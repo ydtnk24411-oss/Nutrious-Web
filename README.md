@@ -27,6 +27,8 @@ Dự án bao gồm:
 ## 📦 Cài đặt môi trường
 
 > **💡 Quick Setup**: Nếu bạn muốn hướng dẫn nhanh, xem file [SETUP.md](SETUP.md)
+>
+> **👥 Team Workflow**: Nếu bạn làm việc trong team, xem file [TEAM_WORKFLOW.md](TEAM_WORKFLOW.md)
 
 ### Yêu cầu
 - Node.js (>= 18.x)
