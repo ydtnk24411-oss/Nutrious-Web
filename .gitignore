@@ -10,6 +10,7 @@ dist/
 .env
 .env.local
 .env.*.local
+server/.env
 
 # IDE
 .vscode/

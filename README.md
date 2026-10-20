@@ -45,7 +45,14 @@ cd server
 npm install
 ```
 
-Tạo file `.env` trong thư mục `server`:
+Tạo file `.env` trong thư mục `server` từ file `.env.example`:
+
+```bash
+cd server
+cp .env.example .env
+```
+
+Hoặc tạo file `.env` với nội dung:
 
 ```env
 PORT=3000
