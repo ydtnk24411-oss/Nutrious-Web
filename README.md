@@ -26,6 +26,8 @@ Dự án bao gồm:
 
 ## 📦 Cài đặt môi trường
 
+> **💡 Quick Setup**: Nếu bạn muốn hướng dẫn nhanh, xem file [SETUP.md](SETUP.md)
+
 ### Yêu cầu
 - Node.js (>= 18.x)
 - MongoDB (đang chạy tại localhost:27017)
@@ -48,7 +50,6 @@ npm install
 Tạo file `.env` trong thư mục `server` từ file `.env.example`:
 
 ```bash
-cd server
 cp .env.example .env
 ```
 
