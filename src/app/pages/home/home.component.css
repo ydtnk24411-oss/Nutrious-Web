@@ -1,0 +1,864 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
+
+#home-view.coop-home{--green:#176b3a;--green-dark:#104c2c;--green-soft:#eaf4e8;--red:#d92332;--ink:#202b24;--muted:#778078;--line:#e8ece6;--cream:#fffdf7;--yellow:#ffd64d;font-family:'Be Vietnam Pro',Arial,sans-serif;color:var(--ink);background:#fff;overflow:hidden}
+.coop-home *{box-sizing:border-box}.coop-container{width:min(1240px,calc(100% - 40px));margin-inline:auto}
+.coop-service-strip{background:#f4f8f1;border-bottom:1px solid #e8eee4;color:#526b54;font-size:11px;font-weight:600}.service-inner{display:flex;gap:18px;align-items:center;justify-content:center;min-height:34px}
+.coop-hero{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(250px,.8fr);gap:16px;padding-top:22px}
+.coop-hero-main{position:relative;min-height:390px;border-radius:18px;overflow:hidden;background:#284b2c;color:#fff}
+.coop-hero-main>img,.coop-hero-shade{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.coop-hero-main>img{object-position:center;transition:opacity .3s}
+.coop-hero-shade{background:linear-gradient(90deg,rgba(12,47,25,.88),rgba(15,49,27,.54) 48%,rgba(15,49,27,.05)),linear-gradient(0deg,rgba(0,0,0,.22),transparent 50%)}
+.coop-hero-copy{position:relative;z-index:1;padding:clamp(34px,5vw,66px);max-width:650px}
+.coop-kicker,.coop-eyebrow{display:inline-block;font-size:10px;letter-spacing:.13em;font-weight:800;color:var(--green);margin-bottom:11px}.coop-kicker{color:#ffe27b}
+.coop-hero-copy h1{font-size:clamp(32px,4vw,54px);letter-spacing:-.045em;line-height:1.1;margin:0 0 14px;font-weight:800;max-width:570px}
+.coop-hero-copy p{font-size:14px;line-height:1.8;color:#e9f0e9;max-width:420px;margin:0 0 24px}
+.coop-btn{display:inline-flex;align-items:center;gap:20px;padding:13px 19px;border-radius:7px;text-decoration:none;font-size:12px;font-weight:800;transition:transform .2s,filter .2s}.coop-btn:hover{transform:translateY(-2px);filter:brightness(1.04)}.coop-btn-yellow{background:var(--yellow);color:#26351f}.coop-btn-white{background:#fff;color:var(--green-dark)}.coop-btn-green{background:var(--green);color:#fff}
+.coop-hero-controls{position:absolute;bottom:20px;right:22px;display:flex;align-items:center;gap:12px;color:#fff;font-size:11px;z-index:2}.coop-hero-controls button{width:31px;height:31px;border:1px solid #ffffff8a;border-radius:50%;background:#ffffff20;color:#fff;font-size:22px;cursor:pointer;line-height:1}
+.coop-hero-side{display:grid;grid-template-rows:1fr 1fr;gap:16px;min-height:390px}.coop-side-promo{position:relative;display:flex;align-items:flex-end;overflow:hidden;border-radius:16px;min-height:185px;color:#fff;text-decoration:none;background:#5c7855}.coop-side-promo:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(13,43,23,.88),rgba(13,43,23,.03) 95%)}.coop-side-promo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .45s}.coop-side-promo:hover img{transform:scale(1.05)}.coop-side-promo>div{position:relative;z-index:1;padding:20px}.coop-side-promo span{font-size:9px;letter-spacing:.13em;font-weight:800;color:#ffe58a}.coop-side-promo h2{font-size:21px;line-height:1.2;margin:8px 0}.coop-side-promo p{font-size:11px;margin:0;color:#f3f6f0}.coop-side-promo p b{margin-left:6px}.coop-side-promo-warm:after{background:linear-gradient(0deg,rgba(88,43,21,.88),rgba(88,43,21,.04) 95%)}
+.coop-category-nav{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:10px;padding-top:22px;padding-bottom:26px;border-bottom:1px solid var(--line)}.coop-category-shortcut{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;color:#364339;text-decoration:none;font-size:10px;font-weight:700;line-height:1.45}.coop-category-icon{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:#f3f7ef;font-size:25px;transition:background .2s,transform .2s}.coop-category-shortcut:hover .coop-category-icon{background:#e2efdc;transform:translateY(-3px)}
+.coop-section{padding-top:48px;padding-bottom:48px}.coop-section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:22px}.coop-section-heading h2{font-size:clamp(23px,2.4vw,31px);letter-spacing:-.04em;line-height:1.2;margin:0;font-weight:800}.coop-section-heading p{font-size:12px;color:var(--muted);margin:8px 0 0;line-height:1.65}.coop-text-link{display:inline-flex;gap:9px;align-items:center;white-space:nowrap;color:var(--green);font-size:11px;font-weight:800;text-decoration:none}.coop-text-link span{font-size:18px;transition:transform .2s}.coop-text-link:hover span{transform:translateX(3px)}.coop-voucher-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}.coop-voucher-card{display:flex;min-height:142px;border:1px solid #e5ebdf;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 5px 20px #1d4d2710}.coop-voucher-ticket{width:112px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#e7f3e4;color:var(--green);position:relative}.coop-voucher-ticket:after,.coop-voucher-ticket:before{content:"";position:absolute;right:-7px;width:14px;height:14px;border-radius:50%;background:white}.coop-voucher-ticket:before{top:-7px}.coop-voucher-ticket:after{bottom:-7px}.coop-voucher-ticket small{font-size:8px;font-weight:800;letter-spacing:.12em}.coop-voucher-ticket strong{font-size:30px;line-height:1.3}.coop-voucher-ticket span{font-size:8px;letter-spacing:.15em}.voucher-orange .coop-voucher-ticket{background:#fff0d7;color:#b36a10}.voucher-red .coop-voucher-ticket{background:#fde8e8;color:#c52a32}.coop-voucher-info{padding:17px 16px;min-width:0;flex:1}.coop-voucher-info h3{font-size:13px;margin:0 0 5px}.coop-voucher-info p{font-size:10px;line-height:1.5;color:#6f786f;margin:0 0 8px}.coop-voucher-info>small{font-size:9px;color:#8b938a}.coop-voucher-actions{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:12px}.coop-voucher-actions b{font-size:10px;color:var(--green);letter-spacing:.04em}.coop-copy-btn{border:1px dashed #9cbea0;background:#f6fbf3;border-radius:5px;padding:7px 9px;color:var(--green);font-size:9px;font-weight:800;cursor:pointer}
+.coop-tinted{background:#f8faf5}.coop-tinted>.coop-container{width:min(1240px,calc(100% - 40px))}.coop-department-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.coop-department-card{display:block;text-decoration:none;color:var(--ink);border:1px solid #e9ede5;background:white;border-radius:12px;overflow:hidden;transition:transform .25s,box-shadow .25s}.coop-department-card:hover{transform:translateY(-4px);box-shadow:0 10px 25px #214c2714}.coop-department-image{height:165px;position:relative;overflow:hidden;background:#f1f4ed}.coop-department-image img{width:100%;height:100%;object-fit:cover;transition:transform .45s}.coop-department-card:hover img{transform:scale(1.06)}.coop-department-image>span{position:absolute;bottom:11px;left:11px;width:36px;height:36px;display:grid;place-items:center;border-radius:50%;background:#ffffffed;font-size:19px}.coop-department-name{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:14px}.coop-department-name strong{font-size:12px}.coop-department-name>span{font-size:9px;color:var(--green);font-weight:800;white-space:nowrap}
+.coop-flash-panel{background:#f8f9f2;border:1px solid #e9eee2;border-radius:18px;padding:25px}.coop-flash-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:20px}.coop-flash-heading h2{font-size:clamp(24px,3vw,34px);letter-spacing:-.04em;margin:0;color:#203c28}.coop-flash-heading h2 em{font-style:normal;color:#d82e35}.coop-flash-heading p{font-size:11px;color:#7d877b;margin:8px 0 0}.coop-countdown{padding:11px 15px;background:#fff;border:1px solid #e7eade;border-radius:9px;min-width:155px;text-align:center}.coop-countdown small{display:block;color:#7d877b;font-size:9px;margin-bottom:5px}.coop-countdown strong{font-size:21px;letter-spacing:.06em;color:#c92e36}.coop-countdown i{font-style:normal;padding:0 2px;color:#aab1a5}
+.coop-product-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.coop-product-card{min-width:0;background:#fff;border:1px solid #e9ede6;border-radius:11px;overflow:hidden;transition:box-shadow .22s,transform .22s}.coop-product-card:hover{box-shadow:0 10px 28px #1b472014;transform:translateY(-3px)}.coop-product-photo{height:190px;display:block;position:relative;background:#f5f6f1;overflow:hidden}.coop-product-photo img{width:100%;height:100%;object-fit:cover;transition:transform .4s}.coop-product-card:hover .coop-product-photo img{transform:scale(1.045)}.coop-discount{position:absolute;top:10px;left:10px;padding:5px 7px;border-radius:4px;background:#d92732;color:#fff;font-size:10px;font-weight:800}.coop-save-label{position:absolute;bottom:10px;left:10px;background:#fff2d1;color:#97620d;font-size:8px;font-weight:800;letter-spacing:.05em;padding:5px 7px;border-radius:3px}.coop-product-tag{position:absolute;top:10px;left:10px;padding:5px 8px;background:#edf6e8;color:var(--green);border-radius:4px;font-size:9px;font-weight:800}.coop-product-info{padding:14px}.coop-product-info>small{font-size:9px;color:#7d9277;font-weight:700}.coop-product-info h3{font-size:12px;line-height:1.5;margin:7px 0;min-height:36px}.coop-product-info h3 a{color:inherit;text-decoration:none}.coop-product-info p{font-size:10px;color:#7b847a;line-height:1.55;margin:0 0 12px;min-height:31px}.coop-price-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}.coop-price-row strong{font-size:16px;color:#d52a34}.coop-price-row del{font-size:10px;color:#9aa19a}.coop-add-btn{width:100%;border:1px solid var(--green);background:#fff;color:var(--green);border-radius:6px;padding:10px;font-size:10px;font-weight:800;cursor:pointer;transition:background .2s,color .2s}.coop-add-btn:hover{background:var(--green);color:#fff}.coop-api-grid{margin-top:4px}.coop-heading-actions{display:flex;align-items:center;gap:10px}.coop-arrow-btn{width:33px;height:33px;border:1px solid #dce4d8;border-radius:50%;background:#fff;color:var(--green);font-size:23px;line-height:1;cursor:pointer}.coop-arrow-btn:disabled{opacity:.35;cursor:not-allowed}.coop-loading,.coop-empty{padding:35px;text-align:center;background:#f8faf5;color:#778078;border-radius:10px;font-size:12px}
+.coop-editorial-banner{display:grid;grid-template-columns:.9fr 1.1fr;gap:35px;align-items:center;padding:36px 42px;margin-top:8px;margin-bottom:8px;border-radius:18px;background:linear-gradient(120deg,#154d2c,#236b3d);color:#fff;overflow:hidden}.coop-eyebrow-light{color:#f4d778}.coop-editorial-copy h2{font-size:clamp(27px,3.3vw,42px);line-height:1.15;letter-spacing:-.04em;margin:0 0 14px}.coop-editorial-copy h2 em{color:#f4d778;font-style:normal}.coop-editorial-copy p{font-size:12px;line-height:1.8;color:#dce8dc;max-width:380px;margin:0 0 22px}.coop-editorial-images{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:145px 145px;gap:10px;transform:rotate(2deg)}.coop-editorial-images img{width:100%;height:100%;object-fit:cover;border-radius:10px}.coop-editorial-images img:first-child{grid-row:span 2}
+.coop-origin-layout{display:grid;grid-template-columns:1fr 1fr;gap:clamp(30px,6vw,80px);align-items:center}.coop-origin-photo{height:380px;position:relative;border-radius:14px;overflow:hidden;background:#edf3e8}.coop-origin-photo img{width:100%;height:100%;object-fit:cover}.coop-origin-photo>span{position:absolute;bottom:18px;left:18px;padding:13px 17px;background:#fff;color:var(--green);font-size:9px;line-height:1.6;letter-spacing:.1em;border-radius:6px}.coop-origin-copy h2{font-size:clamp(27px,3vw,39px);line-height:1.2;letter-spacing:-.04em;margin:0 0 16px}.coop-origin-copy p{font-size:12px;line-height:1.9;color:#737d73;margin-bottom:18px}.coop-origin-copy ul{padding:0;list-style:none;margin:0 0 24px}.coop-origin-copy li{font-size:12px;color:#4e684e;margin:10px 0}
+.coop-news-section{background:#f8faf5}.coop-news-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.coop-news-card{display:block;text-decoration:none;color:var(--ink);background:#fff;border:1px solid #e7ece4;border-radius:12px;overflow:hidden;transition:transform .2s,box-shadow .2s}.coop-news-card:hover{transform:translateY(-3px);box-shadow:0 10px 22px #24472a12}.coop-news-image{height:195px;position:relative;overflow:hidden}.coop-news-image img{width:100%;height:100%;object-fit:cover;transition:transform .4s}.coop-news-card:hover img{transform:scale(1.05)}.coop-news-image>span{position:absolute;left:12px;bottom:12px;background:#fff;color:var(--green);border-radius:4px;padding:6px 8px;font-size:8px;font-weight:800;letter-spacing:.08em}.coop-news-copy{padding:17px}.coop-news-copy small{font-size:9px;color:#889288;font-weight:700}.coop-news-copy h3{font-size:14px;line-height:1.55;margin:8px 0 14px}.coop-read-more{font-size:10px;color:var(--green);font-weight:800}
+.coop-benefits{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;padding-top:24px;padding-bottom:32px;border-top:1px solid var(--line)}.coop-benefits>div{display:grid;grid-template-columns:40px 1fr;column-gap:10px;align-items:center}.coop-benefits>div>span{grid-row:span 2;width:40px;height:40px;display:grid;place-items:center;background:#eff6eb;border-radius:50%;font-size:18px}.coop-benefits strong{font-size:11px}.coop-benefits small{font-size:9px;color:#828c81;margin-top:3px}
+@media(max-width:1000px){.coop-hero{grid-template-columns:1fr}.coop-hero-main{min-height:370px}.coop-hero-side{grid-template-columns:1fr 1fr;grid-template-rows:190px;min-height:0}.coop-category-nav{grid-template-columns:repeat(4,1fr)}.coop-voucher-grid{grid-template-columns:1fr}.coop-voucher-card{min-height:120px}.coop-department-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.coop-product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.coop-product-photo{height:220px}.coop-editorial-banner{grid-template-columns:1fr}.coop-editorial-images{max-width:620px;width:100%;margin:auto}.coop-origin-layout{gap:30px}.coop-origin-photo{height:330px}}
+@media(max-width:640px){.coop-container,.coop-tinted>.coop-container{width:calc(100% - 28px)}.service-inner{gap:8px;font-size:9px;min-height:30px}.coop-hero{padding-top:12px;gap:10px}.coop-hero-main{min-height:430px}.coop-hero-copy{padding:35px 22px}.coop-hero-copy h1{font-size:37px}.coop-hero-copy p{font-size:12px}.coop-hero-side{gap:10px;grid-template-rows:170px}.coop-side-promo>div{padding:13px}.coop-side-promo h2{font-size:16px}.coop-side-promo p{font-size:9px}.coop-side-promo span{font-size:7px}.coop-category-nav{width:100%;padding:18px 14px;gap:15px 8px;grid-template-columns:repeat(4,minmax(0,1fr))}.coop-category-icon{width:45px;height:45px;font-size:22px}.coop-category-shortcut{font-size:9px}.coop-section{padding-top:34px;padding-bottom:34px}.coop-section-heading{align-items:flex-start;margin-bottom:18px}.coop-section-heading h2{font-size:24px}.coop-section-heading p{font-size:10px;max-width:260px}.coop-section-heading>.coop-text-link{padding-top:20px;font-size:9px}.coop-voucher-card{min-height:125px}.coop-voucher-ticket{width:88px}.coop-voucher-ticket strong{font-size:25px}.coop-voucher-info{padding:13px 12px}.coop-voucher-info h3{font-size:11px}.coop-voucher-info p{font-size:9px}.coop-voucher-actions{flex-wrap:wrap}.coop-department-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.coop-department-image{height:135px}.coop-department-name{padding:11px;align-items:flex-start;flex-direction:column;gap:5px}.coop-department-name strong{font-size:11px}.coop-flash-panel{padding:14px;border-radius:13px}.coop-flash-heading{align-items:flex-start;flex-direction:column}.coop-flash-heading h2{font-size:27px}.coop-countdown{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left}.coop-countdown small{margin:0}.coop-countdown strong{font-size:19px}.coop-product-grid{gap:10px}.coop-product-photo{height:155px}.coop-product-info{padding:10px}.coop-product-info h3{font-size:11px;min-height:33px}.coop-product-info p{font-size:9px;min-height:42px}.coop-price-row strong{font-size:14px}.coop-add-btn{font-size:9px;padding:9px 5px}.coop-heading-actions{gap:6px;flex-wrap:wrap;justify-content:flex-end}.coop-heading-actions .coop-text-link{display:none}.coop-arrow-btn{width:29px;height:29px}.coop-editorial-banner{width:calc(100% - 28px);padding:27px 20px;gap:20px}.coop-editorial-copy h2{font-size:30px}.coop-editorial-copy p{font-size:11px}.coop-editorial-images{grid-template-rows:105px 105px;gap:7px}.coop-origin-layout{grid-template-columns:1fr;gap:24px}.coop-origin-photo{height:260px}.coop-origin-copy h2{font-size:29px}.coop-news-grid{grid-template-columns:1fr;gap:12px}.coop-news-card{display:grid;grid-template-columns:120px 1fr}.coop-news-image{height:100%;min-height:150px}.coop-news-copy{padding:13px}.coop-news-copy h3{font-size:12px}.coop-benefits{grid-template-columns:repeat(2,1fr);gap:18px 10px}.coop-benefits>div{grid-template-columns:34px 1fr}.coop-benefits>div>span{width:34px;height:34px;font-size:15px}.coop-benefits strong{font-size:10px}.coop-benefits small{font-size:8px}}
+
+/* -------------------------------------------------------------
+   Visual refinement: crisp section boundaries, readable badges,
+   stronger contrast and a typography-only interface (no icons).
+   ------------------------------------------------------------- */
+#home-view.coop-home {
+  --green: #176b3a;
+  --green-dark: #104c2c;
+  --green-soft: #eaf4e8;
+  --red: #d92332;
+  --ink: #1c2920;
+  --muted: #626e64;
+  --line: #d9e1d7;
+  background: #fff;
+  color: var(--ink);
+}
+.coop-home .coop-container { width: min(1280px, calc(100% - 48px)); }
+.coop-home .coop-service-strip { background: #174f2e; color: #fff; border: 0; font-size: 11px; letter-spacing: .025em; }
+.coop-home .service-inner { min-height: 38px; gap: 20px; }
+.coop-home .service-divider { width: 1px; height: 13px; background: #8cb39a; display: inline-block; }
+.coop-home .coop-hero { padding-top: 24px; gap: 18px; }
+.coop-home .coop-hero-main { min-height: 430px; border-radius: 5px; box-shadow: 0 8px 22px #153d2514; }
+.coop-home .coop-hero-shade { background: linear-gradient(90deg,rgba(7,36,18,.91),rgba(11,44,22,.60) 53%,rgba(11,44,22,.06)),linear-gradient(0deg,rgba(0,0,0,.25),transparent 50%); }
+.coop-home .coop-kicker,
+.coop-home .coop-eyebrow { font-size: 10px; letter-spacing: .14em; font-weight: 800; text-transform: uppercase; }
+.coop-home .coop-kicker { padding: 8px 11px; background: #f7d96b; color: #233a25; margin-bottom: 16px; }
+.coop-home .coop-hero-copy h1 { font-size: clamp(34px, 4vw, 58px); max-width: 610px; }
+.coop-home .coop-hero-copy p { font-size: 14px; max-width: 460px; }
+.coop-home .coop-btn { min-height: 46px; border-radius: 3px; padding: 14px 21px; font-size: 12px; letter-spacing: .01em; }
+.coop-home .coop-btn-yellow { background: #ffdc55; color: #1d3322; box-shadow: 0 3px 0 #d5b744; }
+.coop-home .coop-btn-white { color: #154b2b; }
+.coop-home .coop-btn-green { background: #176b3a; }
+.coop-home .coop-hero-controls { right: 20px; bottom: 18px; gap: 9px; }
+.coop-home .coop-hero-controls button { width: auto; min-width: 62px; height: 32px; padding: 0 10px; border-radius: 3px; border: 1px solid #ffffffb8; background: #123b25a8; color: #fff; font-size: 10px; font-weight: 700; }
+.coop-home .coop-hero-side { gap: 18px; min-height: 430px; }
+.coop-home .coop-side-promo { border-radius: 5px; border: 1px solid #dfe6dc; }
+.coop-home .coop-side-promo>div { padding: 23px; }
+.coop-home .coop-side-promo span { display: inline-block; padding: 6px 8px; border: 1px solid #f4dc87; background: #173e2bbd; color: #ffdf78; font-size: 9px; }
+.coop-home .coop-side-promo h2 { font-size: clamp(18px, 1.8vw, 24px); margin: 10px 0 7px; }
+.coop-home .coop-side-promo p { font-size: 12px; }
+
+/* Text-only quick category navigation */
+.coop-home .coop-category-nav { gap: 10px; padding-top: 25px; padding-bottom: 27px; border-bottom: 2px solid #dfe7dc; }
+.coop-home .coop-category-shortcut { min-height: 58px; padding: 12px 9px; border: 1px solid #dce5d9; border-bottom: 3px solid #b9ceb9; background: #fff; border-radius: 3px; font-size: 11px; line-height: 1.45; transition: border-color .2s, background .2s, transform .2s; }
+.coop-home .coop-category-shortcut:hover { background: #f0f7ee; border-color: #78a77f; border-bottom-color: var(--green); transform: translateY(-2px); }
+.coop-home .coop-category-label { display: block; }
+
+/* Strong section rhythm and clearly defined section labels */
+.coop-home .coop-section { padding-top: 54px; padding-bottom: 54px; }
+.coop-home .coop-section-heading { margin-bottom: 25px; padding-bottom: 17px; border-bottom: 1px solid #dfe6dc; }
+.coop-home .coop-section-heading h2 { font-size: clamp(24px, 2.5vw, 33px); letter-spacing: -.035em; color: #1d3023; }
+.coop-home .coop-section-heading p { color: #626e64; font-size: 12px; }
+.coop-home .coop-eyebrow { padding: 7px 9px; margin-bottom: 12px; background: #e8f2e5; border-left: 3px solid #176b3a; color: #195c32; line-height: 1.2; }
+.coop-home .coop-eyebrow-light { background: #f7df88; border-left-color: #fff3c4; color: #253d28; }
+.coop-home .coop-text-link { padding: 10px 13px; border: 1px solid #176b3a; border-radius: 3px; font-size: 11px; }
+.coop-home .coop-text-link:hover { background: #176b3a; color: #fff; }
+.coop-home .coop-voucher-grid { gap: 17px; }
+.coop-home .coop-voucher-card { border: 1px solid #cfdccd; border-radius: 4px; box-shadow: none; min-height: 150px; }
+.coop-home .coop-voucher-ticket { width: 116px; background: #e3f0df; border-right: 1px dashed #9bb99a; }
+.coop-home .coop-voucher-ticket strong { font-size: 34px; }
+.coop-home .coop-voucher-ticket small,
+.coop-home .coop-voucher-ticket span { font-size: 9px; letter-spacing: .12em; }
+.coop-home .coop-voucher-info { padding: 18px; }
+.coop-home .coop-voucher-info h3 { font-size: 14px; }
+.coop-home .coop-voucher-info p { color: #566458; font-size: 11px; }
+.coop-home .coop-voucher-info>small { font-size: 10px; }
+.coop-home .coop-voucher-actions { flex-wrap: wrap; }
+.coop-home .coop-voucher-actions b { padding: 6px 8px; background: #f1f6ee; border: 1px solid #d9e6d4; font-size: 10px; }
+.coop-home .coop-copy-btn { border: 1px solid #176b3a; background: #176b3a; color: #fff; border-radius: 3px; padding: 8px 10px; font-size: 10px; }
+.coop-home .coop-copy-btn:hover { background: #104c2c; }
+
+/* Category cards: square edges and readable labels */
+.coop-home .coop-tinted { background: #f2f6ef; border-top: 1px solid #dce6d8; border-bottom: 1px solid #dce6d8; }
+.coop-home .coop-tinted>.coop-container { width: min(1280px, calc(100% - 48px)); }
+.coop-home .coop-department-grid { gap: 17px; }
+.coop-home .coop-department-card { border: 1px solid #d3ded0; border-radius: 4px; box-shadow: none; }
+.coop-home .coop-department-card:hover { border-color: #7fa584; box-shadow: 0 7px 18px #1c4d2914; }
+.coop-home .coop-department-image { height: 175px; }
+.coop-home .coop-department-name { min-height: 70px; padding: 14px; align-items: flex-start; flex-direction: column; gap: 8px; border-top: 1px solid #e3e9e0; }
+.coop-home .coop-department-name strong { font-size: 12px; line-height: 1.4; }
+.coop-home .coop-department-name>span { display: inline-block; padding: 5px 7px; background: #eaf3e7; border-left: 2px solid #176b3a; font-size: 9px; }
+
+/* Product and deal badges */
+.coop-home .coop-flash-panel { background: #f4f7f0; border: 1px solid #cfdcc9; border-top: 4px solid #176b3a; border-radius: 4px; padding: 28px; }
+.coop-home .coop-flash-heading { padding-bottom: 18px; margin-bottom: 23px; border-bottom: 1px solid #d9e2d5; }
+.coop-home .coop-flash-heading h2 { color: #183d27; }
+.coop-home .coop-flash-heading h2 em { color: #c5202b; }
+.coop-home .coop-countdown { border: 1px solid #d0dccc; border-radius: 3px; box-shadow: inset 0 0 0 3px #f5f8f2; }
+.coop-home .coop-product-grid { gap: 16px; }
+.coop-home .coop-product-card { border: 1px solid #d8e0d5; border-radius: 4px; box-shadow: none; }
+.coop-home .coop-product-card:hover { border-color: #82a987; box-shadow: 0 7px 18px #1b472015; }
+.coop-home .coop-product-photo { height: 205px; background: #edf1e9; }
+.coop-home .coop-discount,
+.coop-home .coop-save-label,
+.coop-home .coop-product-tag { border-radius: 2px; padding: 6px 8px; font-size: 9px; font-weight: 800; letter-spacing: .035em; }
+.coop-home .coop-discount { background: #c91f2b; }
+.coop-home .coop-save-label { background: #ffdf80; color: #503b00; }
+.coop-home .coop-product-tag { top: 10px; left: 10px; max-width: calc(100% - 20px); background: #e5f1df; border: 1px solid #b9d0b4; color: #15552d; }
+.coop-home .coop-product-info { padding: 16px; }
+.coop-home .coop-product-info>small { display: inline-block; padding: 5px 7px; background: #f0f4ed; color: #526e55; font-size: 9px; }
+.coop-home .coop-product-info h3 { font-size: 13px; line-height: 1.5; }
+.coop-home .coop-product-info p { color: #626e64; font-size: 11px; }
+.coop-home .coop-price-row strong { font-size: 17px; }
+.coop-home .coop-add-btn { border-radius: 3px; border-width: 1px; padding: 11px; font-size: 11px; }
+.coop-home .coop-add-btn:hover { background: #176b3a; }
+.coop-home .coop-arrow-btn { width: auto; min-width: 62px; height: 34px; border-radius: 3px; font-size: 10px; font-weight: 700; }
+.coop-home .coop-arrow-btn:first-of-type::after { content: 'Trước'; }
+.coop-home .coop-arrow-btn:last-of-type::after { content: 'Sau'; }
+.coop-home .coop-arrow-btn { font-size: 0; }
+.coop-home .coop-arrow-btn::after { font-size: 10px; }
+.coop-home .coop-loading, .coop-home .coop-empty { border: 1px solid #dce5d8; border-radius: 4px; background: #f5f8f2; }
+
+/* Editorial, origin, news and benefits */
+.coop-home .coop-editorial-banner { border-radius: 4px; border-left: 6px solid #f3d46e; padding: 42px; }
+.coop-home .coop-editorial-images img { border-radius: 3px; }
+.coop-home .coop-origin-layout { gap: clamp(32px, 6vw, 86px); }
+.coop-home .coop-origin-photo { border-radius: 4px; border: 1px solid #d6e0d2; }
+.coop-home .coop-origin-photo>span { border-radius: 3px; border: 1px solid #dce7d7; font-size: 10px; }
+.coop-home .coop-origin-copy ul { border-left: 2px solid #bad0b7; padding-left: 16px; }
+.coop-home .coop-origin-copy li { position: relative; padding: 9px 10px; margin: 7px 0; background: #f3f7f0; border: 1px solid #e0e9dc; color: #304d36; font-size: 11px; }
+.coop-home .coop-news-section { background: #f2f6ef; border-top: 1px solid #dce5d8; border-bottom: 1px solid #dce5d8; }
+.coop-home .coop-news-card { border: 1px solid #d3ded0; border-radius: 4px; }
+.coop-home .coop-news-image>span { border-radius: 2px; padding: 7px 9px; background: #fff; border: 1px solid #dbe5d7; color: #185b32; font-size: 9px; }
+.coop-home .coop-news-copy { padding: 18px; }
+.coop-home .coop-news-copy small { display: inline-block; padding: 5px 7px; background: #eaf3e7; color: #426748; font-size: 9px; }
+.coop-home .coop-news-copy h3 { font-size: 14px; }
+.coop-home .coop-read-more { display: inline-block; padding: 7px 10px; border: 1px solid #176b3a; border-radius: 3px; }
+.coop-home .coop-benefits { gap: 0; padding-top: 28px; padding-bottom: 34px; border-top: 2px solid #176b3a; }
+.coop-home .coop-benefits>div { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; padding: 15px 20px; border-right: 1px solid #dce5d8; }
+.coop-home .coop-benefits>div:last-child { border-right: 0; }
+.coop-home .coop-benefits strong { font-size: 12px; color: #1c4e2e; }
+.coop-home .coop-benefits small { font-size: 10px; color: #626e64; }
+
+@media (max-width: 1000px) {
+  .coop-home .coop-container, .coop-home .coop-tinted>.coop-container { width: min(100% - 36px, 900px); }
+  .coop-home .coop-hero-main { min-height: 390px; }
+  .coop-home .coop-hero-side { min-height: 0; }
+  .coop-home .coop-category-nav { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .coop-home .coop-voucher-grid { grid-template-columns: 1fr; }
+  .coop-home .coop-department-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .coop-home .coop-product-photo { height: 190px; }
+}
+@media (max-width: 640px) {
+  .coop-home .coop-container, .coop-home .coop-tinted>.coop-container { width: calc(100% - 28px); }
+  .coop-home .service-inner { flex-wrap: wrap; gap: 7px 10px; padding: 8px 0; font-size: 9px; }
+  .coop-home .coop-hero { padding-top: 14px; }
+  .coop-home .coop-hero-main { min-height: 420px; }
+  .coop-home .coop-hero-copy { padding: 30px 21px 72px; }
+  .coop-home .coop-hero-copy h1 { font-size: 35px; }
+  .coop-home .coop-hero-controls { left: 20px; right: auto; }
+  .coop-home .coop-hero-side { grid-template-columns: 1fr 1fr; grid-template-rows: 170px; gap: 10px; }
+  .coop-home .coop-side-promo>div { padding: 12px; }
+  .coop-home .coop-side-promo h2 { font-size: 16px; }
+  .coop-home .coop-side-promo p { font-size: 10px; }
+  .coop-home .coop-category-nav { width: 100%; padding: 16px 14px; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .coop-home .coop-category-shortcut { min-height: 48px; font-size: 10px; }
+  .coop-home .coop-section { padding-top: 36px; padding-bottom: 36px; }
+  .coop-home .coop-section-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .coop-home .coop-section-heading h2 { font-size: 25px; }
+  .coop-home .coop-section-heading>.coop-text-link { padding-top: 8px; }
+  .coop-home .coop-voucher-ticket { width: 88px; }
+  .coop-home .coop-voucher-info { padding: 13px; }
+  .coop-home .coop-voucher-actions { align-items: flex-start; }
+  .coop-home .coop-department-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .coop-home .coop-department-image { height: 130px; }
+  .coop-home .coop-department-name { min-height: 75px; padding: 11px; }
+  .coop-home .coop-flash-panel { padding: 14px; }
+  .coop-home .coop-flash-heading { align-items: flex-start; flex-direction: column; }
+  .coop-home .coop-countdown { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+  .coop-home .coop-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .coop-home .coop-product-photo { height: 150px; }
+  .coop-home .coop-product-info { padding: 10px; }
+  .coop-home .coop-product-info h3 { font-size: 11px; }
+  .coop-home .coop-product-info p { font-size: 9px; }
+  .coop-home .coop-heading-actions { flex-wrap: wrap; }
+  .coop-home .coop-heading-actions .coop-text-link { display: inline-flex; }
+  .coop-home .coop-editorial-banner { width: calc(100% - 28px); padding: 27px 20px; gap: 22px; }
+  .coop-home .coop-editorial-copy h2 { font-size: 29px; }
+  .coop-home .coop-editorial-images { grid-template-rows: 100px 100px; gap: 7px; }
+  .coop-home .coop-origin-layout { grid-template-columns: 1fr; gap: 23px; }
+  .coop-home .coop-origin-photo { height: 255px; }
+  .coop-home .coop-news-grid { grid-template-columns: 1fr; gap: 12px; }
+  .coop-home .coop-news-card { display: grid; grid-template-columns: 120px minmax(0, 1fr); }
+  .coop-home .coop-news-image { height: 100%; min-height: 150px; }
+  .coop-home .coop-news-copy { padding: 12px; }
+  .coop-home .coop-news-copy h3 { font-size: 12px; }
+  .coop-home .coop-benefits { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .coop-home .coop-benefits>div { padding: 13px 10px; border-bottom: 1px solid #dce5d8; }
+  .coop-home .coop-benefits>div:nth-child(2) { border-right: 0; }
+}
+
+/* ===== BOLD MARKET REDESIGN: cobalt blue + tangerine + warm ivory ===== */
+#home-view.coop-home{
+  --green:#173f9f;
+  --green-dark:#102b70;
+  --green-soft:#e8edff;
+  --red:#f04424;
+  --ink:#17233c;
+  --muted:#58657a;
+  --line:#d8dfef;
+  --cream:#fff8eb;
+  --yellow:#ffd23f;
+  background:#fffdf8;
+  color:var(--ink);
+}
+.coop-home .coop-service-strip{background:#172d69;color:#fff;border:0;font-size:11px;letter-spacing:.025em}
+.coop-home .service-inner{min-height:36px}
+.coop-home .coop-hero{padding-top:24px;gap:14px}
+.coop-home .coop-hero-main{border-radius:5px;min-height:435px;background:#173f9f;box-shadow:8px 8px 0 #ffd23f}
+.coop-home .coop-hero-shade{background:linear-gradient(90deg,rgba(10,28,78,.94),rgba(13,40,105,.72) 49%,rgba(13,40,105,.08)),linear-gradient(0deg,rgba(5,16,46,.35),transparent 55%)}
+.coop-home .coop-hero-copy{padding:clamp(34px,5vw,70px)}
+.coop-home .coop-kicker{padding:8px 11px;background:#ffd23f;color:#172d69;letter-spacing:.12em;margin-bottom:18px;font-size:10px}
+.coop-home .coop-hero-copy h1{font-size:clamp(38px,4.7vw,64px);max-width:610px;line-height:1.02;letter-spacing:-.055em}
+.coop-home .coop-hero-copy p{font-size:15px;max-width:460px;color:#f0f3ff}
+.coop-home .coop-btn{border-radius:3px;padding:14px 20px;box-shadow:4px 4px 0 rgba(0,0,0,.16);text-transform:uppercase;letter-spacing:.035em;font-size:11px}
+.coop-home .coop-btn-yellow{background:#ffd23f;color:#172d69}
+.coop-home .coop-btn-green{background:#173f9f;color:#fff}
+.coop-home .coop-hero-controls button{border-radius:3px;background:#173f9f;border:1px solid #fff;color:#fff}
+.coop-home .coop-hero-side{gap:14px;min-height:435px}
+.coop-home .coop-side-promo{border-radius:4px;min-height:210px;border:2px solid #fff;box-shadow:4px 4px 0 #f04424}
+.coop-home .coop-side-promo:after{background:linear-gradient(0deg,rgba(10,27,72,.94),rgba(10,27,72,.05) 100%)}
+.coop-home .coop-side-promo-warm:after{background:linear-gradient(0deg,rgba(117,35,12,.94),rgba(117,35,12,.04) 100%)}
+.coop-home .coop-side-promo span{display:inline-block;background:#ffd23f;color:#172d69;padding:5px 7px;font-size:9px}
+.coop-home .coop-side-promo h2{font-size:24px;letter-spacing:-.035em}
+.coop-home .coop-category-nav{border-bottom:3px solid #173f9f;background:#fff8eb;padding-top:24px;padding-bottom:24px;gap:0}
+.coop-home .coop-category-shortcut{min-height:58px;padding:10px 12px;border-right:1px solid #d9dfed;color:#173f9f;font-size:11px;text-transform:uppercase;letter-spacing:.015em}
+.coop-home .coop-category-shortcut:last-child{border-right:0}
+.coop-home .coop-category-shortcut:hover{background:#ffd23f;color:#172d69}
+.coop-home .coop-section{padding-top:58px;padding-bottom:58px}
+.coop-home .coop-section-heading{margin-bottom:27px;padding-left:17px;border-left:6px solid #f04424}
+.coop-home .coop-eyebrow{color:#173f9f;background:#e8edff;padding:6px 9px;margin-bottom:12px;font-size:9px;letter-spacing:.12em}
+.coop-home .coop-section-heading h2{font-size:clamp(27px,3vw,38px);letter-spacing:-.045em;color:#172d69}
+.coop-home .coop-section-heading p{font-size:13px;color:#58657a}
+.coop-home .coop-text-link{color:#173f9f;border-bottom:2px solid #f04424;padding-bottom:5px;font-size:11px;text-transform:uppercase;letter-spacing:.025em}
+.coop-home .coop-voucher-grid{gap:18px}
+.coop-home .coop-voucher-card{border:1px solid #cbd5ef;border-radius:4px;box-shadow:5px 5px 0 #e5eaff;min-height:158px}
+.coop-home .coop-voucher-ticket{background:#173f9f;color:#fff;width:124px}
+.coop-home .coop-voucher-ticket:before,.coop-home .coop-voucher-ticket:after{background:#fffdf8}
+.coop-home .coop-voucher-ticket strong{font-size:34px}
+.coop-home .coop-voucher-ticket small,.coop-home .coop-voucher-ticket span{color:#ffd23f}
+.coop-home .voucher-orange .coop-voucher-ticket{background:#f04424;color:#fff}
+.coop-home .voucher-red .coop-voucher-ticket{background:#172d69;color:#fff}
+.coop-home .coop-voucher-info h3{font-size:14px;color:#172d69}
+.coop-home .coop-voucher-info p{font-size:11px;color:#58657a}
+.coop-home .coop-copy-btn{border:0;border-radius:2px;background:#ffd23f;color:#172d69;padding:9px 11px;font-size:10px}
+.coop-home .coop-voucher-actions b{color:#f04424;font-size:11px}
+.coop-home .coop-tinted{background:#edf1ff;border-top:1px solid #d5def8;border-bottom:1px solid #d5def8}
+.coop-home .coop-department-grid{gap:18px}
+.coop-home .coop-department-card{border:1px solid #cbd5ef;border-radius:4px;box-shadow:4px 4px 0 #dfe6ff;background:#fff;transition:transform .2s,box-shadow .2s}
+.coop-home .coop-department-card:hover{transform:translate(-2px,-3px);box-shadow:7px 7px 0 #ffd23f}
+.coop-home .coop-department-image{height:185px;background:#e5eaff}
+.coop-home .coop-department-name{padding:16px;min-height:70px}
+.coop-home .coop-department-name strong{font-size:13px;color:#172d69}
+.coop-home .coop-department-name>span{color:#f04424;text-transform:uppercase;font-size:9px}
+.coop-home .coop-flash-panel{background:#f04424;border:0;border-radius:4px;padding:30px;box-shadow:8px 8px 0 #ffd23f}
+.coop-home .coop-flash-heading{border-bottom:1px solid #ffffff60;padding-bottom:22px}
+.coop-home .coop-flash-heading h2{color:#fff;font-size:clamp(29px,3.4vw,42px)}
+.coop-home .coop-flash-heading h2 em{color:#ffd23f}
+.coop-home .coop-flash-heading p{color:#fff1e9}
+.coop-home .coop-eyebrow-light{background:#ffd23f;color:#172d69}
+.coop-home .coop-countdown{background:#172d69;border:0;border-radius:3px;color:#fff}
+.coop-home .coop-countdown small{color:#e7ecff}
+.coop-home .coop-countdown strong{color:#ffd23f;font-size:24px}
+.coop-home .coop-product-grid{gap:16px}
+.coop-home .coop-product-card{border:1px solid #cbd5ef;border-radius:4px;box-shadow:4px 4px 0 #e3e9fb;background:#fff}
+.coop-home .coop-product-card:hover{border-color:#173f9f;box-shadow:6px 6px 0 #ffd23f;transform:translate(-2px,-2px)}
+.coop-home .coop-product-photo{height:215px;background:#f1f3fa}
+.coop-home .coop-discount{background:#f04424;color:#fff;border-radius:2px;font-size:11px;padding:7px 9px}
+.coop-home .coop-save-label{background:#ffd23f;color:#172d69;border-radius:2px}
+.coop-home .coop-product-tag{background:#173f9f;color:#fff;border:0;border-radius:2px}
+.coop-home .coop-product-info{padding:17px}
+.coop-home .coop-product-info>small{background:#edf1ff;color:#173f9f}
+.coop-home .coop-product-info h3{font-size:13px;color:#172d69}
+.coop-home .coop-product-info p{font-size:11px;color:#58657a}
+.coop-home .coop-price-row strong{font-size:19px;color:#f04424}
+.coop-home .coop-add-btn{background:#173f9f;color:#fff;border:1px solid #173f9f;border-radius:2px;text-transform:uppercase;letter-spacing:.03em;font-size:10px;font-weight:800}
+.coop-home .coop-add-btn:hover{background:#f04424;border-color:#f04424}
+.coop-home .coop-arrow-btn{border-radius:2px;border-color:#173f9f;color:#173f9f}
+.coop-home .coop-editorial-banner{background:#172d69;border-radius:4px;border-left:8px solid #ffd23f;padding:clamp(28px,4vw,52px);box-shadow:8px 8px 0 #dfe6ff}
+.coop-home .coop-editorial-copy h2{font-size:clamp(31px,4vw,48px);color:#fff;letter-spacing:-.045em}
+.coop-home .coop-editorial-copy h2 em{color:#ffd23f}
+.coop-home .coop-editorial-copy p{color:#e0e7ff}
+.coop-home .coop-editorial-images img{border-radius:3px;border:2px solid #fff}
+.coop-home .coop-origin-layout{background:#fff8eb;border:1px solid #e8d8b8;padding:clamp(20px,3vw,38px);gap:clamp(25px,5vw,65px)}
+.coop-home .coop-origin-photo{border:0;box-shadow:8px 8px 0 #ffd23f}
+.coop-home .coop-origin-photo>span{background:#f04424;color:#fff;border:0;border-radius:0;padding:13px;font-weight:800}
+.coop-home .coop-origin-copy h2{color:#172d69;font-size:clamp(28px,3vw,39px)}
+.coop-home .coop-origin-copy li{background:#fff;border:1px solid #e7d8bb;color:#34415c;border-left:4px solid #f04424}
+.coop-home .coop-news-section{background:#172d69;border-top:5px solid #ffd23f;border-bottom:0}
+.coop-home .coop-news-section .coop-section-heading h2{color:#fff}
+.coop-home .coop-news-section .coop-section-heading p{color:#d9e2ff}
+.coop-home .coop-news-section .coop-eyebrow{background:#ffd23f;color:#172d69}
+.coop-home .coop-news-card{background:#fff;border:0;border-radius:3px;box-shadow:5px 5px 0 #f04424}
+.coop-home .coop-news-image>span{background:#ffd23f;border:0;border-radius:0;color:#172d69;font-weight:800}
+.coop-home .coop-news-copy h3{color:#172d69}
+.coop-home .coop-read-more{color:#173f9f;border-color:#173f9f;border-radius:2px;font-weight:800}
+.coop-home .coop-benefits{border-top:4px solid #f04424;background:#fff8eb;margin-top:32px;margin-bottom:28px}
+.coop-home .coop-benefits>div{border-right:1px solid #e3d7bf}
+.coop-home .coop-benefits strong{color:#172d69;font-size:13px}
+.coop-home .coop-benefits small{color:#58657a;font-size:11px}
+@media(max-width:1000px){
+  .coop-home .coop-hero-main{min-height:390px}
+  .coop-home .coop-department-image{height:165px}
+  .coop-home .coop-flash-panel{padding:22px}
+}
+@media(max-width:640px){
+  .coop-home .coop-hero{gap:12px}
+  .coop-home .coop-hero-main{box-shadow:4px 4px 0 #ffd23f;min-height:410px}
+  .coop-home .coop-hero-copy h1{font-size:36px}
+  .coop-home .coop-hero-side{gap:9px}
+  .coop-home .coop-side-promo{box-shadow:3px 3px 0 #f04424}
+  .coop-home .coop-side-promo h2{font-size:15px}
+  .coop-home .coop-category-shortcut{padding:9px 6px;font-size:10px}
+  .coop-home .coop-section{padding-top:39px;padding-bottom:39px}
+  .coop-home .coop-section-heading{padding-left:12px;border-left-width:4px}
+  .coop-home .coop-section-heading h2{font-size:26px}
+  .coop-home .coop-voucher-ticket{width:88px}
+  .coop-home .coop-voucher-ticket strong{font-size:27px}
+  .coop-home .coop-department-image{height:125px}
+  .coop-home .coop-department-name{padding:11px;gap:7px}
+  .coop-home .coop-department-name strong{font-size:11px}
+  .coop-home .coop-flash-panel{padding:14px;box-shadow:4px 4px 0 #ffd23f}
+  .coop-home .coop-flash-heading{gap:15px}
+  .coop-home .coop-product-photo{height:145px}
+  .coop-home .coop-product-info{padding:10px}
+  .coop-home .coop-product-info h3{font-size:11px}
+  .coop-home .coop-price-row strong{font-size:15px}
+  .coop-home .coop-editorial-banner{box-shadow:4px 4px 0 #dfe6ff}
+  .coop-home .coop-origin-layout{padding:18px}
+  .coop-home .coop-benefits{margin-top:20px}
+}
+
+/* ===== COOL PALETTE UPDATE: electric blue + violet + icy lavender ===== */
+#home-view.coop-home {
+  --green: #3157d5;
+  --green-dark: #202b73;
+  --green-soft: #e8edff;
+  --red: #7957e8;
+  --ink: #171b38;
+  --muted: #626984;
+  --line: #dce0f6;
+  --cream: #f7f8ff;
+  --yellow: #c9f0ff;
+  background: #f8f9ff;
+  color: var(--ink);
+}
+.coop-home .coop-service-strip { background: #171c49; color: #f6f7ff; border: 0; }
+.coop-home .coop-hero-main { background: #273b9b; box-shadow: 8px 8px 0 #a99aff; }
+.coop-home .coop-hero-shade { background: linear-gradient(90deg, rgba(17,24,78,.96), rgba(38,46,131,.75) 50%, rgba(48,57,143,.06)), linear-gradient(0deg, rgba(18,20,62,.28), transparent 55%); }
+.coop-home .coop-kicker { background: #c9f0ff; color: #202b73; }
+.coop-home .coop-btn-yellow { background: #c9f0ff; color: #202b73; }
+.coop-home .coop-btn-green { background: #3157d5; color: #fff; }
+.coop-home .coop-hero-side .coop-side-promo { box-shadow: 4px 4px 0 #7957e8; }
+.coop-home .coop-side-promo:after { background: linear-gradient(0deg, rgba(25,28,82,.93), rgba(25,28,82,.02) 95%); }
+.coop-home .coop-side-promo-warm:after { background: linear-gradient(0deg, rgba(55,36,112,.94), rgba(55,36,112,.04) 95%); }
+.coop-home .coop-side-promo span { background: #c9f0ff; color: #202b73; }
+.coop-home .coop-category-nav { background: #edf0ff; border-bottom: 3px solid #7957e8; }
+.coop-home .coop-category-shortcut { color: #273b9b; border-color: #d4daf8; }
+.coop-home .coop-category-shortcut:hover { background: #dcd6ff; color: #202b73; }
+.coop-home .coop-section-heading { border-left-color: #7957e8; }
+.coop-home .coop-eyebrow { background: #e7e3ff; color: #4933a7; }
+.coop-home .coop-section-heading h2 { color: #202b73; }
+.coop-home .coop-text-link { color: #3157d5; border-bottom-color: #9b8aff; }
+.coop-home .coop-voucher-card { border-color: #d1d7f6; box-shadow: 5px 5px 0 #e4e2ff; }
+.coop-home .coop-voucher-ticket { background: #3157d5; color: #fff; }
+.coop-home .coop-voucher-ticket small, .coop-home .coop-voucher-ticket span { color: #c9f0ff; }
+.coop-home .coop-voucher-info h3 { color: #202b73; }
+.coop-home .coop-voucher-actions b { color: #7957e8; }
+.coop-home .coop-copy-btn { background: #e7e3ff; color: #4933a7; border: 1px solid #b9afff; }
+.coop-home .voucher-orange .coop-voucher-ticket { background: #7957e8; color: #fff; }
+.coop-home .voucher-red .coop-voucher-ticket { background: #202b73; color: #fff; }
+.coop-home .coop-tinted { background: #edf0ff; border-color: #d6dcfb; }
+.coop-home .coop-department-card { border-color: #d1d7f6; box-shadow: 4px 4px 0 #e0e4ff; }
+.coop-home .coop-department-card:hover { border-color: #7957e8; box-shadow: 7px 7px 0 #c9f0ff; }
+.coop-home .coop-department-image { background: #e8edff; }
+.coop-home .coop-department-name strong { color: #202b73; }
+.coop-home .coop-department-name>span { color: #6548d5; background: #f0edff; border-left-color: #7957e8; }
+.coop-home .coop-flash-panel { background: #242b76; border: 1px solid #4d58bd; border-top: 5px solid #c9f0ff; box-shadow: 8px 8px 0 #c7c0ff; }
+.coop-home .coop-flash-heading { border-bottom-color: #ffffff35; }
+.coop-home .coop-flash-heading h2, .coop-home .coop-flash-heading p { color: #f7f8ff; }
+.coop-home .coop-flash-heading h2 em { color: #c9f0ff; }
+.coop-home .coop-eyebrow-light { background: #c9f0ff; color: #202b73; }
+.coop-home .coop-countdown { background: #f6f7ff; border: 1px solid #d5d8ff; }
+.coop-home .coop-countdown strong { color: #6548d5; }
+.coop-home .coop-product-card { border-color: #d2d8f4; box-shadow: 4px 4px 0 #e4e5ff; }
+.coop-home .coop-product-card:hover { border-color: #7957e8; box-shadow: 6px 6px 0 #c9f0ff; }
+.coop-home .coop-product-photo { background: #eff1ff; }
+.coop-home .coop-discount { background: #6548d5; color: #fff; }
+.coop-home .coop-save-label { background: #c9f0ff; color: #202b73; }
+.coop-home .coop-product-tag { background: #3157d5; color: #fff; }
+.coop-home .coop-product-info>small { background: #edf0ff; color: #3157d5; }
+.coop-home .coop-product-info h3 { color: #202b73; }
+.coop-home .coop-price-row strong { color: #6548d5; }
+.coop-home .coop-add-btn { background: #3157d5; border-color: #3157d5; color: #fff; }
+.coop-home .coop-add-btn:hover { background: #7957e8; border-color: #7957e8; }
+.coop-home .coop-arrow-btn { border-color: #3157d5; color: #3157d5; }
+.coop-home .coop-editorial-banner { background: linear-gradient(120deg, #202b73, #4938a8); border-left-color: #c9f0ff; box-shadow: 8px 8px 0 #dcd6ff; }
+.coop-home .coop-editorial-copy h2 em { color: #c9f0ff; }
+.coop-home .coop-origin-layout { background: #f0f1ff; border-color: #d6d8f8; }
+.coop-home .coop-origin-photo { box-shadow: 8px 8px 0 #bdb2ff; }
+.coop-home .coop-origin-photo>span { background: #6548d5; color: #fff; }
+.coop-home .coop-origin-copy h2 { color: #202b73; }
+.coop-home .coop-origin-copy li { background: #fff; border-color: #d6dcfb; border-left-color: #7957e8; color: #33395f; }
+.coop-home .coop-news-section { background: #202653; border-top-color: #c9f0ff; }
+.coop-home .coop-news-section .coop-eyebrow { background: #c9f0ff; color: #202b73; }
+.coop-home .coop-news-card { box-shadow: 5px 5px 0 #7957e8; }
+.coop-home .coop-news-image>span { background: #c9f0ff; color: #202b73; }
+.coop-home .coop-read-more { color: #3157d5; border-color: #3157d5; }
+.coop-home .coop-benefits { background: #eef0ff; border-top-color: #7957e8; }
+.coop-home .coop-benefits>div { border-right-color: #d5daf5; }
+.coop-home .coop-benefits strong { color: #202b73; }
+@media (max-width: 640px) {
+  .coop-home .coop-hero-main { box-shadow: 4px 4px 0 #a99aff; }
+  .coop-home .coop-side-promo { box-shadow: 3px 3px 0 #7957e8; }
+  .coop-home .coop-flash-panel { box-shadow: 4px 4px 0 #c7c0ff; }
+  .coop-home .coop-editorial-banner { box-shadow: 4px 4px 0 #dcd6ff; }
+}
+
+/* ===== FRESH LIME THEME: young banana green, crisp white, deep forest ===== */
+#home-view.coop-home {
+  --green: #78a817;
+  --green-dark: #31540d;
+  --green-soft: #eff8d8;
+  --red: #e14b32;
+  --ink: #202b18;
+  --muted: #66715c;
+  --line: #dce8c7;
+  --cream: #fbfff2;
+  --yellow: #d9f36a;
+  background: #fbfff5;
+  color: var(--ink);
+}
+.coop-home .coop-service-strip {
+  background: #29470b;
+  color: #f4ffd9;
+  border: 0;
+}
+.coop-home .coop-hero-main {
+  background: #31540d;
+  box-shadow: 8px 8px 0 #d9f36a;
+}
+.coop-home .coop-hero-shade {
+  background: linear-gradient(90deg, rgba(25,49,6,.95), rgba(46,77,12,.72) 50%, rgba(46,77,12,.06)), linear-gradient(0deg, rgba(16,31,4,.3), transparent 55%);
+}
+.coop-home .coop-kicker,
+.coop-home .coop-side-promo span {
+  background: #d9f36a;
+  color: #29470b;
+}
+.coop-home .coop-btn-yellow { background: #d9f36a; color: #29470b; }
+.coop-home .coop-btn-green { background: #78a817; color: #fff; }
+.coop-home .coop-hero-side .coop-side-promo {
+  box-shadow: 4px 4px 0 #a8cf43;
+}
+.coop-home .coop-side-promo:after {
+  background: linear-gradient(0deg, rgba(28,51,7,.94), rgba(28,51,7,.03) 95%);
+}
+.coop-home .coop-side-promo-warm:after {
+  background: linear-gradient(0deg, rgba(63,66,13,.91), rgba(63,66,13,.04) 95%);
+}
+.coop-home .coop-category-nav {
+  background: #eff8d8;
+  border-bottom: 3px solid #78a817;
+}
+.coop-home .coop-category-shortcut {
+  color: #31540d;
+  border-color: #d3e4b4;
+}
+.coop-home .coop-category-shortcut:hover {
+  background: #d9f36a;
+  color: #29470b;
+}
+.coop-home .coop-section-heading { border-left-color: #78a817; }
+.coop-home .coop-eyebrow {
+  background: #e8f5c6;
+  color: #426b12;
+}
+.coop-home .coop-section-heading h2 { color: #29470b; }
+.coop-home .coop-text-link {
+  color: #426b12;
+  border-bottom-color: #a8cf43;
+}
+.coop-home .coop-voucher-card {
+  border-color: #cfe0b3;
+  box-shadow: 5px 5px 0 #e7f2d2;
+}
+.coop-home .coop-voucher-ticket {
+  background: #78a817;
+  color: #fff;
+}
+.coop-home .coop-voucher-ticket small,
+.coop-home .coop-voucher-ticket span { color: #efffb9; }
+.coop-home .coop-voucher-info h3 { color: #29470b; }
+.coop-home .coop-voucher-actions b { color: #5c8616; }
+.coop-home .coop-copy-btn {
+  background: #e8f5c6;
+  color: #31540d;
+  border: 1px solid #bdd78b;
+}
+.coop-home .voucher-orange .coop-voucher-ticket { background: #e14b32; color: #fff; }
+.coop-home .voucher-red .coop-voucher-ticket { background: #31540d; color: #fff; }
+.coop-home .coop-tinted {
+  background: #f0f7e5;
+  border-color: #d8e7c2;
+}
+.coop-home .coop-department-card {
+  border-color: #cfe0b3;
+  box-shadow: 4px 4px 0 #e3efcf;
+}
+.coop-home .coop-department-card:hover {
+  border-color: #78a817;
+  box-shadow: 7px 7px 0 #d9f36a;
+}
+.coop-home .coop-department-image { background: #edf5dd; }
+.coop-home .coop-department-name strong { color: #29470b; }
+.coop-home .coop-department-name>span {
+  color: #426b12;
+  background: #eff8d8;
+  border-left-color: #78a817;
+}
+.coop-home .coop-flash-panel {
+  background: #31540d;
+  border: 1px solid #4f771b;
+  border-top: 5px solid #d9f36a;
+  box-shadow: 8px 8px 0 #d9f0a4;
+}
+.coop-home .coop-flash-heading { border-bottom-color: #ffffff40; }
+.coop-home .coop-flash-heading h2,
+.coop-home .coop-flash-heading p { color: #f8ffe9; }
+.coop-home .coop-flash-heading h2 em { color: #d9f36a; }
+.coop-home .coop-eyebrow-light { background: #d9f36a; color: #29470b; }
+.coop-home .coop-countdown {
+  background: #fbfff2;
+  border: 1px solid #d7e6b9;
+}
+.coop-home .coop-countdown strong { color: #5c8616; }
+.coop-home .coop-product-card {
+  border-color: #d1e0bd;
+  box-shadow: 4px 4px 0 #e7f0da;
+}
+.coop-home .coop-product-card:hover {
+  border-color: #78a817;
+  box-shadow: 6px 6px 0 #d9f36a;
+}
+.coop-home .coop-product-photo { background: #f0f6e7; }
+.coop-home .coop-discount { background: #e14b32; color: #fff; }
+.coop-home .coop-save-label { background: #d9f36a; color: #29470b; }
+.coop-home .coop-product-tag { background: #426b12; color: #fff; }
+.coop-home .coop-product-info>small { background: #eff8d8; color: #426b12; }
+.coop-home .coop-product-info h3 { color: #29470b; }
+.coop-home .coop-price-row strong { color: #d8442e; }
+.coop-home .coop-add-btn {
+  background: #426b12;
+  border-color: #426b12;
+  color: #fff;
+}
+.coop-home .coop-add-btn:hover { background: #78a817; border-color: #78a817; }
+.coop-home .coop-arrow-btn { border-color: #426b12; color: #426b12; }
+.coop-home .coop-editorial-banner {
+  background: linear-gradient(120deg, #29470b, #426b12);
+  border-left-color: #d9f36a;
+  box-shadow: 8px 8px 0 #e3efcf;
+}
+.coop-home .coop-editorial-copy h2 em { color: #d9f36a; }
+.coop-home .coop-origin-layout { background: #f7fbeF; border-color: #d8e7c2; }
+.coop-home .coop-origin-photo { box-shadow: 8px 8px 0 #c7e47c; }
+.coop-home .coop-origin-photo>span { background: #426b12; color: #fff; }
+.coop-home .coop-origin-copy h2 { color: #29470b; }
+.coop-home .coop-origin-copy li {
+  background: #fff;
+  border-color: #d8e7c2;
+  border-left-color: #78a817;
+  color: #34472a;
+}
+.coop-home .coop-news-section {
+  background: #29470b;
+  border-top-color: #d9f36a;
+}
+.coop-home .coop-news-section .coop-eyebrow { background: #d9f36a; color: #29470b; }
+.coop-home .coop-news-card { box-shadow: 5px 5px 0 #a8cf43; }
+.coop-home .coop-news-image>span { background: #d9f36a; color: #29470b; }
+.coop-home .coop-read-more { color: #426b12; border-color: #426b12; }
+.coop-home .coop-benefits {
+  background: #f7fbeF;
+  border-top-color: #78a817;
+}
+.coop-home .coop-benefits>div { border-right-color: #d8e7c2; }
+.coop-home .coop-benefits strong { color: #29470b; }
+@media (max-width: 640px) {
+  .coop-home .coop-hero-main { box-shadow: 4px 4px 0 #d9f36a; }
+  .coop-home .coop-side-promo { box-shadow: 3px 3px 0 #a8cf43; }
+  .coop-home .coop-flash-panel { box-shadow: 4px 4px 0 #d9f0a4; }
+  .coop-home .coop-editorial-banner { box-shadow: 4px 4px 0 #e3efcf; }
+}
+
+
+/* =========================================================
+   XANH LÁ — FRESH BANANA / BOLD WAVY VISUAL PASS
+   Clean information hierarchy, crisp cards, no decorative icons.
+   ========================================================= */
+.coop-home {
+  --xl-lime: #d8f56a;
+  --xl-lime-soft: #f1f8d9;
+  --xl-green: #6f9f18;
+  --xl-forest: #203d0b;
+  --xl-ink: #23321a;
+  --xl-muted: #66715c;
+  --xl-cream: #fbfff3;
+  --xl-line: #d7e5b7;
+  --xl-coral: #e94d3b;
+  color: var(--xl-ink);
+  background: var(--xl-cream);
+  font-family: Inter, "Be Vietnam Pro", "Segoe UI", sans-serif;
+}
+.coop-home *, .coop-home *::before, .coop-home *::after { box-sizing: border-box; }
+.coop-home img { display: block; }
+.coop-home a { text-decoration: none; }
+.coop-home .coop-container { width: min(1240px, calc(100% - 44px)); margin-left: auto; margin-right: auto; }
+.coop-home .coop-service-strip {
+  background: var(--xl-forest) !important; color: #f7ffd9 !important;
+  border-bottom: 3px solid var(--xl-lime); letter-spacing: .035em;
+}
+.coop-home .service-inner { min-height: 38px; display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap; font-size: 11px; font-weight: 700; }
+.coop-home .service-divider { width: 5px; height: 5px; border-radius: 50%; background: var(--xl-lime); flex: 0 0 5px; }
+
+/* Hero: large editorial type and a gently irregular frame */
+.coop-home .coop-hero { display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(260px, .85fr); gap: 18px; padding-top: 26px; align-items: stretch; }
+.coop-home .coop-hero-main { min-height: 440px; overflow: hidden; border: 2px solid var(--xl-forest); border-radius: 30px 8px 30px 8px !important; box-shadow: 9px 9px 0 var(--xl-lime) !important; isolation: isolate; }
+.coop-home .coop-hero-main img { width: 100%; height: 100%; min-height: 440px; object-fit: cover; }
+.coop-home .coop-hero-shade { background: linear-gradient(90deg, rgba(21,48,7,.88) 0%, rgba(28,57,9,.68) 44%, rgba(28,57,9,.05) 100%) !important; }
+.coop-home .coop-hero-copy { max-width: 640px; padding: clamp(24px, 4vw, 54px) !important; }
+.coop-home .coop-kicker, .coop-home .coop-eyebrow {
+  display: inline-flex; align-items: center; width: fit-content; padding: 7px 12px;
+  border: 1px solid #b9d957; border-radius: 3px 12px 3px 12px;
+  background: var(--xl-lime) !important; color: var(--xl-forest) !important;
+  font-size: 10px; line-height: 1.25; font-weight: 900; letter-spacing: .1em;
+  text-transform: uppercase; box-shadow: 3px 3px 0 rgba(15,45,0,.12);
+}
+.coop-home .coop-hero-copy h1 {
+  max-width: 620px; margin: 20px 0 14px; color: #fff !important;
+  font-size: clamp(38px, 5.2vw, 66px) !important; font-weight: 950 !important;
+  line-height: .99 !important; letter-spacing: -.055em !important;
+  text-shadow: 2px 3px 0 rgba(11,38,0,.5), 0 8px 24px rgba(0,0,0,.22);
+  -webkit-text-stroke: .45px rgba(255,255,255,.38);
+}
+.coop-home .coop-hero-copy p { max-width: 460px; font-size: 15px; line-height: 1.75; color: #f5ffe7 !important; text-shadow: 0 2px 8px #183500; }
+.coop-home .coop-btn { min-height: 46px; display: inline-flex; justify-content: center; align-items: center; padding: 12px 22px; border: 2px solid var(--xl-forest); border-radius: 4px 18px 4px 18px !important; font-weight: 900; letter-spacing: -.01em; box-shadow: 4px 4px 0 var(--xl-forest); transition: transform .18s ease, box-shadow .18s ease; }
+.coop-home .coop-btn:hover { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--xl-forest); }
+.coop-home .coop-btn-yellow { background: var(--xl-lime) !important; color: var(--xl-forest) !important; }
+.coop-home .coop-btn-white { background: #fff !important; color: var(--xl-forest) !important; }
+.coop-home .coop-btn-green { background: var(--xl-forest) !important; color: #fff !important; border-color: var(--xl-forest); }
+.coop-home .coop-hero-controls { display: flex; align-items: center; gap: 10px; }
+.coop-home .coop-hero-controls button { border: 1px solid rgba(255,255,255,.7); background: rgba(20,47,5,.65); color: #fff; padding: 8px 13px; font-weight: 800; border-radius: 3px 10px 3px 10px; }
+.coop-home .coop-hero-controls span { color: #fff; font-size: 12px; font-weight: 800; }
+.coop-home .coop-hero-side { gap: 16px; }
+.coop-home .coop-side-promo { min-height: 0; border: 2px solid var(--xl-forest); border-radius: 8px 24px 8px 24px !important; box-shadow: 5px 5px 0 #c4df64 !important; overflow: hidden; }
+.coop-home .coop-side-promo img { transition: transform .35s ease; }
+.coop-home .coop-side-promo:hover img { transform: scale(1.04); }
+.coop-home .coop-side-promo > div { padding: 17px 18px !important; background: #f6fbdf; }
+.coop-home .coop-side-promo > div > span { display: inline-block; color: var(--xl-green); font-size: 9px; letter-spacing: .12em; font-weight: 900; }
+.coop-home .coop-side-promo h2 { color: var(--xl-forest) !important; font-weight: 900; letter-spacing: -.04em; }
+.coop-home .coop-side-promo p { color: var(--xl-muted) !important; }
+.coop-home .coop-side-promo-warm > div { background: #fce9d9; }
+
+/* Plain-text quick links instead of icon tiles */
+.coop-home .coop-category-nav { display: grid; grid-template-columns: repeat(8, minmax(0,1fr)); gap: 9px; padding-top: 32px; padding-bottom: 20px; }
+.coop-home .coop-category-shortcut { min-height: 60px; display: flex; align-items: center; justify-content: center; padding: 12px 10px; text-align: center; background: #fff; border: 1px solid var(--xl-line); border-bottom: 4px solid var(--xl-green); border-radius: 4px 15px 4px 15px !important; color: var(--xl-forest) !important; font-size: 12px; font-weight: 850; line-height: 1.35; box-shadow: 2px 3px 0 #e4edce; transition: background .2s, transform .2s; }
+.coop-home .coop-category-shortcut:hover { background: var(--xl-lime); transform: translateY(-3px); }
+
+/* Sections and wavy separators */
+.coop-home .coop-section { position: relative; padding-top: 48px; padding-bottom: 48px; }
+.coop-home .coop-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+.coop-home .coop-section-heading h2 { margin: 12px 0 8px; color: var(--xl-forest) !important; font-size: clamp(28px, 3vw, 42px) !important; line-height: 1.04; letter-spacing: -.055em !important; font-weight: 950 !important; text-shadow: 1px 2px 0 #e3edc8; }
+.coop-home .coop-section-heading p { margin: 0; color: var(--xl-muted) !important; font-size: 14px; line-height: 1.65; }
+.coop-home .coop-text-link { color: var(--xl-forest) !important; border-bottom: 2px solid var(--xl-green) !important; font-weight: 850; padding-bottom: 5px; white-space: nowrap; }
+.coop-home .coop-tinted { position: relative; isolation: isolate; overflow: hidden; background: #eff7d9 !important; border-top: 1px solid #dbe9b8; border-bottom: 1px solid #dbe9b8; }
+.coop-home .coop-tinted::before { content: ""; position: absolute; z-index: -1; width: 420px; height: 140px; top: -85px; right: 4%; border-radius: 50%; background: #d8f56a; opacity: .62; transform: rotate(-9deg); }
+.coop-home .coop-tinted::after { content: ""; position: absolute; z-index: -1; width: 300px; height: 95px; bottom: -60px; left: -60px; border-radius: 50%; background: #d8f56a; opacity: .45; transform: rotate(12deg); }
+.coop-home .coop-section-vouchers { padding-top: 48px; }
+.coop-home .coop-section-categories { padding-top: 50px; padding-bottom: 54px; }
+.coop-home .coop-section-flash { padding-top: 50px; padding-bottom: 54px; }
+.coop-home .coop-section-popular { padding-top: 48px; }
+.coop-home .coop-section-origin { padding-top: 52px; padding-bottom: 58px; }
+
+/* Badges are rectangular, legible and consistent */
+.coop-home .coop-voucher-ticket { border-radius: 5px 22px 5px 22px !important; background: var(--xl-green) !important; border-right: 2px dashed rgba(255,255,255,.7); }
+.coop-home .coop-voucher-ticket strong { font-size: 36px !important; letter-spacing: -.06em; text-shadow: 1px 2px 0 rgba(25,55,0,.15); }
+.coop-home .coop-voucher-card { background: #fff !important; border: 1px solid #cbdba6 !important; border-radius: 7px 24px 7px 24px !important; box-shadow: 5px 5px 0 #e2edc6 !important; overflow: hidden; }
+.coop-home .coop-voucher-info h3 { color: var(--xl-forest) !important; font-size: 17px; font-weight: 900; letter-spacing: -.025em; }
+.coop-home .coop-voucher-info p { color: #4f5d43 !important; line-height: 1.55; }
+.coop-home .coop-voucher-info small { color: #77816c !important; }
+.coop-home .coop-voucher-actions { gap: 8px; flex-wrap: wrap; }
+.coop-home .coop-copy-btn { border: 1px solid var(--xl-forest) !important; background: var(--xl-lime) !important; color: var(--xl-forest) !important; border-radius: 3px 12px 3px 12px !important; font-weight: 900; }
+.coop-home .coop-voucher-actions b { padding: 7px 10px; border: 1px dashed #93b747; border-radius: 4px; color: var(--xl-forest) !important; background: #f7fbe9; letter-spacing: .04em; }
+.coop-home .voucher-orange .coop-voucher-ticket { background: #e4a827 !important; color: #203d0b !important; }
+.coop-home .voucher-red .coop-voucher-ticket { background: #e94d3b !important; color: #fff !important; }
+
+/* Department cards */
+.coop-home .coop-department-grid { gap: 16px !important; }
+.coop-home .coop-department-card { border: 1px solid #d1dfb3 !important; border-radius: 7px 25px 7px 25px !important; background: #fff !important; overflow: hidden; box-shadow: 4px 5px 0 #e0ebc7 !important; transition: transform .22s ease, box-shadow .22s ease; }
+.coop-home .coop-department-card:hover { transform: translateY(-4px) rotate(-.3deg); border-color: var(--xl-green) !important; box-shadow: 7px 8px 0 var(--xl-lime) !important; }
+.coop-home .coop-department-image { background: #eaf2d5 !important; overflow: hidden; }
+.coop-home .coop-department-image img { transition: transform .35s ease; }
+.coop-home .coop-department-card:hover img { transform: scale(1.06); }
+.coop-home .coop-department-name { padding: 15px !important; }
+.coop-home .coop-department-name strong { color: var(--xl-forest) !important; font-size: 15px; font-weight: 900; }
+.coop-home .coop-department-name > span { display: inline-flex; width: fit-content; margin-top: 9px; padding: 6px 9px; background: #eff7d8 !important; border-left: 3px solid var(--xl-green) !important; color: #4b6b1b !important; font-size: 10px; font-weight: 800; }
+
+/* Flash sale: high contrast anchor section */
+.coop-home .coop-flash-panel { padding: clamp(18px, 3vw, 34px) !important; background: var(--xl-forest) !important; border: 2px solid var(--xl-forest) !important; border-top: 7px solid var(--xl-lime) !important; border-radius: 10px 34px 10px 34px !important; box-shadow: 9px 10px 0 #d9ed9e !important; }
+.coop-home .coop-flash-heading { padding-bottom: 24px !important; margin-bottom: 24px !important; border-bottom: 1px solid rgba(255,255,255,.23) !important; }
+.coop-home .coop-flash-heading h2 { color: #fff !important; font-size: clamp(30px, 4vw, 48px) !important; font-weight: 950 !important; letter-spacing: -.06em; text-shadow: 1px 3px 0 rgba(0,0,0,.2); }
+.coop-home .coop-flash-heading h2 em { color: var(--xl-lime) !important; font-style: normal; text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px; }
+.coop-home .coop-flash-heading p { color: #e6f1d2 !important; }
+.coop-home .coop-eyebrow-light { background: var(--xl-lime) !important; color: var(--xl-forest) !important; }
+.coop-home .coop-countdown { padding: 13px 17px; border: 1px solid #d9ed9e !important; border-radius: 5px 17px 5px 17px !important; background: #f7fbe9 !important; }
+.coop-home .coop-countdown small { color: #5c6d42 !important; font-weight: 750; }
+.coop-home .coop-countdown strong { color: var(--xl-forest) !important; font-size: 29px !important; font-weight: 950; letter-spacing: .04em; }
+.coop-home .coop-product-grid { gap: 16px !important; }
+.coop-home .coop-product-card { min-width: 0; overflow: hidden; border: 1px solid #d3dfb9 !important; border-radius: 7px 23px 7px 23px !important; background: #fff !important; box-shadow: 4px 5px 0 #e5edcf !important; transition: transform .2s ease, box-shadow .2s ease; }
+.coop-home .coop-product-card:hover { transform: translateY(-4px); border-color: #a8c65a !important; box-shadow: 6px 7px 0 #d8f56a !important; }
+.coop-home .coop-product-photo { position: relative; overflow: hidden; background: #f1f6e4 !important; }
+.coop-home .coop-product-photo img { transition: transform .35s ease; }
+.coop-home .coop-product-card:hover .coop-product-photo img { transform: scale(1.045); }
+.coop-home .coop-discount { top: 12px !important; left: 12px !important; padding: 7px 10px !important; border: 1px solid #fff; border-radius: 3px 12px 3px 12px !important; background: var(--xl-coral) !important; color: #fff !important; font-weight: 950 !important; box-shadow: 2px 3px 0 rgba(0,0,0,.12); }
+.coop-home .coop-save-label { background: var(--xl-lime) !important; color: var(--xl-forest) !important; font-size: 9px !important; font-weight: 950 !important; letter-spacing: .08em; }
+.coop-home .coop-product-tag { max-width: calc(100% - 20px); padding: 6px 9px !important; background: var(--xl-forest) !important; color: #fff !important; border-radius: 3px 10px 3px 10px !important; font-size: 9px !important; font-weight: 850; }
+.coop-home .coop-product-info { padding: 15px !important; }
+.coop-home .coop-product-info > small { display: inline-block; margin-bottom: 8px; padding: 5px 8px; border-left: 3px solid var(--xl-green); background: #eff7d8 !important; color: #4c6b20 !important; font-size: 10px !important; font-weight: 850; }
+.coop-home .coop-product-info h3 { color: var(--xl-forest) !important; font-size: 15px !important; line-height: 1.4; font-weight: 900 !important; letter-spacing: -.025em; }
+.coop-home .coop-product-info h3 a { color: inherit !important; }
+.coop-home .coop-product-info p { min-height: 42px; color: #68735c !important; font-size: 12px !important; line-height: 1.6; }
+.coop-home .coop-price-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin: 13px 0; }
+.coop-home .coop-price-row strong { color: #d94431 !important; font-size: 21px !important; font-weight: 950 !important; letter-spacing: -.04em; text-shadow: 0 1px 0 #ffe7d9; }
+.coop-home .coop-price-row del { color: #87907c !important; font-size: 12px; }
+.coop-home .coop-add-btn { width: 100%; min-height: 42px; border: 2px solid var(--xl-forest) !important; border-radius: 4px 14px 4px 14px !important; background: var(--xl-lime) !important; color: var(--xl-forest) !important; font-weight: 900 !important; transition: background .2s, color .2s, transform .2s; }
+.coop-home .coop-add-btn:hover { background: var(--xl-forest) !important; color: #fff !important; transform: translateY(-1px); }
+.coop-home .coop-arrow-btn { border: 1px solid var(--xl-green) !important; border-radius: 4px 12px 4px 12px !important; color: var(--xl-forest) !important; background: #fff !important; font-weight: 850; }
+.coop-home .coop-arrow-btn:disabled { opacity: .35; }
+
+/* Wide editorial band with a curved, organic edge */
+.coop-home .coop-editorial-banner { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(260px,.9fr) minmax(0,1.1fr); gap: 28px; align-items: center; padding: clamp(24px, 4vw, 50px) !important; border: 2px solid var(--xl-forest); border-left: 10px solid var(--xl-lime) !important; border-radius: 12px 48px 12px 48px !important; background: linear-gradient(125deg, #203d0b 0%, #426d12 58%, #6e941f 100%) !important; box-shadow: 9px 10px 0 #e2edc6 !important; }
+.coop-home .coop-editorial-banner::after { content: ""; position: absolute; width: 270px; height: 270px; right: -70px; top: -120px; border: 30px solid rgba(216,245,106,.18); border-radius: 44% 56% 64% 36% / 39% 37% 63% 61%; transform: rotate(24deg); pointer-events: none; }
+.coop-home .coop-editorial-copy { position: relative; z-index: 1; }
+.coop-home .coop-editorial-copy h2 { color: #fff !important; font-size: clamp(31px, 4vw, 49px) !important; font-weight: 950 !important; line-height: 1.03; letter-spacing: -.06em; text-shadow: 2px 3px 0 rgba(0,0,0,.22); }
+.coop-home .coop-editorial-copy h2 em { color: var(--xl-lime) !important; font-style: normal; -webkit-text-stroke: .3px #efffbf; }
+.coop-home .coop-editorial-copy p { max-width: 460px; color: #eff7e3 !important; line-height: 1.75; }
+.coop-home .coop-editorial-images { position: relative; z-index: 1; display: grid; grid-template-columns: 1.15fr .85fr; grid-template-rows: repeat(2, 125px); gap: 10px; }
+.coop-home .coop-editorial-images img { width: 100%; height: 100%; object-fit: cover; border: 2px solid rgba(255,255,255,.8); border-radius: 5px 20px 5px 20px !important; box-shadow: 4px 5px 0 rgba(10,36,0,.24); }
+.coop-home .coop-editorial-images img:first-child { grid-row: 1 / span 2; }
+
+/* Brand story and news */
+.coop-home .coop-origin-layout { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: clamp(24px, 4vw, 54px); align-items: center; padding: clamp(20px, 3vw, 38px) !important; border: 1px solid var(--xl-line) !important; border-radius: 9px 36px 9px 36px !important; background: #f6fae9 !important; }
+.coop-home .coop-origin-photo { border: 2px solid var(--xl-forest); border-radius: 7px 32px 7px 32px !important; box-shadow: 8px 8px 0 var(--xl-lime) !important; overflow: hidden; }
+.coop-home .coop-origin-photo > span { padding: 10px 14px !important; border-radius: 3px 14px 3px 14px !important; background: var(--xl-forest) !important; color: #fff !important; font-size: 10px; font-weight: 850; letter-spacing: .1em; }
+.coop-home .coop-origin-copy h2 { color: var(--xl-forest) !important; font-size: clamp(28px,3vw,40px) !important; line-height: 1.08; font-weight: 950 !important; letter-spacing: -.05em; text-shadow: 1px 2px 0 #e1edc4; }
+.coop-home .coop-origin-copy p { color: #59664d !important; line-height: 1.8; }
+.coop-home .coop-origin-copy ul { list-style: none; padding: 0; margin: 20px 0; display: grid; gap: 8px; }
+.coop-home .coop-origin-copy li { padding: 11px 14px !important; border: 1px solid #dbe7c1 !important; border-left: 4px solid var(--xl-green) !important; border-radius: 3px 12px 3px 12px !important; background: #fff !important; color: #35472a !important; font-weight: 700; }
+.coop-home .coop-news-section { position: relative; overflow: hidden; padding: 50px 0 56px !important; background: var(--xl-forest) !important; border-top: 7px solid var(--xl-lime) !important; }
+.coop-home .coop-news-section::before { content: ""; position: absolute; width: 430px; height: 120px; right: -100px; bottom: -60px; border-radius: 50%; background: rgba(216,245,106,.13); transform: rotate(-14deg); }
+.coop-home .coop-news-section .coop-section-heading { position: relative; z-index: 1; }
+.coop-home .coop-news-section .coop-section-heading h2 { color: #fff !important; text-shadow: 1px 2px 0 rgba(0,0,0,.2); }
+.coop-home .coop-news-section .coop-section-heading p { color: #dce9c8 !important; }
+.coop-home .coop-news-section .coop-eyebrow { background: var(--xl-lime) !important; color: var(--xl-forest) !important; }
+.coop-home .coop-news-card { position: relative; z-index: 1; overflow: hidden; border: 1px solid #d7e6ba !important; border-radius: 7px 24px 7px 24px !important; background: #fff !important; box-shadow: 5px 6px 0 #9cbd45 !important; transition: transform .2s ease; }
+.coop-home .coop-news-card:hover { transform: translateY(-4px); }
+.coop-home .coop-news-image { overflow: hidden; }
+.coop-home .coop-news-image img { transition: transform .35s ease; }
+.coop-home .coop-news-card:hover .coop-news-image img { transform: scale(1.05); }
+.coop-home .coop-news-image > span { padding: 6px 9px !important; border-radius: 3px 10px 3px 10px !important; background: var(--xl-lime) !important; color: var(--xl-forest) !important; font-size: 9px; font-weight: 900; }
+.coop-home .coop-news-copy { padding: 17px !important; }
+.coop-home .coop-news-copy small { color: var(--xl-green) !important; font-weight: 900; letter-spacing: .07em; }
+.coop-home .coop-news-copy h3 { color: var(--xl-forest) !important; font-size: 17px; line-height: 1.35; font-weight: 900; }
+.coop-home .coop-read-more { display: inline-block; margin-top: 5px; padding-bottom: 3px; color: var(--xl-forest) !important; border-bottom: 2px solid var(--xl-green) !important; font-weight: 850; }
+.coop-home .coop-benefits { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 0; padding-top: 22px; padding-bottom: 22px; border-top: 4px solid var(--xl-lime) !important; background: #f7fbe9 !important; }
+.coop-home .coop-benefits > div { padding: 12px 20px; border-right: 1px solid #d5e3b7 !important; }
+.coop-home .coop-benefits > div:last-child { border-right: 0 !important; }
+.coop-home .coop-benefits strong { display: block; margin-bottom: 5px; color: var(--xl-forest) !important; font-size: 13px; font-weight: 900; }
+.coop-home .coop-benefits small { color: #68755a !important; font-size: 11px; }
+.coop-home .coop-loading, .coop-home .coop-empty { padding: 28px; border: 1px dashed #b7ce7c; border-radius: 5px 18px 5px 18px; background: #f6fae8; color: var(--xl-forest); font-weight: 700; }
+
+@media (max-width: 1000px) {
+  .coop-home .coop-hero { grid-template-columns: minmax(0,1fr); }
+  .coop-home .coop-hero-side { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .coop-home .coop-category-nav { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  .coop-home .coop-department-grid { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  .coop-home .coop-editorial-banner { grid-template-columns: minmax(0,1fr); }
+  .coop-home .coop-editorial-images { grid-template-rows: repeat(2, minmax(100px, 150px)); }
+}
+@media (max-width: 700px) {
+  .coop-home .coop-container { width: min(100% - 28px, 1240px); }
+  .coop-home .service-inner { gap: 8px; padding: 9px 0; font-size: 10px; }
+  .coop-home .coop-hero { padding-top: 18px; }
+  .coop-home .coop-hero-main, .coop-home .coop-hero-main img { min-height: 400px; }
+  .coop-home .coop-hero-main { border-radius: 20px 5px 20px 5px !important; box-shadow: 5px 5px 0 var(--xl-lime) !important; }
+  .coop-home .coop-hero-copy { padding: 24px !important; }
+  .coop-home .coop-hero-copy h1 { font-size: clamp(35px, 10vw, 50px) !important; }
+  .coop-home .coop-hero-copy p { font-size: 13px; }
+  .coop-home .coop-hero-side { gap: 10px; }
+  .coop-home .coop-side-promo > div { padding: 12px !important; }
+  .coop-home .coop-side-promo h2 { font-size: 17px; }
+  .coop-home .coop-side-promo p { font-size: 11px; }
+  .coop-home .coop-category-nav { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; padding-top: 24px; }
+  .coop-home .coop-category-shortcut { min-height: 50px; }
+  .coop-home .coop-section { padding-top: 34px; padding-bottom: 38px; }
+  .coop-home .coop-section-heading { align-items: start; flex-direction: column; gap: 12px; }
+  .coop-home .coop-section-heading h2 { font-size: 30px !important; }
+  .coop-home .coop-voucher-grid { grid-template-columns: minmax(0,1fr) !important; }
+  .coop-home .coop-department-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 11px !important; }
+  .coop-home .coop-department-name { padding: 11px !important; }
+  .coop-home .coop-department-name strong { font-size: 13px; }
+  .coop-home .coop-flash-panel { padding: 16px !important; border-radius: 7px 24px 7px 24px !important; box-shadow: 5px 6px 0 #d9ed9e !important; }
+  .coop-home .coop-flash-heading { display: flex; flex-direction: column; gap: 18px; }
+  .coop-home .coop-flash-heading h2 { font-size: 32px !important; }
+  .coop-home .coop-countdown { width: fit-content; }
+  .coop-home .coop-product-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap: 10px !important; }
+  .coop-home .coop-product-info { padding: 11px !important; }
+  .coop-home .coop-product-info h3 { font-size: 13px !important; }
+  .coop-home .coop-product-info p { font-size: 11px !important; }
+  .coop-home .coop-price-row strong { font-size: 17px !important; }
+  .coop-home .coop-add-btn { min-height: 39px; font-size: 12px; }
+  .coop-home .coop-editorial-banner { padding: 23px !important; border-radius: 8px 28px 8px 28px !important; box-shadow: 5px 6px 0 #e2edc6 !important; }
+  .coop-home .coop-editorial-copy h2 { font-size: 34px !important; }
+  .coop-home .coop-editorial-images { grid-template-rows: repeat(2, 100px); gap: 7px; }
+  .coop-home .coop-origin-layout { grid-template-columns: minmax(0,1fr); gap: 26px; padding: 17px !important; }
+  .coop-home .coop-origin-copy h2 { font-size: 30px !important; }
+  .coop-home .coop-news-section { padding: 36px 0 42px !important; }
+  .coop-home .coop-news-grid { grid-template-columns: minmax(0,1fr) !important; gap: 14px; }
+  .coop-home .coop-benefits { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .coop-home .coop-benefits > div { padding: 12px; border-bottom: 1px solid #d5e3b7; }
+  .coop-home .coop-benefits > div:nth-child(2) { border-right: 0 !important; }
+  .coop-home .coop-benefits > div:nth-child(3), .coop-home .coop-benefits > div:nth-child(4) { border-bottom: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coop-home *, .coop-home *::before, .coop-home *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}

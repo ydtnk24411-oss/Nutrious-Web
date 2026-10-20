@@ -1,0 +1,94 @@
+.promotions-page {
+  padding: 24px 0;
+  min-height: 60vh;
+}
+
+.promotions-header {
+  margin-bottom: 24px;
+}
+
+.promotions-title {
+  font-family: var(--xanh-font-display);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--green-700);
+  margin: 0 0 8px 0;
+}
+
+.promotions-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+.promotions-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #e2e8d8;
+}
+
+.promotions-tab {
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.promotions-tab:hover {
+  color: var(--green-700);
+}
+
+.promotions-tab.is-active {
+  color: var(--green-700);
+  border-bottom-color: var(--green-700);
+}
+
+.promotions-content {
+  background: #fff;
+  border: 1.5px solid #e2e8d8;
+  border-radius: var(--r-md);
+  padding: 32px;
+}
+
+.redirect-notice {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.redirect-notice h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--green-700);
+  margin: 0 0 12px 0;
+}
+
+.redirect-notice p {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 24px 0;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.btn-redirect {
+  padding: 12px 32px;
+  background: var(--green-700);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-md);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-redirect:hover {
+  background: #1e4226;
+}

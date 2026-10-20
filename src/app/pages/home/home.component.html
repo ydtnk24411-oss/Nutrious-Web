@@ -1,0 +1,107 @@
+<app-shell>
+  <main id="home-view" class="coop-home">
+    <div class="coop-service-strip">
+      <div class="coop-container service-inner">
+        <span>Giao hàng tận nhà</span><span class="service-divider"></span><span>Thực phẩm tươi mỗi ngày</span><span class="service-divider"></span><span>Ưu đãi dành riêng cho bạn</span>
+      </div>
+    </div>
+
+    <section class="coop-hero coop-container" aria-label="Ưu đãi nổi bật">
+      <div class="coop-hero-main">
+        <img [src]="heroSlides[activeHero].image" [alt]="heroSlides[activeHero].title">
+        <div class="coop-hero-shade"></div>
+        <div class="coop-hero-copy">
+          <span class="coop-kicker">{{ heroSlides[activeHero].eyebrow }}</span>
+          <h1>{{ heroSlides[activeHero].title }}</h1>
+          <p>{{ heroSlides[activeHero].subtitle }}</p>
+          <a class="coop-btn coop-btn-yellow" routerLink="/online-ordering">{{ heroSlides[activeHero].cta }}</a>
+        </div>
+        <div class="coop-hero-controls">
+          <button type="button" aria-label="Banner trước" (click)="prevHero()">Trước</button>
+          <span>{{ activeHero + 1 | number:'2.0' }} / {{ heroSlides.length | number:'2.0' }}</span>
+          <button type="button" aria-label="Banner tiếp theo" (click)="nextHero()">Sau</button>
+        </div>
+      </div>
+      <div class="coop-hero-side">
+        <a class="coop-side-promo" routerLink="/online-ordering">
+          <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=85" alt="Rau củ quả tươi">
+          <div><span>FRESH MARKET</span><h2>Tươi ngon mỗi ngày</h2><p>Thêm sắc xanh cho bữa cơm nhà</p></div>
+        </a>
+        <a class="coop-side-promo coop-side-promo-warm" routerLink="/online-ordering">
+          <img src="https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=900&q=85" alt="Bữa ăn gia đình">
+          <div><span>GỢI Ý TỪ GIAN BẾP</span><h2>Hôm nay ăn gì?</h2><p>Khám phá nguyên liệu</p></div>
+        </a>
+      </div>
+    </section>
+
+    <nav class="coop-category-nav coop-container" aria-label="Danh mục sản phẩm">
+      <a *ngFor="let cat of quickCategories; let i = index" routerLink="/online-ordering" class="coop-category-shortcut">
+        <span class="coop-category-label">{{ cat.name }}</span>
+      </a>
+    </nav>
+
+    <section class="coop-section coop-container coop-section-vouchers" aria-labelledby="voucher-title">
+      <div class="coop-section-heading">
+        <div><span class="coop-eyebrow">MUA SẮM TIẾT KIỆM</span><h2 id="voucher-title">E-voucher khuyến mãi</h2><p>Thêm mã ưu đãi, nhẹ ví hơn khi đi chợ online.</p></div>
+        <a routerLink="/online-ordering" class="coop-text-link">Khám phá ưu đãi</a>
+      </div>
+      <div class="coop-voucher-grid">
+        <article *ngFor="let voucher of vouchers" class="coop-voucher-card" [class.voucher-green]="voucher.color === 'green'" [class.voucher-orange]="voucher.color === 'amber'" [class.voucher-red]="voucher.color === 'red'">
+          <div class="coop-voucher-ticket"><small>VOUCHER</small><strong>{{ voucher.valueShort }}</strong><span>COUPON</span></div>
+          <div class="coop-voucher-info"><h3>{{ voucher.title }}</h3><p>{{ voucher.value }}</p><small>{{ voucher.expiry }}</small><div class="coop-voucher-actions"><button type="button" class="coop-copy-btn" (click)="copyVoucher(voucher.code)">{{ copiedCode === voucher.code ? 'Đã sao chép' : 'Sao chép mã' }}</button><b>{{ voucher.code }}</b></div></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="coop-section coop-tinted coop-section-categories" aria-labelledby="category-title">
+      <div class="coop-container">
+        <div class="coop-section-heading"><div><span class="coop-eyebrow">DỄ DÀNG LỰA CHỌN</span><h2 id="category-title">Danh mục mua sắm</h2><p>Mọi thứ cần cho gia đình, gói gọn trong một lần ghé.</p></div><a routerLink="/online-ordering" class="coop-text-link">Xem tất cả</a></div>
+        <div class="coop-department-grid">
+          <a *ngFor="let cat of visualCategories" routerLink="/online-ordering" class="coop-department-card">
+            <div class="coop-department-image"><img [src]="cat.image" [alt]="cat.name" loading="lazy"></div>
+            <div class="coop-department-name"><strong>{{ cat.name }}</strong><span>Khám phá danh mục</span></div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="coop-section coop-container coop-section-flash" aria-labelledby="sale-title">
+      <div class="coop-flash-panel">
+        <div class="coop-flash-heading"><div><span class="coop-eyebrow coop-eyebrow-light">SĂN DEAL MỖI NGÀY</span><h2 id="sale-title">Flash sale <em>giá cực tốt</em></h2><p>Deal ngon trong ngày — nhanh tay chọn món yêu thích.</p></div><div class="coop-countdown"><small>Ưu đãi kết thúc sau</small><strong>{{ countdown.hours }}<i>:</i>{{ countdown.minutes }}<i>:</i>{{ countdown.seconds }}</strong></div></div>
+        <div class="coop-product-grid">
+          <article *ngFor="let deal of deals" class="coop-product-card">
+            <a class="coop-product-photo" routerLink="/online-ordering"><img [src]="deal.image" [alt]="deal.name" loading="lazy"><span class="coop-discount">-{{ deal.discountPct }}%</span><span class="coop-save-label">TIẾT KIỆM</span></a>
+            <div class="coop-product-info"><small>{{ deal.category }}</small><h3>{{ deal.name }}</h3><p>{{ deal.description }}</p><div class="coop-price-row"><strong>{{ deal.priceNew }}</strong><del>{{ deal.priceOld }}</del></div><button type="button" class="coop-add-btn" (click)="addDealToCart(deal)">Thêm vào giỏ</button></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="coop-section coop-container coop-section-popular" aria-labelledby="popular-title">
+      <div class="coop-section-heading"><div><span class="coop-eyebrow">ĐƯỢC NHIỀU NHÀ TIN CHỌN</span><h2 id="popular-title">Sản phẩm nổi bật</h2><p>Những lựa chọn quen thuộc cho căn bếp đủ đầy.</p></div><div class="coop-heading-actions"><a routerLink="/online-ordering" class="coop-text-link">Xem tất cả</a><button class="coop-arrow-btn" type="button" aria-label="Sản phẩm trước" (click)="prevProducts()" [disabled]="productOffset === 0">Trước</button><button class="coop-arrow-btn" type="button" aria-label="Sản phẩm tiếp theo" (click)="nextProducts()" [disabled]="productOffset + 4 >= apiProducts.length">Sau</button></div></div>
+      <div *ngIf="loadingProducts" class="coop-loading">Đang tải sản phẩm...</div>
+      <div *ngIf="!loadingProducts && apiProducts.length === 0" class="coop-empty">Sản phẩm đang được cập nhật. Bạn có thể khám phá gian hàng online.</div>
+      <div class="coop-product-grid coop-api-grid" *ngIf="!loadingProducts && apiProducts.length">
+        <article *ngFor="let product of visibleProducts" class="coop-product-card">
+          <a class="coop-product-photo" [routerLink]="productSlug(product)"><img [src]="product.image || fallbackProductImage" [alt]="product.name" loading="lazy"><span class="coop-product-tag">{{ product.categoryVi || product.category || 'Gợi ý' }}</span></a>
+          <div class="coop-product-info"><small>{{ product.categoryVi || product.category || 'Sản phẩm chọn lọc' }}</small><h3><a [routerLink]="productSlug(product)">{{ product.name }}</a></h3><p>{{ product.description || 'Lựa chọn tiện lợi cho gia đình bạn.' }}</p><div class="coop-price-row"><strong>{{ product.price }}</strong></div><button type="button" class="coop-add-btn" (click)="addToCart(product)">Thêm vào giỏ</button></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="coop-editorial-banner coop-container">
+      <div class="coop-editorial-copy"><span class="coop-eyebrow coop-eyebrow-light">CẢM HỨNG BỮA CƠM NHÀ</span><h2>Chọn nguyên liệu tươi.<br><em>Nấu điều thương.</em></h2><p>Từ bữa sáng nhanh gọn đến bữa tối quây quần, để Xanh Lá cùng bạn chăm chút từng bữa ăn.</p><a routerLink="/online-ordering" class="coop-btn coop-btn-white">Tìm nguyên liệu</a></div>
+      <div class="coop-editorial-images"><img src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=800&q=85" alt="Salad rau củ tươi" loading="lazy"><img src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=800&q=85" alt="Món ăn lành mạnh" loading="lazy"><img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=800&q=85" alt="Bữa ăn đầy màu sắc" loading="lazy"></div>
+    </section>
+
+    <section class="coop-section coop-container coop-section-origin" aria-labelledby="origin-title">
+      <div class="coop-origin-layout"><div class="coop-origin-photo"><img [src]="originImage" alt="Nông sản tươi được tuyển chọn" loading="lazy"><span>FRESH PICKS<br><b>EVERY DAY</b></span></div><div class="coop-origin-copy"><span class="coop-eyebrow">TƯƠI NGON TỪ LỰA CHỌN ĐẦU TIÊN</span><h2 id="origin-title">Chăm chút bữa ăn, bắt đầu từ điều giản dị.</h2><p>Xanh Lá mang đến trải nghiệm mua sắm thực phẩm gần gũi, dễ chọn và thuận tiện — để bạn dành thêm thời gian cho những điều quan trọng ở nhà.</p><ul><li>Danh mục đa dạng, dễ tìm kiếm</li><li>Gợi ý nguyên liệu theo nhu cầu</li><li>Mua sắm trực tuyến thuận tiện</li></ul><a routerLink="/online-ordering" class="coop-btn coop-btn-green">Khám phá gian hàng</a></div></div>
+    </section>
+
+    <section class="coop-section coop-news-section coop-section-news">
+      <div class="coop-container"><div class="coop-section-heading"><div><span class="coop-eyebrow">GÓC NHÀ XANH</span><h2>Cẩm nang & cảm hứng</h2><p>Mẹo nhỏ và ý tưởng hay cho nhịp sống mỗi ngày.</p></div><a routerLink="/event-list" class="coop-text-link">Xem tất cả</a></div>
+        <div class="coop-news-grid"><a *ngFor="let item of newsItems" [routerLink]="item.path" class="coop-news-card"><div class="coop-news-image"><img [src]="item.image" [alt]="item.title" loading="lazy"><span>GÓC SỐNG XANH</span></div><div class="coop-news-copy"><small>{{ item.date }}</small><h3>{{ item.title }}</h3><span class="coop-read-more">Đọc thêm</span></div></a></div>
+      </div>
+    </section>
+  </main>
+</app-shell>

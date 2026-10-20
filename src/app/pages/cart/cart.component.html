@@ -1,0 +1,66 @@
+<app-shell>
+  <div class="xanhla-container" style="padding:48px max(24px,4vw)">
+    <h1 style="font-family:var(--xanh-font-display);font-size:36px;margin-bottom:28px">
+      Giỏ hàng của bạn ({{ cart.itemCount() }} sản phẩm)
+    </h1>
+
+    @if (cart.items().length === 0) {
+      <div style="text-align:center;padding:64px 0;background:#fff;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line)">
+        <p style="color:var(--xanh-muted);font-size:18px;margin-bottom:24px">Hiện tại bạn chưa có sản phẩm nào trong giỏ hàng.</p>
+        <a class="xanhla-btn-primary" routerLink="/category/all-products">Khám phá thực phẩm ngay</a>
+      </div>
+    } @else {
+      <div style="display:grid;grid-template-columns:1fr 340px;gap:40px">
+        <!-- Items -->
+        <div style="background:#fff;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line);padding:24px">
+          @for (item of cart.items(); track item.product.slug + (item.selectedOption ?? '')) {
+            <div style="display:flex;align-items:center;gap:20px;padding:16px 0;border-bottom:1px solid var(--xanh-line)">
+              <img [src]="item.product.image" [alt]="item.product.name"
+                   style="width:80px;height:80px;border-radius:var(--xanh-radius-sm);object-fit:cover" />
+              <div style="flex:1">
+                <h3 style="margin:0 0 4px 0;font-size:17px">{{ item.product.name }}</h3>
+                @if (item.selectedOption) {
+                  <small style="color:var(--xanh-muted)">Tùy chọn: {{ item.selectedOption }}</small>
+                }
+                <div style="color:var(--xanh-moss);font-weight:600;margin-top:4px">{{ item.product.price }}</div>
+              </div>
+              <div class="xanhla-quantity-picker" style="height:36px">
+                <button type="button" (click)="cart.updateQuantity(item.product.slug, item.quantity - 1)">−</button>
+                <span>{{ item.quantity }}</span>
+                <button type="button" (click)="cart.updateQuantity(item.product.slug, item.quantity + 1)">+</button>
+              </div>
+              <button type="button"
+                      style="background:transparent;border:none;color:var(--xanh-muted);cursor:pointer"
+                      (click)="cart.removeItem(item.product.slug)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+                  <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+                </svg>
+              </button>
+            </div>
+          }
+          <div style="padding-top:16px;display:flex;justify-content:flex-end">
+            <button type="button"
+                    style="background:transparent;border:none;color:var(--xanh-muted);cursor:pointer;font-size:14px;text-decoration:underline"
+                    (click)="cart.clear()">Xóa tất cả</button>
+          </div>
+        </div>
+
+        <!-- Summary -->
+        <div style="background:#fff;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line);padding:24px;height:fit-content">
+          <h3 style="margin:0 0 16px 0;font-size:18px">Tóm tắt đơn hàng</h3>
+          <div style="display:flex;justify-content:space-between;margin-bottom:12px;font-size:15px">
+            <span>Tạm tính</span><span>{{ formatPrice(cart.subtotal()) }}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:20px;font-size:15px">
+            <span>Phí giao hàng</span><span>Miễn phí</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;border-top:1px solid var(--xanh-line);padding-top:16px;margin-bottom:24px;font-size:18px;font-weight:700">
+            <span>Tổng cộng</span><span>{{ formatPrice(cart.subtotal()) }}</span>
+          </div>
+          <button class="xanhla-btn-primary" type="button" style="width:100%" (click)="goToCheckout()">Tiến hành thanh toán</button>
+        </div>
+      </div>
+    }
+  </div>
+</app-shell>

@@ -1,0 +1,176 @@
+<!-- Header -->
+<div class="admin-page-header">
+  <h2 class="admin-page-title">📦 Quản lý đơn hàng</h2>
+  <span class="admin-stat-label">Tổng: <strong>{{ total() }}</strong> đơn</span>
+</div>
+
+@if (success()) { <div class="admin-alert admin-alert-success">✓ {{ success() }}</div> }
+@if (error() && !detailOpen()) { <div class="admin-alert admin-alert-error">⚠ {{ error() }}</div> }
+
+<!-- Toolbar -->
+<div class="admin-toolbar">
+  <input class="admin-search-input" type="text" placeholder="🔍 Tìm mã đơn, tên, email..."
+         [value]="search()" (input)="onSearch($any($event.target).value)" />
+  <select class="admin-select" [value]="status()" (change)="onStatus($any($event.target).value)">
+    <option value="">Tất cả trạng thái</option>
+    @for (s of statusOptions; track s.value) {
+      <option [value]="s.value">{{ s.label }}</option>
+    }
+  </select>
+</div>
+
+<!-- Loading -->
+@if (loading()) {
+  <div class="admin-empty">
+    <div class="admin-spinner" style="width:32px;height:32px;border-width:3px;margin:0 auto 12px"></div>
+    <p>Đang tải...</p>
+  </div>
+}
+
+<!-- Table -->
+@if (!loading()) {
+  @if (orders().length === 0) {
+    <div class="admin-empty"><div class="admin-empty-icon">📭</div><p>Không có đơn hàng nào.</p></div>
+  } @else {
+    <div class="admin-card" style="padding:0;overflow:hidden">
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Mã đơn</th>
+              <th>Khách hàng</th>
+              <th>Số món</th>
+              <th>Tổng tiền</th>
+              <th>Hình thức</th>
+              <th>Trạng thái</th>
+              <th>Ngày đặt</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (o of orders(); track o._id) {
+              <tr>
+                <td>
+                  <code style="font-size:12px;background:#f3f4f6;padding:4px 10px;border-radius:6px;color:#374151;font-weight:600">
+                    {{ o.orderCode }}
+                  </code>
+                </td>
+                <td>
+                  <div style="font-weight:600;font-size:14px;color:#1f2937">{{ o.guestName || o.user?.name || '—' }}</div>
+                  <div style="font-size:13px;color:#6b7280">{{ o.guestEmail || o.user?.email }}</div>
+                </td>
+                <td style="text-align:center;font-weight:600">{{ o.items.length }}</td>
+                <td><strong style="color:#1f2937">{{ formatPrice(o.total) }}</strong></td>
+                <td style="font-size:13px;color:#6b7280">{{ shippingLabel[o.shippingMethod] }}</td>
+                <td>
+                  <span class="admin-badge" [class]="'badge-' + o.status">
+                    {{ statusLabel[o.status] }}
+                  </span>
+                </td>
+                <td style="font-size:13px;color:#6b7280">{{ o.createdAt | date:'dd/MM/yy HH:mm' }}</td>
+                <td>
+                  <button class="admin-btn-icon" title="Xem chi tiết" (click)="openDetail(o)">👁</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="admin-pagination">
+      <span>{{ orders().length }} / {{ total() }} đơn hàng</span>
+      <div class="admin-pagination-btns">
+        <button class="admin-btn-secondary" style="padding:8px 16px;font-size:13px"
+                [disabled]="page() === 1" (click)="prevPage()">← Trước</button>
+        <span style="padding:8px 14px;font-size:13px;font-weight:600">{{ page() }} / {{ totalPages() }}</span>
+        <button class="admin-btn-secondary" style="padding:8px 16px;font-size:13px"
+                [disabled]="page() >= totalPages()" (click)="nextPage()">Tiếp →</button>
+      </div>
+    </div>
+  }
+}
+
+<!-- ── Order Detail Modal ──────────────────────────── -->
+@if (detailOpen() && selected(); as o) {
+  <div class="admin-modal-backdrop" (click)="closeDetail()">
+    <div class="admin-modal" style="max-width:680px" (click)="$event.stopPropagation()">
+
+      <div class="admin-modal-header">
+        <h3>Chi tiết đơn hàng — <code style="font-size:15px;color:#1f2937">{{ o.orderCode }}</code></h3>
+        <button class="admin-btn-icon" (click)="closeDetail()">✕</button>
+      </div>
+
+      <div class="admin-modal-body" style="display:flex;flex-direction:column;gap:24px">
+        @if (error()) { <div class="admin-alert admin-alert-error">⚠ {{ error() }}</div> }
+
+        <!-- Customer info -->
+        <div class="order-section">
+          <h4 class="order-section-title">👤 Thông tin khách hàng</h4>
+          <div class="order-info-grid">
+            <div><span class="order-label">Tên</span><span>{{ o.guestName || o.user?.name }}</span></div>
+            <div><span class="order-label">Email</span><span>{{ o.guestEmail || o.user?.email }}</span></div>
+            <div><span class="order-label">SĐT</span><span>{{ o.guestPhone || '—' }}</span></div>
+            <div><span class="order-label">Thanh toán</span><span>{{ paymentLabel[o.paymentMethod] }}</span></div>
+            <div><span class="order-label">Hình thức</span><span>{{ shippingLabel[o.shippingMethod] }}</span></div>
+            @if (o.shippingAddress) {
+              <div style="grid-column:1/-1"><span class="order-label">Địa chỉ</span><span>{{ o.shippingAddress }}</span></div>
+            }
+          </div>
+        </div>
+
+        <!-- Items -->
+        <div class="order-section">
+          <h4 class="order-section-title">🛒 Sản phẩm</h4>
+          <div class="order-items">
+            @for (item of o.items; track $index) {
+              <div class="order-item-row">
+                @if (item.productImage) {
+                  <img [src]="item.productImage" [alt]="item.productName"
+                       style="width:56px;height:56px;border-radius:10px;object-fit:cover;flex-shrink:0" />
+                }
+                <div style="flex:1">
+                  <div style="font-weight:600;font-size:14px;color:#1f2937">{{ item.productName }}</div>
+                  @if (item.selectedOption) {
+                    <div style="font-size:13px;color:#6b7280">{{ item.selectedOption }}</div>
+                  }
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:13px;color:#6b7280">{{ item.productPrice }} × {{ item.quantity }}</div>
+                  <div style="font-weight:700;font-size:15px;color:#1f2937">{{ formatPrice(item.priceNumber * item.quantity) }}</div>
+                </div>
+              </div>
+            }
+          </div>
+          <div class="order-total-row">
+            <span>Tổng cộng</span>
+            <strong style="font-size:20px;color:#3d4d3a">{{ formatPrice(o.total) }}</strong>
+          </div>
+        </div>
+
+        <!-- Update status -->
+        <div class="order-section">
+          <h4 class="order-section-title">🔄 Cập nhật trạng thái</h4>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <select class="admin-select" style="flex:1;min-width:180px"
+                    [value]="newStatus()" (change)="newStatus.set($any($event.target).value)">
+              @for (s of statusOptions; track s.value) {
+                <option [value]="s.value">{{ s.label }}</option>
+              }
+            </select>
+            <button class="admin-btn-primary" [disabled]="updatingStatus()" (click)="updateStatus()">
+              @if (updatingStatus()) { <span class="admin-spinner"></span> Đang lưu... }
+              @else { Cập nhật }
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-modal-footer">
+        <button class="admin-btn-secondary" (click)="closeDetail()">Đóng</button>
+      </div>
+
+    </div>
+  </div>
+}

@@ -1,0 +1,328 @@
+<app-shell>
+<div class="ord-page">
+
+  <!-- ── Hero Banner ───────────────────────────────────── -->
+  <div class="ord-hero">
+    <div class="ord-hero-overlay"></div>
+    <div class="ord-hero-content">
+      <div class="xanhla-container">
+        <span class="ord-hero-eyebrow">Cửa hàng trực tuyến</span>
+        <h1 class="ord-hero-title">Đặt hàng<br /><em>tươi ngon</em> mỗi ngày</h1>
+        <p class="ord-hero-desc">Chọn nguyên liệu tươi sạch từ Xanh Lá — giao tận nơi hoặc đến lấy, nhanh chóng và tiện lợi.</p>
+
+        <!-- Status + fulfillment tabs nằm trong hero -->
+        <div class="ord-hero-meta">
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Sticky nav bar ────────────────────────────────── -->
+  <div class="ord-page-inner">
+  <div class="ord-nav-bar">
+    <div class="ord-nav-sections">
+      @for (sec of sections(); track sec.title) {
+        <button class="ord-nav-item" [class.active]="activeSection() === sec.title"
+                type="button" (click)="scrollTo(sec.title)">{{ sec.title }}</button>
+      }
+    </div>
+    @if (cart.itemCount() > 0) {
+      <button class="ord-cart-btn" type="button" (click)="goToCart()">
+        Xem giỏ hàng ({{ cart.itemCount() }})
+      </button>
+    }
+  </div>
+
+  <!-- ── Loading / Error ──────────────────────────────── -->
+  @if (loading()) { <div class="ord-loading">Đang tải sản phẩm...</div> }
+  @if (error())   { <div class="ord-error">{{ error() }}</div> }
+
+  <!-- ── Main layout: sidebar + content ───────────────── -->
+  @if (!loading()) {
+    <div class="ord-layout">
+
+      <!-- ════════════════════════════════════════
+           SIDEBAR FILTER (trái)
+      ════════════════════════════════════════ -->
+      <aside class="ord-sidebar">
+
+        <!-- Search -->
+        <div class="ord-filter-search">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" placeholder="Tìm sản phẩm..."
+                 [value]="search()" (input)="search.set($any($event.target).value)" />
+        </div>
+
+        <!-- Header sidebar -->
+        <div class="ord-filter-header">
+          <span class="ord-filter-title">Lọc theo</span>
+          @if (hasActiveFilters()) {
+            <button class="ord-filter-clear" type="button" (click)="clearAllFilters()">Xóa tất cả</button>
+          }
+        </div>
+
+        <!-- Sort -->
+        <div class="ord-filter-group">
+          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('sort')">
+            <span>Sắp xếp</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 [style.transform]="openAccordions()['sort'] ? 'rotate(180deg)' : 'none'"
+                 style="transition:transform .2s">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          @if (openAccordions()['sort']) {
+            <div class="ord-filter-body">
+              <select class="ord-filter-select"
+                      [value]="sortBy()" (change)="sortBy.set($any($event.target).value)">
+                <option value="default">Mặc định</option>
+                <option value="price-asc">Giá: Thấp → Cao</option>
+                <option value="price-desc">Giá: Cao → Thấp</option>
+                <option value="name-asc">Tên A → Z</option>
+              </select>
+            </div>
+          }
+        </div>
+
+        <!-- Price slider -->
+        <div class="ord-filter-group">
+          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('price')">
+            <span>Giá</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 [style.transform]="openAccordions()['price'] ? 'rotate(180deg)' : 'none'"
+                 style="transition:transform .2s">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          @if (openAccordions()['price']) {
+            <div class="ord-filter-body">
+              <div class="ord-price-range">
+                <span>0 ₫</span>
+                <span style="font-weight:600;color:var(--xanh-moss)">{{ maxPrice() }} ₫</span>
+              </div>
+              <input type="range" [min]="0" [max]="maxPriceInDB()" [value]="maxPrice()"
+                     (input)="maxPrice.set(+$any($event.target).value)"
+                     style="width:100%;accent-color:var(--xanh-moss);cursor:pointer" />
+            </div>
+          }
+        </div>
+
+        <!-- Danh mục -->
+        <div class="ord-filter-group">
+          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('category')">
+            <span>Danh mục</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 [style.transform]="openAccordions()['category'] ? 'rotate(180deg)' : 'none'"
+                 style="transition:transform .2s">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          @if (openAccordions()['category']) {
+            <div class="ord-filter-body">
+              @for (val of facetOptions().category; track val) {
+                <label class="ord-filter-label">
+                  <input type="checkbox" [checked]="isChecked('category', val)"
+                         (change)="toggleFilter('category', val)" />
+                  <span>{{ val }}</span>
+                </label>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Chế biến -->
+        <div class="ord-filter-group">
+          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('preparation')">
+            <span>Chế biến</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 [style.transform]="openAccordions()['preparation'] ? 'rotate(180deg)' : 'none'"
+                 style="transition:transform .2s">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          @if (openAccordions()['preparation']) {
+            <div class="ord-filter-body">
+              @for (val of facetOptions().preparation; track val) {
+                <label class="ord-filter-label">
+                  <input type="checkbox" [checked]="isChecked('preparation', val)"
+                         (change)="toggleFilter('preparation', val)" />
+                  <span>{{ val }}</span>
+                </label>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Độ chín -->
+        <div class="ord-filter-group">
+          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('ripeness')">
+            <span>Độ chín</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 [style.transform]="openAccordions()['ripeness'] ? 'rotate(180deg)' : 'none'"
+                 style="transition:transform .2s">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          @if (openAccordions()['ripeness']) {
+            <div class="ord-filter-body">
+              @for (val of facetOptions().ripeness; track val) {
+                <label class="ord-filter-label">
+                  <input type="checkbox" [checked]="isChecked('ripeness', val)"
+                         (change)="toggleFilter('ripeness', val)" />
+                  <span>{{ val }}</span>
+                </label>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Size -->
+        <div class="ord-filter-group">
+          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('sizeGroup')">
+            <span>Kích cỡ</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 [style.transform]="openAccordions()['sizeGroup'] ? 'rotate(180deg)' : 'none'"
+                 style="transition:transform .2s">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          @if (openAccordions()['sizeGroup']) {
+            <div class="ord-filter-body">
+              @for (val of facetOptions().sizeGroup; track val) {
+                <label class="ord-filter-label">
+                  <input type="checkbox" [checked]="isChecked('sizeGroup', val)"
+                         (change)="toggleFilter('sizeGroup', val)" />
+                  <span>{{ val }}</span>
+                </label>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Loại -->
+        <div class="ord-filter-group">
+          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('type')">
+            <span>Loại</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 [style.transform]="openAccordions()['type'] ? 'rotate(180deg)' : 'none'"
+                 style="transition:transform .2s">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          @if (openAccordions()['type']) {
+            <div class="ord-filter-body">
+              @for (val of facetOptions().type; track val) {
+                <label class="ord-filter-label">
+                  <input type="checkbox" [checked]="isChecked('type', val)"
+                         (change)="toggleFilter('type', val)" />
+                  <span>{{ val }}</span>
+                </label>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Khối lượng -->
+        <div class="ord-filter-group">
+          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('weight')">
+            <span>Khối lượng</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 [style.transform]="openAccordions()['weight'] ? 'rotate(180deg)' : 'none'"
+                 style="transition:transform .2s">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          @if (openAccordions()['weight']) {
+            <div class="ord-filter-body">
+              @for (val of facetOptions().weight; track val) {
+                <label class="ord-filter-label">
+                  <input type="checkbox" [checked]="isChecked('weight', val)"
+                         (change)="toggleFilter('weight', val)" />
+                  <span>{{ val }}</span>
+                </label>
+              }
+            </div>
+          }
+        </div>
+
+      </aside>
+
+      <!-- ════════════════════════════════════════
+           CONTENT (phải)
+      ════════════════════════════════════════ -->
+      <div class="ord-content">
+        <div class="ord-content-toolbar">
+          <h2 class="ord-menu-title" style="margin:0">Fresh Ingredients</h2>
+          <span class="ord-result-count">{{ filteredProducts().length }} sản phẩm</span>
+        </div>
+
+        @if (filteredProducts().length === 0) {
+          <div class="ord-empty">
+            <div style="font-size:40px;margin-bottom:12px">🔍</div>
+            <p>Không tìm thấy sản phẩm phù hợp.</p>
+            <button class="xanhla-btn-outline" type="button" (click)="clearAllFilters()"
+                    style="margin-top:12px">Xóa bộ lọc</button>
+          </div>
+        }
+
+        @for (sec of sections(); track sec.title) {
+          <div class="ord-section" [id]="'section-' + sec.title">
+            <div class="ord-section-divider"></div>
+            <h3 class="ord-section-title">{{ sec.title }}</h3>
+
+            <div class="ord-grid">
+              @for (prod of sec.items; track prod._id) {
+                <div class="xanhla-prod-card">
+                  <a class="xanhla-prod-card-img" [routerLink]="'/product-page/' + prod.slug">
+                    <img [src]="prod.image" [alt]="prod.name" loading="lazy" />
+                  </a>
+                  <div class="xanhla-prod-card-body">
+                    <div class="xanhla-prod-card-cat">{{ prod.categoryVi || prod.category }}</div>
+                    <a class="xanhla-prod-card-name" [routerLink]="'/product-page/' + prod.slug">{{ prod.name }}</a>
+                    @if (prod.description) {
+                      <div class="xanhla-prod-card-desc">{{ prod.description }}</div>
+                    }
+                    <div class="xanhla-prod-card-price-row">
+                      <span class="xanhla-prod-card-price">{{ prod.price }}</span>
+                      @if (prod.weight) {
+                        <span class="xanhla-prod-card-unit">/ {{ prod.weight }}</span>
+                      }
+                      @if (itemQty(prod.slug) > 0) {
+                        <span class="ord-item-qty-badge ord-qty-inline">{{ itemQty(prod.slug) }}</span>
+                      }
+                    </div>
+                    @if (itemQty(prod.slug) > 0) {
+                      <div class="ord-qty-picker ord-qty-picker--full">
+                        <button type="button" class="ord-qty-btn" (click)="removeOne(prod)">−</button>
+                        <span class="ord-qty-num">{{ itemQty(prod.slug) }}</span>
+                        <button type="button" class="ord-qty-btn" (click)="addOne(prod)">+</button>
+                      </div>
+                    } @else {
+                      <button type="button" class="xanhla-prod-card-add"
+                              (click)="addOne(prod)"
+                              [attr.aria-label]="'Thêm ' + prod.name">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                          <line x1="3" y1="6" x2="21" y2="6"/>
+                          <path d="M16 10a4 4 0 0 1-8 0"/>
+                        </svg>
+                        Thêm vào giỏ
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+    </div><!-- end ord-layout -->
+  }
+  </div><!-- end ord-page-inner -->
+
+</div>
+</app-shell>

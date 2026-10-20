@@ -1,0 +1,133 @@
+<app-shell>
+  <div class="order-detail-page xanhla-container">
+    @if (loading()) {
+      <div class="order-loading">Đang tải...</div>
+    } @else if (error()) {
+      <div class="order-error">{{ error() }}</div>
+    } @else {
+      <div class="order-detail-header">
+        <h1 class="order-title">Chi tiết đơn hàng</h1>
+        <div class="order-meta">
+          <span class="order-code">Mã đơn: {{ order()!.orderCode }}</span>
+          <span class="order-date">{{ formatDate(order()!.createdAt) }}</span>
+        </div>
+      </div>
+
+      <!-- Status Timeline -->
+      <div class="order-status-section">
+        <h2 class="section-title">Trạng thái đơn hàng</h2>
+        <div class="status-timeline">
+          @for (step of getStatusSteps(); track step.status) {
+            <div class="status-step" [class.completed]="step.completed" [class.active]="step.active">
+              <div class="status-dot"></div>
+              <div class="status-label">{{ step.label }}</div>
+            </div>
+          }
+        </div>
+        <div class="current-status">
+          <span class="status-badge {{ getStatusClass(order()!.status) }}">
+            {{ getStatusText(order()!.status) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Order Info -->
+      <div class="order-info-section">
+        <div class="order-info-card">
+          <h3 class="card-title">Thông tin giao hàng</h3>
+          <div class="info-row">
+            <span class="info-label">Họ tên:</span>
+            <span class="info-value">{{ order()!.guestName }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Số điện thoại:</span>
+            <span class="info-value">{{ order()!.guestPhone }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Email:</span>
+            <span class="info-value">{{ order()!.guestEmail }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Hình thức:</span>
+            <span class="info-value">{{ order()!.shippingMethod === 'delivery' ? 'Giao hàng tận nơi' : 'Đến lấy trực tiếp' }}</span>
+          </div>
+          @if (order()!.shippingAddress) {
+            <div class="info-row">
+              <span class="info-label">Địa chỉ:</span>
+              <span class="info-value">{{ order()!.shippingAddress }}</span>
+            </div>
+          }
+          <div class="info-row">
+            <span class="info-label">Thanh toán:</span>
+            <span class="info-value">{{ order()!.paymentMethod === 'cod' ? 'COD' : 'Chuyển khoản' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Items -->
+      <div class="order-items-section">
+        <h2 class="section-title">Sản phẩm đã đặt</h2>
+        <div class="order-items-list">
+          @for (item of order()!.items; track item.productName) {
+            <div class="order-item">
+              <img [src]="item.productImage" [alt]="item.productName" class="item-image" />
+              <div class="item-details">
+                <div class="item-name">{{ item.productName }}</div>
+                @if (item.selectedOption) {
+                  <div class="item-option">{{ item.selectedOption }}</div>
+                }
+                <div class="item-qty">Số lượng: {{ item.quantity }}</div>
+              </div>
+              <div class="item-price">{{ formatPrice(item.productPrice) }}</div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="order-summary-section">
+        <div class="summary-card">
+          <h3 class="card-title">Tóm tắt đơn hàng</h3>
+          <div class="summary-row">
+            <span>Tạm tính</span>
+            <span>{{ formatPrice(order()!.subtotal) }}</span>
+          </div>
+          @if (order()!.discount > 0) {
+            <div class="summary-row discount">
+              <span>Giảm giá</span>
+              <span>-{{ formatPrice(order()!.discount) }}</span>
+            </div>
+          }
+          @if (order()!.voucherCode) {
+            <div class="summary-row">
+              <span>Mã voucher</span>
+              <span>{{ order()!.voucherCode }}</span>
+            </div>
+          }
+          <div class="summary-row">
+            <span>Phí giao hàng</span>
+            <span>{{ formatPrice(order()!.shippingFee) }}</span>
+          </div>
+          <div class="summary-row total">
+            <span>Tổng thanh toán</span>
+            <span>{{ formatPrice(order()!.total) }}</span>
+          </div>
+          @if (order()!.estimatedPoints) {
+            <div class="summary-row points">
+              <span>Điểm tích lũy</span>
+              <span>+{{ order()!.estimatedPoints }} điểm</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="order-actions-section">
+        @if (order()!.status === 'pending' || order()!.status === 'confirmed') {
+          <button class="btn-cancel" (click)="cancelOrder()">Hủy đơn hàng</button>
+        }
+        <a routerLink="/account" class="btn-back">Về tài khoản</a>
+      </div>
+    }
+  </div>
+</app-shell>

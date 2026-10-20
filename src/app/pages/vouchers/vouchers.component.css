@@ -1,0 +1,160 @@
+.vouchers-page {
+  padding: 48px max(24px, 4vw) 80px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.vouchers-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.vouchers-title {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--xanh-ink);
+  margin: 0 0 8px 0;
+}
+
+.vouchers-subtitle {
+  font-size: 15px;
+  color: var(--xanh-muted);
+  margin: 0;
+}
+
+.vouchers-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 32px;
+  justify-content: center;
+}
+
+.vouchers-tab {
+  padding: 10px 24px;
+  background: transparent;
+  border: 1px solid var(--xanh-line);
+  border-radius: 20px;
+  font-size: 14px;
+  color: var(--xanh-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.vouchers-tab.active {
+  background: var(--xanh-moss);
+  color: #fff;
+  border-color: var(--xanh-moss);
+}
+
+.vouchers-tab:hover:not(.active) {
+  border-color: var(--xanh-ink);
+  color: var(--xanh-ink);
+}
+
+.vouchers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.voucher-card {
+  background: #fff;
+  border: 1px solid var(--xanh-line);
+  border-radius: var(--xanh-radius-md);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.15s;
+}
+
+.voucher-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.voucher-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--xanh-line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.voucher-type {
+  font-size: 11px;
+  background: var(--xanh-moss);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.voucher-code {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--xanh-ink);
+  font-family: monospace;
+  background: var(--xanh-paper);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.voucher-body {
+  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.voucher-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--xanh-ink);
+  margin: 0;
+}
+
+.voucher-desc {
+  font-size: 14px;
+  color: var(--xanh-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.voucher-condition {
+  font-size: 12px;
+  color: var(--xanh-muted);
+  background: var(--xanh-paper);
+  padding: 6px 10px;
+  border-radius: 4px;
+}
+
+.voucher-expiry {
+  font-size: 12px;
+  color: var(--xanh-muted);
+}
+
+.voucher-usage {
+  font-size: 12px;
+  color: var(--xanh-muted);
+}
+
+.voucher-footer {
+  padding: 16px;
+  border-top: 1px solid var(--xanh-line);
+}
+
+.vouchers-empty {
+  text-align: center;
+  padding: 80px 24px;
+  color: var(--xanh-muted);
+}
+
+@media (max-width: 768px) {
+  .vouchers-grid {
+    grid-template-columns: 1fr;
+  }
+  .vouchers-tabs {
+    flex-wrap: wrap;
+  }
+}

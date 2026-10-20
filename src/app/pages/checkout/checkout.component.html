@@ -1,0 +1,196 @@
+<app-shell>
+  <div class="xanhla-container" style="padding:48px max(24px,4vw)">
+
+    <!-- ── Thành công ─────────────────────────────────── -->
+    @if (completed()) {
+      <div style="max-width:600px;margin:40px auto;padding:48px;background:#fff;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line);text-align:center">
+        <div style="width:64px;height:64px;border-radius:50%;background:var(--xanh-light-green);color:var(--xanh-moss);display:flex;align-items:center;justify-content:center;margin:0 auto 20px auto">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h1 style="font-family:var(--xanh-font-display);font-size:30px;margin:0 0 12px 0">Cảm ơn bạn đã đặt hàng!</h1>
+        <p style="font-size:16px;color:var(--xanh-muted);margin-bottom:8px">
+          Mã đơn hàng: <strong style="color:var(--xanh-moss);font-size:18px">{{ orderCode() }}</strong>
+        </p>
+        <p style="font-size:14px;color:var(--xanh-muted);margin-bottom:32px">
+          Xanh Lá sẽ chuẩn bị nguyên liệu tươi và liên hệ xác nhận qua số điện thoại của bạn.
+        </p>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+          <a class="xanhla-btn-primary" routerLink="/tracker-page">Theo dõi đơn hàng</a>
+          <a class="xanhla-btn-secondary" routerLink="/">Về trang chủ</a>
+        </div>
+      </div>
+    }
+
+    <!-- ── Form thanh toán ───────────────────────────── -->
+    @if (!completed()) {
+      <h1 style="font-family:var(--xanh-font-display);font-size:32px;margin-bottom:32px">Thanh toán đơn hàng</h1>
+
+      @if (errorMsg()) {
+        <div style="background:#fff5f5;color:#c53030;border:1px solid #feb2b2;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:14px">
+          ⚠ {{ errorMsg() }}
+        </div>
+      }
+
+      <form (submit)="handleSubmit($event)" style="display:grid;grid-template-columns:1fr 380px;gap:40px">
+        <div style="display:flex;flex-direction:column;gap:28px">
+
+          <!-- 1. Thông tin liên hệ -->
+          <div style="background:#fff;padding:28px;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line)">
+            <h3 style="margin:0 0 20px 0;font-size:18px">1. Thông tin liên hệ</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+              <div>
+                <label style="display:block;font-size:14px;margin-bottom:6px">Họ và tên *</label>
+                <input type="text" required placeholder="Nguyễn Văn A"
+                       [value]="guestName()" (input)="guestName.set($any($event.target).value)"
+                       style="width:100%;padding:10px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)" />
+              </div>
+              <div>
+                <label style="display:block;font-size:14px;margin-bottom:6px">Số điện thoại *</label>
+                <input type="tel" required placeholder="0987 654 321"
+                       [value]="guestPhone()" (input)="guestPhone.set($any($event.target).value)"
+                       style="width:100%;padding:10px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)" />
+              </div>
+            </div>
+            <div>
+              <label style="display:block;font-size:14px;margin-bottom:6px">Email *</label>
+              <input type="email" required placeholder="name@example.com"
+                     [value]="guestEmail()" (input)="guestEmail.set($any($event.target).value)"
+                     style="width:100%;padding:10px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)" />
+            </div>
+          </div>
+
+          <!-- 2. Hình thức nhận hàng -->
+          <div style="background:#fff;padding:28px;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line)">
+            <h3 style="margin:0 0 20px 0;font-size:18px">2. Hình thức nhận hàng</h3>
+            <div style="display:flex;gap:16px;margin-bottom:20px">
+              <label [style.border]="shippingMethod()==='pickup' ? '2px solid var(--xanh-moss)' : '1px solid var(--xanh-line)'"
+                     style="flex:1;padding:16px;border-radius:var(--xanh-radius-sm);cursor:pointer">
+                <input type="radio" name="method" value="pickup" [checked]="shippingMethod()==='pickup'"
+                       (change)="shippingMethod.set('pickup')" style="margin-right:8px" />
+                <strong>Đến lấy trực tiếp</strong>
+                <p style="margin:4px 0 0 0;font-size:13px;color:var(--xanh-muted)">500 Terry Francine St (Tối đa 30p)</p>
+              </label>
+              <label [style.border]="shippingMethod()==='delivery' ? '2px solid var(--xanh-moss)' : '1px solid var(--xanh-line)'"
+                     style="flex:1;padding:16px;border-radius:var(--xanh-radius-sm);cursor:pointer">
+                <input type="radio" name="method" value="delivery" [checked]="shippingMethod()==='delivery'"
+                       (change)="shippingMethod.set('delivery')" style="margin-right:8px" />
+                <strong>Giao hàng tận nơi</strong>
+                <p style="margin:4px 0 0 0;font-size:13px;color:var(--xanh-muted)">Giao nhanh trong ngày bằng xe lạnh</p>
+              </label>
+            </div>
+            @if (shippingMethod() === 'delivery') {
+              <div>
+                <label style="display:block;font-size:14px;margin-bottom:6px">Địa chỉ giao hàng *</label>
+                <input type="text" required placeholder="Số nhà, đường, phường/xã, quận/huyện"
+                       [value]="shippingAddr()" (input)="shippingAddr.set($any($event.target).value)"
+                       style="width:100%;padding:10px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)" />
+              </div>
+            }
+          </div>
+
+          <!-- 3. Thanh toán -->
+          <div style="background:#fff;padding:28px;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line)">
+            <h3 style="margin:0 0 16px 0;font-size:18px">3. Phương thức thanh toán</h3>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer">
+                <input type="radio" name="payment" value="cod" [checked]="paymentMethod()==='cod'"
+                       (change)="paymentMethod.set('cod')" />
+                <span>Thanh toán khi nhận hàng (COD / Tiền mặt)</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer">
+                <input type="radio" name="payment" value="bank_transfer" [checked]="paymentMethod()==='bank_transfer'"
+                       (change)="paymentMethod.set('bank_transfer')" />
+                <span>Chuyển khoản ngân hàng / QR Code</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary sidebar -->
+        <div style="background:#fff;padding:28px;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line);height:fit-content">
+          <h3 style="margin:0 0 16px 0;font-size:18px">Đơn hàng ({{ cart.items().length }} món)</h3>
+          <div style="display:flex;flex-direction:column;gap:12px;max-height:280px;overflow-y:auto;margin-bottom:16px">
+            @for (item of cart.items(); track item.product.slug) {
+              <div style="display:flex;justify-content:space-between;font-size:14px;gap:8px">
+                <span style="flex:1">{{ item.product.name }} × {{ item.quantity }}</span>
+                <span style="white-space:nowrap;font-weight:600">{{ item.product.price }}</span>
+              </div>
+            }
+          </div>
+
+          <!-- Voucher Section -->
+          <div style="border-top:1px solid var(--xanh-line);padding-top:16px;margin-bottom:16px">
+            <label style="display:block;font-size:14px;margin-bottom:8px;font-weight:600">Mã giảm giá</label>
+            <div style="display:flex;gap:8px;margin-bottom:8px">
+              <input type="text" placeholder="Nhập mã voucher"
+                     [value]="voucherCode()" (input)="voucherCode.set($any($event.target).value)"
+                     style="flex:1;padding:10px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)" />
+              <button type="button" (click)="applyVoucher()"
+                      style="padding:10px 16px;background:var(--xanh-moss);color:#fff;border:none;border-radius:var(--xanh-radius-sm);cursor:pointer;font-weight:600">
+                Áp dụng
+              </button>
+            </div>
+            @if (voucherMessage()) {
+              <div style="font-size:13px;margin-bottom:8px" [style.color]="selectedVoucher() ? '#166534' : '#c53030'">
+                {{ voucherMessage() }}
+              </div>
+            }
+            @if (selectedVoucher()) {
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:#f0fdf4;border-radius:4px;font-size:13px">
+                <span>Giảm {{ formatPrice(voucherDiscount()) }}</span>
+                <button type="button" (click)="removeVoucher()" style="background:none;border:none;color:#c53030;cursor:pointer;font-size:12px;text-decoration:underline">
+                  Xóa
+                </button>
+              </div>
+            }
+          </div>
+
+          <!-- Loyalty Points Estimate -->
+          <div style="border-top:1px solid var(--xanh-line);padding-top:16px;margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:14px">
+              <span>Điểm dự kiến nhận</span>
+              <span style="font-weight:600;color:var(--xanh-moss)">+{{ estimatedPoints() }} điểm</span>
+            </div>
+            <div style="font-size:12px;color:var(--xanh-muted);margin-top:4px">
+              1 điểm cho mỗi 1.000đ chi tiêu
+            </div>
+          </div>
+
+          <!-- Totals -->
+          <div style="border-top:1px solid var(--xanh-line);padding-top:14px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;font-size:14px">
+              <span>Tạm tính</span>
+              <span>{{ formatPrice(cart.subtotal()) }}</span>
+            </div>
+            @if (voucherDiscount() > 0) {
+              <div style="display:flex;justify-content:space-between;font-size:14px;color:#166534">
+                <span>Giảm giá</span>
+                <span>-{{ formatPrice(voucherDiscount()) }}</span>
+              </div>
+            }
+            <div style="display:flex;justify-content:space-between;font-size:18px;font-weight:700;margin-top:8px;padding-top:8px;border-top:1px solid var(--xanh-line)">
+              <span>Tổng thanh toán</span>
+              <span>{{ formatPrice(finalTotal()) }}</span>
+            </div>
+          </div>
+
+          <button class="xanhla-btn-primary" type="submit" style="width:100%;position:relative;margin-top:24px"
+                  [disabled]="submitting() || cart.items().length === 0">
+            @if (submitting()) {
+              <span style="display:inline-flex;align-items:center;gap:8px">
+                <svg style="animation:spin .7s linear infinite" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 2a10 10 0 1 0 10 10"/></svg>
+                Đang xử lý...
+              </span>
+            } @else {
+              Hoàn tất đặt hàng
+            }
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</app-shell>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>

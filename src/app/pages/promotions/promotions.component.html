@@ -1,0 +1,48 @@
+<app-shell>
+  <div class="promotions-page xanhla-container">
+    <!-- Page Header -->
+    <div class="promotions-header">
+      <h1 class="promotions-title">Ưu đãi của tôi</h1>
+      <p class="promotions-subtitle">Quản lý voucher và điểm thưởng của bạn</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="promotions-tabs">
+      <button
+        class="promotions-tab"
+        [class.is-active]="activeTab() === 'vouchers'"
+        (click)="setTab('vouchers')"
+      >
+        Voucher
+      </button>
+      <button
+        class="promotions-tab"
+        [class.is-active]="activeTab() === 'points'"
+        (click)="setTab('points')"
+      >
+        Điểm thưởng
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="promotions-content">
+      @if (activeTab() === 'vouchers') {
+        <div class="redirect-notice">
+          <h2>Voucher của bạn</h2>
+          <p>Để xem danh sách voucher chi tiết, hãy truy cập trang Voucher chuyên biệt.</p>
+          <button class="btn-redirect" (click)="goToVouchers()">
+            Đến trang Voucher
+          </button>
+        </div>
+      } @else {
+        <div class="redirect-notice">
+          <h2>Điểm thưởng của bạn</h2>
+          <p>Để xem số dư điểm, đổi quà và lịch sử dụng điểm, hãy truy cập trang Điểm thưởng chuyên biệt.</p>
+          <button class="btn-redirect" (click)="goToLoyalty()">
+            Đến trang Điểm thưởng
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+</app-shell>

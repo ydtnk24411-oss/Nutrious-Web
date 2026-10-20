@@ -1,0 +1,123 @@
+<div class="admin-page-header">
+  <h2 class="admin-page-title">👥 Quản lý người dùng</h2>
+  <span class="admin-stat-label">Tổng: <strong>{{ total() }}</strong> tài khoản</span>
+</div>
+
+@if (success()) { <div class="admin-alert admin-alert-success">✓ {{ success() }}</div> }
+@if (error() && !modalOpen()) { <div class="admin-alert admin-alert-error">⚠ {{ error() }}</div> }
+
+<div class="admin-toolbar">
+  <input class="admin-search-input" type="text" placeholder="🔍 Tìm tên, email..."
+         [value]="search()" (input)="onSearch($any($event.target).value)" />
+  <select class="admin-select" [value]="role()" (change)="onRole($any($event.target).value)">
+    <option value="">Tất cả vai trò</option>
+    <option value="customer">Khách hàng</option>
+    <option value="admin">Admin</option>
+  </select>
+</div>
+
+@if (loading()) {
+  <div class="admin-empty"><div class="admin-spinner" style="width:32px;height:32px;border-width:3px;margin:0 auto 12px"></div><p>Đang tải...</p></div>
+}
+
+@if (!loading()) {
+  @if (users().length === 0) {
+    <div class="admin-empty"><div class="admin-empty-icon">👤</div><p>Không có người dùng nào.</p></div>
+  } @else {
+    <div class="admin-card" style="padding:0;overflow:hidden">
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Tên</th>
+              <th>Email</th>
+              <th>SĐT</th>
+              <th>Phân nhóm</th>
+              <th>Tổng chi tiêu</th>
+              <th>Số đơn</th>
+              <th>Mua gần nhất</th>
+              <th>Vai trò</th>
+              <th>Trạng thái</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of users(); track u._id) {
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#3d4d3a 0%,#2a3628 100%);color:#a3b18a;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0">
+                      {{ u.name.charAt(0).toUpperCase() }}
+                    </div>
+                    <span style="font-weight:600;color:#1f2937">{{ u.name }}</span>
+                  </div>
+                </td>
+                <td style="font-size:14px;color:#6b7280">{{ u.email }}</td>
+                <td style="font-size:14px;color:#6b7280">{{ u.phone || '—' }}</td>
+                <td>
+                  <span class="admin-badge" [style.background-color]="getSegmentColor(getCustomerSegment(u)) + '20'" [style.color]="getSegmentColor(getCustomerSegment(u))">
+                    {{ getCustomerSegment(u) }}
+                  </span>
+                </td>
+                <td style="font-weight:600;color:#1f2937">{{ formatPrice(u.totalSpent || 0) }}</td>
+                <td style="font-weight:600;color:#1f2937">{{ u.orderCount || 0 }}</td>
+                <td style="font-size:13px;color:#6b7280">{{ formatDate(u.lastPurchaseDate) }}</td>
+                <td><span class="admin-badge" [class]="'badge-' + u.role">{{ u.role === 'admin' ? 'Admin' : 'Khách hàng' }}</span></td>
+                <td><span class="admin-badge" [class]="u.isActive ? 'badge-active' : 'badge-inactive'">{{ u.isActive ? 'Hoạt động' : 'Đã khóa' }}</span></td>
+                <td style="display:flex;gap:6px">
+                  <button class="admin-btn-icon" title="Chỉnh sửa" (click)="openEdit(u)">✏️</button>
+                  <button class="admin-btn-icon" title="Vô hiệu hoá" (click)="remove(u)" style="color:#dc2626">🚫</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="admin-pagination">
+      <span>{{ users().length }} / {{ total() }} tài khoản</span>
+      <div class="admin-pagination-btns">
+        <button class="admin-btn-secondary" style="padding:8px 16px;font-size:13px" [disabled]="page()===1" (click)="prevPage()">← Trước</button>
+        <span style="padding:8px 14px;font-size:13px;font-weight:600">{{ page() }} / {{ totalPages() }}</span>
+        <button class="admin-btn-secondary" style="padding:8px 16px;font-size:13px" [disabled]="page()>=totalPages()" (click)="nextPage()">Tiếp →</button>
+      </div>
+    </div>
+  }
+}
+
+<!-- Edit Modal -->
+@if (modalOpen() && selected(); as u) {
+  <div class="admin-modal-backdrop" (click)="closeModal()">
+    <div class="admin-modal" style="max-width:420px" (click)="$event.stopPropagation()">
+      <div class="admin-modal-header">
+        <h3>Chỉnh sửa: {{ u.name }}</h3>
+        <button class="admin-btn-icon" (click)="closeModal()">✕</button>
+      </div>
+      <div class="admin-modal-body">
+        @if (error()) { <div class="admin-alert admin-alert-error">⚠ {{ error() }}</div> }
+        <div class="admin-form-grid cols-1" style="gap:16px">
+          <div class="admin-field">
+            <label>Vai trò</label>
+            <select [value]="editRole()" (change)="editRole.set($any($event.target).value)">
+              <option value="customer">Khách hàng</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="admin-field" style="flex-direction:row;align-items:center;gap:12px">
+            <label style="margin:0;font-weight:600">Tài khoản hoạt động</label>
+            <input type="checkbox" [checked]="editActive()"
+                   (change)="editActive.set($any($event.target).checked)"
+                   style="width:18px;height:18px;accent-color:#3d4d3a;cursor:pointer" />
+          </div>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="admin-btn-secondary" (click)="closeModal()">Hủy</button>
+        <button class="admin-btn-primary" [disabled]="saving()" (click)="save()">
+          @if (saving()) { <span class="admin-spinner"></span> Đang lưu... } @else { Lưu thay đổi }
+        </button>
+      </div>
+    </div>
+  </div>
+}

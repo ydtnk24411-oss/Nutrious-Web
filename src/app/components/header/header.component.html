@@ -1,0 +1,247 @@
+<!-- ── TOP INFO BAR ── -->
+<div class="xanhla-wix-bar">
+  <span>Nông sản, thực phẩm lành mạnh — giao hàng 2 giờ nội thành</span>
+  <span class="xl-topbar-sep">|</span>
+  <span>Hotline: <strong>1800 6999</strong></span>
+  <span class="xl-topbar-sep">|</span>
+  <a routerLink="/tracker-page" class="xl-topbar-link">Tra cứu đơn hàng</a>
+</div>
+
+<!-- ── MAIN HEADER ── -->
+<header class="xanhla-header">
+
+  <!-- Logo -->
+  <a class="xanhla-logo" routerLink="/" aria-label="Xanh Lá - Trang chủ">
+    <span class="xanhla-brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M19.7 3.8C12.9 3.6 7.4 5.8 5.1 10.1c-1.9 3.6-.3 7.5 3.3 8.1 4.8.9 9.1-4.1 11.3-14.4Z" fill="currentColor" />
+        <path d="M3.8 21c2.8-5.3 6.5-8.8 11.6-12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+      </svg>
+    </span>
+    <span class="xanhla-brand-word">Xanh Lá</span>
+  </a>
+
+  <!-- Category Menu Button -->
+  <div class="xl-cat-menu-wrapper">
+    <button class="xl-cat-btn" type="button" (click)="toggleCatMenu()" [class.is-open]="catMenuOpen()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+      <span>Danh mục sản phẩm</span>
+      <svg class="xl-cat-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </button>
+
+    @if (catMenuOpen()) {
+      <div class="xl-cat-dropdown">
+        @for (cat of categories; track cat.label) {
+          <a class="xl-cat-item" [routerLink]="cat.path" (click)="closeCatMenu()">
+            <span>{{ cat.label }}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;opacity:.4"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Search Bar -->
+  <form class="xl-header-search" role="search" (submit)="onSearch($event)">
+    <input
+      class="xl-search-input"
+      name="q"
+      type="search"
+      placeholder="Bạn muốn mua gì hôm nay..."
+      aria-label="Tìm kiếm sản phẩm"
+    />
+    <button class="xl-search-btn" type="submit" aria-label="Tìm kiếm">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </button>
+  </form>
+
+  <!-- Right Actions -->
+  <div class="xanhla-header-actions">
+
+    <!-- Account -->
+    @if (cart.currentUser()) {
+      <div style="position:relative">
+        <button class="xl-icon-btn" type="button" (click)="toggleUserMenu()" title="{{ cart.currentUser()!.name }}">
+          <div class="xanhla-member-avatar">{{ cart.currentUser()!.name.charAt(0).toUpperCase() }}</div>
+        </button>
+        @if (userMenuOpen()) {
+          <div class="xanhla-user-menu">
+            <div class="xanhla-user-menu-header">
+              <strong>{{ cart.currentUser()!.name }}</strong>
+              <span>{{ cart.currentUser()!.email }}</span>
+            </div>
+            <a routerLink="/account" (click)="closeUserMenu()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Tài khoản của tôi
+            </a>
+            <a routerLink="/account?tab=orders" (click)="closeUserMenu()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              Đơn hàng của tôi
+            </a>
+            <a routerLink="/promotions" (click)="closeUserMenu()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.91 8.84C20.88 8.3 20.37 8 19.81 8H15c-.23 0-.42-.16-.48-.38l-.47-1.56C13.86 5.4 13.34 5 12.74 5h-1.48c-.6 0-1.12.4-1.31.96l-.47 1.56C9.42 7.84 9.23 8 9 8H4.19c-.56 0-1.07.3-1.1.84C2.82 10.05 2.5 12.12 2.5 14c0 1.88.32 3.95.59 5.16.03.54.54.84 1.1.84H15c.23 0 .42.16.48.38l.47 1.56c.19.56.71.96 1.31.96h1.48c.6 0 1.12-.4 1.31-.96l.47-1.56c.06-.22.25-.38.48-.38h4.81c.56 0 1.07-.3 1.1-.84.27-1.21.59-3.28.59-5.16 0-1.88-.32-3.95-.59-5.16z"/></svg>
+              Ưu đãi của tôi
+            </a>
+            <a routerLink="/account?tab=addresses" (click)="closeUserMenu()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Sổ địa chỉ
+            </a>
+            <a routerLink="/account?tab=settings" (click)="closeUserMenu()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              Thông tin và cài đặt
+            </a>
+            <button type="button" (click)="logout()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Đăng xuất
+            </button>
+          </div>
+        }
+      </div>
+    }     @else {
+      <button class="xl-icon-btn" type="button" (click)="cart.openAuthModal('login')" title="Đăng nhập">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+        </svg>
+      </button>
+    }
+
+    <!-- Notifications -->
+    <div class="xl-notif-wrapper">
+      <button class="xl-icon-btn" type="button" (click)="toggleNotifMenu()" title="Thông báo" aria-label="Thông báo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        @if (unreadCount() > 0) {
+          <span class="xl-notif-dot">{{ unreadCount() }}</span>
+        }
+      </button>
+      @if (notifMenuOpen()) {
+        <div class="xl-notif-dropdown">
+          <div class="xl-notif-title">Thông báo</div>
+          @for (n of notifications; track n.id) {
+            <a class="xl-notif-item" [class.is-unread]="n.unread" [routerLink]="n.path" (click)="closeNotifMenu()">
+              <span>
+                <strong>{{ n.title }}</strong>
+                <small>{{ n.body }}</small>
+              </span>
+            </a>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Cart -->
+    <button class="xanhla-cart-button xl-icon-btn" type="button" aria-label="Xem giỏ hàng" (click)="cart.openCartDrawer()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/>
+        <path d="M16 10a4 4 0 0 1-8 0"/>
+      </svg>
+      @if (cart.itemCount() > 0) {
+        <span class="xanhla-cart-badge">{{ cart.itemCount() }}</span>
+      }
+    </button>
+
+    <!-- Area Selector -->
+    <div class="xl-area-wrapper">
+      <button class="xl-area-btn" type="button" (click)="toggleAreaMenu()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 5.4-8 14-8 14S4 15.4 4 10a8 8 0 0 1 8-8z"/>
+        </svg>
+        <span class="xl-area-label">{{ selectedArea() }}</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+      @if (areaMenuOpen()) {
+        <div class="xl-area-dropdown">
+          <div class="xl-area-title">Chọn khu vực giao hàng</div>
+          @for (area of areas; track area) {
+            <button type="button" class="xl-area-item" [class.is-selected]="selectedArea() === area" (click)="selectArea(area)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="10" r="3"/><path d="M12 2a8 8 0 0 1 8 8c0 5.4-8 14-8 14S4 15.4 4 10a8 8 0 0 1 8-8z"/>
+              </svg>
+              {{ area }}
+              @if (selectedArea() === area) {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left:auto">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              }
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Mobile Toggle -->
+    <button class="xanhla-mobile-toggle" type="button" aria-label="Mở menu" (click)="toggleMobileMenu()">
+      @if (mobileMenuOpen()) {
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      } @else {
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      }
+    </button>
+  </div>
+</header>
+
+<!-- ── SECONDARY NAV BAR ── -->
+<nav class="xl-subnav" aria-label="Điều hướng nhanh">
+  <div class="xl-subnav-inner">
+    @for (item of navItems; track item.path) {
+      <a [routerLink]="item.path" [class.is-active]="isActive(item.path)" class="xl-subnav-link">
+        @switch (item.path) {
+          @case ('/') { Trang chủ }
+          @case ('/online-ordering') { Đặt hàng }
+          @case ('/nutrition') { Dinh dưỡng TM }
+          @case ('/cook-with-what-you-have') { Nấu gì? }
+          @case ('/event-list') { Sự kiện }
+          @case ('/book-online') { Đặt lịch }
+          @default { {{ item.label }} }
+        }
+      </a>
+    }
+  </div>
+</nav>
+
+<!-- ── MOBILE DRAWER ── -->
+@if (mobileMenuOpen()) {
+  <div class="xanhla-drawer-backdrop" (click)="closeMobileMenu()">
+    <div class="xanhla-cart-drawer" style="width:300px" (click)="$event.stopPropagation()">
+      <div class="xanhla-drawer-header">
+        <h3>Menu</h3>
+        <button class="xanhla-drawer-close" type="button" (click)="closeMobileMenu()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="xanhla-drawer-body">
+        <div class="xl-drawer-section-label">Điều hướng</div>
+        <a routerLink="/" style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)" (click)="closeMobileMenu()">Trang chủ</a>
+        <a routerLink="/online-ordering" style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)" (click)="closeMobileMenu()">Đặt hàng trực tuyến</a>
+        <a routerLink="/promotions" style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)" (click)="closeMobileMenu()">Ưu đãi của tôi</a>
+        <a routerLink="/nutrition" style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line);color:var(--green-700)" (click)="closeMobileMenu()">Dinh dưỡng thông minh</a>
+        <a routerLink="/cook-with-what-you-have" style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line);color:var(--green-700)" (click)="closeMobileMenu()">Nấu gì hôm nay?</a>
+        <a routerLink="/event-list" style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)" (click)="closeMobileMenu()">Sự kiện</a>
+        <a routerLink="/book-online" style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)" (click)="closeMobileMenu()">Đặt lịch</a>
+
+        <div class="xl-drawer-section-label" style="margin-top:12px">Danh mục sản phẩm</div>
+        @for (cat of categories; track cat.label) {
+          <a [routerLink]="cat.path" style="padding:10px 0;font-size:14px;border-bottom:1px solid var(--xanh-line)" (click)="closeMobileMenu()">
+            {{ cat.label }}
+          </a>
+        }
+
+        <div style="padding:16px 0">
+          <a routerLink="/cart" class="xanhla-btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px" (click)="closeMobileMenu()">
+            Giỏ hàng ({{ cart.itemCount() }})
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+}

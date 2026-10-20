@@ -1,0 +1,143 @@
+<div class="admin-page-header">
+  <h2 class="admin-page-title">🗓 Quản lý đặt lịch</h2>
+  <span class="admin-stat-label">Tổng: <strong>{{ total() }}</strong> lịch hẹn</span>
+</div>
+
+@if (success()) { <div class="admin-alert admin-alert-success">✓ {{ success() }}</div> }
+@if (error() && !modalOpen()) { <div class="admin-alert admin-alert-error">⚠ {{ error() }}</div> }
+
+<div class="admin-toolbar">
+  <input class="admin-search-input" type="text" placeholder="🔍 Tìm tên, email, dịch vụ..."
+         [value]="search()" (input)="onSearch($any($event.target).value)" />
+  <select class="admin-select" [value]="status()" (change)="onStatus($any($event.target).value)">
+    <option value="">Tất cả trạng thái</option>
+    @for (s of statusOptions; track s.value) {
+      <option [value]="s.value">{{ s.label }}</option>
+    }
+  </select>
+</div>
+
+@if (loading()) {
+  <div class="admin-empty"><div class="admin-spinner" style="width:32px;height:32px;border-width:3px;margin:0 auto 12px"></div><p>Đang tải...</p></div>
+}
+
+@if (!loading()) {
+  @if (bookings().length === 0) {
+    <div class="admin-empty"><div class="admin-empty-icon">🗓</div><p>Chưa có lịch hẹn nào.</p></div>
+  } @else {
+    <div class="admin-card" style="padding:0;overflow:hidden">
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Dịch vụ</th>
+              <th>Khách hàng</th>
+              <th>Ngày</th>
+              <th>Giờ</th>
+              <th>Trạng thái</th>
+              <th>Ngày tạo</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (b of bookings(); track b._id) {
+              <tr>
+                <td style="font-weight:600;font-size:14px;color:#1f2937">{{ b.serviceName }}</td>
+                <td>
+                  <div style="font-weight:600;font-size:14px;color:#1f2937">{{ b.guestName }}</div>
+                  <div style="font-size:13px;color:#6b7280">{{ b.guestEmail }}</div>
+                </td>
+                <td style="font-size:14px;color:#6b7280">{{ b.date }}</td>
+                <td style="font-size:14px;color:#6b7280">{{ b.time }}</td>
+                <td>
+                  <span class="admin-badge" [class]="'badge-' + b.status">
+                    {{ statusLabel[b.status] }}
+                  </span>
+                </td>
+                <td style="font-size:13px;color:#6b7280">{{ b.createdAt | date:'dd/MM/yy' }}</td>
+                <td>
+                  <button class="admin-btn-icon" title="Xem chi tiết" (click)="openDetail(b)">👁</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="admin-pagination">
+      <span>{{ bookings().length }} / {{ total() }} lịch hẹn</span>
+      <div class="admin-pagination-btns">
+        <button class="admin-btn-secondary" style="padding:8px 16px;font-size:13px" [disabled]="page()===1" (click)="prevPage()">← Trước</button>
+        <span style="padding:8px 14px;font-size:13px;font-weight:600">{{ page() }} / {{ totalPages() }}</span>
+        <button class="admin-btn-secondary" style="padding:8px 16px;font-size:13px" [disabled]="page()>=totalPages()" (click)="nextPage()">Tiếp →</button>
+      </div>
+    </div>
+  }
+}
+
+<!-- Detail Modal -->
+@if (modalOpen() && selected(); as b) {
+  <div class="admin-modal-backdrop" (click)="closeModal()">
+    <div class="admin-modal" style="max-width:500px" (click)="$event.stopPropagation()">
+      <div class="admin-modal-header">
+        <h3>Chi tiết lịch hẹn</h3>
+        <button class="admin-btn-icon" (click)="closeModal()">✕</button>
+      </div>
+      <div class="admin-modal-body" style="display:flex;flex-direction:column;gap:20px">
+        @if (error()) { <div class="admin-alert admin-alert-error">⚠ {{ error() }}</div> }
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="admin-field" style="gap:3px">
+            <span style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;font-weight:600">Dịch vụ</span>
+            <strong style="color:#1f2937">{{ b.serviceName }}</strong>
+          </div>
+          <div class="admin-field" style="gap:3px">
+            <span style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;font-weight:600">Khách hàng</span>
+            <strong style="color:#1f2937">{{ b.guestName }}</strong>
+          </div>
+          <div class="admin-field" style="gap:3px">
+            <span style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;font-weight:600">Email</span>
+            <span style="color:#6b7280">{{ b.guestEmail }}</span>
+          </div>
+          <div class="admin-field" style="gap:3px">
+            <span style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;font-weight:600">SĐT</span>
+            <span style="color:#6b7280">{{ b.guestPhone || '—' }}</span>
+          </div>
+          <div class="admin-field" style="gap:3px">
+            <span style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;font-weight:600">Ngày hẹn</span>
+            <strong style="color:#1f2937">{{ b.date }}</strong>
+          </div>
+          <div class="admin-field" style="gap:3px">
+            <span style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;font-weight:600">Khung giờ</span>
+            <strong style="color:#1f2937">{{ b.time }}</strong>
+          </div>
+          @if (b.note) {
+            <div class="admin-field" style="gap:3px;grid-column:1/-1">
+              <span style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;font-weight:600">Ghi chú</span>
+              <span style="color:#6b7280">{{ b.note }}</span>
+            </div>
+          }
+        </div>
+
+        <div>
+          <h4 style="font-size:14px;font-weight:700;color:#1f2937;margin:0 0 12px">🔄 Cập nhật trạng thái</h4>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <select class="admin-select" style="flex:1;min-width:160px"
+                    [value]="newStatus()" (change)="newStatus.set($any($event.target).value)">
+              @for (s of statusOptions; track s.value) {
+                <option [value]="s.value">{{ s.label }}</option>
+              }
+            </select>
+            <button class="admin-btn-primary" [disabled]="saving()" (click)="updateStatus()">
+              @if (saving()) { <span class="admin-spinner"></span> Đang lưu... } @else { Cập nhật }
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="admin-btn-secondary" (click)="closeModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,154 @@
+<div class="admin-page-header">
+  <h2 class="admin-page-title">📅 Quản lý sự kiện</h2>
+  <button class="admin-btn-primary" (click)="openCreate()">+ Thêm sự kiện</button>
+</div>
+
+@if (success()) { <div class="admin-alert admin-alert-success">✓ {{ success() }}</div> }
+@if (error() && !modalOpen()) { <div class="admin-alert admin-alert-error">⚠ {{ error() }}</div> }
+
+@if (loading()) {
+  <div class="admin-empty"><div class="admin-spinner" style="width:32px;height:32px;border-width:3px;margin:0 auto 12px"></div><p>Đang tải...</p></div>
+}
+
+@if (!loading()) {
+  @if (events().length === 0) {
+    <div class="admin-empty"><div class="admin-empty-icon">📅</div><p>Chưa có sự kiện nào.</p></div>
+  } @else {
+    <div class="events-grid">
+      @for (ev of events(); track ev._id) {
+        <div class="event-card">
+          @if (ev.image) {
+            <img [src]="ev.image" [alt]="ev.name" class="event-card-img" />
+          } @else {
+            <div class="event-card-img event-card-placeholder">📅</div>
+          }
+          <div class="event-card-body">
+            <div class="event-card-meta">
+              <span style="font-size:13px;color:#6b7280;font-weight:500">{{ ev.date }} · {{ ev.time }}</span>
+              <span class="admin-badge" [class]="ev.isActive ? 'badge-active' : 'badge-inactive'">
+                {{ ev.isActive ? 'Hoạt động' : 'Ẩn' }}
+              </span>
+            </div>
+            <h4 class="event-card-name">{{ ev.name }}</h4>
+            <p class="event-card-location">📍 {{ ev.location }}</p>
+            <div class="event-card-reg">
+              Đăng ký: <strong style="color:#1f2937">{{ ev.registrations?.length ?? 0 }}</strong> / {{ ev.capacity }}
+            </div>
+            <div class="event-card-actions">
+              <button class="admin-btn-icon" title="Xem danh sách đăng ký"
+                      (click)="openRegistrations(ev)">👥</button>
+              <button class="admin-btn-icon" title="Chỉnh sửa" (click)="openEdit(ev)">✏️</button>
+              <button class="admin-btn-icon" title="Xóa" (click)="remove(ev)"
+                      style="color:#dc2626">🗑️</button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+}
+
+<!-- Create / Edit Modal -->
+@if (modalOpen() && (modalMode() === 'create' || modalMode() === 'edit')) {
+  <div class="admin-modal-backdrop" (click)="closeModal()">
+    <div class="admin-modal" (click)="$event.stopPropagation()">
+      <div class="admin-modal-header">
+        <h3>{{ modalMode() === 'create' ? '+ Thêm sự kiện' : '✏️ Chỉnh sửa sự kiện' }}</h3>
+        <button class="admin-btn-icon" (click)="closeModal()">✕</button>
+      </div>
+      <div class="admin-modal-body">
+        @if (error()) { <div class="admin-alert admin-alert-error">⚠ {{ error() }}</div> }
+        <div class="admin-form-grid">
+          <div class="admin-field" style="grid-column:1/-1">
+            <label>Tên sự kiện *</label>
+            <input type="text" [value]="form().name" (input)="onNameChange($any($event.target).value)" placeholder="Vd: Fresh Food Festival" />
+          </div>
+          <div class="admin-field" style="grid-column:1/-1">
+            <label>Slug *</label>
+            <input type="text" [value]="form().slug" (input)="setField('slug', $any($event.target).value)" placeholder="fresh-food-festival" />
+          </div>
+          <div class="admin-field">
+            <label>Ngày *</label>
+            <input type="text" [value]="form().date" (input)="setField('date', $any($event.target).value)" placeholder="Thứ 5, 22 thg 10" />
+          </div>
+          <div class="admin-field">
+            <label>Giờ *</label>
+            <input type="text" [value]="form().time" (input)="setField('time', $any($event.target).value)" placeholder="14:00 – 16:00" />
+          </div>
+          <div class="admin-field" style="grid-column:1/-1">
+            <label>Địa điểm *</label>
+            <input type="text" [value]="form().location" (input)="setField('location', $any($event.target).value)" placeholder="Festival Center" />
+          </div>
+          <div class="admin-field">
+            <label>Sức chứa</label>
+            <input type="number" min="1" [value]="form().capacity" (input)="setField('capacity', +$any($event.target).value)" />
+          </div>
+          <div class="admin-field">
+            <label>Nhãn nút hành động</label>
+            <input type="text" [value]="form().action" (input)="setField('action', $any($event.target).value)" placeholder="Đăng ký / Mua vé" />
+          </div>
+          <div class="admin-field" style="grid-column:1/-1">
+            <label>URL hình ảnh</label>
+            <input type="text" [value]="form().image" (input)="setField('image', $any($event.target).value)" placeholder="https://..." />
+          </div>
+          <div class="admin-field" style="grid-column:1/-1">
+            <label>Mô tả</label>
+            <textarea [value]="form().description ?? ''" (input)="setField('description', $any($event.target).value)" placeholder="Mô tả sự kiện..."></textarea>
+          </div>
+          <div class="admin-field" style="flex-direction:row;align-items:center;gap:12px">
+            <label style="margin:0;font-weight:600">Hiển thị</label>
+            <input type="checkbox" [checked]="form().isActive !== false"
+                   (change)="setField('isActive', $any($event.target).checked)"
+                   style="width:18px;height:18px;accent-color:#3d4d3a;cursor:pointer" />
+          </div>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="admin-btn-secondary" (click)="closeModal()">Hủy</button>
+        <button class="admin-btn-primary" [disabled]="saving()" (click)="save()">
+          @if (saving()) { <span class="admin-spinner"></span> Đang lưu... }
+          @else { {{ modalMode() === 'create' ? 'Thêm sự kiện' : 'Lưu thay đổi' }} }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Registrations Modal -->
+@if (modalOpen() && modalMode() === 'registrations' && selected(); as ev) {
+  <div class="admin-modal-backdrop" (click)="closeModal()">
+    <div class="admin-modal" style="max-width:620px" (click)="$event.stopPropagation()">
+      <div class="admin-modal-header">
+        <h3>👥 Danh sách đăng ký — {{ ev.name }}</h3>
+        <button class="admin-btn-icon" (click)="closeModal()">✕</button>
+      </div>
+      <div class="admin-modal-body">
+        <p style="font-size:13px;color:#6b7280;margin:0 0 16px;font-weight:500">
+          {{ ev.registrations?.length ?? 0 }} / {{ ev.capacity }} người đã đăng ký
+        </p>
+        @if (!ev.registrations || ev.registrations.length === 0) {
+          <div class="admin-empty" style="padding:32px"><p>Chưa có ai đăng ký.</p></div>
+        } @else {
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>#</th><th>Họ tên</th><th>Email</th><th>Ngày đăng ký</th></tr></thead>
+              <tbody>
+                @for (r of ev.registrations; track $index) {
+                  <tr>
+                    <td style="color:#6b7280;font-size:13px">{{ $index + 1 }}</td>
+                    <td style="font-weight:600;color:#1f2937">{{ r.name }}</td>
+                    <td style="font-size:14px;color:#6b7280">{{ r.email }}</td>
+                    <td style="font-size:13px;color:#6b7280">{{ r.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+      <div class="admin-modal-footer">
+        <button class="admin-btn-secondary" (click)="closeModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+}

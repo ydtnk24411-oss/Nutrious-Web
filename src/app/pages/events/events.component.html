@@ -1,0 +1,117 @@
+<app-shell>
+  <!-- Hero Banner -->
+  <div class="events-hero">
+    <div class="events-hero-content">
+      <span class="events-hero-badge">Sự kiện & Workshop</span>
+      <h1 class="events-hero-title">Cùng học, cùng nấu, cùng ăn ngon hơn</h1>
+      <p class="events-hero-desc">Tham gia các buổi workshop, lớp học nấu ăn và ngày hội thực phẩm lành mạnh để nâng cao kiến thức dinh dưỡng và kỹ năng nấu ăn của bạn.</p>
+      <div class="events-hero-stats">
+        <div class="events-stat">
+          <span class="events-stat-num">{{ events().length }}</span>
+          <span class="events-stat-label">Sự kiện</span>
+        </div>
+        <div class="events-stat">
+          <span class="events-stat-num">{{ upcomingCount() }}</span>
+          <span class="events-stat-label">Sắp diễn ra</span>
+        </div>
+        <div class="events-stat">
+          <span class="events-stat-num">500+</span>
+          <span class="events-stat-label">Người tham gia</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="xanhla-container" style="padding:48px max(24px,4vw)">
+    <!-- Filter Bar -->
+    <div class="events-filter-bar">
+      <div class="events-filter-group">
+        <button class="events-filter-btn active" type="button">Tất cả</button>
+        <button class="events-filter-btn" type="button">Workshop</button>
+        <button class="events-filter-btn" type="button">Lớp học</button>
+        <button class="events-filter-btn" type="button">Ngày hội</button>
+      </div>
+      <div class="events-sort">
+        <label>Sắp xếp theo:</label>
+        <select class="events-sort-select">
+          <option>Ngày gần nhất</option>
+          <option>Ngày xa nhất</option>
+        </select>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div style="text-align:center;padding:80px 0;color:var(--xanh-muted)">
+        <div style="width:48px;height:48px;border:3px solid var(--green-300);border-top-color:var(--green-700);border-radius:50%;margin:0 auto 16px;animation:spin 0.8s linear infinite"></div>
+        <p>Đang tải sự kiện...</p>
+      </div>
+    }
+
+    @if (error()) {
+      <div style="text-align:center;padding:48px 0;color:#c53030;background:#fef2f2;border-radius:var(--xanh-radius-lg);border:1px solid #fecaca">{{ error() }}</div>
+    }
+
+    @if (!loading() && events().length === 0 && !error()) {
+      <div style="text-align:center;padding:80px 0;color:var(--xanh-muted)">
+        <div style="font-size:64px;margin-bottom:16px;opacity:0.4">📅</div>
+        <p style="font-size:18px">Chưa có sự kiện nào.</p>
+        <p style="font-size:14px;margin-top:8px">Hãy quay lại sau để cập nhật các sự kiện mới!</p>
+      </div>
+    }
+
+    <!-- Events Grid -->
+    <div class="events-grid">
+      @for (event of events(); track event._id) {
+        <article class="event-card">
+          <div class="event-card-image">
+            <img [src]="event.image" [alt]="event.name" />
+            <div class="event-card-badge">
+              @if (event.isActive) {
+                <span class="event-badge-active">Đang mở</span>
+              } @else {
+                <span class="event-badge-upcoming">Sắp tới</span>
+              }
+            </div>
+          </div>
+          <div class="event-card-body">
+            <div class="event-card-meta">
+              <span class="event-card-date">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                {{ event.date }}
+              </span>
+              <span class="event-card-time">{{ event.time }}</span>
+            </div>
+            <h3 class="event-card-title">{{ event.name }}</h3>
+            <p class="event-card-location">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              {{ event.location }}
+            </p>
+            <p class="event-card-desc">{{ event.description }}</p>
+            <div class="event-card-footer">
+              <div class="event-card-reg">
+                <span class="event-reg-count">{{ event.registrations?.length ?? 0 }}</span>
+                <span class="event-reg-total">/ {{ event.capacity }}</span>
+                <span class="event-reg-label">đã đăng ký</span>
+              </div>
+              <a class="event-card-btn" [routerLink]="eventSlug(event)">
+                {{ event.action }}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:4px">
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <polyline points="12 5 19 12 12 19"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  </div>
+</app-shell>

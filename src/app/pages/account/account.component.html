@@ -1,0 +1,444 @@
+<app-shell>
+  @if (cart.currentUser(); as user) {
+    <div class="acc-page xanhla-container">
+
+      <!-- ── Title ───────────────────────────────────── -->
+      <h1 class="acc-title">Tài khoản của tôi</h1>
+
+      <!-- ── Tab bar ─────────────────────────────────── -->
+      <div class="acc-tabs">
+        <button class="acc-tab" [class.is-active]="activeTab()==='overview'"  (click)="activeTab.set('overview')">Tổng quan</button>
+        <button class="acc-tab" [class.is-active]="activeTab()==='orders'"    (click)="activeTab.set('orders')">Đơn hàng của tôi</button>
+        <button class="acc-tab" [class.is-active]="activeTab()==='addresses'" (click)="activeTab.set('addresses')">Sổ địa chỉ</button>
+        <button class="acc-tab" [class.is-active]="activeTab()==='settings'"  (click)="activeTab.set('settings')">Thông tin và cài đặt</button>
+      </div>
+      <div class="acc-tab-divider"></div>
+
+      <!-- ══════════════════════════════════════════════
+           TAB: OVERVIEW
+      ══════════════════════════════════════════════ -->
+      @if (activeTab() === 'overview') {
+        <div class="acc-overview">
+          <!-- User Profile Card -->
+          <div class="acc-profile-card">
+            <div class="acc-profile-avatar">
+              <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face" alt="Avatar" />
+            </div>
+            <div class="acc-profile-info">
+              <h2 class="acc-profile-name">{{ user.name }}</h2>
+              <p class="acc-profile-email">{{ user.email }}</p>
+              @if (user.phone) {
+                <p class="acc-profile-phone">{{ user.phone }}</p>
+              }
+              <p class="acc-profile-tier">Hạng: {{ userTier().name }}</p>
+            </div>
+            <button class="acc-btn-outline" (click)="activeTab.set('settings')">Chỉnh sửa hồ sơ</button>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="acc-stats-grid">
+            <div class="acc-stat-card">
+              <div class="acc-stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              </div>
+              <div class="acc-stat-value">{{ orders().length }}</div>
+              <div class="acc-stat-label">Đơn hàng</div>
+            </div>
+            <div class="acc-stat-card" style="cursor:pointer" (click)="router.navigate(['/promotions'])">
+              <div class="acc-stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.91 8.84C20.88 8.3 20.37 8 19.81 8H15c-.23 0-.42-.16-.48-.38l-.47-1.56C13.86 5.4 13.34 5 12.74 5h-1.48c-.6 0-1.12.4-1.31.96l-.47 1.56C9.42 7.84 9.23 8 9 8H4.19c-.56 0-1.07.3-1.1.84C2.82 10.05 2.5 12.12 2.5 14c0 1.88.32 3.95.59 5.16.03.54.54.84 1.1.84H15c.23 0 .42.16.48.38l.47 1.56c.19.56.71.96 1.31.96h1.48c.6 0 1.12-.4 1.31-.96l.47-1.56c.06-.22.25-.38.48-.38h4.81c.56 0 1.07-.3 1.1-.84.27-1.21.59-3.28.59-5.16 0-1.88-.32-3.95-.59-5.16z"/></svg>
+              </div>
+              <div class="acc-stat-value">{{ userVouchers().length }}</div>
+              <div class="acc-stat-label">Voucher khả dụng</div>
+            </div>
+            <div class="acc-stat-card" style="cursor:pointer" (click)="router.navigate(['/promotions'])">
+              <div class="acc-stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </div>
+              <div class="acc-stat-value">{{ userPoints() }}</div>
+              <div class="acc-stat-label">Điểm tích lũy</div>
+            </div>
+            <div class="acc-stat-card">
+              <div class="acc-stat-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+              </div>
+              <div class="acc-stat-value">{{ userTier().name }}</div>
+              <div class="acc-stat-label">Hạng thành viên</div>
+            </div>
+          </div>
+
+          <!-- Recent Orders -->
+          <div class="acc-recent-orders">
+            <div class="acc-section-header">
+              <h3 class="acc-section-title">Đơn hàng gần đây</h3>
+              <a (click)="activeTab.set('orders')" class="acc-link">Xem tất cả</a>
+            </div>
+            @if (orders().length > 0) {
+              <div class="acc-order-list">
+                @for (order of orders().slice(0, 3); track order.id) {
+                  <div class="acc-order-item">
+                    <div class="acc-order-code">{{ order.orderCode }}</div>
+                    <div class="acc-order-date">{{ order.date }}</div>
+                    <div class="acc-order-total">{{ formatPrice(order.total) }}</div>
+                    <div class="acc-order-status {{ getOrderStatusClass(order.status) }}">
+                      {{ getOrderStatusText(order.status) }}
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="acc-empty">Chưa có đơn hàng nào</div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- ══════════════════════════════════════════════
+           TAB: SETTINGS
+      ══════════════════════════════════════════════ -->
+      @if (activeTab() === 'settings') {
+        <div class="acc-settings-container">
+          <!-- Section 1: Thông tin cá nhân -->
+          <div class="acc-settings-section">
+            <div class="acc-section-header">
+              <h2 class="acc-section-title">Thông tin cá nhân</h2>
+              <p class="acc-section-desc">Cập nhật thông tin hồ sơ của bạn</p>
+            </div>
+            <div class="acc-divider"></div>
+
+            @if (saved()) {
+              <div class="acc-alert-success">✓ Đã cập nhật thông tin thành công!</div>
+            }
+
+            <form (submit)="saveAccount($event)">
+              <div class="acc-form-row">
+                <div class="acc-field">
+                  <label>Tên hiển thị *</label>
+                  <input type="text" [value]="displayName()"
+                         (input)="displayName.set($any($event.target).value)"
+                         placeholder="Tên hiển thị" />
+                </div>
+                <div class="acc-field">
+                  <label>Email</label>
+                  <input type="email" [value]="user.email" disabled style="background:#f9fafb" />
+                </div>
+              </div>
+
+              <div class="acc-form-row">
+                <div class="acc-field">
+                  <label>Họ</label>
+                  <input type="text" [value]="firstName()"
+                         (input)="firstName.set($any($event.target).value)"
+                         placeholder="Họ" />
+                </div>
+                <div class="acc-field">
+                  <label>Tên</label>
+                  <input type="text" [value]="lastName()"
+                         (input)="lastName.set($any($event.target).value)"
+                         placeholder="Tên" />
+                </div>
+              </div>
+
+              <div class="acc-field">
+                <label>Số điện thoại</label>
+                <input type="tel" [value]="phone()"
+                       (input)="phone.set($any($event.target).value)"
+                       placeholder="0987 654 321" />
+              </div>
+
+              <div class="acc-form-actions">
+                <button type="button" class="acc-btn-outline" (click)="cancelAccount()">Hủy</button>
+                <button type="submit" class="acc-btn-primary" [disabled]="saving()">
+                  @if (saving()) { Đang lưu... } @else { Cập nhật thông tin }
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Section 2: Bảo mật -->
+          <div class="acc-settings-section">
+            <div class="acc-section-header">
+              <h2 class="acc-section-title">Bảo mật</h2>
+              <p class="acc-section-desc">Quản lý mật khẩu và bảo mật tài khoản</p>
+            </div>
+            <div class="acc-divider"></div>
+
+            <div class="acc-security-card">
+              <div class="acc-security-info">
+                <h3 class="acc-security-title">Đổi mật khẩu</h3>
+                <p class="acc-security-desc">Thay đổi mật khẩu để bảo vệ tài khoản của bạn</p>
+              </div>
+              <button class="acc-btn-outline">Đổi mật khẩu</button>
+            </div>
+
+            <div class="acc-security-info">
+              <p class="acc-security-note">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Lần cuối đổi mật khẩu: Chưa từng đổi
+              </p>
+            </div>
+          </div>
+
+          <!-- Section 3: Cài đặt thông báo -->
+          <div class="acc-settings-section">
+            <div class="acc-section-header">
+              <h2 class="acc-section-title">Cài đặt thông báo</h2>
+              <p class="acc-section-desc">Quản lý cách bạn nhận thông báo</p>
+            </div>
+            <div class="acc-divider"></div>
+
+            <div class="acc-notification-item">
+              <div class="acc-notification-info">
+                <h4 class="acc-notification-title">Thông báo khuyến mãi</h4>
+                <p class="acc-notification-desc">Nhận thông tin về voucher và ưu đãi mới</p>
+              </div>
+              <label class="acc-toggle">
+                <input type="checkbox" checked />
+                <span class="acc-toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="acc-notification-item">
+              <div class="acc-notification-info">
+                <h4 class="acc-notification-title">Thông báo đơn hàng</h4>
+                <p class="acc-notification-desc">Nhận cập nhật về trạng thái đơn hàng</p>
+              </div>
+              <label class="acc-toggle">
+                <input type="checkbox" checked />
+                <span class="acc-toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="acc-notification-item">
+              <div class="acc-notification-info">
+                <h4 class="acc-notification-title">Thông báo tin tức</h4>
+                <p class="acc-notification-desc">Nhận tin tức và bài viết mới từ Xanh Lá</p>
+              </div>
+              <label class="acc-toggle">
+                <input type="checkbox" />
+                <span class="acc-toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ══════════════════════════════════════════════
+           TAB: ADDRESSES
+      ══════════════════════════════════════════════ -->
+      @if (activeTab() === 'addresses') {
+        <div class="acc-section-header">
+          <h2 class="acc-section-title">Sổ địa chỉ</h2>
+          <button class="acc-btn-primary" (click)="showAddressForm.set(true)">+ Thêm địa chỉ mới</button>
+        </div>
+        <div class="acc-divider"></div>
+
+        @if (!cart.currentUser()?.addresses || cart.currentUser()!.addresses!.length === 0) {
+          @if (!showAddressForm()) {
+            <div class="acc-empty acc-empty-enhanced">
+              <div class="acc-empty-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+              </div>
+              <h3 class="acc-empty-title">Chưa có địa chỉ giao hàng</h3>
+              <p class="acc-empty-text">
+                Thêm địa chỉ giao hàng để việc đặt hàng nhanh chóng và thuận tiện hơn.
+              </p>
+              <button class="acc-btn-primary" (click)="showAddressForm.set(true)">
+                + Thêm địa chỉ đầu tiên
+              </button>
+            </div>
+          }
+        } @else {
+          <div class="acc-address-list">
+            @for (addr of cart.currentUser()!.addresses!; track addr.id) {
+              <div class="acc-address-card" [class.is-default]="addr.isDefault">
+                <div class="acc-address-top">
+                  <span class="acc-address-label">{{ addr.label }}</span>
+                  @if (addr.isDefault) {
+                    <span class="acc-badge-default">Mặc định</span>
+                  }
+                </div>
+                <div class="acc-address-name">{{ addr.fullName }}</div>
+                <div class="acc-address-detail">{{ addr.phone }}</div>
+                <div class="acc-address-detail">{{ addr.address }}</div>
+                <div class="acc-address-detail">{{ addr.city }}</div>
+                <div class="acc-address-actions">
+                  <button class="acc-link-btn" (click)="editAddress(addr.id)">Sửa</button>
+                  @if (!addr.isDefault) {
+                    <button class="acc-link-btn" (click)="setDefault(addr.id)">Đặt làm mặc định</button>
+                  }
+                  <button class="acc-link-btn acc-link-danger" (click)="removeAddress(addr.id)">Xóa</button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Form thêm địa chỉ -->
+        @if (showAddressForm()) {
+          <form class="acc-address-form" (submit)="addAddress($event)">
+            <h3 class="acc-block-title" style="margin-bottom:20px">Thêm địa chỉ mới</h3>
+
+            <div class="acc-grid-2">
+              <div class="acc-field" style="grid-column:1/-1">
+                <label>Nhãn địa chỉ</label>
+                <select [value]="addrLabel()" (change)="addrLabel.set($any($event.target).value)">
+                  <option value="Nhà riêng">Nhà riêng</option>
+                  <option value="Văn phòng">Văn phòng</option>
+                  <option value="Khác">Khác</option>
+                </select>
+              </div>
+              <div class="acc-field">
+                <label>Họ và tên *</label>
+                <input type="text" required placeholder="Nguyễn Văn A"
+                       [value]="addrFullName()" (input)="addrFullName.set($any($event.target).value)" />
+              </div>
+              <div class="acc-field">
+                <label>Số điện thoại</label>
+                <input type="tel" placeholder="0987 654 321"
+                       [value]="addrPhone()" (input)="addrPhone.set($any($event.target).value)" />
+              </div>
+              <div class="acc-field" style="grid-column:1/-1">
+                <label>Địa chỉ *</label>
+                <input type="text" required placeholder="Số nhà, tên đường, phường/xã"
+                       [value]="addrAddress()" (input)="addrAddress.set($any($event.target).value)" />
+              </div>
+              <div class="acc-field">
+                <label>Thành phố / Tỉnh</label>
+                <input type="text" placeholder="TP. Hồ Chí Minh"
+                       [value]="addrCity()" (input)="addrCity.set($any($event.target).value)" />
+              </div>
+            </div>
+
+            <label class="acc-checkbox-row" style="margin-top:16px">
+              <input type="checkbox" [checked]="addrDefault()"
+                     (change)="addrDefault.set($any($event.target).checked)" />
+              <span>Đặt làm địa chỉ mặc định</span>
+            </label>
+
+            <div class="acc-form-actions" style="margin-top:20px">
+              <button type="button" class="acc-btn-outline" (click)="showAddressForm.set(false)">Hủy</button>
+              <button type="submit" class="acc-btn-primary">Lưu địa chỉ</button>
+            </div>
+          </form>
+        }
+      }
+
+      <!-- ══════════════════════════════════════════════
+           TAB: ORDERS
+      ══════════════════════════════════════════════ -->
+      @if (activeTab() === 'orders') {
+        <div class="acc-section-header">
+          <h2 class="acc-section-title">Đơn hàng của tôi</h2>
+        </div>
+        <div class="acc-divider"></div>
+
+        <!-- Filters and Search -->
+        <div class="acc-orders-filters">
+          <div class="acc-filter-group">
+            <button
+              class="acc-filter-btn"
+              [class.is-active]="orderStatusFilter() === 'all'"
+              (click)="orderStatusFilter.set('all')"
+            >
+              Tất cả
+            </button>
+            <button
+              class="acc-filter-btn"
+              [class.is-active]="orderStatusFilter() === 'pending'"
+              (click)="orderStatusFilter.set('pending')"
+            >
+              Chờ xác nhận
+            </button>
+            <button
+              class="acc-filter-btn"
+              [class.is-active]="orderStatusFilter() === 'processing'"
+              (click)="orderStatusFilter.set('processing')"
+            >
+              Đang xử lý
+            </button>
+            <button
+              class="acc-filter-btn"
+              [class.is-active]="orderStatusFilter() === 'delivering'"
+              (click)="orderStatusFilter.set('delivering')"
+            >
+              Đang giao
+            </button>
+            <button
+              class="acc-filter-btn"
+              [class.is-active]="orderStatusFilter() === 'completed'"
+              (click)="orderStatusFilter.set('completed')"
+            >
+              Đã giao
+            </button>
+            <button
+              class="acc-filter-btn"
+              [class.is-active]="orderStatusFilter() === 'cancelled'"
+              (click)="orderStatusFilter.set('cancelled')"
+            >
+              Đã hủy
+            </button>
+          </div>
+          <div class="acc-search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input
+              type="text"
+              [value]="orderSearchQuery()"
+              (input)="orderSearchQuery.set($any($event.target).value)"
+              placeholder="Tìm kiếm theo mã đơn..."
+            />
+          </div>
+        </div>
+
+        @if (filteredOrders().length > 0) {
+          <div class="acc-order-list-full">
+            @for (order of filteredOrders(); track order.id) {
+              <div class="acc-order-card">
+                <div class="acc-order-header">
+                  <div class="acc-order-code">{{ order.orderCode }}</div>
+                  <div class="acc-order-date">{{ order.date }}</div>
+                  <div class="acc-order-status {{ getOrderStatusClass(order.status) }}">
+                    {{ getOrderStatusText(order.status) }}
+                  </div>
+                </div>
+                <div class="acc-order-items">
+                  @for (item of order.items; track item.name) {
+                    <div class="acc-order-item">
+                      <span class="acc-item-name">{{ item.name }}</span>
+                      <span class="acc-item-qty">x{{ item.quantity }}</span>
+                      <span class="acc-item-price">{{ formatPrice(item.price) }}</span>
+                    </div>
+                  }
+                </div>
+                <div class="acc-order-footer">
+                  <div class="acc-order-total">Tổng: {{ formatPrice(order.total) }}</div>
+                  <a [routerLink]="'/order-detail/' + order.orderCode" class="acc-btn-outline acc-btn-sm">Chi tiết</a>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="acc-empty">Không tìm thấy đơn hàng nào</div>
+        }
+      }
+
+    </div>
+  } @else {
+    <!-- Chưa đăng nhập -->
+    <div style="text-align:center;padding:80px 24px">
+      <div style="font-size:48px;margin-bottom:16px">🔒</div>
+      <h2 style="font-family:var(--xanh-font-display);font-size:24px;margin-bottom:12px">
+        Bạn chưa đăng nhập
+      </h2>
+      <p style="color:var(--xanh-muted);margin-bottom:24px">
+        Vui lòng đăng nhập để xem thông tin tài khoản.
+      </p>
+      <button class="xanhla-btn-primary" (click)="cart.openAuthModal('login')">Đăng nhập</button>
+    </div>
+  }
+</app-shell>

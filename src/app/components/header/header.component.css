@@ -1,0 +1,481 @@
+/* Header Xanh Lá — supermarket style */
+:host {
+  display: block;
+  position: relative;
+  z-index: 60;
+}
+
+/* ── Announcement bar ── */
+.xanhla-wix-bar {
+  height: 36px;
+  background: #1e4226;
+  color: #f0ead8;
+  font-size: 11.5px;
+  letter-spacing: .03em;
+}
+.xanhla-wix-bar::before {
+  width: 5px; height: 5px;
+  background: var(--amber-300);
+  margin-right: 4px;
+}
+
+/* ── Main header ── */
+.xanhla-header {
+  top: 36px;
+  height: 72px;
+  padding-inline: clamp(16px, 4.5vw, 72px);
+  background: #fff;
+  border-bottom: 1px solid #e4e8dc;
+  box-shadow: 0 2px 16px rgba(30,60,28,.06);
+}
+
+/* ── Logo ── */
+.xanhla-logo {
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.xanhla-brand-mark {
+  display: inline-flex;
+  width: 36px; height: 36px;
+  align-items: center; justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #e8f0de;
+  color: #2a5c30;
+  transition: background .15s;
+}
+.xanhla-brand-mark svg { width: 22px; height: 22px; }
+.xanhla-logo:hover .xanhla-brand-mark { background: #d4e8c4; }
+
+.xanhla-brand-word {
+  color: #1e3d24;
+  font-family: var(--xanh-font-display);
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -.04em;
+}
+
+/* ── Nav ── */
+.xanhla-nav {
+  gap: clamp(10px, 1.8vw, 28px);
+}
+.xanhla-nav a {
+  padding: 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2c3e2d;
+  letter-spacing: .01em;
+}
+.xanhla-nav a::after {
+  bottom: 1px;
+  height: 2px;
+  background: var(--green-700);
+}
+.xanhla-nav a:hover,
+.xanhla-nav a.is-active { color: var(--green-700); }
+
+/* ── Actions area ── */
+.xanhla-header-actions { gap: 4px; margin-left: auto; }
+
+/* Member bar */
+.xanhla-member-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: #2c3e2d;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.xanhla-member-bar:hover {
+  border-color: #d4e0ca;
+  background: #f2f7ed;
+  color: var(--green-700);
+}
+
+.xanhla-member-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--green-700); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+}
+.xanhla-member-avatar-placeholder {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid var(--green-300);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--green-700);
+}
+
+/* Cart button */
+.xanhla-cart-button {
+  width: 44px; height: 44px;
+  background: #f5f0de;
+  color: #4a4e20;
+  border: 1px solid #e8e2c8;
+  border-radius: 50%;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.xanhla-cart-button:hover {
+  background: var(--green-700);
+  color: #fff;
+  border-color: var(--green-700);
+}
+
+/* Cart badge */
+.xanhla-cart-badge {
+  background: #d63f3f;
+  border: 2px solid #fff;
+}
+
+/* User dropdown menu */
+.xanhla-user-menu {
+  top: 64px;
+  border-top: 2.5px solid var(--green-700);
+  box-shadow: 0 14px 44px rgba(28,52,26,.14);
+  border-radius: 0 0 var(--r-md) var(--r-md);
+}
+
+.xanhla-user-menu a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.xanhla-user-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+/* Mobile toggle */
+.xanhla-mobile-toggle {
+  width: 42px; height: 42px;
+  display: flex;
+  align-items: center; justify-content: center;
+  border-radius: 50%;
+  color: #2c3e2d;
+  transition: background .15s;
+}
+.xanhla-mobile-toggle:hover { background: #f0f4eb; }
+
+/* Focus ring */
+.xanhla-header :focus-visible,
+.xanhla-drawer-body a:focus-visible,
+.xanhla-drawer-close:focus-visible {
+  outline: 3px solid var(--amber-500);
+  outline-offset: 3px;
+}
+
+/* ── Tablet ── */
+@media (max-width: 960px) {
+  .xanhla-header { height: 64px; }
+  .xanhla-logo { height: 40px; }
+  .xanhla-brand-mark { width: 30px; height: 30px; }
+  .xanhla-brand-word { font-size: 18px; }
+  .xanhla-member-bar > span { display: none; }
+  .xanhla-member-bar { padding: 5px; }
+}
+
+/* ── Mobile ── */
+@media (max-width: 520px) {
+  .xanhla-wix-bar { height: 30px; font-size: 10.5px; letter-spacing: 0; }
+  .xanhla-header { top: 30px; padding-inline: 14px; }
+  .xanhla-header-actions { gap: 4px; }
+  .xanhla-cart-button { width: 40px; height: 40px; }
+}
+/* ---- Header layout refinements ---- */
+.xanhla-header {
+  justify-content: flex-start;
+  gap: 14px;
+}
+
+.xanhla-nav {
+  gap: clamp(12px, 2vw, 32px);
+}
+
+.xanhla-nav a.is-active {
+  border-bottom: 2px solid var(--green-700);
+}
+
+.xanhla-nav-badge {
+  font-size: 13px;
+  margin-right: 3px;
+}
+
+/* ── Category button ── */
+.xl-cat-menu-wrapper { position: relative; flex-shrink: 0; }
+.xl-cat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 16px;
+  border: 1.5px solid #dbe6d3;
+  border-radius: var(--r-full);
+  background: #f4f8ef;
+  color: #1e4226;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.xl-cat-btn:hover,
+.xl-cat-btn.is-open {
+  background: var(--green-700);
+  border-color: var(--green-700);
+  color: #fff;
+}
+.xl-cat-chevron { transition: transform .18s; }
+.xl-cat-btn.is-open .xl-cat-chevron { transform: rotate(180deg); }
+
+.xl-cat-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 80;
+  width: 280px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #e4e8dc;
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(28,52,26,.14);
+}
+.xl-cat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #2c3e2d;
+}
+.xl-cat-item:hover { background: #f2f7ed; color: var(--green-700); }
+
+/* ── Search ── */
+.xl-header-search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 46px;
+  padding: 4px 4px 4px 16px;
+  background: #f6f7f3;
+  border: 1.5px solid #e2e8d8;
+  border-radius: var(--r-full);
+}
+.xl-header-search:focus-within {
+  background: #fff;
+  border-color: var(--green-700);
+  box-shadow: 0 0 0 3px rgba(45,106,45,.12);
+}
+.xl-search-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
+}
+.xl-search-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--green-700);
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.xl-search-btn:hover { background: #1e4226; }
+
+/* ── Icon buttons ── */
+.xl-icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #2c3e2d;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.xl-icon-btn:hover { background: #f0f4eb; }
+
+.xl-notif-wrapper { position: relative; }
+.xl-notif-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 99px;
+  background: #d63f3f;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  border: 2px solid #fff;
+}
+.xl-notif-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 80;
+  width: 320px;
+  background: #fff;
+  border: 1px solid #e4e8dc;
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(28,52,26,.14);
+  overflow: hidden;
+}
+.xl-notif-title {
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 800;
+  border-bottom: 1px solid #eef2e8;
+}
+.xl-notif-item {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #2c3e2d;
+  border-bottom: 1px solid #f3f6ef;
+}
+.xl-notif-item:last-child { border-bottom: 0; }
+.xl-notif-item:hover { background: #f6faf2; }
+.xl-notif-item.is-unread { background: #f4f8ef; }
+.xl-notif-item strong { display: block; font-size: 13px; }
+.xl-notif-item small { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+
+/* ── Area selector ── */
+.xl-area-wrapper { position: relative; }
+.xl-area-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 42px;
+  padding: 0 12px 0 10px;
+  border: 1.5px solid #dbe6d3;
+  border-radius: var(--r-full);
+  background: #fff;
+  color: #1e4226;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.xl-area-btn:hover { background: #f4f8ef; }
+.xl-area-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 80;
+  width: 240px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #e4e8dc;
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(28,52,26,.14);
+}
+.xl-area-title {
+  padding: 8px 10px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.xl-area-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #2c3e2d;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+.xl-area-item:hover,
+.xl-area-item.is-selected { background: #f2f7ed; color: var(--green-700); }
+
+/* ── Subnav ── */
+.xl-subnav {
+  background: #fff;
+  border-bottom: 1px solid #eef2e8;
+}
+.xl-subnav-inner {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 max(16px, 4vw);
+  scrollbar-width: none;
+}
+.xl-subnav-inner::-webkit-scrollbar { display: none; }
+.xl-subnav-link {
+  flex-shrink: 0;
+  padding: 11px 14px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #3d4f3e;
+  border-bottom: 2.5px solid transparent;
+}
+.xl-subnav-link:hover,
+.xl-subnav-link.is-active {
+  color: var(--green-700);
+  border-bottom-color: var(--green-700);
+}
+
+.xl-drawer-section-label {
+  padding-top: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+@media (max-width: 1100px) {
+  .xl-area-label { display: none; }
+  .xl-cat-btn span { display: none; }
+  .xl-cat-btn { padding: 0 12px; }
+}
+
+@media (max-width: 960px) {
+  .xl-header-search,
+  .xl-cat-menu-wrapper,
+  .xl-area-wrapper,
+  .xl-subnav { display: none; }
+}

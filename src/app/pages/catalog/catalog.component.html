@@ -1,0 +1,131 @@
+<app-shell>
+  <div class="xanhla-container">
+    <div class="xanhla-breadcrumb" style="margin-top:32px">
+      <a routerLink="/">Trang chủ</a>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      <span>All Products</span>
+      @if (category()) {
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <span>{{ category() }}</span>
+      }
+    </div>
+
+    <div class="xanhla-shop-layout">
+      <!-- SIDEBAR -->
+      <aside class="xanhla-sidebar">
+        <h3 class="xanhla-sidebar-section-title">Duyệt theo</h3>
+        <ul class="xanhla-browse-list">
+          <li><a [class.is-active]="!category()" routerLink="/category/all-products">Tất cả sản phẩm</a></li>
+          <li><a [class.is-active]="category() === 'vegetables'" routerLink="/category/vegetables">Vegetables</a></li>
+          <li><a [class.is-active]="category() === 'meat'" routerLink="/category/meat">Meat</a></li>
+          <li><a [class.is-active]="category() === 'fruits'" routerLink="/category/fruits">Fruits</a></li>
+        </ul>
+
+        <div class="xanhla-sidebar-section-title">
+          <span>Lọc theo</span>
+          @if (hasActiveFilters()) {
+            <button class="xanhla-clear-filters-btn" type="button" (click)="clearAll()">Xóa tất cả</button>
+          }
+        </div>
+
+        <!-- Price slider -->
+        <div class="xanhla-filter-group">
+          <button class="xanhla-filter-group-header" type="button" (click)="toggleAccordion('price')">
+            <span>Giá</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 [style.transform]="openAccordions()['price'] ? 'rotate(180deg)' : 'none'" style="transition:transform 0.2s">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          @if (openAccordions()['price']) {
+            <div class="xanhla-filter-group-content">
+              <div class="xanhla-price-slider">
+                <div class="xanhla-price-range-inputs">
+                  <span>8 ₫</span><span>{{ maxPrice() }} ₫</span>
+                </div>
+                <input type="range" min="8" max="45" [value]="maxPrice()"
+                       (input)="maxPrice.set(+$any($event.target).value)" />
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Dynamic facet filters -->
+        @for (key of facetKeys; track key) {
+          <div class="xanhla-filter-group">
+            <button class="xanhla-filter-group-header" type="button" (click)="toggleAccordion(key)">
+              <span>{{ facetLabel(key) }}</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   [style.transform]="openAccordions()[key] ? 'rotate(180deg)' : 'none'" style="transition:transform 0.2s">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            @if (openAccordions()[key]) {
+              <div class="xanhla-filter-group-content">
+                @for (val of $any(facets)[key]; track val) {
+                  <label class="xanhla-checkbox-label">
+                    <input type="checkbox" [checked]="isChecked(key, val)"
+                           (change)="toggleFilter(key, val)" />
+                    <span>{{ val }}</span>
+                  </label>
+                }
+              </div>
+            }
+          </div>
+        }
+      </aside>
+
+      <!-- PRODUCTS GRID -->
+      <main>
+        <div class="xanhla-shop-toolbar">
+          <div class="xanhla-shop-count"><strong>{{ filteredProducts().length }} sản phẩm</strong></div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:14px;color:var(--xanh-muted)">Sắp xếp theo:</span>
+            <select class="xanhla-sort-select" [value]="sortBy()" (change)="sortBy.set($any($event.target).value)">
+              <option value="recommended">Đề xuất</option>
+              <option value="newest">Mới nhất</option>
+              <option value="price-asc">Giá: Thấp đến cao</option>
+              <option value="price-desc">Giá: Cao đến thấp</option>
+              <option value="name-asc">Tên A-Z</option>
+              <option value="name-desc">Tên Z-A</option>
+            </select>
+          </div>
+        </div>
+
+        @if (filteredProducts().length === 0) {
+          <div style="text-align:center;padding:64px 0">
+            <h3 style="font-size:20px;margin-bottom:8px">Không tìm thấy sản phẩm phù hợp</h3>
+            <p style="color:var(--xanh-muted);margin-bottom:20px">Hãy thử bỏ bớt các bộ lọc để xem nhiều sản phẩm hơn.</p>
+            <button class="xanhla-btn-outline" type="button" (click)="clearAll()">Xóa tất cả bộ lọc</button>
+          </div>
+        } @else {
+          <div class="xanhla-shop-grid">
+            @for (prod of filteredProducts(); track prod._id) {
+              <div class="xanhla-prod-card">
+                <a class="xanhla-prod-card-img" [routerLink]="productSlug(prod)">
+                  <img [src]="prod.image" [alt]="prod.name" loading="lazy" />
+                </a>
+                <div class="xanhla-prod-card-body">
+                  <div class="xanhla-prod-card-cat">{{ prod.categoryVi || prod.category }}</div>
+                  <a class="xanhla-prod-card-name" [routerLink]="productSlug(prod)">{{ prod.name }}</a>
+                  @if (prod.description) {
+                    <div class="xanhla-prod-card-desc">{{ prod.description }}</div>
+                  }
+                  <div class="xanhla-prod-card-price-row">
+                    <span class="xanhla-prod-card-price">{{ prod.price }}</span>
+                    @if (prod.weight) {
+                      <span class="xanhla-prod-card-unit">/ {{ prod.weight }}</span>
+                    }
+                  </div>
+                  <button class="xanhla-prod-card-add" type="button" (click)="addToCart(prod)">
+                    Thêm vào giỏ
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </main>
+    </div>
+  </div>
+</app-shell>

@@ -1,0 +1,58 @@
+<div class="admin-login-page">
+  <div class="admin-login-card">
+    <!-- Logo -->
+    <div class="admin-login-logo">
+      <div class="admin-logo-icon">🌿</div>
+      <h1>Xanh Lá Admin</h1>
+      <p>Quản trị hệ thống</p>
+    </div>
+
+    <!-- Error -->
+    @if (error()) {
+      <div class="admin-alert admin-alert-error">
+        <span>⚠</span> {{ error() }}
+      </div>
+    }
+
+    <!-- Form -->
+    <form (submit)="submit($event)" class="admin-login-form">
+      <div class="admin-field">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          placeholder="admin@xanhla.farm"
+          [value]="email()"
+          (input)="email.set($any($event.target).value)"
+          required
+          autocomplete="username"
+        />
+      </div>
+
+      <div class="admin-field">
+        <label for="password">Mật khẩu</label>
+        <input
+          id="password"
+          type="password"
+          placeholder="••••••••"
+          [value]="password()"
+          (input)="password.set($any($event.target).value)"
+          required
+          autocomplete="current-password"
+        />
+      </div>
+
+      <button class="admin-btn-primary" type="submit" [disabled]="loading()">
+        @if (loading()) {
+          <span class="admin-spinner"></span> Đang đăng nhập...
+        } @else {
+          Đăng nhập
+        }
+      </button>
+    </form>
+
+    <p class="admin-login-hint">
+      Default: <code>admin&#64;xanhla.farm</code> / <code>admin123</code>
+    </p>
+  </div>
+</div>

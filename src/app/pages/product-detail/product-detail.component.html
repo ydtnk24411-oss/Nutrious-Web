@@ -1,0 +1,206 @@
+<app-shell>
+  @if (product(); as p) {
+    <div class="xanhla-container" style="padding:40px max(24px,4vw)">
+      <div class="xanhla-breadcrumb">
+        <a routerLink="/">Trang chủ</a>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <a routerLink="/category/all-products">Shop</a>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <span>{{ p.name }}</span>
+      </div>
+
+      <div class="xanhla-product-detail-layout">
+        <div class="xanhla-product-gallery-main">
+          <img [src]="p.image" [alt]="p.name" />
+        </div>
+
+        <div class="xanhla-product-info-panel">
+          <h1>{{ p.name }}</h1>
+          <div class="xanhla-product-info-price">Giá {{ p.price }}</div>
+
+          @if (p.options && p.options.length > 0) {
+            <div class="xanhla-option-group">
+              <span class="xanhla-option-label">{{ p.options[0].name }}</span>
+              <div class="xanhla-option-buttons">
+                @for (v of p.options[0].values; track v) {
+                  <button type="button" class="xanhla-option-btn" [class.is-active]="selectedRipeness() === v"
+                          (click)="selectedRipeness.set(v)">{{ v }}</button>
+                }
+              </div>
+            </div>
+          }
+
+          <div style="margin-bottom:24px">
+            <span class="xanhla-option-label">Số lượng</span>
+            <div class="xanhla-quantity-picker">
+              <button type="button" (click)="dec()">−</button>
+              <span>{{ quantity() }}</span>
+              <button type="button" (click)="inc()">+</button>
+            </div>
+          </div>
+
+          <div class="xanhla-product-cta-row">
+            <button class="xanhla-btn-primary" type="button" style="flex:1" (click)="addToCart()">Thêm vào giỏ hàng</button>
+            <button class="xanhla-btn-secondary" type="button" style="flex:1" (click)="buyNow()">Mua ngay</button>
+          </div>
+
+          <div class="xanhla-product-accordions">
+            <div class="xanhla-p-accordion">
+              <button class="xanhla-p-accordion-header" type="button" (click)="toggleAccordion('info')">
+                <span>Thông tin sản phẩm</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     [style.transform]="openAccordions().info ? 'rotate(180deg)' : 'none'" style="transition:transform 0.2s">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              @if (openAccordions().info) {
+                <div class="xanhla-p-accordion-body">
+                  <p>{{ p.description }}</p>
+                  <p>Được nuôi trồng và bảo quản bằng quy trình chuẩn sạch của Xanh Lá.</p>
+                </div>
+              }
+            </div>
+            <div class="xanhla-p-accordion">
+              <button class="xanhla-p-accordion-header" type="button" (click)="toggleAccordion('refund')">
+                <span>Chính sách đổi trả &amp; hoàn tiền</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     [style.transform]="openAccordions().refund ? 'rotate(180deg)' : 'none'" style="transition:transform 0.2s">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              @if (openAccordions().refund) {
+                <div class="xanhla-p-accordion-body">Đổi trả 100% miễn phí hoặc hoàn tiền trong 24 giờ nếu sản phẩm không đảm bảo chất lượng.</div>
+              }
+            </div>
+            <div class="xanhla-p-accordion">
+              <button class="xanhla-p-accordion-header" type="button" (click)="toggleAccordion('shipping')">
+                <span>Chính sách giao hàng</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     [style.transform]="openAccordions().shipping ? 'rotate(180deg)' : 'none'" style="transition:transform 0.2s">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              @if (openAccordions().shipping) {
+                <div class="xanhla-p-accordion-body">Giao hàng nhanh trong ngày hoặc tối đa 30 phút đối với hình thức Đến lấy tại điểm phân phối.</div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Review Section ─────────────────────────────── -->
+      <div class="xanhla-reviews-section">
+        <h2>Đánh giá sản phẩm</h2>
+
+        <!-- Review Summary -->
+        <div class="xanhla-review-summary">
+          <div class="xanhla-review-average">
+            <div class="xanhla-review-score">{{ reviewStats.averageRating }}</div>
+            <div class="xanhla-review-stars">
+              @for (star of starsArray; track star) {
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="color:{{ star <= reviewStats.averageRating ? '#f59e0b' : '#e5e7eb' }}">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+              }
+            </div>
+            <div class="xanhla-review-count">{{ reviewStats.totalReviews }} đánh giá</div>
+          </div>
+
+          <div class="xanhla-review-distribution">
+            @for (rating of [5, 4, 3, 2, 1]; track rating) {
+              <div class="xanhla-review-dist-row">
+                <span class="xanhla-review-dist-label">{{ rating }} sao</span>
+                <div class="xanhla-review-dist-bar">
+                  <div class="xanhla-review-dist-fill" [style.width.%]="getRatingPercent(rating)"></div>
+                </div>
+                <span class="xanhla-review-dist-count">{{ getRatingCount(rating) }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Write Review Button -->
+        <button class="xanhla-btn-primary" type="button" (click)="showReviewForm.set(!showReviewForm())">
+          Viết đánh giá
+        </button>
+
+        <!-- Review Form -->
+        @if (showReviewForm()) {
+          <div class="xanhla-review-form">
+            <h3>Viết đánh giá của bạn</h3>
+            <div class="xanhla-rating-input">
+              <span>Đánh giá:</span>
+              @for (star of starsArray; track star) {
+                <button type="button" class="xanhla-rating-star" (click)="setRating(star)">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="color:{{ star <= reviewRating() ? '#f59e0b' : '#e5e7eb' }}">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                </button>
+              }
+            </div>
+            <input type="text" placeholder="Tiêu đề (tùy chọn)" [(ngModel)]="reviewTitle" class="xanhla-input" style="margin-bottom:12px">
+            <textarea placeholder="Nội dung đánh giá..." [(ngModel)]="reviewContent" class="xanhla-input" rows="4" style="margin-bottom:12px"></textarea>
+            <button class="xanhla-btn-primary" type="button" (click)="submitReview()" [disabled]="submittingReview()">
+              @if (submittingReview()) { Đang gửi... } @else { Gửi đánh giá }
+            </button>
+          </div>
+        }
+
+        <!-- Review Filters -->
+        <div class="xanhla-review-filters">
+          <button class="xanhla-filter-btn" [class.active]="reviewFilter() === 'all'" (click)="setReviewFilter('all')">Tất cả</button>
+          <button class="xanhla-filter-btn" [class.active]="reviewFilter() === '5'" (click)="setReviewFilter('5')">5 sao</button>
+          <button class="xanhla-filter-btn" [class.active]="reviewFilter() === '4'" (click)="setReviewFilter('4')">4 sao</button>
+          <button class="xanhla-filter-btn" [class.active]="reviewFilter() === '3'" (click)="setReviewFilter('3')">3 sao</button>
+          <button class="xanhla-filter-btn" [class.active]="reviewFilter() === 'latest'" (click)="setReviewFilter('latest')">Mới nhất</button>
+          <button class="xanhla-filter-btn" [class.active]="reviewFilter() === 'withImages'" (click)="setReviewFilter('withImages')">Có hình ảnh</button>
+        </div>
+
+        <!-- Review List -->
+        <div class="xanhla-review-list">
+          @for (review of reviews; track review.id) {
+            <div class="xanhla-review-item">
+              <div class="xanhla-review-header">
+                <div class="xanhla-review-author">
+                  <strong>{{ review.userName }}</strong>
+                  @if (review.verifiedPurchase) {
+                    <span class="xanhla-verified-badge">Đã mua hàng</span>
+                  }
+                </div>
+                <div class="xanhla-review-date">{{ review.createdAt | date:'dd/MM/yyyy' }}</div>
+              </div>
+              <div class="xanhla-review-rating">
+                @for (star of starsArray; track star) {
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:{{ star <= review.rating ? '#f59e0b' : '#e5e7eb' }}">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                }
+              </div>
+              @if (review.title) {
+                <h4 class="xanhla-review-title">{{ review.title }}</h4>
+              }
+              <p class="xanhla-review-content">{{ review.content }}</p>
+              <div class="xanhla-review-footer">
+                <button class="xanhla-helpful-btn" (click)="markHelpful(review.id)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-1.3z"/>
+                    <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+                  </svg>
+                  Hữu ích ({{ review.helpfulCount }})
+                </button>
+              </div>
+            </div>
+          }
+          @if (reviews.length === 0) {
+            <div class="xanhla-empty-reviews">Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá!</div>
+          }
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="xanhla-container" style="padding:64px max(24px,4vw);text-align:center">
+      <p>Không tìm thấy sản phẩm.</p>
+      <a class="xanhla-btn-primary" routerLink="/category/all-products">Quay lại Shop</a>
+    </div>
+  }
+</app-shell>

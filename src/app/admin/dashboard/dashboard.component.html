@@ -1,0 +1,336 @@
+<!-- Loading -->
+@if (loading()) {
+  <div class="dash-loading">
+    <div class="admin-spinner" style="width:40px;height:40px;border-width:3px;border-color:rgba(61,77,58,.15);border-top-color:#3d4d3a;margin:0 auto 16px"></div>
+    <p>Đang tải dữ liệu...</p>
+  </div>
+}
+@if (error()) {
+  <div class="admin-alert admin-alert-error" style="margin-bottom:24px">Lỗi: {{ error() }}</div>
+}
+
+@if (!loading() && stats(); as s) {
+
+  <!-- ── Hero Banner with Image ───────────────────────────── -->
+  <div class="dash-hero-banner">
+    <div class="dash-hero-content">
+      <h1 class="dash-hero-title">Xin chào, {{ auth.user()?.name ?? 'Admin' }}!</h1>
+      <p class="dash-hero-subtitle">Cùng Xanh Lá lan tỏa lối sống xanh và dinh dưỡng mỗi ngày!</p>
+      <div class="dash-hero-stats">
+        <div class="dash-hero-stat">
+          <span class="dash-hero-stat-value">{{ formatPrice(s.totalRevenue) }}</span>
+          <span class="dash-hero-stat-label">Doanh thu tháng này</span>
+        </div>
+        <div class="dash-hero-stat">
+          <span class="dash-hero-stat-value">{{ s.totalOrders }}</span>
+          <span class="dash-hero-stat-label">Đơn hàng</span>
+        </div>
+        <div class="dash-hero-stat">
+          <span class="dash-hero-stat-value">{{ s.totalUsers }}</span>
+          <span class="dash-hero-stat-label">Khách hàng</span>
+        </div>
+      </div>
+    </div>
+    <div class="dash-hero-image">
+      <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&h=400&fit=crop" alt="Fresh vegetables" />
+    </div>
+  </div>
+
+  <!-- ── Greeting & Date Range ───────────────────────────── -->
+  <div class="dash-header">
+    <div class="dash-greeting">
+      <p class="dash-greeting-subtitle">Tổng quan hoạt động</p>
+    </div>
+    <div class="dash-date-range">
+      <div class="dash-filter-group">
+        <button
+          class="dash-filter-btn"
+          [class.is-active]="timeFilter() === '7d'"
+          (click)="onTimeFilterChange('7d')"
+        >7 ngày</button>
+        <button
+          class="dash-filter-btn"
+          [class.is-active]="timeFilter() === '30d'"
+          (click)="onTimeFilterChange('30d')"
+        >30 ngày</button>
+        <button
+          class="dash-filter-btn"
+          [class.is-active]="timeFilter() === '90d'"
+          (click)="onTimeFilterChange('90d')"
+        >90 ngày</button>
+        <button
+          class="dash-filter-btn"
+          [class.is-active]="timeFilter() === 'custom'"
+          (click)="onTimeFilterChange('custom')"
+        >Tùy chỉnh</button>
+      </div>
+      @if (timeFilter() === 'custom') {
+        <div class="dash-custom-dates">
+          <input
+            type="date"
+            [value]="customStartDate()"
+            (input)="onCustomDateChange('start', $any($event.target).value)"
+            class="dash-date-input"
+          />
+          <span>đến</span>
+          <input
+            type="date"
+            [value]="customEndDate()"
+            (input)="onCustomDateChange('end', $any($event.target).value)"
+            class="dash-date-input"
+          />
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- ── KPI Cards ─────────────────────────────────────── -->
+  <div class="dash-kpi-grid">
+    @for (card of kpiCards; track card.key) {
+      <div class="dash-kpi-card">
+        <div class="dash-kpi-icon" [style.background]="card.bgColor">
+          <span [innerHTML]="card.svgIcon"></span>
+        </div>
+        <div class="dash-kpi-content">
+          <div class="dash-kpi-label">{{ card.label }}</div>
+          <div class="dash-kpi-value">
+            @if (card.isCurrency) {
+              {{ formatPrice(statValue(card.key)) }}
+            } @else {
+              {{ statValue(card.key) }}
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ── Charts Row 1 ───────────────────────────────────── -->
+  <div class="dash-charts-row">
+    <!-- Revenue Over Time -->
+    <div class="dash-chart-card dash-chart-lg">
+      <div class="dash-chart-header">
+        <h3 class="dash-chart-title">Doanh thu theo thời gian</h3>
+        <div class="dash-chart-tabs">
+          <button class="dash-chart-tab active">Theo ngày</button>
+          <button class="dash-chart-tab">Kỳ trước</button>
+        </div>
+      </div>
+      <div class="dash-line-chart">
+        <svg width="100%" height="200" viewBox="0 0 600 200" preserveAspectRatio="none">
+          <!-- Grid -->
+          <line x1="0" y1="50" x2="600" y2="50" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4 4"/>
+          <line x1="0" y1="100" x2="600" y2="100" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4 4"/>
+          <line x1="0" y1="150" x2="600" y2="150" stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4 4"/>
+          <!-- Line -->
+          <polyline
+            [attr.points]="linePoints"
+            fill="none"
+            stroke="#3d4d3a"
+            stroke-width="3"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+          />
+          <!-- Area under line -->
+          <polygon
+            [attr.points]="lineAreaPoints"
+            fill="url(#gradient)"
+            opacity="0.1"
+          />
+          <defs>
+            <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style="stop-color:#3d4d3a;stop-opacity:0.3"/>
+              <stop offset="100%" style="stop-color:#3d4d3a;stop-opacity:0"/>
+            </linearGradient>
+          </defs>
+          <!-- Dots -->
+          @for (d of lineData(); track d.date; let i = $index) {
+            <circle
+              [attr.cx]="(i / (lineData().length - 1)) * 560 + 20"
+              [attr.cy]="linePointY(d.revenue)"
+              r="5"
+              fill="#3d4d3a"
+              stroke="#fff"
+              stroke-width="2"
+            />
+          }
+        </svg>
+        <!-- X labels -->
+        <div class="dash-line-labels">
+          @for (d of lineData(); track d.date) {
+            <span>{{ d.date }}</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue by Product Group -->
+    <div class="dash-chart-card">
+      <div class="dash-chart-header">
+        <h3 class="dash-chart-title">Doanh thu theo nhóm sản phẩm</h3>
+      </div>
+      @if (barData().length === 0) {
+        <div class="dash-chart-empty">Chưa có dữ liệu doanh thu</div>
+      } @else {
+        <div class="dash-bar-chart-lg">
+          @for (bar of barData(); track bar.label; let i = $index) {
+            <div class="dash-bar-col-lg">
+              <div class="dash-bar-wrap-lg">
+                <div class="dash-bar"
+                     [class.dash-bar-highlight]="isHighlight(i)"
+                     [style.height.px]="barHeight(bar.revenue)"
+                     [title]="formatPrice(bar.revenue)">
+                </div>
+              </div>
+              <div class="dash-bar-label">{{ bar.label }}</div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- ── Charts Row 2 ───────────────────────────────────── -->
+  <div class="dash-charts-row">
+    <!-- Top Selling Products -->
+    <div class="dash-chart-card">
+      <div class="dash-chart-header">
+        <h3 class="dash-chart-title">Top sản phẩm bán chạy</h3>
+      </div>
+      @if (topProducts().length === 0) {
+        <div class="dash-chart-empty">Chưa có dữ liệu bán hàng</div>
+      } @else {
+        <div class="dash-table-sm">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Sản phẩm</th>
+                <th>Số lượng</th>
+                <th>Doanh thu</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of topProducts(); track item.name) {
+                <tr>
+                  <td style="font-weight:500">{{ item.name }}</td>
+                  <td><strong>{{ item.quantity }}</strong></td>
+                  <td>{{ formatPrice(item.revenue) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    <!-- Order Status Ratio -->
+    <div class="dash-chart-card">
+      <div class="dash-chart-header">
+        <h3 class="dash-chart-title">Tỷ lệ đơn hàng theo trạng thái</h3>
+      </div>
+      @if (hasOrderStatusData()) {
+        <div class="dash-donut-chart">
+          <svg width="180" height="180" viewBox="0 0 180 180">
+            @for (seg of getDonutSegments(); track seg.status) {
+              <circle cx="90" cy="90" r="70" fill="none" [attr.stroke]="seg.color" stroke-width="30" [attr.stroke-dasharray]="seg.dashArray" [attr.stroke-dashoffset]="seg.dashOffset" />
+            }
+          </svg>
+          <div class="dash-donut-legend">
+            @for (seg of getDonutSegments(); track seg.status) {
+              <div class="dash-legend-item">
+                <span class="dash-legend-dot" [style.background]="seg.color"></span>
+                <span>{{ seg.label }}</span>
+                <span class="dash-legend-value">{{ seg.percentage }}%</span>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="dash-chart-empty">Chưa có dữ liệu đơn hàng</div>
+      }
+    </div>
+  </div>
+
+  <!-- ── Recent Orders ─────────────────────────────────── -->
+  <div class="dash-recent-section">
+    <div class="dash-recent-header">
+      <h2 class="dash-section-h" style="margin:0">Đơn hàng gần đây</h2>
+      <a routerLink="/admin/orders" class="admin-btn-secondary" style="font-size:13px;padding:8px 18px">
+        Xem tất cả
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:4px">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </a>
+    </div>
+
+    @if (s.recentOrders.length === 0) {
+      <div class="admin-empty" style="padding:48px;background:#fff;border-radius:16px;border:1px solid #e5e7eb">
+        <div class="admin-empty-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+        </div>
+        <p>Chưa có đơn hàng nào.</p>
+      </div>
+    } @else {
+      <div class="admin-card" style="padding:0;overflow:hidden">
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Mã đơn</th>
+                <th>Khách hàng</th>
+                <th>Tổng tiền</th>
+                <th>Trạng thái</th>
+                <th>Ngày đặt</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (order of s.recentOrders; track order._id) {
+                <tr>
+                  <td>
+                    <code style="font-size:12px;background:#f3f4f6;padding:4px 10px;border-radius:6px;color:#374151;font-weight:600">
+                      {{ order.orderCode }}
+                    </code>
+                  </td>
+                  <td style="font-weight:500">{{ order.guestName || '—' }}</td>
+                  <td><strong style="color:#1f2937">{{ formatPrice(order.total) }}</strong></td>
+                  <td>
+                    <span class="admin-badge" [class]="'badge-' + order.status">
+                      {{ orderStatusMap[order.status] || order.status }}
+                    </span>
+                  </td>
+                  <td style="color:#6b7280;font-size:13px">
+                    {{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ── Sale Insights ───────────────────────────────────── -->
+  @if (insights().length > 0) {
+    <div class="dash-insights-section">
+      <h2 class="dash-section-h" style="margin:0 0 16px 0">Sale Insights</h2>
+      <div class="dash-insights-grid">
+        @for (insight of insights(); track insight) {
+          <div class="dash-insight-card">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <span>{{ insight }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+}

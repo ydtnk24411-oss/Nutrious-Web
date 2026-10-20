@@ -1,0 +1,65 @@
+<app-shell>
+  <div class="menus-page">
+
+    <!-- Header -->
+    <div class="menus-header">
+      <div class="xanhla-container">
+        <span class="xanhla-eyebrow">Thực đơn & Dinh dưỡng</span>
+        <h1 class="menus-title">Nguyên liệu tươi sạch</h1>
+        <p class="menus-desc">Khám phá nguyên liệu sạch từ nông trại Xanh Lá cho bữa ăn dinh dưỡng trọn vẹn mỗi ngày.</p>
+      </div>
+    </div>
+
+    <div class="xanhla-container menus-body">
+
+      @if (loading()) {
+        <div class="menus-loading">Đang tải thực đơn...</div>
+      }
+      @if (error()) {
+        <div class="menus-error">{{ error() }}</div>
+      }
+
+      @for (sec of sections(); track sec.title) {
+        <div class="menus-section">
+
+          <!-- Section heading -->
+          <div class="menus-section-head">
+            <h2 class="menus-section-title">{{ sec.title }}</h2>
+            <span class="menus-section-count">{{ sec.items.length }} sản phẩm</span>
+          </div>
+
+          <!-- Grid card -->
+          <div class="menus-grid">
+            @for (prod of sec.items; track prod._id) {
+              <div class="xanhla-prod-card menus-card">
+                <a class="xanhla-prod-card-img" [routerLink]="'/product-page/' + prod.slug">
+                  <img [src]="prod.image" [alt]="prod.name" loading="lazy" />
+                </a>
+                <div class="xanhla-prod-card-body">
+                  <div class="xanhla-prod-card-cat">{{ prod.categoryVi || prod.category }}</div>
+                  <a class="xanhla-prod-card-name" [routerLink]="'/product-page/' + prod.slug">
+                    {{ prod.name }}
+                  </a>
+                  @if (prod.description) {
+                    <div class="xanhla-prod-card-desc">{{ prod.description }}</div>
+                  }
+                  <div class="xanhla-prod-card-price-row">
+                    <span class="xanhla-prod-card-price">{{ prod.price }}</span>
+                    @if (prod.weight) {
+                      <span class="xanhla-prod-card-unit">/ {{ prod.weight }}</span>
+                    }
+                  </div>
+                  <button class="xanhla-prod-card-add" type="button" (click)="addToCart(prod)">
+                    Thêm vào giỏ
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+
+        </div>
+      }
+
+    </div>
+  </div>
+</app-shell>

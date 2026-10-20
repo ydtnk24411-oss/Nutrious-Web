@@ -1,0 +1,157 @@
+<footer class="xanhla-footer" id="footer">
+  <div class="xanhla-footer-trust-banner">
+    <div class="xanhla-container">
+      <div class="xanhla-trust-grid">
+        <div class="xanhla-trust-item">
+          <div class="xanhla-trust-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+          <div>
+            <h5>Nông sản &amp; thực phẩm</h5>
+            <p>Những lựa chọn cho căn bếp mỗi ngày</p>
+          </div>
+        </div>
+        <div class="xanhla-trust-item">
+          <div class="xanhla-trust-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div>
+            <h5>Gợi ý dinh dưỡng</h5>
+            <p>Tham khảo lựa chọn phù hợp với nhu cầu</p>
+          </div>
+        </div>
+        <div class="xanhla-trust-item">
+          <div class="xanhla-trust-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div>
+            <h5>Đặt hàng trực tuyến</h5>
+            <p>Chọn sản phẩm ngay trên cửa hàng</p>
+          </div>
+        </div>
+        <div class="xanhla-trust-item">
+          <div class="xanhla-trust-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+          </div>
+          <div>
+            <h5>Thông tin rõ ràng</h5>
+            <p>Xem các chính sách và hướng dẫn hỗ trợ</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="xanhla-container">
+    <div class="xanhla-footer-main">
+      <div class="xanhla-footer-col">
+        <a class="xanhla-footer-logo" routerLink="/">
+          <span class="xanhla-brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M19.7 3.8C12.9 3.6 7.4 5.8 5.1 10.1c-1.9 3.6-.3 7.5 3.3 8.1 4.8.9 9.1-4.1 11.3-14.4Z" fill="currentColor" />
+              <path d="M3.8 21c2.8-5.3 6.5-8.8 11.6-12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+            </svg>
+          </span>
+          <span class="xanhla-brand-word">Xanh Lá</span>
+        </a>
+        <p class="xanhla-brand-desc">Nông sản, thực phẩm lành mạnh và dịch vụ dinh dưỡng cho những bữa ăn gần gũi mỗi ngày.</p>
+      </div>
+
+      <div class="xanhla-footer-col">
+        <h4 class="xanhla-footer-heading">Sản phẩm &amp; dịch vụ</h4>
+        <ul class="xanhla-footer-links">
+          <li><a routerLink="/online-ordering">Đặt hàng trực tuyến</a></li>
+          <li><a routerLink="/category/vegetables">Rau củ tươi</a></li>
+          <li><a routerLink="/category/fruits">Trái cây</a></li>
+          <li><a routerLink="/category/meat">Thịt &amp; hải sản</a></li>
+          <li><a routerLink="/book-online">Lớp học nấu ăn</a></li>
+          <li><a routerLink="/event-list">Sự kiện Xanh Lá</a></li>
+        </ul>
+      </div>
+
+      <div class="xanhla-footer-col">
+        <h4 class="xanhla-footer-heading">Tiện ích thông minh</h4>
+        <ul class="xanhla-footer-links">
+          <li><a routerLink="/nutrition">🥗 Dinh dưỡng thông minh</a></li>
+          <li><a routerLink="/cook-with-what-you-have">🍳 Nấu gì hôm nay?</a></li>
+          <li><a routerLink="/tracker-page">Theo dõi đơn hàng</a></li>
+          <li><a routerLink="/account">Tài khoản của tôi</a></li>
+        </ul>
+      </div>
+
+      <div class="xanhla-footer-col">
+        <h4 class="xanhla-footer-heading">Chính sách &amp; hỗ trợ</h4>
+        <ul class="xanhla-footer-links">
+          <li><a href="#" (click)="openPolicy('shipping', $event)">Chính sách giao hàng &amp; Đồng kiểm</a></li>
+          <li><a href="#" (click)="openPolicy('returns', $event)">Chính sách đổi trả &amp; hoàn tiền</a></li>
+          <li><a href="#" (click)="openPolicy('privacy', $event)">Chính sách bảo mật thông tin</a></li>
+          <li><a routerLink="/tracker-page">Tra cứu trạng thái đơn hàng</a></li>
+          <li><a routerLink="/account">Chương trình thành viên Xanh Lá Club</a></li>
+        </ul>
+      </div>
+
+      <div class="xanhla-footer-col">
+        <h4 class="xanhla-footer-heading">Bản tin dinh dưỡng</h4>
+        <p class="xanhla-newsletter-desc">Đăng ký để nhận công thức món ăn và thông tin từ Xanh Lá.</p>
+        <form class="xanhla-newsletter-form" (submit)="handleSubscribe($event)">
+          <input type="email" placeholder="Email của bạn" aria-label="Email của bạn" [value]="email()" (input)="email.set($any($event.target).value)" required />
+          <button type="submit" aria-label="Đăng ký nhận bản tin"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></button>
+        </form>
+        @if (subscribed()) {
+          <div style="font-size:13px;color:var(--xanh-moss);margin-bottom:12px;">Đã đăng ký nhận bản tin thành công!</div>
+        }
+        <div class="xanhla-social-wrap">
+          <span class="xanhla-social-title">Kết nối cùng Xanh Lá:</span>
+          <div class="xanhla-social-icons">
+            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/></svg></a>
+            <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33zM9.75 15.02V8.53l5.9 3.25-5.9 3.24z"/></svg></a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="xanhla-footer-bottom">
+      <div>© 2026 <strong>Xanh Lá</strong> — Nông Nghiệp Hữu Cơ &amp; Dinh Dưỡng Thông Minh. Bảo lưu mọi quyền.</div>
+      <div class="xanhla-payment-methods">
+        <span class="xanhla-payment-badge">COD</span>
+        <span class="xanhla-payment-badge">VietQR</span>
+        <span class="xanhla-payment-badge">VISA</span>
+        <span class="xanhla-payment-badge">MasterCard</span>
+        <span class="xanhla-payment-badge">MoMo</span>
+        <span class="xanhla-payment-badge">ZaloPay</span>
+      </div>
+    </div>
+  </div>
+
+  @if (activePolicy(); as policy) {
+    <div class="xanhla-policy-modal-backdrop" (click)="closePolicy()">
+      <div class="xanhla-policy-modal" (click)="$event.stopPropagation()">
+        <div class="xanhla-policy-modal-header">
+          <div>
+            <span class="xanhla-policy-tag">Thông tin hỗ trợ</span>
+            <h3>{{ policy.title }}</h3>
+            <p>{{ policy.subtitle }}</p>
+          </div>
+          <button type="button" class="xanhla-policy-close-btn" (click)="closePolicy()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div class="xanhla-policy-modal-body">
+          @for (sec of policy.sections; track sec.heading) {
+            <div class="xanhla-policy-sec">
+              <h4>{{ sec.heading }}</h4>
+              <ul>
+                @for (item of sec.content; track item) {
+                  <li>{{ item }}</li>
+                }
+              </ul>
+            </div>
+          }
+        </div>
+        <div class="xanhla-policy-modal-footer">
+          <div>Thông tin chính sách và hỗ trợ khách hàng Xanh Lá</div>
+          <button type="button" class="xanhla-btn-primary" (click)="closePolicy()" style="padding:6px 20px;font-size:13px;">Đã hiểu</button>
+        </div>
+      </div>
+    </div>
+  }
+</footer>

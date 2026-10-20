@@ -1,0 +1,275 @@
+/* ── Review Section ───────────────────────────────────── */
+.xanhla-reviews-section {
+  margin-top: 60px;
+  padding-top: 40px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.xanhla-reviews-section h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1c3a1c;
+  margin-bottom: 24px;
+}
+
+.xanhla-review-summary {
+  display: flex;
+  gap: 40px;
+  background: #f9fafb;
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.xanhla-review-average {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.xanhla-review-score {
+  font-size: 48px;
+  font-weight: 700;
+  color: #1c3a1c;
+}
+
+.xanhla-review-stars {
+  display: flex;
+  gap: 4px;
+}
+
+.xanhla-review-count {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.xanhla-review-distribution {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.xanhla-review-dist-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.xanhla-review-dist-label {
+  width: 40px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.xanhla-review-dist-bar {
+  flex: 1;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.xanhla-review-dist-fill {
+  height: 100%;
+  background: #f59e0b;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.xanhla-review-dist-count {
+  width: 40px;
+  text-align: right;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.xanhla-review-form {
+  background: #f9fafb;
+  padding: 24px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.xanhla-review-form h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1c3a1c;
+  margin-bottom: 16px;
+}
+
+.xanhla-rating-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.xanhla-rating-star {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.2s ease;
+}
+
+.xanhla-rating-star:hover {
+  transform: scale(1.1);
+}
+
+.xanhla-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #d4e8d4;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.xanhla-input:focus {
+  border-color: #2d6a2d;
+  box-shadow: 0 0 0 3px rgba(45, 106, 45, 0.1);
+}
+
+.xanhla-review-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.xanhla-filter-btn {
+  padding: 8px 16px;
+  background: #fff;
+  border: 1px solid #d4e8d4;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #1c3a1c;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.xanhla-filter-btn:hover {
+  background: #f9fafb;
+  border-color: #2d6a2d;
+}
+
+.xanhla-filter-btn.active {
+  background: #2d6a2d;
+  color: #fff;
+  border-color: #2d6a2d;
+}
+
+.xanhla-review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.xanhla-review-item {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.xanhla-review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.xanhla-review-author {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.xanhla-review-author strong {
+  font-size: 14px;
+  color: #1c3a1c;
+}
+
+.xanhla-verified-badge {
+  font-size: 11px;
+  background: #dcfce7;
+  color: #166534;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.xanhla-review-date {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.xanhla-review-rating {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.xanhla-review-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1c3a1c;
+  margin: 0 0 8px 0;
+}
+
+.xanhla-review-content {
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 0 0 12px 0;
+}
+
+.xanhla-review-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.xanhla-helpful-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.xanhla-helpful-btn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  color: #1c3a1c;
+}
+
+.xanhla-empty-reviews {
+  text-align: center;
+  padding: 40px;
+  color: #9ca3af;
+  font-size: 14px;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
+@media (max-width: 768px) {
+  .xanhla-review-summary {
+    flex-direction: column;
+    gap: 24px;
+  }
+  .xanhla-review-filters {
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+}

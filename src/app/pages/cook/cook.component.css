@@ -1,0 +1,503 @@
+/* ==========================================================================
+   Trang Nấu Gì Hôm Nay? — Xanh Lá
+   ========================================================================== */
+
+:host { display: block; }
+.xanhla-cook-page { padding-bottom: 80px; }
+
+/* ── BREADCRUMB ── */
+.xanhla-breadcrumb {
+  padding: 16px 0 0;
+  font-size: 12.5px; color: var(--muted);
+  display: flex; align-items: center; gap: 6px;
+}
+.xanhla-breadcrumb a { color: var(--green-700); text-decoration: none; }
+.xanhla-breadcrumb a:hover { text-decoration: underline; }
+.xanhla-breadcrumb-sep { color: var(--muted); }
+.xanhla-breadcrumb-current { color: var(--muted); }
+
+/* ── HERO ── */
+.xanhla-cook-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+  padding: clamp(32px,5vw,60px) 0 28px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 36px;
+}
+
+.xanhla-cook-hero-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.xanhla-cook-hero-image {
+  border-radius: var(--xanh-radius-md);
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+
+.xanhla-cook-hero-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+.xanhla-cook-eyebrow {
+  display: inline-block;
+  font-size: 11.5px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--green-700); margin-bottom: 10px;
+}
+.xanhla-cook-title {
+  font-size: clamp(28px,4.5vw,46px);
+  font-weight: 800; letter-spacing: -.03em; line-height: 1.12;
+  color: #1e3820; margin: 0 0 12px;
+}
+.xanhla-cook-desc {
+  font-size: 15px; color: var(--muted); max-width: 620px; line-height: 1.75; margin: 0;
+}
+
+/* ── TOAST ── */
+.xanhla-cook-toast {
+  position: fixed; top: 80px; right: 20px; z-index: 9999;
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 18px;
+  background: #1e4226; color: #fff;
+  border-radius: 10px; box-shadow: 0 6px 24px rgba(30,60,28,.2);
+  font-size: 13.5px; font-weight: 600;
+  animation: toastIn .25s ease;
+}
+@keyframes toastIn { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:none; } }
+
+/* ── INPUT PANEL ── */
+.xanhla-cook-panel {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: clamp(20px,3vw,36px);
+  margin-bottom: 40px;
+  box-shadow: 0 4px 16px rgba(30,60,28,.05);
+}
+.xanhla-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px; margin-bottom: 20px;
+}
+.xanhla-panel-title { font-size: 17px; font-weight: 700; color: #1e3820; margin: 0; }
+.xanhla-panel-badge {
+  padding: 3px 12px; border-radius: var(--r-full);
+  background: #e9f0e0; color: #1e4226;
+  font-size: 12.5px; font-weight: 700;
+}
+
+/* ── SEARCH ROW ── */
+.xanhla-input-group { display: flex; gap: 10px; margin-bottom: 14px; }
+.xanhla-search-wrapper {
+  flex: 1; position: relative;
+  display: flex; align-items: center;
+}
+.xanhla-input-icon {
+  position: absolute; left: 14px; color: var(--muted); pointer-events: none;
+}
+.xanhla-ingredient-input {
+  width: 100%; height: 48px;
+  padding: 0 40px 0 44px;
+  border: 1.5px solid var(--border); border-radius: 12px;
+  font-size: 14px; background: var(--paper);
+  color: var(--ink); font-family: inherit; outline: none;
+  transition: border-color .15s;
+}
+.xanhla-ingredient-input:focus { border-color: var(--green-700); }
+.xanhla-input-clear {
+  position: absolute; right: 12px;
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-size: 14px; padding: 4px;
+  transition: color .12s;
+}
+.xanhla-input-clear:hover { color: #c0392b; }
+
+/* Autocomplete dropdown */
+.xanhla-autocomplete-dropdown {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 10px 32px rgba(30,60,28,.12);
+  z-index: 200;
+  overflow: hidden;
+}
+.xanhla-autocomplete-label {
+  padding: 8px 14px; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+  background: var(--paper); border-bottom: 1px solid var(--border);
+}
+.xanhla-autocomplete-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; font-size: 13.5px; cursor: pointer;
+  color: var(--ink); background: none; border: none;
+  width: 100%; text-align: left; font-family: inherit;
+  transition: background .1s;
+}
+.xanhla-autocomplete-item:hover { background: #f0f7ea; }
+.xanhla-autocomplete-item svg { color: var(--green-700); flex-shrink: 0; }
+
+/* Add button */
+.xanhla-btn-add {
+  height: 48px; padding: 0 20px;
+  display: flex; align-items: center; gap: 7px;
+  background: var(--green-700); color: #fff;
+  border: none; border-radius: 12px;
+  font-size: 14px; font-weight: 700; font-family: inherit;
+  cursor: pointer; white-space: nowrap; transition: background .15s;
+}
+.xanhla-btn-add:hover { background: #1a4d24; }
+
+/* Quick suggestions */
+.xanhla-quick-section { margin-bottom: 16px; }
+.xanhla-quick-label {
+  display: block; font-size: 12px; font-weight: 700;
+  color: var(--muted); text-transform: uppercase; letter-spacing: .07em;
+  margin-bottom: 8px;
+}
+.xanhla-quick-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.xanhla-quick-chip {
+  padding: 6px 14px; border: 1.5px solid var(--border);
+  border-radius: var(--r-full); background: var(--paper);
+  font-size: 13px; font-weight: 600; color: #2a402c;
+  cursor: pointer; font-family: inherit;
+  transition: border-color .15s, background .15s;
+}
+.xanhla-quick-chip:hover { border-color: var(--green-700); background: #f0f7ea; }
+
+/* Tags */
+.xanhla-ingredients-tags { margin-bottom: 20px; }
+.xanhla-tags-title {
+  font-size: 12px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .07em; margin-bottom: 10px;
+}
+.xanhla-tags-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+.xanhla-tag-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 12px; background: #e9f0e0;
+  border: 1px solid #c8ddb8; border-radius: var(--r-full);
+  font-size: 13px; font-weight: 600; color: #1e4226;
+}
+.xanhla-tag-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--green-700); flex-shrink: 0;
+}
+.xanhla-tag-name {}
+.xanhla-tag-remove {
+  background: none; border: none; cursor: pointer;
+  color: #5a7a5c; font-size: 14px; line-height: 1; padding: 0;
+  transition: color .12s;
+}
+.xanhla-tag-remove:hover { color: #c0392b; }
+
+/* Filter grid */
+.xanhla-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px; margin-bottom: 4px;
+}
+.xanhla-filter-item { display: flex; flex-direction: column; gap: 5px; }
+.xanhla-filter-label {
+  font-size: 12px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .07em;
+}
+.xanhla-number-control {
+  display: flex; align-items: center;
+  border: 1.5px solid var(--border); border-radius: 10px; height: 42px; overflow: hidden;
+}
+.xanhla-number-btn {
+  width: 40px; height: 100%; background: var(--paper);
+  border: none; font-size: 18px; font-weight: 600; color: #2a402c;
+  cursor: pointer; font-family: inherit; transition: background .12s;
+}
+.xanhla-number-btn:hover:not(:disabled) { background: #e9f0e0; }
+.xanhla-number-btn:disabled { opacity: .4; cursor: not-allowed; }
+.xanhla-number-val {
+  flex: 1; text-align: center; font-size: 14px; font-weight: 600; color: var(--ink);
+}
+.xanhla-filter-select,
+.xanhla-filter-input {
+  height: 42px; padding: 0 12px;
+  border: 1.5px solid var(--border); border-radius: 10px;
+  font-size: 13.5px; background: var(--paper); color: var(--ink);
+  font-family: inherit; outline: none; transition: border-color .15s;
+}
+.xanhla-filter-select:focus, .xanhla-filter-input:focus { border-color: var(--green-700); }
+
+/* CTA panel */
+.xanhla-panel-cta { text-align: center; margin-top: 24px; }
+.xanhla-btn-submit {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 14px 36px;
+  background: var(--green-700); color: #fff;
+  border: none; border-radius: var(--r-full);
+  font-size: 15px; font-weight: 700; font-family: inherit;
+  cursor: pointer; transition: background .15s, transform .15s;
+}
+.xanhla-btn-submit:hover { background: #1a4d24; transform: translateY(-2px); }
+.xanhla-btn-submit:disabled { opacity: .65; cursor: not-allowed; transform: none; }
+.xanhla-spinner {
+  width: 17px; height: 17px;
+  border: 2px solid rgba(255,255,255,.35); border-top-color: #fff;
+  border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── RESULTS SECTION ── */
+.xanhla-results-section { margin-top: 48px; }
+.xanhla-results-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px; margin-bottom: 28px;
+}
+.xanhla-results-title {
+  font-size: 22px; font-weight: 800; color: #1e3820;
+  margin: 0 0 4px; letter-spacing: -.02em;
+}
+.xanhla-results-sub { font-size: 13.5px; color: var(--muted); margin: 0; }
+.xanhla-results-count {
+  padding: 4px 14px; background: #e9f0e0;
+  border-radius: var(--r-full); font-size: 12.5px; font-weight: 700;
+  color: #1e4226; white-space: nowrap; align-self: flex-start;
+}
+
+/* ── EMPTY STATE ── */
+.xanhla-empty-state {
+  text-align: center; padding: 60px 20px;
+}
+.xanhla-empty-icon { font-size: 52px; display: block; margin-bottom: 14px; }
+.xanhla-empty-title { font-size: 19px; font-weight: 700; color: #2a402c; margin: 0 0 10px; }
+.xanhla-empty-desc {
+  font-size: 14px; color: var(--muted);
+  max-width: 380px; margin: 0 auto 20px; line-height: 1.7;
+}
+.xanhla-btn-reset {
+  padding: 10px 24px; border: 1.5px solid var(--green-700);
+  border-radius: var(--r-full); background: transparent;
+  color: var(--green-700); font-size: 14px; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: background .15s;
+}
+.xanhla-btn-reset:hover { background: #f0f7ea; }
+
+/* ── RECIPE GRID ── */
+.xanhla-recipe-grid { display: flex; flex-direction: column; gap: 20px; }
+
+/* ── RECIPE CARD ── */
+.xanhla-recipe-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 18px; overflow: hidden;
+  transition: box-shadow .2s;
+}
+.xanhla-recipe-card:hover { box-shadow: 0 6px 22px rgba(30,60,28,.1); }
+
+.xanhla-card-body {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+}
+@media (max-width: 600px) {
+  .xanhla-card-body { grid-template-columns: 1fr; }
+}
+
+.xanhla-card-media {
+  position: relative; min-height: 180px;
+  background: #dde8d4;
+}
+.xanhla-card-img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+
+/* Readiness badges */
+.xanhla-badge {
+  position: absolute; top: 12px; left: 12px;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px; border-radius: var(--r-full);
+  font-size: 12px; font-weight: 700;
+  backdrop-filter: blur(4px);
+}
+.xanhla-badge-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+.xanhla-badge-ready { background: rgba(233,240,224,.92); color: #1e4226; }
+.xanhla-badge-ready .xanhla-badge-dot { background: #2e7d32; }
+.xanhla-badge-almost { background: rgba(255,248,224,.92); color: #7a5e00; }
+.xanhla-badge-almost .xanhla-badge-dot { background: #e6a817; }
+.xanhla-badge-more { background: rgba(252,232,232,.92); color: #9c1f1f; }
+.xanhla-badge-more .xanhla-badge-dot { background: #c62828; }
+
+.xanhla-card-content { padding: 18px 22px 20px; }
+.xanhla-card-meta {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;
+}
+.xanhla-meta-item {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 12.5px; color: var(--muted);
+}
+.xanhla-meta-dot { color: var(--border); font-size: 16px; line-height: 1; }
+.xanhla-card-name {
+  font-size: 18px; font-weight: 700; color: #1e3820; margin: 0 0 6px;
+}
+.xanhla-card-desc { font-size: 13.5px; color: var(--muted); line-height: 1.65; margin: 0 0 12px; }
+
+.xanhla-card-stats { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.xanhla-stat-have { font-size: 13px; font-weight: 700; color: #1e4226; }
+.xanhla-stat-missing { font-size: 13px; color: #9c1f1f; }
+
+.xanhla-card-actions {}
+.xanhla-btn-expand {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px;
+  border: 1.5px solid var(--green-700); border-radius: var(--r-full);
+  background: transparent; color: var(--green-700);
+  font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer;
+  transition: background .15s;
+}
+.xanhla-btn-expand:hover { background: #f0f7ea; }
+.xanhla-btn-expand svg { transition: transform .25s; }
+.xanhla-btn-expand svg.is-rotated { transform: rotate(180deg); }
+
+/* ── EXPANDED WRAPPER ── */
+.xanhla-expanded-wrapper {
+  border-top: 1.5px solid var(--border);
+  padding: 28px 24px 24px;
+  background: #fafcf8;
+  animation: expandIn .25s ease;
+}
+@keyframes expandIn { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:none; } }
+
+.xanhla-expanded-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+@media (max-width: 700px) {
+  .xanhla-expanded-grid { grid-template-columns: 1fr; }
+}
+
+.xanhla-subhead {
+  font-size: 14px; font-weight: 700; color: #1e3820;
+  margin: 0 0 14px;
+}
+
+/* Fridge box */
+.xanhla-fridge-box,
+.xanhla-missing-box {
+  margin-bottom: 20px;
+}
+.xanhla-box-title {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 13.5px; font-weight: 700; margin-bottom: 12px;
+}
+.xanhla-text-green { color: #1e4226; }
+.xanhla-text-amber { color: #7a5e00; }
+
+.xanhla-ing-list { list-style: none; margin: 0; padding: 0; }
+.xanhla-ing-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; border-radius: 8px;
+  margin-bottom: 4px;
+}
+.xanhla-ing-item.is-ready { background: #f0f7ea; }
+.xanhla-ing-bullet { color: #2e7d32; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+.xanhla-ing-title { font-size: 13.5px; font-weight: 600; color: #2a402c; flex: 1; }
+.xanhla-ing-qty { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+.xanhla-empty-hint { font-size: 13px; color: var(--muted); font-style: italic; margin: 0; }
+
+/* Missing items */
+.xanhla-missing-items { margin-bottom: 16px; }
+.xanhla-missing-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 12px; margin-bottom: 6px;
+  background: #fffcf4; border: 1px solid #f0e6c8;
+  border-radius: 10px; cursor: pointer;
+}
+.xanhla-checkbox { accent-color: var(--green-700); width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; cursor: pointer; }
+.xanhla-missing-info { flex: 1; min-width: 0; }
+.xanhla-missing-name { font-size: 13.5px; font-weight: 600; color: #2a402c; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.xanhla-missing-scale { font-size: 12px; color: var(--muted); font-weight: 400; }
+.xanhla-product-match { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-top: 4px; }
+.xanhla-badge-source { font-size: 11px; font-weight: 700; color: var(--green-700); }
+.xanhla-prod-name { font-size: 12.5px; color: #2a402c; font-weight: 600; }
+.xanhla-prod-price { font-size: 12.5px; font-weight: 700; color: var(--green-700); }
+.xanhla-self-prep { font-size: 12px; color: #aaa; font-style: italic; display: block; margin-top: 3px; }
+
+.xanhla-ready-celebrate {
+  padding: 14px 16px; background: #e9f0e0;
+  border-radius: 10px; font-size: 14px; font-weight: 600; color: #1e4226;
+}
+
+/* Order panel */
+.xanhla-missing-order-panel {
+  padding: 16px; background: var(--white);
+  border: 1.5px solid var(--border); border-radius: 14px;
+}
+.xanhla-order-total-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px; font-size: 13.5px; color: var(--muted);
+}
+.xanhla-total-price { font-size: 18px; font-weight: 800; color: var(--green-700); }
+.xanhla-btn-add-cart {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 12px;
+  background: var(--green-700); color: #fff;
+  border: none; border-radius: 10px;
+  font-size: 14px; font-weight: 700; font-family: inherit;
+  cursor: pointer; transition: background .15s;
+  margin-bottom: 10px;
+}
+.xanhla-btn-add-cart:hover { background: #1a4d24; }
+.xanhla-btn-add-cart:disabled { opacity: .5; cursor: not-allowed; }
+.xanhla-cart-guarantee { font-size: 12px; color: var(--muted); margin: 0; line-height: 1.6; }
+
+/* Steps column */
+.xanhla-steps-list { list-style: none; margin: 0 0 20px; padding: 0; }
+.xanhla-step-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid #f2f5ef;
+}
+.xanhla-step-item:last-child { border-bottom: none; }
+.xanhla-step-num {
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; flex-shrink: 0;
+  background: var(--green-700); color: #fff;
+  border-radius: 50%; font-size: 12px; font-weight: 800;
+}
+.xanhla-step-text { font-size: 13.5px; color: #2a402c; line-height: 1.7; padding-top: 2px; }
+
+.xanhla-chef-tip {
+  padding: 14px 16px; background: #fffbe6;
+  border-left: 3px solid var(--amber-500); border-radius: 8px;
+}
+.xanhla-chef-tip strong { font-size: 13px; color: #5a4d00; display: block; margin-bottom: 4px; }
+.xanhla-chef-tip p { font-size: 13px; color: #5a4d00; margin: 0; line-height: 1.65; }
+
+/* ── WELCOME CARD ── */
+.xanhla-welcome-card {
+  text-align: center; padding: 64px 24px;
+  margin-top: 16px;
+  border: 2px dashed var(--border); border-radius: 20px;
+  background: #fafcf8;
+}
+.xanhla-welcome-graphic { color: var(--green-700); margin-bottom: 16px; }
+.xanhla-welcome-title { font-size: 20px; font-weight: 700; color: #1e3820; margin: 0 0 10px; }
+.xanhla-welcome-text {
+  font-size: 14px; color: var(--muted); max-width: 420px;
+  margin: 0 auto; line-height: 1.75;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+  .xanhla-cook-panel { padding: 16px; }
+  .xanhla-input-group { flex-wrap: wrap; }
+  .xanhla-btn-add { width: 100%; justify-content: center; }
+  .xanhla-filter-grid { grid-template-columns: 1fr 1fr; }
+  .xanhla-card-content { padding: 14px 16px 16px; }
+  .xanhla-expanded-wrapper { padding: 18px 16px; }
+  .xanhla-order-total-row { flex-direction: column; align-items: flex-start; gap: 4px; }
+}

@@ -1,0 +1,202 @@
+/* Footer Xanh Lá — supermarket style */
+:host { display: block; }
+
+/* ── Trust banner — nổi bật phía trên footer ── */
+.xanhla-footer-trust-banner {
+  padding: 28px 0;
+  background: #f4f7ed;
+  border-top: 1px solid #dde6d0;
+  border-bottom: 1px solid #dde6d0;
+}
+
+.xanhla-trust-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.xanhla-trust-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+}
+
+.xanhla-trust-icon {
+  display: flex;
+  width: 44px; height: 44px;
+  flex: 0 0 auto;
+  align-items: center; justify-content: center;
+  border: 1.5px solid #c8d9bc;
+  border-radius: 10px;
+  color: var(--green-700);
+  background: #fff;
+}
+
+.xanhla-trust-item h5 {
+  margin: 0 0 3px;
+  color: #213a27;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.xanhla-trust-item p {
+  margin: 0;
+  color: #5f7056;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* ── Main footer ── */
+.xanhla-footer {
+  padding-top: 52px;
+  background: #182f1e;
+}
+
+.xanhla-footer-main {
+  grid-template-columns: 1.1fr 1fr 1fr 1.15fr;
+  gap: clamp(22px, 3.5vw, 52px);
+  padding-bottom: 16px;
+}
+
+/* Logo */
+.xanhla-footer-logo {
+  display: inline-flex;
+  height: 44px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  text-decoration: none;
+}
+.xanhla-footer-logo .xanhla-brand-mark {
+  width: 30px; height: 30px;
+  background: rgba(240,200,80,.14);
+  color: #f0c850;
+}
+.xanhla-footer-logo .xanhla-brand-word {
+  color: #f6f1e4;
+  font-size: 18px;
+}
+
+.xanhla-brand-desc,
+.xanhla-newsletter-desc {
+  max-width: 300px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: rgba(255,255,255,.55);
+}
+
+/* Column headings */
+.xanhla-footer .xanhla-footer-col h4,
+.xanhla-footer-heading {
+  margin-bottom: 16px;
+  color: #e8c870;
+  font-family: var(--xanh-font-text);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+/* Links */
+.xanhla-footer-links {
+  margin: 0; padding: 0; list-style: none;
+}
+.xanhla-footer .xanhla-footer-links a {
+  display: block;
+  padding: 4px 0;
+  font-size: 13px;
+  color: rgba(255,255,255,.6);
+  line-height: 1.5;
+  transition: color .15s;
+}
+.xanhla-footer .xanhla-footer-links a:hover { color: #fff; }
+
+/* Newsletter */
+.xanhla-newsletter-form { margin-top: 16px; }
+.xanhla-newsletter-form input {
+  min-width: 0; min-height: 44px;
+  border-color: rgba(255,255,255,.2);
+  background: rgba(255,255,255,.07);
+  color: #fff;
+}
+.xanhla-newsletter-form input::placeholder { color: rgba(255,255,255,.38); }
+.xanhla-newsletter-form input:focus { border-color: var(--amber-500); }
+.xanhla-newsletter-form button {
+  display: flex;
+  min-width: 46px;
+  align-items: center; justify-content: center;
+  background: var(--amber-500);
+  transition: background .15s;
+}
+.xanhla-newsletter-form button:hover { background: var(--amber-700); }
+
+/* Social */
+.xanhla-social-wrap { margin-top: 20px; }
+.xanhla-social-title {
+  display: block;
+  margin-bottom: 10px;
+  color: rgba(255,255,255,.5);
+  font-size: 11.5px;
+  letter-spacing: .04em;
+}
+.xanhla-social-icons { display: flex; gap: 8px; }
+.xanhla-social-icons a {
+  display: flex;
+  width: 34px; height: 34px;
+  align-items: center; justify-content: center;
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 8px;
+  color: rgba(255,255,255,.7);
+  transition: color .18s, background .18s, transform .18s;
+}
+.xanhla-social-icons a:hover {
+  transform: translateY(-2px);
+  color: #182f1e;
+  background: #e8c870;
+  border-color: #e8c870;
+}
+
+/* Footer bottom */
+.xanhla-footer-bottom {
+  border-color: rgba(255,255,255,.12);
+  color: rgba(255,255,255,.48);
+  font-size: 12px;
+}
+
+.xanhla-payment-methods { display: flex; flex-wrap: wrap; gap: 6px; }
+.xanhla-payment-badge {
+  padding: 3px 8px;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 4px;
+  color: rgba(255,255,255,.55);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+/* Focus ring */
+.xanhla-newsletter-form input:focus-visible,
+.xanhla-newsletter-form button:focus-visible,
+.xanhla-footer a:focus-visible,
+.xanhla-social-icons a:focus-visible {
+  outline: 3px solid #e8c870;
+  outline-offset: 3px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .xanhla-trust-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .xanhla-footer-main { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .xanhla-footer-trust-banner { padding: 22px 0; }
+  .xanhla-trust-grid { grid-template-columns: 1fr 1fr; gap: 16px 12px; }
+  .xanhla-trust-item { align-items: flex-start; gap: 9px; }
+  .xanhla-trust-icon { width: 36px; height: 36px; border-radius: 8px; }
+  .xanhla-trust-icon svg { width: 18px; height: 18px; }
+  .xanhla-footer { padding-top: 40px; }
+  .xanhla-footer-main { gap: 28px 18px; }
+  .xanhla-footer-bottom { align-items: flex-start; flex-direction: column; padding: 18px 0; }
+}
+@media (max-width: 390px) {
+  .xanhla-footer-main { grid-template-columns: 1fr; }
+}

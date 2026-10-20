@@ -1,0 +1,55 @@
+<app-shell>
+  <div class="vouchers-page xanhla-container">
+    <div class="vouchers-header">
+      <h1 class="vouchers-title">Voucher & Khuyến mãi</h1>
+      <p class="vouchers-subtitle">Thu thập voucher để tiết kiệm khi mua sắm</p>
+    </div>
+
+    <div class="vouchers-tabs">
+      <button class="vouchers-tab" [class.active]="activeTab() === 'all'" (click)="activeTab.set('all')">Tất cả</button>
+      <button class="vouchers-tab" [class.active]="activeTab() === 'available'" (click)="activeTab.set('available')">Có thể thu thập</button>
+      <button class="vouchers-tab" [class.active]="activeTab() === 'collected'" (click)="activeTab.set('collected')">Đã thu thập ({{ collectedVouchers().length }})</button>
+    </div>
+
+    <div class="vouchers-grid">
+      @for (v of tabVouchers(); track v.id) {
+        <div class="voucher-card">
+          <div class="voucher-header">
+            <div class="voucher-type">{{ v.type === 'percentage' ? 'Giảm %' : v.type === 'fixed' ? 'Giảm trực tiếp' : v.type === 'freeship' ? 'Miễn phí giao hàng' : 'Theo danh mục' }}</div>
+            <div class="voucher-code">{{ v.code }}</div>
+          </div>
+          <div class="voucher-body">
+            <h3 class="voucher-name">{{ v.name }}</h3>
+            <p class="voucher-desc">{{ v.description }}</p>
+            @if (v.minValue) {
+              <div class="voucher-condition">Đơn tối thiểu: {{ v.minValue.toLocaleString('vi-VN') }}đ</div>
+            }
+            @if (v.maxValue) {
+              <div class="voucher-condition">Giảm tối đa: {{ v.maxValue.toLocaleString('vi-VN') }}đ</div>
+            }
+            <div class="voucher-expiry">Hạn dùng: {{ v.endDate }}</div>
+            <div class="voucher-usage">Đã dùng: {{ v.usedCount }}/{{ v.usageLimit }}</div>
+          </div>
+          <div class="voucher-footer">
+            @if (activeTab() === 'available' || activeTab() === 'all') {
+              @if (isCollected(v.id)) {
+                <button class="xanhla-btn-primary" disabled>Đã thu thập</button>
+              } @else {
+                <button class="xanhla-btn-primary" (click)="collectVoucher(v.id)">Thu thập</button>
+              }
+            } @else {
+              <button class="xanhla-btn-primary" disabled>Đã thu thập</button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (tabVouchers().length === 0) {
+      <div class="vouchers-empty">
+        <div style="font-size:48px;margin-bottom:16px">🎫</div>
+        <p>Không có voucher nào</p>
+      </div>
+    }
+  </div>
+</app-shell>
