@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0 --port $PORT",
-    "dev": "ng serve --host 0.0.0.0 --port $PORT",
+    "dev": "ng serve --port 4200",
     "build": "ng build --configuration production --base-href /",
     "typecheck": "ng build --configuration development",
     "watch": "ng build --watch --configuration development",
