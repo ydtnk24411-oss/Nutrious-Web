@@ -22,37 +22,6 @@ router.get('/', protect, adminOnly, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/users/:id — admin
-router.get('/:id', protect, adminOnly, async (req, res, next) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
-    res.json({ success: true, data: user });
-  } catch (err) { next(err); }
-});
-
-// PUT /api/users/:id — admin (update role / isActive)
-router.put('/:id', protect, adminOnly, async (req, res, next) => {
-  try {
-    const { role, isActive, name, phone } = req.body;
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { role, isActive, name, phone },
-      { new: true, runValidators: true }
-    );
-    if (!user) return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
-    res.json({ success: true, data: user });
-  } catch (err) { next(err); }
-});
-
-// DELETE /api/users/:id — admin (soft delete)
-router.delete('/:id', protect, adminOnly, async (req, res, next) => {
-  try {
-    await User.findByIdAndUpdate(req.params.id, { isActive: false });
-    res.json({ success: true, message: 'Đã vô hiệu hoá tài khoản.' });
-  } catch (err) { next(err); }
-});
-
 // GET /api/users/purchase-stats — get customer purchase statistics
 router.get('/purchase-stats', protect, adminOnly, async (req, res, next) => {
   try {
@@ -105,6 +74,37 @@ router.get('/purchase-stats', protect, adminOnly, async (req, res, next) => {
     );
 
     res.json({ success: true, total, page: Number(page), data: usersWithStats });
+  } catch (err) { next(err); }
+});
+
+// GET /api/users/:id — admin
+router.get('/:id', protect, adminOnly, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
+    res.json({ success: true, data: user });
+  } catch (err) { next(err); }
+});
+
+// PUT /api/users/:id — admin (update role / isActive)
+router.put('/:id', protect, adminOnly, async (req, res, next) => {
+  try {
+    const { role, isActive, name, phone } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { role, isActive, name, phone },
+      { new: true, runValidators: true }
+    );
+    if (!user) return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
+    res.json({ success: true, data: user });
+  } catch (err) { next(err); }
+});
+
+// DELETE /api/users/:id — admin (soft delete)
+router.delete('/:id', protect, adminOnly, async (req, res, next) => {
+  try {
+    await User.findByIdAndUpdate(req.params.id, { isActive: false });
+    res.json({ success: true, message: 'Đã vô hiệu hoá tài khoản.' });
   } catch (err) { next(err); }
 });
 

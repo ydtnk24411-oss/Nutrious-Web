@@ -22,17 +22,27 @@ router.post(
   async (req, res, next) => {
     try {
       const { name, email, password, phone } = req.body;
+      console.log('Signup request:', { name, email, phone, passwordLength: password?.length });
+
       const exists = await User.findOne({ email });
-      if (exists) return res.status(409).json({ success: false, message: 'Email đã tồn tại.' });
+      if (exists) {
+        console.log('Email already exists:', email);
+        return res.status(409).json({ success: false, message: 'Email đã tồn tại.' });
+      }
 
       const user  = await User.create({ name, email, password, phone });
+      console.log('User created:', { _id: user._id, email: user.email });
+
       const token = sign(user._id);
       res.status(201).json({
         success: true,
         token,
-        user: { _id: user._id, name: user.name, email: user.email, role: user.role },
+        data: { _id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar, phone: user.phone },
       });
-    } catch (err) { next(err); }
+    } catch (err) {
+      console.error('Signup error:', err);
+      next(err);
+    }
   }
 );
 
