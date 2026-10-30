@@ -56,19 +56,28 @@ export class AdminProductsComponent implements OnInit {
 
   load(): void {
     this.loading.set(true);
+    this.error.set('');
     const params: Record<string, string | number> = {
       page: this.page(), limit: this.limit, sort: this.sort(),
     };
     if (this.search())   params['search']   = this.search();
     if (this.category()) params['category'] = this.category();
 
+    console.log('Loading products with params:', params);
+
     this.productApi.getAll(params).subscribe({
       next: (res) => {
+        console.log('Products response:', res);
+        console.log('Products count:', res.data?.length);
         this.products.set(res.data);
         this.total.set(res.total);
         this.loading.set(false);
       },
-      error: () => { this.error.set('Không thể tải sản phẩm.'); this.loading.set(false); },
+      error: (err) => {
+        console.error('Failed to load products:', err);
+        this.error.set(err.error?.message || 'Không thể tải sản phẩm.');
+        this.loading.set(false);
+      },
     });
   }
 

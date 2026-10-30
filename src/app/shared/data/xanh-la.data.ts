@@ -23,7 +23,7 @@ export const categories: XanhLaCategory[] = [
   { name: 'Thức uống',              slug: '/category/beverages',  image: uns('1544145945-f90425340c7e') },
   { name: 'Bánh & Đồ ăn vặt',       slug: '/category/bakery',     image: uns('1499636136210-6f4ee915583e') },
   { name: 'Gia vị & Thực phẩm khô', slug: '/category/pantry',     image: uns('1532336414038-cf19250c5757') },
-  { name: 'Chăm sóc cá nhân',       slug: '/category/personal',   image: uns('1608248543803-ba4f8c70ae0b') },
+
   { name: 'Nhà cửa & Đời sống',     slug: '/category/household',  image: uns('1556911220-e15b29be8c8f') },
 ];
 

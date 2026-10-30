@@ -9,7 +9,8 @@ export class ApiService {
   private http = inject(HttpClient);
 
   private headers(): HttpHeaders {
-    const token = localStorage.getItem('xanhla_auth_token') || localStorage.getItem('xanhla_admin_token');
+    const token = localStorage.getItem('xanhla_admin_token') || localStorage.getItem('xanhla_auth_token');
+    console.log('ApiService - Using token:', token ? 'Present' : 'Missing', 'from:', localStorage.getItem('xanhla_admin_token') ? 'admin' : 'user');
     return token
       ? new HttpHeaders({ Authorization: `Bearer ${token}` })
       : new HttpHeaders();

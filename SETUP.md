@@ -1,46 +1,90 @@
-# QUICK SETUP GUIDE
 
-Hướng dẫn nhanh để chạy dự án Xanh Lá Website
+# 🌿 XANH LÁ – PROJECT SETUP GUIDE
 
-## 1. Clone Repository
+Tài liệu hướng dẫn thành viên thiết lập môi trường, kết nối MongoDB Atlas và chạy dự án **Nutrious-Web** trên máy cá nhân.
+
+---
+
+## 1. Tham gia MongoDB Atlas
+
+1. Mở email nhận lời mời tham gia MongoDB Atlas Project `WEB2`.
+2. Nhấn **Accept Invitation** để chấp nhận lời mời.
+3. Đăng nhập MongoDB Atlas bằng tài khoản được mời.
+4. Truy cập Project `WEB2` tại: https://cloud.mongodb.com/
+
+Bạn đã được cấp quyền **Project Owner**, có thể truy cập và quản lý Project.
+
+## 2. Cài đặt môi trường
+
+Cài đặt các công cụ cần thiết:
+
+- [Node.js](https://nodejs.org/) và npm.
+- [Angular CLI](https://angular.dev/tools/cli).
+- [Visual Studio Code](https://code.visualstudio.com/) (khuyến nghị).
+
+Kiểm tra Node.js và npm sau khi cài đặt:
+
+```bash
+node -v
+npm -v
+```
+
+Cài đặt Angular CLI:
+
+```bash
+npm install -g @angular/cli
+```
+
+Kiểm tra Angular CLI:
+
+```bash
+ng version
+```
+
+## 3. Clone source code từ GitHub
+
+Mở terminal tại thư mục muốn lưu dự án và chạy:
 
 ```bash
 git clone https://github.com/ydtnk24411-oss/Nutrious-Web.git
+```
+
+Di chuyển vào thư mục dự án:
+
+```bash
 cd Nutrious-Web
 ```
 
-## 2. Cài đặt MongoDB
+Chuyển sang nhánh `main` và cập nhật source code mới nhất:
 
-**Option A: Dùng MongoDB Atlas (Khuyên dùng)**
-1. Đăng ký tài khoản MongoDB Atlas miễn phí: https://www.mongodb.com/cloud/atlas
-2. Tạo cluster mới (hoặc dùng cluster hiện có)
-3. Trong dashboard Atlas:
-   - Vào **Database Access** → tạo user admin
-   - Vào **Network Access** → cho phép IP `0.0.0.0/0` (cho phép tất cả IP) hoặc IP của bạn
-   - Vào **Database** → xem connection string
-
-4. Copy MongoDB connection string của bạn (định dạng: `mongodb+srv://...`)
-
-**Option B: Cài MongoDB trên máy**
-|- Download MongoDB từ: https://www.mongodb.com/try/download/community
-|- Cài đặt và đảm bảo MongoDB service đang chạy
-
-**Option C: Dùng Docker**
 ```bash
-docker run -d -p 27017:27017 --name mongodb mongo:latest
+git checkout main
+git pull origin main
 ```
 
-## 3. Cài đặt Backend
+## 4. Cấu hình Backend
+
+### 4.1. Cài đặt dependencies
+
+Di chuyển vào thư mục `server`:
 
 ```bash
 cd server
-npm install
-cp .env.example .env
 ```
 
-**Nếu dùng MongoDB Atlas:**
-Cập nhật file `.env` với connection string của bạn:
+Cài đặt các thư viện cần thiết:
+
+```bash
+npm install
 ```
+
+### 4.2. Tạo file môi trường `.env`
+
+Tạo file `.env` trong thư mục `server`, cùng cấp với file `package.json`.
+
+Cấu trúc file:
+
+```env
 PORT=3000
 MONGODB_URI=mongodb+srv://k24411web2:NhomAcong@cluster0.ltnac9s.mongodb.net/
 JWT_SECRET=xanh-la-secret-key-2025
@@ -48,74 +92,74 @@ JWT_EXPIRE=7d
 
 ```
 
+Thay các giá trị mẫu bằng thông tin kết nối được sử dụng chung trong nhóm:
 
-**Nếu dùng MongoDB cài local:**
-```
-PORT=3000
-MONGODB_URI=mongodb://localhost:27017/xanh-la
-JWT_SECRET=xanh-la-secret-key-2025
-JWT_EXPIRE=7d
-```
+| Biến | Ý nghĩa |
+|---|---|
+| `PORT` | Cổng chạy Backend |
+| `MONGODB_URI` | Connection string kết nối MongoDB Atlas |
+| `JWT_SECRET` | Khóa bí mật dùng để xác thực JWT |
+| `JWT_EXPIRE` | Thời hạn của JWT token |
 
-Seed dữ liệu mẫu:
-```bash
-npm run seed
-```
+**Thông tin MongoDB Atlas:**
 
-Chạy backend:
-```bash
-npm run dev
-```
+- Project: `WEB2`
+- Database: `xanh-la`
+- Database User: sử dụng tài khoản được nhóm cung cấp.
+- Tất cả thành viên sử dụng chung database Atlas.
 
-Backend sẽ chạy tại: `http://localhost:3000`
+Không cần chạy seed vì MongoDB Atlas đã có dữ liệu của dự án.
 
-## 4. Cài đặt Frontend
+### 4.3. Khởi động Backend
 
-Mở terminal mới (giữ backend chạy):
+Chạy lệnh:
 
 ```bash
-cd ..  # Quay về thư mục gốc
+npm start
+```
+
+Backend hoạt động tại:
+
+```text
+http://localhost:3000
+```
+
+Giữ terminal này hoạt động trong suốt quá trình sử dụng website.
+
+## 5. Cấu hình Frontend Angular
+
+Mở **terminal thứ hai** tại thư mục gốc `Nutrious-Web` (thư mục chứa file `angular.json`).
+
+Cài đặt dependencies:
+
+```bash
 npm install
-npm run dev
 ```
 
-Frontend sẽ chạy tại: `http://localhost:4200`
+Khởi động Angular:
 
-## 5. Test
-
-Mở browser vào `http://localhost:4200`
-
-Đăng nhập với tài khoản demo:
-|- **Admin**: admin@xanhla.farm / admin123
-|- **Customer**: customer@example.com / customer123
-
-## Troubleshooting
-
-**MongoDB Atlas không kết nối:**
-- Kiểm tra Network Access đã cho phép IP của bạn
-- Kiểm tra Database Access user có đúng quyền
-- Đảm bảo connection string đúng (thay <password> bằng password thực)
-- Đợi 2-3 phút cho cluster khởi động (nếu cluster mới tạo)
-
-**MongoDB local không kết nối:**
-- Kiểm tra MongoDB đang chạy: `mongod` hoặc service
-- Đảm bảo port 27017 không bị chặn
-
-**Frontend không chạy:**
 ```bash
-rm -rf node_modules
-npm install
-npm run dev
+ng serve -o
 ```
 
-**Backend không chạy:**
-```bash
-cd server
-rm -rf node_modules
-npm install
-npm run dev
+Trình duyệt sẽ tự động mở website tại:
+
+```text
+http://localhost:4200
 ```
 
-## Chi tiết
+## 6. Hoàn tất thiết lập
 
-Xem file `README.md` để biết thêm về API endpoints, cấu trúc dự án, và tính năng chi tiết.
+Sau khi hoàn thành các bước trên, dự án sẽ hoạt động với các thành phần:
+
+| Thành phần | Địa chỉ |
+|---|---|
+| Frontend Angular | http://localhost:4200 |
+| Backend API | http://localhost:3000 |
+| MongoDB | MongoDB Atlas – `xanh-la` |
+
+**Lưu ý:** Mỗi thành viên chạy Frontend và Backend trên máy cá nhân, nhưng cùng kết nối đến một MongoDB Atlas database. Vì vậy, dữ liệu được sử dụng chung giữa các thành viên trong nhóm.
+
+---
+
+**XANH LÁ – NUTRIOUS WEB PROJECT**

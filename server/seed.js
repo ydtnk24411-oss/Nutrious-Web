@@ -37,8 +37,8 @@ const CATEGORIES = [
   { name: 'Thức uống',                 slug: '/category/beverages',  image: uns('1544145945-f90425340c7e'),                         order: 6 },
   { name: 'Bánh & Đồ ăn vặt',          slug: '/category/bakery',     image: uns('1499636136210-6f4ee915583e'),                      order: 7 },
   { name: 'Gia vị & Thực phẩm khô',    slug: '/category/pantry',     image: uns('1532336414038-cf19250c5757'),                      order: 8 },
-  { name: 'Chăm sóc cá nhân',          slug: '/category/personal',   image: uns('1608248543803-ba4f8c70ae0b'),                      order: 9 },
-  { name: 'Nhà cửa & Đời sống',        slug: '/category/household',  image: uns('1556911220-e15b29be8c8f'),                         order: 10 },
+  
+
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
