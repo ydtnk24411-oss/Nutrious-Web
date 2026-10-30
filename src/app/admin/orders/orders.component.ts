@@ -59,13 +59,25 @@ export class AdminOrdersComponent implements OnInit {
 
   load(): void {
     this.loading.set(true);
+    this.error.set('');
     const params: Record<string, string | number> = { page: this.page(), limit: this.limit };
     if (this.search())  params['search'] = this.search();
     if (this.status())  params['status'] = this.status();
 
+    console.log('Loading orders with params:', params);
+
     this.orderApi.getAll(params).subscribe({
-      next:  (res) => { this.orders.set(res.data); this.total.set(res.total); this.loading.set(false); },
-      error: ()    => { this.error.set('Không thể tải đơn hàng.'); this.loading.set(false); },
+      next:  (res) => {
+        console.log('Orders response:', res);
+        this.orders.set(res.data);
+        this.total.set(res.total);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load orders:', err);
+        this.error.set(err.error?.message || 'Không thể tải đơn hàng.');
+        this.loading.set(false);
+      },
     });
   }
 
