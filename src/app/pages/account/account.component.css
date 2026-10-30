@@ -1134,6 +1134,176 @@
   background-color: var(--green-700);
 }
 
+/* Avatar Upload Section */
+.acc-avatar-section {
+  margin-bottom: 24px;
+}
+
+.acc-avatar-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--xanh-ink);
+  margin-bottom: 12px;
+  display: block;
+}
+
+.acc-avatar-upload {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.acc-avatar-preview-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.acc-avatar-preview {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--xanh-moss);
+  flex-shrink: 0;
+}
+
+.acc-avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.acc-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'Georgia', serif;
+}
+
+.acc-avatar-placeholder-large {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'Georgia', serif;
+}
+
+.acc-avatar-edit-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--xanh-moss);
+  color: #fff;
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  z-index: 10;
+}
+
+.acc-avatar-edit-btn:hover {
+  background: var(--xanh-moss-hover);
+}
+
+.acc-avatar-edit-btn-large {
+  width: 32px;
+  height: 32px;
+}
+
+.acc-avatar-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border: 1px solid var(--xanh-line);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 8px 0;
+  min-width: 180px;
+  z-index: 100;
+}
+
+.acc-avatar-menu-large {
+  top: calc(100% + 8px);
+  left: 0;
+  transform: none;
+}
+
+.acc-avatar-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: var(--xanh-ink);
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.acc-avatar-menu-item:hover {
+  background: #f6faf2;
+}
+
+.acc-avatar-menu-danger {
+  color: #c53030;
+}
+
+.acc-avatar-menu-danger:hover {
+  background: #fee2e2;
+}
+
+.acc-avatar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.acc-avatar-hint {
+  font-size: 12px;
+  color: var(--xanh-muted);
+  margin: 0;
+}
+
+.acc-btn-danger {
+  color: #c53030 !important;
+  border-color: #c53030 !important;
+}
+
+.acc-btn-danger:hover {
+  background: #fee2e2 !important;
+  border-color: #c53030 !important;
+}
+
+/* Profile card avatar wrapper */
+.acc-profile-avatar-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.acc-profile-avatar {
+  position: relative;
+}
+
 .acc-toggle input:checked + .acc-toggle-slider:before {
   transform: translateX(24px);
 }

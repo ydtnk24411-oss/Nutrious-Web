@@ -17,16 +17,36 @@ router.get('/me', protect, async (req, res, next) => {
 router.put('/me', protect, async (req, res, next) => {
   try {
     const { name, phone, avatar } = req.body;
+    console.log('Update profile request:', {
+      userId: req.user.id,
+      name,
+      phone,
+      hasAvatar: !!avatar,
+      avatarLength: avatar?.length
+    });
+
     const user = await User.findByIdAndUpdate(
       req.user.id,
       { name, phone, avatar },
       { new: true, runValidators: true }
     ).select('-password');
+
     if (!user) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
     }
+
+    console.log('User updated:', {
+      _id: user._id,
+      name: user.name,
+      hasAvatar: !!user.avatar,
+      avatarLength: user.avatar?.length
+    });
+
     res.json({ success: true, data: user });
-  } catch (err) { next(err); }
+  } catch (err) {
+    console.error('Update profile error:', err);
+    next(err);
+  }
 });
 
 // PUT /api/account/me/password - Change password

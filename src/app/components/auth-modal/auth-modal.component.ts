@@ -21,14 +21,18 @@ export class AuthModalComponent {
     e.preventDefault();
     if (!this.email()) return;
     if (this.cart.authTab() === 'login') {
-      this.cart.login(this.email());
+      this.cart.loginWithPassword(this.email(), this.password());
     } else {
-      this.cart.signup(this.name() || 'Khách hàng', this.email());
+      this.cart.signup(this.name() || 'Khách hàng', this.email(), this.password());
     }
   }
 
   handleGoogleLogin(): void {
     this.cart.login('member@gmail.com', 'Nguyễn Văn A');
+  }
+
+  handleForgotPassword(): void {
+    alert('Tính năng quên mật khẩu đang được phát triển. Vui lòng liên hệ hỗ trợ để đặt lại mật khẩu.');
   }
 
   setTab(tab: AuthTab): void {

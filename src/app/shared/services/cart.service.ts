@@ -1,7 +1,9 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { XanhLaProduct, XanhLaCartItem, XanhLaUser, XanhLaAddress } from '../models/xanh-la.models';
+import { ApiService } from './api.service';
 
 const USER_KEY    = 'xanhla_user_session';
+const TOKEN_KEY   = 'xanhla_auth_token';
 
 // Key giỏ hàng riêng theo từng user
 function cartKey(email: string): string {
@@ -20,10 +22,18 @@ export function formatPrice(value: number): string {
 
 @Injectable({ providedIn: 'root' })
 export class CartService {
+  private api = inject(ApiService);
 
   // ── Auth (load trước, cart phụ thuộc vào user) ──────────
   private _currentUser = signal<XanhLaUser | null>(this._loadUser());
   readonly currentUser = this._currentUser.asReadonly();
+
+  constructor() {
+    // Load full user data from backend if user is logged in
+    if (this._currentUser()) {
+      this.loadUserData();
+    }
+  }
 
   private _authModalOpen = signal(false);
   readonly authModalOpen = this._authModalOpen.asReadonly();
@@ -112,23 +122,111 @@ export class CartService {
     this._authModalOpen.set(false);
     // Restore giỏ hàng của user này (nếu có từ lần trước)
     this._items.set(this._loadCartForUser(email));
+
+    // Load full user data from backend
+    this.loadUserData();
   }
 
-  signup(name: string, email: string): void {
-    const user: XanhLaUser = { name, email };
-    this._currentUser.set(user);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-    this._authModalOpen.set(false);
-    // User mới → giỏ trống (chưa có cart key)
-    this._items.set(this._loadCartForUser(email));
+  // Login with email and password (for real authentication)
+  loginWithPassword(email: string, password: string): void {
+    this.api.post('/auth/login', { email, password }).subscribe({
+      next: (res: any) => {
+        if (res.success && res.data) {
+          const user: XanhLaUser = res.data;
+          this._currentUser.set(user);
+          localStorage.setItem(USER_KEY, JSON.stringify(user));
+          if (res.token) {
+            localStorage.setItem(TOKEN_KEY, res.token);
+          }
+          this._authModalOpen.set(false);
+          this._items.set(this._loadCartForUser(email));
+          console.log('Login successful:', user);
+        } else {
+          alert('Đăng nhập thất bại: ' + (res.message || 'Unknown error'));
+        }
+      },
+      error: (err) => {
+        console.error('Login error:', err);
+        const errorMsg = err.error?.message || err.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
+        alert(errorMsg);
+      }
+    });
+  }
+
+  private loadUserData(): void {
+    this.api.get('/account/me').subscribe({
+      next: (res: any) => {
+        console.log('Load user data response:', res);
+        if (res.success && res.data) {
+          this._currentUser.set(res.data);
+          localStorage.setItem(USER_KEY, JSON.stringify(res.data));
+          console.log('User data loaded from backend:', res.data);
+          console.log('Has avatar:', !!res.data.avatar, 'Avatar length:', res.data.avatar?.length);
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load user data:', err);
+      }
+    });
+  }
+
+  signup(name: string, email: string, password: string): void {
+    console.log('Signup called with:', { name, email, passwordLength: password?.length });
+
+    // Call API to create user in MongoDB
+    this.api.post('/auth/register', { name, email, password }).subscribe({
+      next: (res: any) => {
+        console.log('Signup response:', res);
+        if (res.success && res.data) {
+          const user: XanhLaUser = res.data;
+          this._currentUser.set(user);
+          localStorage.setItem(USER_KEY, JSON.stringify(user));
+          if (res.token) {
+            localStorage.setItem(TOKEN_KEY, res.token);
+          }
+          this._authModalOpen.set(false);
+          this._items.set(this._loadCartForUser(email));
+          console.log('Signup successful, user saved:', user);
+        } else {
+          console.error('Signup failed - response:', res);
+          alert('Đăng ký thất bại: ' + (res.message || 'Unknown error'));
+        }
+      },
+      error: (err) => {
+        console.error('Signup error:', err);
+        const errorMsg = err.error?.message || err.message || 'Đăng ký thất bại. Vui lòng thử lại.';
+        alert(errorMsg);
+      }
+    });
   }
 
   updateUser(patch: Partial<XanhLaUser>): void {
     const current = this._currentUser();
     if (!current) return;
+
+    // First update local state immediately for instant feedback
     const updated = { ...current, ...patch };
     this._currentUser.set(updated);
     localStorage.setItem(USER_KEY, JSON.stringify(updated));
+
+    console.log('Updating user with patch:', patch);
+
+    // Then sync with backend
+    this.api.put('/account/me', patch).subscribe({
+      next: (res: any) => {
+        console.log('Update user response:', res);
+        if (res.success && res.data) {
+          // Update with the latest data from server
+          this._currentUser.set(res.data);
+          localStorage.setItem(USER_KEY, JSON.stringify(res.data));
+          console.log('User updated in localStorage:', res.data);
+        }
+      },
+      error: (err) => {
+        console.error('Failed to update user profile:', err);
+        // Optionally revert on error or show notification
+      }
+    });
   }
 
   addAddress(addr: XanhLaAddress): void {

@@ -21,8 +21,44 @@
         <div class="acc-overview">
           <!-- User Profile Card -->
           <div class="acc-profile-card">
-            <div class="acc-profile-avatar">
-              <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face" alt="Avatar" />
+            <div class="acc-profile-avatar-wrapper">
+              <div class="acc-profile-avatar">
+                @if (avatar()) {
+                  <img [src]="avatar()" alt="Avatar" />
+                } @else {
+                  <div class="acc-avatar-placeholder">{{ avatarChar() }}</div>
+                }
+              </div>
+              <button class="acc-avatar-edit-btn" type="button" (click)="toggleAvatarMenu()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+                  <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+                  <path d="M2 2l7.586 7.586"/>
+                  <circle cx="11" cy="11" r="2"/>
+                </svg>
+              </button>
+              @if (avatarMenuOpen()) {
+                <div class="acc-avatar-menu">
+                  <label class="acc-avatar-menu-item" style="cursor:pointer">
+                    <input type="file" id="avatarInputOverview" accept="image/*" (change)="onAvatarUpload($event)" style="display:none" />
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="17 8 12 3 7 8"/>
+                      <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    Đổi ảnh đại diện
+                  </label>
+                  @if (avatar()) {
+                    <button type="button" class="acc-avatar-menu-item acc-avatar-menu-danger" (click)="removeAvatar()">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      </svg>
+                      Xóa ảnh đại diện
+                    </button>
+                  }
+                </div>
+              }
             </div>
             <div class="acc-profile-info">
               <h2 class="acc-profile-name">{{ user.name }}</h2>
@@ -109,6 +145,53 @@
             @if (saved()) {
               <div class="acc-alert-success">✓ Đã cập nhật thông tin thành công!</div>
             }
+
+            <!-- Avatar Upload Section -->
+            <div class="acc-avatar-section">
+              <label class="acc-avatar-label">Ảnh đại diện</label>
+              <div class="acc-avatar-upload">
+                <div class="acc-avatar-preview-wrapper">
+                  <div class="acc-avatar-preview">
+                    @if (avatar()) {
+                      <img [src]="avatar()" alt="Avatar preview" />
+                    } @else {
+                      <div class="acc-avatar-placeholder-large">{{ avatarChar() }}</div>
+                    }
+                  </div>
+                  <button class="acc-avatar-edit-btn acc-avatar-edit-btn-large" type="button" (click)="toggleAvatarMenu()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+                      <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+                      <path d="M2 2l7.586 7.586"/>
+                      <circle cx="11" cy="11" r="2"/>
+                    </svg>
+                  </button>
+                  @if (avatarMenuOpen()) {
+                    <div class="acc-avatar-menu acc-avatar-menu-large">
+                      <label class="acc-avatar-menu-item" style="cursor:pointer">
+                        <input type="file" id="avatarInputSettings" accept="image/*" (change)="onAvatarUpload($event)" style="display:none" />
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                          <polyline points="17 8 12 3 7 8"/>
+                          <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        Đổi ảnh đại diện
+                      </label>
+                      @if (avatar()) {
+                        <button type="button" class="acc-avatar-menu-item acc-avatar-menu-danger" (click)="removeAvatar()">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                          </svg>
+                          Xóa ảnh đại diện
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+              <p class="acc-avatar-hint">Kích thước tối đa: 2MB. Định dạng: JPG, PNG, GIF</p>
+            </div>
 
             <form (submit)="saveAccount($event)">
               <div class="acc-form-row">

@@ -51,6 +51,13 @@
             <input id="auth-password" type="password" placeholder="••••••••"
                    [value]="password()" (input)="password.set($any($event.target).value)" required />
           </div>
+          @if (cart.authTab() === 'login') {
+            <div style="text-align:right;margin-top:8px">
+              <button type="button" style="background:none;border:none;color:var(--green-700);cursor:pointer;font-size:13px;padding:0" (click)="handleForgotPassword()">
+                Quên mật khẩu?
+              </button>
+            </div>
+          }
           <button class="xanhla-btn-primary" type="submit" style="width:100%;margin-top:8px">
             {{ cart.authTab() === 'login' ? 'Đăng nhập' : 'Tạo tài khoản' }}
           </button>

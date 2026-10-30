@@ -68,13 +68,24 @@
     @if (cart.currentUser()) {
       <div style="position:relative">
         <button class="xl-icon-btn" type="button" (click)="toggleUserMenu()" title="{{ cart.currentUser()!.name }}">
-          <div class="xanhla-member-avatar">{{ cart.currentUser()!.name.charAt(0).toUpperCase() }}</div>
+          @if (cart.currentUser()!.avatar) {
+            <img [src]="cart.currentUser()!.avatar" class="xanhla-member-avatar-img" alt="Avatar" />
+          } @else {
+            <div class="xanhla-member-avatar">{{ cart.currentUser()!.name.charAt(0).toUpperCase() }}</div>
+          }
         </button>
         @if (userMenuOpen()) {
           <div class="xanhla-user-menu">
             <div class="xanhla-user-menu-header">
-              <strong>{{ cart.currentUser()!.name }}</strong>
-              <span>{{ cart.currentUser()!.email }}</span>
+              @if (cart.currentUser()!.avatar) {
+                <img [src]="cart.currentUser()!.avatar" class="xanhla-user-menu-avatar" alt="Avatar" />
+              } @else {
+                <div class="xanhla-user-menu-avatar-placeholder">{{ cart.currentUser()!.name.charAt(0).toUpperCase() }}</div>
+              }
+              <div class="xanhla-user-menu-info">
+                <strong>{{ cart.currentUser()!.name }}</strong>
+                <span>{{ cart.currentUser()!.email }}</span>
+              </div>
             </div>
             <a routerLink="/account" (click)="closeUserMenu()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
