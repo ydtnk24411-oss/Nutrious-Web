@@ -8,6 +8,15 @@ export interface AdminUser {
   name: string;
   email: string;
   role: string;
+  avatar?: string;
+  phone?: string;
+  points?: number;
+  tier?: string;
+  totalSpent?: number;
+  addresses?: any[];
+  createdAt?: Date;
+  updatedAt?: Date;
+  __v?: number;
 }
 
 const TOKEN_KEY = 'xanhla_admin_token';
