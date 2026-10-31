@@ -293,7 +293,7 @@ description: p.description,
     this.catalogue.set(fallbackList);
 
     // Call productApi to get real catalogue
-    this.productApi.getAll({ limit: 100 }).subscribe({
+    this.productApi.getAll({ limit: 0 }).subscribe({
       next: (res) => {
         if (res && res.data && res.data.length > 0) {
           this.catalogue.set(res.data);

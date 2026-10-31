@@ -241,7 +241,7 @@ export class CookComponent implements OnInit {
 
   // ── Lifecycle ───────────────────────────────────────────
   ngOnInit(): void {
-    this.productApi.getAll({ limit: 100 }).subscribe({
+    this.productApi.getAll({ limit: 0 }).subscribe({
       next: (res) => {
         if (res?.data && res.data.length > 0) {
           this.catalogueProducts.set(res.data);

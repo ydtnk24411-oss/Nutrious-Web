@@ -291,7 +291,7 @@ protected selectCategory(categoryId: string): void {
     });
 
     this.productApi.getAll({
-      limit: 100,
+      limit: 0,
       sort: 'createdAt',
     }).subscribe({
       next: res => {

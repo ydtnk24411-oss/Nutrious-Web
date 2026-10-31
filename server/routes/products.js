@@ -23,12 +23,18 @@ router.get('/', async (req, res, next) => {
                   : sort === 'name-desc'  ? { name: -1 }
                   : { createdAt: -1 };
 
-    const skip  = (Number(page) - 1) * Number(limit);
+    const limitNum = Number(limit);
+    const pageNum  = Math.max(1, Number(page) || 1);
+    let query = Product.find(filter).sort(sortObj);
+    if (limitNum > 0) {
+      const skip = (pageNum - 1) * limitNum;
+      query = query.skip(skip).limit(limitNum);
+    }
     const [products, total] = await Promise.all([
-      Product.find(filter).sort(sortObj).skip(skip).limit(Number(limit)),
+      query,
       Product.countDocuments(filter),
     ]);
-    res.json({ success: true, total, page: Number(page), data: products });
+    res.json({ success: true, total, page: pageNum, data: products });
   } catch (err) { next(err); }
 });
 
