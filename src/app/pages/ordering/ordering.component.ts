@@ -20,6 +20,60 @@ function toCartProduct(p: ApiProduct): XanhLaProduct {
   };
 }
 
+export const ORDERING_CATEGORIES = [
+  'Rau củ & trái cây',
+  'Thịt & hải sản',
+  'Sữa & thực phẩm mát',
+  'Thức uống',
+  'Bánh & đồ ăn vặt',
+  'Gia vị & thực phẩm khô',
+  'Chăm sóc cá nhân',
+  'Nhà cửa & đời sống',
+];
+
+export function toMainCategory(p: ApiProduct): string {
+  const cat = (p.category || '').toLowerCase();
+  const catVi = (p.categoryVi || '').toLowerCase();
+  if (cat === 'vegetables' || cat === 'fruits' || catVi.includes('rau') || catVi.includes('củ') || catVi.includes('nấm') || catVi.includes('đặc sản') || catVi.includes('trái cây')) {
+    return 'Rau củ & trái cây';
+  }
+  if (cat === 'meat' || cat === 'seafood' || catVi.includes('thịt') || catVi.includes('heo') || catVi.includes('bò') || catVi.includes('gà') || catVi.includes('vịt') || catVi.includes('tôm') || catVi.includes('cá') || catVi.includes('mực') || catVi.includes('cua') || catVi.includes('nhuyễn thể')) {
+    return 'Thịt & hải sản';
+  }
+  if (cat === 'dairy' || catVi.includes('sữa') || catVi.includes('trứng') || catVi.includes('phô mai') || catVi.includes('bơ')) {
+    return 'Sữa & thực phẩm mát';
+  }
+  if (cat === 'beverages' || catVi.includes('uống') || catVi.includes('trà') || catVi.includes('cà phê') || catVi.includes('khoáng') || catVi.includes('bia')) {
+    return 'Thức uống';
+  }
+  if (cat === 'bakery' || catVi.includes('bánh') || catVi.includes('snack') || catVi.includes('kẹo')) {
+    return 'Bánh & đồ ăn vặt';
+  }
+  if (cat === 'pantry' || catVi.includes('gia vị') || catVi.includes('dầu ăn') || catVi.includes('gạo') || catVi.includes('mì')) {
+    return 'Gia vị & thực phẩm khô';
+  }
+  if (cat === 'personal' || catVi.includes('tắm') || catVi.includes('gội') || catVi.includes('răng') || catVi.includes('khăn') || catVi.includes('dưỡng da') || catVi.includes('cá nhân')) {
+    return 'Chăm sóc cá nhân';
+  }
+  if (cat === 'household' || catVi.includes('tẩy rửa') || catVi.includes('giặt') || catVi.includes('bảo quản') || catVi.includes('nhà') || catVi.includes('đời sống')) {
+    return 'Nhà cửa & đời sống';
+  }
+  return 'Rau củ & trái cây';
+}
+
+export function normalizeCategoryTarget(cat: string): string {
+  const c = cat.toLowerCase().trim();
+  if (c.includes('rau') || c.includes('trái cây') || c.includes('vegetable') || c.includes('fruit')) return 'Rau củ & trái cây';
+  if (c.includes('thịt') || c.includes('hải sản') || c.includes('cá') || c.includes('meat') || c.includes('seafood')) return 'Thịt & hải sản';
+  if (c.includes('sữa') || c.includes('mát') || c.includes('trứng') || c.includes('dairy')) return 'Sữa & thực phẩm mát';
+  if (c.includes('thức uống') || c.includes('đồ uống') || c.includes('uống') || c.includes('beverage')) return 'Thức uống';
+  if (c.includes('bánh') || c.includes('vặt') || c.includes('snack') || c.includes('bakery')) return 'Bánh & đồ ăn vặt';
+  if (c.includes('gia vị') || c.includes('thảo mộc') || c.includes('khô') || c.includes('pantry')) return 'Gia vị & thực phẩm khô';
+  if (c.includes('cá nhân') || c.includes('personal')) return 'Chăm sóc cá nhân';
+  if (c.includes('nhà cửa') || c.includes('đời sống') || c.includes('household')) return 'Nhà cửa & đời sống';
+  return cat;
+}
+
 @Component({
   selector: 'app-ordering',
   standalone: true,
@@ -59,7 +113,7 @@ export class OrderingComponent implements OnInit {
     const all = this.allProducts();
     const unique = (arr: string[]) => [...new Set(arr.filter(Boolean))].sort();
     return {
-      category:    unique(all.map(p => p.categoryVi || p.category)),
+      category:    ORDERING_CATEGORIES.filter(c => all.some(p => toMainCategory(p) === c)),
       preparation: unique(all.map(p => p.preparation)),
       ripeness:    unique(all.map(p => p.ripeness)),
       sizeGroup:   unique(all.map(p => p.sizeGroup)),
@@ -87,7 +141,7 @@ export class OrderingComponent implements OnInit {
     let list   = this.allProducts().filter(p => {
       if (q && !p.name.toLowerCase().includes(q) && !p.description.toLowerCase().includes(q)) return false;
       if (p.priceNumber > maxP) return false;
-      if (f['category'].length && !f['category'].includes(p.categoryVi || p.category)) return false;
+      if (f['category'].length && !f['category'].includes(toMainCategory(p))) return false;
       if (f['preparation'].length && !f['preparation'].includes(p.preparation)) return false;
       if (f['ripeness'].length   && !f['ripeness'].includes(p.ripeness))        return false;
       if (f['sizeGroup'].length  && !f['sizeGroup'].includes(p.sizeGroup))      return false;
@@ -104,12 +158,17 @@ export class OrderingComponent implements OnInit {
   // ── Group filtered products into sections ─────────────
   protected sections = computed(() => {
     const groups: Record<string, ApiProduct[]> = {};
+    for (const cat of ORDERING_CATEGORIES) {
+      groups[cat] = [];
+    }
     for (const p of this.filteredProducts()) {
-      const key = p.categoryVi || p.category;
+      const key = toMainCategory(p);
       if (!groups[key]) groups[key] = [];
       groups[key].push(p);
     }
-    return Object.entries(groups).map(([title, items]) => ({ title, items }));
+    return ORDERING_CATEGORIES
+      .filter(title => groups[title] && groups[title].length > 0)
+      .map(title => ({ title, items: groups[title] }));
   });
 
   ngOnInit(): void {
@@ -120,18 +179,40 @@ export class OrderingComponent implements OnInit {
       next: (res) => {
         this.allProducts.set(res.data);
         if (res.data.length > 0) {
-          this.activeSection.set(res.data[0].categoryVi || res.data[0].category);
+          const firstSec = this.sections()[0]?.title || 'Rau củ & trái cây';
+          this.activeSection.set(firstSec);
           this.maxPrice.set(this.maxPriceInDB());
         }
         this.loading.set(false);
+
+        const cat = this.route.snapshot.queryParamMap.get('category');
+        if (cat) {
+          const target = normalizeCategoryTarget(cat);
+          this.activeSection.set(target);
+          setTimeout(() => this.scrollTo(target), 200);
+        }
       },
       error: () => { this.error.set('Không thể tải sản phẩm.'); this.loading.set(false); },
+    });
+
+    this.route.queryParamMap.subscribe(params => {
+      const cat = params.get('category');
+      if (cat && !this.loading()) {
+        const target = normalizeCategoryTarget(cat);
+        this.activeSection.set(target);
+        setTimeout(() => this.scrollTo(target), 100);
+      }
     });
   }
 
   scrollTo(title: string): void {
     this.activeSection.set(title);
-    document.getElementById('section-' + title)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const el = document.getElementById('section-' + title);
+    if (el) {
+      const yOffset = -90;
+      const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
   }
 
   toggleAccordion(key: string): void {
