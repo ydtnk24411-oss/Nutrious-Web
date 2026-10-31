@@ -36,7 +36,7 @@
     @if (catMenuOpen()) {
       <div class="xl-cat-dropdown">
         @for (cat of categories; track cat.label) {
-          <a class="xl-cat-item" [routerLink]="cat.path" (click)="closeCatMenu()">
+          <a class="xl-cat-item" routerLink="/online-ordering" [queryParams]="{ category: cat.category }" (click)="closeCatMenu()">
             <span>{{ cat.label }}</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;opacity:.4"><polyline points="9 18 15 12 9 6"/></svg>
           </a>
@@ -242,7 +242,7 @@
 
         <div class="xl-drawer-section-label" style="margin-top:12px">Danh mục sản phẩm</div>
         @for (cat of categories; track cat.label) {
-          <a [routerLink]="cat.path" style="padding:10px 0;font-size:14px;border-bottom:1px solid var(--xanh-line)" (click)="closeMobileMenu()">
+          <a routerLink="/online-ordering" [queryParams]="{ category: cat.category }" style="padding:10px 0;font-size:14px;border-bottom:1px solid var(--xanh-line)" (click)="closeMobileMenu()">
             {{ cat.label }}
           </a>
         }

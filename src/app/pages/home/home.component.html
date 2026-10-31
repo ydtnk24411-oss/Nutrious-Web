@@ -27,7 +27,7 @@
           <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=85" alt="Rau củ quả tươi">
           <div><span>FRESH MARKET</span><h2>Tươi ngon mỗi ngày</h2><p>Thêm sắc xanh cho bữa cơm nhà</p></div>
         </a>
-        <a class="coop-side-promo coop-side-promo-warm" routerLink="/online-ordering">
+        <a class="coop-side-promo coop-side-promo-warm" routerLink="/nutrition">
           <img src="https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=900&q=85" alt="Bữa ăn gia đình">
           <div><span>GỢI Ý TỪ GIAN BẾP</span><h2>Hôm nay ăn gì?</h2><p>Khám phá nguyên liệu</p></div>
         </a>
@@ -35,7 +35,7 @@
     </section>
 
     <nav class="coop-category-nav coop-container" aria-label="Danh mục sản phẩm">
-      <a *ngFor="let cat of quickCategories; let i = index" routerLink="/online-ordering" class="coop-category-shortcut">
+      <a *ngFor="let cat of quickCategories; let i = index" routerLink="/online-ordering" [queryParams]="{ category: cat.name }" class="coop-category-shortcut">
         <span class="coop-category-label">{{ cat.name }}</span>
       </a>
     </nav>
@@ -43,7 +43,7 @@
     <section class="coop-section coop-container coop-section-vouchers" aria-labelledby="voucher-title">
       <div class="coop-section-heading">
         <div><span class="coop-eyebrow">MUA SẮM TIẾT KIỆM</span><h2 id="voucher-title">E-voucher khuyến mãi</h2><p>Thêm mã ưu đãi, nhẹ ví hơn khi đi chợ online.</p></div>
-        <a routerLink="/online-ordering" class="coop-text-link">Khám phá ưu đãi</a>
+        <a routerLink="/event-list" class="coop-text-link">Khám phá ưu đãi</a>
       </div>
       <div class="coop-voucher-grid">
         <article *ngFor="let voucher of vouchers" class="coop-voucher-card" [class.voucher-green]="voucher.color === 'green'" [class.voucher-orange]="voucher.color === 'amber'" [class.voucher-red]="voucher.color === 'red'">
@@ -57,7 +57,7 @@
       <div class="coop-container">
         <div class="coop-section-heading"><div><span class="coop-eyebrow">DỄ DÀNG LỰA CHỌN</span><h2 id="category-title">Danh mục mua sắm</h2><p>Mọi thứ cần cho gia đình, gói gọn trong một lần ghé.</p></div><a routerLink="/online-ordering" class="coop-text-link">Xem tất cả</a></div>
         <div class="coop-department-grid">
-          <a *ngFor="let cat of visualCategories" routerLink="/online-ordering" class="coop-department-card">
+          <a *ngFor="let cat of visualCategories" routerLink="/online-ordering" [queryParams]="{ category: cat.name }" class="coop-department-card">
             <div class="coop-department-image"><img [src]="cat.image" [alt]="cat.name" loading="lazy"></div>
             <div class="coop-department-name"><strong>{{ cat.name }}</strong><span>Khám phá danh mục</span></div>
           </a>

@@ -43,9 +43,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   private heroTimer: ReturnType<typeof setInterval> | null = null;
 
   readonly quickCategories = [
-    { name: 'Rau củ, trái cây', icon: '🥬' }, { name: 'Thịt, trứng, cá', icon: '🥩' },
-    { name: 'Thực phẩm mát', icon: '🥛' }, { name: 'Thức uống', icon: '🥤' },
-    { name: 'Bánh & đồ ăn vặt', icon: '🍪' }, { name: 'Gia vị, thực phẩm khô', icon: '🧂' },
+    { name: 'Rau củ & trái cây', icon: '🥬' }, { name: 'Thịt & hải sản', icon: '🥩' },
+    { name: 'Sữa & thực phẩm mát', icon: '🥛' }, { name: 'Thức uống', icon: '🥤' },
+    { name: 'Bánh & đồ ăn vặt', icon: '🍪' }, { name: 'Gia vị & thực phẩm khô', icon: '🧂' },
     { name: 'Chăm sóc cá nhân', icon: '🧴' }, { name: 'Nhà cửa & đời sống', icon: '🧺' },
   ];
   readonly visualCategories = [

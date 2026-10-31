@@ -5,14 +5,14 @@ import { CartService } from '../../shared/services/cart.service';
 import { navItems, logoImage } from '../../shared/data/xanh-la.data';
 
 const CATEGORIES = [
-  { label: 'Rau củ tươi',           path: '/online-ordering' },
-  { label: 'Trái cây',              path: '/online-ordering' },
-  { label: 'Thịt & Hải sản',        path: '/online-ordering' },
-  { label: 'Thực phẩm chế biến',    path: '/online-ordering' },
-  { label: 'Gia vị & Thảo mộc',     path: '/online-ordering' },
-  { label: 'Sữa & Trứng',           path: '/online-ordering' },
-  { label: 'Đồ uống',               path: '/online-ordering' },
-  { label: 'Thực phẩm hữu cơ',      path: '/online-ordering' },
+  { label: 'Rau củ & trái cây',     path: '/online-ordering', category: 'Rau củ & trái cây' },
+  { label: 'Thịt & hải sản',        path: '/online-ordering', category: 'Thịt & hải sản' },
+  { label: 'Sữa & thực phẩm mát',   path: '/online-ordering', category: 'Sữa & thực phẩm mát' },
+  { label: 'Thức uống',             path: '/online-ordering', category: 'Thức uống' },
+  { label: 'Bánh & đồ ăn vặt',      path: '/online-ordering', category: 'Bánh & đồ ăn vặt' },
+  { label: 'Gia vị & thực phẩm khô', path: '/online-ordering', category: 'Gia vị & thực phẩm khô' },
+  { label: 'Chăm sóc cá nhân',      path: '/online-ordering', category: 'Chăm sóc cá nhân' },
+  { label: 'Nhà cửa & đời sống',    path: '/online-ordering', category: 'Nhà cửa & đời sống' },
 ];
 
 const AREAS = ['TP. Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Cần Thơ', 'Biên Hòa'];
