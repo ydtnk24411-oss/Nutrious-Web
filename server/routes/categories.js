@@ -7,7 +7,7 @@ const { validate }           = require('../middleware/validate');
 // GET /api/categories — public
 router.get('/', async (req, res, next) => {
   try {
-    const cats = await Category.find({ isActive: true }).sort({ order: 1, createdAt: 1 });
+    const cats = await Category.find({ isActive: { $ne: false } }).sort({ order: 1, createdAt: 1 });
     res.json({ success: true, data: cats });
   } catch (err) { next(err); }
 });

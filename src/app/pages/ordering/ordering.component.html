@@ -21,19 +21,34 @@
   <!-- ── Sticky nav bar ────────────────────────────────── -->
   <div class="ord-page-inner">
   <div class="ord-nav-bar">
-    <div class="ord-nav-sections">
-      @for (sec of sections(); track sec.title) {
-        <button class="ord-nav-item" [class.active]="activeSection() === sec.title"
-                type="button" (click)="scrollTo(sec.title)">{{ sec.title }}</button>
-      }
-    </div>
-    @if (cart.itemCount() > 0) {
-      <button class="ord-cart-btn" type="button" (click)="goToCart()">
-        Xem giỏ hàng ({{ cart.itemCount() }})
+  <div class="ord-nav-sections">
+
+    <button
+      class="ord-nav-item"
+      [class.active]="activeCategory() === 'all'"
+      type="button"
+      (click)="selectCategory('all')">
+      Tất cả
+    </button>
+
+    @for (cat of allCategories(); track cat._id) {
+      <button
+        class="ord-nav-item"
+        [class.active]="activeCategory() === cat._id"
+        type="button"
+        (click)="selectCategory(cat._id)">
+        {{ cat.name }}
       </button>
     }
+
   </div>
 
+  @if (cart.itemCount() > 0) {
+    <button class="ord-cart-btn" type="button" (click)="goToCart()">
+      Xem giỏ hàng ({{ cart.itemCount() }})
+    </button>
+  }
+</div>
   <!-- ── Loading / Error ──────────────────────────────── -->
   @if (loading()) { <div class="ord-loading">Đang tải sản phẩm...</div> }
   @if (error())   { <div class="ord-error">{{ error() }}</div> }
@@ -77,12 +92,13 @@
           @if (openAccordions()['sort']) {
             <div class="ord-filter-body">
               <select class="ord-filter-select"
-                      [value]="sortBy()" (change)="sortBy.set($any($event.target).value)">
-                <option value="default">Mặc định</option>
-                <option value="price-asc">Giá: Thấp → Cao</option>
-                <option value="price-desc">Giá: Cao → Thấp</option>
-                <option value="name-asc">Tên A → Z</option>
-              </select>
+        [value]="sortBy()"
+        (change)="sortBy.set($any($event.target).value)">
+  <option value="default">Mặc định</option>
+  <option value="price-asc">Giá: Thấp đến cao</option>
+  <option value="price-desc">Giá: Cao đến thấp</option>
+  <option value="name-asc">Tên: A đến Z</option>
+</select>
             </div>
           }
         </div>
@@ -122,11 +138,11 @@
           </button>
           @if (openAccordions()['category']) {
             <div class="ord-filter-body">
-              @for (val of facetOptions().category; track val) {
+              @for (cat of allCategories(); track cat._id) {
                 <label class="ord-filter-label">
-                  <input type="checkbox" [checked]="isChecked('category', val)"
-                         (change)="toggleFilter('category', val)" />
-                  <span>{{ val }}</span>
+                  <input type="checkbox" [checked]="isChecked('category', cat._id)"
+                         (change)="toggleFilter('category', cat._id)" />
+                  <span>{{ cat.name }}</span>
                 </label>
               }
             </div>
@@ -240,7 +256,7 @@
               @for (val of facetOptions().weight; track val) {
                 <label class="ord-filter-label">
                   <input type="checkbox" [checked]="isChecked('weight', val)"
-                         (change)="toggleFilter('weight', val)" />
+                         (change)="toggleFilter('weight',val )" />
                   <span>{{ val }}</span>
                 </label>
               }
@@ -256,7 +272,7 @@
       <div class="ord-content">
         <div class="ord-content-toolbar">
           <h2 class="ord-menu-title" style="margin:0">Fresh Ingredients</h2>
-          <span class="ord-result-count">{{ filteredProducts().length }} sản phẩm</span>
+          <span class="ord-result-count">{{ categoryProducts().length }} sản phẩm</span>
         </div>
 
         @if (filteredProducts().length === 0) {
@@ -268,56 +284,76 @@
           </div>
         }
 
-        @for (sec of sections(); track sec.title) {
-          <div class="ord-section" [id]="'section-' + sec.title">
-            <div class="ord-section-divider"></div>
-            <h3 class="ord-section-title">{{ sec.title }}</h3>
+        @for (sec of sections(); track sec.id) {
+  @if (activeCategory() === 'all' || activeCategory() === sec.id) {
+    <div class="ord-section" [id]="'section-' + sec.id">
+      <div class="ord-section-divider"></div>
+      <h3 class="ord-section-title">{{ sec.title }}</h3>
 
-            <div class="ord-grid">
-              @for (prod of sec.items; track prod._id) {
-                <div class="xanhla-prod-card">
-                  <a class="xanhla-prod-card-img" [routerLink]="'/product-page/' + prod.slug">
-                    <img [src]="prod.image" [alt]="prod.name" loading="lazy" />
-                  </a>
-                  <div class="xanhla-prod-card-body">
-                    <div class="xanhla-prod-card-cat">{{ prod.categoryVi || prod.category }}</div>
-                    <a class="xanhla-prod-card-name" [routerLink]="'/product-page/' + prod.slug">{{ prod.name }}</a>
-                    @if (prod.description) {
-                      <div class="xanhla-prod-card-desc">{{ prod.description }}</div>
-                    }
-                    <div class="xanhla-prod-card-price-row">
-                      <span class="xanhla-prod-card-price">{{ prod.price }}</span>
-                      @if (prod.weight) {
-                        <span class="xanhla-prod-card-unit">/ {{ prod.weight }}</span>
-                      }
-                      @if (itemQty(prod.slug) > 0) {
-                        <span class="ord-item-qty-badge ord-qty-inline">{{ itemQty(prod.slug) }}</span>
-                      }
-                    </div>
-                    @if (itemQty(prod.slug) > 0) {
-                      <div class="ord-qty-picker ord-qty-picker--full">
-                        <button type="button" class="ord-qty-btn" (click)="removeOne(prod)">−</button>
-                        <span class="ord-qty-num">{{ itemQty(prod.slug) }}</span>
-                        <button type="button" class="ord-qty-btn" (click)="addOne(prod)">+</button>
-                      </div>
-                    } @else {
-                      <button type="button" class="xanhla-prod-card-add"
-                              (click)="addOne(prod)"
-                              [attr.aria-label]="'Thêm ' + prod.name">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                          <line x1="3" y1="6" x2="21" y2="6"/>
-                          <path d="M16 10a4 4 0 0 1-8 0"/>
-                        </svg>
-                        Thêm vào giỏ
-                      </button>
-                    }
-                  </div>
+      <div class="ord-grid">
+        @for (prod of sec.items; track prod._id) {
+          <div class="xanhla-prod-card">
+            <a class="xanhla-prod-card-img" [routerLink]="'/product-page/' + prod.slug">
+              <img [src]="prod.image" [alt]="prod.name" loading="lazy" />
+            </a>
+
+            <div class="xanhla-prod-card-body">
+              <div class="xanhla-prod-card-cat">
+                {{ getCategoryName(prod.categoryId) }}
+              </div>
+
+              <a class="xanhla-prod-card-name" [routerLink]="'/product-page/' + prod.slug">
+                {{ prod.name }}
+              </a>
+
+              @if (prod.description) {
+                <div class="xanhla-prod-card-desc">{{ prod.description }}</div>
+              }
+
+              <div class="xanhla-prod-card-price-row">
+                <span class="xanhla-prod-card-price">{{ prod.price }}</span>
+
+                @if (prod.weight) {
+                  <span class="xanhla-prod-card-unit">/ {{ prod.weight }}</span>
+                }
+
+                @if (itemQty(prod.slug) > 0) {
+                  <span class="ord-item-qty-badge ord-qty-inline">
+                    {{ itemQty(prod.slug) }}
+                  </span>
+                }
+              </div>
+
+              @if (itemQty(prod.slug) > 0) {
+                <div class="ord-qty-picker ord-qty-picker--full">
+                  <button type="button" class="ord-qty-btn" (click)="removeOne(prod)">−</button>
+                  <span class="ord-qty-num">{{ itemQty(prod.slug) }}</span>
+                  <button type="button" class="ord-qty-btn" (click)="addOne(prod)">+</button>
                 </div>
+              } @else {
+                <button
+                  type="button"
+                  class="xanhla-prod-card-add"
+                  (click)="addOne(prod)"
+                  [attr.aria-label]="'Thêm ' + prod.name">
+
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2.2">
+                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <path d="M16 10a4 4 0 0 1-8 0"/>
+                  </svg>
+
+                  Thêm vào giỏ
+                </button>
               }
             </div>
           </div>
         }
+      </div>
+    </div>
+  }
+}
       </div>
 
     </div><!-- end ord-layout -->

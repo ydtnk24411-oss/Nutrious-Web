@@ -83,8 +83,8 @@
       <div *ngIf="!loadingProducts && apiProducts.length === 0" class="coop-empty">Sản phẩm đang được cập nhật. Bạn có thể khám phá gian hàng online.</div>
       <div class="coop-product-grid coop-api-grid" *ngIf="!loadingProducts && apiProducts.length">
         <article *ngFor="let product of visibleProducts" class="coop-product-card">
-          <a class="coop-product-photo" [routerLink]="productSlug(product)"><img [src]="product.image || fallbackProductImage" [alt]="product.name" loading="lazy"><span class="coop-product-tag">{{ product.categoryVi || product.category || 'Gợi ý' }}</span></a>
-          <div class="coop-product-info"><small>{{ product.categoryVi || product.category || 'Sản phẩm chọn lọc' }}</small><h3><a [routerLink]="productSlug(product)">{{ product.name }}</a></h3><p>{{ product.description || 'Lựa chọn tiện lợi cho gia đình bạn.' }}</p><div class="coop-price-row"><strong>{{ product.price }}</strong></div><button type="button" class="coop-add-btn" (click)="addToCart(product)">Thêm vào giỏ</button></div>
+          <a class="coop-product-photo" [routerLink]="productSlug(product)"><img [src]="product.image || fallbackProductImage" [alt]="product.name" loading="lazy"><span class="coop-product-tag">{{ getCategoryName(product.categoryId) }}</span></a>
+          <div class="coop-product-info"><small>{{ getCategoryName(product.categoryId) }}</small><h3><a [routerLink]="productSlug(product)">{{ product.name }}</a></h3><p>{{ product.description || 'Lựa chọn tiện lợi cho gia đình bạn.' }}</p><div class="coop-price-row"><strong>{{ product.price }}</strong></div><button type="button" class="coop-add-btn" (click)="addToCart(product)">Thêm vào giỏ</button></div>
         </article>
       </div>
     </section>
