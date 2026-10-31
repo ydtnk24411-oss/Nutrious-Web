@@ -99,10 +99,10 @@ export class CheckoutComponent {
     // hoặc bỏ qua nếu là static data (slug string)
     const items = this.cart.items().map(i => {
       const prod = i.product as any;
-      // _id có dạng 24-char hex (MongoDB ObjectId)
-      const isObjectId = /^[a-f\d]{24}$/i.test(prod._id ?? '');
+      // id có dạng 24-char hex (MongoDB ObjectId)
+      const isObjectId = /^[a-f\d]{24}$/i.test(prod.id ?? '');
       return {
-        ...(isObjectId ? { product: prod._id } : {}),
+        ...(isObjectId ? { product: prod.id } : {}),
         productName:    i.product.name,
         productImage:   i.product.image,
         productPrice:   i.product.price,

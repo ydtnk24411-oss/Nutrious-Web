@@ -129,29 +129,40 @@ export class CartService {
 
   // Login with email and password (for real authentication)
   loginWithPassword(email: string, password: string): void {
-    this.api.post('/auth/login', { email, password }).subscribe({
-      next: (res: any) => {
-        if (res.success && res.data) {
-          const user: XanhLaUser = res.data;
-          this._currentUser.set(user);
-          localStorage.setItem(USER_KEY, JSON.stringify(user));
-          if (res.token) {
-            localStorage.setItem(TOKEN_KEY, res.token);
-          }
-          this._authModalOpen.set(false);
-          this._items.set(this._loadCartForUser(email));
-          console.log('Login successful:', user);
-        } else {
-          alert('Đăng nhập thất bại: ' + (res.message || 'Unknown error'));
-        }
-      },
-      error: (err) => {
-        console.error('Login error:', err);
-        const errorMsg = err.error?.message || err.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
-        alert(errorMsg);
+  this.api.post('/auth/login', {
+    email: email.trim().toLowerCase(),
+    password
+  }).subscribe({
+    next: (res: any) => {
+      if (res.success && res.user && res.token) {
+        const user: XanhLaUser = res.user;
+
+        this._currentUser.set(user);
+
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+        localStorage.setItem(TOKEN_KEY, res.token);
+
+        this._authModalOpen.set(false);
+
+        // Khôi phục giỏ hàng
+        this._items.set(this._loadCartForUser(user.email));
+
+        console.log('Login successful:', user);
+      } else {
+        alert('Đăng nhập thất bại: ' + (res.message || 'Dữ liệu trả về không hợp lệ.'));
       }
-    });
-  }
+    },
+    error: (err) => {
+      console.error('Login error:', err);
+
+      const errorMsg =
+        err.error?.message ||
+        'Đăng nhập thất bại. Vui lòng thử lại.';
+
+      alert(errorMsg);
+    }
+  });
+}
 
   private loadUserData(): void {
     this.api.get('/account/me').subscribe({
@@ -170,36 +181,48 @@ export class CartService {
     });
   }
 
-  signup(name: string, email: string, password: string): void {
-    console.log('Signup called with:', { name, email, passwordLength: password?.length });
+  signup(
+  name: string,
+  email: string,
+  password: string,
+  onSuccess?: () => void
+): void {
+  this.api.post('/auth/register', {
+    name: name.trim(),
+    email: email.trim().toLowerCase(),
+    password
+  }).subscribe({
+    next: (res: any) => {
+      if (res.success) {
+        // Không tự động đăng nhập
+        this._currentUser.set(null);
+        this._items.set([]);
 
-    // Call API to create user in MongoDB
-    this.api.post('/auth/register', { name, email, password }).subscribe({
-      next: (res: any) => {
-        console.log('Signup response:', res);
-        if (res.success && res.data) {
-          const user: XanhLaUser = res.data;
-          this._currentUser.set(user);
-          localStorage.setItem(USER_KEY, JSON.stringify(user));
-          if (res.token) {
-            localStorage.setItem(TOKEN_KEY, res.token);
-          }
-          this._authModalOpen.set(false);
-          this._items.set(this._loadCartForUser(email));
-          console.log('Signup successful, user saved:', user);
-        } else {
-          console.error('Signup failed - response:', res);
-          alert('Đăng ký thất bại: ' + (res.message || 'Unknown error'));
-        }
-      },
-      error: (err) => {
-        console.error('Signup error:', err);
-        const errorMsg = err.error?.message || err.message || 'Đăng ký thất bại. Vui lòng thử lại.';
-        alert(errorMsg);
+        localStorage.removeItem(USER_KEY);
+        localStorage.removeItem(TOKEN_KEY);
+
+        // Chuyển về tab đăng nhập
+        this._authTab.set('login');
+        this._authModalOpen.set(true);
+
+        alert('Đăng ký thành công! Vui lòng đăng nhập.');
+
+        onSuccess?.();
+      } else {
+        alert('Đăng ký thất bại: ' + (res.message || 'Vui lòng thử lại.'));
       }
-    });
-  }
+    },
+    error: (err) => {
+      console.error('Signup error:', err);
 
+      const errorMsg =
+        err.error?.message ||
+        'Đăng ký thất bại. Vui lòng thử lại.';
+
+      alert(errorMsg);
+    }
+  });
+}
   updateUser(patch: Partial<XanhLaUser>): void {
     const current = this._currentUser();
     if (!current) return;
@@ -246,12 +269,13 @@ export class CartService {
   }
 
   logout(): void {
-    // Lưu giỏ hàng hiện tại trước khi logout (đã lưu liên tục, chắc chắn rồi)
-    this._currentUser.set(null);
-    localStorage.removeItem(USER_KEY);
-    // Xóa giỏ hàng khỏi UI — không xóa storage của user đó
-    this._items.set([]);
-  }
+  this._currentUser.set(null);
+
+  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(TOKEN_KEY);
+
+  this._items.set([]);
+}
 
   openAuthModal(tab: AuthTab = 'login'): void {
     this._authTab.set(tab);

@@ -16,16 +16,36 @@ export class AuthModalComponent {
   protected name = signal('');
   protected email = signal('');
   protected password = signal('');
+  protected confirmPassword = signal('');
 
-  handleSubmit(e: Event): void {
-    e.preventDefault();
-    if (!this.email()) return;
-    if (this.cart.authTab() === 'login') {
-      this.cart.loginWithPassword(this.email(), this.password());
-    } else {
-      this.cart.signup(this.name() || 'Khách hàng', this.email(), this.password());
-    }
+ handleSubmit(e: Event): void {
+  e.preventDefault();
+
+  const email = this.email().trim();
+  const password = this.password();
+
+  if (!email || !password) return;
+
+  if (this.cart.authTab() === 'login') {
+    this.cart.loginWithPassword(email, password);
+    return;
   }
+
+  if (password !== this.confirmPassword()) {
+    alert('Mật khẩu xác nhận không khớp!');
+    return;
+  }
+
+  this.cart.signup(
+    this.name() || 'Khách hàng',
+    email,
+    password,
+    () => {
+      this.password.set('');
+      this.confirmPassword.set('');
+    }
+  );
+}
 
   handleGoogleLogin(): void {
     this.cart.login('member@gmail.com', 'Nguyễn Văn A');
