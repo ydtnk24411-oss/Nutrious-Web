@@ -18,11 +18,11 @@
   <input class="admin-search-input" type="text" placeholder="🔍 Tìm sản phẩm..."
          [value]="search()" (input)="onSearch($any($event.target).value)" />
   <select class="admin-select" [value]="category()" (change)="onCategory($any($event.target).value)">
-    <option value="">Tất cả danh mục</option>
-    <option value="Vegetables">Rau củ</option>
-    <option value="Fruits">Trái cây</option>
-    <option value="Meat">Thịt</option>
-  </select>
+  <option value="">Tất cả danh mục</option>
+  @for (c of categories(); track c._id) {
+  <option [value]="c._id">{{ c.name }}</option>
+}
+</select>
   <select class="admin-select" [value]="sort()" (change)="onSort($any($event.target).value)">
     <option value="createdAt">Mới nhất</option>
     <option value="price-asc">Giá tăng dần</option>
@@ -50,7 +50,7 @@
               <img [src]="p.image" [alt]="p.name" loading="lazy" />
             </div>
             <div class="prod-card-body">
-              <div class="prod-card-cat">{{ p.categoryVi || p.category }}</div>
+              <div class="prod-card-cat">{{ getCategoryName(p.categoryId) }}</div>
               <h4 class="prod-card-name">{{ p.name }}</h4>
               <div class="prod-card-meta">
                 <strong class="prod-card-price">{{ p.price }}</strong>
@@ -96,7 +96,7 @@
                       <h5 class="prod-table-name">{{ p.name }}</h5>
                     </div>
                   </td>
-                  <td><span class="prod-table-cat">{{ p.categoryVi || p.category }}</span></td>
+                  <td><span class="prod-table-cat">{{ getCategoryName(p.categoryId) }}</span></td>
                   <td><span class="prod-table-price">{{ p.price }}</span></td>
                   <td><span class="prod-table-stock">{{ p.stock }}</span></td>
                   <td>
@@ -178,20 +178,18 @@
           </div>
 
           <!-- Category -->
-          <div class="admin-field">
-            <label>Danh mục *</label>
-            <select [value]="form().category" (change)="setField('category', $any($event.target).value)">
-              @for (c of categories; track c) { <option [value]="c">{{ c }}</option> }
-            </select>
-          </div>
-
-          <!-- CategoryVi -->
-          <div class="admin-field">
-            <label>Danh mục (VI)</label>
-            <input type="text" placeholder="Rau củ"
-                   [value]="form().categoryVi" (input)="setField('categoryVi', $any($event.target).value)" />
-          </div>
-
+<div class="admin-field">
+  <label>Danh mục *</label>
+  <select
+    [value]="form().categoryId"
+    (change)="setField('categoryId', $any($event.target).value)"
+  >
+    <option value="">Chọn danh mục</option>
+    @for (c of categories(); track c._id) {
+      <option [value]="c._id">{{ c.name }}</option>
+    }
+  </select>
+</div>
           <!-- Stock -->
           <div class="admin-field">
             <label>Tồn kho</label>

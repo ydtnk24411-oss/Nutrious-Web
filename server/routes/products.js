@@ -4,12 +4,17 @@ const Product  = require('../models/Product');
 const { protect, adminOnly } = require('../middleware/auth');
 const { validate }           = require('../middleware/validate');
 
-// GET /api/products  — public, supports ?category=&search=&sort=&page=&limit=
+// GET /api/products  — public, supports ?categoryId=&search=&sort=&page=&limit=
 router.get('/', async (req, res, next) => {
   try {
-    const { category, search, sort = 'createdAt', page = 1, limit = 20 } = req.query;
-    const filter = { isActive: true };
-    if (category && category !== 'all') filter.category = { $regex: category, $options: 'i' };
+    const { categoryId, search, sort = 'createdAt', page = 1, limit = 20 } = req.query;
+    const filter = { isActive: { $ne: false } };
+
+    if (categoryId && categoryId !== 'all') {
+      // categoryId trong DB là string thường, không phải ObjectId
+      filter.categoryId = categoryId;
+    }
+
     if (search) filter.$text = { $search: search };
 
     const sortObj = sort === 'price-asc'  ? { priceNumber:  1 }
@@ -30,7 +35,7 @@ router.get('/', async (req, res, next) => {
 // GET /api/products/:slug — public
 router.get('/:slug', async (req, res, next) => {
   try {
-    const product = await Product.findOne({ slug: req.params.slug, isActive: true });
+    const product = await Product.findOne({ slug: req.params.slug, isActive: { $ne: false } });
     if (!product) return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
     res.json({ success: true, data: product });
   } catch (err) { next(err); }
@@ -40,7 +45,6 @@ const productValidation = [
   body('name').notEmpty().withMessage('Tên sản phẩm không được để trống.'),
   body('slug').notEmpty().withMessage('Slug không được để trống.'),
   body('priceNumber').isNumeric().withMessage('Giá phải là số.'),
-  body('category').isIn(['Vegetables', 'Fruits', 'Meat']).withMessage('Danh mục không hợp lệ.'),
 ];
 
 // POST /api/products — admin

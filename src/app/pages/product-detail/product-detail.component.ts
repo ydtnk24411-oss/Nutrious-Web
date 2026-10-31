@@ -12,8 +12,9 @@ function toCartProduct(p: ApiProduct): XanhLaProduct {
   return {
     id: p._id, name: p.name, slug: p.slug, price: p.price,
     priceNumber: p.priceNumber, image: p.image,
-    category: p.category as 'Vegetables' | 'Fruits' | 'Meat',
-    categoryVi: p.categoryVi, description: p.description,
+    category: p.categoryId,
+categoryVi: '',
+description: p.description,
     container: p.container, cutType: p.cutType, cutting: p.cutting,
     packSize: p.packSize, packaging: p.packaging, preparation: p.preparation,
     quantity: p.quantity, ripeness: p.ripeness, sizeGroup: p.sizeGroup,

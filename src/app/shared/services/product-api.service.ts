@@ -8,8 +8,7 @@ export interface ApiProduct {
   price: string;
   priceNumber: number;
   image: string;
-  category: string;
-  categoryVi: string;
+  categoryId: string;
   description: string;
   stock: number;
   isActive: boolean;
@@ -20,9 +19,20 @@ export interface ApiProduct {
   options?: { name: string; values: string[] }[];
   createdAt: string;
 }
+export interface ApiCategory {
+  _id: string;
+  name: string;
+  slug: string;
+  order: number;
+  isActive: boolean;
+  createdAt: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ProductApiService {
+  getCategories() {
+  return this.api.get<{ success: boolean; data: ApiCategory[] }>('/categories');
+}
   private api = inject(ApiService);
 
   getAll(params?: Record<string, string | number>) {

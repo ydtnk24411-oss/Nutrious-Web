@@ -12,7 +12,8 @@ const productSchema = new mongoose.Schema(
     price:       { type: String, required: true },           // display string "25 ₫"
     priceNumber: { type: Number, required: true, min: 0 },
     image:       { type: String, default: '' },
-    category:    { type: String, enum: ['Vegetables', 'Fruits', 'Meat', 'Seafood', 'Dairy', 'Beverages', 'Bakery', 'Pantry', 'Personal', 'Household'], required: true },
+    category:    { type: String, default: '' },
+    categoryId:  { type: String, default: '' },
     categoryVi:  { type: String, default: '' },
     description: { type: String, default: '' },
     container:   { type: String, default: '' },

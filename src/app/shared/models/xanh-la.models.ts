@@ -11,7 +11,7 @@ export interface XanhLaProduct {
   price: string;
   priceNumber: number;
   image: string;
-  category: 'Vegetables' | 'Fruits' | 'Meat' | 'Seafood' | 'Dairy' | 'Beverages' | 'Bakery' | 'Pantry' | 'Personal' | 'Household';
+  category: string;
   categoryVi: string;
   container: string;
   cutType: string;

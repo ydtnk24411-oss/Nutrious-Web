@@ -4,9 +4,9 @@ import { RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { CartService } from '../../shared/services/cart.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
-import { CategoryApiService } from '../../shared/services/category-api.service';
 import { heroImage, originImage } from '../../shared/data/xanh-la.data';
 import { XanhLaProduct } from '../../shared/models/xanh-la.models';
+import { CategoryApiService, ApiCategory } from '../../shared/services/category-api.service';
 
 interface Deal {
   id: string; name: string; category: string; description: string; image: string;
@@ -77,6 +77,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   ];
 
   apiProducts: ApiProduct[] = [];
+  categories: ApiCategory[] = [];
   loadingProducts = true;
   productOffset = 0;
   countdown = { hours: '05', minutes: '42', seconds: '18' };
@@ -90,7 +91,14 @@ export class HomeComponent implements OnInit, OnDestroy {
       next: res => { this.apiProducts = res.data || []; this.loadingProducts = false; },
       error: () => { this.loadingProducts = false; },
     });
-    this.categoryApi.getAll().subscribe({ error: () => undefined });
+    this.categoryApi.getAll().subscribe({
+  next: res => {
+    this.categories = res.data || [];
+  },
+  error: err => {
+    console.error('Failed to load categories:', err);
+  },
+});
     this.heroTimer = setInterval(() => this.nextHero(), 6500);
     this.countdownTimer = setInterval(() => this.tickCountdown(), 1000);
     this.tickCountdown();
@@ -110,6 +118,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
   productSlug(p: ApiProduct): string { return p.slug?.startsWith('/') ? p.slug : `/product-page/${p.slug}`; }
   addToCart(p: ApiProduct): void { this.cart.addItem(this.toCartProduct(p), 1); }
+  getCategoryName(categoryId: string): string {
+  return this.categories.find(c => c._id === categoryId)?.name ?? 'Chưa phân loại';
+}
   addDealToCart(deal: Deal): void {
     const product = {
       id: deal.id, name: deal.name, slug: deal.id, price: deal.priceNew,
@@ -120,12 +131,29 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
   private toCartProduct(p: ApiProduct): XanhLaProduct {
     return {
-      id: p._id, name: p.name, slug: p.slug, price: p.price, priceNumber: p.priceNumber,
-      image: p.image, category: p.category as 'Vegetables' | 'Fruits' | 'Meat',
-      categoryVi: p.categoryVi, description: p.description, container: p.container,
-      cutType: p.cutType, cutting: p.cutting, packSize: p.packSize, packaging: p.packaging,
-      preparation: p.preparation, quantity: p.quantity, ripeness: p.ripeness, sizeGroup: p.sizeGroup,
-      thickness: p.thickness, type: p.type, weight: p.weight, options: p.options,
+    id: p._id,
+    name: p.name,
+    slug: p.slug,
+    price: p.price,
+    priceNumber: p.priceNumber,
+    image: p.image,
+    category: p.categoryId,
+    categoryVi: '',
+    description: p.description,
+
+    container: p.container,
+    cutType: p.cutType,
+    cutting: p.cutting,
+    packSize: p.packSize,
+    packaging: p.packaging,
+    preparation: p.preparation,
+    quantity: p.quantity,
+    ripeness: p.ripeness,
+    sizeGroup: p.sizeGroup,
+    thickness: p.thickness,
+    type: p.type,
+    weight: p.weight,
+    options: p.options,
     } as XanhLaProduct;
   }
   private tickCountdown(): void {
