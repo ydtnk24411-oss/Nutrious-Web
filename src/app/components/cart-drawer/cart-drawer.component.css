@@ -1,1 +1,96 @@
 /* Styles in global styles.css */
+
+/* ── Checkbox trong drawer ── */
+.drawer-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 17px;
+  height: 17px;
+  border: 2px solid var(--xanh-line, #ccc);
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.drawer-checkbox:checked {
+  background: var(--xanh-moss, #4a7c59);
+  border-color: var(--xanh-moss, #4a7c59);
+}
+
+.drawer-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+.drawer-checkbox:hover {
+  border-color: var(--xanh-moss, #4a7c59);
+}
+
+/* ── Chọn tất cả ── */
+.drawer-select-all-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--xanh-line, #eee);
+  margin-bottom: 4px;
+}
+
+.drawer-select-all-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--xanh-muted, #888);
+  user-select: none;
+}
+
+.drawer-selected-badge {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--xanh-moss, #4a7c59);
+  font-weight: 600;
+  background: rgba(74,124,89,0.1);
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+
+/* ── Checkbox wrap bên cạnh sản phẩm ── */
+.drawer-item-checkbox-wrap {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding-right: 2px;
+}
+
+/* ── Item mờ khi chưa được chọn ── */
+.drawer-item-dimmed {
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+/* ── Gợi ý text ── */
+.drawer-hint-text {
+  font-size: 12px;
+  color: var(--xanh-muted, #888);
+  text-align: center;
+  margin: 0 0 8px;
+}
+
+/* ── Nút disabled ── */
+.drawer-btn-disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+}

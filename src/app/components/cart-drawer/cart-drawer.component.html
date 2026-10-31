@@ -19,8 +19,39 @@
             <button class="xanhla-btn-primary" type="button" (click)="goToShop()">Khám phá thực phẩm</button>
           </div>
         } @else {
+          <!-- Chọn tất cả -->
+          <div class="drawer-select-all-row">
+            <label id="drawer-select-all-label" class="drawer-select-all-label">
+              <input
+                id="drawer-select-all"
+                type="checkbox"
+                class="drawer-checkbox"
+                [checked]="allSelected"
+                (change)="toggleAll()"
+              />
+              <span>Chọn tất cả</span>
+            </label>
+            @if (selectedCount > 0) {
+              <span class="drawer-selected-badge">{{ selectedCount }}/{{ cart.items().length }}</span>
+            }
+          </div>
+
           @for (item of cart.items(); track item.product.slug + (item.selectedOption ?? '')) {
-            <div class="xanhla-drawer-item">
+            <div class="xanhla-drawer-item" [class.drawer-item-dimmed]="!isSelected(item.product.slug, item.selectedOption)">
+              <!-- Checkbox -->
+              <label
+                [id]="'drawer-item-label-' + item.product.slug"
+                class="drawer-item-checkbox-wrap"
+              >
+                <input
+                  [id]="'drawer-item-check-' + item.product.slug"
+                  type="checkbox"
+                  class="drawer-checkbox"
+                  [checked]="isSelected(item.product.slug, item.selectedOption)"
+                  (change)="toggleItem(item.product.slug, item.selectedOption)"
+                />
+              </label>
+
               <img [src]="item.product.image" [alt]="item.product.name" />
               <div class="xanhla-drawer-item-info">
                 <h4>{{ item.product.name }}</h4>
@@ -54,11 +85,24 @@
         <div class="xanhla-drawer-footer">
           <div class="xanhla-drawer-total">
             <span>Tổng cộng</span>
-            <span>{{ formatPrice(cart.subtotal()) }}</span>
+            <span [style.color]="selectedCount > 0 ? 'var(--xanh-moss)' : 'var(--xanh-muted)'">
+              {{ selectedCount > 0 ? formatPrice(selectedSubtotal) : '—' }}
+            </span>
           </div>
+          @if (selectedCount === 0) {
+            <p class="drawer-hint-text">Chọn sản phẩm để thanh toán</p>
+          }
           <div style="display:flex;flex-direction:column;gap:10px">
-            <button class="xanhla-btn-primary" type="button" style="width:100%" (click)="goToCheckout()">
-              Thanh toán ngay
+            <button
+              id="drawer-checkout-btn"
+              class="xanhla-btn-primary"
+              type="button"
+              style="width:100%"
+              [disabled]="selectedCount === 0"
+              [class.drawer-btn-disabled]="selectedCount === 0"
+              (click)="goToCheckout()"
+            >
+              Thanh toán{{ selectedCount > 0 ? ' (' + selectedCount + ')' : '' }}
             </button>
             <button class="xanhla-btn-secondary" type="button" style="width:100%" (click)="goToCart()">
               Xem chi tiết giỏ hàng

@@ -13,10 +13,47 @@
       <div style="display:grid;grid-template-columns:1fr 340px;gap:40px">
         <!-- Items -->
         <div style="background:#fff;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line);padding:24px">
+
+          <!-- Tiêu đề + chọn tất cả -->
+          <div style="display:flex;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--xanh-line);margin-bottom:4px">
+            <label id="select-all-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--xanh-muted);user-select:none">
+              <input
+                id="cart-select-all"
+                type="checkbox"
+                class="cart-checkbox"
+                [checked]="allSelected"
+                (change)="toggleAll()"
+              />
+              Chọn tất cả
+            </label>
+            @if (selectedCount > 0) {
+              <span style="margin-left:auto;font-size:13px;color:var(--xanh-moss);font-weight:600">
+                Đã chọn {{ selectedCount }} / {{ cart.items().length }} sản phẩm
+              </span>
+            }
+          </div>
+
           @for (item of cart.items(); track item.product.slug + (item.selectedOption ?? '')) {
-            <div style="display:flex;align-items:center;gap:20px;padding:16px 0;border-bottom:1px solid var(--xanh-line)">
+            <div
+              style="display:flex;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid var(--xanh-line)"
+              [style.opacity]="isSelected(item.product.slug, item.selectedOption) ? '1' : '0.55'"
+            >
+              <!-- Checkbox chọn sản phẩm -->
+              <label
+                [id]="'cart-item-label-' + item.product.slug"
+                style="display:flex;align-items:center;cursor:pointer;flex-shrink:0"
+              >
+                <input
+                  [id]="'cart-item-check-' + item.product.slug"
+                  type="checkbox"
+                  class="cart-checkbox"
+                  [checked]="isSelected(item.product.slug, item.selectedOption)"
+                  (change)="toggleItem(item.product.slug, item.selectedOption)"
+                />
+              </label>
+
               <img [src]="item.product.image" [alt]="item.product.name"
-                   style="width:80px;height:80px;border-radius:var(--xanh-radius-sm);object-fit:cover" />
+                   style="width:80px;height:80px;border-radius:var(--xanh-radius-sm);object-fit:cover;flex-shrink:0" />
               <div style="flex:1">
                 <h3 style="margin:0 0 4px 0;font-size:17px">{{ item.product.name }}</h3>
                 @if (item.selectedOption) {
@@ -28,6 +65,10 @@
                 <button type="button" (click)="cart.updateQuantity(item.product.slug, item.quantity - 1)">−</button>
                 <span>{{ item.quantity }}</span>
                 <button type="button" (click)="cart.updateQuantity(item.product.slug, item.quantity + 1)">+</button>
+              </div>
+              <!-- Thành tiền của item này -->
+              <div style="min-width:90px;text-align:right;font-size:14px;font-weight:600;color:var(--xanh-text)">
+                {{ formatPrice(itemSubtotal(item.product.price, item.quantity)) }}
               </div>
               <button type="button"
                       style="background:transparent;border:none;color:var(--xanh-muted);cursor:pointer"
@@ -50,15 +91,35 @@
         <div style="background:#fff;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line);padding:24px;height:fit-content">
           <h3 style="margin:0 0 16px 0;font-size:18px">Tóm tắt đơn hàng</h3>
           <div style="display:flex;justify-content:space-between;margin-bottom:12px;font-size:15px">
-            <span>Tạm tính</span><span>{{ formatPrice(cart.subtotal()) }}</span>
+            <span>Tạm tính</span>
+            <span>{{ selectedCount > 0 ? formatPrice(selectedSubtotal) : '—' }}</span>
           </div>
           <div style="display:flex;justify-content:space-between;margin-bottom:20px;font-size:15px">
             <span>Phí giao hàng</span><span>Miễn phí</span>
           </div>
           <div style="display:flex;justify-content:space-between;border-top:1px solid var(--xanh-line);padding-top:16px;margin-bottom:24px;font-size:18px;font-weight:700">
-            <span>Tổng cộng</span><span>{{ formatPrice(cart.subtotal()) }}</span>
+            <span>Tổng cộng</span>
+            <span style="color:var(--xanh-moss)">{{ selectedCount > 0 ? formatPrice(selectedSubtotal) : '—' }}</span>
           </div>
-          <button class="xanhla-btn-primary" type="button" style="width:100%" (click)="goToCheckout()">Tiến hành thanh toán</button>
+
+          @if (selectedCount === 0) {
+            <p style="font-size:13px;color:var(--xanh-muted);text-align:center;margin-bottom:12px">
+              Vui lòng chọn ít nhất 1 sản phẩm để thanh toán
+            </p>
+          }
+
+          <button
+            id="cart-checkout-btn"
+            class="xanhla-btn-primary"
+            type="button"
+            style="width:100%"
+            [disabled]="selectedCount === 0"
+            [style.opacity]="selectedCount === 0 ? '0.45' : '1'"
+            [style.cursor]="selectedCount === 0 ? 'not-allowed' : 'pointer'"
+            (click)="goToCheckout()"
+          >
+            Tiến hành thanh toán{{ selectedCount > 0 ? ' (' + selectedCount + ')' : '' }}
+          </button>
         </div>
       </div>
     }

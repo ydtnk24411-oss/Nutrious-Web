@@ -13,7 +13,9 @@ function cartKey(email: string): string {
 export type AuthTab = 'login' | 'signup';
 
 function priceValue(price: string): number {
-  return Number(price.replace(/[^\d.]/g, ''));
+  // Giá VNĐ dùng dấu chấm làm phân cách hàng nghìn (vd: "10.000đ")
+  // → xóa tất cả ký tự không phải chữ số trước khi parse
+  return Number(price.replace(/[^\d]/g, ''));
 }
 
 export function formatPrice(value: number): string {
