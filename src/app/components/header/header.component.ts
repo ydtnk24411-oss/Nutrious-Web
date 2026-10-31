@@ -1,4 +1,4 @@
-import { Component, signal, inject, HostListener } from '@angular/core';
+import { Component, signal, inject, HostListener, effect } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CartService } from '../../shared/services/cart.service';
@@ -33,6 +33,17 @@ const NOTIFICATIONS = [
 export class HeaderComponent {
   protected cart   = inject(CartService);
   protected router = inject(Router);
+
+  constructor() {
+    // Mỗi khi user đăng nhập (currentUser thay đổi từ null → có user),
+    // tự fetch lại đầy đủ data từ MongoDB (kể cả avatar)
+    effect(() => {
+      const user = this.cart.currentUser();
+      if (user) {
+        this.cart.loadUserData();
+      }
+    });
+  }
 
   protected readonly navItems    = navItems;
   protected readonly logoImage   = logoImage;

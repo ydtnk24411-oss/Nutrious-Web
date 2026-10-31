@@ -149,6 +149,9 @@ export class CartService {
         // Khôi phục giỏ hàng
         this._items.set(this._loadCartForUser(user.email));
 
+        // Load full user data (ku1ec3 cu1ea3 avatar) tu1eeb backend
+        this.loadUserData();
+
         console.log('Login successful:', user);
       } else {
         alert('Đăng nhập thất bại: ' + (res.message || 'Dữ liệu trả về không hợp lệ.'));
@@ -166,7 +169,7 @@ export class CartService {
   });
 }
 
-  private loadUserData(): void {
+  public loadUserData(): void {
     this.api.get('/account/me').subscribe({
       next: (res: any) => {
         console.log('Load user data response:', res);
