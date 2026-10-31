@@ -1,1 +1,37 @@
 /* Styles in global styles.css */
+
+/* Custom checkbox cho giỏ hàng */
+.cart-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--xanh-line, #ccc);
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.cart-checkbox:checked {
+  background: var(--xanh-moss, #4a7c59);
+  border-color: var(--xanh-moss, #4a7c59);
+}
+
+.cart-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 6px;
+  height: 10px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+.cart-checkbox:hover {
+  border-color: var(--xanh-moss, #4a7c59);
+}
