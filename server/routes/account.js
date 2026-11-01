@@ -16,31 +16,24 @@ router.get('/me', protect, async (req, res, next) => {
 // PUT /api/account/me - Update profile
 router.put('/me', protect, async (req, res, next) => {
   try {
-    const { name, phone, avatar } = req.body;
-    console.log('Update profile request:', {
-      userId: req.user.id,
-      name,
-      phone,
-      hasAvatar: !!avatar,
-      avatarLength: avatar?.length
-    });
+    // Only update fields that were actually sent in the request body
+    const allowedFields = ['name', 'phone', 'avatar', 'firstName', 'lastName', 'title'];
+    const updateData = {};
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    }
 
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      { name, phone, avatar },
+      { $set: updateData },
       { new: true, runValidators: true }
     ).select('-password');
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
     }
-
-    console.log('User updated:', {
-      _id: user._id,
-      name: user.name,
-      hasAvatar: !!user.avatar,
-      avatarLength: user.avatar?.length
-    });
 
     res.json({ success: true, data: user });
   } catch (err) {

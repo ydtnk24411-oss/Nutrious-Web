@@ -1,4 +1,4 @@
-import { Component, signal, inject, HostListener, effect } from '@angular/core';
+﻿import { Component, signal, inject, HostListener, effect } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CartService } from '../../shared/services/cart.service';

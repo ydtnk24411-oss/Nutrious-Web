@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, computed, HostListener } from '@angular/core';
+﻿import { Component, signal, inject, OnInit, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
@@ -114,11 +114,13 @@ export class AccountComponent implements OnInit {
     this.lastName.set(u.lastName ?? '');
     this.phone.set(u.phone ?? '');
     this.title.set(u.title ?? '');
-    this.avatar.set(u.avatar ?? '');
-    console.log('Account component loaded, avatar:', u.avatar ? 'Has avatar' : 'No avatar');
+    // avatar lay truc tiep tu cart.currentUser() de luon dong bo
     // Pre-fill address form name
     this.addrFullName.set(u.name ?? '');
     this.addrPhone.set(u.phone ?? '');
+
+    // Fetch moi nhat tu backend de dam bao avatar luon dung sau login
+    this.cart.loadUserData();
   }
 
   // ── Save account info ────────────────────────
@@ -133,7 +135,7 @@ export class AccountComponent implements OnInit {
       lastName:  this.lastName(),
       phone:     this.phone(),
       title:     this.title(),
-      avatar:    this.avatar(),
+      avatar:    this.cart.currentUser()?.avatar ?? '',
     };
     console.log('Saving account with data:', updateData);
     this.cart.updateUser(updateData);
@@ -177,8 +179,6 @@ export class AccountComponent implements OnInit {
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = reader.result as string;
-      console.log('Avatar converted to base64, length:', base64.length);
-      this.avatar.set(base64);
       this.uploadingAvatar.set(false);
 
       // Auto-save avatar to backend
@@ -207,7 +207,6 @@ export class AccountComponent implements OnInit {
 
   removeAvatar(): void {
     if (confirm('Bạn có chắc muốn xóa ảnh đại diện?')) {
-      this.avatar.set('');
       this.avatarMenuOpen.set(false);
 
       // Auto-save empty avatar to backend

@@ -68,7 +68,7 @@ router.post(
       res.json({
         success: true,
         token,
-        user: { _id: user._id, name: user.name, email: user.email, role: user.role },
+        user: { _id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar, phone: user.phone },
       });
     } catch (err) { next(err); }
   }
