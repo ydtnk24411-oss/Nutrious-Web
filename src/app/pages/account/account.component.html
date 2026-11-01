@@ -1,4 +1,4 @@
-<app-shell>
+﻿<app-shell>
   @if (cart.currentUser(); as user) {
     <div class="acc-page xanhla-container">
 
@@ -23,8 +23,8 @@
           <div class="acc-profile-card">
             <div class="acc-profile-avatar-wrapper">
               <div class="acc-profile-avatar">
-                @if (avatar()) {
-                  <img [src]="avatar()" alt="Avatar" />
+                @if (cart.currentUser()?.avatar) {
+                  <img [src]="cart.currentUser()!.avatar" alt="Avatar" />
                 } @else {
                   <div class="acc-avatar-placeholder">{{ avatarChar() }}</div>
                 }
@@ -48,7 +48,7 @@
                     </svg>
                     Đổi ảnh đại diện
                   </label>
-                  @if (avatar()) {
+                  @if (cart.currentUser()?.avatar) {
                     <button type="button" class="acc-avatar-menu-item acc-avatar-menu-danger" (click)="removeAvatar()">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="3 6 5 6 21 6"/>
@@ -152,8 +152,8 @@
               <div class="acc-avatar-upload">
                 <div class="acc-avatar-preview-wrapper">
                   <div class="acc-avatar-preview">
-                    @if (avatar()) {
-                      <img [src]="avatar()" alt="Avatar preview" />
+                    @if (cart.currentUser()?.avatar) {
+                      <img [src]="cart.currentUser()!.avatar" alt="Avatar preview" />
                     } @else {
                       <div class="acc-avatar-placeholder-large">{{ avatarChar() }}</div>
                     }
@@ -177,7 +177,7 @@
                         </svg>
                         Đổi ảnh đại diện
                       </label>
-                      @if (avatar()) {
+                      @if (cart.currentUser()?.avatar) {
                         <button type="button" class="acc-avatar-menu-item acc-avatar-menu-danger" (click)="removeAvatar()">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="3 6 5 6 21 6"/>
