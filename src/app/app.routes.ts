@@ -89,6 +89,16 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/cook/cook.component').then((m) => m.CookComponent),
   },
+  {
+    path: 'cam-nang/:slug',
+    loadComponent: () =>
+      import('./pages/handbook/handbook-detail.component').then((m) => m.HandbookDetailComponent),
+  },
+  {
+    path: 'cam-nang',
+    loadComponent: () =>
+      import('./pages/handbook/handbook-detail.component').then((m) => m.HandbookDetailComponent),
+  },
 
   // ── Redirect các trang đã xóa ────────────────────────────────
   { path: 'menus',                  redirectTo: 'online-ordering', pathMatch: 'full' },

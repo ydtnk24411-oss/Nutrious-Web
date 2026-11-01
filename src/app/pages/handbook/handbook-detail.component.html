@@ -1,0 +1,108 @@
+<app-shell>
+  <main class="hb-page">
+    @if (currentArticle(); as article) {
+      <!-- Breadcrumb -->
+      <nav class="hb-breadcrumb coop-container" aria-label="Đường dẫn">
+        <a routerLink="/">Trang chủ</a>
+        <span class="hb-sep">/</span>
+        <a routerLink="/cam-nang">Cẩm nang &amp; Cảm hứng</a>
+        <span class="hb-sep">/</span>
+        <span class="hb-current">{{ article.title }}</span>
+      </nav>
+
+      <!-- Article Header -->
+      <header class="hb-header coop-container">
+        <div class="hb-tags">
+          <span class="hb-badge-green">{{ article.badge }}</span>
+          <span class="hb-badge-category">{{ article.category }}</span>
+        </div>
+        <h1 class="hb-title">{{ article.title }}</h1>
+        <div class="hb-meta">
+          <span>🕒 {{ article.readTime }}</span>
+          <span>•</span>
+          <span>📅 {{ article.date }}</span>
+          <span>•</span>
+          <span>✍️ Ban Biên Tập Xanh Lá</span>
+        </div>
+      </header>
+
+      <!-- Hero Image -->
+      <div class="hb-hero-image coop-container">
+        <img [src]="article.image" [alt]="article.title" />
+      </div>
+
+      <!-- Article Body -->
+      <article class="hb-body coop-container">
+        <!-- Summary Box -->
+        <div class="hb-summary">
+          <p>{{ article.summary }}</p>
+        </div>
+
+        <!-- Sections -->
+        @for (sec of article.sections; track sec.heading) {
+          <section class="hb-section">
+            <h2 class="hb-heading">{{ sec.heading }}</h2>
+            <p class="hb-text">{{ sec.text }}</p>
+
+            @if (sec.tips && sec.tips.length > 0) {
+              <div class="hb-tips-box">
+                <div class="hb-tips-title">💡 Mẹo hay cho bạn:</div>
+                <ul class="hb-tips-list">
+                  @for (tip of sec.tips; track tip) {
+                    <li>{{ tip }}</li>
+                  }
+                </ul>
+              </div>
+            }
+          </section>
+        }
+
+        <!-- Related Action Box (CTA) -->
+        @if (article.relatedCta) {
+          <div class="hb-cta-box">
+            <div class="hb-cta-content">
+              <h3>Đồng hành cùng lối sống tươi lành tại Xanh Lá</h3>
+              <p>{{ article.relatedCta.text }}</p>
+            </div>
+            <a [routerLink]="article.relatedCta.link"
+               [queryParams]="article.relatedCta.queryParams"
+               class="hb-cta-btn">
+              {{ article.relatedCta.buttonText }} →
+            </a>
+          </div>
+        }
+      </article>
+
+      <!-- Other Articles Carousel / Grid -->
+      <section class="hb-other-section">
+        <div class="coop-container">
+          <div class="coop-section-heading">
+            <div>
+              <span class="coop-eyebrow">GÓC NHÀ XANH</span>
+              <h2>Bài viết cẩm nang khác</h2>
+              <p>Khám phá thêm nhiều mẹo hữu ích cho gian bếp và gia đình bạn.</p>
+            </div>
+            <a routerLink="/" class="coop-text-link">← Về trang chủ</a>
+          </div>
+
+          <div class="coop-news-grid">
+            @for (item of otherArticles(); track item.slug) {
+              <a [routerLink]="['/cam-nang', item.slug]" class="coop-news-card">
+                <div class="coop-news-image">
+                  <img [src]="item.image" [alt]="item.title" loading="lazy">
+                  <span>{{ item.badge }}</span>
+                </div>
+                <div class="coop-news-copy">
+                  <small>{{ item.category }}</small>
+                  <h3>{{ item.title }}</h3>
+                  <span class="coop-read-more">Đọc bài viết →</span>
+                </div>
+              </a>
+            }
+          </div>
+        </div>
+      </section>
+    }
+  </main>
+</app-shell>
+

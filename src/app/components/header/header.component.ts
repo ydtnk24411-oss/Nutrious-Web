@@ -1,18 +1,19 @@
-﻿import { Component, signal, inject, HostListener, effect } from '@angular/core';
+import { Component, signal, inject, HostListener, effect } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CartService } from '../../shared/services/cart.service';
 import { navItems, logoImage } from '../../shared/data/xanh-la.data';
+import { CategoryApiService } from '../../shared/services/category-api.service';
 
 const CATEGORIES = [
-  { label: 'Rau củ & trái cây',     path: '/online-ordering', category: 'Rau củ & trái cây' },
-  { label: 'Thịt & hải sản',        path: '/online-ordering', category: 'Thịt & hải sản' },
-  { label: 'Sữa & thực phẩm mát',   path: '/online-ordering', category: 'Sữa & thực phẩm mát' },
-  { label: 'Thức uống',             path: '/online-ordering', category: 'Thức uống' },
-  { label: 'Bánh & đồ ăn vặt',      path: '/online-ordering', category: 'Bánh & đồ ăn vặt' },
-  { label: 'Gia vị & thực phẩm khô', path: '/online-ordering', category: 'Gia vị & thực phẩm khô' },
-  { label: 'Chăm sóc cá nhân',      path: '/online-ordering', category: 'Chăm sóc cá nhân' },
-  { label: 'Nhà cửa & đời sống',    path: '/online-ordering', category: 'Nhà cửa & đời sống' },
+  { label: 'Rau củ',                 path: '/online-ordering', category: 'Rau củ' },
+  { label: 'Trái cây',               path: '/online-ordering', category: 'Trái cây' },
+  { label: 'Thịt',                   path: '/online-ordering', category: 'Thịt' },
+  { label: 'Cá & Hải sản',           path: '/online-ordering', category: 'Cá & Hải sản' },
+  { label: 'Sữa & Thực phẩm mát',    path: '/online-ordering', category: 'Sữa & Thực phẩm mát' },
+  { label: 'Thức uống',              path: '/online-ordering', category: 'Thức uống' },
+  { label: 'Bánh & Đồ ăn vặt',       path: '/online-ordering', category: 'Bánh & Đồ ăn vặt' },
+  { label: 'Gia vị & Thực phẩm khô', path: '/online-ordering', category: 'Gia vị & Thực phẩm khô' },
 ];
 
 const AREAS = ['TP. Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Cần Thơ', 'Biên Hòa'];
@@ -33,8 +34,22 @@ const NOTIFICATIONS = [
 export class HeaderComponent {
   protected cart   = inject(CartService);
   protected router = inject(Router);
+  private categoryApi = inject(CategoryApiService, { optional: true });
 
   constructor() {
+    this.categoryApi?.getAll().subscribe({
+      next: (res) => {
+        if (res?.data?.length) {
+          this.categories = res.data.map(cat => ({
+            label: cat.name,
+            path: '/online-ordering',
+            category: cat.name,
+          }));
+        }
+      },
+      error: () => {},
+    });
+
     // Mỗi khi user đăng nhập (currentUser thay đổi từ null → có user),
     // tự fetch lại đầy đủ data từ MongoDB (kể cả avatar)
     effect(() => {
@@ -47,7 +62,7 @@ export class HeaderComponent {
 
   protected readonly navItems    = navItems;
   protected readonly logoImage   = logoImage;
-  protected readonly categories    = CATEGORIES;
+  protected categories           = CATEGORIES;
   protected readonly areas         = AREAS;
   protected readonly notifications = NOTIFICATIONS;
 

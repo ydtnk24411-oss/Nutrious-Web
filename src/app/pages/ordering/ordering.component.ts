@@ -50,6 +50,95 @@ export function normalizeCategoryTarget(cat: string): string {
   return cat.trim();
 }
 
+export interface FacetOption {
+  value: string;
+  label: string;
+  count: number;
+}
+
+export const FACET_LABEL_MAP: Record<string, Record<string, string>> = {
+  preparation: {
+    'Brewing Required': 'Cần pha / Hãm trà',
+    'Cleaned Raw': 'Sơ chế sạch',
+    'Cooked': 'Đã chế biến chín',
+    'Cooked Frozen': 'Chín đông lạnh',
+    'Instant Mix': 'Hòa tan / Dùng liền',
+    'Raw': 'Tươi sống (chưa chế biến)',
+    'Ready to Coat': 'Bột tẩm chiên',
+    'Ready to Cook': 'Sơ chế nấu ngay',
+    'Ready to Drink': 'Uống liền',
+    'Ready to Eat': 'Ăn liền / Dùng ngay',
+    'Ready to Use': 'Dùng trực tiếp',
+    'Requires Bake': 'Cần nướng',
+    'Requires Boiling': 'Cần luộc / nấu sôi',
+    'Requires Mix': 'Cần pha trộn',
+    'Requires Soaking': 'Cần ngâm nước',
+  },
+  ripeness: {
+    'Dried': 'Đồ khô / Sấy khô',
+    'Fresh': 'Tươi mới',
+    'Fresh Frozen': 'Cấp đông tươi',
+    'Frozen': 'Đông lạnh',
+    'Ready to Cook': 'Sơ chế nấu ngay',
+    'Ready to Eat': 'Ăn liền / Dùng ngay',
+    'Ripe': 'Chín mọng / Chín tới',
+    'Shelf Stable': 'Bảo quản nhiệt độ phòng',
+  },
+  sizeGroup: {
+    'Extra Large': 'Cực lớn (XL)',
+    'Large': 'Lớn (L)',
+    'Medium': 'Vừa (M)',
+    'Small': 'Nhỏ (S)',
+  },
+  type: {
+    'Bakery': 'Bánh quy & bánh ngọt',
+    'Beverage': 'Nước giải khát',
+    'Cereal Drink': 'Thức uống ngũ cốc',
+    'Chilled': 'Bảo quản mát (Sữa & bơ)',
+    'Coffee': 'Cà phê',
+    'Confectionery': 'Bánh kẹo & socola',
+    'Dried Fruit': 'Trái cây sấy',
+    'Dry': 'Hàng khô & gia vị',
+    'Energy': 'Nước tăng lực',
+    'Fresh': 'Hàng tươi sống',
+    'Fresh Bakery': 'Bánh tươi & bánh mì',
+    'Frozen': 'Đông lạnh',
+    'Herbal': 'Trà thảo mộc & thanh nhiệt',
+    'Juice': 'Nước ép trái cây',
+    'Live': 'Hải sản tươi sống (đang bơi)',
+    'Natural': 'Tự nhiên',
+    'Nutritional': 'Bổ dưỡng & dinh dưỡng',
+    'Nuts': 'Hạt dinh dưỡng',
+    'Savory Snack': 'Khô & đồ nhắm mặn',
+    'Semi-Dried': 'Hàng một nắng',
+    'Snack': 'Snack & bánh gạo',
+    'Sports': 'Nước bù khoáng & thể thao',
+    'Tea': 'Trà túi lọc & đóng chai',
+    'Vitamin': 'Nước bổ sung Vitamin',
+    'Water': 'Nước tinh khiết & khoáng',
+  },
+};
+
+const SIZE_ORDER: Record<string, number> = {
+  'Small': 1,
+  'Medium': 2,
+  'Large': 3,
+  'Extra Large': 4,
+};
+
+function parseWeightInGrams(w: string): number {
+  const num = parseFloat(w.replace(',', '.'));
+  if (isNaN(num)) return 999999;
+  if (/kg/i.test(w)) return num * 1000;
+  if (/l$/i.test(w)) return num * 1000;
+  if (/ml/i.test(w)) return num;
+  return num;
+}
+
+export function getFacetLabel(field: string, val: string): string {
+  return FACET_LABEL_MAP[field]?.[val] || val;
+}
+
 @Component({
   selector: 'app-ordering',
   standalone: true,
@@ -122,20 +211,54 @@ export class OrderingComponent implements OnInit {
   weight: false,
 });
 
-  // Các lựa chọn bộ lọc lấy từ dữ liệu thực tế
+    // Các lựa chọn bộ lọc tiếng Việt lấy từ dữ liệu thực tế
   protected facetOptions = computed(() => {
-    const all = this.allProducts();
+    const targetCat = this.activeCategory();
+    const sourceProducts = targetCat === 'all'
+      ? this.allProducts()
+      : this.allProducts().filter(p => p.categoryId === targetCat);
 
-    const unique = (arr: string[]) =>
-      [...new Set(arr.filter(Boolean))].sort();
+    const buildFacetList = (field: keyof ApiProduct): FacetOption[] => {
+      const counts: Record<string, number> = {};
+      for (const p of sourceProducts) {
+        const val = p[field] as string;
+        if (val) {
+          counts[val] = (counts[val] || 0) + 1;
+        }
+      }
+
+      return Object.keys(counts)
+        .sort((a, b) => {
+          if (field === 'sizeGroup') {
+            const orderA = SIZE_ORDER[a] ?? 99;
+            const orderB = SIZE_ORDER[b] ?? 99;
+            return orderA - orderB;
+          }
+          if (field === 'weight') {
+            return parseWeightInGrams(a) - parseWeightInGrams(b);
+          }
+          const labelA = getFacetLabel(field as string, a);
+          const labelB = getFacetLabel(field as string, b);
+          return labelA.localeCompare(labelB, 'vi');
+        })
+        .map(val => ({
+          value: val,
+          label: getFacetLabel(field as string, val),
+          count: counts[val],
+        }));
+    };
 
     return {
-      category: this.allCategories().map(c => c._id),
-      preparation: unique(all.map(p => p.preparation)),
-      ripeness: unique(all.map(p => p.ripeness)),
-      sizeGroup: unique(all.map(p => p.sizeGroup)),
-      type: unique(all.map(p => p.type)),
-      weight: unique(all.map(p => p.weight)),
+      category: this.allCategories().map(c => ({
+        value: c._id,
+        label: c.name,
+        count: this.allProducts().filter(p => p.categoryId === c._id).length,
+      })),
+      preparation: buildFacetList('preparation'),
+      ripeness: buildFacetList('ripeness'),
+      sizeGroup: buildFacetList('sizeGroup'),
+      type: buildFacetList('type'),
+      weight: buildFacetList('weight'),
     };
   });
 
@@ -223,21 +346,29 @@ export class OrderingComponent implements OnInit {
     return list;
   });
 
-  // Gom sản phẩm theo đúng Category trong MongoDB
+    // Gom sản phẩm theo đúng Category trong MongoDB
   protected activeCategory = signal('all');
   protected categoryProducts = computed(() => {
-  const products = this.filteredProducts();
-  const categoryId = this.activeCategory();
+    const products = this.filteredProducts();
+    const categoryId = this.activeCategory();
 
-  if (categoryId === 'all') {
-    return products;
+    if (this.selectedFilters()['category'].length > 0) {
+      return products;
+    }
+
+    if (categoryId === 'all') {
+      return products;
+    }
+
+    return products.filter(p => p.categoryId === categoryId);
+  });
+
+  protected selectCategory(categoryId: string): void {
+    this.activeCategory.set(categoryId);
+    if (this.selectedFilters()['category'].length > 0) {
+      this.selectedFilters.update(f => ({ ...f, category: [] }));
+    }
   }
-
-  return products.filter(p => p.categoryId === categoryId);
-});
-protected selectCategory(categoryId: string): void {
-  this.activeCategory.set(categoryId);
-}
   protected sections = computed(() => {
   const products = this.categoryProducts();
 
@@ -310,25 +441,30 @@ protected selectCategory(categoryId: string): void {
     // Theo dõi khi query parameter thay đổi
     this.route.queryParamMap.subscribe(params => {
       const cat = params.get('category');
-
-      if (cat && !this.loading()) {
-        this.navigateToCategory(cat);
+      if (!this.loading()) {
+        if (cat) {
+          this.navigateToCategory(cat);
+        } else {
+          this.selectCategory('all');
+        }
       }
     });
   }
 
   // Tìm Category bằng ID, slug hoặc name
   private navigateToCategory(value: string): void {
-    const target = normalizeCategoryTarget(value);
+    const target = normalizeCategoryTarget(value).toLowerCase();
 
     const category = this.allCategories().find(c =>
-      c._id === target ||
-      c.slug === target ||
-      c.name.toLowerCase() === target.toLowerCase()
+      c._id === value ||
+      c.slug.toLowerCase() === target ||
+      c.slug.toLowerCase() === '/category/' + target ||
+      c.name.toLowerCase() === target
     );
 
     if (category) {
-      this.scrollTo(category._id);
+      this.selectCategory(category._id);
+      setTimeout(() => this.scrollTo(category._id), 100);
     }
   }
 

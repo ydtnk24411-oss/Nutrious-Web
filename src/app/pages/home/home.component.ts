@@ -43,20 +43,24 @@ export class HomeComponent implements OnInit, OnDestroy {
   private heroTimer: ReturnType<typeof setInterval> | null = null;
 
   readonly quickCategories = [
-    { name: 'Rau củ & trái cây', icon: '🥬' }, { name: 'Thịt & hải sản', icon: '🥩' },
-    { name: 'Sữa & thực phẩm mát', icon: '🥛' }, { name: 'Thức uống', icon: '🥤' },
-    { name: 'Bánh & đồ ăn vặt', icon: '🍪' }, { name: 'Gia vị & thực phẩm khô', icon: '🧂' },
-    { name: 'Chăm sóc cá nhân', icon: '🧴' }, { name: 'Nhà cửa & đời sống', icon: '🧺' },
+    { name: 'Rau củ', icon: '🥬' },
+    { name: 'Trái cây', icon: '🍎' },
+    { name: 'Thịt', icon: '🥩' },
+    { name: 'Cá & Hải sản', icon: '🐟' },
+    { name: 'Sữa & Thực phẩm mát', icon: '🥛' },
+    { name: 'Thức uống', icon: '🥤' },
+    { name: 'Bánh & Đồ ăn vặt', icon: '🍪' },
+    { name: 'Gia vị & Thực phẩm khô', icon: '🧂' },
   ];
   readonly visualCategories = [
-    { name: 'Rau củ & trái cây', icon: '🥦', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Thịt & hải sản', icon: '🐟', image: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Sữa & thực phẩm mát', icon: '🥛', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=700&q=85' },
+    { name: 'Rau củ', icon: '🥬', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=700&q=85' },
+    { name: 'Trái cây', icon: '🍎', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=700&q=85' },
+    { name: 'Thịt', icon: '🥩', image: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=700&q=85' },
+    { name: 'Cá & Hải sản', icon: '🐟', image: 'https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?auto=format&fit=crop&w=700&q=85' },
+    { name: 'Sữa & Thực phẩm mát', icon: '🥛', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=700&q=85' },
     { name: 'Thức uống', icon: '🥤', image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Bánh & đồ ăn vặt', icon: '🍪', image: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Gia vị & thực phẩm khô', icon: '🌾', image: 'https://images.unsplash.com/photo-1532336414038-cf19250c5757?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Chăm sóc cá nhân', icon: '🧴', image: 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Nhà cửa & đời sống', icon: '🧺', image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=700&q=85' },
+    { name: 'Bánh & Đồ ăn vặt', icon: '🍪', image: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=700&q=85' },
+    { name: 'Gia vị & Thực phẩm khô', icon: '🧂', image: 'https://images.unsplash.com/photo-1532336414038-cf19250c5757?auto=format&fit=crop&w=700&q=85' },
   ];
   readonly vouchers: Voucher[] = [
     { code: 'XANHLA30', title: 'Chào bạn mới', value: 'Tặng mã 30K cho khách hàng mới', valueShort: '30K', expiry: 'HSD: 10 ngày từ ngày nhận mã', color: 'green' },
@@ -66,14 +70,14 @@ export class HomeComponent implements OnInit, OnDestroy {
   copiedCode = '';
   readonly deals: Deal[] = [
     { id: 'deal-1', name: 'Rau cải xanh tươi', category: 'Rau củ', description: 'Gợi ý cho món canh, món xào trong bữa cơm nhà.', image: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?auto=format&fit=crop&w=700&q=85', priceNew: '18.000đ', priceOld: '30.000đ', discountPct: 40, save: '12.000đ' },
-    { id: 'deal-2', name: 'Cà chua bi đỏ', category: 'Rau củ & trái cây', description: 'Thêm sắc đỏ tươi ngon cho salad và món ăn mỗi ngày.', image: 'https://images.unsplash.com/photo-1546094096-0df4bcaaa337?auto=format&fit=crop&w=700&q=85', priceNew: '22.000đ', priceOld: '38.000đ', discountPct: 42, save: '16.000đ' },
-    { id: 'deal-3', name: 'Gừng tươi nguyên củ', category: 'Gia vị', description: 'Gia vị quen thuộc giúp món ăn thêm đậm đà.', image: 'https://images.unsplash.com/photo-1615485500834-bc10199bc727?auto=format&fit=crop&w=700&q=85', priceNew: '12.000đ', priceOld: '20.000đ', discountPct: 40, save: '8.000đ' },
+    { id: 'deal-2', name: 'Cà chua bi đỏ', category: 'Rau củ', description: 'Thêm sắc đỏ tươi ngon cho salad và món ăn mỗi ngày.', image: 'https://images.unsplash.com/photo-1546094096-0df4bcaaa337?auto=format&fit=crop&w=700&q=85', priceNew: '22.000đ', priceOld: '38.000đ', discountPct: 42, save: '16.000đ' },
+    { id: 'deal-3', name: 'Gừng tươi nguyên củ', category: 'Gia vị & Thực phẩm khô', description: 'Gia vị quen thuộc giúp món ăn thêm đậm đà.', image: 'https://images.unsplash.com/photo-1615485500834-bc10199bc727?auto=format&fit=crop&w=700&q=85', priceNew: '12.000đ', priceOld: '20.000đ', discountPct: 40, save: '8.000đ' },
     { id: 'deal-4', name: 'Trái cây theo mùa', category: 'Trái cây', description: 'Lựa chọn nhiều màu sắc cho món tráng miệng.', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=700&q=85', priceNew: '39.000đ', priceOld: '55.000đ', discountPct: 29, save: '16.000đ' },
   ];
   readonly newsItems: NewsItem[] = [
-    { title: 'Mẹo chọn rau củ tươi ngon cho cả tuần', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=900&q=85', path: '/event-list', date: 'CẨM NANG MUA SẮM' },
-    { title: 'Gợi ý thực đơn nhanh gọn cho ngày bận rộn', image: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=85', path: '/nutrition', date: 'CẢM HỨNG GIAN BẾP' },
-    { title: 'Sắp xếp căn bếp gọn gàng, dễ tìm nguyên liệu', image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=900&q=85', path: '/event-list', date: 'SỐNG TIỆN NGHI' },
+    { title: 'Mẹo chọn rau củ tươi ngon cho cả tuần', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=900&q=85', path: '/cam-nang/meo-chon-rau-cu-tuoi-ngon', date: 'CẨM NANG MUA SẮM' },
+    { title: 'Gợi ý thực đơn nhanh gọn cho ngày bận rộn', image: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=85', path: '/cam-nang/thuc-don-nhanh-gon-ngay-ban-ron', date: 'CẢM HỨNG GIAN BẾP' },
+    { title: 'Sắp xếp căn bếp gọn gàng, dễ tìm nguyên liệu', image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=900&q=85', path: '/cam-nang/sap-xep-can-bep-gon-gang', date: 'SỐNG TIỆN NGHI' },
   ];
 
   apiProducts: ApiProduct[] = [];
@@ -92,13 +96,13 @@ export class HomeComponent implements OnInit, OnDestroy {
       error: () => { this.loadingProducts = false; },
     });
     this.categoryApi.getAll().subscribe({
-  next: res => {
-    this.categories = res.data || [];
-  },
-  error: err => {
-    console.error('Failed to load categories:', err);
-  },
-});
+      next: res => {
+        this.categories = res.data || [];
+      },
+      error: err => {
+        console.error('Failed to load categories:', err);
+      },
+    });
     this.heroTimer = setInterval(() => this.nextHero(), 6500);
     this.countdownTimer = setInterval(() => this.tickCountdown(), 1000);
     this.tickCountdown();
@@ -119,8 +123,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   productSlug(p: ApiProduct): string { return p.slug?.startsWith('/') ? p.slug : `/product-page/${p.slug}`; }
   addToCart(p: ApiProduct): void { this.cart.addItem(this.toCartProduct(p), 1); }
   getCategoryName(categoryId: string): string {
-  return this.categories.find(c => c._id === categoryId)?.name ?? 'Chưa phân loại';
-}
+    return this.categories.find(c => c._id === categoryId)?.name ?? 'Chưa phân loại';
+  }
   addDealToCart(deal: Deal): void {
     const product = {
       id: deal.id, name: deal.name, slug: deal.id, price: deal.priceNew,
@@ -131,29 +135,29 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
   private toCartProduct(p: ApiProduct): XanhLaProduct {
     return {
-    id: p._id,
-    name: p.name,
-    slug: p.slug,
-    price: p.price,
-    priceNumber: p.priceNumber,
-    image: p.image,
-    category: p.categoryId,
-    categoryVi: '',
-    description: p.description,
+      id: p._id,
+      name: p.name,
+      slug: p.slug,
+      price: p.price,
+      priceNumber: p.priceNumber,
+      image: p.image,
+      category: p.categoryId,
+      categoryVi: '',
+      description: p.description,
 
-    container: p.container,
-    cutType: p.cutType,
-    cutting: p.cutting,
-    packSize: p.packSize,
-    packaging: p.packaging,
-    preparation: p.preparation,
-    quantity: p.quantity,
-    ripeness: p.ripeness,
-    sizeGroup: p.sizeGroup,
-    thickness: p.thickness,
-    type: p.type,
-    weight: p.weight,
-    options: p.options,
+      container: p.container,
+      cutType: p.cutType,
+      cutting: p.cutting,
+      packSize: p.packSize,
+      packaging: p.packaging,
+      preparation: p.preparation,
+      quantity: p.quantity,
+      ripeness: p.ripeness,
+      sizeGroup: p.sizeGroup,
+      thickness: p.thickness,
+      type: p.type,
+      weight: p.weight,
+      options: p.options,
     } as XanhLaProduct;
   }
   private tickCountdown(): void {

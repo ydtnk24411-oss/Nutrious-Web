@@ -474,6 +474,18 @@
   transform: rotate(45deg);
 }
 
+.ord-filter-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: #7b8868;
+  font-weight: 500;
+}
+
+.ord-filter-label input[type="checkbox"]:checked ~ .ord-filter-count {
+  color: var(--xl-forest);
+  font-weight: 750;
+}
+
 .ord-filter-label input[type="checkbox"]:checked + span {
   color: var(--xl-forest);
   font-weight: 850;

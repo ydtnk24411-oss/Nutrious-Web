@@ -99,7 +99,7 @@
     </section>
 
     <section class="coop-section coop-news-section coop-section-news">
-      <div class="coop-container"><div class="coop-section-heading"><div><span class="coop-eyebrow">GÓC NHÀ XANH</span><h2>Cẩm nang & cảm hứng</h2><p>Mẹo nhỏ và ý tưởng hay cho nhịp sống mỗi ngày.</p></div><a routerLink="/event-list" class="coop-text-link">Xem tất cả</a></div>
+      <div class="coop-container"><div class="coop-section-heading"><div><span class="coop-eyebrow">GÓC NHÀ XANH</span><h2>Cẩm nang & cảm hứng</h2><p>Mẹo nhỏ và ý tưởng hay cho nhịp sống mỗi ngày.</p></div><a routerLink="/cam-nang" class="coop-text-link">Xem tất cả</a></div>
         <div class="coop-news-grid"><a *ngFor="let item of newsItems" [routerLink]="item.path" class="coop-news-card"><div class="coop-news-image"><img [src]="item.image" [alt]="item.title" loading="lazy"><span>GÓC SỐNG XANH</span></div><div class="coop-news-copy"><small>{{ item.date }}</small><h3>{{ item.title }}</h3><span class="coop-read-more">Đọc thêm</span></div></a></div>
       </div>
     </section>

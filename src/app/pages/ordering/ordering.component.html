@@ -138,11 +138,12 @@
           </button>
           @if (openAccordions()['category']) {
             <div class="ord-filter-body">
-              @for (cat of allCategories(); track cat._id) {
+              @for (cat of facetOptions().category; track cat.value) {
                 <label class="ord-filter-label">
-                  <input type="checkbox" [checked]="isChecked('category', cat._id)"
-                         (change)="toggleFilter('category', cat._id)" />
-                  <span>{{ cat.name }}</span>
+                  <input type="checkbox" [checked]="isChecked('category', cat.value)"
+                         (change)="toggleFilter('category', cat.value)" />
+                  <span>{{ cat.label }}</span>
+                  <span class="ord-filter-count">({{ cat.count }})</span>
                 </label>
               }
             </div>
@@ -161,11 +162,12 @@
           </button>
           @if (openAccordions()['preparation']) {
             <div class="ord-filter-body">
-              @for (val of facetOptions().preparation; track val) {
+              @for (opt of facetOptions().preparation; track opt.value) {
                 <label class="ord-filter-label">
-                  <input type="checkbox" [checked]="isChecked('preparation', val)"
-                         (change)="toggleFilter('preparation', val)" />
-                  <span>{{ val }}</span>
+                  <input type="checkbox" [checked]="isChecked('preparation', opt.value)"
+                         (change)="toggleFilter('preparation', opt.value)" />
+                  <span>{{ opt.label }}</span>
+                  <span class="ord-filter-count">({{ opt.count }})</span>
                 </label>
               }
             </div>
@@ -184,11 +186,12 @@
           </button>
           @if (openAccordions()['ripeness']) {
             <div class="ord-filter-body">
-              @for (val of facetOptions().ripeness; track val) {
+              @for (opt of facetOptions().ripeness; track opt.value) {
                 <label class="ord-filter-label">
-                  <input type="checkbox" [checked]="isChecked('ripeness', val)"
-                         (change)="toggleFilter('ripeness', val)" />
-                  <span>{{ val }}</span>
+                  <input type="checkbox" [checked]="isChecked('ripeness', opt.value)"
+                         (change)="toggleFilter('ripeness', opt.value)" />
+                  <span>{{ opt.label }}</span>
+                  <span class="ord-filter-count">({{ opt.count }})</span>
                 </label>
               }
             </div>
@@ -207,11 +210,12 @@
           </button>
           @if (openAccordions()['sizeGroup']) {
             <div class="ord-filter-body">
-              @for (val of facetOptions().sizeGroup; track val) {
+              @for (opt of facetOptions().sizeGroup; track opt.value) {
                 <label class="ord-filter-label">
-                  <input type="checkbox" [checked]="isChecked('sizeGroup', val)"
-                         (change)="toggleFilter('sizeGroup', val)" />
-                  <span>{{ val }}</span>
+                  <input type="checkbox" [checked]="isChecked('sizeGroup', opt.value)"
+                         (change)="toggleFilter('sizeGroup', opt.value)" />
+                  <span>{{ opt.label }}</span>
+                  <span class="ord-filter-count">({{ opt.count }})</span>
                 </label>
               }
             </div>
@@ -230,11 +234,12 @@
           </button>
           @if (openAccordions()['type']) {
             <div class="ord-filter-body">
-              @for (val of facetOptions().type; track val) {
+              @for (opt of facetOptions().type; track opt.value) {
                 <label class="ord-filter-label">
-                  <input type="checkbox" [checked]="isChecked('type', val)"
-                         (change)="toggleFilter('type', val)" />
-                  <span>{{ val }}</span>
+                  <input type="checkbox" [checked]="isChecked('type', opt.value)"
+                         (change)="toggleFilter('type', opt.value)" />
+                  <span>{{ opt.label }}</span>
+                  <span class="ord-filter-count">({{ opt.count }})</span>
                 </label>
               }
             </div>
@@ -253,11 +258,12 @@
           </button>
           @if (openAccordions()['weight']) {
             <div class="ord-filter-body">
-              @for (val of facetOptions().weight; track val) {
+              @for (opt of facetOptions().weight; track opt.value) {
                 <label class="ord-filter-label">
-                  <input type="checkbox" [checked]="isChecked('weight', val)"
-                         (change)="toggleFilter('weight',val )" />
-                  <span>{{ val }}</span>
+                  <input type="checkbox" [checked]="isChecked('weight', opt.value)"
+                         (change)="toggleFilter('weight', opt.value)" />
+                  <span>{{ opt.label }}</span>
+                  <span class="ord-filter-count">({{ opt.count }})</span>
                 </label>
               }
             </div>
