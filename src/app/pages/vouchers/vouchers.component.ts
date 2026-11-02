@@ -1,45 +1,94 @@
-import { Component, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
-import { VoucherService } from '../../shared/services/voucher.service';
 import { CartService } from '../../shared/services/cart.service';
+import { VoucherRecord, VoucherService } from '../../shared/services/voucher.service';
 
 @Component({
   selector: 'app-vouchers',
   standalone: true,
-  imports: [CommonModule, ShellComponent],
+  imports: [CommonModule, ShellComponent, RouterLink],
   templateUrl: './vouchers.component.html',
   styleUrl: './vouchers.component.css',
 })
-export class VouchersComponent {
-  protected voucher = inject(VoucherService);
+export class VouchersComponent implements OnInit {
   protected cart = inject(CartService);
+  protected voucher = inject(VoucherService);
 
   activeTab = signal<'available' | 'collected' | 'all'>('all');
-
-  readonly publicVouchers = this.voucher.getPublicVouchers();
-  readonly collectedVouchers = this.voucher.userVouchers;
+  saveMessage = signal('');
+  private pendingVoucherId = signal<string | null>(null);
 
   readonly tabVouchers = computed(() => {
-    switch (this.activeTab()) {
-      case 'available':
-        return this.publicVouchers.filter(v => v.isPublic);
-      case 'collected':
-        return this.collectedVouchers().filter(uv => uv.status === 'available').map(uv => uv.voucher);
-      case 'all':
-        return this.publicVouchers;
-      default:
-        return this.publicVouchers;
+    const tab = this.activeTab();
+    if (tab === 'collected') {
+      return this.voucher.availableVouchers().map(item => item.voucher);
     }
+    if (tab === 'available') {
+      return this.voucher.publicVouchers().filter(v => !this.isCollected(v._id));
+    }
+    return this.voucher.publicVouchers();
   });
 
-  isCollected(voucherId: string): boolean {
-    return this.collectedVouchers().some(uv => uv.voucherId === voucherId);
+  constructor() {
+    effect(() => {
+      const user = this.cart.currentUser();
+      const voucherId = this.pendingVoucherId();
+      if (!user || !voucherId) return;
+      if (localStorage.getItem('xanhla_auth_token')) {
+        this.pendingVoucherId.set(null);
+        this.saveToWallet(voucherId);
+      }
+    });
   }
 
-  collectVoucher(voucherId: string): void {
-    if (this.voucher.collectVoucher(voucherId)) {
-      alert('Đã thu thập voucher thành công!');
+  ngOnInit(): void {
+    this.voucher.loadPublicVouchers();
+    this.voucher.loadUserVouchers();
+  }
+
+  isCollected(voucherId: string): boolean {
+    return this.voucher.userVouchers().some(item => item.voucher?._id === voucherId);
+  }
+
+  isCopied(code: string): boolean {
+    return this.voucher.isCopied(code);
+  }
+
+  copyVoucherCode(code: string): void {
+    this.voucher.copyCode(code);
+    this.saveMessage.set(`Đã sao chép mã ${code} vào bộ nhớ tạm!`);
+  }
+
+  collectVoucher(v: VoucherRecord): void {
+    if (!this.cart.currentUser() || !localStorage.getItem('xanhla_auth_token')) {
+      this.pendingVoucherId.set(v._id);
+      this.cart.openAuthModal('login');
+      return;
     }
+    this.saveToWallet(v._id);
+  }
+
+  private saveToWallet(voucherId: string): void {
+    this.saveMessage.set('');
+    this.voucher.saveVoucher(voucherId).subscribe({
+      next: response => {
+        this.saveMessage.set(`Đã lưu mã ${response.data.voucher.code} vào ví voucher của bạn!`);
+      },
+      error: err => {
+        if (err.status === 401) {
+          this.pendingVoucherId.set(voucherId);
+          this.cart.openAuthModal('login');
+          return;
+        }
+        if (err.status === 400 && err.error?.message?.includes('đã lưu')) {
+          this.voucher.loadUserVouchers();
+          this.saveMessage.set('Voucher này đã có trong ví của bạn.');
+          return;
+        }
+        this.saveMessage.set(err.error?.message || 'Không thể lưu voucher lúc này.');
+      },
+    });
   }
 }

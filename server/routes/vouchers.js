@@ -11,7 +11,7 @@ function calculateDiscount(voucher, orderTotal) {
   if (!canApply) return { canApply: false, discountAmount: 0 };
 
   let discountAmount = 0;
-  if (voucher.discountType === 'percent') {
+  if (voucher.discountType === 'percentage' || voucher.discountType === 'percent') {
     discountAmount = Math.round((total * voucher.discountValue) / 100);
     if (voucher.maxDiscountValue > 0) {
       discountAmount = Math.min(discountAmount, voucher.maxDiscountValue);
@@ -20,6 +20,30 @@ function calculateDiscount(voucher, orderTotal) {
     discountAmount = voucher.discountValue;
   }
   return { canApply: true, discountAmount };
+}
+
+function formatCheckoutVoucherItem(v, orderTotal, uv = null, inWallet = false) {
+  const { canApply, discountAmount } = calculateDiscount(v, orderTotal);
+  const normalizedType = v.discountType === 'percent' ? 'percentage' : v.discountType;
+  return {
+    _id: uv ? uv._id : v._id,
+    userVoucherId: uv ? String(uv._id) : String(v._id),
+    voucherId: String(v._id),
+    code: v.code,
+    name: v.name,
+    description: v.description,
+    discountType: normalizedType,
+    discountValue: v.discountValue,
+    minOrderValue: v.minOrderValue || 0,
+    maxDiscountValue: v.maxDiscountValue,
+    endDate: v.endDate,
+    status: uv ? uv.status : 'available',
+    receivedAt: uv ? uv.receivedAt : v.createdAt,
+    inWallet,
+    canApply,
+    discountAmount,
+    voucher: v,
+  };
 }
 
 // GET /api/vouchers - Get all available vouchers (public)
@@ -85,32 +109,14 @@ router.get('/available-for-checkout', async (req, res, next) => {
       const v = uv.voucher;
       if (!v || !v.isActive || now < v.startDate || now > v.endDate) continue;
       seenIds.add(vId);
-      const { canApply, discountAmount } = calculateDiscount(v, orderTotal);
-      result.push({
-        _id: uv._id,
-        voucher: v,
-        status: uv.status,
-        receivedAt: uv.receivedAt,
-        inWallet: true,
-        canApply,
-        discountAmount,
-      });
+      result.push(formatCheckoutVoucherItem(v, orderTotal, uv, true));
     }
 
     // Then include all other public active vouchers so checkout dropdown always has offers
     for (const v of publicVouchers) {
       const vId = String(v._id);
       if (seenIds.has(vId)) continue;
-      const { canApply, discountAmount } = calculateDiscount(v, orderTotal);
-      result.push({
-        _id: v._id,
-        voucher: v,
-        status: 'available',
-        receivedAt: v.createdAt,
-        inWallet: false,
-        canApply,
-        discountAmount,
-      });
+      result.push(formatCheckoutVoucherItem(v, orderTotal, null, false));
     }
 
     res.json({ success: true, data: result });
@@ -148,19 +154,7 @@ router.get('/my/available', protect, async (req, res, next) => {
 
     const validVouchers = userVouchers
       .filter(uv => uv.voucher !== null)
-      .map(uv => {
-        const v = uv.voucher;
-        const { canApply, discountAmount } = calculateDiscount(v, orderTotal);
-        return {
-          _id: uv._id,
-          voucher: v,
-          status: uv.status,
-          receivedAt: uv.receivedAt,
-          inWallet: true,
-          canApply,
-          discountAmount,
-        };
-      });
+      .map(uv => formatCheckoutVoucherItem(uv.voucher, orderTotal, uv, true));
 
     res.json({ success: true, data: validVouchers });
   } catch (err) { next(err); }
@@ -263,7 +257,7 @@ router.post('/validate', async (req, res, next) => {
         code: voucher.code,
         name: voucher.name,
         description: voucher.description,
-        discountType: voucher.discountType,
+        discountType: voucher.discountType === 'percent' ? 'percentage' : voucher.discountType,
         discountValue: voucher.discountValue,
         discountAmount,
         maxDiscountValue: voucher.maxDiscountValue,

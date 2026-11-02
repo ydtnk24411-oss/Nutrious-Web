@@ -10,3 +10,4 @@ const newsletterSubscriberSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model('NewsletterSubscriber', newsletterSubscriberSchema);
+

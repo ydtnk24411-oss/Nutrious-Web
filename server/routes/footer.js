@@ -45,3 +45,4 @@ router.post('/newsletter', async (req, res, next) => {
 });
 
 module.exports = router;
+

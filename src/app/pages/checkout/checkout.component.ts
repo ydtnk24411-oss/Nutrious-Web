@@ -1,11 +1,11 @@
-import { Component, signal, inject, computed } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, signal, inject, computed, OnInit, effect } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { CartService, formatPrice } from '../../shared/services/cart.service';
 import { OrderApiService } from '../../shared/services/order-api.service';
-import { VoucherService } from '../../shared/services/voucher.service';
+import { CheckoutVoucherRecord, VoucherService } from '../../shared/services/voucher.service';
 import { LoyaltyService } from '../../shared/services/loyalty.service';
 
 @Component({
@@ -14,13 +14,15 @@ import { LoyaltyService } from '../../shared/services/loyalty.service';
   imports: [CommonModule, FormsModule, ShellComponent, RouterLink],
   templateUrl: './checkout.component.html',
   styleUrl: './checkout.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CheckoutComponent {
+export class CheckoutComponent implements OnInit {
   protected cart     = inject(CartService);
   private orderApi   = inject(OrderApiService);
   private router     = inject(Router);
-  private voucher   = inject(VoucherService);
-  private loyalty   = inject(LoyaltyService);
+  private route      = inject(ActivatedRoute);
+  private voucher    = inject(VoucherService);
+  private loyalty    = inject(LoyaltyService);
   protected formatPrice = formatPrice;
 
   protected completed      = signal(false);
@@ -30,16 +32,83 @@ export class CheckoutComponent {
   protected shippingMethod = signal<'pickup' | 'delivery'>('pickup');
   protected paymentMethod  = signal<'cod' | 'bank_transfer'>('cod');
 
-  // Voucher
+  // Voucher state
   protected voucherCode = signal('');
-  protected selectedVoucher = signal<any>(null);
+  protected selectedVoucher = signal<{ code: string; name?: string; discount: number } | null>(null);
   protected voucherDiscount = signal(0);
   protected voucherMessage = signal('');
+  protected savedVouchers = signal<CheckoutVoucherRecord[]>([]);
+  protected vouchersLoading = signal(false);
+  protected showOfferList = signal(true);
+  private loadedVoucherContext = '';
+
+  constructor() {
+    effect(() => {
+      this.cart.currentUser();
+      const orderTotal = this.cart.subtotal();
+      const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('xanhla_auth_token') || 'guest') : 'guest';
+      const context = `${token}:${orderTotal}`;
+      if (context !== this.loadedVoucherContext) {
+        this.loadedVoucherContext = context;
+        this.loadAvailableVouchers(orderTotal);
+      }
+    });
+  }
+
+  ngOnInit(): void {
+    this.route.queryParamMap.subscribe(params => {
+      const code = params.get('voucher');
+      if (code) {
+        this.voucherCode.set(code.trim().toUpperCase());
+        this.applyVoucher();
+      }
+    });
+  }
+
+  private loadAvailableVouchers(orderTotal: number): void {
+    this.vouchersLoading.set(true);
+    this.voucher.getAvailableForCheckout(orderTotal).subscribe({
+      next: response => {
+        this.savedVouchers.set(response.data ?? []);
+        this.vouchersLoading.set(false);
+
+        // Re-validate currently selected voucher if subtotal changed
+        const current = this.selectedVoucher();
+        if (current?.code) {
+          const matched = (response.data ?? []).find(v => v.code === current.code);
+          if (matched && matched.canApply) {
+            this.voucherDiscount.set(matched.discountAmount);
+            this.selectedVoucher.set({ code: matched.code, name: matched.name, discount: matched.discountAmount });
+          } else if (matched && !matched.canApply) {
+            this.removeVoucher();
+            this.voucherMessage.set(`Đơn hàng tối thiểu ${formatPrice(matched.minOrderValue)} để áp dụng mã ${matched.code}`);
+          }
+        }
+      },
+      error: () => {
+        this.savedVouchers.set([]);
+        this.vouchersLoading.set(false);
+      },
+    });
+  }
+
+  chooseSavedVoucher(code: string): void {
+    if (!code) {
+      this.removeVoucher();
+      return;
+    }
+    this.voucherCode.set(code.trim().toUpperCase());
+    this.applyVoucher();
+  }
+
+  toggleOfferList(): void {
+    this.showOfferList.update(v => !v);
+  }
 
   // Loyalty points estimate
   readonly estimatedPoints = computed(() => {
     const subtotal = this.cart.subtotal();
-    return Math.floor(subtotal / 1000); // 1 điểm cho mỗi 1000đ
+    return Math.floor(subtotal / 1000);
   });
 
   // Total after discount
@@ -54,22 +123,30 @@ export class CheckoutComponent {
   protected shippingAddr = signal('');
 
   applyVoucher(): void {
-    const code = this.voucherCode().trim();
+    const code = this.voucherCode().trim().toUpperCase();
     if (!code) {
-      this.voucherMessage.set('Vui lòng nhập mã voucher');
+      this.voucherMessage.set('Vui lòng nhập hoặc chọn mã voucher');
       return;
     }
+    this.voucherCode.set(code);
 
-    const result = this.voucher.validateVoucher(code, this.cart.subtotal());
-    if (result.valid) {
-      this.selectedVoucher.set({ code, discount: result.discount });
-      this.voucherDiscount.set(result.discount);
-      this.voucherMessage.set(`Đã áp dụng: Giảm ${formatPrice(result.discount)}`);
-    } else {
-      this.selectedVoucher.set(null);
-      this.voucherDiscount.set(0);
-      this.voucherMessage.set(result.message || 'Mã voucher không hợp lệ');
-    }
+    this.voucher.validateVoucher(code, this.cart.subtotal()).subscribe({
+      next: response => {
+        const applied = response.data;
+        this.selectedVoucher.set({
+          code: applied.code,
+          name: applied.name,
+          discount: applied.discountAmount,
+        });
+        this.voucherDiscount.set(applied.discountAmount);
+        this.voucherMessage.set(`Đã áp dụng mã ${applied.code} (${applied.name}): Giảm ${formatPrice(applied.discountAmount)}`);
+      },
+      error: err => {
+        this.selectedVoucher.set(null);
+        this.voucherDiscount.set(0);
+        this.voucherMessage.set(err.error?.message || 'Mã voucher không hợp lệ hoặc chưa đủ điều kiện');
+      },
+    });
   }
 
   removeVoucher(): void {
@@ -95,11 +172,8 @@ export class CheckoutComponent {
     this.submitting.set(true);
     this.errorMsg.set('');
 
-    // Build order payload — product field là MongoDB _id nếu có (từ API),
-    // hoặc bỏ qua nếu là static data (slug string)
     const items = this.cart.items().map(i => {
       const prod = i.product as any;
-      // id có dạng 24-char hex (MongoDB ObjectId)
       const isObjectId = /^[a-f\d]{24}$/i.test(prod.id ?? '');
       return {
         ...(isObjectId ? { product: prod.id } : {}),
@@ -136,7 +210,6 @@ export class CheckoutComponent {
         this.orderCode.set(res.data.orderCode);
         this.completed.set(true);
 
-        // Add loyalty points for completed order (demo only)
         const user = this.cart.currentUser();
         if (user) {
           this.loyalty.addPoints(user.email, this.estimatedPoints(), 'Tích điểm từ đơn hàng');

@@ -1,237 +1,195 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { Voucher, UserVoucher, VoucherType } from '../models/xanh-la.models';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { Observable, tap } from 'rxjs';
+import { ApiService } from './api.service';
 
-const USER_VOUCHERS_KEY = 'xanhla_user_vouchers';
+export interface VoucherRecord {
+  _id: string;
+  code: string;
+  name: string;
+  description?: string;
+  discountType: 'percentage' | 'percent' | 'fixed';
+  discountValue: number;
+  minOrderValue: number;
+  maxDiscountValue?: number;
+  pointsRequired: number;
+  startDate: string;
+  endDate: string;
+  usageLimit: number;
+  usedCount: number;
+  isActive: boolean;
+  applicableCategories: string[];
+}
+
+export interface UserVoucherRecord {
+  _id: string;
+  status: 'available' | 'used' | 'expired';
+  receivedAt: string;
+  usedAt?: string;
+  orderId?: string;
+  voucher: VoucherRecord;
+}
+
+export interface CheckoutVoucherRecord {
+  _id?: string;
+  userVoucherId: string;
+  voucherId: string;
+  code: string;
+  name: string;
+  description?: string;
+  discountType: 'percentage' | 'percent' | 'fixed';
+  discountValue: number;
+  minOrderValue: number;
+  maxDiscountValue?: number;
+  endDate: string;
+  discountAmount: number;
+  canApply: boolean;
+  inWallet?: boolean;
+  voucher?: VoucherRecord;
+}
+
+export interface VoucherValidation {
+  voucherId: string;
+  code: string;
+  name: string;
+  description?: string;
+  discountType: 'percentage' | 'percent' | 'fixed';
+  discountValue: number;
+  discountAmount: number;
+  maxDiscountValue?: number;
+  minOrderValue?: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class VoucherService {
-  private _userVouchers = signal<UserVoucher[]>(this._loadUserVouchers());
+  private api = inject(ApiService);
 
+  private _publicVouchers = signal<VoucherRecord[]>([]);
+  readonly publicVouchers = this._publicVouchers.asReadonly();
+  readonly publicLoading = signal(false);
+
+  private _userVouchers = signal<UserVoucherRecord[]>([]);
   readonly userVouchers = this._userVouchers.asReadonly();
+  readonly userLoading = signal(false);
+
+  // Persistent set of revealed/copied voucher codes so copying another code never hides previous ones
+  private _copiedCodes = signal<Set<string>>(new Set<string>());
+  readonly copiedCodes = this._copiedCodes.asReadonly();
 
   readonly availableVouchers = computed(() =>
-    this._userVouchers().filter(v => v.status === 'available')
+    this._userVouchers().filter(voucher => voucher.status === 'available' && !!voucher.voucher)
   );
 
   readonly usedVouchers = computed(() =>
-    this._userVouchers().filter(v => v.status === 'used')
+    this._userVouchers().filter(voucher => voucher.status === 'used' && !!voucher.voucher)
   );
 
   readonly expiredVouchers = computed(() =>
-    this._userVouchers().filter(v => v.status === 'expired')
+    this._userVouchers().filter(voucher => voucher.status === 'expired' && !!voucher.voucher)
   );
 
-  // Sample vouchers
-  private sampleVouchers: Voucher[] = [
-    {
-      id: 'v1',
-      code: 'GIAM10',
-      name: 'Giảm 10% cho đơn hàng',
-      type: 'percentage',
-      value: 10,
-      minValue: 300000,
-      maxValue: 50000,
-      startDate: '2025-01-01',
-      endDate: '2025-12-31',
-      usageLimit: 1000,
-      usedCount: 234,
-      description: 'Giảm 10% tối đa 50.000đ cho đơn hàng từ 300.000đ',
-      isPublic: true,
-    },
-    {
-      id: 'v2',
-      code: 'GIAM30K',
-      name: 'Giảm 30.000đ',
-      type: 'fixed',
-      value: 30000,
-      minValue: 200000,
-      startDate: '2025-01-01',
-      endDate: '2025-12-31',
-      usageLimit: 500,
-      usedCount: 89,
-      description: 'Giảm trực tiếp 30.000đ cho đơn hàng từ 200.000đ',
-      isPublic: true,
-    },
-    {
-      id: 'v3',
-      code: 'FREESHIP',
-      name: 'Miễn phí giao hàng',
-      type: 'freeship',
-      value: 25000,
-      minValue: 150000,
-      startDate: '2025-01-01',
-      endDate: '2025-12-31',
-      usageLimit: 2000,
-      usedCount: 567,
-      description: 'Miễn phí giao hàng cho đơn hàng từ 150.000đ',
-      isPublic: true,
-    },
-    {
-      id: 'v4',
-      code: 'RAU5',
-      name: 'Giảm 5% cho Rau củ',
-      type: 'category',
-      value: 5,
-      minValue: 100000,
-      categorySlugs: ['/category/vegetables'],
-      startDate: '2025-01-01',
-      endDate: '2025-12-31',
-      usageLimit: 1000,
-      usedCount: 123,
-      description: 'Giảm 5% cho sản phẩm rau củ từ 100.000đ',
-      isPublic: true,
-    },
-  ];
-
-  constructor() {
-    // Initialize with sample data if empty
-    if (this._userVouchers().length === 0) {
-      this._initializeSampleVouchers();
+  copyCode(code: string): void {
+    const normalized = (code || '').trim().toUpperCase();
+    if (!normalized) return;
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(normalized).catch(() => undefined);
     }
+    this._copiedCodes.update(prev => {
+      const next = new Set(prev);
+      next.add(normalized);
+      return next;
+    });
   }
 
-  // Check if voucher is valid for a cart
-  validateVoucher(
-    voucherCode: string,
-    cartTotal: number,
-    cartCategories?: string[]
-  ): { valid: boolean; message?: string; discount: number } {
-    const voucher = this.sampleVouchers.find(v => v.code === voucherCode);
-    if (!voucher) {
-      return { valid: false, message: 'Mã voucher không tồn tại', discount: 0 };
+  isCopied(code: string): boolean {
+    const normalized = (code || '').trim().toUpperCase();
+    return this._copiedCodes().has(normalized);
+  }
+
+  isSaved(voucherIdOrCode: string): boolean {
+    return this._userVouchers().some(
+      uv =>
+        uv.voucher &&
+        (uv.voucher._id === voucherIdOrCode || uv.voucher.code === voucherIdOrCode.toUpperCase())
+    );
+  }
+
+  loadPublicVouchers(): void {
+    this.publicLoading.set(true);
+    this.api.get<{ success: boolean; data: VoucherRecord[] }>('/vouchers').subscribe({
+      next: response => {
+        this._publicVouchers.set(response.data ?? []);
+        this.publicLoading.set(false);
+      },
+      error: () => {
+        this._publicVouchers.set([]);
+        this.publicLoading.set(false);
+      },
+    });
+  }
+
+  loadUserVouchers(): void {
+    if (typeof localStorage === 'undefined' || !localStorage.getItem('xanhla_auth_token')) {
+      this._userVouchers.set([]);
+      this.userLoading.set(false);
+      return;
     }
+    this.userLoading.set(true);
+    this.api.get<{ success: boolean; data: UserVoucherRecord[] }>('/vouchers/my').subscribe({
+      next: response => {
+        this._userVouchers.set((response.data ?? []).filter(item => !!item.voucher));
+        this.userLoading.set(false);
+      },
+      error: () => {
+        this._userVouchers.set([]);
+        this.userLoading.set(false);
+      },
+    });
+  }
 
-    const now = new Date();
-    const start = new Date(voucher.startDate);
-    const end = new Date(voucher.endDate);
-
-    if (now < start || now > end) {
-      return { valid: false, message: 'Voucher đã hết hạn', discount: 0 };
-    }
-
-    if (voucher.usageLimit && voucher.usedCount >= voucher.usageLimit) {
-      return { valid: false, message: 'Voucher đã hết lượt sử dụng', discount: 0 };
-    }
-
-    if (voucher.minValue && cartTotal < voucher.minValue) {
-      return {
-        valid: false,
-        message: `Đơn hàng tối thiểu ${this.formatPrice(voucher.minValue)}`,
-        discount: 0,
-      };
-    }
-
-    // Check category restriction
-    if (voucher.type === 'category' && voucher.categorySlugs && cartCategories) {
-      const hasMatchingCategory = cartCategories.some(cat =>
-        voucher.categorySlugs!.some(slug => cat.includes(slug))
-      );
-      if (!hasMatchingCategory) {
-        return { valid: false, message: 'Voucher chỉ áp dụng cho danh mục sản phẩm cụ thể', discount: 0 };
-      }
-    }
-
-    // Calculate discount
-    let discount = 0;
-    switch (voucher.type) {
-      case 'percentage':
-        discount = (cartTotal * voucher.value) / 100;
-        if (voucher.maxValue) {
-          discount = Math.min(discount, voucher.maxValue);
+  saveVoucher(voucherId: string): Observable<{ success: boolean; data: UserVoucherRecord; message?: string }> {
+    return this.api.post<{ success: boolean; data: UserVoucherRecord; message?: string }>(`/vouchers/${voucherId}/save`, {}).pipe(
+      tap(response => {
+        if (response.data) {
+          this._userVouchers.update(current => [
+            response.data,
+            ...current.filter(item => item._id !== response.data._id),
+          ]);
         }
-        break;
-      case 'fixed':
-        discount = voucher.value;
-        break;
-      case 'freeship':
-        discount = Math.min(voucher.value, 25000); // Assume max shipping fee
-        break;
-      case 'category':
-        discount = (cartTotal * voucher.value) / 100;
-        break;
-    }
-
-    return { valid: true, discount };
+      })
+    );
   }
 
-  // Apply voucher to cart
-  applyVoucher(voucherCode: string, cartTotal: number, cartCategories?: string[]): number {
-    const result = this.validateVoucher(voucherCode, cartTotal, cartCategories);
-    return result.valid ? result.discount : 0;
-  }
-
-  // Collect/Save voucher for user
   collectVoucher(voucherId: string): boolean {
-    const voucher = this.sampleVouchers.find(v => v.id === voucherId);
-    if (!voucher) return false;
-
-    // Check if already collected
-    if (this._userVouchers().some(v => v.voucherId === voucherId && v.status === 'available')) {
-      return false;
-    }
-
-    const userVoucher: UserVoucher = {
-      voucherId,
-      voucher,
-      status: 'available',
-    };
-
-    this._userVouchers.update(v => [...v, userVoucher]);
-    this._saveUserVouchers();
+    if (this.isSaved(voucherId)) return false;
+    this.saveVoucher(voucherId).subscribe({
+      error: () => {},
+    });
     return true;
   }
 
-  // Mark voucher as used
-  useVoucher(voucherId: string, orderId: string): void {
-    this._userVouchers.update(v =>
-      v.map(uv =>
-        uv.voucherId === voucherId && uv.status === 'available'
-          ? { ...uv, status: 'used', usedAt: new Date().toISOString(), orderId }
-          : uv
-      )
+  saveVoucherByCode(code: string): Observable<{ success: boolean; data: UserVoucherRecord; message?: string }> {
+    return this.api.post<{ success: boolean; data: UserVoucherRecord; message?: string }>(`/vouchers/code/${encodeURIComponent(code.trim().toUpperCase())}/save`, {}).pipe(
+      tap(response => {
+        if (response.data) {
+          this._userVouchers.update(current => [
+            response.data,
+            ...current.filter(item => item._id !== response.data._id),
+          ]);
+        }
+      })
     );
-    this._saveUserVouchers();
   }
 
-  // Get voucher by code
-  getVoucherByCode(code: string): Voucher | undefined {
-    return this.sampleVouchers.find(v => v.code === code);
+  getAvailableForCheckout(orderTotal: number): Observable<{ success: boolean; data: CheckoutVoucherRecord[] }> {
+    return this.api.get<{ success: boolean; data: CheckoutVoucherRecord[] }>('/vouchers/available-for-checkout', {
+      orderTotal,
+    });
   }
 
-  // Get all public vouchers
-  getPublicVouchers(): Voucher[] {
-    return this.sampleVouchers.filter(v => v.isPublic);
-  }
-
-  private _loadUserVouchers(): UserVoucher[] {
-    try {
-      const data = localStorage.getItem(USER_VOUCHERS_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  private _saveUserVouchers(): void {
-    try {
-      localStorage.setItem(USER_VOUCHERS_KEY, JSON.stringify(this._userVouchers()));
-    } catch {
-      // Ignore storage errors
-    }
-  }
-
-  private _initializeSampleVouchers(): void {
-    // Give user all sample vouchers as available
-    const userVouchers: UserVoucher[] = this.sampleVouchers.map(v => ({
-      voucherId: v.id,
-      voucher: v,
-      status: 'available' as const,
-    }));
-    this._userVouchers.set(userVouchers);
-    this._saveUserVouchers();
-  }
-
-  private formatPrice(value: number): string {
-    return value.toLocaleString('vi-VN') + 'đ';
+  validateVoucher(code: string, orderTotal: number): Observable<{ success: boolean; data: VoucherValidation }> {
+    return this.api.post<{ success: boolean; data: VoucherValidation }>('/vouchers/validate', {
+      code: code.trim().toUpperCase(),
+      orderTotal,
+    });
   }
 }

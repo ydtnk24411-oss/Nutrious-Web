@@ -8,17 +8,17 @@
 
     <section class="coop-hero coop-container" aria-label="Ưu đãi nổi bật">
       <div class="coop-hero-main">
-        <img [src]="heroSlides[activeHero].image" [alt]="heroSlides[activeHero].title">
+        <img [src]="heroSlides[activeHero()].image" [alt]="heroSlides[activeHero()].title">
         <div class="coop-hero-shade"></div>
         <div class="coop-hero-copy">
-          <span class="coop-kicker">{{ heroSlides[activeHero].eyebrow }}</span>
-          <h1>{{ heroSlides[activeHero].title }}</h1>
-          <p>{{ heroSlides[activeHero].subtitle }}</p>
-          <a class="coop-btn coop-btn-yellow" routerLink="/online-ordering">{{ heroSlides[activeHero].cta }}</a>
+          <span class="coop-kicker">{{ heroSlides[activeHero()].eyebrow }}</span>
+          <h1>{{ heroSlides[activeHero()].title }}</h1>
+          <p>{{ heroSlides[activeHero()].subtitle }}</p>
+          <a class="coop-btn coop-btn-yellow" routerLink="/online-ordering">{{ heroSlides[activeHero()].cta }}</a>
         </div>
         <div class="coop-hero-controls">
           <button type="button" aria-label="Banner trước" (click)="prevHero()">Trước</button>
-          <span>{{ activeHero + 1 | number:'2.0' }} / {{ heroSlides.length | number:'2.0' }}</span>
+          <span>{{ activeHero() + 1 | number:'2.0' }} / {{ heroSlides.length | number:'2.0' }}</span>
           <button type="button" aria-label="Banner tiếp theo" (click)="nextHero()">Sau</button>
         </div>
       </div>
@@ -43,14 +43,32 @@
     <section class="coop-section coop-container coop-section-vouchers" aria-labelledby="voucher-title">
       <div class="coop-section-heading">
         <div><span class="coop-eyebrow">MUA SẮM TIẾT KIỆM</span><h2 id="voucher-title">E-voucher khuyến mãi</h2><p>Thêm mã ưu đãi, nhẹ ví hơn khi đi chợ online.</p></div>
-        <a routerLink="/event-list" class="coop-text-link">Khám phá ưu đãi</a>
+        <div class="coop-heading-actions"><a routerLink="/vouchers" class="coop-text-link">Ví voucher của tôi</a><a routerLink="/promotions" class="coop-text-link">Xem các ưu đãi</a></div>
       </div>
       <div class="coop-voucher-grid">
-        <article *ngFor="let voucher of vouchers" class="coop-voucher-card" [class.voucher-green]="voucher.color === 'green'" [class.voucher-orange]="voucher.color === 'amber'" [class.voucher-red]="voucher.color === 'red'">
-          <div class="coop-voucher-ticket"><small>VOUCHER</small><strong>{{ voucher.valueShort }}</strong><span>COUPON</span></div>
-          <div class="coop-voucher-info"><h3>{{ voucher.title }}</h3><p>{{ voucher.value }}</p><small>{{ voucher.expiry }}</small><div class="coop-voucher-actions"><button type="button" class="coop-copy-btn" (click)="copyVoucher(voucher.code)">{{ copiedCode === voucher.code ? 'Đã sao chép' : 'Sao chép mã' }}</button><b>{{ voucher.code }}</b></div></div>
+        <article *ngFor="let voucher of vouchers()" class="coop-voucher-card" [class.voucher-green]="voucher.color === 'green'" [class.voucher-orange]="voucher.color === 'amber'" [class.voucher-red]="voucher.color === 'red'">
+          <div class="coop-voucher-ticket"><small>VOUCHER</small><strong>{{ voucher.valueShort }}</strong><span>{{ isCopied(voucher.code) ? voucher.code : 'COUPON' }}</span></div>
+          <div class="coop-voucher-info">
+            <h3>{{ voucher.title }}</h3>
+            <p>{{ voucher.value }}</p>
+            <small>{{ voucher.expiry }}</small>
+            <div class="coop-voucher-actions">
+              <button type="button" class="coop-copy-btn" [class.copied]="isCopied(voucher.code)" (click)="copyVoucher(voucher.code)">
+                {{ isCopied(voucher.code) ? '✓ Mã: ' + voucher.code : 'Sao chép mã' }}
+              </button>
+              <button type="button" class="coop-copy-btn" [class.copied]="isSaved(voucher.id)" [disabled]="isSaved(voucher.id)" (click)="saveVoucher(voucher)">
+                {{ isSaved(voucher.id) ? '✓ Đã lưu' : 'Lưu vào ví' }}
+              </button>
+            </div>
+          </div>
         </article>
       </div>
+      @if (voucherSaveMessage()) {
+        <p role="status" style="margin-top:12px;color:var(--xanh-moss);font-size:13px;font-weight:600">{{ voucherSaveMessage() }}</p>
+      }
+      @if (!vouchers().length) {
+        <p style="color:var(--xanh-muted);font-size:13px">Đang tải danh sách voucher từ máy chủ...</p>
+      }
     </section>
 
     <section class="coop-section coop-tinted coop-section-categories" aria-labelledby="category-title">
@@ -67,7 +85,7 @@
 
     <section class="coop-section coop-container coop-section-flash" aria-labelledby="sale-title">
       <div class="coop-flash-panel">
-        <div class="coop-flash-heading"><div><span class="coop-eyebrow coop-eyebrow-light">SĂN DEAL MỖI NGÀY</span><h2 id="sale-title">Flash sale <em>giá cực tốt</em></h2><p>Deal ngon trong ngày — nhanh tay chọn món yêu thích.</p></div><div class="coop-countdown"><small>Ưu đãi kết thúc sau</small><strong>{{ countdown.hours }}<i>:</i>{{ countdown.minutes }}<i>:</i>{{ countdown.seconds }}</strong></div></div>
+        <div class="coop-flash-heading"><div><span class="coop-eyebrow coop-eyebrow-light">SĂN DEAL MỖI NGÀY</span><h2 id="sale-title">Flash sale <em>giá cực tốt</em></h2><p>Deal ngon trong ngày — nhanh tay chọn món yêu thích.</p></div><div class="coop-countdown"><small>Ưu đãi kết thúc sau</small><strong>{{ countdown().hours }}<i>:</i>{{ countdown().minutes }}<i>:</i>{{ countdown().seconds }}</strong></div></div>
         <div class="coop-product-grid">
           <article *ngFor="let deal of deals" class="coop-product-card">
             <a class="coop-product-photo" routerLink="/online-ordering"><img [src]="deal.image" [alt]="deal.name" loading="lazy"><span class="coop-discount">-{{ deal.discountPct }}%</span><span class="coop-save-label">TIẾT KIỆM</span></a>

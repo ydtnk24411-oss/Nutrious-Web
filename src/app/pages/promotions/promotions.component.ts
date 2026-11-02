@@ -1,10 +1,13 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { Router, RouterLink } from '@angular/router';
+import { VoucherRecord, VoucherService } from '../../shared/services/voucher.service';
+import { CartService } from '../../shared/services/cart.service';
 
 export interface PromoItem {
   id: string;
+  voucherId?: string;
   icon: string;
   title: string;
   desc: string;
@@ -12,11 +15,20 @@ export interface PromoItem {
   expiry: string;
   tag: string;
   cta: string;
-  code?: string;
+  code: string;
+  minOrderValue: number;
+  discountText: string;
   color: 'green' | 'amber' | 'teal' | 'rose';
-  action: 'vouchers' | 'loyalty' | 'shop' | 'nutrition';
+  action: 'vouchers' | 'loyalty' | 'shop' | 'nutrition' | 'checkout';
   queryParams?: Record<string, string>;
 }
+
+const CARD_THEMES: { icon: string; badge: string; tag: string; color: 'green' | 'amber' | 'teal' | 'rose' }[] = [
+  { icon: '🌱', badge: 'HOT', tag: 'Ưu đãi nổi bật', color: 'green' },
+  { icon: '🛒', badge: 'SALE', tag: 'Rau củ hữu cơ', color: 'amber' },
+  { icon: '🚚', badge: 'FREE', tag: 'Miễn phí vận chuyển', color: 'teal' },
+  { icon: '🥗', badge: 'SMART', tag: 'Thực đơn dinh dưỡng', color: 'rose' },
+];
 
 @Component({
   selector: 'app-promotions',
@@ -25,78 +37,125 @@ export interface PromoItem {
   templateUrl: './promotions.component.html',
   styleUrl: './promotions.component.css',
 })
-export class PromotionsComponent {
+export class PromotionsComponent implements OnInit {
   private router = inject(Router);
+  protected voucher = inject(VoucherService);
+  protected cart = inject(CartService);
 
   activeTab = signal<'vouchers' | 'points'>('vouchers');
-  copiedCode = signal<string | null>(null);
+  walletFilter = signal<'all' | 'saved'>('all');
+  toastMessage = signal<string>('');
+  private pendingVoucherId = signal<string | null>(null);
 
-  readonly promotions: PromoItem[] = [
-    {
-      id: 'new-member',
-      icon: '🌱',
-      title: 'Ưu đãi thành viên mới',
-      desc: 'Giảm 20% cho đơn hàng đầu tiên. Thu thập mã tại Ví Voucher và áp dụng cho mọi nông sản tươi sạch.',
-      badge: 'HOT',
-      expiry: 'Hết hạn: 31/12/2026',
-      tag: 'Voucher thành viên',
-      cta: 'Săn voucher ngay',
-      code: 'XANHLA20',
-      color: 'green',
-      action: 'vouchers',
-    },
-    {
-      id: 'weekend-sale',
-      icon: '🛒',
-      title: 'Flash Sale cuối tuần',
-      desc: 'Giảm đến 50% rau củ quả tươi hữu cơ mỗi thứ Bảy & Chủ Nhật. Số lượng giới hạn trong ngày!',
-      badge: 'LTD',
-      expiry: 'Mỗi cuối tuần',
-      tag: 'Rau củ quả',
-      cta: 'Khám phá ngay',
-      color: 'amber',
-      action: 'shop',
-      queryParams: { category: 'Rau củ' },
-    },
-    {
-      id: 'loyalty-bonus',
-      icon: '⭐',
-      title: 'Nhân đôi điểm thưởng',
-      desc: 'Tích điểm x2 cho mọi đơn hàng trong tháng 11. Đổi điểm lấy phiếu mua hàng và quà hấp dẫn!',
-      badge: 'NEW',
-      expiry: 'Hết hạn: 30/11/2026',
-      tag: 'Chương trình điểm',
-      cta: 'Tích điểm ngay',
-      color: 'teal',
-      action: 'loyalty',
-    },
-    {
-      id: 'combo-deal',
-      icon: '🥗',
-      title: 'Combo dinh dưỡng thông minh',
-      desc: 'Lên thực đơn cá nhân hóa tại trang Dinh dưỡng thông minh và mua trọn gói nguyên liệu tiết kiệm thêm 10%.',
-      badge: 'SMART',
-      expiry: 'Không giới hạn',
-      tag: 'Dinh dưỡng thông minh',
-      cta: 'Tạo thực đơn',
-      color: 'rose',
-      action: 'nutrition',
-    },
-  ];
+  // Dynamically computed promotions from MongoDB vouchers
+  readonly promotions = computed<PromoItem[]>(() => {
+    const list = this.voucher.publicVouchers();
+    return list.map((v, idx) => {
+      const theme = CARD_THEMES[idx % CARD_THEMES.length];
+      const isPercent = v.discountType === 'percentage' || v.discountType === 'percent';
+      const discountText = isPercent
+        ? `Giảm ${v.discountValue}%`
+        : `Giảm ${v.discountValue.toLocaleString('vi-VN')}đ`;
+      const endDateStr = v.endDate ? new Date(v.endDate).toLocaleDateString('vi-VN') : '31/12/2027';
+
+      return {
+        id: v._id,
+        voucherId: v._id,
+        icon: theme.icon,
+        title: v.name,
+        desc: v.description || `${discountText} cho đơn hàng từ ${(v.minOrderValue || 0).toLocaleString('vi-VN')}đ.`,
+        badge: isPercent ? `-${v.discountValue}%` : `-${Math.round(v.discountValue / 1000)}K`,
+        expiry: `HSD: ${endDateStr}`,
+        tag: `Đơn từ ${(v.minOrderValue || 0).toLocaleString('vi-VN')}đ`,
+        cta: 'Dùng ưu đãi này',
+        code: v.code,
+        minOrderValue: v.minOrderValue || 0,
+        discountText,
+        color: theme.color,
+        action: 'checkout',
+        queryParams: { voucher: v.code },
+      };
+    });
+  });
+
+  readonly filteredWalletVouchers = computed<VoucherRecord[]>(() => {
+    if (this.walletFilter() === 'saved') {
+      return this.voucher.availableVouchers().map(uv => uv.voucher);
+    }
+    return this.voucher.publicVouchers();
+  });
+
+  constructor() {
+    effect(() => {
+      const user = this.cart.currentUser();
+      const pendingId = this.pendingVoucherId();
+      if (user && pendingId && localStorage.getItem('xanhla_auth_token')) {
+        this.pendingVoucherId.set(null);
+        this.persistVoucher(pendingId);
+      }
+    });
+  }
+
+  ngOnInit(): void {
+    this.voucher.loadPublicVouchers();
+    this.voucher.loadUserVouchers();
+  }
 
   setTab(tab: 'vouchers' | 'points'): void {
     this.activeTab.set(tab);
   }
 
+  isCopied(code: string): boolean {
+    return this.voucher.isCopied(code);
+  }
+
+  isSaved(voucherId?: string): boolean {
+    if (!voucherId) return false;
+    return this.voucher.isSaved(voucherId);
+  }
+
   copyPromoCode(code: string, event: Event): void {
     event.stopPropagation();
-    navigator.clipboard?.writeText(code);
-    this.copiedCode.set(code);
-    setTimeout(() => {
-      if (this.copiedCode() === code) {
-        this.copiedCode.set(null);
-      }
-    }, 2000);
+    this.voucher.copyCode(code);
+    this.showToast(`Đã sao chép mã ${code}! Bạn có thể dán hoặc chọn trực tiếp khi thanh toán.`);
+  }
+
+  savePromoVoucher(voucherId: string | undefined, event: Event): void {
+    event.stopPropagation();
+    if (!voucherId) return;
+    if (this.isSaved(voucherId)) return;
+
+    if (!this.cart.currentUser() || !localStorage.getItem('xanhla_auth_token')) {
+      this.pendingVoucherId.set(voucherId);
+      this.cart.openAuthModal('login');
+      return;
+    }
+    this.persistVoucher(voucherId);
+  }
+
+  private persistVoucher(voucherId: string): void {
+    this.voucher.saveVoucher(voucherId).subscribe({
+      next: res => {
+        this.showToast(`Đã lưu mã ${res.data.voucher.code} vào Ví Voucher của bạn!`);
+      },
+      error: err => {
+        if (err.status === 401) {
+          this.pendingVoucherId.set(voucherId);
+          this.cart.openAuthModal('login');
+          return;
+        }
+        if (err.status === 400 && err.error?.message?.includes('đã lưu')) {
+          this.voucher.loadUserVouchers();
+          this.showToast('Mã ưu đãi này đã có trong ví của bạn.');
+          return;
+        }
+        this.showToast(err.error?.message || 'Không thể lưu voucher lúc này.');
+      },
+    });
+  }
+
+  private showToast(msg: string): void {
+    this.toastMessage.set(msg);
   }
 
   goToVouchers(): void {
@@ -108,7 +167,11 @@ export class PromotionsComponent {
   }
 
   handlePromoAction(promo: PromoItem): void {
-    if (promo.action === 'vouchers') {
+    if (promo.action === 'checkout') {
+      this.router.navigate(['/checkout'], {
+        queryParams: promo.queryParams || { voucher: promo.code },
+      });
+    } else if (promo.action === 'vouchers') {
       this.router.navigate(['/vouchers']);
     } else if (promo.action === 'loyalty') {
       this.router.navigate(['/loyalty']);

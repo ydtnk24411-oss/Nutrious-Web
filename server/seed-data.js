@@ -12,7 +12,7 @@ const vouchersData = [
     code: 'WELCOME20',
     name: 'Giảm 20% Đơn Đầu Tiên',
     description: 'Ưu đãi chào mừng khách hàng mới tại Xanh Lá. Giảm tối đa 50.000đ cho đơn từ 150.000đ.',
-    discountType: 'percent',
+    discountType: 'percentage',
     discountValue: 20,
     minOrderValue: 150000,
     maxDiscountValue: 50000,
@@ -40,7 +40,7 @@ const vouchersData = [
     code: 'XANHLA30',
     name: 'Combo Rau Củ Hữu Cơ - Giảm 30%',
     description: 'Mua từ 3 sản phẩm rau củ hữu cơ bất kỳ, giảm ngay 30% tổng giá trị đơn hàng (tối đa 90.000đ).',
-    discountType: 'percent',
+    discountType: 'percentage',
     discountValue: 30,
     minOrderValue: 200000,
     maxDiscountValue: 90000,
@@ -54,7 +54,7 @@ const vouchersData = [
     code: 'XANHLA20',
     name: 'Giảm 20% Trái Cây Nhập Khẩu',
     description: 'Áp dụng cho tất cả các loại trái cây nhập khẩu và nội địa đạt chuẩn VietGAP cho đơn từ 200.000đ.',
-    discountType: 'percent',
+    discountType: 'percentage',
     discountValue: 20,
     minOrderValue: 200000,
     maxDiscountValue: 60000,
@@ -82,7 +82,7 @@ const vouchersData = [
     code: 'NUTRITION10',
     name: 'Giảm 10% Thực Đơn Dinh Dưỡng',
     description: 'Giảm 10% tối đa 40.000đ khi mua nguyên liệu theo gợi ý mâm cơm dinh dưỡng cho đơn từ 120.000đ.',
-    discountType: 'percent',
+    discountType: 'percentage',
     discountValue: 10,
     minOrderValue: 120000,
     maxDiscountValue: 40000,
@@ -96,7 +96,7 @@ const vouchersData = [
     code: 'COMBO30',
     name: 'Combo Gia Đình Tiết Kiệm 30%',
     description: 'Giảm 30% tối đa 100.000đ cho đơn hàng combo gia đình từ 350.000đ.',
-    discountType: 'percent',
+    discountType: 'percentage',
     discountValue: 30,
     minOrderValue: 350000,
     maxDiscountValue: 100000,
@@ -124,7 +124,7 @@ const vouchersData = [
     code: 'GOLD15',
     name: 'Đặc Quyền Thành Viên Giảm 15%',
     description: 'Giảm 15% tối đa 75.000đ cho đơn hàng từ 250.000đ dành cho khách hàng thân thiết.',
-    discountType: 'percent',
+    discountType: 'percentage',
     discountValue: 15,
     minOrderValue: 250000,
     maxDiscountValue: 75000,
@@ -138,7 +138,7 @@ const vouchersData = [
     code: 'BIRTHDAY30',
     name: 'Quà Sinh Nhật Xanh Lá - Giảm 30%',
     description: 'Ưu đãi mừng sinh nhật giảm 30% tối đa 80.000đ cho đơn hàng từ 200.000đ.',
-    discountType: 'percent',
+    discountType: 'percentage',
     discountValue: 30,
     minOrderValue: 200000,
     maxDiscountValue: 80000,
@@ -529,7 +529,7 @@ const footerConfigData = {
 
 async function runSeed() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
+    await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 4000 });
     console.log('✅ Connected to MongoDB Atlas for seeding');
 
     // 1. Upsert Vouchers

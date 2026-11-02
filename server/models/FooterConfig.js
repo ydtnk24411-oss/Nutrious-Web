@@ -43,3 +43,4 @@ const footerConfigSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model('FooterConfig', footerConfigSchema);
+
