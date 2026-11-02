@@ -27,9 +27,14 @@
           <p class="xl-hero-subtitle">
             Khám phá công thức món ăn cân đối vi chất, tối ưu khẩu phần cho gia đình và tự động chuẩn bị giỏ nguyên liệu tươi sạch chuẩn nguồn gốc từ Xanh Lá chỉ với một chạm.
           </p>
+          <div class="xl-hero-quicklinks">
+            <a routerLink="/cook-with-what-you-have" class="xl-hero-link">🍳 Nấu gì với đồ sẵn có?</a>
+            <a routerLink="/online-ordering" class="xl-hero-link">🛒 Cửa hàng nông sản</a>
+            <a routerLink="/promotions" class="xl-hero-link xl-hero-link--accent">🎁 Ưu đãi Combo -10%</a>
+          </div>
         </div>
         <div class="xl-hero-image">
-          <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&h=400&fit=crop" alt="Healthy food" />
+          <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&h=400&fit=crop" alt="Thực đơn dinh dưỡng lành mạnh Xanh Lá" />
         </div>
       </header>
 
@@ -231,7 +236,7 @@
             <div>
               <h2 class="xl-results-title">Thực đơn gợi ý dành cho bạn</h2>
               <p class="xl-results-sub">
-                Đã cân đối theo khẩu phần {{ servings() }} người ăn và mục tiêu dinh dưỡng đã chọn.
+                Đã cân đối theo khẩu phần {{ servings() }} người ăn ({{ mealsCount() }} bữa) và mục tiêu dinh dưỡng đã chọn.
               </p>
             </div>
             <span class="xl-results-count">{{ results().length }} món ăn phù hợp</span>
@@ -343,7 +348,7 @@
                             @if (item.product) {
                               <div class="xl-prod-matched-info">
                                 <a
-                                  [routerLink]="item.product.slug"
+                                  [routerLink]="getProductLink(item.product)"
                                   class="xl-prod-name-link"
                                   title="Xem sản phẩm tại Xanh Lá"
                                 >
@@ -434,13 +439,16 @@
             <p class="xl-empty-desc">
               Không có món ăn nào đáp ứng trọn vẹn tất cả mục tiêu hoặc ngân sách đã đặt ra. Bạn hãy thử bỏ bớt điều kiện lọc hoặc chọn thêm mục tiêu dinh dưỡng khác nhé!
             </p>
-            <button
-              type="button"
-              class="xl-reset-btn"
-              (click)="selectedGoals.set([]); budgetLimit.set(null); excludeIngredients.set(''); findRecipes()"
-            >
-              Xem tất cả món gợi ý
-            </button>
+            <div class="xl-empty-actions">
+              <button
+                type="button"
+                class="xl-reset-btn"
+                (click)="selectedGoals.set([]); budgetLimit.set(null); excludeIngredients.set(''); findRecipes()"
+              >
+                Xem tất cả món gợi ý
+              </button>
+              <a routerLink="/online-ordering" class="xl-reset-link">Khám phá cửa hàng nông sản</a>
+            </div>
           </div>
         }
       </section>

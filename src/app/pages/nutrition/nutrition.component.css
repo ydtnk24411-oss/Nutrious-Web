@@ -49,11 +49,12 @@
   border-radius: var(--xanh-radius-md);
   overflow: hidden;
   box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+  aspect-ratio: 3/2;
 }
 
 .xl-hero-image img {
   width: 100%;
-  height: auto;
+  height: 100%;
   display: block;
   object-fit: cover;
 }
@@ -71,7 +72,40 @@
 }
 .xl-hero-subtitle {
   font-size: 15px; color: var(--muted);
-  max-width: 600px; line-height: 1.75; margin: 0;
+  max-width: 600px; line-height: 1.75; margin: 0 0 18px;
+}
+
+.xl-hero-quicklinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.xl-hero-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: #f0f7ea;
+  color: var(--green-700, #2d6a4f);
+  border: 1px solid #c8e0be;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+.xl-hero-link:hover {
+  background: #e2f0d8;
+  border-color: var(--green-700, #2d6a4f);
+}
+.xl-hero-link--accent {
+  background: #fff8dc;
+  color: #8a5a00;
+  border-color: #f0d078;
+}
+.xl-hero-link--accent:hover {
+  background: #ffefad;
 }
 
 /* ── CONFIG CARD ── */
@@ -542,6 +576,13 @@
 .xl-empty-icon { font-size: 52px; display: block; margin-bottom: 14px; }
 .xl-empty-title { font-size: 19px; font-weight: 700; color: #2a402c; margin: 0 0 10px; }
 .xl-empty-desc { font-size: 14px; color: var(--muted); max-width: 380px; margin: 0 auto 20px; line-height: 1.7; }
+.xl-empty-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 .xl-reset-btn {
   padding: 10px 24px; border: 1.5px solid var(--green-700);
   border-radius: var(--r-full); background: transparent;
@@ -549,6 +590,17 @@
   cursor: pointer; font-family: inherit; transition: background .15s;
 }
 .xl-reset-btn:hover { background: #f0f7ea; }
+.xl-reset-link {
+  padding: 10px 24px;
+  border-radius: var(--r-full);
+  background: var(--green-700);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background .15s;
+}
+.xl-reset-link:hover { background: #1a4d24; }
 
 /* ── DISCLAIMER ── */
 .xl-disclaimer-card {
@@ -561,6 +613,10 @@
 .xl-disclaimer-text { font-size: 12.5px; color: var(--muted); line-height: 1.75; margin: 0; }
 
 /* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .xl-recipes-grid { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 768px) {
   .xl-nutrition-hero {
     grid-template-columns: 1fr;
@@ -568,15 +624,36 @@
   }
   .xl-hero-image {
     order: -1;
+    aspect-ratio: 16/7;
   }
+  .xl-results-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .xl-recipe-meta-top { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .xl-servings-adjust { margin-left: 0; }
 }
 
 @media (max-width: 640px) {
+  .xl-feedback-toast { left: 16px; right: 16px; top: 72px; font-size: 13px; }
   .xl-nutrition-config-card { padding: 18px 16px; }
   .xl-goals-grid { grid-template-columns: repeat(2, 1fr); }
   .xl-controls-grid { grid-template-columns: 1fr 1fr; }
   .xl-ingredient-row { flex-wrap: wrap; gap: 8px; }
   .xl-ing-product-col { min-width: unset; text-align: left; }
+  .xl-prod-matched-info { align-items: flex-start; }
   .xl-total-box { flex-direction: column; align-items: flex-start; gap: 4px; }
   .xl-recipes-grid { grid-template-columns: 1fr; }
+  .xl-cta-wrapper { padding: 0 4px; }
+  .xl-primary-btn { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 480px) {
+  .xl-goals-grid { grid-template-columns: 1fr; gap: 8px; }
+  .xl-controls-grid { grid-template-columns: 1fr; }
+  .xl-step-header { gap: 10px; }
+  .xl-step-badge { width: 28px; height: 28px; font-size: 12px; flex-shrink: 0; }
+  .xl-step-title { font-size: 15px; }
+  .xl-recipe-body { padding: 16px 14px 18px; }
+  .xl-ing-actions { width: 100%; justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
+  .xl-hero-title { font-size: clamp(22px, 7vw, 32px); }
+  .xl-nutrition-hero { padding-top: 20px; }
+  .xanhla-breadcrumb { font-size: 11.5px; }
 }

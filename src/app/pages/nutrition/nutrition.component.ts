@@ -75,89 +75,111 @@ export const GOAL_ICONS: Record<string, string> = {
 export const RECIPE_DB: RecipeDbItem[] = [
   {
     id: 'ca-hoi-ap-chao',
-    name: 'Cá hồi áp chảo rau xanh',
+    name: 'Cá hồi áp chảo cải thìa baby',
     image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600&q=80',
-    description: 'Cá hồi tươi áp chảo xém vàng thơm bơ tỏi, kèm rau xanh giòn ngọt thanh mát và dưa leo tươi mát.',
+    description: 'Cá hồi Na Uy fillet tươi áp chảo xém vàng thơm bơ tỏi, kèm cải thìa baby giòn ngọt và cà chua bi tươi mát.',
     prepTime: '20 phút',
     servingBase: 1,
     nutritionNote: 'Giàu đạm nạc chất lượng cao, axit béo Omega-3 tốt cho tim mạch và chất xơ tự nhiên.',
     goalsTags: ['protein', 'mineral', 'balance'],
     ingredients: [
-      { name: 'Cá Hồi Tươi', amountPer1Serving: 150, unit: 'g' },
-      { name: 'Baby Bok Choy', amountPer1Serving: 100, unit: 'g' },
-      { name: 'Dưa Leo Tươi', amountPer1Serving: 1, unit: 'quả' },
+      { name: 'Cá Hồi Na Uy Fillet Tươi', amountPer1Serving: 150, unit: 'g' },
+      { name: 'Cải Thìa Baby', amountPer1Serving: 120, unit: 'g' },
+      { name: 'Cà Chua Bi Đà Lạt', amountPer1Serving: 100, unit: 'g' },
     ],
   },
   {
     id: 'salad-ga-nuong',
-    name: 'Salad gà nướng',
+    name: 'Salad gà nướng rau củ Đà Lạt',
     image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80',
-    description: 'Ức gà nướng thảo mộc xé nhỏ, trộn cùng cà chua chín mọng và dưa leo tươi giòn thanh nhẹ.',
+    description: 'Thịt gà ta nướng thảo mộc xé phay, trộn cùng cà chua bi Đà Lạt chín mọng và ớt chuông 3 màu giòn ngọt.',
     prepTime: '25 phút',
     servingBase: 1,
-    nutritionNote: 'Cung cấp nguồn protein nạc ít béo, dồi dào chất xơ và kali giúp giữ dáng, thanh lọc cơ thể.',
-    goalsTags: ['protein', 'fiber', 'balance'],
+    nutritionNote: 'Cung cấp nguồn protein nạc ít béo, dồi dào chất xơ và vitamin C giúp giữ dáng, thanh lọc cơ thể.',
+    goalsTags: ['protein', 'fiber', 'vitamin', 'balance'],
     ingredients: [
-      { name: 'Gà Ta Thả Vườn', amountPer1Serving: 150, unit: 'g' },
-      { name: 'Cà Chua Đỏ', amountPer1Serving: 1, unit: 'quả' },
-      { name: 'Dưa Leo Tươi', amountPer1Serving: 1, unit: 'quả' },
+      { name: 'Gà Ta Thả Vườn Nguyên Con', amountPer1Serving: 150, unit: 'g' },
+      { name: 'Cà Chua Bi Đà Lạt', amountPer1Serving: 100, unit: 'g' },
+      { name: 'Ớt Chuông 3 Màu', amountPer1Serving: 100, unit: 'g' },
     ],
   },
   {
-    id: 'canh-bap-cai-thit-bo',
-    name: 'Canh bắp cải thịt bò',
+    id: 'canh-cai-xanh-thit-bo',
+    name: 'Canh cải xanh thịt bò bắp Mỹ',
     image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=600&q=80',
-    description: 'Bắp cải tươi giòn ngọt nấu cùng thịt bò Mỹ đậm đà, bổ sung cà rốt ngọt thanh ấm bụng.',
-    prepTime: '30 phút',
+    description: 'Cải xanh Đà Lạt tươi giòn nấu cùng thịt bò Mỹ ngọt mềm và cà rốt baby Đà Lạt thanh mát, ấm bụng.',
+    prepTime: '25 phút',
     servingBase: 1,
-    nutritionNote: 'Cung cấp sắt hữu cơ, đạm cao cấp, vitamin C và chất xơ hỗ trợ hệ tiêu hoá.',
+    nutritionNote: 'Cung cấp sắt hữu cơ, đạm cao cấp, tiền chất vitamin A và chất xơ hỗ trợ hệ tiêu hoá.',
     goalsTags: ['protein', 'fiber', 'mineral', 'balance'],
     ingredients: [
-      { name: 'Bò Mỹ Thăn', amountPer1Serving: 120, unit: 'g' },
-      { name: 'Organic Heirloom Kale', amountPer1Serving: 150, unit: 'g' },
-      { name: 'Cà Rốt Ngọt', amountPer1Serving: 80, unit: 'g' },
+      { name: 'Thịt Bò Bắp Mỹ Nhập Khẩu', amountPer1Serving: 120, unit: 'g' },
+      { name: 'Cải Xanh Đà Lạt', amountPer1Serving: 150, unit: 'g' },
+      { name: 'Cà Rốt Baby Đà Lạt', amountPer1Serving: 80, unit: 'g' },
     ],
   },
   {
-    id: 'bo-xay-sinh-to',
-    name: 'Bơ xay sinh tố',
+    id: 'sinh-to-dau-xoai',
+    name: 'Sinh tố dâu tây & xoài cát Hòa Lộc',
     image: 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=600&q=80',
-    description: 'Sinh tố bơ Hass béo ngậy kết hợp chuối tiêu thơm lừng tự nhiên, cung cấp năng lượng sảng khoái.',
+    description: 'Sự kết hợp tươi mát giữa dâu tây Đà Lạt mọng nước và xoài cát Hòa Lộc ngọt thơm tự nhiên, nạp nhanh vitamin.',
     prepTime: '10 phút',
     servingBase: 1,
-    nutritionNote: 'Nguồn chất béo thực vật lành mạnh không bão hoà đơn, giàu vitamin E, B6 và kali tự nhiên.',
+    nutritionNote: 'Dồi dào vitamin C, chất chống oxy hóa tự nhiên và chất xơ hòa tan giúp tăng đề kháng, đẹp da.',
     goalsTags: ['vitamin', 'fiber', 'variety'],
     ingredients: [
-      { name: 'Quả Bơ Hass', amountPer1Serving: 1, unit: 'quả' },
-      { name: 'Chuối Tiêu', amountPer1Serving: 1, unit: 'quả' },
+      { name: 'Dâu Tây Đà Lạt', amountPer1Serving: 150, unit: 'g' },
+      { name: 'Xoài Cát Hòa Lộc', amountPer1Serving: 150, unit: 'g' },
     ],
   },
   {
     id: 'ca-rot-xao-thit-ga',
-    name: 'Cà rốt xào thịt gà',
+    name: 'Gà xào nấm đông cô & cà rốt baby',
     image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=600&q=80',
-    description: 'Thịt gà mềm thơm xào cùng cà rốt tươi ngon thái sợi, gia vị vừa vặn, màu sắc bắt mắt.',
+    description: 'Thịt gà mềm thơm xào cùng nấm đông cô Đà Lạt và cà rốt baby thái lát, vị ngọt thanh tự nhiên.',
     prepTime: '20 phút',
     servingBase: 1,
-    nutritionNote: 'Cực kỳ giàu beta-caroten (tiền vitamin A) sáng mắt và chất đạm phát triển cơ bắp.',
+    nutritionNote: 'Cực kỳ giàu beta-caroten (tiền vitamin A) sáng mắt, selen từ nấm và chất đạm phát triển cơ bắp.',
     goalsTags: ['protein', 'vitamin', 'variety'],
     ingredients: [
-      { name: 'Gà Ta Thả Vườn', amountPer1Serving: 140, unit: 'g' },
-      { name: 'Cà Rốt Ngọt', amountPer1Serving: 120, unit: 'g' },
+      { name: 'Gà Ta Thả Vườn Nguyên Con', amountPer1Serving: 140, unit: 'g' },
+      { name: 'Nấm Đông Cô Đà Lạt', amountPer1Serving: 80, unit: 'g' },
+      { name: 'Cà Rốt Baby Đà Lạt', amountPer1Serving: 100, unit: 'g' },
+    ],
+  },
+  {
+    id: 'tom-su-hap-cai-ngot',
+    name: 'Tôm sú hấp sả & rau cải ngọt',
+    image: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=600&q=80',
+    description: 'Tôm sú Cà Mau tươi sống hấp sả thơm lừng giữ trọn vị ngọt tự nhiên, dùng kèm rau cải ngọt luộc thanh đạm.',
+    prepTime: '15 phút',
+    servingBase: 1,
+    nutritionNote: 'Bổ sung canxi, kẽm, i-ốt và đạm biển dễ tiêu hóa cùng chất xơ xanh ít calo.',
+    goalsTags: ['protein', 'mineral', 'fiber', 'balance'],
+    ingredients: [
+      { name: 'Tôm Sú Tươi Sống Cà Mau', amountPer1Serving: 150, unit: 'g' },
+      { name: 'Rau Cải Ngọt', amountPer1Serving: 150, unit: 'g' },
+      { name: 'Sả Tươi Bến Tre', amountPer1Serving: 30, unit: 'g' },
     ],
   },
 ];
+
+function formatProductSlug(slug?: string, id?: string): string {
+  const raw = (slug || id || '').trim();
+  if (!raw) return '/online-ordering';
+  return raw.startsWith('/') ? raw : `/product-page/${raw}`;
+}
 
 function toCartProduct(p: ApiProduct): XanhLaProduct {
   return {
     id: p._id || p.slug,
     name: p.name,
-    slug: p.slug,
+    slug: formatProductSlug(p.slug, p._id),
     price: p.price,
     priceNumber: p.priceNumber || 0,
     image: p.image,
     category: p.categoryId,
-categoryVi: '',
+    categoryVi: '',
     description: p.description || '',
     container: p.container || '',
     cutType: p.cutType || '',
@@ -195,25 +217,29 @@ function matchCatalogueProduct(ingredientName: string, catalogue: ApiProduct[]):
   });
   if (match) return match;
 
-  // 2. Keyword alias mappings for Vietnamese market items
-  const keywordMap: Record<string, string[]> = {
-    'ca hoi': ['ca hoi', 'salmon'],
-    'ga': ['ga ta', 'chicken', 'uc ga'],
-    'thit ga': ['ga ta', 'chicken', 'uc ga'],
-    'bo': ['bo my', 'ribeye', 'beef'],
-    'thit bo': ['bo my', 'ribeye', 'beef'],
-    'qua bo': ['qua bo', 'avocado'],
-    'bo hass': ['qua bo', 'hass'],
-    'ca rot': ['ca rot', 'carrot'],
-    'bap cai': ['bap cai', 'kale', 'bok choy', 'cabbage'],
-    'rau xanh': ['bok choy', 'kale', 'rau'],
-    'rau cai': ['bok choy', 'kale'],
-    'ca chua': ['ca chua', 'tomato'],
-    'dua leo': ['dua leo', 'cucumber'],
-    'chuoi': ['chuoi', 'banana'],
-  };
+  // 2. Keyword alias mappings for Vietnamese market items (ordered from specific to general)
+  const keywordMap: [string, string[]][] = [
+    ['ca hoi', ['ca hoi', 'salmon']],
+    ['tom su', ['tom su', 'tom the']],
+    ['qua bo', ['qua bo', 'avocado']],
+    ['bo hass', ['qua bo', 'hass']],
+    ['thit bo', ['bo bap my', 'bo than', 'bo my', 'beef']],
+    ['bo my', ['bo bap my', 'bo than', 'bo my']],
+    ['thit ga', ['ga ta', 'dui ga', 'chicken', 'uc ga']],
+    ['ga ta', ['ga ta', 'dui ga', 'chicken']],
+    ['ca rot', ['ca rot', 'carrot']],
+    ['cai thia', ['cai thia', 'bok choy']],
+    ['cai xanh', ['cai xanh', 'rau cai']],
+    ['cai ngot', ['cai ngot', 'rau cai']],
+    ['ca chua', ['ca chua', 'tomato']],
+    ['ot chuong', ['ot chuong', 'bell pepper']],
+    ['nam dong co', ['nam dong co', 'nam']],
+    ['dau tay', ['dau tay', 'strawberry']],
+    ['xoai cat', ['xoai cat', 'xoai']],
+    ['sa tuoi', ['sa tuoi', 'gung tuoi']],
+  ];
 
-  for (const [key, aliases] of Object.entries(keywordMap)) {
+  for (const [key, aliases] of keywordMap) {
     if (target.includes(key) || key.includes(target)) {
       match = catalogue.find((p) => {
         const pNorm = normalizeStr(p.name);
@@ -224,7 +250,7 @@ function matchCatalogueProduct(ingredientName: string, catalogue: ApiProduct[]):
   }
 
   // 3. Match individual significant words
-  const words = target.split(/\s+/).filter((w) => w.length >= 3);
+  const words = target.split(/\s+/).filter((w) => w.length >= 4);
   for (const word of words) {
     match = catalogue.find((p) => normalizeStr(p.name).includes(word));
     if (match) return match;
@@ -518,6 +544,10 @@ description: p.description,
     return recipe.ingredients
       .filter((i) => i.selected && !i.owned && i.product)
       .reduce((sum, i) => sum + (i.product?.priceNumber || 0), 0);
+  }
+
+  getProductLink(product: ApiProduct): string {
+    return formatProductSlug(product.slug, product._id);
   }
 
   addAllToCart(recipe: RecipeResult): void {
