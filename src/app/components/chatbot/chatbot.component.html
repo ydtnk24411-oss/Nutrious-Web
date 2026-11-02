@@ -5,7 +5,7 @@
   <div class="xanh-chat-launcher-wrap">
     @if (!chat.isOpen() && chat.hasUnread()) {
       <div class="xanh-chat-tooltip" (click)="chat.open()">
-        <span>🌿 Chào bạn! Cần tìm nông sản tươi hay thực đơn gì hôm nay?</span>
+        <span>🩺 Chào bạn! Cần NutriBot phân tích ảnh món ăn hay tính calo, BMI hôm nay?</span>
         <button class="xanh-tooltip-close" (click)="$event.stopPropagation(); chat.hasUnread.set(false)" aria-label="Đóng gợi ý">×</button>
       </div>
     }
@@ -14,15 +14,12 @@
       class="xanh-chat-launcher"
       [class.is-open]="chat.isOpen()"
       (click)="chat.toggle()"
-      title="Trợ lý AI Xanh Lá"
-      aria-label="Mở cửa sổ chat với Trợ lý AI Xanh Lá"
+      title="NutriBot · Trợ lý Dinh dưỡng & Nông sản Xanh Lá"
+      aria-label="Mở cửa sổ chat với NutriBot"
     >
       @if (!chat.isOpen()) {
         <div class="launcher-icon-wrap">
-          <svg class="launcher-leaf-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
-            <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 12"/>
-          </svg>
+          <img src="/avatars/nutribot.png" alt="NutriBot" class="launcher-nutribot-avatar" />
           <span class="launcher-sparkle">✨</span>
         </div>
       } @else {
@@ -42,16 +39,13 @@
       <div class="xanh-chat-header">
         <div class="xanh-chat-header-info">
           <div class="xanh-chat-avatar">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-              <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
-              <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 12"/>
-            </svg>
+            <img src="/avatars/nutribot.png" alt="NutriBot" class="header-nutri-img" />
             <span class="xanh-live-dot" title="Đang trực tuyến"></span>
           </div>
           <div>
-            <h3 class="xanh-chat-title">Trợ lý Nông sản Xanh Lá</h3>
+            <h3 class="xanh-chat-title">NutriBot · Dinh Dưỡng Xanh Lá</h3>
             <span class="xanh-chat-status">
-              {{ chat.provider() === 'local' ? '🌿 AI Xanh Lá · Sẵn sàng 24/7' : (chat.provider() === 'gemini' ? '⚡ Google Gemini 1.5 Flash' : '🤖 OpenAI ChatGPT') }}
+              {{ chat.provider() === 'local' ? '🌿 NutriBot Local Engine · Sẵn sàng 24/7' : (chat.provider() === 'gemini' ? '⚡ Google Gemini 1.5 Flash Vision' : '🤖 OpenAI GPT-4o-mini Vision') }}
             </span>
           </div>
         </div>
@@ -61,7 +55,7 @@
             class="xanh-chat-btn-icon"
             [class.active]="chat.settingsOpen()"
             (click)="chat.toggleSettings()"
-            title="Cài đặt mô hình AI (Chatbox Engine)"
+            title="Cài đặt AI & Hồ sơ thể trạng cá nhân (BMI)"
             aria-label="Cài đặt AI"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -84,20 +78,21 @@
         </div>
       </div>
 
-      <!-- Settings Panel (Chatbox-inspired AI Configuration) -->
+      <!-- Settings & Personal Nutrition Profile Panel -->
       @if (chat.settingsOpen()) {
         <div class="xanh-chat-settings-panel">
           <div class="xanh-settings-title">
-            <span>⚙️ Cấu hình Mô hình AI (Chatbox Engine)</span>
+            <span>⚙️ Cài đặt NutriBot Engine & Hồ sơ thể trạng</span>
             <button class="xanh-settings-close" (click)="chat.toggleSettings()">Đóng</button>
           </div>
 
+          <!-- AI Model Provider -->
           <div class="xanh-settings-field">
-            <label>Nhà cung cấp Mô hình AI:</label>
+            <label>Mô hình Xử lý & Thị giác AI (Vision):</label>
             <select [value]="chat.provider()" (change)="chat.setProvider($any($event.target).value)">
-              <option value="local">🌿 Xanh Lá Engine (Khuyên dùng - Nhanh & Miễn phí)</option>
-              <option value="gemini">⚡ Google Gemini AI (Gemini 1.5 Flash)</option>
-              <option value="openai">🤖 OpenAI ChatGPT (GPT-4o Mini)</option>
+              <option value="local">🌿 NutriBot Engine (Khuyên dùng - Nhanh & Miễn phí)</option>
+              <option value="gemini">⚡ Google Gemini Vision (Gemini 1.5 Flash)</option>
+              <option value="openai">🤖 OpenAI GPT-4o Mini Vision</option>
             </select>
           </div>
 
@@ -113,36 +108,116 @@
             </div>
           }
 
+          <!-- Persona Selector -->
           <div class="xanh-settings-field">
-            <label>Vai trò Trợ lý (AI Persona):</label>
+            <label>Vai trò Trợ lý:</label>
             <select [value]="chat.persona()" (change)="chat.setPersona($any($event.target).value)">
-              <option value="general">🌿 Trợ lý Nông sản & Mua sắm (Toàn diện)</option>
+              <option value="nutribot">🩺 NutriBot — Chuyên gia Dinh dưỡng Quốc tế & Nhận diện Món ăn</option>
               <option value="chef">👩‍🍳 Bếp trưởng Gợi ý Thực đơn & Nấu ăn</option>
-              <option value="nutritionist">🩺 Chuyên gia Dinh dưỡng & Eat-Clean</option>
-              <option value="support">📦 Hỗ trợ Đơn hàng & Giao nhận Xe lạnh</option>
+              <option value="nutritionist">🥗 Chuyên gia Dinh dưỡng Eat-Clean</option>
+              <option value="support">📦 Hỗ trợ Đơn hàng & Xe lạnh Xanh Lá</option>
+              <option value="general">🌿 Trợ lý Nông sản & Mua sắm Toàn diện</option>
             </select>
           </div>
+
+          <!-- NutriBot Personal Profile Section -->
+          <div class="nutri-profile-box">
+            <div class="nutri-profile-header">
+              <span>🩺 Hồ sơ Thể trạng & Dinh dưỡng Cá nhân</span>
+              @if (chat.bmiData()) {
+                <span class="nutri-bmi-tag" [style.background]="chat.bmiData()!.color">
+                  BMI: {{ chat.bmiData()!.bmi }} · {{ chat.bmiData()!.label }}
+                </span>
+              }
+            </div>
+
+            <div class="nutri-profile-grid">
+              <div class="nutri-profile-item">
+                <label>Tuổi:</label>
+                <input
+                  type="number"
+                  placeholder="25"
+                  [value]="chat.profile().age || ''"
+                  (input)="updateProfileField('age', +$any($event.target).value)"
+                />
+              </div>
+
+              <div class="nutri-profile-item">
+                <label>Giới tính:</label>
+                <select [value]="chat.profile().sex || 'female'" (change)="updateProfileField('sex', $any($event.target).value)">
+                  <option value="female">Nữ</option>
+                  <option value="male">Nam</option>
+                </select>
+              </div>
+
+              <div class="nutri-profile-item">
+                <label>Chiều cao (cm):</label>
+                <input
+                  type="number"
+                  placeholder="165"
+                  [value]="chat.profile().height || ''"
+                  (input)="updateProfileField('height', +$any($event.target).value)"
+                />
+              </div>
+
+              <div class="nutri-profile-item">
+                <label>Cân nặng (kg):</label>
+                <input
+                  type="number"
+                  placeholder="55"
+                  [value]="chat.profile().weight || ''"
+                  (input)="updateProfileField('weight', +$any($event.target).value)"
+                />
+              </div>
+            </div>
+
+            <div class="nutri-profile-item" style="margin-top:6px">
+              <label>Mục tiêu / Chế độ ăn:</label>
+              <input
+                type="text"
+                placeholder="Ví dụ: Giảm mỡ, Tăng cơ, Eat-Clean, Ăn chay..."
+                [value]="chat.profile().dietGoal || ''"
+                (input)="updateProfileField('dietGoal', $any($event.target).value)"
+              />
+            </div>
+
+            <div class="nutri-profile-item" style="margin-top:6px">
+              <label>Tình trạng sức khỏe / Dị ứng:</label>
+              <input
+                type="text"
+                placeholder="Ví dụ: Dị ứng hải sản, Tiểu đường nhẹ..."
+                [value]="chat.profile().conditions || ''"
+                (input)="updateProfileField('conditions', $any($event.target).value)"
+              />
+            </div>
+            <span class="nutri-profile-hint">💡 NutriBot sẽ tự động tính lượng Calo và đưa ra lời khuyên cá nhân hóa dựa trên hồ sơ này.</span>
+          </div>
+
         </div>
       }
 
       <!-- Messages Area -->
       <div class="xanh-chat-body" #messagesScroll>
         <div class="xanh-chat-date-divider">
-          <span>Hôm nay · Trợ lý AI Xanh Lá sẵn sàng hỗ trợ</span>
+          <span>Hôm nay · NutriBot đồng hành cùng bữa ăn lành mạnh của bạn</span>
         </div>
 
         @for (msg of chat.messages(); track msg.id) {
           <div class="xanh-chat-message-row" [class.is-user]="msg.sender === 'user'">
             @if (msg.sender === 'bot') {
               <div class="xanh-msg-avatar">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2">
-                  <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
-                  <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
-                </svg>
+                <img src="/avatars/nutribot.png" alt="NutriBot" class="bot-bubble-avatar" />
               </div>
             }
 
             <div class="xanh-msg-content-wrap">
+              <!-- Attached User Image -->
+              @if (msg.image) {
+                <div class="xanh-msg-uploaded-image">
+                  <img [src]="msg.image" alt="Món ăn đã tải lên" />
+                </div>
+              }
+
               <div class="xanh-msg-bubble-wrap">
                 <div class="xanh-msg-bubble" [innerHTML]="formatMessageText(msg.text)"></div>
 
@@ -210,16 +285,13 @@
         @if (chat.loading()) {
           <div class="xanh-chat-message-row">
             <div class="xanh-msg-avatar">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2">
-                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
-                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
-              </svg>
+              <img src="/avatars/nutribot.png" alt="NutriBot" class="bot-bubble-avatar" />
             </div>
             <div class="xanh-msg-bubble xanh-typing-bubble">
               <div class="xanh-typing-dot"></div>
               <div class="xanh-typing-dot"></div>
               <div class="xanh-typing-dot"></div>
-              <span style="font-size:12px;color:#6b7c6e;margin-left:4px">Đang suy nghĩ...</span>
+              <span style="font-size:12px;color:#6b7c6e;margin-left:4px">NutriBot đang phân tích...</span>
             </div>
           </div>
         }
@@ -227,7 +299,7 @@
         <!-- Quick Suggestions (show when chat is young) -->
         @if (chat.messages().length <= 3 && !chat.loading()) {
           <div class="xanh-chat-suggestions">
-            <div class="xanh-suggestions-label">💡 Gợi ý câu hỏi nhanh:</div>
+            <div class="xanh-suggestions-label">💡 Gợi ý câu hỏi & tính năng nhanh:</div>
             <div class="xanh-suggestions-list">
               @for (s of chat.quickSuggestions; track s) {
                 <button
@@ -245,11 +317,52 @@
 
       <!-- Footer Input Area -->
       <div class="xanh-chat-footer">
+
+        <!-- Hidden File Picker -->
+        <input
+          type="file"
+          #fileInput
+          (change)="onFileSelected($event)"
+          accept="image/*"
+          style="display: none"
+        />
+
+        <!-- Image Preview Bar (if user selected photo) -->
+        @if (selectedImageBase64()) {
+          <div class="xanh-image-preview-bar">
+            <div class="xanh-image-thumb-box">
+              <img [src]="selectedImageBase64()" alt="Ảnh đã chọn" />
+            </div>
+            <div class="xanh-image-name-box">
+              <span class="xanh-image-title">📸 {{ selectedImageName() || 'Ảnh món ăn' }}</span>
+              <span class="xanh-image-sub">Sẵn sàng nhận diện & tính calo</span>
+            </div>
+            <button type="button" class="xanh-image-remove-btn" (click)="removeSelectedImage()" title="Hủy ảnh">
+              ✕
+            </button>
+          </div>
+        }
+
         <form class="xanh-chat-form" (ngSubmit)="submitMessage()">
+
+          <!-- Upload Image Button -->
+          <button
+            type="button"
+            class="xanh-chat-attach-btn"
+            (click)="triggerImagePicker()"
+            title="Tải ảnh đồ ăn hoặc thức uống để NutriBot nhận diện & tính calo"
+            aria-label="Tải ảnh món ăn"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+          </button>
+
           <textarea
             class="xanh-chat-input"
             rows="1"
-            placeholder="Hỏi về rau củ, công thức món, phí ship..."
+            placeholder="Hỏi dinh dưỡng, tải ảnh món ăn, hoặc hỏi rau củ..."
             [value]="inputText()"
             (input)="inputText.set($any($event.target).value)"
             (keydown)="onKeyDown($event)"
@@ -259,7 +372,7 @@
           <button
             type="submit"
             class="xanh-chat-send-btn"
-            [disabled]="!inputText().trim() || chat.loading()"
+            [disabled]="(!inputText().trim() && !selectedImageBase64()) || chat.loading()"
             aria-label="Gửi tin nhắn"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
@@ -270,7 +383,7 @@
         </form>
 
         <div class="xanh-chat-footer-note">
-          <span>🌿 Hệ thống AI Xanh Lá · 100% Nông sản tươi sạch</span>
+          <span>🩺 NutriBot · Chuyên gia Dinh dưỡng & Nông sản Xanh Lá</span>
         </div>
       </div>
 

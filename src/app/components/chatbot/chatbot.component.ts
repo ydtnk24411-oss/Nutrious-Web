@@ -27,9 +27,13 @@ export class ChatbotComponent implements AfterViewChecked {
   private router = inject(Router);
 
   @ViewChild('messagesScroll') private messagesScrollContainer?: ElementRef<HTMLDivElement>;
+  @ViewChild('fileInput') private fileInputRef?: ElementRef<HTMLInputElement>;
 
   inputText = signal('');
   copiedId = signal('');
+  selectedImageBase64 = signal<string | null>(null);
+  selectedImageName = signal<string | null>(null);
+
   private shouldScroll = false;
 
   constructor() {
@@ -63,14 +67,58 @@ export class ChatbotComponent implements AfterViewChecked {
     }
   }
 
+  // ── Image Upload Handling (NutriBot Food & Beverage Vision) ──────────
+  triggerImagePicker(): void {
+    this.fileInputRef?.nativeElement.click();
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    if (!file.type.startsWith('image/')) {
+      alert('Vui lòng chọn file hình ảnh (JPEG, PNG, WebP).');
+      return;
+    }
+
+    this.selectedImageName.set(file.name);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.selectedImageBase64.set(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+
+    // Reset input so same file can be re-selected if removed
+    input.value = '';
+  }
+
+  removeSelectedImage(): void {
+    this.selectedImageBase64.set(null);
+    this.selectedImageName.set(null);
+  }
+
+  // ── Send Message ─────────────────────────────────────────────────────
   submitMessage(): void {
     const text = this.inputText().trim();
-    if (!text || this.chat.loading()) return;
+    const image = this.selectedImageBase64();
+
+    if (!text && !image) return;
+    if (this.chat.loading()) return;
+
     this.inputText.set('');
-    this.chat.sendMessage(text);
+    this.selectedImageBase64.set(null);
+    this.selectedImageName.set(null);
+
+    this.chat.sendMessage(text, image || undefined);
   }
 
   selectSuggestion(s: string): void {
+    if (s.includes('Nhận diện ảnh')) {
+      this.triggerImagePicker();
+      return;
+    }
     this.chat.sendMessage(s);
   }
 
@@ -130,5 +178,10 @@ export class ChatbotComponent implements AfterViewChecked {
     const h = String(d.getHours()).padStart(2, '0');
     const m = String(d.getMinutes()).padStart(2, '0');
     return `${h}:${m}`;
+  }
+
+  // Profile update helpers
+  updateProfileField(field: string, value: any): void {
+    this.chat.updateProfile({ [field]: value });
   }
 }
