@@ -40,11 +40,11 @@ router.get('/purchase-stats', protect, adminOnly, async (req, res, next) => {
       User.countDocuments(filter),
     ]);
 
-    // For each user, calculate purchase stats from orders
+    // For each user, calculate purchase stats from orders (active, non-cancelled)
     const usersWithStats = await Promise.all(
       users.map(async (user) => {
         const orderStats = await Order.aggregate([
-          { $match: { user: user._id, status: 'delivered' } },
+          { $match: { user: user._id, status: { $ne: 'cancelled' } } },
           {
             $group: {
               _id: '$user',
@@ -60,7 +60,7 @@ router.get('/purchase-stats', protect, adminOnly, async (req, res, next) => {
           },
         ]);
 
-        const lastOrder = await Order.findOne({ user: user._id, status: 'delivered' })
+        const lastOrder = await Order.findOne({ user: user._id, status: { $ne: 'cancelled' } })
           .sort({ createdAt: -1 })
           .select('createdAt');
 

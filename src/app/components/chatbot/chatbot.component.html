@@ -1,0 +1,280 @@
+<!-- ── Floating Chatbot Widget ──────────────────────────────────────── -->
+<div class="xanh-chatbot-container">
+
+  <!-- ── Floating Launcher Button ──────────────────────────────────── -->
+  <div class="xanh-chat-launcher-wrap">
+    @if (!chat.isOpen() && chat.hasUnread()) {
+      <div class="xanh-chat-tooltip" (click)="chat.open()">
+        <span>🌿 Chào bạn! Cần tìm nông sản tươi hay thực đơn gì hôm nay?</span>
+        <button class="xanh-tooltip-close" (click)="$event.stopPropagation(); chat.hasUnread.set(false)" aria-label="Đóng gợi ý">×</button>
+      </div>
+    }
+
+    <button
+      class="xanh-chat-launcher"
+      [class.is-open]="chat.isOpen()"
+      (click)="chat.toggle()"
+      title="Trợ lý AI Xanh Lá"
+      aria-label="Mở cửa sổ chat với Trợ lý AI Xanh Lá"
+    >
+      @if (!chat.isOpen()) {
+        <div class="launcher-icon-wrap">
+          <svg class="launcher-leaf-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+            <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 12"/>
+          </svg>
+          <span class="launcher-sparkle">✨</span>
+        </div>
+      } @else {
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="18" x2="18" y2="6"></line>
+        </svg>
+      }
+    </button>
+  </div>
+
+  <!-- ── Chat Window ─────────────────────────────────────────────── -->
+  @if (chat.isOpen()) {
+    <div class="xanh-chat-window animate-slide-up">
+
+      <!-- Header -->
+      <div class="xanh-chat-header">
+        <div class="xanh-chat-header-info">
+          <div class="xanh-chat-avatar">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+              <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 12"/>
+            </svg>
+            <span class="xanh-live-dot" title="Đang trực tuyến"></span>
+          </div>
+          <div>
+            <h3 class="xanh-chat-title">Trợ lý Nông sản Xanh Lá</h3>
+            <span class="xanh-chat-status">
+              {{ chat.provider() === 'local' ? '🌿 AI Xanh Lá · Sẵn sàng 24/7' : (chat.provider() === 'gemini' ? '⚡ Google Gemini 1.5 Flash' : '🤖 OpenAI ChatGPT') }}
+            </span>
+          </div>
+        </div>
+
+        <div class="xanh-chat-header-actions">
+          <button
+            class="xanh-chat-btn-icon"
+            [class.active]="chat.settingsOpen()"
+            (click)="chat.toggleSettings()"
+            title="Cài đặt mô hình AI (Chatbox Engine)"
+            aria-label="Cài đặt AI"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </button>
+          <button class="xanh-chat-btn-icon" (click)="chat.clearHistory()" title="Bắt đầu hội thoại mới" aria-label="Xóa lịch sử chat">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+          </button>
+          <button class="xanh-chat-btn-icon" (click)="chat.close()" title="Thu nhỏ cửa sổ" aria-label="Đóng cửa sổ chat">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="18" x2="18" y2="6"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Settings Panel (Chatbox-inspired AI Configuration) -->
+      @if (chat.settingsOpen()) {
+        <div class="xanh-chat-settings-panel">
+          <div class="xanh-settings-title">
+            <span>⚙️ Cấu hình Mô hình AI (Chatbox Engine)</span>
+            <button class="xanh-settings-close" (click)="chat.toggleSettings()">Đóng</button>
+          </div>
+
+          <div class="xanh-settings-field">
+            <label>Nhà cung cấp Mô hình AI:</label>
+            <select [value]="chat.provider()" (change)="chat.setProvider($any($event.target).value)">
+              <option value="local">🌿 Xanh Lá Engine (Khuyên dùng - Nhanh & Miễn phí)</option>
+              <option value="gemini">⚡ Google Gemini AI (Gemini 1.5 Flash)</option>
+              <option value="openai">🤖 OpenAI ChatGPT (GPT-4o Mini)</option>
+            </select>
+          </div>
+
+          @if (chat.provider() !== 'local') {
+            <div class="xanh-settings-field">
+              <label>API Key cá nhân (Lưu an toàn tại trình duyệt):</label>
+              <input
+                type="password"
+                placeholder="Nhập API Key của bạn..."
+                [value]="chat.apiKey()"
+                (input)="chat.setApiKey($any($event.target).value)"
+              />
+            </div>
+          }
+
+          <div class="xanh-settings-field">
+            <label>Vai trò Trợ lý (AI Persona):</label>
+            <select [value]="chat.persona()" (change)="chat.setPersona($any($event.target).value)">
+              <option value="general">🌿 Trợ lý Nông sản & Mua sắm (Toàn diện)</option>
+              <option value="chef">👩‍🍳 Bếp trưởng Gợi ý Thực đơn & Nấu ăn</option>
+              <option value="nutritionist">🩺 Chuyên gia Dinh dưỡng & Eat-Clean</option>
+              <option value="support">📦 Hỗ trợ Đơn hàng & Giao nhận Xe lạnh</option>
+            </select>
+          </div>
+        </div>
+      }
+
+      <!-- Messages Area -->
+      <div class="xanh-chat-body" #messagesScroll>
+        <div class="xanh-chat-date-divider">
+          <span>Hôm nay · Trợ lý AI Xanh Lá sẵn sàng hỗ trợ</span>
+        </div>
+
+        @for (msg of chat.messages(); track msg.id) {
+          <div class="xanh-chat-message-row" [class.is-user]="msg.sender === 'user'">
+            @if (msg.sender === 'bot') {
+              <div class="xanh-msg-avatar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2">
+                  <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+                  <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+                </svg>
+              </div>
+            }
+
+            <div class="xanh-msg-content-wrap">
+              <div class="xanh-msg-bubble-wrap">
+                <div class="xanh-msg-bubble" [innerHTML]="formatMessageText(msg.text)"></div>
+
+                <!-- Copy message action button -->
+                <button
+                  type="button"
+                  class="xanh-msg-action-btn"
+                  (click)="copyMessage(msg.id, msg.text)"
+                  [title]="copiedId() === msg.id ? 'Đã chép!' : 'Sao chép văn bản'"
+                >
+                  @if (copiedId() === msg.id) {
+                    <span style="color:#176b3a;font-weight:700">✓ Đã chép</span>
+                  } @else {
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                  }
+                </button>
+              </div>
+
+              <!-- Product recommendations cards -->
+              @if (msg.products && msg.products.length > 0) {
+                <div class="xanh-chat-products-grid">
+                  @for (prod of msg.products; track prod.id) {
+                    <div class="xanh-chat-product-card">
+                      <div class="xanh-chat-product-thumb">
+                        <img [src]="prod.image" [alt]="prod.name" loading="lazy" />
+                      </div>
+                      <div class="xanh-chat-product-info">
+                        <a [routerLink]="['/product-page', prod.slug]" (click)="chat.close()" class="xanh-chat-prod-title">
+                          {{ prod.name }}
+                        </a>
+                        <div class="xanh-chat-prod-price">{{ prod.price }}</div>
+                        <div class="xanh-chat-prod-actions">
+                          <button
+                            type="button"
+                            class="xanh-chat-add-btn"
+                            (click)="addChatProductToCart(prod)"
+                            title="Thêm vào giỏ"
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                              <circle cx="9" cy="21" r="1"></circle>
+                              <circle cx="20" cy="21" r="1"></circle>
+                              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                            </svg>
+                            <span>Thêm giỏ</span>
+                          </button>
+                          <a [routerLink]="['/product-page', prod.slug]" (click)="chat.close()" class="xanh-chat-view-btn">
+                            Xem
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
+              <span class="xanh-msg-time">{{ formatTime(msg.timestamp) }}</span>
+            </div>
+          </div>
+        }
+
+        <!-- Typing Indicator -->
+        @if (chat.loading()) {
+          <div class="xanh-chat-message-row">
+            <div class="xanh-msg-avatar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2">
+                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+              </svg>
+            </div>
+            <div class="xanh-msg-bubble xanh-typing-bubble">
+              <div class="xanh-typing-dot"></div>
+              <div class="xanh-typing-dot"></div>
+              <div class="xanh-typing-dot"></div>
+              <span style="font-size:12px;color:#6b7c6e;margin-left:4px">Đang suy nghĩ...</span>
+            </div>
+          </div>
+        }
+
+        <!-- Quick Suggestions (show when chat is young) -->
+        @if (chat.messages().length <= 3 && !chat.loading()) {
+          <div class="xanh-chat-suggestions">
+            <div class="xanh-suggestions-label">💡 Gợi ý câu hỏi nhanh:</div>
+            <div class="xanh-suggestions-list">
+              @for (s of chat.quickSuggestions; track s) {
+                <button
+                  type="button"
+                  class="xanh-suggestion-chip"
+                  (click)="selectSuggestion(s)"
+                >
+                  {{ s }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Footer Input Area -->
+      <div class="xanh-chat-footer">
+        <form class="xanh-chat-form" (ngSubmit)="submitMessage()">
+          <textarea
+            class="xanh-chat-input"
+            rows="1"
+            placeholder="Hỏi về rau củ, công thức món, phí ship..."
+            [value]="inputText()"
+            (input)="inputText.set($any($event.target).value)"
+            (keydown)="onKeyDown($event)"
+            [disabled]="chat.loading()"
+          ></textarea>
+
+          <button
+            type="submit"
+            class="xanh-chat-send-btn"
+            [disabled]="!inputText().trim() || chat.loading()"
+            aria-label="Gửi tin nhắn"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </form>
+
+        <div class="xanh-chat-footer-note">
+          <span>🌿 Hệ thống AI Xanh Lá · 100% Nông sản tươi sạch</span>
+        </div>
+      </div>
+
+    </div>
+  }
+
+</div>

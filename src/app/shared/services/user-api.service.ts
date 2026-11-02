@@ -6,6 +6,7 @@ export interface ApiUser {
   name: string;
   email: string;
   phone: string;
+  avatar?: string;
   role: 'customer' | 'admin';
   isActive: boolean;
   createdAt: string;

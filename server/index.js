@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -17,6 +17,7 @@ const accountRoutes = require('./routes/account');
 const voucherRoutes = require('./routes/vouchers');
 const loyaltyRoutes = require('./routes/loyalty');
 const reviewRoutes = require('./routes/reviews');
+const chatbotRoutes = require('./routes/chatbot');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -47,6 +48,7 @@ app.use('/api/account', accountRoutes);
 app.use('/api/vouchers', voucherRoutes);
 app.use('/api/loyalty', loyaltyRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 
 // ── Health check ──────────────────────────────────────────
 app.get('/api/health', (_req, res) =>
@@ -69,4 +71,3 @@ mongoose
     console.error('❌ MongoDB connection error:', err.message);
     process.exit(1);
   });
-

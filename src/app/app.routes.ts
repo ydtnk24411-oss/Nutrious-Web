@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { adminGuard } from './shared/guards/admin.guard';
 
 export const routes: Routes = [
   // ── Public storefront routes ──────────────────────────────────
@@ -104,6 +105,52 @@ export const routes: Routes = [
   { path: 'menus-1',                redirectTo: 'online-ordering', pathMatch: 'full' },
   { path: 'category/all-products',  redirectTo: 'online-ordering', pathMatch: 'full' },
   { path: 'category/:slug',         redirectTo: 'online-ordering', pathMatch: 'full' },
+
+  // ── Admin routes ──────────────────────────────────────────────
+  {
+    path: 'admin/login',
+    loadComponent: () =>
+      import('./admin/login/login.component').then((m) => m.AdminLoginComponent),
+  },
+  {
+    path: 'admin',
+    loadComponent: () =>
+      import('./admin/layout/admin-layout.component').then((m) => m.AdminLayoutComponent),
+    canActivate: [adminGuard],
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./admin/dashboard/dashboard.component').then((m) => m.AdminDashboardComponent),
+      },
+      {
+        path: 'products',
+        loadComponent: () =>
+          import('./admin/products/products.component').then((m) => m.AdminProductsComponent),
+      },
+      {
+        path: 'orders',
+        loadComponent: () =>
+          import('./admin/orders/orders.component').then((m) => m.AdminOrdersComponent),
+      },
+      {
+        path: 'users',
+        loadComponent: () =>
+          import('./admin/users/users.component').then((m) => m.AdminUsersComponent),
+      },
+      {
+        path: 'events',
+        loadComponent: () =>
+          import('./admin/events/events.component').then((m) => m.AdminEventsComponent),
+      },
+      {
+        path: 'bookings',
+        loadComponent: () =>
+          import('./admin/bookings/bookings.component').then((m) => m.AdminBookingsComponent),
+      },
+    ],
+  },
 
   // ── Fallback ──────────────────────────────────────────────────
   { path: '**', redirectTo: '' },
