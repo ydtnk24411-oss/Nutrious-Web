@@ -112,7 +112,9 @@ export class CheckoutComponent {
       };
     });
 
+    const user = this.cart.currentUser();
     const payload = {
+      ...(user ? { user: (user as any)._id || (user as any).id } : {}),
       guestName:       this.guestName(),
       guestEmail:      this.guestEmail(),
       guestPhone:      this.guestPhone(),

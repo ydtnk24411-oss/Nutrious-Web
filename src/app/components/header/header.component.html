@@ -91,7 +91,7 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               Tài khoản của tôi
             </a>
-            <a routerLink="/account?tab=orders" (click)="closeUserMenu()">
+            <a routerLink="/account" [queryParams]="{ tab: 'orders' }" (click)="closeUserMenu()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
               Đơn hàng của tôi
             </a>
@@ -99,11 +99,11 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.91 8.84C20.88 8.3 20.37 8 19.81 8H15c-.23 0-.42-.16-.48-.38l-.47-1.56C13.86 5.4 13.34 5 12.74 5h-1.48c-.6 0-1.12.4-1.31.96l-.47 1.56C9.42 7.84 9.23 8 9 8H4.19c-.56 0-1.07.3-1.1.84C2.82 10.05 2.5 12.12 2.5 14c0 1.88.32 3.95.59 5.16.03.54.54.84 1.1.84H15c.23 0 .42.16.48.38l.47 1.56c.19.56.71.96 1.31.96h1.48c.6 0 1.12-.4 1.31-.96l.47-1.56c.06-.22.25-.38.48-.38h4.81c.56 0 1.07-.3 1.1-.84.27-1.21.59-3.28.59-5.16 0-1.88-.32-3.95-.59-5.16z"/></svg>
               Ưu đãi của tôi
             </a>
-            <a routerLink="/account?tab=addresses" (click)="closeUserMenu()">
+            <a routerLink="/account" [queryParams]="{ tab: 'addresses' }" (click)="closeUserMenu()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
               Sổ địa chỉ
             </a>
-            <a routerLink="/account?tab=settings" (click)="closeUserMenu()">
+            <a routerLink="/account" [queryParams]="{ tab: 'settings' }" (click)="closeUserMenu()">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
               Thông tin và cài đặt
             </a>
@@ -235,6 +235,9 @@
         <a routerLink="/" style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)" (click)="closeMobileMenu()">Trang chủ</a>
         <a routerLink="/online-ordering" style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)" (click)="closeMobileMenu()">Đặt hàng trực tuyến</a>
         <a routerLink="/promotions" style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)" (click)="closeMobileMenu()">Ưu đãi của tôi</a>
+        @if (cart.currentUser()) {
+          <a routerLink="/account" [queryParams]="{ tab: 'orders' }" style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)" (click)="closeMobileMenu()">Đơn hàng của tôi</a>
+        }
         <a routerLink="/nutrition" style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line);color:var(--green-700)" (click)="closeMobileMenu()">Dinh dưỡng thông minh</a>
         <a routerLink="/cook-with-what-you-have" style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line);color:var(--green-700)" (click)="closeMobileMenu()">Nấu gì hôm nay?</a>
         <a routerLink="/event-list" style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)" (click)="closeMobileMenu()">Sự kiện</a>

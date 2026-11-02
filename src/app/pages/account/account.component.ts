@@ -1,6 +1,7 @@
-﻿import { Component, signal, inject, OnInit, computed, HostListener } from '@angular/core';
+import { Component, signal, inject, OnInit, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { OrderApiService } from '../../shared/services/order-api.service';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { CartService } from '../../shared/services/cart.service';
 import { LoyaltyService } from '../../shared/services/loyalty.service';
@@ -21,6 +22,8 @@ export class AccountComponent implements OnInit {
   protected router = inject(Router);
   private loyalty   = inject(LoyaltyService);
   private voucher   = inject(VoucherService);
+  private route     = inject(ActivatedRoute);
+  private orderApi  = inject(OrderApiService);
 
   // ── Tab ──────────────────────────────────────
   activeTab = signal<Tab>('overview');
@@ -46,25 +49,9 @@ export class AccountComponent implements OnInit {
   addrCity     = signal('');
   addrDefault  = signal(false);
 
-  // ── Order History (mock data) ───────────────
-  orders = signal([
-    {
-      id: '1',
-      orderCode: 'XL-470634',
-      date: '2025-10-10',
-      total: 16000,
-      status: 'delivered',
-      items: [{ name: 'Rau Muống Tươi', quantity: 2, price: 8000 }],
-    },
-    {
-      id: '2',
-      orderCode: 'XL-470635',
-      date: '2025-10-08',
-      total: 32000,
-      status: 'shipping',
-      items: [{ name: 'Cà Rốt Baby Đà Lạt', quantity: 1, price: 32000 }],
-    },
-  ]);
+  // ── Order History ───────────────
+  orders = signal<any[]>([]);
+  loadingOrders = signal(false);
 
   orderStatusFilter = signal<'all' | 'pending' | 'processing' | 'delivering' | 'completed' | 'cancelled'>('all');
   orderSearchQuery = signal('');
@@ -74,8 +61,20 @@ export class AccountComponent implements OnInit {
     const searchQuery = this.orderSearchQuery().toLowerCase();
 
     return this.orders().filter(order => {
-      const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-      const matchesSearch = searchQuery === '' || order.orderCode.toLowerCase().includes(searchQuery);
+      let matchesStatus = false;
+      if (statusFilter === 'all') {
+        matchesStatus = true;
+      } else if (statusFilter === 'processing') {
+        matchesStatus = ['processing', 'confirmed', 'preparing'].includes(order.status);
+      } else if (statusFilter === 'delivering') {
+        matchesStatus = ['delivering', 'shipping'].includes(order.status);
+      } else if (statusFilter === 'completed') {
+        matchesStatus = ['completed', 'delivered'].includes(order.status);
+      } else {
+        matchesStatus = order.status === statusFilter;
+      }
+
+      const matchesSearch = searchQuery === '' || (order.orderCode && order.orderCode.toLowerCase().includes(searchQuery));
       return matchesStatus && matchesSearch;
     });
   });
@@ -120,7 +119,46 @@ export class AccountComponent implements OnInit {
     this.addrPhone.set(u.phone ?? '');
 
     // Fetch moi nhat tu backend de dam bao avatar luon dung sau login
+    this.route.queryParams.subscribe(params => {
+      const tab = params['tab'];
+      if (tab && ['overview', 'orders', 'addresses', 'settings'].includes(tab)) {
+        this.activeTab.set(tab as Tab);
+      }
+    });
+
     this.cart.loadUserData();
+    this.loadOrders();
+  }
+
+  // ── Load Orders ──────────────────────────────
+  loadOrders(): void {
+    this.loadingOrders.set(true);
+    this.orderApi.getMyOrders().subscribe({
+      next: (res) => {
+        this.loadingOrders.set(false);
+        if (res?.data) {
+          this.orders.set(res.data.map((order: any) => ({
+            id: order._id,
+            _id: order._id,
+            orderCode: order.orderCode,
+            date: order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : '',
+            createdAt: order.createdAt,
+            total: order.total,
+            status: order.status,
+            items: (order.items || []).map((item: any) => ({
+              name: item.productName || item.name || 'Sản phẩm',
+              productName: item.productName || item.name || 'Sản phẩm',
+              quantity: item.quantity,
+              price: item.priceNumber ?? (typeof item.productPrice === 'number' ? item.productPrice : Number(String(item.productPrice || 0).replace(/[^\d]/g, ''))),
+            })),
+          })));
+        }
+      },
+      error: (err) => {
+        this.loadingOrders.set(false);
+        console.error('Failed to load user orders:', err);
+      }
+    });
   }
 
   // ── Save account info ────────────────────────
