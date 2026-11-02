@@ -1,0 +1,23 @@
+const mongoose = require('mongoose');
+
+const reviewSchema = new mongoose.Schema(
+  {
+    product:          { type: String, required: true, index: true }, // _id sản phẩm
+    productName:      { type: String, default: '' },
+    user:             { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    userName:         { type: String, required: true },
+    rating:           { type: Number, required: true, min: 1, max: 5 },
+    title:            { type: String, default: '', trim: true },
+    content:          { type: String, required: true, trim: true },
+    images:           [{ type: String }],
+    helpfulBy:        [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    verifiedPurchase: { type: Boolean, default: false },
+  },
+  { timestamps: true }
+);
+
+// Mỗi tài khoản chỉ đánh giá 1 lần cho 1 sản phẩm
+reviewSchema.index({ product: 1, user: 1 }, { unique: true });
+
+module.exports = mongoose.model('Review', reviewSchema);
+

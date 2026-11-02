@@ -1,13 +1,16 @@
 const router = require('express').Router();
-const jwt    = require('jsonwebtoken');
 const { body } = require('express-validator');
 const Order  = require('../models/Order');
-const { protect, adminOnly } = require('../middleware/auth');
+const { protect, optionalAuth, adminOnly } = require('../middleware/auth');
 const { validate }           = require('../middleware/validate');
+const { evaluateVoucher, consumeVoucher } = require('../utils/voucher');
+const { creditOrderPoints }   = require('../utils/loyalty');
 
-// POST /api/orders — public (guest checkout)
+// POST /api/orders – khách vãng lai hoặc user đã đăng nhập.
+// Chủ đơn hàng LUÔN lấy từ token (req.user), không tin `user` do client gửi lên.
 router.post(
   '/',
+  optionalAuth,
   [
     body('items').isArray({ min: 1 }).withMessage('Đơn hàng phải có ít nhất 1 sản phẩm.'),
     body('subtotal').isNumeric().withMessage('Subtotal phải là số.'),
@@ -17,17 +20,39 @@ router.post(
   async (req, res, next) => {
     try {
       const orderData = { ...req.body };
-      if (!orderData.user && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-        try {
-          const token = req.headers.authorization.split(' ')[1];
-          const decoded = jwt.verify(token, process.env.JWT_SECRET || 'xanhla_secret');
-          if (decoded && decoded.id) {
-            orderData.user = decoded.id;
-          }
-        } catch (_) {}
+      delete orderData.user;
+      delete orderData.status;
+      delete orderData.orderCode;
+
+      if (req.user) {
+        orderData.user       = req.user._id;
+        orderData.guestName  = orderData.guestName  || req.user.name;
+        orderData.guestEmail = orderData.guestEmail || req.user.email;
+        orderData.guestPhone = orderData.guestPhone || req.user.phone || '';
       }
+      const subtotal = Number(orderData.subtotal);
+      orderData.estimatedPoints = Math.floor(subtotal / 1000);
+
+      // Voucher: server kiểm tra và tự tính số tiền giảm, không tin discount/total từ client
+      let applied = null;
+      const code = orderData.voucherCode ? String(orderData.voucherCode).trim() : '';
+      if (code) {
+        applied = await evaluateVoucher(code, subtotal, req.user?._id);
+        if (!applied.valid) {
+          return res.status(400).json({ success: false, message: applied.message });
+        }
+      }
+      orderData.voucherCode = applied ? applied.voucher.code : '';
+      orderData.discount    = applied ? applied.discount : 0;
+      orderData.total = Math.max(0, subtotal - orderData.discount + (Number(orderData.shippingFee) || 0));
+
       const order = await Order.create(orderData);
-      res.status(201).json({ success: true, data: { orderCode: order.orderCode, _id: order._id } });
+      if (applied) await consumeVoucher(applied, req.user?._id, order._id);
+
+      res.status(201).json({
+        success: true,
+        data: { orderCode: order.orderCode, _id: order._id, discount: order.discount, total: order.total },
+      });
     } catch (err) { next(err); }
   }
 );
@@ -68,7 +93,7 @@ router.get('/track/:code', async (req, res, next) => {
 router.get('/my', protect, async (req, res, next) => {
   try {
     const { status, page = 1, limit = 20, search } = req.query;
-    const userId = req.user._id || req.user.id;
+    const userId = req.user._id;
     const userEmail = req.user.email;
     const filter = {
       $or: [
@@ -122,6 +147,7 @@ router.put('/:id/status', protect, adminOnly, async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Trạng thái không hợp lệ.' });
     }
     const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    if (order && status === 'delivered') await creditOrderPoints(order._id);
     if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng.' });
     res.json({ success: true, data: order });
   } catch (err) { next(err); }

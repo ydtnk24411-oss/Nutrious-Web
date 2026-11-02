@@ -1,14 +1,16 @@
 const router = require('express').Router();
-const jwt    = require('jsonwebtoken');
 const { body } = require('express-validator');
 const User   = require('../models/User');
 const { validate }  = require('../middleware/validate');
-const { protect }   = require('../middleware/auth');
+const { protect, signToken } = require('../middleware/auth');
 
-const sign = (id) =>
-  jwt.sign({ id }, process.env.JWT_SECRET || 'xanhla_secret', {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  });
+// Dữ liệu user trả về cho client – giống nhau ở register / login / me
+const publicUser = (u) => ({
+  _id: u._id, name: u.name, email: u.email, role: u.role,
+  avatar: u.avatar, phone: u.phone,
+  points: u.points, tier: u.tier, totalSpent: u.totalSpent,
+  addresses: u.addresses,
+});
 
 // POST /api/auth/register
 router.post(
@@ -21,26 +23,24 @@ router.post(
   validate,
   async (req, res, next) => {
     try {
-      const { name, email, password, phone } = req.body;
-      console.log('Signup request:', { name, email, phone, passwordLength: password?.length });
+      const { name, password, phone } = req.body;
+      const email = String(req.body.email).trim().toLowerCase();
 
       const exists = await User.findOne({ email });
       if (exists) {
-        console.log('Email already exists:', email);
         return res.status(409).json({ success: false, message: 'Email đã tồn tại.' });
       }
 
       const user  = await User.create({ name, email, password, phone });
-      console.log('User created:', { _id: user._id, email: user.email });
 
-      const token = sign(user._id);
+      const token = signToken(user);
       res.status(201).json({
         success: true,
         token,
-        data: { _id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar, phone: user.phone },
+        user: publicUser(user),
+        data: publicUser(user),
       });
     } catch (err) {
-      console.error('Signup error:', err);
       next(err);
     }
   }
@@ -56,7 +56,8 @@ router.post(
   validate,
   async (req, res, next) => {
     try {
-      const { email, password } = req.body;
+      const { password } = req.body;
+      const email = String(req.body.email).trim().toLowerCase();
       const user = await User.findOne({ email }).select('+password');
       if (!user || !(await user.comparePassword(password))) {
         return res.status(401).json({ success: false, message: 'Email hoặc mật khẩu không đúng.' });
@@ -64,11 +65,11 @@ router.post(
       if (!user.isActive) {
         return res.status(403).json({ success: false, message: 'Tài khoản đã bị vô hiệu hoá.' });
       }
-      const token = sign(user._id);
+      const token = signToken(user);
       res.json({
         success: true,
         token,
-        user: { _id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar, phone: user.phone },
+        user: publicUser(user),
       });
     } catch (err) { next(err); }
   }

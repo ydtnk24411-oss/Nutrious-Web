@@ -48,7 +48,7 @@ export class AuthModalComponent {
 }
 
   handleGoogleLogin(): void {
-    this.cart.login('member@gmail.com', 'Nguyễn Văn A');
+    alert('Đăng nhập bằng Google chưa được hỗ trợ. Vui lòng đăng nhập bằng email và mật khẩu.');
   }
 
   handleForgotPassword(): void {

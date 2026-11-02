@@ -17,19 +17,19 @@ export class VouchersComponent {
 
   activeTab = signal<'available' | 'collected' | 'all'>('all');
 
-  readonly publicVouchers = this.voucher.getPublicVouchers();
+  readonly publicVouchers = this.voucher.publicVouchers;
   readonly collectedVouchers = this.voucher.userVouchers;
 
   readonly tabVouchers = computed(() => {
     switch (this.activeTab()) {
       case 'available':
-        return this.publicVouchers.filter(v => v.isPublic);
+        return this.publicVouchers().filter(v => v.isPublic);
       case 'collected':
         return this.collectedVouchers().filter(uv => uv.status === 'available').map(uv => uv.voucher);
       case 'all':
-        return this.publicVouchers;
+        return this.publicVouchers();
       default:
-        return this.publicVouchers;
+        return this.publicVouchers();
     }
   });
 
@@ -38,8 +38,8 @@ export class VouchersComponent {
   }
 
   collectVoucher(voucherId: string): void {
-    if (this.voucher.collectVoucher(voucherId)) {
-      alert('Đã thu thập voucher thành công!');
-    }
+    this.voucher.collectVoucher(voucherId).subscribe((res) => {
+      alert(res.success ? 'Đã thu thập voucher thành công!' : (res.message || 'Không thể thu thập voucher.'));
+    });
   }
 }

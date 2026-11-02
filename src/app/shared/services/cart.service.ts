@@ -117,16 +117,11 @@ export class CartService {
 
   // ── Auth methods ────────────────────────────────────────
 
-  login(email: string, name?: string): void {
-    const user: XanhLaUser = { name: name ?? email.split('@')[0], email };
-    this._currentUser.set(user);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-    this._authModalOpen.set(false);
-    // Restore giỏ hàng của user này (nếu có từ lần trước)
-    this._items.set(this._loadCartForUser(email));
-
-    // Load full user data from backend
-    this.loadUserData();
+  /** Token hết hạn / bị từ chối (401): xóa phiên và mở form đăng nhập lại. */
+  expireSession(): void {
+    if (!this._currentUser()) return;
+    this.logout();
+    this.openAuthModal('login');
   }
 
   // Login with email and password (for real authentication)
@@ -305,10 +300,21 @@ export class CartService {
     try { localStorage.setItem(cartKey(u.email), JSON.stringify(items)); } catch { /**/ }
   }
 
+  /**
+   * Phiên đăng nhập = user + token, luôn đi cùng nhau.
+   * Có user mà thiếu token (phiên cũ/giả lập) → coi như chưa đăng nhập và dọn sạch,
+   * tránh trường hợp UI hiển thị một tài khoản nhưng API không biết là ai.
+   */
   private _loadUser(): XanhLaUser | null {
     try {
       const raw = localStorage.getItem(USER_KEY);
-      return raw ? JSON.parse(raw) : null;
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!raw || !token) {
+        localStorage.removeItem(USER_KEY);
+        localStorage.removeItem(TOKEN_KEY);
+        return null;
+      }
+      return JSON.parse(raw);
     } catch { return null; }
   }
 }

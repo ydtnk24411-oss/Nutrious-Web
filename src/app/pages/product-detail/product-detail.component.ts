@@ -56,12 +56,12 @@ export class ProductDetailComponent implements OnInit {
     const slug = this.route.snapshot.paramMap.get('slug') ?? '';
     // Thử slug trực tiếp, backend hỗ trợ cả dạng slug thuần và /product-page/xxx
     this.productApi.getBySlug(slug).subscribe({
-      next: (res) => { this.product.set(res.data); this.loading.set(false); },
+      next: (res) => { this.product.set(res.data); this.loading.set(false); this.reviewService.load(res.data._id); },
       error: () => {
         // Thử thêm prefix nếu slug trực tiếp không tìm thấy
         const prefixed = slug.startsWith('/product-page/') ? slug.replace('/product-page/', '') : slug;
         this.productApi.getBySlug(prefixed).subscribe({
-          next: (r) => { this.product.set(r.data); this.loading.set(false); },
+          next: (r) => { this.product.set(r.data); this.loading.set(false); this.reviewService.load(r.data._id); },
           error: () => { this.error.set('Không tìm thấy sản phẩm.'); this.loading.set(false); },
         });
       },
@@ -106,31 +106,42 @@ export class ProductDetailComponent implements OnInit {
     const p = this.product();
     if (!p || this.reviewRating() === 0 || !this.reviewContent()) return;
 
-    this.submittingReview.set(true);
+    // Cần đăng nhập: đánh giá được gắn với tài khoản (server lấy từ token)
+    if (!this.cart.currentUser()) {
+      this.cart.openAuthModal('login');
+      return;
+    }
 
-    const user = this.cart.currentUser();
+    this.submittingReview.set(true);
     this.reviewService.addReview({
       productId: p._id,
       productName: p.name,
-      userId: user?.email || 'guest',
-      userName: user?.name || 'Khách',
       rating: this.reviewRating(),
       title: this.reviewTitle(),
       content: this.reviewContent(),
-      verifiedPurchase: this.reviewService.canReview(user?.email || '', p._id),
+    }).subscribe({
+      next: () => {
+        this.submittingReview.set(false);
+        this.showReviewForm.set(false);
+        this.reviewRating.set(0);
+        this.reviewTitle.set('');
+        this.reviewContent.set('');
+      },
+      error: (err) => {
+        this.submittingReview.set(false);
+        alert(err?.error?.message || 'Không gửi được đánh giá, vui lòng thử lại.');
+      },
     });
-
-    setTimeout(() => {
-      this.submittingReview.set(false);
-      this.showReviewForm.set(false);
-      this.reviewRating.set(0);
-      this.reviewTitle.set('');
-      this.reviewContent.set('');
-    }, 500);
   }
 
   markHelpful(reviewId: string): void {
-    this.reviewService.markHelpful(reviewId);
+    const p = this.product();
+    if (!p) return;
+    if (!this.cart.currentUser()) {
+      this.cart.openAuthModal('login');
+      return;
+    }
+    this.reviewService.markHelpful(reviewId, p._id).subscribe({ error: () => { /* bỏ qua */ } });
   }
 
   setReviewFilter(filter: typeof this.reviewFilter extends (...args: any) => any ? ReturnType<typeof this.reviewFilter> : any): void {

@@ -1,16 +1,26 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { LoyaltyTier, LoyaltyTierConfig, PointTransaction, LoyaltyReward, Redemption } from '../models/xanh-la.models';
+import { Injectable, signal, computed, effect, inject, untracked } from '@angular/core';
+import { Observable, of } from 'rxjs';
+import { map, tap, catchError } from 'rxjs/operators';
+import { LoyaltyTier, LoyaltyTierConfig, PointTransaction, LoyaltyReward } from '../models/xanh-la.models';
+import { ApiService } from './api.service';
+import { CartService } from './cart.service';
 
-const TRANSACTIONS_KEY = 'xanhla_point_transactions';
-const REDEMPTIONS_KEY = 'xanhla_redemptions';
-
+/**
+ * Điểm thưởng & lịch sử điểm lấy từ server theo TÀI KHOẢN đang đăng nhập
+ * (không còn lưu ở localStorage). Đổi tài khoản → dữ liệu tự tải lại / xóa sạch.
+ */
 @Injectable({ providedIn: 'root' })
 export class LoyaltyService {
-  private _transactions = signal<PointTransaction[]>(this._loadTransactions());
-  private _redemptions = signal<Redemption[]>(this._loadRedemptions());
+  private api  = inject(ApiService);
+  private cart = inject(CartService);
 
+  private _balance      = signal(0);
+  private _totalSpent   = signal(0);
+  private _transactions = signal<PointTransaction[]>([]);
+
+  readonly balance      = this._balance.asReadonly();
+  readonly totalSpent   = this._totalSpent.asReadonly();
   readonly transactions = this._transactions.asReadonly();
-  readonly redemptions = this._redemptions.asReadonly();
 
   // Loyalty tier configuration (SAMPLE POLICY - ghi rõ là chính sách giả lập)
   readonly tierConfigs: LoyaltyTierConfig[] = [
@@ -48,7 +58,7 @@ export class LoyaltyService {
     },
   ];
 
-  // Sample rewards
+  // Danh sách quà hiển thị (số điểm thực tế do server quyết định khi đổi)
   readonly rewards: LoyaltyReward[] = [
     {
       id: 'r1',
@@ -98,15 +108,32 @@ export class LoyaltyService {
   ];
 
   constructor() {
-    // Initialize with sample data if empty
-    if (this._transactions().length === 0) {
-      this._initializeSampleData();
-    }
+    // Theo dõi theo _id tài khoản: đăng nhập/đổi tài khoản → tải lại, đăng xuất → xóa sạch
+    const userId = computed(() => this.cart.currentUser()?._id ?? null);
+    effect(() => {
+      const id = userId();
+      untracked(() => (id ? this.refresh() : this._clear()));
+    });
+  }
+
+  /** Tải điểm + lịch sử của tài khoản hiện tại từ server. */
+  refresh(): void {
+    if (!this.cart.currentUser()) { this._clear(); return; }
+    this.api.get<{ success: boolean; data: { points: number; totalSpent: number; transactions: PointTransaction[] } }>(
+      '/loyalty/my'
+    ).subscribe({
+      next: (res) => {
+        if (!res.success) return;
+        this._balance.set(res.data.points);
+        this._totalSpent.set(res.data.totalSpent);
+        this._transactions.set(res.data.transactions);
+      },
+      error: () => { /* 401 do interceptor xử lý */ },
+    });
   }
 
   // Get user's current tier based on points and spent
   getUserTier(points: number, spent: number): LoyaltyTierConfig {
-    // Find highest tier user qualifies for
     for (let i = this.tierConfigs.length - 1; i >= 0; i--) {
       const tier = this.tierConfigs[i];
       if (points >= tier.minPoints && spent >= tier.minSpent) {
@@ -123,109 +150,30 @@ export class LoyaltyService {
     return Math.floor((orderTotal / 10000) * pointsPer10k);
   }
 
-  // Add points (when order is completed)
-  addPoints(userId: string, amount: number, description: string, orderId?: string): void {
-    const transaction: PointTransaction = {
-      id: Date.now().toString(),
-      userId,
-      type: 'earned',
-      amount,
-      description,
-      orderId,
-      createdAt: new Date().toISOString(),
-    };
-    this._transactions.update(t => [transaction, ...t]);
-    this._saveTransactions();
+  // Số dư điểm của tài khoản đang đăng nhập (tham số giữ lại cho tương thích)
+  getUserBalance(_userId?: string): number {
+    return this._balance();
   }
 
-  // Deduct points (when redeeming reward)
-  deductPoints(userId: string, amount: number, description: string, rewardId?: string): void {
-    const transaction: PointTransaction = {
-      id: Date.now().toString(),
-      userId,
-      type: 'redeemed',
-      amount: -amount,
-      description,
-      rewardId,
-      createdAt: new Date().toISOString(),
-    };
-    this._transactions.update(t => [transaction, ...t]);
-    this._saveTransactions();
+  // Lịch sử điểm của tài khoản đang đăng nhập
+  getUserTransactions(_userId?: string): PointTransaction[] {
+    return this._transactions();
   }
 
-  // Adjust points (admin action or correction)
-  adjustPoints(userId: string, amount: number, description: string): void {
-    const transaction: PointTransaction = {
-      id: Date.now().toString(),
-      userId,
-      type: 'adjusted',
-      amount,
-      description,
-      createdAt: new Date().toISOString(),
-    };
-    this._transactions.update(t => [transaction, ...t]);
-    this._saveTransactions();
-  }
-
-  // Get user's point balance
-  getUserBalance(userId: string): number {
-    return this._transactions()
-      .filter(t => t.userId === userId)
-      .reduce((sum, t) => sum + t.amount, 0);
-  }
-
-  // Get user's transaction history
-  getUserTransactions(userId: string): PointTransaction[] {
-    return this._transactions()
-      .filter(t => t.userId === userId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-
-  // Redeem reward
-  redeemReward(userId: string, rewardId: string): { success: boolean; message?: string } {
-    const reward = this.rewards.find(r => r.id === rewardId);
-    if (!reward) {
-      return { success: false, message: 'Quà tặng không tồn tại' };
-    }
-
-    if (!reward.available) {
-      return { success: false, message: 'Quà tặng đã hết' };
-    }
-
-    if (reward.stock !== undefined && reward.stock <= 0) {
-      return { success: false, message: 'Quà tặng đã hết hàng' };
-    }
-
-    const balance = this.getUserBalance(userId);
-    if (balance < reward.pointsRequired) {
-      return { success: false, message: 'Điểm không đủ' };
-    }
-
-    // Deduct points
-    this.deductPoints(userId, reward.pointsRequired, `Đổi quà: ${reward.name}`, rewardId);
-
-    // Create redemption record
-    const redemption: Redemption = {
-      id: Date.now().toString(),
-      userId,
-      rewardId,
-      reward,
-      pointsUsed: reward.pointsRequired,
-      status: 'approved',
-      createdAt: new Date().toISOString(),
-      approvedAt: new Date().toISOString(),
-    };
-    this._redemptions.update(r => [redemption, ...r]);
-    this._saveRedemptions();
-
-    return { success: true };
-  }
-
-  // Get user's redemption history
-  getUserRedemptions(userId: string): Redemption[] {
-    return this._redemptions()
-      .filter(r => r.userId === userId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  // Đổi quà: server kiểm tra đủ điểm và trừ điểm
+  redeemReward(_userId: string, rewardId: string): Observable<{ success: boolean; message?: string }> {
+    return this.api.post<{ success: boolean; message?: string; data?: { points: number } }>(
+      '/loyalty/redeem', { rewardId }
+    ).pipe(
+      tap((res) => {
+        if (res.success) {
+          this.refresh();
+          this.cart.loadUserData();
+        }
+      }),
+      map((res) => ({ success: res.success, message: res.message })),
+      catchError((err) => of({ success: false, message: err?.error?.message as string | undefined }))
+    );
   }
 
   // Get available rewards
@@ -233,63 +181,9 @@ export class LoyaltyService {
     return this.rewards.filter(r => r.available && (r.stock === undefined || r.stock > 0));
   }
 
-  private _loadTransactions(): PointTransaction[] {
-    try {
-      const data = localStorage.getItem(TRANSACTIONS_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  private _saveTransactions(): void {
-    try {
-      localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(this._transactions()));
-    } catch {
-      // Ignore storage errors
-    }
-  }
-
-  private _loadRedemptions(): Redemption[] {
-    try {
-      const data = localStorage.getItem(REDEMPTIONS_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  private _saveRedemptions(): void {
-    try {
-      localStorage.setItem(REDEMPTIONS_KEY, JSON.stringify(this._redemptions()));
-    } catch {
-      // Ignore storage errors
-    }
-  }
-
-  private _initializeSampleData(): void {
-    // Sample transactions for demo user
-    const sampleTransactions: PointTransaction[] = [
-      {
-        id: 't1',
-        userId: 'demo_user',
-        type: 'earned',
-        amount: 150,
-        description: 'Đơn hàng XL-470634',
-        orderId: 'XL-470634',
-        createdAt: '2025-10-10T10:00:00Z',
-      },
-      {
-        id: 't2',
-        userId: 'demo_user',
-        type: 'earned',
-        amount: 85,
-        description: 'Đơn hàng XL-470635',
-        orderId: 'XL-470635',
-        createdAt: '2025-10-08T15:30:00Z',
-      },
-    ];
-    this._transactions.set(sampleTransactions);
-    this._saveTransactions();
+  private _clear(): void {
+    this._balance.set(0);
+    this._totalSpent.set(0);
+    this._transactions.set([]);
   }
 }

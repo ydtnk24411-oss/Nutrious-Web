@@ -44,12 +44,13 @@ export class LoyaltyComponent {
     const user = this.cart.currentUser();
     if (!user) return;
 
-    const result = this.loyalty.redeemReward(user.email, rewardId);
-    if (result.success) {
-      alert('Đổi quà thành công!');
-    } else {
-      alert(result.message || 'Không thể đổi quà');
-    }
+    this.loyalty.redeemReward(user.email, rewardId).subscribe((result) => {
+      if (result.success) {
+        alert('Đổi quà thành công!');
+      } else {
+        alert(result.message || 'Không thể đổi quà');
+      }
+    });
   }
 
   formatPrice(value: number): string {

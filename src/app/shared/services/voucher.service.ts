@@ -1,237 +1,152 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { Voucher, UserVoucher, VoucherType } from '../models/xanh-la.models';
+import { Injectable, signal, computed, effect, inject, untracked } from '@angular/core';
+import { Observable, of } from 'rxjs';
+import { map, tap, catchError } from 'rxjs/operators';
+import { Voucher, UserVoucher } from '../models/xanh-la.models';
+import { ApiService } from './api.service';
+import { CartService } from './cart.service';
 
-const USER_VOUCHERS_KEY = 'xanhla_user_vouchers';
+interface ApiVoucher {
+  _id: string;
+  code: string;
+  name: string;
+  description?: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  minOrderValue?: number;
+  maxDiscountValue?: number | null;
+  pointsRequired?: number;
+  startDate: string;
+  endDate: string;
+  usageLimit?: number;
+  usedCount: number;
+  applicableCategories?: string[];
+}
 
+interface ApiUserVoucher {
+  _id: string;
+  voucher: ApiVoucher;
+  status: 'available' | 'used' | 'expired';
+  usedAt?: string;
+  orderId?: string;
+}
+
+function toVoucher(v: ApiVoucher): Voucher {
+  return {
+    id: v._id,
+    code: v.code,
+    name: v.name,
+    type: v.discountType,
+    value: v.discountValue,
+    minValue: v.minOrderValue || undefined,
+    maxValue: v.maxDiscountValue || undefined,
+    categorySlugs: v.applicableCategories?.length ? v.applicableCategories : undefined,
+    startDate: v.startDate,
+    endDate: new Date(v.endDate).toLocaleDateString('vi-VN'),
+    usageLimit: v.usageLimit || undefined,
+    usedCount: v.usedCount,
+    description: v.description ?? '',
+    isPublic: true,
+  };
+}
+
+/**
+ * Voucher lấy từ server. Voucher "của tôi" gắn với TÀI KHOẢN đang đăng nhập
+ * (không còn lưu ở localStorage). Việc kiểm tra mã/tính tiền giảm do server làm.
+ */
 @Injectable({ providedIn: 'root' })
 export class VoucherService {
-  private _userVouchers = signal<UserVoucher[]>(this._loadUserVouchers());
+  private api  = inject(ApiService);
+  private cart = inject(CartService);
 
-  readonly userVouchers = this._userVouchers.asReadonly();
+  private _publicVouchers = signal<Voucher[]>([]);
+  private _userVouchers   = signal<UserVoucher[]>([]);
+
+  readonly publicVouchers = this._publicVouchers.asReadonly();
+  readonly userVouchers   = this._userVouchers.asReadonly();
 
   readonly availableVouchers = computed(() =>
     this._userVouchers().filter(v => v.status === 'available')
   );
-
   readonly usedVouchers = computed(() =>
     this._userVouchers().filter(v => v.status === 'used')
   );
-
   readonly expiredVouchers = computed(() =>
     this._userVouchers().filter(v => v.status === 'expired')
   );
 
-  // Sample vouchers
-  private sampleVouchers: Voucher[] = [
-    {
-      id: 'v1',
-      code: 'GIAM10',
-      name: 'Giảm 10% cho đơn hàng',
-      type: 'percentage',
-      value: 10,
-      minValue: 300000,
-      maxValue: 50000,
-      startDate: '2025-01-01',
-      endDate: '2025-12-31',
-      usageLimit: 1000,
-      usedCount: 234,
-      description: 'Giảm 10% tối đa 50.000đ cho đơn hàng từ 300.000đ',
-      isPublic: true,
-    },
-    {
-      id: 'v2',
-      code: 'GIAM30K',
-      name: 'Giảm 30.000đ',
-      type: 'fixed',
-      value: 30000,
-      minValue: 200000,
-      startDate: '2025-01-01',
-      endDate: '2025-12-31',
-      usageLimit: 500,
-      usedCount: 89,
-      description: 'Giảm trực tiếp 30.000đ cho đơn hàng từ 200.000đ',
-      isPublic: true,
-    },
-    {
-      id: 'v3',
-      code: 'FREESHIP',
-      name: 'Miễn phí giao hàng',
-      type: 'freeship',
-      value: 25000,
-      minValue: 150000,
-      startDate: '2025-01-01',
-      endDate: '2025-12-31',
-      usageLimit: 2000,
-      usedCount: 567,
-      description: 'Miễn phí giao hàng cho đơn hàng từ 150.000đ',
-      isPublic: true,
-    },
-    {
-      id: 'v4',
-      code: 'RAU5',
-      name: 'Giảm 5% cho Rau củ',
-      type: 'category',
-      value: 5,
-      minValue: 100000,
-      categorySlugs: ['/category/vegetables'],
-      startDate: '2025-01-01',
-      endDate: '2025-12-31',
-      usageLimit: 1000,
-      usedCount: 123,
-      description: 'Giảm 5% cho sản phẩm rau củ từ 100.000đ',
-      isPublic: true,
-    },
-  ];
-
   constructor() {
-    // Initialize with sample data if empty
-    if (this._userVouchers().length === 0) {
-      this._initializeSampleVouchers();
-    }
+    this.loadPublic();
+
+    const userId = computed(() => this.cart.currentUser()?._id ?? null);
+    effect(() => {
+      const id = userId();
+      untracked(() => (id ? this.refreshMine() : this._userVouchers.set([])));
+    });
   }
 
-  // Check if voucher is valid for a cart
+  loadPublic(): void {
+    this.api.get<{ success: boolean; data: ApiVoucher[] }>('/vouchers').subscribe({
+      next: (res) => { if (res.success) this._publicVouchers.set(res.data.map(toVoucher)); },
+      error: () => { /* giữ danh sách cũ */ },
+    });
+  }
+
+  /** Tải voucher của tài khoản hiện tại. */
+  refreshMine(): void {
+    if (!this.cart.currentUser()) { this._userVouchers.set([]); return; }
+    this.api.get<{ success: boolean; data: ApiUserVoucher[] }>('/vouchers/my').subscribe({
+      next: (res) => {
+        if (!res.success) return;
+        this._userVouchers.set(res.data.map(uv => ({
+          voucherId: uv.voucher._id,
+          voucher: toVoucher(uv.voucher),
+          status: uv.status,
+          usedAt: uv.usedAt,
+          orderId: uv.orderId,
+        })));
+      },
+      error: () => { /* 401 do interceptor xử lý */ },
+    });
+  }
+
+  // Server kiểm tra voucher + tính số tiền giảm
   validateVoucher(
     voucherCode: string,
-    cartTotal: number,
-    cartCategories?: string[]
-  ): { valid: boolean; message?: string; discount: number } {
-    const voucher = this.sampleVouchers.find(v => v.code === voucherCode);
-    if (!voucher) {
-      return { valid: false, message: 'Mã voucher không tồn tại', discount: 0 };
-    }
-
-    const now = new Date();
-    const start = new Date(voucher.startDate);
-    const end = new Date(voucher.endDate);
-
-    if (now < start || now > end) {
-      return { valid: false, message: 'Voucher đã hết hạn', discount: 0 };
-    }
-
-    if (voucher.usageLimit && voucher.usedCount >= voucher.usageLimit) {
-      return { valid: false, message: 'Voucher đã hết lượt sử dụng', discount: 0 };
-    }
-
-    if (voucher.minValue && cartTotal < voucher.minValue) {
-      return {
+    cartTotal: number
+  ): Observable<{ valid: boolean; message?: string; discount: number }> {
+    return this.api.post<{ success: boolean; valid: boolean; message?: string; discount: number }>(
+      '/vouchers/validate', { code: voucherCode, subtotal: cartTotal }
+    ).pipe(
+      map((res) => ({ valid: !!res.valid, message: res.message, discount: res.discount || 0 })),
+      catchError((err) => of({
         valid: false,
-        message: `Đơn hàng tối thiểu ${this.formatPrice(voucher.minValue)}`,
+        message: (err?.error?.message as string | undefined) ?? 'Không kiểm tra được voucher, vui lòng thử lại.',
         discount: 0,
-      };
-    }
-
-    // Check category restriction
-    if (voucher.type === 'category' && voucher.categorySlugs && cartCategories) {
-      const hasMatchingCategory = cartCategories.some(cat =>
-        voucher.categorySlugs!.some(slug => cat.includes(slug))
-      );
-      if (!hasMatchingCategory) {
-        return { valid: false, message: 'Voucher chỉ áp dụng cho danh mục sản phẩm cụ thể', discount: 0 };
-      }
-    }
-
-    // Calculate discount
-    let discount = 0;
-    switch (voucher.type) {
-      case 'percentage':
-        discount = (cartTotal * voucher.value) / 100;
-        if (voucher.maxValue) {
-          discount = Math.min(discount, voucher.maxValue);
-        }
-        break;
-      case 'fixed':
-        discount = voucher.value;
-        break;
-      case 'freeship':
-        discount = Math.min(voucher.value, 25000); // Assume max shipping fee
-        break;
-      case 'category':
-        discount = (cartTotal * voucher.value) / 100;
-        break;
-    }
-
-    return { valid: true, discount };
-  }
-
-  // Apply voucher to cart
-  applyVoucher(voucherCode: string, cartTotal: number, cartCategories?: string[]): number {
-    const result = this.validateVoucher(voucherCode, cartTotal, cartCategories);
-    return result.valid ? result.discount : 0;
-  }
-
-  // Collect/Save voucher for user
-  collectVoucher(voucherId: string): boolean {
-    const voucher = this.sampleVouchers.find(v => v.id === voucherId);
-    if (!voucher) return false;
-
-    // Check if already collected
-    if (this._userVouchers().some(v => v.voucherId === voucherId && v.status === 'available')) {
-      return false;
-    }
-
-    const userVoucher: UserVoucher = {
-      voucherId,
-      voucher,
-      status: 'available',
-    };
-
-    this._userVouchers.update(v => [...v, userVoucher]);
-    this._saveUserVouchers();
-    return true;
-  }
-
-  // Mark voucher as used
-  useVoucher(voucherId: string, orderId: string): void {
-    this._userVouchers.update(v =>
-      v.map(uv =>
-        uv.voucherId === voucherId && uv.status === 'available'
-          ? { ...uv, status: 'used', usedAt: new Date().toISOString(), orderId }
-          : uv
-      )
+      }))
     );
-    this._saveUserVouchers();
   }
 
-  // Get voucher by code
-  getVoucherByCode(code: string): Voucher | undefined {
-    return this.sampleVouchers.find(v => v.code === code);
+  // Thu thập voucher cho tài khoản đang đăng nhập (có thể trừ điểm)
+  collectVoucher(voucherId: string): Observable<{ success: boolean; message?: string }> {
+    if (!this.cart.currentUser()) {
+      this.cart.openAuthModal('login');
+      return of({ success: false, message: 'Vui lòng đăng nhập để thu thập voucher.' });
+    }
+    return this.api.post<{ success: boolean; message?: string }>(
+      `/vouchers/${voucherId}/claim`, {}
+    ).pipe(
+      tap((res) => {
+        if (res.success) {
+          this.refreshMine();
+          this.cart.loadUserData();
+        }
+      }),
+      catchError((err) => of({ success: false, message: err?.error?.message as string | undefined }))
+    );
   }
 
   // Get all public vouchers
   getPublicVouchers(): Voucher[] {
-    return this.sampleVouchers.filter(v => v.isPublic);
-  }
-
-  private _loadUserVouchers(): UserVoucher[] {
-    try {
-      const data = localStorage.getItem(USER_VOUCHERS_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  private _saveUserVouchers(): void {
-    try {
-      localStorage.setItem(USER_VOUCHERS_KEY, JSON.stringify(this._userVouchers()));
-    } catch {
-      // Ignore storage errors
-    }
-  }
-
-  private _initializeSampleVouchers(): void {
-    // Give user all sample vouchers as available
-    const userVouchers: UserVoucher[] = this.sampleVouchers.map(v => ({
-      voucherId: v.id,
-      voucher: v,
-      status: 'available' as const,
-    }));
-    this._userVouchers.set(userVouchers);
-    this._saveUserVouchers();
-  }
-
-  private formatPrice(value: number): string {
-    return value.toLocaleString('vi-VN') + 'đ';
+    return this._publicVouchers();
   }
 }

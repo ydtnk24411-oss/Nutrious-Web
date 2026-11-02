@@ -127,6 +127,8 @@ export class AccountComponent implements OnInit {
     });
 
     this.cart.loadUserData();
+    this.loyalty.refresh();
+    this.voucher.refreshMine();
     this.loadOrders();
   }
 
@@ -354,9 +356,9 @@ export class AccountComponent implements OnInit {
 
   // ── Vouchers ────────────────────────────────
   collectVoucher(voucherId: string): void {
-    if (this.voucher.collectVoucher(voucherId)) {
-      alert('Đã thu thập voucher thành công!');
-    }
+    this.voucher.collectVoucher(voucherId).subscribe((res) => {
+      alert(res.success ? 'Đã thu thập voucher thành công!' : (res.message || 'Không thể thu thập voucher.'));
+    });
   }
 
   // ── Points & Rewards ────────────────────────
@@ -364,12 +366,13 @@ export class AccountComponent implements OnInit {
     const user = this.cart.currentUser();
     if (!user) return;
 
-    const result = this.loyalty.redeemReward(user.email, rewardId);
-    if (result.success) {
-      alert('Đổi quà thành công!');
-    } else {
-      alert(result.message || 'Không thể đổi quà');
-    }
+    this.loyalty.redeemReward(user.email, rewardId).subscribe((result) => {
+      if (result.success) {
+        alert('Đổi quà thành công!');
+      } else {
+        alert(result.message || 'Không thể đổi quà');
+      }
+    });
   }
 
   // ── Logout ───────────────────────────────────
