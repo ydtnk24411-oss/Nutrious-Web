@@ -1,4 +1,4 @@
-import { Component, signal, inject, computed } from '@angular/core';
+import { Component, signal, inject, computed, effect } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -34,15 +34,23 @@ export class CheckoutComponent {
   protected voucherDiscount = signal(0);
   protected voucherMessage = signal('');
 
+  // Chỉ thanh toán các món được chọn trong giỏ hàng
+  readonly checkoutItems = computed(() => {
+    return this.cart.selectedItems();
+  });
+
+  readonly checkoutSubtotal = computed(() => {
+    return this.cart.selectedSubtotal();
+  });
+
   // Loyalty points estimate
   readonly estimatedPoints = computed(() => {
-    const subtotal = this.cart.subtotal();
-    return Math.floor(subtotal / 1000); // 1 điểm cho mỗi 1000đ
+    return Math.floor(this.checkoutSubtotal() / 1000); // 1 điểm cho mỗi 1000đ
   });
 
   // Total after discount
   readonly finalTotal = computed(() => {
-    return Math.max(0, this.cart.subtotal() - this.voucherDiscount());
+    return Math.max(0, this.checkoutSubtotal() - this.voucherDiscount());
   });
 
   // form fields
@@ -50,6 +58,18 @@ export class CheckoutComponent {
   protected guestPhone   = signal(this.cart.currentUser()?.phone ?? '');
   protected guestEmail   = signal(this.cart.currentUser()?.email ?? '');
   protected shippingAddr = signal(this._defaultAddress());
+
+  constructor() {
+    effect(() => {
+      const u = this.cart.currentUser();
+      if (u) {
+        this.guestName.set(u.name || '');
+        this.guestEmail.set(u.email || '');
+        this.guestPhone.set(u.phone || '');
+        this.shippingAddr.set(this._defaultAddress());
+      }
+    });
+  }
 
   /** Địa chỉ mặc định của tài khoản đang đăng nhập (để điền sẵn khi giao hàng). */
   private _defaultAddress(): string {
@@ -65,7 +85,7 @@ export class CheckoutComponent {
       return;
     }
 
-    this.voucher.validateVoucher(code, this.cart.subtotal()).subscribe((result) => {
+    this.voucher.validateVoucher(code, this.checkoutSubtotal()).subscribe((result) => {
       if (result.valid) {
         this.selectedVoucher.set({ code, discount: result.discount });
         this.voucherDiscount.set(result.discount);
@@ -88,8 +108,9 @@ export class CheckoutComponent {
   handleSubmit(e: Event): void {
     e.preventDefault();
 
-    if (this.cart.items().length === 0) {
-      this.errorMsg.set('Giỏ hàng trống, vui lòng thêm sản phẩm trước.'); return;
+    const currentItems = this.checkoutItems();
+    if (currentItems.length === 0) {
+      this.errorMsg.set('Không có sản phẩm nào được chọn để thanh toán.'); return;
     }
     if (!this.guestName() || !this.guestPhone() || !this.guestEmail()) {
       this.errorMsg.set('Vui lòng điền đầy đủ thông tin liên hệ.'); return;
@@ -103,7 +124,7 @@ export class CheckoutComponent {
 
     // Build order payload — product field là MongoDB _id nếu có (từ API),
     // hoặc bỏ qua nếu là static data (slug string)
-    const items = this.cart.items().map(i => {
+    const items = currentItems.map(i => {
       const prod = i.product as any;
       // id có dạng 24-char hex (MongoDB ObjectId)
       const isObjectId = /^[a-f\d]{24}$/i.test(prod.id ?? '');
@@ -124,7 +145,7 @@ export class CheckoutComponent {
       guestEmail:      this.guestEmail(),
       guestPhone:      this.guestPhone(),
       items,
-      subtotal:        this.cart.subtotal(),
+      subtotal:        this.checkoutSubtotal(),
       discount:        this.voucherDiscount(),
       voucherCode:     this.selectedVoucher()?.code || null,
       shippingFee:     0,
@@ -147,7 +168,7 @@ export class CheckoutComponent {
         // Voucher đã dùng được server đánh dấu → tải lại; điểm được cộng khi đơn giao thành công
         this.voucher.refreshMine();
 
-        this.cart.clear();
+        this.cart.removeSelectedItems();
       },
       error: (err) => {
         this.submitting.set(false);

@@ -135,14 +135,23 @@
       </button>
       @if (notifMenuOpen()) {
         <div class="xl-notif-dropdown">
-          <div class="xl-notif-title">Thông báo</div>
-          @for (n of notifications; track n.id) {
-            <a class="xl-notif-item" [class.is-unread]="n.unread" [routerLink]="n.path" (click)="closeNotifMenu()">
-              <span>
-                <strong>{{ n.title }}</strong>
-                <small>{{ n.body }}</small>
-              </span>
-            </a>
+          <div class="xl-notif-title" style="display:flex;justify-content:space-between;align-items:center">
+            <span>Thông báo</span>
+            @if (unreadCount() > 0) {
+              <button type="button" (click)="markAllAsRead()" style="background:none;border:none;font-size:12px;color:var(--xanh-moss);cursor:pointer;font-weight:600">Đã đọc</button>
+            }
+          </div>
+          @if (notifications().length === 0) {
+            <div style="padding:16px;text-align:center;font-size:13px;color:var(--xanh-muted)">Không có thông báo nào</div>
+          } @else {
+            @for (n of notifications(); track n.id) {
+              <a class="xl-notif-item" [class.is-unread]="n.unread" [routerLink]="n.path" (click)="closeNotifMenu()">
+                <span>
+                  <strong>{{ n.title }}</strong>
+                  <small>{{ n.body }}</small>
+                </span>
+              </a>
+            }
           }
         </div>
       }

@@ -6,6 +6,8 @@ describe('CartService', () => {
 
   beforeEach(() => {
     localStorage.clear();
+    localStorage.setItem('xanhla_user_session', JSON.stringify({ _id: '1', name: 'Test User', email: 'test@example.com' }));
+    localStorage.setItem('xanhla_auth_token', 'test-token');
     TestBed.configureTestingModule({});
     service = TestBed.inject(CartService);
   });
