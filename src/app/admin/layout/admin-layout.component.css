@@ -155,6 +155,7 @@
   align-items: center;
   justify-content: center;
   transition: transform 0.18s ease;
+  pointer-events: none;
 }
 
 .admin-nav-item:hover .admin-nav-icon {
@@ -165,6 +166,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  pointer-events: none;
 }
 
 /* Storefront Quick Banner */
