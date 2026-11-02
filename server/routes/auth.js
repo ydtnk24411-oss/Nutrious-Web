@@ -7,9 +7,10 @@ const { protect, signToken } = require('../middleware/auth');
 // Dữ liệu user trả về cho client – giống nhau ở register / login / me
 const publicUser = (u) => ({
   _id: u._id, name: u.name, email: u.email, role: u.role,
-  avatar: u.avatar, phone: u.phone,
-  points: u.points, tier: u.tier, totalSpent: u.totalSpent,
-  addresses: u.addresses,
+  firstName: u.firstName || '', lastName: u.lastName || '', title: u.title || '',
+  avatar: u.avatar || '', phone: u.phone || '',
+  points: u.points || 0, tier: u.tier || 'bronze', totalSpent: u.totalSpent || 0,
+  addresses: u.addresses || [],
 });
 
 // POST /api/auth/register

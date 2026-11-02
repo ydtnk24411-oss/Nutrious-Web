@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, computed, HostListener } from '@angular/core';
+import { Component, signal, inject, OnInit, computed, HostListener, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { OrderApiService } from '../../shared/services/order-api.service';
@@ -24,6 +24,21 @@ export class AccountComponent implements OnInit {
   private voucher   = inject(VoucherService);
   private route     = inject(ActivatedRoute);
   private orderApi  = inject(OrderApiService);
+
+  constructor() {
+    effect(() => {
+      const u = this.cart.currentUser();
+      if (u) {
+        this.displayName.set(u.name ?? '');
+        this.firstName.set(u.firstName ?? '');
+        this.lastName.set(u.lastName ?? '');
+        this.phone.set(u.phone ?? '');
+        this.title.set(u.title ?? '');
+        this.addrFullName.set(u.name ?? '');
+        this.addrPhone.set(u.phone ?? '');
+      }
+    });
+  }
 
   // ── Tab ──────────────────────────────────────
   activeTab = signal<Tab>('overview');

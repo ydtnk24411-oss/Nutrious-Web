@@ -81,7 +81,13 @@ export class ProductDetailComponent implements OnInit {
   }
 
   buyNow(): void {
-    this.addToCart();
+    const p = this.product();
+    if (!p) return;
+    const cartProd = toCartProduct(p);
+    const ripeness = this.selectedRipeness();
+    this.cart.addItem(cartProd, this.quantity(), ripeness);
+    this.cart.selectOnly(cartProd.slug, ripeness);
+    this.cart.closeCartDrawer();
     this.router.navigate(['/checkout']);
   }
 
