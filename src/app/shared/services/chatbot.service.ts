@@ -47,6 +47,12 @@ export class ChatbotService {
   apiKey = signal<string>(this.loadStoredApiKey());
   persona = signal<AIPersona>('general');
 
+  constructor() {
+    try {
+      localStorage.setItem('xanhla_chatbot_provider', 'gemini');
+    } catch {}
+  }
+
   readonly quickSuggestions = [
     '📷 Nhận diện ảnh món ăn & nguyên liệu',
     '🥗 Gợi ý món ngon tươi lành hôm nay',

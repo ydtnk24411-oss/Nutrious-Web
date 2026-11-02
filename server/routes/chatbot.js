@@ -105,13 +105,13 @@ router.post('/message', async (req, res, next) => {
     const trimmed = (message || '').trim();
     const cleanLower = removeDiacritics(trimmed);
 
-    const effectiveGeminiKey = (provider === 'gemini' ? apiKey : '') || process.env.GEMINI_API_KEY || apiKey;
+    const effectiveGeminiKey = process.env.GEMINI_API_KEY || (provider === 'gemini' ? apiKey : '') || apiKey;
     const effectiveOpenAIKey = (provider === 'openai' ? apiKey : '') || process.env.OPENAI_API_KEY || apiKey;
 
-    // ── 1. Image Recognition & Multimodal Vision Analysis (NutriBot Core) ─
+    // ── 1. Image Recognition & Multimodal Vision Analysis ────────────────
     if (image) {
       // 1.1. Multimodal Vision via Google Gemini (Gemini 3.5 Flash Vision)
-      if (effectiveGeminiKey) {
+      if (effectiveGeminiKey && provider !== 'openai') {
         try {
           const visionResult = await callGeminiVision(image, trimmed, effectiveGeminiKey, persona, profile);
           if (visionResult && visionResult.text) {
@@ -119,12 +119,12 @@ router.post('/message', async (req, res, next) => {
             return res.json({ success: true, reply: visionResult.text, products: prods });
           }
         } catch (err) {
-          console.warn('Gemini Vision fallback to NutriBot local engine:', err.message);
+          console.warn('Gemini Vision fallback to local engine:', err.message);
         }
       }
 
       // 1.2. Multimodal Vision via OpenAI (GPT-4o-mini Vision)
-      if (effectiveOpenAIKey) {
+      if (effectiveOpenAIKey && provider === 'openai') {
         try {
           const visionResult = await callOpenAIVision(image, trimmed, effectiveOpenAIKey, persona, profile);
           if (visionResult && visionResult.text) {
@@ -132,11 +132,11 @@ router.post('/message', async (req, res, next) => {
             return res.json({ success: true, reply: visionResult.text, products: prods });
           }
         } catch (err) {
-          console.warn('OpenAI Vision fallback to NutriBot local engine:', err.message);
+          console.warn('OpenAI Vision fallback to local engine:', err.message);
         }
       }
 
-      // 1.3. NutriBot Built-in Food & Beverage Vision Analyzer (Local Engine)
+      // 1.3. Built-in Food & Beverage Vision Analyzer (Local Fallback)
       const localAnalysis = await analyzeFoodImageLocal(image, trimmed, profile);
       const prods = await findRelatedProducts(removeDiacritics(localAnalysis.keywords));
       return res.json({
@@ -146,8 +146,9 @@ router.post('/message', async (req, res, next) => {
       });
     }
 
-    // ── 2. External Text LLM Provider (Gemini / OpenAI) ──────────────────
-    if (effectiveGeminiKey && (provider === 'gemini' || persona === 'nutribot')) {
+    // ── 2. External Text LLM Provider (Google Gemini / OpenAI) ───────────
+    // Always route to Gemini whenever GEMINI_API_KEY is configured
+    if (effectiveGeminiKey && provider !== 'openai') {
       try {
         const reply = await callGeminiAI(trimmed, history, effectiveGeminiKey, persona, profile);
         if (reply && reply.text) {
@@ -155,7 +156,7 @@ router.post('/message', async (req, res, next) => {
           return res.json({ success: true, reply: reply.text, products: prods });
         }
       } catch (aiErr) {
-        console.warn('Gemini AI fallback:', aiErr.message);
+        console.warn('Gemini AI fallback error:', aiErr.message);
       }
     } else if (effectiveOpenAIKey && provider === 'openai') {
       try {
@@ -165,7 +166,7 @@ router.post('/message', async (req, res, next) => {
           return res.json({ success: true, reply: reply.text, products: prods });
         }
       } catch (aiErr) {
-        console.warn('OpenAI fallback:', aiErr.message);
+        console.warn('OpenAI fallback error:', aiErr.message);
       }
     }
 
@@ -745,8 +746,13 @@ async function callGeminiAI(prompt, history, apiKey, persona, profile) {
         const json = await res.json();
         const replyText = json.candidates?.[0]?.content?.parts?.[0]?.text;
         if (replyText) return { text: replyText };
+      } else {
+        const errText = await res.text();
+        console.warn(`Gemini AI (${model}, HTTP ${res.status}):`, errText);
       }
-    } catch {}
+    } catch (fetchErr) {
+      console.warn(`Gemini AI fetch failed (${model}):`, fetchErr.message);
+    }
   }
   return null;
 }
