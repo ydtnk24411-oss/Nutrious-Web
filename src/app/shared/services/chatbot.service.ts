@@ -139,17 +139,35 @@ export class ChatbotService {
         this.messages.update(msgs => [...msgs, botMsg]);
         this.loading.set(false);
       },
-      error: () => {
+      error: (err) => {
+        console.warn('Chatbot server unreachable, activating offline knowledge fallback:', err?.message || err);
         const fallbackMsg: ChatMessage = {
           id: 'err_' + Date.now(),
           sender: 'bot',
-          text: 'Xin lỗi bạn, kết nối của em vừa bị gián đoạn một chút. Bạn vui lòng thử lại hoặc gọi Hotline **1900 6868** để được hỗ trợ nhanh nhất nhé! 🌿',
+          text: this.getOfflineFallbackReply(trimmed),
           timestamp: new Date(),
         };
         this.messages.update(msgs => [...msgs, fallbackMsg]);
         this.loading.set(false);
       }
     });
+  }
+
+  private getOfflineFallbackReply(query: string): string {
+    const q = query.toLowerCase();
+    if (q.includes('ship') || q.includes('giao hang') || q.includes('van chuyen') || q.includes('phi')) {
+      return `🚚 **Chính sách giao hàng xe lạnh Xanh Lá:**\n\n• **Miễn phí ship (0₫)** cho đơn từ **300.000₫** trở lên.\n• Đơn dưới 300.000₫: Đồng giá 25.000₫ nội thành.\n• Giao nhanh trong 2 giờ bảo quản bằng thùng lạnh 0°C – 4°C đảm bảo độ tươi giòn!`;
+    }
+    if (q.includes('voucher') || q.includes('giam gia') || q.includes('khuyen mai') || q.includes('code')) {
+      return `🎉 **Ưu đãi hôm nay tại Xanh Lá:**\n\n🎟️ Mã: **WELCOME20** — Giảm ngay 20.000₫ cho khách hàng mới!\n🎟️ Mã: **FREESHIP** — Miễn phí vận chuyển cho đơn từ 200.000₫.\n\n👉 Bạn hãy nhập mã ở bước Thanh toán nhé!`;
+    }
+    if (q.includes('an gi') || q.includes('nau gi') || q.includes('thuc don') || q.includes('mon ngon')) {
+      return `👩‍🍳 **Gợi ý món ngon tươi lành cho bữa cơm hôm nay:**\n\n🍲 **Món canh:** Canh cải thìa thịt bằm ngọt thanh mát.\n🥗 **Món rau:** Xà lách Lô Tô sốt mè rang giòn ngọt.\n🥩 **Món mặn:** Thịt ba chỉ cuộn nấm kim châm hoặc cá hồi áp chảo sốt bơ tỏi.\n\n*Nông sản Xanh Lá hái mới mỗi sớm luôn sẵn sàng phục vụ bạn!*`;
+    }
+    if (q.includes('nong trai') || q.includes('nguon goc') || q.includes('huu co') || q.includes('organic')) {
+      return `🌱 **Cam kết nông sản Xanh Lá Farm:**\n\n• 100% đạt chuẩn VietGAP & GlobalGAP từ Đà Lạt và Ba Vì.\n• Cam kết 3 KHÔNG: Không thuốc trừ sâu – Không chất kích thích – Không chất bảo quản.\n• Bảo hành 1 đổi 1 trong 24 giờ nếu hàng không đạt độ tươi ngon!`;
+    }
+    return `🌿 Cảm ơn bạn đã nhắn tin cho **Xanh Lá Farm**!\n\nEm luôn sẵn sàng hỗ trợ bạn chọn nông sản hữu cơ, gợi ý thực đơn, kiểm tra chính sách giao hàng xe lạnh và mã giảm giá.\n\n*Nếu cần hỗ trợ hỏa tốc, bạn cũng có thể gọi Hotline miễn phí **1900 6868** nhé!*`;
   }
 
   private loadStoredProvider(): AIProvider {
