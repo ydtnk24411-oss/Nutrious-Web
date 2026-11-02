@@ -229,86 +229,6 @@
   transform: scale(1.05);
 }
 
-.xanh-chat-btn-icon.active {
-  background: rgba(114, 195, 67, 0.35);
-  color: #85dd52;
-  border: 1px solid rgba(133, 221, 82, 0.5);
-}
-
-/* ── Settings Panel (Chatbox-inspired AI Configuration) ─────────────── */
-.xanh-chat-settings-panel {
-  background: #edf6eb;
-  border-bottom: 1.5px solid #d2e4cb;
-  padding: 14px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  animation: slideDown 0.2s ease-out;
-}
-
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.xanh-settings-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 12px;
-  font-weight: 700;
-  color: #176b3a;
-}
-
-.xanh-settings-close {
-  background: none;
-  border: 1px solid #c2d9ba;
-  border-radius: 6px;
-  font-size: 11px;
-  padding: 2px 8px;
-  color: #38573f;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.xanh-settings-close:hover {
-  background: #176b3a;
-  color: #ffffff;
-  border-color: #176b3a;
-}
-
-.xanh-settings-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.xanh-settings-field label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #2e4a34;
-}
-
-.xanh-settings-field select,
-.xanh-settings-field input {
-  width: 100%;
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid #bfd7b8;
-  background: #ffffff;
-  color: #1b3720;
-  font-size: 12px;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  box-sizing: border-box;
-}
-
-.xanh-settings-field select:focus,
-.xanh-settings-field input:focus {
-  border-color: #176b3a;
-  box-shadow: 0 0 0 2px rgba(23, 107, 58, 0.15);
-}
-
 /* ── Body ──────────────────────────────────────────────────────────── */
 .xanh-chat-body {
   flex: 1;
@@ -733,4 +653,190 @@
     bottom: 68px;
     right: 0;
   }
+}
+
+/* ── NutriBot Avatars & Vision Styles ──────────────────────────────── */
+.launcher-nutribot-avatar {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 50%;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.header-nutri-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 11px;
+}
+
+.bot-bubble-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 9px;
+}
+
+/* ── Attached User Image in Message ────────────────────────────────── */
+.xanh-msg-uploaded-image {
+  max-width: 240px;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(16, 50, 28, 0.15);
+  border: 2px solid #ffffff;
+  margin-bottom: 4px;
+  align-self: flex-end;
+}
+
+.xanh-msg-uploaded-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  max-height: 180px;
+}
+
+/* ── Image Upload Button & Preview Bar ─────────────────────────────── */
+.xanh-quick-upload-strip {
+  margin-bottom: 8px;
+}
+
+.xanh-upload-strip-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: linear-gradient(135deg, #eef7eb 0%, #e2f2dd 100%);
+  border: 1.5px dashed #85dd52;
+  border-radius: 12px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(23, 107, 58, 0.06);
+}
+
+.xanh-upload-strip-btn:hover {
+  background: #e1f3db;
+  border-color: #176b3a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(23, 107, 58, 0.12);
+}
+
+.xanh-strip-icon {
+  font-size: 16px;
+}
+
+.xanh-strip-text {
+  flex: 1;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: #176b3a;
+}
+
+.xanh-strip-badge {
+  background: #176b3a;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.02em;
+}
+
+.xanh-chat-attach-btn {
+  background: #e3eedf;
+  border: 1px solid #bfdcb8;
+  color: #176b3a;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.18s;
+  flex-shrink: 0;
+}
+
+.xanh-chat-attach-btn:hover {
+  background: #176b3a;
+  border-color: #176b3a;
+  transform: scale(1.1);
+  color: #ffffff;
+}
+
+.attach-cam-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.xanh-image-preview-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f1f7ee;
+  border: 1px solid #cce1c7;
+  border-radius: 12px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  animation: slideDown 0.18s ease-out;
+}
+
+.xanh-image-thumb-box {
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #b8d9b1;
+  flex-shrink: 0;
+}
+
+.xanh-image-thumb-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.xanh-image-name-box {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.xanh-image-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #176b3a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.xanh-image-sub {
+  font-size: 10.5px;
+  color: #637765;
+}
+
+.xanh-image-remove-btn {
+  background: #e1ede0;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+  color: #4f6352;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.xanh-image-remove-btn:hover {
+  background: #d14d4d;
+  color: #ffffff;
 }

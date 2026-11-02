@@ -10,7 +10,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { ChatbotService, ChatProduct, ChatMessage, AIProvider, AIPersona } from '../../shared/services/chatbot.service';
+import { ChatbotService, ChatProduct, ChatMessage } from '../../shared/services/chatbot.service';
 import { CartService } from '../../shared/services/cart.service';
 import { XanhLaProduct } from '../../shared/models/xanh-la.models';
 
@@ -27,9 +27,13 @@ export class ChatbotComponent implements AfterViewChecked {
   private router = inject(Router);
 
   @ViewChild('messagesScroll') private messagesScrollContainer?: ElementRef<HTMLDivElement>;
+  @ViewChild('fileInput') private fileInputRef?: ElementRef<HTMLInputElement>;
 
   inputText = signal('');
   copiedId = signal('');
+  selectedImageBase64 = signal<string | null>(null);
+  selectedImageName = signal<string | null>(null);
+
   private shouldScroll = false;
 
   constructor() {
@@ -63,14 +67,87 @@ export class ChatbotComponent implements AfterViewChecked {
     }
   }
 
+  // ── Image Upload Handling (Photo of food / ingredients) ──────────
+  triggerImagePicker(): void {
+    this.fileInputRef?.nativeElement.click();
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    if (!file.type.startsWith('image/')) {
+      alert('Vui lòng chọn file hình ảnh (JPEG, PNG, WebP).');
+      return;
+    }
+
+    this.processImageFile(file);
+    input.value = '';
+  }
+
+  onPaste(event: ClipboardEvent): void {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith('image/')) {
+        const file = items[i].getAsFile();
+        if (file) {
+          event.preventDefault();
+          this.processImageFile(file);
+          break;
+        }
+      }
+    }
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0 && files[0].type.startsWith('image/')) {
+      this.processImageFile(files[0]);
+    }
+  }
+
+  private processImageFile(file: File): void {
+    this.selectedImageName.set(file.name || 'Ảnh món ăn');
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.selectedImageBase64.set(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removeSelectedImage(): void {
+    this.selectedImageBase64.set(null);
+    this.selectedImageName.set(null);
+  }
+
+  // ── Send Message ─────────────────────────────────────────────────────
   submitMessage(): void {
     const text = this.inputText().trim();
-    if (!text || this.chat.loading()) return;
+    const image = this.selectedImageBase64();
+
+    if (!text && !image) return;
+    if (this.chat.loading()) return;
+
     this.inputText.set('');
-    this.chat.sendMessage(text);
+    this.selectedImageBase64.set(null);
+    this.selectedImageName.set(null);
+
+    this.chat.sendMessage(text, image || undefined);
   }
 
   selectSuggestion(s: string): void {
+    if (s.includes('ảnh')) {
+      this.triggerImagePicker();
+      return;
+    }
     this.chat.sendMessage(s);
   }
 
