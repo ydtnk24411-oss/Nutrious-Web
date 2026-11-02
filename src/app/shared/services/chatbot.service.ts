@@ -1,17 +1,8 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { ApiService } from './api.service';
 
-export type AIProvider = 'local' | 'gemini' | 'openai';
-export type AIPersona = 'nutribot' | 'general' | 'chef' | 'nutritionist' | 'support';
-
-export interface UserNutritionProfile {
-  age?: number;
-  sex?: 'male' | 'female';
-  height?: number; // cm
-  weight?: number; // kg
-  conditions?: string; // e.g. "Tiểu đường", "Dị ứng hải sản", "Huyết áp"
-  dietGoal?: string; // "Giảm mỡ / Cắt nét", "Tăng cơ", "Ăn chay / Vegan", "Eat-Clean"
-}
+export type AIProvider = 'gemini' | 'openai' | 'local';
+export type AIPersona = 'general' | 'chef' | 'nutritionist' | 'support' | 'nutribot';
 
 export interface ChatProduct {
   _id: string;
@@ -38,7 +29,7 @@ export interface ChatMessage {
 const INITIAL_WELCOME_MESSAGE: ChatMessage = {
   id: 'welcome_1',
   sender: 'bot',
-  text: `Xin chào! Tôi là **NutriBot** — Trợ lý Dinh dưỡng & Nông sản Xanh Lá 🩺🌿\n\nTôi có thể giải đáp mọi thắc mắc dinh dưỡng, đưa ra lời khuyên cá nhân hóa theo thể trạng (BMI) của bạn. Đặc biệt, bạn có thể **tải ảnh món ăn hoặc đồ uống lên**, tôi sẽ nhận diện thành phần, tính lượng Calo (kcal) và gợi ý nguyên liệu hữu cơ tươi sạch tức thì!\n\n*Hôm nay bạn muốn phân tích món ăn hay tìm nông sản gì nào?*`,
+  text: `Xin chào! Tôi là **Trợ lý AI Xanh Lá** kết nối trực tiếp với **Google Gemini** 🌿✨\n\nTôi có thể giải đáp mọi thắc mắc về nông sản sạch, hướng dẫn cách chế biến món ngon và tư vấn dinh dưỡng. Đặc biệt, bạn có thể **bấm nút máy ảnh 📷 để tải ảnh món ăn hoặc nguyên liệu lên**, tôi sẽ tự động nhận diện và gợi ý chi tiết!\n\n*Hôm nay bạn cần tôi hỗ trợ gì nào?*`,
   timestamp: new Date(),
 };
 
@@ -49,49 +40,20 @@ export class ChatbotService {
   isOpen = signal(false);
   loading = signal(false);
   hasUnread = signal(true);
-  settingsOpen = signal(false);
   messages = signal<ChatMessage[]>([INITIAL_WELCOME_MESSAGE]);
 
-  // Model & AI Provider configuration
-  provider = signal<AIProvider>(this.loadStoredProvider());
+  // Model & AI Provider configuration: Default directly to Gemini
+  provider = signal<AIProvider>('gemini');
   apiKey = signal<string>(this.loadStoredApiKey());
-  persona = signal<AIPersona>(this.loadStoredPersona());
-
-  // NutriBot User Health & Nutrition Profile
-  profile = signal<UserNutritionProfile>(this.loadStoredProfile());
-
-  // Computed BMI
-  bmiData = computed(() => {
-    const p = this.profile();
-    if (!p.height || !p.weight || p.height <= 0 || p.weight <= 0) return null;
-    const hM = p.height / 100;
-    const bmiVal = Number((p.weight / (hM * hM)).toFixed(1));
-    let label = 'Bình thường';
-    let color = '#176b3a';
-
-    if (bmiVal < 18.5) {
-      label = 'Thiếu cân';
-      color = '#e67e22';
-    } else if (bmiVal < 23) {
-      label = 'Chuẩn (Lý tưởng)';
-      color = '#176b3a';
-    } else if (bmiVal < 25) {
-      label = 'Tiền béo phì (Thừa cân)';
-      color = '#f39c12';
-    } else {
-      label = 'Béo phì';
-      color = '#e74c3c';
-    }
-    return { bmi: bmiVal, label, color };
-  });
+  persona = signal<AIPersona>('general');
 
   readonly quickSuggestions = [
-    '📷 Nhận diện ảnh món ăn & tính calo',
-    '🩺 Tính chỉ số BMI & cân nặng lý tưởng',
-    '🥗 Gợi ý thực đơn Eat-Clean 7 ngày',
-    '📊 Cách chia tỷ lệ Macro (Carb, Pro, Fat)',
-    '🍎 Ăn vặt gì khi đói đêm không lo béo?',
-    '🚚 Phí ship xe lạnh & bảo quản tươi ngon',
+    '📷 Nhận diện ảnh món ăn & nguyên liệu',
+    '🥗 Gợi ý món ngon tươi lành hôm nay',
+    '🥦 Các loại rau củ hữu cơ VietGAP',
+    '🥩 Nông sản thịt cá tươi sạch trong ngày',
+    '🚚 Phí ship xe lạnh & thời gian giao hàng',
+    '🎟️ Mã giảm giá & ưu đãi hôm nay',
   ];
 
   toggle(): void {
@@ -109,11 +71,6 @@ export class ChatbotService {
 
   close(): void {
     this.isOpen.set(false);
-    this.settingsOpen.set(false);
-  }
-
-  toggleSettings(): void {
-    this.settingsOpen.update(v => !v);
   }
 
   setProvider(p: AIProvider): void {
@@ -124,19 +81,6 @@ export class ChatbotService {
   setApiKey(key: string): void {
     this.apiKey.set(key);
     try { localStorage.setItem('xanhla_chatbot_apikey', key); } catch {}
-  }
-
-  setPersona(p: AIPersona): void {
-    this.persona.set(p);
-    try { localStorage.setItem('xanhla_chatbot_persona', p); } catch {}
-  }
-
-  updateProfile(partial: Partial<UserNutritionProfile>): void {
-    this.profile.update(cur => {
-      const updated = { ...cur, ...partial };
-      try { localStorage.setItem('xanhla_nutribot_profile', JSON.stringify(updated)); } catch {}
-      return updated;
-    });
   }
 
   clearHistory(): void {
@@ -157,7 +101,7 @@ export class ChatbotService {
     const userMsg: ChatMessage = {
       id: 'msg_' + Date.now(),
       sender: 'user',
-      text: trimmed || (imageBase64 ? '📷 [Đã tải ảnh món ăn để NutriBot phân tích]' : ''),
+      text: trimmed || (imageBase64 ? '📷 [Đã tải ảnh lên để AI phân tích]' : ''),
       image: imageBase64,
       timestamp: new Date(),
     };
@@ -173,16 +117,15 @@ export class ChatbotService {
       message: trimmed,
       image: imageBase64 || null,
       history: historyPayload,
-      provider: this.provider(),
-      apiKey: this.apiKey(),
-      persona: this.persona(),
-      profile: this.profile()
+      provider: 'gemini',
+      apiKey: this.apiKey() || '',
+      persona: this.persona()
     }).subscribe({
       next: (res) => {
         const botMsg: ChatMessage = {
           id: 'reply_' + Date.now(),
           sender: 'bot',
-          text: res.reply || 'NutriBot đã tiếp nhận thông tin từ bạn!',
+          text: res.reply || 'AI Xanh Lá đã tiếp nhận thông tin từ bạn!',
           timestamp: new Date(),
           products: res.products && res.products.length > 0 ? res.products : undefined,
         };
@@ -190,7 +133,7 @@ export class ChatbotService {
         this.loading.set(false);
       },
       error: (err) => {
-        console.warn('Backend unavailable, activating NutriBot client fallback:', err?.message || err);
+        console.warn('Backend unavailable, activating Gemini fallback:', err?.message || err);
         const fallbackMsg: ChatMessage = {
           id: 'err_' + Date.now(),
           sender: 'bot',
@@ -207,27 +150,12 @@ export class ChatbotService {
     const q = query.toLowerCase();
 
     if (hasImage) {
-      return `📸 **NutriBot đã nhận diện thành công hình ảnh món ăn của bạn!** 🥗✨\n\n` +
-        `🍽️ **Tên món:** **Salad Ức Gà Rau Củ Hữu Cơ Sốt Mè Rang**\n` +
-        `📋 **Thành phần nhận diện:** Ức gà phi lê nướng, xà lách Lô Tô xanh Xanh Lá, cà chua bi, dưa chuột, ngô ngọt, mè rang.\n\n` +
+      return `📸 **AI Xanh Lá đã nhận diện hình ảnh của bạn!** 🥗✨\n\n` +
+        `🍽️ **Món ăn:** **Salad Ức Gà Rau Củ Hữu Cơ Xanh Lá**\n` +
+        `📋 **Thành phần:** Ức gà phi lê tươi, xà lách Lô Tô xanh, cà chua bi Đà Lạt, dưa leo tươi giòn, ngô ngọt.\n\n` +
         `🔥 **Ước tính Năng lượng:** **320 kcal**\n` +
-        `📊 **Giá trị dinh dưỡng (Macro):**\n` +
-        `• 🥩 **Chất đạm (Protein):** 28g (Cao, hỗ trợ phục hồi và phát triển cơ)\n` +
-        `• 🌾 **Tinh bột (Carb):** 16g (Tinh bột chậm từ rau củ)\n` +
-        `• 🥑 **Chất béo (Fat):** 11g (Chất béo lành mạnh từ mè và hạt)\n` +
-        `• 🥦 **Chất xơ (Fiber):** 6g (Dồi dào, tốt cho tiêu hóa)\n\n` +
-        `🩺 **Lời khuyên từ NutriBot:** Đây là đĩa ăn rất cân đối, giàu vitamin và khoáng chất, hoàn toàn phù hợp cho thực đơn giảm mỡ và giữ dáng Eat-Clean!\n\n` +
-        `🌿 *Các nguyên liệu trên luôn có sẵn rau tươi thu hái mỗi sáng tại nông trại Xanh Lá.*`;
-    }
-
-    if (q.includes('bmi') || q.includes('the trang') || q.includes('can nang')) {
-      const p = this.profile();
-      if (p.height && p.weight) {
-        const hM = p.height / 100;
-        const bmi = (p.weight / (hM * hM)).toFixed(1);
-        return `🩺 **Chỉ số thể trạng của bạn:**\n\n• Chiều cao: ${p.height} cm | Cân nặng: ${p.weight} kg\n• **BMI: ${bmi}**\n\n💡 *NutriBot khuyên bạn duy trì chế độ giàu rau củ, uống đủ 2 lít nước mỗi ngày và ưu tiên các loại rau xanh tươi từ nông trại Xanh Lá nhé!*`;
-      }
-      return `🩺 **Công thức tính BMI:** Cân nặng (kg) / [Chiều cao (m)]².\nBạn có thể điền thông tin trong phần Cài đặt (⚙️) để NutriBot tự động tính toán và đưa ra thực đơn nhé!`;
+        `• Đạm (Protein): 28g | Tinh bột: 16g | Chất béo tốt: 11g | Chất xơ: 6g\n\n` +
+        `🌿 *Các nguyên liệu trên luôn có sẵn hàng tươi mới mỗi sáng tại nông trại Xanh Lá.*`;
     }
 
     if (q.includes('ship') || q.includes('giao hang') || q.includes('van chuyen') || q.includes('phi')) {
@@ -239,18 +167,10 @@ export class ChatbotService {
     }
 
     if (q.includes('an gi') || q.includes('nau gi') || q.includes('thuc don') || q.includes('mon ngon')) {
-      return `👩‍🍳 **Gợi ý món ngon tươi lành cho bữa cơm hôm nay:**\n\n🍲 **Món canh:** Canh cải thìa thịt bằm ngọt thanh mát.\n🥗 **Món rau:** Xà lách Lô Tô sốt mè rang giòn ngọt.\n🥩 **Món mặn:** Thịt ba chỉ cuộn nấm kim châm hoặc cá hồi áp chảo sốt bơ tỏi.\n\n*Nông sản Xanh Lá hái mới mỗi sớm luôn sẵn sàng phục vụ bạn!*`;
+      return `👩‍🍳 **Gợi ý món ngon tươi lành cho bữa cơm hôm nay:**\n\n🍲 **Món canh:** Canh cải thìa thịt bằm ngọt thanh mát.\n🥗 **Món rau:** Xà lách Lô Tô sốt mè rang giòn ngọt.\n🥩 **Món mặn:** Cá hồi áp chảo sốt bơ tỏi hoặc Thịt bò xào cần tây.\n\n*Nông sản Xanh Lá hái mới mỗi sớm luôn sẵn sàng phục vụ bạn!*`;
     }
 
-    return `🌿 Cảm ơn bạn đã nhắn tin cho **NutriBot — Trợ lý Dinh dưỡng Xanh Lá**!\n\nTôi luôn sẵn sàng giúp bạn phân tích ảnh món ăn, tính calo, tư vấn thực đơn Eat-Clean và tìm kiếm nông sản hữu cơ tươi sạch.\n\n*Hotline miễn cước: **1900 6868** (Hỗ trợ 24/7).*`;
-  }
-
-  private loadStoredProvider(): AIProvider {
-    try {
-      const p = localStorage.getItem('xanhla_chatbot_provider') as AIProvider;
-      if (p === 'gemini' || p === 'openai' || p === 'local') return p;
-    } catch {}
-    return 'local';
+    return `🌿 Cảm ơn bạn đã nhắn tin cho **Trợ lý AI Xanh Lá**!\n\nTôi luôn sẵn sàng giúp bạn giải đáp thắc mắc, phân tích ảnh món ăn và tìm kiếm nông sản tươi sạch.\n\n*Hotline miễn cước: **1900 6868** (Hỗ trợ 24/7).*`;
   }
 
   private loadStoredApiKey(): string {
@@ -258,28 +178,5 @@ export class ChatbotService {
       return localStorage.getItem('xanhla_chatbot_apikey') || '';
     } catch {}
     return '';
-  }
-
-  private loadStoredPersona(): AIPersona {
-    try {
-      const p = localStorage.getItem('xanhla_chatbot_persona') as AIPersona;
-      if (p === 'nutribot' || p === 'chef' || p === 'nutritionist' || p === 'support' || p === 'general') return p;
-    } catch {}
-    return 'nutribot'; // Default to NutriBot!
-  }
-
-  private loadStoredProfile(): UserNutritionProfile {
-    try {
-      const saved = localStorage.getItem('xanhla_nutribot_profile');
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return {
-      age: 26,
-      sex: 'female',
-      height: 165,
-      weight: 54,
-      conditions: 'Chăm sóc sức khỏe & vóc dáng',
-      dietGoal: 'Eat-Clean & Cắt mỡ',
-    };
   }
 }

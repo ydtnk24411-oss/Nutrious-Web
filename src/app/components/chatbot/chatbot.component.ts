@@ -10,7 +10,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { ChatbotService, ChatProduct, ChatMessage, AIProvider, AIPersona } from '../../shared/services/chatbot.service';
+import { ChatbotService, ChatProduct, ChatMessage } from '../../shared/services/chatbot.service';
 import { CartService } from '../../shared/services/cart.service';
 import { XanhLaProduct } from '../../shared/models/xanh-la.models';
 
@@ -67,7 +67,7 @@ export class ChatbotComponent implements AfterViewChecked {
     }
   }
 
-  // ── Image Upload Handling (NutriBot Food & Beverage Vision) ──────────
+  // ── Image Upload Handling (Photo of food / ingredients) ──────────
   triggerImagePicker(): void {
     this.fileInputRef?.nativeElement.click();
   }
@@ -144,7 +144,7 @@ export class ChatbotComponent implements AfterViewChecked {
   }
 
   selectSuggestion(s: string): void {
-    if (s.includes('Nhận diện ảnh')) {
+    if (s.includes('ảnh')) {
       this.triggerImagePicker();
       return;
     }
@@ -207,10 +207,5 @@ export class ChatbotComponent implements AfterViewChecked {
     const h = String(d.getHours()).padStart(2, '0');
     const m = String(d.getMinutes()).padStart(2, '0');
     return `${h}:${m}`;
-  }
-
-  // Profile update helpers
-  updateProfileField(field: string, value: any): void {
-    this.chat.updateProfile({ [field]: value });
   }
 }
