@@ -1,67 +1,104 @@
+.order-code-badge {
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #176b3a;
+  background: #eaf4e8;
+  border: 1px solid #d4e7cd;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+}
+
 .order-section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .order-section-title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
-  color: #1f2937;
+  color: #1c2920;
   margin: 0;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #edf3e9;
   display: flex;
   align-items: center;
   gap: 8px;
 }
+.order-section-title svg {
+  color: #176b3a;
+}
 
 .order-info-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
 }
 
-.order-info-grid > div {
+.order-info-card {
+  background: #f8fbf6;
+  border: 1px solid #e2ebd8;
+  border-radius: 8px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 14px;
+  font-size: 13.5px;
+  color: #1c2920;
 }
 
 .order-label {
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #9ca3af;
-  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #626e64;
+  font-weight: 700;
 }
 
 .order-items {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  border: 1px solid #e2ebd8;
+  border-radius: 10px;
+  padding: 12px;
+  background: #fff;
 }
 
 .order-item-row {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #f3f4f6;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #edf3e9;
 }
 .order-item-row:last-child {
   border-bottom: none;
   padding-bottom: 0;
 }
 
+.order-item-img {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid #edf3e9;
+  background: #f7faf5;
+}
+
 .order-total-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 16px;
-  border-top: 2px solid #e5e7eb;
-  font-size: 15px;
+  padding: 14px 16px;
+  background: #f4f8f1;
+  border: 1px solid #dce8d3;
+  border-radius: 8px;
+  font-size: 14.5px;
   font-weight: 600;
-  color: #374151;
+  color: #1c2920;
 }

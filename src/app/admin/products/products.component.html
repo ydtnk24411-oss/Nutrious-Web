@@ -1,28 +1,69 @@
 <!-- Header -->
 <div class="admin-page-header">
-  <h2 class="admin-page-title">🥦 Quản lý sản phẩm</h2>
+  <div>
+    <h2 class="admin-page-title">Quản lý Sản phẩm</h2>
+    <span class="admin-stat-label">Tổng cộng: <strong>{{ total() }}</strong> sản phẩm</span>
+  </div>
   <div style="display:flex;gap:12px;align-items:center">
     <div class="prod-view-toggle">
-      <button class="prod-view-btn" [class.active]="viewMode() === 'grid'" (click)="viewMode.set('grid')" title="Grid view">⊞</button>
-      <button class="prod-view-btn" [class.active]="viewMode() === 'table'" (click)="viewMode.set('table')" title="Table view">☰</button>
+      <button class="prod-view-btn" [class.active]="viewMode() === 'grid'" (click)="viewMode.set('grid')" title="Dạng lưới" aria-label="Dạng lưới">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+      </button>
+      <button class="prod-view-btn" [class.active]="viewMode() === 'table'" (click)="viewMode.set('table')" title="Dạng bảng" aria-label="Dạng bảng">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="8" y1="6" x2="21" y2="6"></line>
+          <line x1="8" y1="12" x2="21" y2="12"></line>
+          <line x1="8" y1="18" x2="21" y2="18"></line>
+          <line x1="3" y1="6" x2="3.01" y2="6"></line>
+          <line x1="3" y1="12" x2="3.01" y2="12"></line>
+          <line x1="3" y1="18" x2="3.01" y2="18"></line>
+        </svg>
+      </button>
     </div>
-    <button class="admin-btn-primary" (click)="openCreate()">+ Thêm sản phẩm</button>
+    <button class="admin-btn-primary" (click)="openCreate()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      <span>Thêm sản phẩm</span>
+    </button>
   </div>
 </div>
 
-@if (success()) { <div class="admin-alert admin-alert-success">✓ {{ success() }}</div> }
-@if (error() && !modalOpen()) { <div class="admin-alert admin-alert-error">⚠ {{ error() }}</div> }
+@if (success()) {
+  <div class="admin-alert admin-alert-success">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <span>{{ success() }}</span>
+  </div>
+}
+@if (error() && !modalOpen()) {
+  <div class="admin-alert admin-alert-error">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+    <span>{{ error() }}</span>
+  </div>
+}
 
 <!-- Toolbar -->
 <div class="admin-toolbar">
-  <input class="admin-search-input" type="text" placeholder="🔍 Tìm sản phẩm..."
-         [value]="search()" (input)="onSearch($any($event.target).value)" />
+  <div class="admin-search-wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    <input class="admin-search-input" type="text" placeholder="Tìm kiếm theo tên sản phẩm..."
+           [value]="search()" (input)="onSearch($any($event.target).value)" />
+  </div>
   <select class="admin-select" [value]="category()" (change)="onCategory($any($event.target).value)">
-  <option value="">Tất cả danh mục</option>
-  @for (c of categories(); track c._id) {
-  <option [value]="c._id">{{ c.name }}</option>
-}
-</select>
+    <option value="">Tất cả danh mục</option>
+    @for (c of categories(); track c._id) {
+      <option [value]="c._id">{{ c.name }}</option>
+    }
+  </select>
   <select class="admin-select" [value]="sort()" (change)="onSort($any($event.target).value)">
     <option value="createdAt">Mới nhất</option>
     <option value="price-asc">Giá tăng dần</option>
@@ -33,13 +74,25 @@
 
 <!-- Loading -->
 @if (loading()) {
-  <div class="admin-empty"><div class="admin-spinner" style="width:32px;height:32px;border-width:3px;margin:0 auto 12px"></div><p>Đang tải...</p></div>
+  <div class="admin-empty">
+    <div class="admin-spinner" style="width:36px;height:36px;border-width:3px;margin:0 auto 14px"></div>
+    <p>Đang tải danh sách sản phẩm...</p>
+  </div>
 }
 
 <!-- Products -->
 @if (!loading()) {
   @if (products().length === 0) {
-    <div class="admin-empty"><div class="admin-empty-icon">📭</div><p>Không có sản phẩm nào.</p></div>
+    <div class="admin-empty">
+      <div class="admin-empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+          <line x1="12" y1="22.08" x2="12" y2="12"></line>
+        </svg>
+      </div>
+      <p>Không tìm thấy sản phẩm nào phù hợp.</p>
+    </div>
   } @else {
     <!-- Grid View -->
     @if (viewMode() === 'grid') {
@@ -51,7 +104,7 @@
             </div>
             <div class="prod-card-body">
               <div class="prod-card-cat">{{ getCategoryName(p.categoryId) }}</div>
-              <h4 class="prod-card-name">{{ p.name }}</h4>
+              <h4 class="prod-card-name" [title]="p.name">{{ p.name }}</h4>
               <div class="prod-card-meta">
                 <strong class="prod-card-price">{{ p.price }}</strong>
                 <span class="admin-badge" [class]="p.isActive ? 'badge-active' : 'badge-inactive'">
@@ -60,9 +113,20 @@
               </div>
               <div class="prod-card-stock">Tồn kho: <strong>{{ p.stock }}</strong></div>
               <div class="prod-card-actions">
-                <button class="admin-btn-icon" title="Chỉnh sửa" (click)="openEdit(p)">✏️</button>
-                <button class="admin-btn-icon" title="Xóa" (click)="remove(p)"
-                        style="color:#dc2626">🗑️</button>
+                <button class="admin-btn-icon" title="Chỉnh sửa" (click)="openEdit(p)" aria-label="Chỉnh sửa">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                </button>
+                <button class="admin-btn-icon admin-btn-icon-danger" title="Xóa" (click)="remove(p)" aria-label="Xóa">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -79,10 +143,10 @@
               <tr>
                 <th>Sản phẩm</th>
                 <th>Danh mục</th>
-                <th>Giá</th>
+                <th>Giá bán</th>
                 <th>Tồn kho</th>
                 <th>Trạng thái</th>
-                <th>Hành động</th>
+                <th style="text-align:right">Hành động</th>
               </tr>
             </thead>
             <tbody>
@@ -105,10 +169,21 @@
                     </span>
                   </td>
                   <td>
-                    <div class="prod-table-actions">
-                      <button class="admin-btn-icon" title="Chỉnh sửa" (click)="openEdit(p)">✏️</button>
-                      <button class="admin-btn-icon" title="Xóa" (click)="remove(p)"
-                              style="color:#dc2626">🗑️</button>
+                    <div class="prod-table-actions" style="justify-content:flex-end">
+                      <button class="admin-btn-icon" title="Chỉnh sửa" (click)="openEdit(p)" aria-label="Chỉnh sửa">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                      </button>
+                      <button class="admin-btn-icon admin-btn-icon-danger" title="Xóa" (click)="remove(p)" aria-label="Xóa">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          <line x1="10" y1="11" x2="10" y2="17"></line>
+                          <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -123,11 +198,17 @@
     <div class="admin-pagination">
       <span>Hiển thị {{ products().length }} / {{ total() }} sản phẩm</span>
       <div class="admin-pagination-btns">
-        <button class="admin-btn-secondary" style="padding:8px 16px;font-size:13px"
-                [disabled]="page() === 1" (click)="prevPage()">← Trước</button>
-        <span style="padding:8px 14px;font-size:13px;font-weight:600">{{ page() }} / {{ totalPages() }}</span>
-        <button class="admin-btn-secondary" style="padding:8px 16px;font-size:13px"
-                [disabled]="page() >= totalPages()" (click)="nextPage()">Tiếp →</button>
+        <button class="admin-btn-secondary" style="padding:7px 14px;font-size:13px"
+                [disabled]="page() === 1" (click)="prevPage()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <span>Trước</span>
+        </button>
+        <span style="padding:6px 12px;font-size:13px;font-weight:600;color:#2c4230">{{ page() }} / {{ totalPages() }}</span>
+        <button class="admin-btn-secondary" style="padding:7px 14px;font-size:13px"
+                [disabled]="page() >= totalPages()" (click)="nextPage()">
+          <span>Sau</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
       </div>
     </div>
   }
@@ -139,60 +220,70 @@
     <div class="admin-modal" (click)="$event.stopPropagation()">
 
       <div class="admin-modal-header">
-        <h3>{{ modalMode() === 'create' ? '+ Thêm sản phẩm' : '✏️ Chỉnh sửa sản phẩm' }}</h3>
-        <button class="admin-btn-icon" (click)="closeModal()">✕</button>
+        <h3>{{ modalMode() === 'create' ? 'Thêm sản phẩm mới' : 'Chỉnh sửa sản phẩm' }}</h3>
+        <button class="admin-btn-icon" (click)="closeModal()" aria-label="Đóng">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="18" x2="18" y2="6"></line>
+          </svg>
+        </button>
       </div>
 
       <div class="admin-modal-body">
-        @if (error()) { <div class="admin-alert admin-alert-error">⚠ {{ error() }}</div> }
+        @if (error()) {
+          <div class="admin-alert admin-alert-error">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span>{{ error() }}</span>
+          </div>
+        }
 
         <div class="admin-form-grid">
-
           <!-- Name -->
           <div class="admin-field" style="grid-column:1/-1">
             <label>Tên sản phẩm *</label>
-            <input type="text" placeholder="Vd: Golden Mangoes"
+            <input type="text" placeholder="Ví dụ: Xoài cát Chu organic"
                    [value]="form().name" (input)="onNameChange($any($event.target).value)" />
           </div>
 
           <!-- Slug -->
           <div class="admin-field" style="grid-column:1/-1">
-            <label>Slug *</label>
-            <input type="text" placeholder="golden-mangoes"
+            <label>Đường dẫn Slug *</label>
+            <input type="text" placeholder="xoai-cat-chu-organic"
                    [value]="form().slug" (input)="setField('slug', $any($event.target).value)" />
           </div>
 
           <!-- Price -->
           <div class="admin-field">
             <label>Giá hiển thị *</label>
-            <input type="text" placeholder="25 ₫"
+            <input type="text" placeholder="65.000 ₫"
                    [value]="form().price" (input)="setField('price', $any($event.target).value)" />
           </div>
 
           <!-- Price number -->
           <div class="admin-field">
-            <label>Giá số *</label>
-            <input type="number" placeholder="25" min="0"
+            <label>Giá số (VNĐ) *</label>
+            <input type="number" placeholder="65000" min="0"
                    [value]="form().priceNumber"
                    (input)="setField('priceNumber', +$any($event.target).value)" />
           </div>
 
           <!-- Category -->
-<div class="admin-field">
-  <label>Danh mục *</label>
-  <select
-    [value]="form().categoryId"
-    (change)="setField('categoryId', $any($event.target).value)"
-  >
-    <option value="">Chọn danh mục</option>
-    @for (c of categories(); track c._id) {
-      <option [value]="c._id">{{ c.name }}</option>
-    }
-  </select>
-</div>
+          <div class="admin-field">
+            <label>Danh mục *</label>
+            <select
+              [value]="form().categoryId"
+              (change)="setField('categoryId', $any($event.target).value)"
+            >
+              <option value="">Chọn danh mục</option>
+              @for (c of categories(); track c._id) {
+                <option [value]="c._id">{{ c.name }}</option>
+              }
+            </select>
+          </div>
+
           <!-- Stock -->
           <div class="admin-field">
-            <label>Tồn kho</label>
+            <label>Số lượng tồn kho</label>
             <input type="number" placeholder="100" min="0"
                    [value]="form().stock"
                    (input)="setField('stock', +$any($event.target).value)" />
@@ -207,8 +298,8 @@
 
           <!-- Description -->
           <div class="admin-field" style="grid-column:1/-1">
-            <label>Mô tả</label>
-            <textarea placeholder="Mô tả sản phẩm..."
+            <label>Mô tả chi tiết</label>
+            <textarea placeholder="Mô tả công dụng, xuất xứ sản phẩm..."
                       [value]="form().description ?? ''"
                       (input)="setField('description', $any($event.target).value)"></textarea>
           </div>
@@ -223,7 +314,7 @@
 
           <!-- Type -->
           <div class="admin-field">
-            <label>Loại</label>
+            <label>Loại sản phẩm</label>
             <select [value]="form().type" (change)="setField('type', $any($event.target).value)">
               @for (t of types; track t) { <option [value]="t">{{ t }}</option> }
             </select>
@@ -231,27 +322,27 @@
 
           <!-- Weight -->
           <div class="admin-field">
-            <label>Khối lượng</label>
+            <label>Khối lượng / Đóng gói</label>
             <input type="text" placeholder="500g"
                    [value]="form().weight" (input)="setField('weight', $any($event.target).value)" />
           </div>
 
           <!-- isActive -->
           <div class="admin-field" style="justify-content:flex-end;flex-direction:row;align-items:center;gap:10px">
-            <label style="margin:0;font-weight:600;font-size:14px">Hiển thị</label>
+            <label style="margin:0;font-weight:600;font-size:13.5px;color:#2c4230">Hiển thị bán</label>
             <input type="checkbox" [checked]="form().isActive !== false"
                    (change)="setField('isActive', $any($event.target).checked)"
-                   style="width:18px;height:18px;accent-color:#3d4d3a;cursor:pointer" />
+                   style="width:18px;height:18px;accent-color:#176b3a;cursor:pointer" />
           </div>
 
         </div>
       </div>
 
       <div class="admin-modal-footer">
-        <button class="admin-btn-secondary" (click)="closeModal()">Hủy</button>
+        <button class="admin-btn-secondary" (click)="closeModal()">Hủy bỏ</button>
         <button class="admin-btn-primary" [disabled]="saving()" (click)="save()">
-          @if (saving()) { <span class="admin-spinner"></span> Đang lưu... }
-          @else { {{ modalMode() === 'create' ? 'Thêm sản phẩm' : 'Lưu thay đổi' }} }
+          @if (saving()) { <span class="admin-spinner" style="border-top-color:#fff;border-color:rgba(255,255,255,0.2)"></span> Đang lưu... }
+          @else { {{ modalMode() === 'create' ? 'Tạo sản phẩm' : 'Lưu thay đổi' }} }
         </button>
       </div>
 

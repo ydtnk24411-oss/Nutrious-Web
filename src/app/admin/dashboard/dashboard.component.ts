@@ -1,7 +1,7 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { DashboardApiService, DashboardStats, TopProduct, RevenueData, CategoryRevenue } from '../../shared/services/dashboard-api.service';
+import { DashboardApiService, DashboardStats, CategoryRevenue, TopProduct } from '../../shared/services/dashboard-api.service';
 import { AdminAuthService } from '../../shared/services/admin-auth.service';
 
 export interface LinePoint { date: string; revenue: number; count: number; }
@@ -15,7 +15,7 @@ export interface LinePoint { date: string; revenue: number; count: number; }
 })
 export class AdminDashboardComponent implements OnInit {
   private dashApi = inject(DashboardApiService);
-  protected auth = inject(AdminAuthService);
+  protected auth  = inject(AdminAuthService);
 
   stats       = signal<DashboardStats | null>(null);
   barData     = signal<CategoryRevenue[]>([]);
@@ -43,29 +43,33 @@ export class AdminDashboardComponent implements OnInit {
     {
       key: 'totalRevenue',
       label: 'Tổng doanh thu',
-      svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 0 0-7H7"/></svg>',
-      bgColor: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)',
+      svgIcon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 0 0-7H7"/></svg>',
+      bgColor: '#eaf4e8',
+      color: '#176b3a',
       isCurrency: true
     },
     {
       key: 'totalOrders',
-      label: 'Tổng đơn hàng',
-      svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
-      bgColor: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+      label: 'Đơn hàng hoàn tất',
+      svgIcon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
+      bgColor: '#f1faea',
+      color: '#5ca32a',
       isCurrency: false
     },
     {
       key: 'averageOrderValue',
-      label: 'Giá trị đơn TB',
-      svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
-      bgColor: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+      label: 'Giá trị trung bình đơn',
+      svgIcon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+      bgColor: '#fff8e6',
+      color: '#d97706',
       isCurrency: true
     },
     {
       key: 'totalUsers',
-      label: 'Khách hàng mua hàng',
-      svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-      bgColor: 'linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%)',
+      label: 'Khách hàng thân thiết',
+      svgIcon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+      bgColor: '#e0f2fe',
+      color: '#0284c7',
       isCurrency: false
     },
   ];
@@ -101,141 +105,123 @@ export class AdminDashboardComponent implements OnInit {
 
   onTimeFilterChange(filter: '7d' | '30d' | '90d' | 'custom'): void {
     this.timeFilter.set(filter);
-    this.loadData();
+    if (filter !== 'custom') {
+      this.loadData();
+    }
   }
 
-  onCustomDateChange(field: 'start' | 'end', value: string): void {
-    if (field === 'start') {
+  onCustomDateChange(type: 'start' | 'end', value: string): void {
+    if (type === 'start') {
       this.customStartDate.set(value);
     } else {
       this.customEndDate.set(value);
     }
+
     if (this.customStartDate() && this.customEndDate()) {
       this.loadData();
     }
   }
 
-  getDateRange(): { startDate: string; endDate: string } {
-    const now = new Date();
-    const end = now.toISOString().split('T')[0];
-    let start: string;
-
-    switch (this.timeFilter()) {
-      case '7d':
-        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        start = sevenDaysAgo.toISOString().split('T')[0];
-        break;
-      case '30d':
-        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        start = thirtyDaysAgo.toISOString().split('T')[0];
-        break;
-      case '90d':
-        const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-        start = ninetyDaysAgo.toISOString().split('T')[0];
-        break;
-      case 'custom':
-        start = this.customStartDate();
-        break;
-      default:
-        const defaultDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        start = defaultDaysAgo.toISOString().split('T')[0];
+  getDateRange(): { startDate?: string; endDate?: string } {
+    const filter = this.timeFilter();
+    if (filter === 'custom') {
+      return {
+        startDate: this.customStartDate(),
+        endDate: this.customEndDate()
+      };
     }
 
-    return { startDate: start, endDate: end };
+    const end = new Date();
+    const start = new Date();
+
+    if (filter === '7d') {
+      start.setDate(end.getDate() - 7);
+    } else if (filter === '30d') {
+      start.setDate(end.getDate() - 30);
+    } else if (filter === '90d') {
+      start.setDate(end.getDate() - 90);
+    }
+
+    return {
+      startDate: start.toISOString().split('T')[0],
+      endDate: end.toISOString().split('T')[0]
+    };
   }
 
   statValue(key: string): number {
     const s = this.stats();
     if (!s) return 0;
-    return (s as unknown as Record<string, number>)[key] ?? 0;
+    return (s as any)[key] ?? 0;
   }
 
-  formatBig(val: number): string {
-    if (val >= 1_000_000) return (val / 1_000_000).toFixed(1) + 'M';
-    if (val >= 1_000)     return (val / 1_000).toFixed(1) + 'K';
-    return val.toString();
+  formatPrice(v: number): string {
+    return v.toLocaleString('vi-VN') + 'đ';
   }
 
-  formatPrice(val: number): string {
-    return val.toLocaleString('vi-VN') + ' ₫';
+  barHeight(rev: number): number {
+    const max = Math.max(...this.barData().map(b => b.revenue), 1);
+    return Math.max(12, Math.round((rev / max) * 160));
   }
 
-  // Tính chiều cao bar theo tỉ lệ (max = 160px)
-  barHeight(revenue: number): number {
-    const vals = this.barData().map(b => b.revenue);
-    const max  = Math.max(...vals, 1);
-    return Math.max(Math.round((revenue / max) * 140), 4);
-  }
-
-  // Alternating highlight: bar chẵn (index 1, 3, ...) màu nhạt
   isHighlight(index: number): boolean {
-    return index % 2 === 1;
+    return index === 0;
   }
 
-  // SVG polyline points cho line chart
+  // Line chart helpers
+  get maxRevenue(): number {
+    const data = this.lineData();
+    if (data.length === 0) return 1;
+    return Math.max(...data.map(d => d.revenue), 1);
+  }
+
+  linePointY(rev: number): number {
+    const max = this.maxRevenue;
+    const h = 180;
+    const padding = 20;
+    return h - ((rev / max) * (h - padding * 2)) - padding;
+  }
+
   get linePoints(): string {
     const data = this.lineData();
-    if (data.length < 2) return '';
-    const W = 560, H = 160;
-    const maxV = Math.max(...data.map(d => d.revenue), 1);
-    return data.map((d, i) => {
-      const x = (i / (data.length - 1)) * (W - 40) + 20;
-      const y = d.revenue === 0
-        ? H / 2
-        : H - (d.revenue / maxV) * (H - 40) - 20;
-      return `${x},${y}`;
-    }).join(' ');
+    if (data.length === 0) return '';
+    const w = 560;
+    const step = w / (data.length - 1 || 1);
+    return data.map((d, i) => `${(i * step) + 20},${this.linePointY(d.revenue)}`).join(' ');
   }
 
-  // SVG polygon points cho area under line
   get lineAreaPoints(): string {
+    const points = this.linePoints;
+    if (!points) return '';
     const data = this.lineData();
-    if (data.length < 2) return '';
-    const W = 560, H = 160;
-    const maxV = Math.max(...data.map(d => d.revenue), 1);
-    const points = data.map((d, i) => {
-      const x = (i / (data.length - 1)) * (W - 40) + 20;
-      const y = d.revenue === 0
-        ? H / 2
-        : H - (d.revenue / maxV) * (H - 40) - 20;
-      return `${x},${y}`;
-    }).join(' ');
-    return `${points} ${W},${H} 20,${H}`;
+    const lastX = ((data.length - 1) * (560 / (data.length - 1 || 1))) + 20;
+    return `20,200 ${points} ${lastX},200`;
   }
 
-  // Tính toán vị trí y cho từng điểm trong line chart
-  linePointY(revenue: number): number {
-    const data = this.lineData();
-    const H = 160;
-    const maxV = Math.max(...data.map(d => d.revenue), 1);
-    return revenue === 0 ? 80 : (H - (revenue / maxV) * (H - 40) - 20);
-  }
-
-  // Sale insights - generate based on actual data
-  generateInsights(stats: DashboardStats | null): string[] {
+  generateInsights(stats: DashboardStats): string[] {
     const insights: string[] = [];
-    if (!stats) return insights;
 
-    const deliveredOrders = stats.ordersByStatus.find(o => o._id === 'delivered')?.count || 0;
+    const deliveredOrders = stats.ordersByStatus?.find(s => s._id === 'delivered')?.count ?? 0;
     const totalOrders = stats.totalOrders;
     const completionRate = totalOrders > 0 ? (deliveredOrders / totalOrders * 100) : 0;
 
     if (completionRate > 80) {
-      insights.push(`Tỷ lệ đơn hoàn thành cao (${completionRate.toFixed(1)}%) - quy trình vận hành ổn định.`);
+      insights.push(`Tỷ lệ đơn hoàn thành xuất sắc (${completionRate.toFixed(1)}%) - quy trình vận hành và giao hàng xe lạnh ổn định.`);
     } else if (completionRate < 50) {
-      insights.push(`Tỷ lệ đơn hoàn thành thấp (${completionRate.toFixed(1)}%) - cần xem xét các đơn đang xử lý.`);
+      insights.push(`Tỷ lệ đơn hoàn thành đạt ${completionRate.toFixed(1)}% - đề xuất kiểm tra các đơn hàng đang chuẩn bị hoặc đang giao.`);
     }
 
     if (stats.averageOrderValue > 100000) {
-      insights.push(`Giá trị đơn hàng trung bình khá cao (${this.formatPrice(stats.averageOrderValue)}) - khách hàng mua nhiều mỗi đơn.`);
+      insights.push(`Giá trị đơn hàng trung bình đạt mức cao (${this.formatPrice(stats.averageOrderValue)}) - người tiêu dùng có xu hướng mua trọn gói giỏ hàng tươi.`);
     } else if (stats.averageOrderValue < 50000) {
-      insights.push(`Giá trị đơn hàng trung bình thấp (${this.formatPrice(stats.averageOrderValue)}) - có thể khuyến mã upsell.`);
+      insights.push(`Giá trị đơn hàng trung bình đạt ${this.formatPrice(stats.averageOrderValue)} - có thể bổ sung combo ưu đãi để kích thích quy mô đơn hàng.`);
     }
+
+    insights.push(`Hệ sinh thái Xanh Lá đang duy trì ${stats.totalUsers} khách hàng mua sắm thường xuyên với danh mục nông sản tươi sạch đa dạng.`);
 
     return insights;
   }
 
-  // Order status breakdown for donut chart - convert to method
+  // Order status breakdown for donut chart
   getOrderStatusBreakdown() {
     const s = this.stats();
     if (!s || !s.ordersByStatus) return [];
@@ -243,11 +229,11 @@ export class AdminDashboardComponent implements OnInit {
     const total = s.ordersByStatus.reduce((sum: number, item: any) => sum + item.count, 0);
     const colors: Record<string, string> = {
       pending: '#f59e0b',
-      confirmed: '#3b82f6',
+      confirmed: '#0284c7',
       preparing: '#8b5cf6',
-      shipping: '#06b6d4',
-      delivered: '#059669',
-      cancelled: '#ef4444',
+      shipping: '#059669',
+      delivered: '#176b3a',
+      cancelled: '#dc2626',
     };
 
     return s.ordersByStatus.map((item: any) => ({
@@ -259,7 +245,7 @@ export class AdminDashboardComponent implements OnInit {
     }));
   }
 
-  // Calculate donut chart segments - convert to method
+  // Calculate donut chart segments
   getDonutSegments() {
     const breakdown = this.getOrderStatusBreakdown();
     const total = breakdown.reduce((sum: number, item: any) => sum + item.count, 0);
@@ -277,7 +263,8 @@ export class AdminDashboardComponent implements OnInit {
       cumulativeOffset += dashArray;
       return segment;
     });
-}
+  }
+
   hasOrderStatusData(): boolean {
     const s = this.stats();
     return !!(s && s.ordersByStatus && s.ordersByStatus.length > 0);

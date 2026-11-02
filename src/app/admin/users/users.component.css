@@ -1,1 +1,23 @@
-/* Styles come from global admin tokens in styles.css */
+.user-avatar-initial {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #176b3a 0%, #10321c 100%);
+  color: #85dd52;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 5px rgba(23, 107, 58, 0.2);
+}
+
+.admin-btn-icon-danger {
+  color: #b91c1c;
+}
+.admin-btn-icon-danger:hover {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+  border-color: #fca5a5 !important;
+}

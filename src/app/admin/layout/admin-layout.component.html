@@ -2,137 +2,160 @@
 
   <!-- ── Sidebar ──────────────────────────────────────── -->
   <aside class="admin-sidebar">
-    <!-- Brand -->
+    <!-- Brand Header -->
     <div class="admin-sidebar-header">
-      <div class="admin-sidebar-logo">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 2C7.03 2 3 6.03 3 11c0 3.94 2.56 7.3 6.09 8.7 1.54.63 3.28.63 4.82 0C17.44 18.3 20 14.94 20 11c0-4.97-4.03-9-9-9z"/>
-          <path d="M12 5c-2.76 0-5 2.24-5 5 0 1.5.67 2.85 1.73 3.77"/>
-          <path d="M12 11c0 1.5.67 2.85 1.73 3.77"/>
+      <div class="admin-sidebar-logo" title="Xanh Lá Farm">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+          <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
         </svg>
       </div>
       @if (sidebarOpen()) {
         <div class="admin-sidebar-brand">
-          <span class="admin-sidebar-name">Xanh Lá</span>
-          <span class="admin-sidebar-tagline">Thực phẩm sạch - Sống lành mạnh</span>
+          <span class="admin-sidebar-name">XANH LÁ</span>
+          <span class="admin-sidebar-tagline">Quản trị Nông trại & Bán hàng</span>
         </div>
       }
     </div>
 
-    <!-- Navigation -->
+    <!-- Navigation List (Scrollable) -->
     <nav class="admin-sidebar-nav">
-      @for (item of navItems; track item.path) {
-        <a
-          [routerLink]="item.path"
-          routerLinkActive="is-active"
-          class="admin-nav-item"
-          [title]="item.label"
-        >
-          <span class="admin-nav-icon" [innerHTML]="item.svgIcon"></span>
-          @if (sidebarOpen()) {
-            <span class="admin-nav-label">{{ item.label }}</span>
-          }
-        </a>
+      @for (sec of navSections; track sec.title) {
+        @if (sidebarOpen() && sec.title) {
+          <div class="admin-nav-section-title">{{ sec.title }}</div>
+        }
+        @for (item of sec.items; track item.path) {
+          <a
+            [routerLink]="item.path"
+            routerLinkActive="is-active"
+            class="admin-nav-item"
+            [title]="item.label"
+          >
+            <span class="admin-nav-icon" [innerHTML]="item.svgIcon"></span>
+            @if (sidebarOpen()) {
+              <span class="admin-nav-label">{{ item.label }}</span>
+            }
+          </a>
+        }
       }
     </nav>
 
-    <!-- Ad Section -->
+    <!-- Storefront Quick Link -->
     @if (sidebarOpen()) {
-      <div class="admin-sidebar-ad">
-        <div class="admin-sidebar-ad-img">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#a3b18a" stroke-width="1.5">
-            <path d="M12 2C7.03 2 3 6.03 3 11c0 3.94 2.56 7.3 6.09 8.7 1.54.63 3.28.63 4.82 0C17.44 18.3 20 14.94 20 11c0-4.97-4.03-9-9-9z"/>
-            <path d="M12 5c-2.76 0-5 2.24-5 5 0 1.5.67 2.85 1.73 3.77"/>
+      <div class="admin-sidebar-store-banner">
+        <div class="admin-store-info">
+          <span class="admin-store-title">Cửa hàng Xanh Lá</span>
+          <span class="admin-store-desc">Xem giao diện khách hàng</span>
+        </div>
+        <button type="button" class="admin-store-btn" (click)="openStorefront()" title="Mở trang khách hàng">
+          <span>Khám phá</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15 3 21 3 21 9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
           </svg>
-        </div>
-        <div class="admin-sidebar-ad-text">
-          <span class="admin-sidebar-ad-title">Thực phẩm tươi sạch</span>
-          <span class="admin-sidebar-ad-desc">Từ nông trại Xanh Lá</span>
-        </div>
+        </button>
       </div>
     }
 
-    <!-- Logout -->
+    <!-- Sidebar Footer / Admin Account -->
     <div class="admin-sidebar-footer">
-      <button class="admin-nav-item admin-logout-btn" (click)="logout()" title="Đăng xuất">
-        <span class="admin-nav-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-        </span>
+      <div class="admin-profile-card">
+        <div class="admin-profile-avatar">
+          @if (auth.user()?.avatar) {
+            <img [src]="auth.user()?.avatar" [alt]="auth.user()?.name" />
+          } @else {
+            {{ (auth.user()?.name ?? 'Admin').charAt(0).toUpperCase() }}
+          }
+        </div>
         @if (sidebarOpen()) {
-          <span class="admin-nav-label">Đăng xuất</span>
+          <div class="admin-profile-details">
+            <span class="admin-profile-name">{{ auth.user()?.name ?? 'Admin Xanh Lá' }}</span>
+            <span class="admin-profile-badge">Quản trị viên</span>
+          </div>
+          <button class="admin-sidebar-logout" (click)="logout()" title="Đăng xuất">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </button>
         }
-      </button>
+      </div>
     </div>
   </aside>
 
-  <!-- ── Main ─────────────────────────────────────────── -->
+  <!-- ── Main Area ─────────────────────────────────────── -->
   <div class="admin-main">
 
     <!-- Topbar -->
     <header class="admin-topbar">
-      <!-- Toggle -->
-      <button class="admin-toggle-btn" type="button" (click)="toggleSidebar()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2">
-          <line x1="3" y1="12" x2="21" y2="12"/>
-          <line x1="3" y1="6"  x2="21" y2="6"/>
-          <line x1="3" y1="18" x2="21" y2="18"/>
-        </svg>
-      </button>
+      <div class="admin-topbar-left">
+        <!-- Toggle button -->
+        <button class="admin-toggle-btn" type="button" (click)="toggleSidebar()" title="Đóng/mở menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="6"  x2="21" y2="6"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
 
-      <!-- Search -->
+        <!-- Breadcrumb / System identity -->
+        <div class="admin-topbar-breadcrumb">
+          <span class="admin-breadcrumb-home">Hệ thống Xanh Lá</span>
+          <span class="admin-breadcrumb-sep">/</span>
+          <span class="admin-breadcrumb-current">Khu vực Quản trị</span>
+        </div>
+      </div>
+
+      <!-- Quick Search Bar -->
       <div class="admin-topbar-search">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/>
           <line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input type="text" placeholder="Tìm kiếm sản phẩm, đơn hàng, khách hàng" />
-        <span class="admin-search-shortcut">Ctrl + K</span>
+        <input type="text" placeholder="Tìm kiếm nhanh đơn hàng, sản phẩm, khách hàng..." />
+        <span class="admin-search-shortcut">⌘K</span>
       </div>
 
       <!-- Right Actions -->
       <div class="admin-topbar-actions">
-        <!-- Notifications -->
-        <button class="admin-topbar-icon" title="Thông báo">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <!-- Storefront link -->
+        <button class="admin-topbar-store-btn" (click)="openStorefront()" title="Mở trang bán hàng">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          <span>Xem website</span>
+        </button>
+
+        <!-- Notification Bell -->
+        <button class="admin-topbar-icon" title="Thông báo hệ thống">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
           </svg>
           <span class="admin-badge-dot"></span>
         </button>
 
-        <!-- Messages -->
-        <button class="admin-topbar-icon" title="Tin nhắn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-        </button>
-
-        <!-- User Profile -->
+        <!-- User Quick Card -->
         <div class="admin-topbar-user">
           <div class="admin-user-avatar">
             @if (auth.user()?.avatar) {
-              <img
-                [src]="auth.user()?.avatar"
-                [alt]="auth.user()?.name"
-              />
+              <img [src]="auth.user()?.avatar" [alt]="auth.user()?.name" />
             } @else {
-              {{ auth.user()?.name?.trim()?.charAt(0)?.toUpperCase() }}
+              {{ (auth.user()?.name ?? 'Admin').charAt(0).toUpperCase() }}
             }
           </div>
           <div class="admin-user-info">
-            <span class="admin-user-name">{{ auth.user()?.name ?? 'Admin' }}</span>
+            <span class="admin-user-name">{{ auth.user()?.name ?? 'Admin Xanh Lá' }}</span>
             <span class="admin-user-role">Quản trị viên</span>
           </div>
         </div>
       </div>
     </header>
 
-    <!-- Page content -->
+    <!-- Page Content Router -->
     <main class="admin-content">
       <router-outlet />
     </main>
