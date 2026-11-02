@@ -13,7 +13,7 @@ const productSchema = new mongoose.Schema(
     priceNumber: { type: Number, required: true, min: 0 },
     image:       { type: String, default: '' },
     category:    { type: String, default: '' },
-    categoryId:  { type: String, default: '' },
+    categoryId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Category', default: null },
     categoryVi:  { type: String, default: '' },
     description: { type: String, default: '' },
     container:   { type: String, default: '' },

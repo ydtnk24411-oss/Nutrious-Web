@@ -1,21 +1,58 @@
-const router  = require('express').Router();
+const router   = require('express').Router();
+const mongoose = require('mongoose');
 const { body } = require('express-validator');
 const Product  = require('../models/Product');
+const Category = require('../models/Category');
 const { protect, adminOnly } = require('../middleware/auth');
 const { validate }           = require('../middleware/validate');
 
-// GET /api/products  — public, supports ?categoryId=&search=&sort=&page=&limit=
+// GET /api/products  — public, supports ?categoryId=&category=&search=&sort=&page=&limit=
 router.get('/', async (req, res, next) => {
   try {
-    const { categoryId, search, sort = 'createdAt', page = 1, limit = 20 } = req.query;
+    const { categoryId, category, search, sort = 'createdAt', page = 1, limit = 20 } = req.query;
     const filter = { isActive: { $ne: false } };
 
-    if (categoryId && categoryId !== 'all') {
-      // categoryId trong DB là string thường, không phải ObjectId
-      filter.categoryId = categoryId;
+    const catParam = categoryId || category;
+    if (catParam && catParam !== 'all') {
+      if (mongoose.Types.ObjectId.isValid(catParam)) {
+        filter.categoryId = new mongoose.Types.ObjectId(catParam);
+      } else {
+        // Find category by slug or name
+        const cleanSlug = catParam.startsWith('/') ? catParam : `/category/${catParam}`;
+        const foundCat = await Category.findOne({
+          $or: [
+            { slug: cleanSlug },
+            { slug: catParam },
+            { name: catParam }
+          ]
+        });
+        if (foundCat) {
+          filter.categoryId = foundCat._id;
+        } else {
+          filter.$or = [
+            { category: catParam },
+            { categoryVi: catParam },
+          ];
+        }
+      }
     }
 
-    if (search) filter.$text = { $search: search };
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      const searchCondition = {
+        $or: [
+          { name: { $regex: searchRegex } },
+          { slug: { $regex: searchRegex } },
+          { description: { $regex: searchRegex } },
+        ]
+      };
+      if (filter.$or) {
+        filter.$and = [{ $or: filter.$or }, searchCondition];
+        delete filter.$or;
+      } else {
+        filter.$or = searchCondition.$or;
+      }
+    }
 
     const sortObj = sort === 'price-asc'  ? { priceNumber:  1 }
                   : sort === 'price-desc' ? { priceNumber: -1 }
@@ -41,7 +78,10 @@ router.get('/', async (req, res, next) => {
 // GET /api/products/:slug — public
 router.get('/:slug', async (req, res, next) => {
   try {
-    const product = await Product.findOne({ slug: req.params.slug, isActive: { $ne: false } });
+    let product = await Product.findOne({ slug: req.params.slug, isActive: { $ne: false } });
+    if (!product && mongoose.Types.ObjectId.isValid(req.params.slug)) {
+      product = await Product.findOne({ _id: req.params.slug, isActive: { $ne: false } });
+    }
     if (!product) return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
     res.json({ success: true, data: product });
   } catch (err) { next(err); }
@@ -56,6 +96,13 @@ const productValidation = [
 // POST /api/products — admin
 router.post('/', protect, adminOnly, productValidation, validate, async (req, res, next) => {
   try {
+    if (req.body.categoryId) {
+      const cat = await Category.findById(req.body.categoryId);
+      if (cat) {
+        req.body.category = (cat.slug || '').replace(/^\/category\//, '');
+        req.body.categoryVi = cat.name;
+      }
+    }
     const product = await Product.create(req.body);
     res.status(201).json({ success: true, data: product });
   } catch (err) { next(err); }
@@ -64,6 +111,13 @@ router.post('/', protect, adminOnly, productValidation, validate, async (req, re
 // PUT /api/products/:id — admin
 router.put('/:id', protect, adminOnly, async (req, res, next) => {
   try {
+    if (req.body.categoryId) {
+      const cat = await Category.findById(req.body.categoryId);
+      if (cat) {
+        req.body.category = (cat.slug || '').replace(/^\/category\//, '');
+        req.body.categoryVi = cat.name;
+      }
+    }
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
     if (!product) return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
     res.json({ success: true, data: product });
