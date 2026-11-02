@@ -62,7 +62,19 @@ export class OrderDetailComponent implements OnInit {
     }
 
     // Demo data for now - in production, fetch from API
-    this.loadOrderDemo(orderCode);
+    this.orderApi.track(orderCode).subscribe({
+      next: (res) => {
+        if (res?.success && res?.data) {
+          this.order.set(res.data as any);
+        } else {
+          this.loadOrderDemo(orderCode);
+        }
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loadOrderDemo(orderCode);
+      }
+    });
   }
 
   private loadOrderDemo(orderCode: string): void {
@@ -161,8 +173,9 @@ export class OrderDetailComponent implements OnInit {
     return steps;
   }
 
-  formatPrice(value: number): string {
-    return value.toLocaleString('vi-VN') + 'đ';
+  formatPrice(value: number | string): string {
+    const num = typeof value === 'number' ? value : Number(String(value || 0).replace(/[^\d]/g, ''));
+    return num.toLocaleString('vi-VN') + 'đ';
   }
 
   formatDate(date: string): string {

@@ -1,4 +1,4 @@
-﻿<app-shell>
+<app-shell>
   @if (cart.currentUser(); as user) {
     <div class="acc-page xanhla-container">
 
@@ -109,7 +109,9 @@
               <h3 class="acc-section-title">Đơn hàng gần đây</h3>
               <a (click)="activeTab.set('orders')" class="acc-link">Xem tất cả</a>
             </div>
-            @if (orders().length > 0) {
+            @if (loadingOrders()) {
+              <div class="acc-empty" style="padding:20px">Đang tải đơn hàng...</div>
+            } @else if (orders().length > 0) {
               <div class="acc-order-list">
                 @for (order of orders().slice(0, 3); track order.id) {
                   <div class="acc-order-item">
@@ -478,7 +480,9 @@
           </div>
         </div>
 
-        @if (filteredOrders().length > 0) {
+        @if (loadingOrders()) {
+          <div class="acc-empty" style="padding:40px">Đang tải danh sách đơn hàng...</div>
+        } @else if (filteredOrders().length > 0) {
           <div class="acc-order-list-full">
             @for (order of filteredOrders(); track order.id) {
               <div class="acc-order-card">
@@ -500,7 +504,7 @@
                 </div>
                 <div class="acc-order-footer">
                   <div class="acc-order-total">Tổng: {{ formatPrice(order.total) }}</div>
-                  <a [routerLink]="'/order-detail/' + order.orderCode" class="acc-btn-outline acc-btn-sm">Chi tiết</a>
+                  <a [routerLink]="'/order/' + order.orderCode" class="acc-btn-outline acc-btn-sm">Chi tiết</a>
                 </div>
               </div>
             }

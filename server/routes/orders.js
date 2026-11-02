@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const jwt    = require('jsonwebtoken');
 const { body } = require('express-validator');
 const Order  = require('../models/Order');
 const { protect, adminOnly } = require('../middleware/auth');
@@ -15,7 +16,17 @@ router.post(
   validate,
   async (req, res, next) => {
     try {
-      const order = await Order.create(req.body);
+      const orderData = { ...req.body };
+      if (!orderData.user && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+        try {
+          const token = req.headers.authorization.split(' ')[1];
+          const decoded = jwt.verify(token, process.env.JWT_SECRET || 'xanhla_secret');
+          if (decoded && decoded.id) {
+            orderData.user = decoded.id;
+          }
+        } catch (_) {}
+      }
+      const order = await Order.create(orderData);
       res.status(201).json({ success: true, data: { orderCode: order.orderCode, _id: order._id } });
     } catch (err) { next(err); }
   }
@@ -57,8 +68,15 @@ router.get('/track/:code', async (req, res, next) => {
 router.get('/my', protect, async (req, res, next) => {
   try {
     const { status, page = 1, limit = 20, search } = req.query;
-    const filter = { user: req.user.id };
-    if (status) filter.status = status;
+    const userId = req.user._id || req.user.id;
+    const userEmail = req.user.email;
+    const filter = {
+      $or: [
+        { user: userId },
+        ...(userEmail ? [{ user: null, guestEmail: userEmail }, { user: { $exists: false }, guestEmail: userEmail }] : [])
+      ]
+    };
+    if (status && status !== 'all') filter.status = status;
     if (search) filter.orderCode = { $regex: search, $options: 'i' };
 
     const skip = (Number(page) - 1) * Number(limit);
@@ -77,7 +95,9 @@ router.get('/:code', protect, async (req, res, next) => {
       .populate('user', 'name email');
     if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng.' });
     // Check if user owns this order or is admin
-    if (order.user && order.user._id.toString() !== req.user.id && req.user.role !== 'admin') {
+    const isOwner = (order.user && (order.user._id?.toString() === req.user.id || order.user.toString() === req.user.id)) ||
+                    (!order.user && order.guestEmail === req.user.email);
+    if (!isOwner && req.user.role !== 'admin') {
       return res.status(403).json({ success: false, message: 'Bạn không có quyền xem đơn hàng này.' });
     }
     res.json({ success: true, data: order });
