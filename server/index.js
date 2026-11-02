@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -16,6 +16,8 @@ const categoryRoutes   = require('./routes/categories');
 const accountRoutes    = require('./routes/account');
 const voucherRoutes    = require('./routes/vouchers');
 const loyaltyRoutes    = require('./routes/loyalty');
+const nutritionRoutes  = require('./routes/nutrition');
+const footerRoutes     = require('./routes/footer');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app  = express();
@@ -40,6 +42,8 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/account',    accountRoutes);
 app.use('/api/vouchers',   voucherRoutes);
 app.use('/api/loyalty',    loyaltyRoutes);
+app.use('/api/nutrition',  nutritionRoutes);
+app.use('/api/footer',     footerRoutes);
 
 // ── Health check ──────────────────────────────────────────
 app.get('/api/health', (_req, res) =>

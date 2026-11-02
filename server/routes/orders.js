@@ -2,6 +2,8 @@ const router = require('express').Router();
 const jwt    = require('jsonwebtoken');
 const { body } = require('express-validator');
 const Order  = require('../models/Order');
+const Voucher = require('../models/Voucher');
+const UserVoucher = require('../models/UserVoucher');
 const { protect, adminOnly } = require('../middleware/auth');
 const { validate }           = require('../middleware/validate');
 
@@ -27,6 +29,27 @@ router.post(
         } catch (_) {}
       }
       const order = await Order.create(orderData);
+
+      // Update voucher usage if voucherCode was applied
+      if (orderData.voucherCode) {
+        try {
+          const voucher = await Voucher.findOne({ code: orderData.voucherCode.toUpperCase().trim() });
+          if (voucher) {
+            voucher.usedCount = (voucher.usedCount || 0) + 1;
+            await voucher.save();
+
+            if (orderData.user) {
+              await UserVoucher.findOneAndUpdate(
+                { user: orderData.user, voucher: voucher._id, status: 'available' },
+                { status: 'used', usedAt: new Date(), orderId: order._id }
+              );
+            }
+          }
+        } catch (voucherErr) {
+          console.error('Error updating voucher status:', voucherErr);
+        }
+      }
+
       res.status(201).json({ success: true, data: { orderCode: order.orderCode, _id: order._id } });
     } catch (err) { next(err); }
   }
