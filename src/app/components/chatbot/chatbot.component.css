@@ -778,12 +778,61 @@
 }
 
 /* ── Image Upload Button & Preview Bar ─────────────────────────────── */
+.xanh-quick-upload-strip {
+  margin-bottom: 8px;
+}
+
+.xanh-upload-strip-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: linear-gradient(135deg, #eef7eb 0%, #e2f2dd 100%);
+  border: 1.5px dashed #85dd52;
+  border-radius: 12px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(23, 107, 58, 0.06);
+}
+
+.xanh-upload-strip-btn:hover {
+  background: #e1f3db;
+  border-color: #176b3a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(23, 107, 58, 0.12);
+}
+
+.xanh-strip-icon {
+  font-size: 16px;
+}
+
+.xanh-strip-text {
+  flex: 1;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: #176b3a;
+}
+
+.xanh-strip-badge {
+  background: #176b3a;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.02em;
+}
+
 .xanh-chat-attach-btn {
-  background: none;
-  border: none;
+  background: #e3eedf;
+  border: 1px solid #bfdcb8;
   color: #176b3a;
   cursor: pointer;
-  padding: 4px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -793,9 +842,15 @@
 }
 
 .xanh-chat-attach-btn:hover {
-  background: #e3eedf;
+  background: #176b3a;
+  border-color: #176b3a;
   transform: scale(1.1);
-  color: #11502b;
+  color: #ffffff;
+}
+
+.attach-cam-icon {
+  font-size: 16px;
+  line-height: 1;
 }
 
 .xanh-image-preview-bar {

@@ -33,7 +33,11 @@
 
   <!-- ── Chat Window ─────────────────────────────────────────────── -->
   @if (chat.isOpen()) {
-    <div class="xanh-chat-window animate-slide-up">
+    <div
+      class="xanh-chat-window animate-slide-up"
+      (dragover)="onDragOver($event)"
+      (drop)="onDrop($event)"
+    >
 
       <!-- Header -->
       <div class="xanh-chat-header">
@@ -327,6 +331,20 @@
           style="display: none"
         />
 
+        <!-- Prominent Quick Image Upload Strip (Always Visible) -->
+        <div class="xanh-quick-upload-strip">
+          <button
+            type="button"
+            class="xanh-upload-strip-btn"
+            (click)="triggerImagePicker()"
+            title="Bấm để chọn ảnh món ăn từ máy hoặc điện thoại"
+          >
+            <span class="xanh-strip-icon">📸</span>
+            <span class="xanh-strip-text">Tải ảnh món ăn để NutriBot tính Calo</span>
+            <span class="xanh-strip-badge">AI Vision ✨</span>
+          </button>
+        </div>
+
         <!-- Image Preview Bar (if user selected photo) -->
         @if (selectedImageBase64()) {
           <div class="xanh-image-preview-bar">
@@ -345,7 +363,7 @@
 
         <form class="xanh-chat-form" (ngSubmit)="submitMessage()">
 
-          <!-- Upload Image Button -->
+          <!-- Upload Image Button Inside Input -->
           <button
             type="button"
             class="xanh-chat-attach-btn"
@@ -353,19 +371,17 @@
             title="Tải ảnh đồ ăn hoặc thức uống để NutriBot nhận diện & tính calo"
             aria-label="Tải ảnh món ăn"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-              <circle cx="12" cy="13" r="4"></circle>
-            </svg>
+            <span class="attach-cam-icon">📷</span>
           </button>
 
           <textarea
             class="xanh-chat-input"
             rows="1"
-            placeholder="Hỏi dinh dưỡng, tải ảnh món ăn, hoặc hỏi rau củ..."
+            placeholder="Hỏi dinh dưỡng, dán ảnh (Ctrl+V), hỏi nông sản..."
             [value]="inputText()"
             (input)="inputText.set($any($event.target).value)"
             (keydown)="onKeyDown($event)"
+            (paste)="onPaste($event)"
             [disabled]="chat.loading()"
           ></textarea>
 

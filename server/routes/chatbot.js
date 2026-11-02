@@ -105,12 +105,15 @@ router.post('/message', async (req, res, next) => {
     const trimmed = (message || '').trim();
     const cleanLower = removeDiacritics(trimmed);
 
+    const effectiveGeminiKey = (provider === 'gemini' ? apiKey : '') || process.env.GEMINI_API_KEY || apiKey;
+    const effectiveOpenAIKey = (provider === 'openai' ? apiKey : '') || process.env.OPENAI_API_KEY || apiKey;
+
     // ── 1. Image Recognition & Multimodal Vision Analysis (NutriBot Core) ─
     if (image) {
-      // 1.1. External Multimodal Vision (Gemini 1.5 Flash Vision)
-      if (provider === 'gemini' && (apiKey || process.env.GEMINI_API_KEY)) {
+      // 1.1. Multimodal Vision via Google Gemini (Gemini 3.5 Flash Vision)
+      if (effectiveGeminiKey) {
         try {
-          const visionResult = await callGeminiVision(image, trimmed, apiKey || process.env.GEMINI_API_KEY, persona, profile);
+          const visionResult = await callGeminiVision(image, trimmed, effectiveGeminiKey, persona, profile);
           if (visionResult && visionResult.text) {
             const prods = await findRelatedProducts(removeDiacritics(visionResult.text + ' ' + trimmed));
             return res.json({ success: true, reply: visionResult.text, products: prods });
@@ -120,10 +123,10 @@ router.post('/message', async (req, res, next) => {
         }
       }
 
-      // 1.2. External Multimodal Vision (OpenAI GPT-4o-mini Vision)
-      if (provider === 'openai' && (apiKey || process.env.OPENAI_API_KEY)) {
+      // 1.2. Multimodal Vision via OpenAI (GPT-4o-mini Vision)
+      if (effectiveOpenAIKey) {
         try {
-          const visionResult = await callOpenAIVision(image, trimmed, apiKey || process.env.OPENAI_API_KEY, persona, profile);
+          const visionResult = await callOpenAIVision(image, trimmed, effectiveOpenAIKey, persona, profile);
           if (visionResult && visionResult.text) {
             const prods = await findRelatedProducts(removeDiacritics(visionResult.text + ' ' + trimmed));
             return res.json({ success: true, reply: visionResult.text, products: prods });
@@ -144,9 +147,9 @@ router.post('/message', async (req, res, next) => {
     }
 
     // ── 2. External Text LLM Provider (Gemini / OpenAI) ──────────────────
-    if (provider === 'gemini' && (apiKey || process.env.GEMINI_API_KEY)) {
+    if (effectiveGeminiKey && (provider === 'gemini' || persona === 'nutribot')) {
       try {
-        const reply = await callGeminiAI(trimmed, history, apiKey || process.env.GEMINI_API_KEY, persona, profile);
+        const reply = await callGeminiAI(trimmed, history, effectiveGeminiKey, persona, profile);
         if (reply && reply.text) {
           const prods = await findRelatedProducts(cleanLower);
           return res.json({ success: true, reply: reply.text, products: prods });
@@ -154,9 +157,9 @@ router.post('/message', async (req, res, next) => {
       } catch (aiErr) {
         console.warn('Gemini AI fallback:', aiErr.message);
       }
-    } else if (provider === 'openai' && (apiKey || process.env.OPENAI_API_KEY)) {
+    } else if (effectiveOpenAIKey && provider === 'openai') {
       try {
-        const reply = await callOpenAIAI(trimmed, history, apiKey || process.env.OPENAI_API_KEY, persona, profile);
+        const reply = await callOpenAIAI(trimmed, history, effectiveOpenAIKey, persona, profile);
         if (reply && reply.text) {
           const prods = await findRelatedProducts(cleanLower);
           return res.json({ success: true, reply: reply.text, products: prods });
@@ -470,32 +473,39 @@ async function callGeminiVision(imageBase64, prompt, apiKey, persona, profile) {
     ? `Khách hàng vừa tải ảnh lên với lời nhắn: "${prompt}". Hãy phân tích món ăn theo chuẩn NutriBot.`
     : `Khách hàng vừa tải lên một hình ảnh đồ ăn/thức uống. Hãy phân tích chi tiết tên món, thành phần, calo và dinh dưỡng theo chuẩn NutriBot.`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            { text: systemInstruction + '\n\n' + userQuery },
+  const candidateModels = ['gemini-3.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash'];
+  for (const model of candidateModels) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
             {
-              inline_data: {
-                mime_type: mimeType,
-                data: cleanBase64
-              }
+              role: 'user',
+              parts: [
+                { text: systemInstruction + '\n\n' + userQuery },
+                {
+                  inline_data: {
+                    mime_type: mimeType,
+                    data: cleanBase64
+                  }
+                }
+              ]
             }
           ]
-        }
-      ]
-    })
-  });
+        })
+      });
 
-  if (!res.ok) return null;
-  const json = await res.json();
-  const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
-  return { text };
+      if (res.ok) {
+        const json = await res.json();
+        const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) return { text };
+      }
+    } catch {}
+  }
+  return null;
 }
 
 // ── OpenAI Vision API Call ───────────────────────────────────────────────────
@@ -631,21 +641,28 @@ async function callGeminiAI(prompt, history, apiKey, persona, profile) {
   const catalogSnippet = products.map(p => `- ${p.name} (${p.price}, nhóm: ${p.categoryVi})`).join('\n');
   const systemInstruction = buildSystemPrompt(catalogSnippet, persona, profile);
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [
-        { role: 'user', parts: [{ text: systemInstruction + '\n\nKhách hàng hỏi: ' + prompt }] }
-      ]
-    })
-  });
+  const candidateModels = ['gemini-3.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash'];
+  for (const model of candidateModels) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            { role: 'user', parts: [{ text: systemInstruction + '\n\nKhách hàng hỏi: ' + prompt }] }
+          ]
+        })
+      });
 
-  if (!res.ok) return null;
-  const json = await res.json();
-  const replyText = json.candidates?.[0]?.content?.parts?.[0]?.text;
-  return { text: replyText };
+      if (res.ok) {
+        const json = await res.json();
+        const replyText = json.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (replyText) return { text: replyText };
+      }
+    } catch {}
+  }
+  return null;
 }
 
 async function callOpenAIAI(prompt, history, apiKey, persona, profile) {

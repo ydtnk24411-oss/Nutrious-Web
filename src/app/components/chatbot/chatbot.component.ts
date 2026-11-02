@@ -82,16 +82,45 @@ export class ChatbotComponent implements AfterViewChecked {
       return;
     }
 
-    this.selectedImageName.set(file.name);
+    this.processImageFile(file);
+    input.value = '';
+  }
 
+  onPaste(event: ClipboardEvent): void {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith('image/')) {
+        const file = items[i].getAsFile();
+        if (file) {
+          event.preventDefault();
+          this.processImageFile(file);
+          break;
+        }
+      }
+    }
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0 && files[0].type.startsWith('image/')) {
+      this.processImageFile(files[0]);
+    }
+  }
+
+  private processImageFile(file: File): void {
+    this.selectedImageName.set(file.name || 'Ảnh món ăn');
     const reader = new FileReader();
     reader.onload = () => {
       this.selectedImageBase64.set(reader.result as string);
     };
     reader.readAsDataURL(file);
-
-    // Reset input so same file can be re-selected if removed
-    input.value = '';
   }
 
   removeSelectedImage(): void {
