@@ -181,11 +181,17 @@ export class AdminDashboardComponent implements OnInit {
     return h - ((rev / max) * (h - padding * 2)) - padding;
   }
 
+  linePointX(index: number): number {
+    const data = this.lineData();
+    if (data.length <= 1) return 300;
+    return (index / (data.length - 1)) * 560 + 20;
+  }
+
   get linePoints(): string {
     const data = this.lineData();
     if (data.length === 0) return '';
-    const w = 560;
-    const step = w / (data.length - 1 || 1);
+    if (data.length === 1) return `300,${this.linePointY(data[0].revenue)}`;
+    const step = 560 / (data.length - 1);
     return data.map((d, i) => `${(i * step) + 20},${this.linePointY(d.revenue)}`).join(' ');
   }
 
@@ -193,8 +199,25 @@ export class AdminDashboardComponent implements OnInit {
     const points = this.linePoints;
     if (!points) return '';
     const data = this.lineData();
-    const lastX = ((data.length - 1) * (560 / (data.length - 1 || 1))) + 20;
+    if (data.length === 1) {
+      const y = this.linePointY(data[0].revenue);
+      return `20,200 20,${y} 580,${y} 580,200`;
+    }
+    const lastX = ((data.length - 1) * (560 / (data.length - 1))) + 20;
     return `20,200 ${points} ${lastX},200`;
+  }
+
+  get visibleLabels(): LinePoint[] {
+    const data = this.lineData();
+    if (data.length <= 7) return data;
+    const count = 6;
+    const step = (data.length - 1) / (count - 1);
+    const result: LinePoint[] = [];
+    for (let i = 0; i < count; i++) {
+      const idx = Math.min(Math.round(i * step), data.length - 1);
+      result.push(data[idx]);
+    }
+    return result;
   }
 
   generateInsights(stats: DashboardStats): string[] {
@@ -254,13 +277,13 @@ export class AdminDashboardComponent implements OnInit {
 
     return breakdown.map((item: any) => {
       const percentage = total > 0 ? item.count / total : 0;
-      const dashArray = circumference * percentage;
+      const dashLength = circumference * percentage;
       const segment = {
         ...item,
-        dashArray,
-        dashOffset: cumulativeOffset,
+        dashArray: `${dashLength} ${circumference}`,
+        dashOffset: -cumulativeOffset,
       };
-      cumulativeOffset += dashArray;
+      cumulativeOffset += dashLength;
       return segment;
     });
   }

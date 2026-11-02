@@ -75,9 +75,15 @@
               <tr>
                 <td>
                   <div style="display:flex;align-items:center;gap:12px">
-                    <div class="user-avatar-initial">
-                      {{ u.name.charAt(0).toUpperCase() }}
-                    </div>
+                    @if (u.avatar) {
+                      <div class="user-avatar-wrap">
+                        <img [src]="u.avatar" [alt]="u.name" class="user-avatar-img" />
+                      </div>
+                    } @else {
+                      <div class="user-avatar-initial">
+                        {{ u.name.charAt(0).toUpperCase() }}
+                      </div>
+                    }
                     <span style="font-weight:600;color:#1c2920">{{ u.name }}</span>
                   </div>
                 </td>
@@ -161,9 +167,18 @@
             <span>{{ error() }}</span>
           </div>
         }
-        <div style="margin-bottom:16px;padding:12px;background:#f8fbf6;border-radius:8px;border:1px solid #e2ebd8">
-          <div style="font-weight:700;color:#1c2920;font-size:15px">{{ u.name }}</div>
-          <div style="font-size:13px;color:#626e64">{{ u.email }}</div>
+        <div style="margin-bottom:16px;padding:12px;background:#f8fbf6;border-radius:8px;border:1px solid #e2ebd8;display:flex;align-items:center;gap:12px">
+          @if (u.avatar) {
+            <div class="user-avatar-wrap">
+              <img [src]="u.avatar" [alt]="u.name" class="user-avatar-img" />
+            </div>
+          } @else {
+            <div class="user-avatar-initial">{{ u.name.charAt(0).toUpperCase() }}</div>
+          }
+          <div>
+            <div style="font-weight:700;color:#1c2920;font-size:15px">{{ u.name }}</div>
+            <div style="font-size:13px;color:#626e64">{{ u.email }}</div>
+          </div>
         </div>
         <div class="admin-form-grid cols-1" style="gap:16px">
           <div class="admin-field">

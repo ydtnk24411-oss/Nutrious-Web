@@ -182,19 +182,19 @@
           <!-- Dots with fresh lime accent -->
           @for (d of lineData(); track d.date; let i = $index) {
             <circle
-              [attr.cx]="(i / (lineData().length - 1)) * 560 + 20"
+              [attr.cx]="linePointX(i)"
               [attr.cy]="linePointY(d.revenue)"
-              r="5"
+              [attr.r]="lineData().length > 30 ? (d.revenue > 0 ? 4 : 0) : 4.5"
               fill="#72c343"
               stroke="#ffffff"
-              stroke-width="2.5"
+              stroke-width="2"
             />
           }
         </svg>
 
         <!-- X-axis Labels -->
         <div class="dash-line-labels">
-          @for (d of lineData(); track d.date) {
+          @for (d of visibleLabels; track $index) {
             <span>{{ d.date }}</span>
           }
         </div>
@@ -283,7 +283,7 @@
 
       @if (hasOrderStatusData()) {
         <div class="dash-donut-chart">
-          <svg width="170" height="170" viewBox="0 0 180 180">
+          <svg width="170" height="170" viewBox="0 0 180 180" style="transform: rotate(-90deg); flex-shrink: 0;">
             @for (seg of getDonutSegments(); track seg.status) {
               <circle cx="90" cy="90" r="70" fill="none" [attr.stroke]="seg.color" stroke-width="26" [attr.stroke-dasharray]="seg.dashArray" [attr.stroke-dashoffset]="seg.dashOffset" />
             }
