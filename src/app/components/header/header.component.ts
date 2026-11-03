@@ -238,6 +238,8 @@ export class HeaderComponent {
   selectProduct(p: ApiProduct): void {
     this.showSuggestions.set(false);
     this.closeMobileMenu();
+    this.searchQuery.set('');
+    this.selectedSuggestionIndex.set(-1);
     const cleanSlug = (p.slug || '').replace(/^\/product-page\//, '');
     this.router.navigate(['/product-page', cleanSlug]);
   }
