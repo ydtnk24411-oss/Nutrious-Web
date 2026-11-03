@@ -18,6 +18,23 @@ async function enrichConversation(convDoc) {
     conv.customerEmail = conv.customer.email || conv.customerEmail;
     conv.customerPhone = conv.customer.phone || conv.customerPhone;
     conv.customerAvatar = conv.customer.avatar || conv.customerAvatar || '';
+  } else if (conv.customer) {
+    try {
+      const u = await User.findById(conv.customer).select('name email phone avatar');
+      if (u) {
+        conv.customer = {
+          _id: u._id,
+          name: u.name,
+          email: u.email,
+          phone: u.phone,
+          avatar: u.avatar,
+        };
+        conv.customerName = u.name || conv.customerName;
+        conv.customerEmail = u.email || conv.customerEmail;
+        conv.customerPhone = u.phone || conv.customerPhone;
+        conv.customerAvatar = u.avatar || conv.customerAvatar || '';
+      }
+    } catch (_) {}
   }
 
   // 2. If customer is null, but we have customerEmail, look up in User
@@ -147,11 +164,37 @@ router.get('/conversations', protect, staffOnly, async (req, res, next) => {
 
     const enriched = await Promise.all(conversations.map((c) => enrichConversation(c)));
 
+    // Tự động gom (deduplicate) các hội thoại của cùng 1 khách hàng để chỉ hiển thị 1 khung chat duy nhất
+    const uniqueMap = new Map();
+    for (const c of enriched) {
+      const userKey = c.customer?._id
+        ? String(c.customer._id)
+        : (c.customerEmail ? c.customerEmail.toLowerCase().trim() : c.sessionId);
+
+      if (!uniqueMap.has(userKey)) {
+        uniqueMap.set(userKey, c);
+      } else {
+        const existing = uniqueMap.get(userKey);
+        // Ưu tiên hội thoại đang được nhân viên hỗ trợ hoặc có tương tác mới nhất
+        if (
+          (c.status === 'ADMIN_PROCESSING' && existing.status !== 'ADMIN_PROCESSING') ||
+          (c.status === 'WAITING_FOR_ADMIN' && existing.status === 'AI_PROCESSING') ||
+          new Date(c.lastMessageAt).getTime() > new Date(existing.lastMessageAt).getTime()
+        ) {
+          uniqueMap.set(userKey, c);
+        }
+      }
+    }
+    const finalConversations = Array.from(uniqueMap.values());
+
     res.json({
       success: true,
-      data: enriched,
-      stats,
-      total,
+      data: finalConversations,
+      stats: {
+        ...stats,
+        total: finalConversations.length,
+      },
+      total: finalConversations.length,
     });
   } catch (err) {
     next(err);

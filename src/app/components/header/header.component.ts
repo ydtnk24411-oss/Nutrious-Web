@@ -80,27 +80,6 @@ export class HeaderComponent {
     return searchProducts(this.allProducts(), q, 6);
   });
 
-  // Search & Suggestions state
-  protected searchQuery = signal('');
-  protected showSuggestions = signal(false);
-  protected selectedSuggestionIndex = signal(-1);
-  protected allProducts = signal<ApiProduct[]>([]);
-  protected popularKeywords = [
-    'Rau hữu cơ',
-    'Trái cây tươi',
-    'Thịt sạch',
-    'Cá hồi',
-    'Sữa hạt',
-    'Nấm tươi',
-    'Khoai lang mật',
-    'Gạo ST25',
-  ];
-  protected readonly fallbackImage = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=700&q=80';
-
-  protected suggestedProducts = computed(() => {
-    const q = this.searchQuery();
-    return searchProducts(this.allProducts(), q, 6);
-  });
   constructor() {
     this.categoryApi?.getAll().subscribe({
       next: (res) => {
@@ -134,21 +113,6 @@ export class HeaderComponent {
         }
       },
       error: () => {},
-    });
-  }
-
-    // Khởi tạo tải sản phẩm để gợi ý tìm kiếm tức thì
-    this.loadProducts();
-  }
-  private loadProducts(): void {
-    if (!this.productApi || this.allProducts().length > 0) return;
-    this.productApi.getAll({ limit: 0, sort: 'createdAt' }).subscribe({
-      next: (res) => {
-        if (res?.data?.length) {
-          this.allProducts.set(res.data);
-        }
-      },
-      error: () => { },
     });
   }
   private loadNotifications(user: any): void {

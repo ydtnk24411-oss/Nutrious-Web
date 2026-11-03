@@ -50,14 +50,13 @@ const optionalAuth = async (req, res, next) => {
   if (!token) return next();
   try {
     const user = await resolveUser(token);
-    if (!user || !user.isActive) {
-      return res.status(401).json({ success: false, message: 'Phiên đăng nhập không hợp lệ.' });
+    if (user && user.isActive) {
+      req.user = user;
     }
-    req.user = user;
-    next();
-  } catch (err) {
-    next(err);
+  } catch (_) {
+    // Token không hợp lệ hoặc hết hạn -> tiếp tục như khách vãng lai
   }
+  next();
 };
 
 // Admin only

@@ -117,6 +117,45 @@ async function logMessageToConv(conv, userMsg, botReply) {
   } catch (_) {}
 }
 
+// Helper: Check if question involves internal operational/financial issues that AI cannot resolve
+function isInternalIssueRequiringHuman(cleanLower) {
+  // 1. Payment, Money transfer, Bank transaction issues
+  const paymentIssues = /(da tru tien|bi tru tien|tru tien ma chua|chuyen khoan nham|sai cu phap|chuyen tien roi ma|loi thanh toan|treo tien|tien chua vao|sao ke ngan hang|chuyen sai so tai khoan)/i.test(cleanLower);
+
+  // 2. Refund, Compensation, Money return
+  const refundIssues = /(yeu cau hoan tien|hoan lai tien|doi lai tien|tra lai tien|hoan tien vao tai khoan|boi thuong tien)/i.test(cleanLower);
+
+  // 3. Account security, Official corporate tax invoice disputes
+  const accountIssues = /(khoa tai khoan|bi khoa nick|mat tai khoan|khoi phuc tai khoan|tranh chap hoa don|xuat hoa don vat doanh nghiep)/i.test(cleanLower);
+
+  if (paymentIssues) {
+    return {
+      type: 'payment',
+      reason: 'Vấn đề **thanh toán, trừ tiền hoặc giao dịch ngân hàng** liên quan đến việc tra soát sao kê nội bộ trên hệ sinh thái tài chính Xanh Lá.',
+    };
+  }
+  if (refundIssues) {
+    return {
+      type: 'refund',
+      reason: 'Yêu cầu **hoàn tiền hoặc bồi thường tài chính** thuộc nghiệp vụ kế toán nội bộ và cần được nhân viên phụ trách xác nhận thủ tục hoàn tiền.',
+    };
+  }
+  if (accountIssues) {
+    return {
+      type: 'account',
+      reason: 'Vấn đề **bảo mật tài khoản hoặc hóa đơn thuế doanh nghiệp** cần chuyên viên quản trị xác minh trực tiếp để đảm bảo quyền lợi.',
+    };
+  }
+  return null;
+}
+
+// Helper: Check if customer explicitly requested human agent
+function isExplicitHumanRequest(cleanLower, requestHumanFlag) {
+  if (requestHumanFlag === true || requestHumanFlag === 'true') return true;
+  return /^(gap nhan vien|gap tu van|nhan vien ho tro|tu van vien|gap nguoi|gap admin|chuyen nhan vien|gap cskh|nhan vien truc tiep)$/i.test(cleanLower) ||
+         /(muon gap|can gap|cho gap|chuyen gap|chuyen toi|noi chuyen voi|gap truc tiep) (nhan vien|tu van|cskh|nguoi that|admin)/i.test(cleanLower);
+}
+
 // POST /api/chatbot/message
 router.post('/message', optionalAuth, async (req, res, next) => {
   try {
@@ -161,7 +200,18 @@ router.post('/message', optionalAuth, async (req, res, next) => {
     const sessionId = req.body.sessionId || req.body.userId || 'guest_chat_session';
     let conv = null;
     try {
-      conv = await Conversation.findOne({ sessionId });
+      // 1. Tìm hội thoại của người dùng nếu đã đăng nhập hoặc có email (tránh tạo 2 khung chat cùng 1 người)
+      if (customerId) {
+        conv = await Conversation.findOne({ customer: customerId });
+      }
+      if (!conv && customerEmail) {
+        conv = await Conversation.findOne({ customerEmail: customerEmail.toLowerCase().trim() });
+      }
+      // 2. Nếu là khách vãng lai, tìm theo sessionId
+      if (!conv && sessionId) {
+        conv = await Conversation.findOne({ sessionId });
+      }
+
       if (!conv) {
         conv = new Conversation({
           sessionId,
@@ -173,6 +223,10 @@ router.post('/message', optionalAuth, async (req, res, next) => {
           messages: [],
         });
       } else {
+        // Luôn giữ sessionId mới nhất để đồng bộ mượt mà với browser
+        if (sessionId && conv.sessionId !== sessionId) {
+          conv.sessionId = sessionId;
+        }
         if (!conv.customer && customerId) conv.customer = customerId;
         if ((!conv.customerName || conv.customerName === 'Khách hàng') && customerName) {
           conv.customerName = customerName;
@@ -183,9 +237,50 @@ router.post('/message', optionalAuth, async (req, res, next) => {
       }
     } catch (_) {}
 
-    // Check if customer explicitly requests human agent
-    const wantsHuman = /gap nhan vien|gap tu van|nhan vien ho tro|tu van vien|gap nguoi|gap admin/i.test(cleanLower);
-    if (wantsHuman && conv) {
+    // 1. Kiểm tra nếu người dùng muốn quay lại hỏi Trợ lý AI
+    const wantsAiReturn = req.body.switchToAi === true ||
+      /^(tro ve ai|quay lai ai|hoi ai|gap ai|tro lai ai|quay ve ai|tro ve bot|quay lai bot)$/i.test(cleanLower) ||
+      /(tro ve|quay lai|noi chuyen voi) (tro ly ai|nutribot|bot|ai)/i.test(cleanLower);
+
+    if (wantsAiReturn && conv) {
+      conv.status = 'AI_PROCESSING';
+      const returnMsg = {
+        sender: 'ai',
+        senderName: 'NutriBot',
+        senderAvatar: 'https://api.iconify.design/lucide:bot.svg?color=%23176b3a',
+        content: 'NutriBot đã quay trở lại đồng hành cùng bạn 🌿! Bạn có câu hỏi gì về dinh dưỡng hoặc nông sản không?',
+        timestamp: new Date(),
+      };
+      if (trimmed) {
+        conv.messages.push({
+          sender: 'customer',
+          senderName: conv.customerName || 'Khách hàng',
+          senderAvatar: conv.customerAvatar || '',
+          content: trimmed,
+          timestamp: new Date(),
+        });
+      }
+      conv.messages.push(returnMsg);
+      conv.lastMessage = returnMsg.content;
+      conv.lastMessageAt = new Date();
+      await conv.save();
+      return res.json({
+        success: true,
+        reply: returnMsg.content,
+        status: 'AI_PROCESSING',
+        isHandedOver: false,
+        liveChat: false,
+        messages: conv.messages,
+      });
+    }
+
+    // 2. Chỉ chuyển nhân viên khi:
+    // (a) Khách hàng bấm nút chuyển / gửi yêu cầu chuyển rõ ràng (requestHuman hoặc gõ yêu cầu gặp người)
+    // (b) Hoặc AI không thể xử lý thông tin nội bộ (thanh toán, hoàn tiền, trừ tiền ngân hàng, bảo mật)
+    const isExplicitTransfer = isExplicitHumanRequest(cleanLower, req.body.requestHuman);
+    const internalIssue = isInternalIssueRequiringHuman(cleanLower);
+
+    if ((isExplicitTransfer || internalIssue) && conv) {
       conv.status = 'WAITING_FOR_ADMIN';
       conv.messages.push({
         sender: 'customer',
@@ -194,7 +289,10 @@ router.post('/message', optionalAuth, async (req, res, next) => {
         content: trimmed,
         timestamp: new Date(),
       });
-      const aiReply = 'NutriBot đã chuyển yêu cầu của bạn đến chuyên viên tư vấn Xanh Lá. Bạn vui lòng đợi trong giây lát, nhân viên sẽ tham gia hỗ trợ trực tiếp tại đây! 🌿';
+      const aiReply = internalIssue
+        ? `⚠️ **NutriBot thông báo chuyển tiếp:** ${internalIssue.reason}\n\nNutriBot đã kết nối cuộc trò chuyện đến **Chuyên viên tư vấn & Chăm sóc khách hàng Xanh Lá**. Nhân viên sẽ tiếp nhận và kiểm tra trực tiếp cho bạn ngay tại đây nhé! 🌿`
+        : 'NutriBot đã chuyển yêu cầu của bạn đến chuyên viên tư vấn Xanh Lá. Bạn vui lòng đợi trong giây lát, chuyên viên sẽ tham gia hỗ trợ trực tiếp tại đây! 🌿';
+
       conv.messages.push({
         sender: 'ai',
         senderName: 'NutriBot',
@@ -206,11 +304,20 @@ router.post('/message', optionalAuth, async (req, res, next) => {
       conv.lastMessageAt = new Date();
       conv.unreadAdminCount = (conv.unreadAdminCount || 0) + 1;
       await conv.save();
-      return res.json({ success: true, reply: aiReply, isHandedOver: true });
+      return res.json({
+        success: true,
+        reply: aiReply,
+        isHandedOver: true,
+        liveChat: true,
+        status: 'WAITING_FOR_ADMIN',
+        messages: conv.messages,
+      });
     }
 
-    // If Admin is currently handling this conversation, suspend AI automatic reply
-    if (conv && conv.status === 'ADMIN_PROCESSING') {
+    // 3. NẾU ĐANG TRONG CHẾ ĐỘ NHÂN VIÊN (WAITING_FOR_ADMIN HOẶC ADMIN_PROCESSING):
+    // Khách hàng trò chuyện trực tiếp với nhân viên 1-1, TUYỆT ĐỐI KHÔNG GỌI GEMINI NỮA!
+    // Chỉ lưu tin nhắn vào hội thoại để nhân viên trả lời từ trang quản trị.
+    if (conv && (conv.status === 'WAITING_FOR_ADMIN' || conv.status === 'ADMIN_PROCESSING')) {
       conv.messages.push({
         sender: 'customer',
         senderName: conv.customerName || customerName || 'Khách hàng',
@@ -222,27 +329,14 @@ router.post('/message', optionalAuth, async (req, res, next) => {
       conv.lastMessageAt = new Date();
       conv.unreadAdminCount = (conv.unreadAdminCount || 0) + 1;
       await conv.save();
-      return res.json({
-        success: true,
-        reply: 'Tin nhắn của bạn đã được chuyển đến chuyên viên tư vấn đang tiếp nhận cuộc trò chuyện.',
-        isHandedOver: true,
-      });
-    }
 
-    if (conv && conv.status === 'WAITING_FOR_ADMIN') {
-      conv.messages.push({
-        sender: 'customer',
-        content: trimmed,
-        timestamp: new Date(),
-      });
-      conv.lastMessage = trimmed;
-      conv.lastMessageAt = new Date();
-      conv.unreadAdminCount = (conv.unreadAdminCount || 0) + 1;
-      await conv.save();
       return res.json({
         success: true,
-        reply: 'Yêu cầu của bạn đang chờ chuyên viên tư vấn tiếp nhận. Vui lòng đợi trong giây lát...',
+        liveChat: true,
         isHandedOver: true,
+        status: conv.status,
+        reply: '', // Không gọi Gemini, giữ nguyên luồng chat trực tiếp với nhân viên
+        messages: conv.messages,
       });
     }
 
@@ -622,12 +716,14 @@ async function getAvailableGeminiModel(apiKey) {
 
       console.log('📋 Danh sách Gemini models khả dụng cho key này:', models);
 
-      // Ưu tiên theo chuẩn Google Gemini mới nhất: gemini-3.8-flash, gemini-3.8-pro
-      const chosen = models.find(m => m === 'gemini-3.8-flash') ||
-                     models.find(m => m === 'gemini-3.8-pro') ||
-                     models.find(m => m.includes('3.8-flash')) ||
-                     models.find(m => m.includes('3.8')) ||
-                     models.find(m => m.includes('flash') && !m.includes('2.5-flash')) ||
+      // Ưu tiên các model ổn định và nhanh nhất
+      const chosen = models.find(m => m === 'gemini-3.5-flash') ||
+                     models.find(m => m === 'gemini-3.5-flash-lite') ||
+                     models.find(m => m === 'gemini-flash-lite-latest') ||
+                     models.find(m => m === 'gemini-flash-latest') ||
+                     models.find(m => m === 'gemini-3.8-flash') ||
+                     models.find(m => m.includes('3.5-flash')) ||
+                     models.find(m => m.includes('flash') && !m.includes('2.5-flash') && !m.includes('image')) ||
                      models[0];
 
       if (chosen) {
@@ -670,9 +766,11 @@ async function callGeminiVision(imageBase64, prompt, apiKey, persona, profile) {
   const autoModel = await getAvailableGeminiModel(apiKey);
   const candidateModels = [
     ...(autoModel ? [autoModel] : []),
-    'gemini-3.8-flash',
-    'gemini-3.8-pro',
-    'gemini-2.0-flash'
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-flash-lite-latest',
+    'gemini-flash-latest',
+    'gemini-3.8-flash'
   ].filter((v, i, a) => a.indexOf(v) === i);
   for (const model of candidateModels) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
@@ -941,9 +1039,11 @@ async function callGeminiAI(prompt, history, apiKey, persona, profile) {
   const autoModel = await getAvailableGeminiModel(apiKey);
   const candidateModels = [
     ...(autoModel ? [autoModel] : []),
-    'gemini-3.8-flash',
-    'gemini-3.8-pro',
-    'gemini-2.0-flash'
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-flash-lite-latest',
+    'gemini-flash-latest',
+    'gemini-3.8-flash'
   ].filter((v, i, a) => a.indexOf(v) === i);
   for (const model of candidateModels) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
@@ -1138,6 +1238,102 @@ router.post('/detect-ingredients', async (req, res, next) => {
       success: true,
       ingredients: results,
       total: results.length
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/chatbot/session/:sessionId — đồng bộ tin nhắn 2 chiều giữa khách hàng và admin
+router.get('/session/:sessionId', optionalAuth, async (req, res, next) => {
+  try {
+    const { sessionId } = req.params;
+    let conv = null;
+
+    // Ưu tiên tìm hội thoại của user đã đăng nhập để gom về 1 khung chat duy nhất
+    if (req.user) {
+      conv = await Conversation.findOne({ customer: req.user._id })
+        .populate('assignedTo', 'name email avatar')
+        .populate('customer', 'name email phone avatar');
+      if (!conv && req.user.email) {
+        conv = await Conversation.findOne({ customerEmail: req.user.email.toLowerCase().trim() })
+          .populate('assignedTo', 'name email avatar')
+          .populate('customer', 'name email phone avatar');
+      }
+    }
+    if (!conv) {
+      conv = await Conversation.findOne({ sessionId })
+        .populate('assignedTo', 'name email avatar')
+        .populate('customer', 'name email phone avatar');
+    }
+
+    if (!conv) {
+      return res.json({
+        success: true,
+        status: 'AI_PROCESSING',
+        messages: [],
+        assignedTo: null,
+      });
+    }
+
+    // Đánh dấu khách đã đọc các tin nhắn từ admin
+    if (conv.unreadCustomerCount > 0) {
+      conv.unreadCustomerCount = 0;
+      await conv.save();
+    }
+
+    res.json({
+      success: true,
+      status: conv.status,
+      assignedTo: conv.assignedTo,
+      customer: conv.customer,
+      customerName: conv.customerName,
+      customerAvatar: conv.customerAvatar,
+      messages: conv.messages,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/chatbot/switch-to-ai — khách bấm nút "Trở về hỏi Trợ lý AI"
+router.post('/switch-to-ai', optionalAuth, async (req, res, next) => {
+  try {
+    const { sessionId } = req.body;
+    let conv = null;
+
+    if (req.user) {
+      conv = await Conversation.findOne({ customer: req.user._id });
+      if (!conv && req.user.email) {
+        conv = await Conversation.findOne({ customerEmail: req.user.email.toLowerCase().trim() });
+      }
+    }
+    if (!conv && sessionId) {
+      conv = await Conversation.findOne({ sessionId });
+    }
+
+    if (!conv) {
+      return res.json({ success: true, status: 'AI_PROCESSING', messages: [] });
+    }
+
+    conv.status = 'AI_PROCESSING';
+    const returnMsg = {
+      sender: 'ai',
+      senderName: 'NutriBot',
+      senderAvatar: 'https://api.iconify.design/lucide:bot.svg?color=%23176b3a',
+      content: 'NutriBot đã quay trở lại đồng hành cùng bạn 🌿! Bạn có câu hỏi gì về dinh dưỡng hoặc nông sản không?',
+      timestamp: new Date(),
+    };
+    conv.messages.push(returnMsg);
+    conv.lastMessage = returnMsg.content;
+    conv.lastMessageAt = new Date();
+    await conv.save();
+
+    res.json({
+      success: true,
+      status: 'AI_PROCESSING',
+      reply: returnMsg.content,
+      messages: conv.messages,
     });
   } catch (err) {
     next(err);
