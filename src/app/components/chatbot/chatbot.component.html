@@ -40,26 +40,38 @@
     >
 
       <!-- Header -->
-      <div class="xanh-chat-header">
+      <div class="xanh-chat-header" [class.is-staff-header]="chat.isStaffMode()">
         <div class="xanh-chat-header-info">
           <div class="xanh-chat-avatar">
-            <img src="/avatars/nutribot.png" alt="AI Xanh Lá" class="header-nutri-img" />
+            @if (chat.isStaffMode()) {
+              <div class="header-staff-icon-circle">👨‍💼</div>
+            } @else {
+              <img src="/avatars/nutribot.png" alt="AI Xanh Lá" class="header-nutri-img" />
+            }
             <span class="xanh-live-dot" title="Đang trực tuyến"></span>
           </div>
           <div>
-            <h3 class="xanh-chat-title">Trợ lý AI Xanh Lá</h3>
+            <h3 class="xanh-chat-title">
+              {{ chat.isStaffMode() ? (chat.assignedStaffName() || 'Nhân viên tư vấn Xanh Lá') : 'Trợ lý AI Xanh Lá' }}
+            </h3>
             <span class="xanh-chat-status">
-              ⚡ Google Gemini API · Trực tuyến 24/7
+              {{ chat.isStaffMode() ? '🟢 Trực tiếp 1-1 với nhân viên' : '⚡ Google Gemini API · Trực tuyến 24/7' }}
             </span>
           </div>
         </div>
 
         <div class="xanh-chat-header-actions">
-          <button class="xanh-chat-btn-icon" (click)="chat.requestHumanSupport()" title="Gặp nhân viên tư vấn hỗ trợ" aria-label="Gặp nhân viên">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-          </button>
+          @if (chat.isStaffMode()) {
+            <button class="xanh-chat-pill-btn" (click)="chat.returnToAi()" title="Trở về hỏi Trợ lý AI" aria-label="Trở về hỏi AI">
+              <span>🤖 Về AI</span>
+            </button>
+          } @else {
+            <button class="xanh-chat-btn-icon" (click)="chat.requestHumanSupport()" title="Gặp nhân viên tư vấn hỗ trợ" aria-label="Gặp nhân viên">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </button>
+          }
           <button class="xanh-chat-btn-icon" (click)="chat.clearHistory()" title="Bắt đầu hội thoại mới" aria-label="Xóa lịch sử chat">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="1 4 1 10 7 10"></polyline>
@@ -77,19 +89,48 @@
 
       <!-- Messages Area -->
       <div class="xanh-chat-body" #messagesScroll>
-        <div class="xanh-chat-date-divider">
-          <span>Hôm nay · Trợ lý AI đồng hành cùng bữa cơm gia đình bạn</span>
-        </div>
+        @if (chat.isStaffMode()) {
+          <div class="xanh-live-staff-banner">
+            <div class="xanh-live-staff-left">
+              <span class="xanh-live-pulse-dot"></span>
+              <div class="xanh-live-staff-texts">
+                <strong>Đang trò chuyện trực tiếp với Nhân viên Xanh Lá</strong>
+                <span>Mọi tin nhắn của bạn sẽ được nhân viên phản hồi trực tiếp tại đây</span>
+              </div>
+            </div>
+            <button type="button" class="xanh-btn-switch-back-ai" (click)="chat.returnToAi()" title="Chuyển về hỏi Trợ lý AI NutriBot">
+              <span>🤖 Trở về hỏi Trợ lý AI</span>
+            </button>
+          </div>
+        } @else {
+          <div class="xanh-chat-date-divider">
+            <span>Hôm nay · Trợ lý AI đồng hành cùng bữa cơm gia đình bạn</span>
+          </div>
+        }
 
         @for (msg of chat.messages(); track msg.id) {
-          <div class="xanh-chat-message-row" [class.is-user]="msg.sender === 'user'">
-            @if (msg.sender === 'bot') {
+          <div class="xanh-chat-message-row" [class.is-user]="msg.sender === 'user'" [class.is-admin]="msg.sender === 'admin'">
+            @if (msg.sender === 'admin') {
+              <div class="xanh-msg-avatar admin-avatar-box">
+                @if (msg.senderAvatar) {
+                  <img [src]="msg.senderAvatar" [alt]="msg.senderName || 'Admin'" class="bot-bubble-avatar staff-photo-avatar" />
+                } @else {
+                  <div class="staff-bubble-icon">👨‍💼</div>
+                }
+              </div>
+            } @else if (msg.sender === 'bot') {
               <div class="xanh-msg-avatar">
                 <img src="/avatars/nutribot.png" alt="AI Xanh Lá" class="bot-bubble-avatar" />
               </div>
             }
 
             <div class="xanh-msg-content-wrap">
+              @if (msg.sender === 'admin') {
+                <div class="xanh-admin-sender-badge">
+                  <span>👨‍💼 {{ msg.senderName || 'Chuyên viên hỗ trợ Xanh Lá' }}</span>
+                </div>
+              }
+
               <!-- Attached User Image -->
               @if (msg.image) {
                 <div class="xanh-msg-uploaded-image">
@@ -98,7 +139,7 @@
               }
 
               <div class="xanh-msg-bubble-wrap">
-                <div class="xanh-msg-bubble" [innerHTML]="formatMessageText(msg.text)"></div>
+                <div class="xanh-msg-bubble" [class.bubble-admin]="msg.sender === 'admin'" [innerHTML]="formatMessageText(msg.text)"></div>
 
                 <!-- Copy message action button -->
                 <button
@@ -117,6 +158,14 @@
                   }
                 </button>
               </div>
+
+              @if (msg.isHandedOver) {
+                <div class="xanh-handover-action-row">
+                  <button type="button" class="xanh-btn-return-ai" (click)="chat.returnToAi()" title="Quay lại hỏi AI các câu hỏi về thực phẩm, dinh dưỡng, nấu ăn">
+                    <span>🤖 Tiếp tục hỏi Trợ lý AI</span>
+                  </button>
+                </div>
+              }
 
               <!-- Product recommendations cards -->
               @if (msg.products && msg.products.length > 0) {
@@ -252,7 +301,7 @@
           <textarea
             class="xanh-chat-input"
             rows="1"
-            placeholder="Hỏi về rau củ, cách nấu, dán ảnh (Ctrl+V)..."
+            [placeholder]="chat.isStaffMode() ? 'Nhập tin nhắn gửi cho nhân viên hỗ trợ... (Enter để gửi)' : 'Hỏi về rau củ, cách nấu, dán ảnh (Ctrl+V)...'"
             [value]="inputText()"
             (input)="inputText.set($any($event.target).value)"
             (keydown)="onKeyDown($event)"

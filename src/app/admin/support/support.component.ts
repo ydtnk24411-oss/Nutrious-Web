@@ -39,10 +39,10 @@ export class AdminSupportComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadConversations();
-    // Polling every 5 seconds for incoming live messages
+    // Polling every 3 seconds for instant 2-way live sync with customer chatbot
     this.pollTimer = setInterval(() => {
       this.refreshQuietly();
-    }, 5000);
+    }, 3000);
   }
 
   ngOnDestroy(): void {
