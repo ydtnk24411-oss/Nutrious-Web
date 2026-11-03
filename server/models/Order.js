@@ -39,6 +39,7 @@ const orderSchema = new mongoose.Schema(
       default: 'pending',
     },
     estimatedPoints: { type: Number, default: 0 },
+    pointsAwarded:   { type: Boolean, default: false }, // đã cộng điểm cho chủ đơn chưa
     note: { type: String, default: '' },
   },
   { timestamps: true }

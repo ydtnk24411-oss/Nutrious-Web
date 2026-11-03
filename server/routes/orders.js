@@ -1,15 +1,17 @@
 const router = require('express').Router();
-const jwt    = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 const { body } = require('express-validator');
 const Order  = require('../models/Order');
-const Voucher = require('../models/Voucher');
-const UserVoucher = require('../models/UserVoucher');
-const { protect, adminOnly } = require('../middleware/auth');
+const { protect, optionalAuth, adminOnly } = require('../middleware/auth');
 const { validate }           = require('../middleware/validate');
+const { evaluateVoucher, consumeVoucher } = require('../utils/voucher');
+const { creditOrderPoints }   = require('../utils/loyalty');
 
-// POST /api/orders — public (guest checkout)
+// POST /api/orders – khách vãng lai hoặc user đã đăng nhập.
+// Chủ đơn hàng LUÔN lấy từ token (req.user), không tin `user` do client gửi lên.
 router.post(
   '/',
+  optionalAuth,
   [
     body('items').isArray({ min: 1 }).withMessage('Đơn hàng phải có ít nhất 1 sản phẩm.'),
     body('subtotal').isNumeric().withMessage('Subtotal phải là số.'),
@@ -19,38 +21,39 @@ router.post(
   async (req, res, next) => {
     try {
       const orderData = { ...req.body };
-      if (!orderData.user && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-        try {
-          const token = req.headers.authorization.split(' ')[1];
-          const decoded = jwt.verify(token, process.env.JWT_SECRET || 'xanhla_secret');
-          if (decoded && decoded.id) {
-            orderData.user = decoded.id;
-          }
-        } catch (_) {}
+      delete orderData.user;
+      delete orderData.status;
+      delete orderData.orderCode;
+
+      if (req.user) {
+        orderData.user       = req.user._id;
+        orderData.guestName  = orderData.guestName  || req.user.name;
+        orderData.guestEmail = orderData.guestEmail || req.user.email;
+        orderData.guestPhone = orderData.guestPhone || req.user.phone || '';
       }
-      const order = await Order.create(orderData);
+      const subtotal = Number(orderData.subtotal);
+      orderData.estimatedPoints = Math.floor(subtotal / 1000);
 
-      // Update voucher usage if voucherCode was applied
-      if (orderData.voucherCode) {
-        try {
-          const voucher = await Voucher.findOne({ code: orderData.voucherCode.toUpperCase().trim() });
-          if (voucher) {
-            voucher.usedCount = (voucher.usedCount || 0) + 1;
-            await voucher.save();
-
-            if (orderData.user) {
-              await UserVoucher.findOneAndUpdate(
-                { user: orderData.user, voucher: voucher._id, status: 'available' },
-                { status: 'used', usedAt: new Date(), orderId: order._id }
-              );
-            }
-          }
-        } catch (voucherErr) {
-          console.error('Error updating voucher status:', voucherErr);
+      // Voucher: server kiểm tra và tự tính số tiền giảm, không tin discount/total từ client
+      let applied = null;
+      const code = orderData.voucherCode ? String(orderData.voucherCode).trim() : '';
+      if (code) {
+        applied = await evaluateVoucher(code, subtotal, req.user?._id);
+        if (!applied.valid) {
+          return res.status(400).json({ success: false, message: applied.message });
         }
       }
+      orderData.voucherCode = applied ? applied.voucher.code : '';
+      orderData.discount    = applied ? applied.discount : 0;
+      orderData.total = Math.max(0, subtotal - orderData.discount + (Number(orderData.shippingFee) || 0));
 
-      res.status(201).json({ success: true, data: { orderCode: order.orderCode, _id: order._id } });
+      const order = await Order.create(orderData);
+      if (applied) await consumeVoucher(applied, req.user?._id, order._id);
+
+      res.status(201).json({
+        success: true,
+        data: { orderCode: order.orderCode, _id: order._id, discount: order.discount, total: order.total },
+      });
     } catch (err) { next(err); }
   }
 );
@@ -91,7 +94,7 @@ router.get('/track/:code', async (req, res, next) => {
 router.get('/my', protect, async (req, res, next) => {
   try {
     const { status, page = 1, limit = 20, search } = req.query;
-    const userId = req.user._id || req.user.id;
+    const userId = req.user._id;
     const userEmail = req.user.email;
     const filter = {
       $or: [
@@ -136,6 +139,73 @@ router.get('/:id', protect, adminOnly, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// PUT/POST /api/orders/:id/cancel — cancel order (customer or admin)
+const handleCancelOrder = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body || {};
+
+    const mongoose = require('mongoose');
+    let order = null;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      order = await Order.findById(id);
+    }
+    if (!order) {
+      order = await Order.findOne({ orderCode: id });
+    }
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng.' });
+    }
+
+    // Kiểm tra quyền: nếu đơn hàng thuộc về một tài khoản, yêu cầu người đặt hoặc admin
+    if (order.user) {
+      if (!req.user) {
+        return res.status(401).json({ success: false, message: 'Vui lòng đăng nhập để thực hiện thao tác này.' });
+      }
+      const orderUserId = (order.user._id || order.user).toString();
+      const currentUserId = req.user._id.toString();
+      const isOwner = orderUserId === currentUserId;
+      if (!isOwner && req.user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Bạn không có quyền hủy đơn hàng này.' });
+      }
+    } else if (req.user && req.user.role !== 'admin' && order.guestEmail && order.guestEmail !== req.user.email) {
+      return res.status(403).json({ success: false, message: 'Bạn không có quyền hủy đơn hàng này.' });
+    }
+
+    // Kiểm tra điều kiện hợp lệ trước khi hủy
+    if (order.status === 'cancelled') {
+      return res.status(400).json({ success: false, message: 'Đơn hàng này đã được hủy trước đó.' });
+    }
+
+    const cancellableStatuses = ['pending', 'confirmed'];
+    if (!cancellableStatuses.includes(order.status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Đơn hàng đang trong quá trình chuẩn bị hoặc giao hàng, không thể hủy lúc này.'
+      });
+    }
+
+    // Cập nhật trạng thái thành 'cancelled'
+    order.status = 'cancelled';
+    if (reason && typeof reason === 'string' && reason.trim()) {
+      order.note = order.note ? `${order.note} | Lý do hủy: ${reason.trim()}` : `Lý do hủy: ${reason.trim()}`;
+    }
+    await order.save();
+
+    res.json({
+      success: true,
+      message: 'Hủy đơn hàng thành công.',
+      data: order
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+router.put('/:id/cancel', optionalAuth, handleCancelOrder);
+router.post('/:id/cancel', optionalAuth, handleCancelOrder);
+
 // PUT /api/orders/:id/status — admin
 router.put('/:id/status', protect, adminOnly, async (req, res, next) => {
   try {
@@ -145,6 +215,7 @@ router.put('/:id/status', protect, adminOnly, async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Trạng thái không hợp lệ.' });
     }
     const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    if (order && status === 'delivered') await creditOrderPoints(order._id);
     if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng.' });
     res.json({ success: true, data: order });
   } catch (err) { next(err); }

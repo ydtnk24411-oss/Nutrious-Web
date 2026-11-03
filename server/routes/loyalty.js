@@ -1,56 +1,72 @@
 const router = require('express').Router();
 const User = require('../models/User');
+const PointTransaction = require('../models/PointTransaction');
 const { protect } = require('../middleware/auth');
+const { REWARDS, tierFor } = require('../utils/loyalty');
 
-// GET /api/loyalty/my - Get user loyalty info
+// GET /api/loyalty/rewards - danh sách quà đổi điểm (public)
+router.get('/rewards', (_req, res) => res.json({ success: true, data: REWARDS }));
+
+// GET /api/loyalty/my - điểm, hạng và lịch sử điểm của tài khoản đang đăng nhập
 router.get('/my', protect, async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id).select('points tier totalSpent');
+    const user = await User.findById(req.user._id).select('points tier totalSpent');
     if (!user) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
     }
-    // Calculate next tier
-    const tierThresholds = {
-      bronze: 0,
-      silver: 500000,
-      gold: 2000000,
-      platinum: 5000000,
-    };
-    const currentThreshold = tierThresholds[user.tier];
-    const nextTier = Object.keys(tierThresholds).find(key => tierThresholds[key] > currentThreshold);
-    const nextThreshold = nextTier ? tierThresholds[nextTier] : null;
-    const progress = nextThreshold ? ((user.totalSpent - currentThreshold) / (nextThreshold - currentThreshold)) * 100 : 100;
+    const transactions = await PointTransaction.find({ user: req.user._id })
+      .sort({ createdAt: -1 })
+      .limit(100);
     res.json({
       success: true,
       data: {
         points: user.points,
-        tier: user.tier,
         totalSpent: user.totalSpent,
-        nextTier,
-        nextThreshold,
-        progress: Math.min(100, Math.max(0, progress)),
+        tier: tierFor(user.points, user.totalSpent),
+        transactions: transactions.map((t) => ({
+          id: String(t._id),
+          userId: String(t.user),
+          type: t.type,
+          amount: t.amount,
+          description: t.description,
+          orderId: t.order || undefined,
+          rewardId: t.rewardId || undefined,
+          createdAt: t.createdAt,
+        })),
       },
     });
   } catch (err) { next(err); }
 });
 
-// POST /api/loyalty/redeem - Redeem points for reward
+// POST /api/loyalty/redeem - đổi điểm lấy quà { rewardId }
 router.post('/redeem', protect, async (req, res, next) => {
   try {
-    const { points, rewardName } = req.body;
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
+    const reward = REWARDS.find((r) => r.id === req.body.rewardId);
+    if (!reward) {
+      return res.status(404).json({ success: false, message: 'Quà tặng không tồn tại.' });
     }
-    if (user.points < points) {
+    // Trừ điểm nguyên tử: chỉ trừ khi còn đủ điểm
+    const user = await User.findOneAndUpdate(
+      { _id: req.user._id, points: { $gte: reward.pointsRequired } },
+      { $inc: { points: -reward.pointsRequired } },
+      { new: true }
+    );
+    if (!user) {
       return res.status(400).json({ success: false, message: 'Điểm không đủ.' });
     }
-    if (points <= 0) {
-      return res.status(400).json({ success: false, message: 'Số điểm không hợp lệ.' });
-    }
-    user.points -= points;
-    await user.save();
-    res.json({ success: true, message: `Đổi ${points} điểm thành công.`, data: { points: user.points } });
+    await PointTransaction.create({
+      user: user._id,
+      type: 'redeemed',
+      amount: -reward.pointsRequired,
+      description: `Đổi quà: ${reward.name}`,
+      rewardId: reward.id,
+      balanceAfter: user.points,
+    });
+    res.json({
+      success: true,
+      message: `Đổi ${reward.pointsRequired} điểm thành công.`,
+      data: { points: user.points },
+    });
   } catch (err) { next(err); }
 });
 

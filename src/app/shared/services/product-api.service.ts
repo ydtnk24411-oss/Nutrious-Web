@@ -9,6 +9,8 @@ export interface ApiProduct {
   priceNumber: number;
   image: string;
   categoryId: string;
+  category?: string;
+  categoryVi?: string;
   description: string;
   stock: number;
   isActive: boolean;
@@ -23,17 +25,19 @@ export interface ApiCategory {
   _id: string;
   name: string;
   slug: string;
+  image?: string;
   order: number;
   isActive: boolean;
-  createdAt: string;
+  createdAt?: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ProductApiService {
-  getCategories() {
-  return this.api.get<{ success: boolean; data: ApiCategory[] }>('/categories');
-}
   private api = inject(ApiService);
+
+  getCategories() {
+    return this.api.get<{ success: boolean; data: ApiCategory[] }>('/categories');
+  }
 
   getAll(params?: Record<string, string | number>) {
     return this.api.get<{ success: boolean; total: number; data: ApiProduct[] }>('/products', params);

@@ -2,6 +2,7 @@ import { Component, signal, inject, HostListener, effect } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CartService } from '../../shared/services/cart.service';
+import { OrderApiService } from '../../shared/services/order-api.service';
 import { navItems, logoImage } from '../../shared/data/xanh-la.data';
 import { CategoryApiService } from '../../shared/services/category-api.service';
 
@@ -18,11 +19,14 @@ const CATEGORIES = [
 
 const AREAS = ['TP. Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Cần Thơ', 'Biên Hòa'];
 
-const NOTIFICATIONS = [
-  { id: 'n1', title: 'Đơn hàng đang giao', body: 'Đơn #XL-2408 sẽ đến trong hôm nay.', path: '/tracker-page', unread: true },
-  { id: 'n2', title: 'Voucher XANHLA30', body: 'Mã chào bạn mới còn hạn 10 ngày.', path: '/online-ordering', unread: true },
-  { id: 'n3', title: 'Rau củ hữu cơ -40%', body: 'Flash sale cuối tuần đang diễn ra.', path: '/online-ordering', unread: false },
-];
+export interface HeaderNotification {
+  id: string;
+  title: string;
+  body: string;
+  path: string;
+  unread: boolean;
+  time?: string;
+}
 
 @Component({
   selector: 'app-header',
@@ -50,21 +54,20 @@ export class HeaderComponent {
       error: () => {},
     });
 
-    // Mỗi khi user đăng nhập (currentUser thay đổi từ null → có user),
-    // tự fetch lại đầy đủ data từ MongoDB (kể cả avatar)
+    // Cập nhật thông báo tự động theo tài khoản người dùng
     effect(() => {
       const user = this.cart.currentUser();
-      if (user) {
-        this.cart.loadUserData();
-      }
+      this.loadNotifications(user);
     });
   }
+
+  private orderApi = inject(OrderApiService);
 
   protected readonly navItems    = navItems;
   protected readonly logoImage   = logoImage;
   protected categories           = CATEGORIES;
   protected readonly areas         = AREAS;
-  protected readonly notifications = NOTIFICATIONS;
+  protected notifications          = signal<HeaderNotification[]>([]);
 
   protected mobileMenuOpen  = signal(false);
   protected userMenuOpen    = signal(false);
@@ -74,8 +77,82 @@ export class HeaderComponent {
   protected selectedArea    = signal('TP. Hồ Chí Minh');
   protected copiedCode      = signal<string | null>(null);
 
+  private loadNotifications(user: any): void {
+    if (!user) {
+      this.notifications.set([
+        {
+          id: 'guest-welcome',
+          title: 'Chào mừng bạn đến với Xanh Lá',
+          body: 'Nông sản hữu cơ tươi ngon mỗi ngày. Đăng nhập để nhận ưu đãi thành viên.',
+          path: '/online-ordering',
+          unread: false,
+        },
+      ]);
+      return;
+    }
+
+    // Với tài khoản đã đăng nhập: lấy đơn hàng thực tế của chính tài khoản đó
+    this.orderApi.getMyOrders().subscribe({
+      next: (res) => {
+        const orders = res?.data || [];
+        const notifs: HeaderNotification[] = [];
+
+        // Tìm các đơn hàng đang hoạt động của user
+        const activeOrders = orders.filter((o: any) =>
+          ['pending', 'confirmed', 'preparing', 'shipping', 'delivering'].includes(o.status)
+        );
+
+        if (activeOrders.length > 0) {
+          for (const ord of activeOrders.slice(0, 3)) {
+            const isShipping = ['shipping', 'delivering'].includes(ord.status);
+            notifs.push({
+              id: 'ord-' + ord._id,
+              title: isShipping ? 'Đơn hàng đang giao' : 'Đơn hàng đang xử lý',
+              body: `Đơn #${ord.orderCode || ord._id.slice(-6)} ${isShipping ? 'đang trên đường giao đến bạn.' : 'đang được chuẩn bị nguyên liệu.'}`,
+              path: `/tracker-page?code=${ord.orderCode || ''}`,
+              unread: true,
+            });
+          }
+        } else {
+          // Tài khoản mới / không có đơn nào đang giao: hiển thị lời chào và hướng dẫn nhận ưu đãi
+          notifs.push({
+            id: 'welcome-member',
+            title: `Chào mừng ${user.name}!`,
+            body: 'Cảm ơn bạn đã gia nhập Xanh Lá. Khám phá các thực phẩm hữu cơ tươi ngon ngay.',
+            path: '/online-ordering',
+            unread: true,
+          });
+          notifs.push({
+            id: 'member-voucher',
+            title: 'Ưu đãi thành viên mới',
+            body: 'Tích điểm nhận quà và voucher cho mỗi đơn hàng thành công.',
+            path: '/loyalty',
+            unread: false,
+          });
+        }
+
+        this.notifications.set(notifs);
+      },
+      error: () => {
+        this.notifications.set([
+          {
+            id: 'welcome-member',
+            title: `Chào mừng ${user.name}!`,
+            body: 'Khám phá các nông sản tươi sạch hữu cơ tại Xanh Lá Farm.',
+            path: '/online-ordering',
+            unread: false,
+          },
+        ]);
+      },
+    });
+  }
+
   protected unreadCount(): number {
-    return this.notifications.filter(n => n.unread).length;
+    return this.notifications().filter(n => n.unread).length;
+  }
+
+  markAllAsRead(): void {
+    this.notifications.update(items => items.map(n => ({ ...n, unread: false })));
   }
 
   toggleMobileMenu(): void { this.mobileMenuOpen.update(v => !v); }

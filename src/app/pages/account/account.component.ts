@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, computed, HostListener } from '@angular/core';
+import { Component, signal, inject, OnInit, computed, HostListener, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { OrderApiService } from '../../shared/services/order-api.service';
@@ -24,6 +24,21 @@ export class AccountComponent implements OnInit {
   private voucher   = inject(VoucherService);
   private route     = inject(ActivatedRoute);
   private orderApi  = inject(OrderApiService);
+
+  constructor() {
+    effect(() => {
+      const u = this.cart.currentUser();
+      if (u) {
+        this.displayName.set(u.name ?? '');
+        this.firstName.set(u.firstName ?? '');
+        this.lastName.set(u.lastName ?? '');
+        this.phone.set(u.phone ?? '');
+        this.title.set(u.title ?? '');
+        this.addrFullName.set(u.name ?? '');
+        this.addrPhone.set(u.phone ?? '');
+      }
+    });
+  }
 
   // ── Tab ──────────────────────────────────────
   activeTab = signal<Tab>('overview');
@@ -127,6 +142,8 @@ export class AccountComponent implements OnInit {
     });
 
     this.cart.loadUserData();
+    this.loyalty.refresh();
+    this.voucher.refreshMine();
     this.loadOrders();
   }
 
@@ -354,9 +371,9 @@ export class AccountComponent implements OnInit {
 
   // ── Vouchers ────────────────────────────────
   collectVoucher(voucherId: string): void {
-    if (this.voucher.collectVoucher(voucherId)) {
-      alert('Đã thu thập voucher thành công!');
-    }
+    this.voucher.collectVoucher(voucherId).subscribe((res) => {
+      alert(res.success ? 'Đã thu thập voucher thành công!' : (res.message || 'Không thể thu thập voucher.'));
+    });
   }
 
   // ── Points & Rewards ────────────────────────
@@ -364,12 +381,13 @@ export class AccountComponent implements OnInit {
     const user = this.cart.currentUser();
     if (!user) return;
 
-    const result = this.loyalty.redeemReward(user.email, rewardId);
-    if (result.success) {
-      alert('Đổi quà thành công!');
-    } else {
-      alert(result.message || 'Không thể đổi quà');
-    }
+    this.loyalty.redeemReward(user.email, rewardId).subscribe((result) => {
+      if (result.success) {
+        alert('Đổi quà thành công!');
+      } else {
+        alert(result.message || 'Không thể đổi quà');
+      }
+    });
   }
 
   // ── Logout ───────────────────────────────────

@@ -3,12 +3,14 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --host 0.0.0.0 --port $PORT",
-    "dev": "ng serve --port 4200",
-    "build": "ng build --configuration production --base-href /",
-    "typecheck": "ng build --configuration development",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "start": "ng serve xanh-la --host 0.0.0.0 --port $PORT",
+    "dev": "ng serve xanh-la --port 4200",
+    "admin": "ng serve admin --port 4201",
+    "build": "ng build xanh-la --configuration production --base-href /",
+    "typecheck": "ng build xanh-la --configuration development",
+    "watch": "ng build xanh-la --watch --configuration development",
+    "test": "ng test xanh-la",
+    "build:admin": "ng build admin --configuration production --base-href /"
   },
   "private": true,
   "dependencies": {

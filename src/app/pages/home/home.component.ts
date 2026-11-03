@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, NgZone, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { CartService } from '../../shared/services/cart.service';
@@ -7,14 +7,13 @@ import { ProductApiService, ApiProduct } from '../../shared/services/product-api
 import { heroImage, originImage } from '../../shared/data/xanh-la.data';
 import { XanhLaProduct } from '../../shared/models/xanh-la.models';
 import { CategoryApiService, ApiCategory } from '../../shared/services/category-api.service';
-import { VoucherRecord, VoucherService } from '../../shared/services/voucher.service';
 
 interface Deal {
   id: string; name: string; category: string; description: string; image: string;
   priceNew: string; priceOld: string; discountPct: number; save: string;
 }
 interface Voucher {
-  id: string; code: string; title: string; value: string; valueShort: string; expiry: string;
+  code: string; title: string; value: string; valueShort: string; expiry: string;
   color: 'green' | 'amber' | 'red';
 }
 interface NewsItem { title: string; image: string; path: string; date: string; }
@@ -28,10 +27,8 @@ interface NewsItem { title: string; image: string; path: string; date: string; }
 })
 export class HomeComponent implements OnInit, OnDestroy {
   private cart = inject(CartService);
-  private zone = inject(NgZone);
   private productApi = inject(ProductApiService);
   private categoryApi = inject(CategoryApiService);
-  protected voucherApi = inject(VoucherService);
 
   readonly heroImage = heroImage;
   readonly originImage = originImage;
@@ -42,7 +39,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     { eyebrow: 'BỮA CƠM NHÀ THÊM ĐỦ ĐẦY', title: 'Chọn điều tươi lành mỗi ngày.', subtitle: 'Khám phá rau củ, trái cây và nguyên liệu cho những bữa ăn ngon.', cta: 'Khám phá gian hàng', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1600&q=90' },
     { eyebrow: 'SĂN DEAL – NHẬN ƯU ĐÃI', title: 'Mua sắm tiết kiệm, vui trọn mỗi ngày.', subtitle: 'Đừng bỏ lỡ những sản phẩm nổi bật và mã ưu đãi dành riêng cho bạn.', cta: 'Xem ưu đãi', image: 'https://images.unsplash.com/photo-1543083477-4f785aeafaa9?auto=format&fit=crop&w=1600&q=90' },
   ];
-  activeHero = signal(0);
+  activeHero = 0;
   private heroTimer: ReturnType<typeof setInterval> | null = null;
 
   readonly quickCategories = [
@@ -65,11 +62,12 @@ export class HomeComponent implements OnInit, OnDestroy {
     { name: 'Bánh & Đồ ăn vặt', icon: '🍪', image: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=700&q=85' },
     { name: 'Gia vị & Thực phẩm khô', icon: '🧂', image: 'https://images.unsplash.com/photo-1532336414038-cf19250c5757?auto=format&fit=crop&w=700&q=85' },
   ];
-  readonly vouchers = signal<Voucher[]>([]);
-  readonly voucherLoadError = signal('');
-  readonly voucherSaveMessage = signal('');
-  private pendingVoucherId = signal<string | null>(null);
-
+  readonly vouchers: Voucher[] = [
+    { code: 'XANHLA30', title: 'Chào bạn mới', value: 'Tặng mã 30K cho khách hàng mới', valueShort: '30K', expiry: 'HSD: 10 ngày từ ngày nhận mã', color: 'green' },
+    { code: 'XANHLA20', title: 'Ưu đãi đi chợ online', value: 'Giảm 20K cho đơn hàng phù hợp', valueShort: '20K', expiry: 'Ưu đãi có thời hạn', color: 'amber' },
+    { code: 'COMBO30', title: 'Combo bữa nhà', value: 'Giảm 30K khi mua combo nguyên liệu', valueShort: '30K', expiry: 'Số lượng ưu đãi có hạn', color: 'red' },
+  ];
+  copiedCode = '';
   readonly deals: Deal[] = [
     { id: 'deal-1', name: 'Rau cải xanh tươi', category: 'Rau củ', description: 'Gợi ý cho món canh, món xào trong bữa cơm nhà.', image: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?auto=format&fit=crop&w=700&q=85', priceNew: '18.000đ', priceOld: '30.000đ', discountPct: 40, save: '12.000đ' },
     { id: 'deal-2', name: 'Cà chua bi đỏ', category: 'Rau củ', description: 'Thêm sắc đỏ tươi ngon cho salad và món ăn mỗi ngày.', image: 'https://images.unsplash.com/photo-1546094096-0df4bcaaa337?auto=format&fit=crop&w=700&q=85', priceNew: '22.000đ', priceOld: '38.000đ', discountPct: 42, save: '16.000đ' },
@@ -86,27 +84,13 @@ export class HomeComponent implements OnInit, OnDestroy {
   categories: ApiCategory[] = [];
   loadingProducts = true;
   productOffset = 0;
-  countdown = signal({ hours: '05', minutes: '42', seconds: '18' });
+  countdown = { hours: '05', minutes: '42', seconds: '18' };
   private countdownEnd = Date.now() + 5 * 60 * 60 * 1000 + 42 * 60 * 1000 + 18000;
   private countdownTimer: ReturnType<typeof setInterval> | null = null;
 
   get visibleProducts(): ApiProduct[] { return this.apiProducts.slice(this.productOffset, this.productOffset + 4); }
 
-  constructor() {
-    effect(() => {
-      this.vouchers.set(this.voucherApi.publicVouchers().slice(0, 6).map((record, index) => this.toHomeVoucher(record, index)));
-      const user = this.cart.currentUser();
-      const pendingId = this.pendingVoucherId();
-      if (user && pendingId && localStorage.getItem('xanhla_auth_token')) {
-        this.pendingVoucherId.set(null);
-        this.persistVoucher(pendingId);
-      }
-    });
-  }
-
   ngOnInit(): void {
-    this.voucherApi.loadPublicVouchers();
-    this.voucherApi.loadUserVouchers();
     this.productApi.getAll({ limit: 12, sort: 'createdAt' }).subscribe({
       next: res => { this.apiProducts = res.data || []; this.loadingProducts = false; },
       error: () => { this.loadingProducts = false; },
@@ -119,80 +103,22 @@ export class HomeComponent implements OnInit, OnDestroy {
         console.error('Failed to load categories:', err);
       },
     });
-    this.zone.runOutsideAngular(() => {
-      this.heroTimer = setInterval(() => this.nextHero(), 6500);
-      this.countdownTimer = setInterval(() => this.tickCountdown(), 1000);
-    });
+    this.heroTimer = setInterval(() => this.nextHero(), 6500);
+    this.countdownTimer = setInterval(() => this.tickCountdown(), 1000);
     this.tickCountdown();
   }
   ngOnDestroy(): void {
     if (this.heroTimer) clearInterval(this.heroTimer);
     if (this.countdownTimer) clearInterval(this.countdownTimer);
   }
-  nextHero(): void { this.activeHero.update(index => (index + 1) % this.heroSlides.length); }
-  prevHero(): void { this.activeHero.update(index => (index - 1 + this.heroSlides.length) % this.heroSlides.length); }
+  nextHero(): void { this.activeHero = (this.activeHero + 1) % this.heroSlides.length; }
+  prevHero(): void { this.activeHero = (this.activeHero - 1 + this.heroSlides.length) % this.heroSlides.length; }
   nextProducts(): void { this.productOffset = Math.min(Math.max(0, this.apiProducts.length - 4), this.productOffset + 1); }
   prevProducts(): void { this.productOffset = Math.max(0, this.productOffset - 1); }
-
-  isCopied(code: string): boolean {
-    return this.voucherApi.isCopied(code);
-  }
-
-  isSaved(voucherId: string): boolean {
-    return this.voucherApi.isSaved(voucherId);
-  }
-
   copyVoucher(code: string): void {
-    this.voucherApi.copyCode(code);
-    this.voucherSaveMessage.set(`Đã sao chép mã ${code}!`);
-  }
-
-  saveVoucher(voucher: Voucher): void {
-    if (this.isSaved(voucher.id)) return;
-    if (!this.cart.currentUser() || !localStorage.getItem('xanhla_auth_token')) {
-      this.pendingVoucherId.set(voucher.id);
-      this.cart.openAuthModal('login');
-      return;
-    }
-    this.persistVoucher(voucher.id);
-  }
-
-  private persistVoucher(voucherId: string): void {
-    this.voucherSaveMessage.set('');
-    this.voucherApi.saveVoucher(voucherId).subscribe({
-      next: response => {
-        this.voucherSaveMessage.set(`Đã lưu ${response.data.voucher.code} vào ví voucher.`);
-      },
-      error: err => {
-        if (err.status === 401) {
-          this.pendingVoucherId.set(voucherId);
-          this.cart.openAuthModal('login');
-          return;
-        }
-        if (err.status === 400 && err.error?.message?.includes('đã lưu')) {
-          this.voucherApi.loadUserVouchers();
-          this.voucherSaveMessage.set('Voucher này đã có trong ví của bạn.');
-          return;
-        }
-        this.voucherSaveMessage.set(err.error?.message || 'Không thể lưu voucher lúc này.');
-      },
-    });
-  }
-
-  private toHomeVoucher(voucher: VoucherRecord, index: number): Voucher {
-    const isPercent = voucher.discountType === 'percentage' || voucher.discountType === 'percent';
-    const valueShort = isPercent
-      ? `${voucher.discountValue}%`
-      : `${Math.round(voucher.discountValue / 1000)}K`;
-    return {
-      id: voucher._id,
-      code: voucher.code,
-      title: voucher.name,
-      value: voucher.description || `Giảm ${valueShort}`,
-      valueShort,
-      expiry: `Hạn dùng: ${new Date(voucher.endDate).toLocaleDateString('vi-VN')}`,
-      color: (['green', 'amber', 'red'] as const)[index % 3],
-    };
+    if (typeof navigator !== 'undefined' && navigator.clipboard) navigator.clipboard.writeText(code).catch(() => undefined);
+    this.copiedCode = code;
+    setTimeout(() => { if (this.copiedCode === code) this.copiedCode = ''; }, 1800);
   }
   productSlug(p: ApiProduct): string { return p.slug?.startsWith('/') ? p.slug : `/product-page/${p.slug}`; }
   addToCart(p: ApiProduct): void { this.cart.addItem(this.toCartProduct(p), 1); }
@@ -236,10 +162,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
   private tickCountdown(): void {
     const total = Math.max(0, Math.floor((this.countdownEnd - Date.now()) / 1000));
-    this.countdown.set({
+    this.countdown = {
       hours: String(Math.floor(total / 3600)).padStart(2, '0'),
       minutes: String(Math.floor((total % 3600) / 60)).padStart(2, '0'),
       seconds: String(total % 60).padStart(2, '0'),
-    });
+    };
   }
 }

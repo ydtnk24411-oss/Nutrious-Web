@@ -2,11 +2,12 @@ const router  = require('express').Router();
 const { body } = require('express-validator');
 const Booking  = require('../models/Booking');
 const Service  = require('../models/Service');
-const { protect, adminOnly } = require('../middleware/auth');
+const { protect, optionalAuth, adminOnly } = require('../middleware/auth');
 const { validate }           = require('../middleware/validate');
 
 // POST /api/bookings — public
 router.post('/',
+  optionalAuth,
   [
     body('service').notEmpty().withMessage('Dịch vụ không được để trống.'),
     body('guestName').notEmpty().withMessage('Họ tên không được để trống.'),
@@ -23,11 +24,27 @@ router.post('/',
       const booking = await Booking.create({
         ...req.body,
         serviceName: service.name,
+        // chủ booking lấy từ token, không tin client
+        user: req.user ? req.user._id : undefined,
+        ...(req.user ? {
+          guestName:  req.body.guestName  || req.user.name,
+          guestEmail: req.body.guestEmail || req.user.email,
+        } : {}),
       });
       res.status(201).json({ success: true, data: booking });
     } catch (err) { next(err); }
   }
 );
+
+// GET /api/bookings/my – booking của user đang đăng nhập
+router.get('/my', protect, async (req, res, next) => {
+  try {
+    const bookings = await Booking.find({
+      $or: [{ user: req.user._id }, { user: null, guestEmail: req.user.email }],
+    }).sort({ createdAt: -1 }).populate('service', 'name price');
+    res.json({ success: true, total: bookings.length, data: bookings });
+  } catch (err) { next(err); }
+});
 
 // GET /api/bookings — admin
 router.get('/', protect, adminOnly, async (req, res, next) => {

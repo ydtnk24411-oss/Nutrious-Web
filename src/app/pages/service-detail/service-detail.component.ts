@@ -27,9 +27,18 @@ export class ServiceDetailComponent implements OnInit {
   protected bookError   = signal('');
   protected selectedDate = signal('2026-10-25');
   protected selectedTime = signal('10:00 AM');
+  protected guestName    = signal(this.cart.currentUser()?.name ?? '');
+  protected guestEmail   = signal(this.cart.currentUser()?.email ?? '');
+  protected guestPhone   = signal(this.cart.currentUser()?.phone ?? '');
 
   ngOnInit(): void {
     const slug = this.route.snapshot.paramMap.get('slug') ?? '';
+    const u = this.cart.currentUser();
+    if (u) {
+      this.guestName.set(u.name ?? '');
+      this.guestEmail.set(u.email ?? '');
+      this.guestPhone.set(u.phone ?? '');
+    }
     this.serviceApi.getBySlug(slug).subscribe({
       next: (res) => { this.service.set(res.data); this.loading.set(false); },
       error: () => { this.error.set('Không tìm thấy dịch vụ.'); this.loading.set(false); },

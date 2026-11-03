@@ -294,6 +294,14 @@
   transition: all 0.15s;
 }
 
+.btn-cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  border-color: #d1d5db;
+  color: #9ca3af;
+  background: #f9fafb;
+}
+
 .btn-cancel:hover {
   background: #fee2e2;
 }

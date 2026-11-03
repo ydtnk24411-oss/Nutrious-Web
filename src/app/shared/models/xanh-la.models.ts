@@ -53,6 +53,9 @@ export interface XanhLaAddress {
 }
 
 export interface XanhLaUser {
+  _id?: string;
+  role?: string;
+  tier?: string;
   name: string;
   email: string;
   firstName?: string;

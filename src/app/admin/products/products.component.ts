@@ -1,4 +1,3 @@
-
 import { Component, signal, inject, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -57,7 +56,7 @@ export class AdminProductsComponent implements OnInit {
   category = signal('');
   sort = signal('createdAt');
   page = signal(1);
-  readonly limit = 12;
+  limit = signal(12);
 
   // View mode
   viewMode = signal<'grid' | 'table'>('grid');
@@ -73,7 +72,7 @@ export class AdminProductsComponent implements OnInit {
   readonly types = ['Fresh', 'Dried'];
 
   totalPages = computed(() =>
-    Math.ceil(this.total() / this.limit)
+    Math.ceil(this.total() / this.limit()) || 1
   );
 
   ngOnInit(): void {
@@ -100,7 +99,7 @@ export class AdminProductsComponent implements OnInit {
 
     const params: Record<string, string | number> = {
       page: this.page(),
-      limit: this.limit,
+      limit: this.limit(),
       sort: this.sort(),
     };
 
@@ -126,11 +125,14 @@ export class AdminProductsComponent implements OnInit {
     });
   }
 
-  // Get category name by categoryId
-  getCategoryName(categoryId: string): string {
-    return this.categories().find(
-      c => c._id === categoryId
-    )?.name ?? 'Chưa phân loại';
+  // Get category name by categoryId or product categoryVi
+  getCategoryName(cat: any, product?: ApiProduct): string {
+    if (product?.categoryVi) return product.categoryVi;
+    if (!cat) return 'Chưa phân loại';
+    const catId = typeof cat === 'object' && cat?._id ? cat._id.toString() : cat.toString();
+    const found = this.categories().find(c => c._id.toString() === catId);
+    if (found) return found.name;
+    return 'Chưa phân loại';
   }
 
   // Filter and sort
@@ -152,6 +154,12 @@ export class AdminProductsComponent implements OnInit {
     this.load();
   }
 
+  onLimitChange(val: number): void {
+    this.limit.set(val);
+    this.page.set(1);
+    this.load();
+  }
+
   prevPage(): void {
     if (this.page() > 1) {
       this.page.update(p => p - 1);
@@ -168,7 +176,8 @@ export class AdminProductsComponent implements OnInit {
 
   // Open create modal
   openCreate(): void {
-    this.form.set(EMPTY_FORM());
+    const defaultCat = this.categories().length > 0 ? this.categories()[0]._id : '';
+    this.form.set({ ...EMPTY_FORM(), categoryId: defaultCat });
     this.modalMode.set('create');
     this.editId.set('');
     this.error.set('');
@@ -177,7 +186,10 @@ export class AdminProductsComponent implements OnInit {
 
   // Open edit modal
   openEdit(p: ApiProduct): void {
-    this.form.set({ ...p });
+    const catId = typeof p.categoryId === 'object' && (p.categoryId as any)?._id
+      ? (p.categoryId as any)._id.toString()
+      : (p.categoryId ? p.categoryId.toString() : '');
+    this.form.set({ ...p, categoryId: catId });
     this.modalMode.set('edit');
     this.editId.set(p._id);
     this.error.set('');
@@ -216,6 +228,10 @@ export class AdminProductsComponent implements OnInit {
     if (!f.name || !f.slug || !f.priceNumber || !f.categoryId) {
       this.error.set('Vui lòng điền đầy đủ thông tin bắt buộc.');
       return;
+    }
+
+    if (!f.price) {
+      f.price = f.priceNumber.toLocaleString('vi-VN') + 'đ';
     }
 
     this.saving.set(true);

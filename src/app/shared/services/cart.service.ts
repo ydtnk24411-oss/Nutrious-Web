@@ -2,19 +2,22 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { XanhLaProduct, XanhLaCartItem, XanhLaUser, XanhLaAddress } from '../models/xanh-la.models';
 import { ApiService } from './api.service';
 
-const USER_KEY    = 'xanhla_user_session';
-const TOKEN_KEY   = 'xanhla_auth_token';
+const USER_KEY     = 'xanhla_user_session';
+const TOKEN_KEY    = 'xanhla_auth_token';
+const SELECTED_KEY = 'xanhla_selected_keys';
 
 // Key giỏ hàng riêng theo từng user
 function cartKey(email: string): string {
   return `xanhla_cart__${email}`;
 }
 
+export function cartItemKey(slug: string, selectedOption?: string): string {
+  return `${slug}|${selectedOption ?? ''}`;
+}
+
 export type AuthTab = 'login' | 'signup';
 
 function priceValue(price: string): number {
-  // Giá VNĐ dùng dấu chấm làm phân cách hàng nghìn (vd: "10.000đ")
-  // → xóa tất cả ký tự không phải chữ số trước khi parse
   return Number(price.replace(/[^\d]/g, ''));
 }
 
@@ -22,20 +25,30 @@ export function formatPrice(value: number): string {
   return value.toLocaleString('vi-VN') + 'đ';
 }
 
+function loadSavedSelectedKeys(): Set<string> | null {
+  try {
+    const raw = sessionStorage.getItem(SELECTED_KEY);
+    if (!raw) return null;
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? new Set(arr) : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistSelectedKeys(keys: Set<string>): void {
+  try {
+    sessionStorage.setItem(SELECTED_KEY, JSON.stringify(Array.from(keys)));
+  } catch {}
+}
+
 @Injectable({ providedIn: 'root' })
 export class CartService {
   private api = inject(ApiService);
 
-  // ── Auth (load trước, cart phụ thuộc vào user) ──────────
+  // ── Auth ────────────────────────────────────────────────
   private _currentUser = signal<XanhLaUser | null>(this._loadUser());
   readonly currentUser = this._currentUser.asReadonly();
-
-  constructor() {
-    // Load full user data from backend if user is logged in
-    if (this._currentUser()) {
-      this.loadUserData();
-    }
-  }
 
   private _authModalOpen = signal(false);
   readonly authModalOpen = this._authModalOpen.asReadonly();
@@ -44,16 +57,108 @@ export class CartService {
   readonly authTab = this._authTab.asReadonly();
 
   // ── Cart state ──────────────────────────────────────────
-  // Nếu đã login: load giỏ hàng của user đó
-  // Nếu chưa login: giỏ trống
-  private _items = signal<XanhLaCartItem[]>(
-    this._currentUser() ? this._loadCartForUser(this._currentUser()!.email) : []
-  );
+  private _items = signal<XanhLaCartItem[]>([]);
   readonly items = this._items.asReadonly();
+
+  // ── Cart item selection (tick chọn sản phẩm để thanh toán) ──
+  private _selectedKeys = signal<Set<string>>(new Set());
+  readonly selectedKeys = this._selectedKeys.asReadonly();
+
+  constructor() {
+    const user = this._currentUser();
+    if (user) {
+      const loaded = this._loadCartForUser(user.email);
+      this._items.set(loaded);
+
+      const saved = loadSavedSelectedKeys();
+      const allItemKeys = new Set(loaded.map(i => cartItemKey(i.product.slug, i.selectedOption)));
+      if (saved && saved.size > 0) {
+        const validKeys = new Set([...saved].filter(k => allItemKeys.has(k)));
+        this._selectedKeys.set(validKeys.size > 0 ? validKeys : allItemKeys);
+      } else {
+        this._selectedKeys.set(allItemKeys);
+      }
+
+      this.loadUserData();
+    }
+  }
+
+  readonly isSelected = (slug: string, selectedOption?: string): boolean => {
+    return this._selectedKeys().has(cartItemKey(slug, selectedOption));
+  };
+
+  toggleItem(slug: string, selectedOption?: string): void {
+    const key = cartItemKey(slug, selectedOption);
+    this._selectedKeys.update(set => {
+      const next = new Set(set);
+      next.has(key) ? next.delete(key) : next.add(key);
+      persistSelectedKeys(next);
+      return next;
+    });
+  }
+
+  toggleAll(): void {
+    if (this.allSelected()) {
+      const empty = new Set<string>();
+      this._selectedKeys.set(empty);
+      persistSelectedKeys(empty);
+    } else {
+      const allKeys = this._items().map(i => cartItemKey(i.product.slug, i.selectedOption));
+      const next = new Set(allKeys);
+      this._selectedKeys.set(next);
+      persistSelectedKeys(next);
+    }
+  }
+
+  readonly allSelected = computed(() => {
+    const items = this._items();
+    if (items.length === 0) return false;
+    return items.every(i => this._selectedKeys().has(cartItemKey(i.product.slug, i.selectedOption)));
+  });
+
+  // Chỉ lấy các sản phẩm ĐƯỢC CHỌN để thanh toán
+  readonly selectedItems = computed(() => {
+    return this._items().filter(i =>
+      this._selectedKeys().has(cartItemKey(i.product.slug, i.selectedOption))
+    );
+  });
+
+  readonly selectedCount = computed(() =>
+    this.selectedItems().length
+  );
+
+  readonly selectedSubtotal = computed(() =>
+    this.selectedItems().reduce((t, i) => t + priceValue(i.product.price) * i.quantity, 0)
+  );
+
+  /** Khi mua ngay 1 sản phẩm: chỉ chọn duy nhất sản phẩm đó */
+  selectOnly(slug: string, selectedOption?: string): void {
+    const next = new Set([cartItemKey(slug, selectedOption)]);
+    this._selectedKeys.set(next);
+    persistSelectedKeys(next);
+  }
+
+  /** Xóa chỉ những sản phẩm ĐÃ MUA khỏi giỏ hàng, giữ lại những sản phẩm chưa chọn */
+  removeSelectedItems(): void {
+    const selected = this._selectedKeys();
+    this._items.update((current) => {
+      const remaining = current.filter(
+        i => !selected.has(cartItemKey(i.product.slug, i.selectedOption))
+      );
+      this._saveCartForCurrentUser(remaining);
+      return remaining;
+    });
+    // Reset selection về tất cả các món còn lại
+    const remainingKeys = this._items().map(i => cartItemKey(i.product.slug, i.selectedOption));
+    const next = new Set(remainingKeys);
+    this._selectedKeys.set(next);
+    persistSelectedKeys(next);
+  }
 
   readonly itemCount = computed(() =>
     this._items().reduce((t, i) => t + i.quantity, 0)
   );
+
   readonly subtotal = computed(() =>
     this._items().reduce((t, i) => t + priceValue(i.product.price) * i.quantity, 0)
   );
@@ -65,11 +170,11 @@ export class CartService {
   // ── Cart methods ────────────────────────────────────────
 
   addItem(product: XanhLaProduct, quantity = 1, selectedOption?: string): void {
-    // Chỉ cho phép thêm nếu đã đăng nhập
     if (!this._currentUser()) {
       this.openAuthModal('login');
       return;
     }
+    const key = cartItemKey(product.slug, selectedOption);
     this._items.update((current) => {
       const idx = current.findIndex(
         (i) => i.product.slug === product.slug && i.selectedOption === selectedOption
@@ -82,6 +187,13 @@ export class CartService {
       this._saveCartForCurrentUser(updated);
       return updated;
     });
+    // Tự động tick chọn sản phẩm vừa thêm
+    this._selectedKeys.update(set => {
+      const next = new Set(set);
+      next.add(key);
+      persistSelectedKeys(next);
+      return next;
+    });
     this._cartDrawerOpen.set(true);
   }
 
@@ -93,6 +205,13 @@ export class CartService {
       this._saveCartForCurrentUser(updated);
       return updated;
     });
+    if (quantity <= 0) {
+      this._selectedKeys.update(set => {
+        const next = new Set([...set].filter(k => !k.startsWith(slug + '|')));
+        persistSelectedKeys(next);
+        return next;
+      });
+    }
   }
 
   removeItem(slug: string): void {
@@ -101,12 +220,19 @@ export class CartService {
       this._saveCartForCurrentUser(updated);
       return updated;
     });
+    this._selectedKeys.update(set => {
+      const next = new Set([...set].filter(k => !k.startsWith(slug + '|')));
+      persistSelectedKeys(next);
+      return next;
+    });
   }
 
-  /** Xóa giỏ hàng UI + xóa storage của user hiện tại */
+  /** Xóa toàn bộ giỏ hàng UI + xóa storage của user hiện tại */
   clear(): void {
     const u = this._currentUser();
     this._items.set([]);
+    this._selectedKeys.set(new Set());
+    persistSelectedKeys(new Set());
     if (u) {
       try { localStorage.removeItem(cartKey(u.email)); } catch { /**/ }
     }
@@ -117,67 +243,56 @@ export class CartService {
 
   // ── Auth methods ────────────────────────────────────────
 
-  login(email: string, name?: string): void {
-    const user: XanhLaUser = { name: name ?? email.split('@')[0], email };
-    this._currentUser.set(user);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-    this._authModalOpen.set(false);
-    // Restore giỏ hàng của user này (nếu có từ lần trước)
-    this._items.set(this._loadCartForUser(email));
-
-    // Load full user data from backend
-    this.loadUserData();
+  /** Token hết hạn / bị từ chối (401): xóa phiên và mở form đăng nhập lại. */
+  expireSession(): void {
+    if (!this._currentUser()) return;
+    this.logout();
+    this.openAuthModal('login');
   }
 
-  // Login with email and password (for real authentication)
+  // Login with email and password
   loginWithPassword(email: string, password: string): void {
-  this.api.post('/auth/login', {
-    email: email.trim().toLowerCase(),
-    password
-  }).subscribe({
-    next: (res: any) => {
-      if (res.success && res.user && res.token) {
-        const user: XanhLaUser = res.user;
+    this.api.post('/auth/login', {
+      email: email.trim().toLowerCase(),
+      password
+    }).subscribe({
+      next: (res: any) => {
+        if (res.success && res.user && res.token) {
+          const user: XanhLaUser = res.user;
 
-        this._currentUser.set(user);
+          this._currentUser.set(user);
+          localStorage.setItem(USER_KEY, JSON.stringify(user));
+          localStorage.setItem(TOKEN_KEY, res.token);
 
-        localStorage.setItem(USER_KEY, JSON.stringify(user));
-        localStorage.setItem(TOKEN_KEY, res.token);
+          this._authModalOpen.set(false);
 
-        this._authModalOpen.set(false);
+          // Khôi phục giỏ hàng
+          const loaded = this._loadCartForUser(user.email);
+          this._items.set(loaded);
+          const allKeys = new Set(loaded.map(i => cartItemKey(i.product.slug, i.selectedOption)));
+          this._selectedKeys.set(allKeys);
+          persistSelectedKeys(allKeys);
 
-        // Khôi phục giỏ hàng
-        this._items.set(this._loadCartForUser(user.email));
-
-        // Load full user data (ku1ec3 cu1ea3 avatar) tu1eeb backend
-        this.loadUserData();
-
-        console.log('Login successful:', user);
-      } else {
-        alert('Đăng nhập thất bại: ' + (res.message || 'Dữ liệu trả về không hợp lệ.'));
+          // Load full user data từ backend
+          this.loadUserData();
+        } else {
+          alert('Đăng nhập thất bại: ' + (res.message || 'Dữ liệu trả về không hợp lệ.'));
+        }
+      },
+      error: (err) => {
+        console.error('Login error:', err);
+        const errorMsg = err.error?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
+        alert(errorMsg);
       }
-    },
-    error: (err) => {
-      console.error('Login error:', err);
-
-      const errorMsg =
-        err.error?.message ||
-        'Đăng nhập thất bại. Vui lòng thử lại.';
-
-      alert(errorMsg);
-    }
-  });
-}
+    });
+  }
 
   public loadUserData(): void {
     this.api.get('/account/me').subscribe({
       next: (res: any) => {
-        console.log('Load user data response:', res);
         if (res.success && res.data) {
           this._currentUser.set(res.data);
           localStorage.setItem(USER_KEY, JSON.stringify(res.data));
-          console.log('User data loaded from backend:', res.data);
-          console.log('Has avatar:', !!res.data.avatar, 'Avatar length:', res.data.avatar?.length);
         }
       },
       error: (err) => {
@@ -187,72 +302,62 @@ export class CartService {
   }
 
   signup(
-  name: string,
-  email: string,
-  password: string,
-  onSuccess?: () => void
-): void {
-  this.api.post('/auth/register', {
-    name: name.trim(),
-    email: email.trim().toLowerCase(),
-    password
-  }).subscribe({
-    next: (res: any) => {
-      if (res.success) {
-        // Không tự động đăng nhập
-        this._currentUser.set(null);
-        this._items.set([]);
+    name: string,
+    email: string,
+    password: string,
+    onSuccess?: () => void
+  ): void {
+    this.api.post('/auth/register', {
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      password
+    }).subscribe({
+      next: (res: any) => {
+        if (res.success && res.token && (res.user || res.data)) {
+          // Tự động đăng nhập luôn với tài khoản vừa tạo
+          const user: XanhLaUser = res.user || res.data;
 
-        localStorage.removeItem(USER_KEY);
-        localStorage.removeItem(TOKEN_KEY);
+          this._currentUser.set(user);
+          localStorage.setItem(USER_KEY, JSON.stringify(user));
+          localStorage.setItem(TOKEN_KEY, res.token);
 
-        // Chuyển về tab đăng nhập
-        this._authTab.set('login');
-        this._authModalOpen.set(true);
+          this._authModalOpen.set(false);
+          this._items.set([]);
+          this._selectedKeys.set(new Set());
+          persistSelectedKeys(new Set());
 
-        alert('Đăng ký thành công! Vui lòng đăng nhập.');
-
-        onSuccess?.();
-      } else {
-        alert('Đăng ký thất bại: ' + (res.message || 'Vui lòng thử lại.'));
+          this.loadUserData();
+          alert(`Đăng ký thành công! Chào mừng ${user.name} đến với Xanh Lá.`);
+          onSuccess?.();
+        } else {
+          alert('Đăng ký thất bại: ' + (res.message || 'Vui lòng thử lại.'));
+        }
+      },
+      error: (err) => {
+        console.error('Signup error:', err);
+        const errorMsg = err.error?.message || 'Đăng ký thất bại. Vui lòng thử lại.';
+        alert(errorMsg);
       }
-    },
-    error: (err) => {
-      console.error('Signup error:', err);
+    });
+  }
 
-      const errorMsg =
-        err.error?.message ||
-        'Đăng ký thất bại. Vui lòng thử lại.';
-
-      alert(errorMsg);
-    }
-  });
-}
   updateUser(patch: Partial<XanhLaUser>): void {
     const current = this._currentUser();
     if (!current) return;
 
-    // First update local state immediately for instant feedback
     const updated = { ...current, ...patch };
     this._currentUser.set(updated);
     localStorage.setItem(USER_KEY, JSON.stringify(updated));
 
-    console.log('Updating user with patch:', patch);
-
-    // Then sync with backend
     this.api.put('/account/me', patch).subscribe({
       next: (res: any) => {
-        console.log('Update user response:', res);
         if (res.success && res.data) {
-          // Update with the latest data from server
           this._currentUser.set(res.data);
           localStorage.setItem(USER_KEY, JSON.stringify(res.data));
-          console.log('User updated in localStorage:', res.data);
         }
       },
       error: (err) => {
         console.error('Failed to update user profile:', err);
-        // Optionally revert on error or show notification
       }
     });
   }
@@ -274,13 +379,14 @@ export class CartService {
   }
 
   logout(): void {
-  this._currentUser.set(null);
-
-  localStorage.removeItem(USER_KEY);
-  localStorage.removeItem(TOKEN_KEY);
-
-  this._items.set([]);
-}
+    this._currentUser.set(null);
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(SELECTED_KEY);
+    this._items.set([]);
+    this._selectedKeys.set(new Set());
+    persistSelectedKeys(new Set());
+  }
 
   openAuthModal(tab: AuthTab = 'login'): void {
     this._authTab.set(tab);
@@ -308,7 +414,13 @@ export class CartService {
   private _loadUser(): XanhLaUser | null {
     try {
       const raw = localStorage.getItem(USER_KEY);
-      return raw ? JSON.parse(raw) : null;
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!raw || !token) {
+        localStorage.removeItem(USER_KEY);
+        localStorage.removeItem(TOKEN_KEY);
+        return null;
+      }
+      return JSON.parse(raw);
     } catch { return null; }
   }
 }

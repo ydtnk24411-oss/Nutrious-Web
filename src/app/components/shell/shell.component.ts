@@ -3,11 +3,18 @@ import { HeaderComponent } from '../header/header.component';
 import { FooterComponent } from '../footer/footer.component';
 import { CartDrawerComponent } from '../cart-drawer/cart-drawer.component';
 import { AuthModalComponent } from '../auth-modal/auth-modal.component';
+import { ChatbotComponent } from '../chatbot/chatbot.component';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [HeaderComponent, FooterComponent, CartDrawerComponent, AuthModalComponent],
+  imports: [
+    HeaderComponent,
+    FooterComponent,
+    CartDrawerComponent,
+    AuthModalComponent,
+    ChatbotComponent,
+  ],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.css',
 })

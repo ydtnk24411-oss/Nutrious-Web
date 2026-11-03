@@ -1,100 +1,54 @@
 <app-shell>
   <div class="vouchers-page xanhla-container">
     <div class="vouchers-header">
-      <h1 class="vouchers-title">Ví Voucher &amp; Kho Ưu Đãi</h1>
-      <p class="vouchers-subtitle">Sao chép mã giảm giá, lưu voucher vào ví cá nhân hoặc áp dụng trực tiếp khi thanh toán</p>
-      <div class="vouchers-header-links">
-        <a routerLink="/promotions" class="vouchers-link-btn">🎁 Xem chương trình khuyến mãi</a>
-        <a routerLink="/checkout" class="vouchers-link-btn vouchers-link-btn--primary">🛒 Đến trang Thanh toán</a>
-      </div>
+      <h1 class="vouchers-title">Voucher & Khuyến mãi</h1>
+      <p class="vouchers-subtitle">Thu thập voucher để tiết kiệm khi mua sắm</p>
     </div>
 
-    @if (saveMessage()) {
-      <div class="vouchers-toast" role="status">{{ saveMessage() }}</div>
-    }
-
     <div class="vouchers-tabs">
-      <button class="vouchers-tab" [class.active]="activeTab() === 'all'" (click)="activeTab.set('all')">
-        Tất cả ưu đãi ({{ voucher.publicVouchers().length }})
-      </button>
-      <button class="vouchers-tab" [class.active]="activeTab() === 'available'" (click)="activeTab.set('available')">
-        Chưa lưu vào ví
-      </button>
-      <button class="vouchers-tab" [class.active]="activeTab() === 'collected'" (click)="activeTab.set('collected')">
-        Ví của tôi ({{ voucher.availableVouchers().length }})
-      </button>
+      <button class="vouchers-tab" [class.active]="activeTab() === 'all'" (click)="activeTab.set('all')">Tất cả</button>
+      <button class="vouchers-tab" [class.active]="activeTab() === 'available'" (click)="activeTab.set('available')">Có thể thu thập</button>
+      <button class="vouchers-tab" [class.active]="activeTab() === 'collected'" (click)="activeTab.set('collected')">Đã thu thập ({{ collectedVouchers().length }})</button>
     </div>
 
     <div class="vouchers-grid">
-      @for (v of tabVouchers(); track v._id) {
+      @for (v of tabVouchers(); track v.id) {
         <div class="voucher-card">
-          <div class="voucher-art" aria-label="Hình minh họa voucher">
-            <span>ƯU ĐÃI XANH LÁ</span>
-            <strong>
-              {{ (v.discountType === 'percentage' || v.discountType === 'percent') ? 'Giảm ' + v.discountValue + '%' : 'Giảm ' + (v.discountValue | number:'1.0-0') + 'đ' }}
-            </strong>
-            <small>{{ isCopied(v.code) ? 'MÃ: ' + v.code : 'Nhấn sao chép để hiện mã' }}</small>
-          </div>
           <div class="voucher-header">
-            <div class="voucher-type">
-              {{ (v.discountType === 'percentage' || v.discountType === 'percent') ? 'Giảm theo %' : 'Giảm trực tiếp' }}
-            </div>
-            @if (isCopied(v.code)) {
-              <div class="voucher-code revealed">✓ {{ v.code }}</div>
-            } @else {
-              <div class="voucher-code masked">••••••</div>
-            }
+            <div class="voucher-type">{{ v.type === 'percentage' ? 'Giảm %' : v.type === 'fixed' ? 'Giảm trực tiếp' : v.type === 'freeship' ? 'Miễn phí giao hàng' : 'Theo danh mục' }}</div>
+            <div class="voucher-code">{{ v.code }}</div>
           </div>
           <div class="voucher-body">
             <h3 class="voucher-name">{{ v.name }}</h3>
             <p class="voucher-desc">{{ v.description }}</p>
-            @if (v.minOrderValue) {
-              <div class="voucher-condition">Đơn tối thiểu: {{ v.minOrderValue.toLocaleString('vi-VN') }}đ</div>
+            @if (v.minValue) {
+              <div class="voucher-condition">Đơn tối thiểu: {{ v.minValue.toLocaleString('vi-VN') }}đ</div>
             }
-            @if (v.maxDiscountValue) {
-              <div class="voucher-condition">Giảm tối đa: {{ v.maxDiscountValue.toLocaleString('vi-VN') }}đ</div>
+            @if (v.maxValue) {
+              <div class="voucher-condition">Giảm tối đa: {{ v.maxValue.toLocaleString('vi-VN') }}đ</div>
             }
-            <div class="voucher-expiry">Hạn dùng: {{ v.endDate | date:'dd/MM/yyyy' }}</div>
-            <div class="voucher-usage">Đã dùng: {{ v.usedCount }}{{ v.usageLimit ? '/' + v.usageLimit : '' }}</div>
+            <div class="voucher-expiry">Hạn dùng: {{ v.endDate }}</div>
+            <div class="voucher-usage">Đã dùng: {{ v.usedCount }}/{{ v.usageLimit }}</div>
           </div>
           <div class="voucher-footer">
-            <button
-              type="button"
-              class="voucher-action-btn voucher-copy-btn"
-              [class.copied]="isCopied(v.code)"
-              (click)="copyVoucherCode(v.code)"
-            >
-              {{ isCopied(v.code) ? '✓ Mã: ' + v.code : '📋 Sao chép mã' }}
-            </button>
-
-            @if (isCollected(v._id)) {
-              <button type="button" class="voucher-action-btn voucher-save-btn saved" disabled>
-                ✓ Đã lưu vào ví
-              </button>
+            @if (activeTab() === 'available' || activeTab() === 'all') {
+              @if (isCollected(v.id)) {
+                <button class="xanhla-btn-primary" disabled>Đã thu thập</button>
+              } @else {
+                <button class="xanhla-btn-primary" (click)="collectVoucher(v.id)">Thu thập</button>
+              }
             } @else {
-              <button type="button" class="voucher-action-btn voucher-save-btn" (click)="collectVoucher(v)">
-                + Lưu vào ví
-              </button>
+              <button class="xanhla-btn-primary" disabled>Đã thu thập</button>
             }
-
-            <a
-              class="voucher-action-btn voucher-use-btn"
-              routerLink="/checkout"
-              [queryParams]="{ voucher: v.code }"
-            >
-              Áp dụng ngay →
-            </a>
           </div>
         </div>
       }
     </div>
 
-    @if (voucher.publicLoading()) {
-      <div class="vouchers-empty"><p>Đang tải danh sách voucher từ MongoDB...</p></div>
-    } @else if (tabVouchers().length === 0) {
+    @if (tabVouchers().length === 0) {
       <div class="vouchers-empty">
         <div style="font-size:48px;margin-bottom:16px">🎫</div>
-        <p>Chưa có voucher nào trong mục này.</p>
+        <p>Không có voucher nào</p>
       </div>
     }
   </div>

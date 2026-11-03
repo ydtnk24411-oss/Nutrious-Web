@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const { body } = require('express-validator');
 const Event  = require('../models/Event');
-const { protect, adminOnly } = require('../middleware/auth');
+const { protect, optionalAuth, adminOnly } = require('../middleware/auth');
 const { validate }           = require('../middleware/validate');
 
 // GET /api/events — public
@@ -25,6 +25,7 @@ router.get('/:slug', async (req, res, next) => {
 
 // POST /api/events/:slug/register — public
 router.post('/:slug/register',
+  optionalAuth,
   [
     body('name').notEmpty().withMessage('Họ tên không được để trống.'),
     body('email').isEmail().withMessage('Email không hợp lệ.'),
@@ -37,7 +38,7 @@ router.post('/:slug/register',
       if (event.registrations.length >= event.capacity) {
         return res.status(400).json({ success: false, message: 'Sự kiện đã hết chỗ.' });
       }
-      event.registrations.push({ name: req.body.name, email: req.body.email, phone: req.body.phone });
+      event.registrations.push({ name: req.body.name, email: req.body.email, phone: req.body.phone || '', userId: req.user ? req.user._id : undefined });
       await event.save();
       res.json({ success: true, message: 'Đăng ký tham gia thành công!' });
     } catch (err) { next(err); }
