@@ -102,7 +102,7 @@
             <article class="deal-product-card">
               <div class="deal-product-media">
                 <a [routerLink]="deal.productLink" class="deal-product-img-link">
-                  <img [src]="deal.image" [alt]="deal.name" loading="lazy" />
+                  <img [src]="deal.image" [alt]="deal.name" loading="lazy" (error)="onImageError($event)" />
                 </a>
                 <span class="deal-discount-badge">-{{ deal.discountPercent }}%</span>
                 <span class="deal-tag-pill">{{ deal.dealTag }}</span>
@@ -153,13 +153,15 @@
         <div class="combo-deals-grid">
           @for (combo of comboDeals(); track combo.id) {
             <article class="combo-deal-card">
-              <div class="combo-deal-img-wrap">
-                <img [src]="combo.image" [alt]="combo.name" loading="lazy" />
+              <a [routerLink]="['/nutrition']" [queryParams]="{ recipe: combo.id }" class="combo-deal-img-wrap" style="display:block;text-decoration:none">
+                <img [src]="combo.image" [alt]="combo.name" loading="lazy" (error)="onImageError($event)" />
                 <span class="combo-badge">{{ combo.badge }}</span>
                 <span class="combo-time">⏱ {{ combo.prepTime }}</span>
-              </div>
+              </a>
               <div class="combo-deal-body">
-                <h3 class="combo-deal-title">{{ combo.name }}</h3>
+                <h3 class="combo-deal-title">
+                  <a [routerLink]="['/nutrition']" [queryParams]="{ recipe: combo.id }" style="color:inherit;text-decoration:none">{{ combo.name }}</a>
+                </h3>
                 <p class="combo-deal-desc">{{ combo.description }}</p>
 
                 <div class="combo-ingredients-list">
@@ -180,9 +182,14 @@
                     </div>
                     <span class="combo-saved-pill">Tiết kiệm {{ combo.savedText }} + Mã {{ combo.voucherCode }}</span>
                   </div>
-                  <button type="button" class="combo-buy-btn" (click)="addComboToCart(combo)">
-                    🛒 Thêm Combo vào giỏ
-                  </button>
+                  <div class="combo-actions-group">
+                    <a [routerLink]="['/nutrition']" [queryParams]="{ recipe: combo.id }" class="combo-detail-link">
+                      📖 Xem chi tiết món
+                    </a>
+                    <button type="button" class="combo-buy-btn" (click)="addComboToCart(combo)">
+                      🛒 Thêm Combo vào giỏ
+                    </button>
+                  </div>
                 </div>
               </div>
             </article>

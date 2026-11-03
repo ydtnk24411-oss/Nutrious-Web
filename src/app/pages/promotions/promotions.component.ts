@@ -223,7 +223,7 @@ export class PromotionsComponent implements OnInit {
 
   private loadDealsFromMongo(): void {
     this.dealsLoading.set(true);
-    this.productApi.getAll({ limit: 60 }).subscribe({
+    this.productApi.getAll({ limit: 0 }).subscribe({
       next: (res) => {
         const products = (res.data || []).filter(p => p.isActive !== false && p.priceNumber > 0);
         this.buildProductDeals(products);
@@ -234,6 +234,14 @@ export class PromotionsComponent implements OnInit {
         this.dealsLoading.set(false);
       },
     });
+  }
+
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement | null;
+    if (img && !img.dataset['fallbackApplied']) {
+      img.dataset['fallbackApplied'] = '1';
+      img.src = 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=700&q=80';
+    }
   }
 
   private buildProductDeals(products: ApiProduct[]): void {

@@ -1,6 +1,6 @@
 import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of, catchError } from 'rxjs';
 import { ShellComponent } from '../../components/shell/shell.component';
@@ -19,15 +19,36 @@ export interface IngredientItem {
   owned: boolean;
 }
 
+export interface RecipeMacros {
+  protein: string;
+  carbs: string;
+  fat: string;
+  fiber: string;
+  vitamins: string;
+}
+
+export interface RecipeStep {
+  stepNumber: number;
+  title: string;
+  detail: string;
+}
+
 export interface RecipeResult {
   id: string;
   name: string;
   image: string;
+  gallery: string[];
   description: string;
   matchScore: number;
   servings: number;
   meals: number;
   prepTime: string;
+  cookTime: string;
+  difficulty: string;
+  calories: number;
+  macros: RecipeMacros;
+  chefTips: string;
+  steps: RecipeStep[];
   ingredients: IngredientItem[];
   nutritionNote: string;
   goalsTags: string[];
@@ -39,8 +60,15 @@ export interface RecipeDbItem {
   id: string;
   name: string;
   image: string;
+  gallery?: string[];
   description: string;
   prepTime: string;
+  cookTime?: string;
+  difficulty?: string;
+  calories?: number;
+  macros?: RecipeMacros;
+  chefTips?: string;
+  steps?: RecipeStep[];
   servingBase: number;
   nutritionNote: string;
   goalsTags: string[];
@@ -61,6 +89,7 @@ export interface GoalItem {
 export interface MealPlanDeal {
   id: string;
   name: string;
+  image?: string;
   badge: string;
   discountPercent: number;
   voucherCode: string;
@@ -74,6 +103,8 @@ export interface MealPlanDeal {
 }
 
 export interface MealPlanCardView extends MealPlanDeal {
+  image: string;
+  recipes: RecipeResult[];
   recipeNames: string[];
   matchedProducts: ApiProduct[];
   originalTotal: number;
@@ -91,13 +122,15 @@ export interface NutritionHeroConfig {
 }
 
 export const GOAL_ICONS: Record<string, string> = {
-  protein: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8c0 2.2-1.8 4-4 4-1.1 0-2.1-.4-2.8-1.1"/><path d="M3 8c0 2.2 1.8 4 4 4 1.1 0 2.1-.4 2.8-1.1"/><path d="M12 20V4"/><path d="M8 16l4 4 4-4"/></svg>',
+  protein: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8c0 2.2-1.8 4-4 4-1.1 0-2.1-.4-2.8-1.1"/><path d="M3 8c0 2.2 1.8 4 4 4 1.1 0-2.1-.4 2.8-1.1"/><path d="M12 20V4"/><path d="M8 16l4 4 4-4"/></svg>',
   fiber: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22l14-14"/><path d="M4 8l14 14"/><path d="M18 4v4"/><path d="M18 8h4"/></svg>',
   vitamin: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2v20"/><path d="M2 12h20"/></svg>',
   mineral: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M12 2v20"/><path d="M2 12h20"/></svg>',
   variety: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
   balance: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><path d="M4 6h16"/><path d="M4 18h16"/><path d="M12 7l4-4"/><path d="M12 7l-4-4"/><path d="M12 17l4 4"/><path d="M12 17l-4-4"/></svg>',
 };
+
+const FALLBACK_FOOD_IMG = 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=700&q=80';
 
 function formatProductSlug(slug?: string, id?: string): string {
   const raw = (slug || id || '').trim();
@@ -113,7 +146,7 @@ function toCartProduct(p: ApiProduct, customPrice?: number): XanhLaProduct {
     slug: formatProductSlug(p.slug, p._id),
     price: customPrice !== undefined ? formatPrice(customPrice) : p.price,
     priceNumber: finalPrice,
-    image: p.image,
+    image: p.image || FALLBACK_FOOD_IMG,
     category: p.categoryId,
     categoryVi: p.categoryVi || '',
     description: p.description || '',
@@ -179,7 +212,7 @@ function matchCatalogueProduct(ingredientName: string, catalogue: ApiProduct[]):
     ['dau tay', ['dau tay', 'strawberry']],
     ['xoai cat', ['xoai cat', 'xoai']],
     ['cam sanh', ['cam sanh', 'cam', 'orange']],
-    ['sa tuoi', ['sa tuoi', 'gung tuoi', 'sa', ' hành']],
+    ['sa tuoi', ['sa tuoi', 'gung tuoi', 'sa', 'hanh']],
   ];
 
   for (const [key, aliases] of keywordMap) {
@@ -214,14 +247,17 @@ export class NutritionComponent implements OnInit {
   private productApi = inject(ProductApiService);
   private api = inject(ApiService);
   private voucher = inject(VoucherService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
   readonly GOAL_ICONS = GOAL_ICONS;
+  protected formatPrice = formatPrice;
 
   heroConfig = signal<NutritionHeroConfig>({
     kicker: '🥗 Trợ Lý Thực Đơn Khoa Học · Dữ Liệu Trực Tuyến',
     title: 'Dinh dưỡng thông minh & Thực đơn chuẩn vị',
     subtitle:
-      'Khám phá các gói thực đơn dinh dưỡng tiết kiệm, cân đối vi chất theo thể trạng, tự động tính định lượng theo số người & số bữa ăn và thêm trọn bộ nguyên liệu tươi sạch vào giỏ hàng chỉ với một chạm.',
+      'Khám phá các gói thực đơn dinh dưỡng tiết kiệm, xem chi tiết công thức chế biến từng bước, bảng thành phần vi chất và thêm trọn bộ nguyên liệu tươi sạch vào giỏ hàng chỉ với một chạm.',
     bannerImage: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&h=520&fit=crop',
   });
 
@@ -244,23 +280,45 @@ export class NutritionComponent implements OnInit {
   categoryTab = signal<'all' | 'protein' | 'fiber' | 'vitamin' | 'balance'>('all');
   activePlanId = signal<string | null>(null);
 
+  // Dedicated detail view state (for viewing a dish or a meal plan on its own detail screen)
+  selectedRecipeId = signal<string | null>(null);
+  selectedPlanDetailId = signal<string | null>(null);
+  activeGalleryImage = signal<string>('');
+
   loading = signal<boolean>(false);
   results = signal<RecipeResult[]>([]);
   addedToCart = signal<string | null>(null);
   hasSearched = signal<boolean>(false);
 
+  readonly selectedDetailRecipe = computed<RecipeResult | null>(() => {
+    const id = this.selectedRecipeId();
+    if (!id) return null;
+    return this.results().find(r => r.id === id) || null;
+  });
+
+  readonly relatedRecipes = computed<RecipeResult[]>(() => {
+    const current = this.selectedDetailRecipe();
+    if (!current) return [];
+    return this.results().filter(r => r.id !== current.id).slice(0, 3);
+  });
+
   readonly mealPlanCards = computed<MealPlanCardView[]>(() => {
     const plans = this.mealPlansSignal();
+    const allResults = this.results();
     const recipes = this.recipesDbSignal();
     const cat = this.catalogue();
 
-    return plans.map((plan) => {
+    return plans.map((plan, idx) => {
       const planRecipes = plan.recipeIds
+        .map(id => allResults.find(r => r.id === id))
+        .filter((r): r is RecipeResult => !!r);
+
+      const dbRecipes = plan.recipeIds
         .map(id => recipes.find(r => r.id === id))
         .filter((r): r is RecipeDbItem => !!r);
 
       const prodMap = new Map<string, ApiProduct>();
-      for (const r of planRecipes) {
+      for (const r of dbRecipes) {
         for (const ing of r.ingredients) {
           const p = matchCatalogueProduct(ing.name, cat);
           if (p) prodMap.set(p._id || p.slug, p);
@@ -271,9 +329,18 @@ export class NutritionComponent implements OnInit {
       const dealTotal = Math.round((originalTotal * (100 - plan.discountPercent)) / 100 / 1000) * 1000;
       const saved = Math.max(0, originalTotal - dealTotal);
 
+      const defaultImages = [
+        'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=700&q=80',
+        'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=700&q=80',
+        'https://images.unsplash.com/photo-1547592180-85f173990554?w=700&q=80',
+        'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=700&q=80',
+      ];
+
       return {
         ...plan,
-        recipeNames: planRecipes.map(r => r.name),
+        image: plan.image || dbRecipes[0]?.image || defaultImages[idx % defaultImages.length],
+        recipes: planRecipes,
+        recipeNames: dbRecipes.map(r => r.name),
         matchedProducts,
         originalTotal,
         originalTotalText: formatPrice(originalTotal),
@@ -282,6 +349,12 @@ export class NutritionComponent implements OnInit {
         savedText: formatPrice(saved),
       };
     });
+  });
+
+  readonly selectedDetailPlan = computed<MealPlanCardView | null>(() => {
+    const id = this.selectedPlanDetailId();
+    if (!id) return null;
+    return this.mealPlanCards().find(p => p.id === id) || null;
   });
 
   readonly filteredResults = computed<RecipeResult[]>(() => {
@@ -304,7 +377,19 @@ export class NutritionComponent implements OnInit {
             recipes: RecipeDbItem[];
           };
         }>('/nutrition')
-        .pipe(catchError(() => of({ success: false, data: { hero: undefined as NutritionHeroConfig | undefined, goals: [] as GoalItem[], mealPlans: [] as MealPlanDeal[], recipes: [] as RecipeDbItem[] } }))),
+        .pipe(
+          catchError(() =>
+            of({
+              success: false,
+              data: {
+                hero: undefined as NutritionHeroConfig | undefined,
+                goals: [] as GoalItem[],
+                mealPlans: [] as MealPlanDeal[],
+                recipes: [] as RecipeDbItem[],
+              },
+            })
+          )
+        ),
       products: this.productApi
         .getAll({ limit: 0 })
         .pipe(catchError(() => of({ success: false, total: 0, page: 1, pages: 1, data: [] as ApiProduct[] }))),
@@ -320,16 +405,87 @@ export class NutritionComponent implements OnInit {
       }
       this.computeRecipes();
       this.loading.set(false);
+
+      // Watch query params (?recipe=... or ?plan=...) so clicking from Promotions or sharing link opens detail page directly
+      this.route.queryParamMap.subscribe((params) => {
+        const rId = params.get('recipe');
+        const pId = params.get('plan');
+        if (rId) {
+          this.openRecipeDetail(rId, false);
+        } else if (pId) {
+          this.openPlanDetail(pId, false);
+        } else {
+          this.selectedRecipeId.set(null);
+          this.selectedPlanDetailId.set(null);
+        }
+      });
+    });
+  }
+
+  onImageError(event: Event, fallbackUrl = FALLBACK_FOOD_IMG): void {
+    const img = event.target as HTMLImageElement | null;
+    if (img && img.src !== fallbackUrl) {
+      img.src = fallbackUrl;
+    }
+  }
+
+  openRecipeDetail(recipeId: string, updateUrl = true): void {
+    // Ensure all recipes are computed so we can find it even if a filter was active
+    if (!this.results().some(r => r.id === recipeId)) {
+      this.selectedGoals.set([]);
+      this.budgetLimit.set(null);
+      this.excludeIngredients.set('');
+      this.computeRecipes();
+    }
+    const found = this.results().find(r => r.id === recipeId);
+    if (found) {
+      this.selectedPlanDetailId.set(null);
+      this.selectedRecipeId.set(recipeId);
+      this.activeGalleryImage.set(found.image);
+      if (updateUrl) {
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { recipe: recipeId, plan: null },
+          queryParamsHandling: 'merge',
+        });
+      }
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  }
+
+  openPlanDetail(planId: string, updateUrl = true): void {
+    const plan = this.mealPlanCards().find(p => p.id === planId);
+    if (plan) {
+      this.selectedRecipeId.set(null);
+      this.selectedPlanDetailId.set(planId);
+      this.activePlanId.set(planId);
+      if (updateUrl) {
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { plan: planId, recipe: null },
+          queryParamsHandling: 'merge',
+        });
+      }
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  }
+
+  closeDetailView(): void {
+    this.selectedRecipeId.set(null);
+    this.selectedPlanDetailId.set(null);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { recipe: null, plan: null },
+      queryParamsHandling: 'merge',
     });
   }
 
   applyMealPlan(plan: MealPlanCardView): void {
-    this.activePlanId.set(plan.id);
-    this.selectedGoals.set([...plan.goals]);
-    this.servings.set(plan.servings);
-    this.mealsCount.set(plan.mealsCount);
-    this.categoryTab.set('all');
-    this.computeRecipes(plan.recipeIds);
+    this.openPlanDetail(plan.id);
   }
 
   addMealPlanToCart(plan: MealPlanCardView): void {
@@ -510,15 +666,42 @@ export class NutritionComponent implements OnInit {
         };
       });
 
+      const ingImages = ingredients
+        .map(i => i.product?.image)
+        .filter((u): u is string => !!u);
+      const gallery = Array.from(new Set([recipe.image, ...(recipe.gallery || []), ...ingImages])).slice(0, 5);
+
       return {
         id: recipe.id,
         name: recipe.name,
         image: recipe.image,
+        gallery,
         description: recipe.description,
         matchScore,
         servings: currentServings,
         meals: currentMeals,
         prepTime: recipe.prepTime,
+        cookTime: recipe.cookTime || '15 phút',
+        difficulty: recipe.difficulty || 'Dễ nấu',
+        calories: recipe.calories || 420,
+        macros: recipe.macros || {
+          protein: '32g',
+          carbs: '24g',
+          fat: '14g',
+          fiber: '8g',
+          vitamins: 'Vitamin A, C, B6, Omega-3, Sắt, Canxi',
+        },
+        chefTips:
+          recipe.chefTips ||
+          'Chế biến ở lửa vừa cùng nông sản tươi sạch thu hoạch trong ngày từ Xanh Lá để giữ trọn vẹn hương vị và vi chất.',
+        steps: recipe.steps?.length
+          ? recipe.steps
+          : [
+              { stepNumber: 1, title: 'Sơ chế nguyên liệu', detail: 'Rửa sạch rau củ hữu cơ và thấm khô phần thịt/hải sản tươi.' },
+              { stepNumber: 2, title: 'Tẩm ướp gia vị', detail: 'Ướp nguyên liệu với muối hồng, tiêu đen và dầu ô liu trong 10 phút.' },
+              { stepNumber: 3, title: 'Chế biến giữ trọn vi chất', detail: 'Nấu hoặc áp chảo vừa chín tới để giữ màu xanh giòn của rau củ.' },
+              { stepNumber: 4, title: 'Trình bày & Thưởng thức', detail: 'Bày ra đĩa và thưởng thức ngay khi còn nóng.' },
+            ],
         ingredients,
         nutritionNote: recipe.nutritionNote,
         goalsTags: recipe.goalsTags,

@@ -224,11 +224,33 @@ const recipesData = [
   {
     recipeId: 'ca-hoi-ap-chao',
     name: 'Cá hồi áp chảo cải thìa baby',
-    image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&q=80',
+      'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=800&q=80',
+      'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&q=80',
+    ],
     description: 'Cá hồi Na Uy fillet tươi áp chảo xém vàng thơm bơ tỏi, kèm cải thìa baby giòn ngọt và cà chua bi tươi mát.',
-    prepTime: '20 phút',
+    prepTime: '10 phút',
+    cookTime: '10 phút',
+    difficulty: 'Dễ nấu',
+    calories: 460,
+    macros: {
+      protein: '36g',
+      carbs: '14g',
+      fat: '22g',
+      fiber: '6g',
+      vitamins: 'Omega-3, Vitamin D, B12, Vitamin C, Canxi',
+    },
     servingBase: 1,
     nutritionNote: 'Giàu đạm nạc chất lượng cao, axit béo Omega-3 tốt cho tim mạch và chất xơ tự nhiên.',
+    chefTips: 'Thấm thật khô mặt da cá hồi trước khi áp chảo và đặt mặt da xuống trước để da cá giòn rụm mà thịt bên trong vẫn mềm mọng.',
+    steps: [
+      { stepNumber: 1, title: 'Sơ chế cá hồi & rau củ', detail: 'Thấm khô miếng cá hồi Na Uy bằng khăn giấy, ướp nhẹ với chút muối hồng và tiêu đen trong 5 phút. Cải thìa baby và cà chua bi rửa sạch, để ráo.' },
+      { stepNumber: 2, title: 'Áp chảo cá hồi da giòn', detail: 'Làm nóng chảo với 1 thìa dầu ô liu, đặt mặt da cá hồi xuống áp chảo ở lửa vừa 4 phút cho da vàng giòn, lật mặt áp thêm 2 phút cùng 1 tép tỏi đập dập.' },
+      { stepNumber: 3, title: 'Xào nhanh cải thìa & cà chua bi', detail: 'Dùng chính chiếc chảo đó cho cải thìa baby và cà chua bi cắt đôi vào đảo nhanh 2 phút trên lửa lớn để rau giữ màu xanh mướt và độ giòn.' },
+      { stepNumber: 4, title: 'Trình bày & Thưởng thức', detail: 'Xếp cải thìa và cà chua bi ra đĩa, đặt miếng cá hồi áp chảo lên trên, rưới nước sốt chanh dây hoặc bơ tỏi và thưởng thức nóng.' },
+    ],
     goalsTags: ['protein', 'mineral', 'balance'],
     ingredients: [
       { name: 'Cá Hồi Na Uy Fillet Tươi', amountPer1Serving: 150, unit: 'g' },
@@ -240,11 +262,33 @@ const recipesData = [
   {
     recipeId: 'salad-ga-nuong',
     name: 'Salad gà nướng rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80',
+      'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80',
+      'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&q=80',
+    ],
     description: 'Thịt gà ta nướng thảo mộc xé phay, trộn cùng cà chua bi Đà Lạt chín mọng và ớt chuông 3 màu giòn ngọt.',
-    prepTime: '25 phút',
+    prepTime: '10 phút',
+    cookTime: '15 phút',
+    difficulty: 'Dễ nấu',
+    calories: 340,
+    macros: {
+      protein: '32g',
+      carbs: '18g',
+      fat: '10g',
+      fiber: '9g',
+      vitamins: 'Vitamin C, Vitamin A, B6, Kẽm, Kali',
+    },
     servingBase: 1,
     nutritionNote: 'Cung cấp nguồn protein nạc ít béo, dồi dào chất xơ và vitamin C giúp giữ dáng, thanh lọc cơ thể.',
+    chefTips: 'Ngâm ớt chuông và cà chua bi vào nước mát 5 phút trước khi trộn sẽ giúp rau củ giòn ngọt hơn gấp đôi.',
+    steps: [
+      { stepNumber: 1, title: 'Ướp & Nướng thịt gà thảo mộc', detail: 'Thịt gà rửa sạch, ướp cùng chút muối, tiêu, lá hương thảo và mật ong rồi nướng hoặc áp chảo chín vàng 2 mặt (khoảng 12 phút), sau đó thái lát vừa ăn.' },
+      { stepNumber: 2, title: 'Sơ chế rau củ Đà Lạt', detail: 'Ớt chuông 3 màu bỏ hạt, thái sợi dài. Cà chua bi Đà Lạt rửa sạch, bổ đôi.' },
+      { stepNumber: 3, title: 'Pha sốt trộn Eat Clean', detail: 'Khuấy đều 2 thìa dầu ô liu, 1 thìa nước cốt chanh tươi, 1 thìa mật ong và một chút muối tiêu.' },
+      { stepNumber: 4, title: 'Trộn salad & Thưởng thức', detail: 'Cho rau củ vào tô lớn, rưới nước sốt trộn đều, xếp thịt gà nướng lên trên và dùng ngay.' },
+    ],
     goalsTags: ['protein', 'fiber', 'vitamin', 'balance'],
     ingredients: [
       { name: 'Gà Ta Thả Vườn Nguyên Con', amountPer1Serving: 150, unit: 'g' },
@@ -256,11 +300,32 @@ const recipesData = [
   {
     recipeId: 'canh-cai-xanh-thit-bo',
     name: 'Canh cải xanh thịt bò bắp Mỹ',
-    image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1547592180-85f173990554?w=800&q=80',
+      'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80',
+    ],
     description: 'Cải xanh Đà Lạt tươi giòn nấu cùng thịt bò Mỹ ngọt mềm và cà rốt baby Đà Lạt thanh mát, ấm bụng.',
-    prepTime: '25 phút',
+    prepTime: '10 phút',
+    cookTime: '15 phút',
+    difficulty: 'Dễ nấu',
+    calories: 380,
+    macros: {
+      protein: '29g',
+      carbs: '20g',
+      fat: '12g',
+      fiber: '8g',
+      vitamins: 'Sắt Heme, Vitamin A, K, C, Folate',
+    },
     servingBase: 1,
     nutritionNote: 'Cung cấp sắt hữu cơ, đạm cao cấp, tiền chất vitamin A và chất xơ hỗ trợ hệ tiêu hoá.',
+    chefTips: 'Cho một vài lát gừng tươi vào nồi nước canh và trụng thịt bò vừa chín tới ở bước cuối cùng để thịt bò mềm ngọt không bị dai.',
+    steps: [
+      { stepNumber: 1, title: 'Sơ chế thịt bò & rau củ', detail: 'Thịt bò bắp Mỹ thái lát mỏng ngang thớ, ướp chút gừng băm và hạt nêm. Cải xanh cắt khúc 4cm, cà rốt baby tỉa hoa cắt khoanh.' },
+      { stepNumber: 2, title: 'Hầm ngọt nước cùng cà rốt', detail: 'Đun sôi 500ml nước cùng vài lát gừng, cho cà rốt baby vào nấu khoảng 5 phút cho tiết vị ngọt tự nhiên.' },
+      { stepNumber: 3, title: 'Nấu cải xanh & thịt bò', detail: 'Cho phần cọng cải xanh vào trước 1 phút, tiếp tục cho lá cải và thịt bò vào khuấy nhẹ tay đến khi nước sôi bùng trở lại thì tắt bếp ngay.' },
+      { stepNumber: 4, title: 'Múc ra tô & Dùng nóng', detail: 'Rắc thêm chút tiêu xay và hành ngò, dùng nóng với cơm trắng hoặc cơm gạo lứt.' },
+    ],
     goalsTags: ['protein', 'fiber', 'mineral', 'balance'],
     ingredients: [
       { name: 'Thịt Bò Bắp Mỹ Nhập Khẩu', amountPer1Serving: 120, unit: 'g' },
@@ -272,11 +337,32 @@ const recipesData = [
   {
     recipeId: 'sinh-to-dau-xoai',
     name: 'Sinh tố dâu tây & xoài cát Hòa Lộc',
-    image: 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=800&q=80',
+      'https://images.unsplash.com/photo-1610970881699-44a5587cabec?w=800&q=80',
+    ],
     description: 'Sự kết hợp tươi mát giữa dâu tây Đà Lạt mọng nước và xoài cát Hòa Lộc ngọt thơm tự nhiên, nạp nhanh vitamin.',
-    prepTime: '10 phút',
+    prepTime: '5 phút',
+    cookTime: '5 phút',
+    difficulty: 'Rất dễ',
+    calories: 240,
+    macros: {
+      protein: '4g',
+      carbs: '48g',
+      fat: '2g',
+      fiber: '7g',
+      vitamins: 'Vitamin C (150% DV), Vitamin A, E, Kali, Anthocyanin',
+    },
     servingBase: 1,
     nutritionNote: 'Dồi dào vitamin C, chất chống oxy hóa tự nhiên và chất xơ hòa tan giúp tăng đề kháng, đẹp da.',
+    chefTips: 'Cắt nhỏ dâu tây và xoài rồi để ngăn đông 30 phút trước khi xay sẽ tạo kết cấu sánh mịn mát lạnh mà không cần dùng nhiều đá.',
+    steps: [
+      { stepNumber: 1, title: 'Sơ chế trái cây tươi', detail: 'Dâu tây Đà Lạt bỏ cuống, rửa sạch với nước muối loãng, bổ đôi. Xoài cát Hòa Lộc gọt vỏ, cắt quân cờ.' },
+      { stepNumber: 2, title: 'Xay lớp xoài vàng', detail: 'Xay nhuyễn xoài cát Hòa Lộc cùng 50ml sữa hạt hoặc sữa chua không đường rồi rót vào nửa dưới ly.' },
+      { stepNumber: 3, title: 'Xay lớp dâu tây đỏ mọng', detail: 'Tiếp tục xay nhuyễn dâu tây Đà Lạt và nhẹ nhàng rót lên trên lớp xoài để tạo hiệu ứng phân tầng đẹp mắt.' },
+      { stepNumber: 4, title: 'Trang trí & Thưởng thức', detail: 'Điểm thêm vài lát dâu tây tươi và lá bạc hà trên mặt ly, thưởng thức ngay để hấp thu trọn vẹn vitamin.' },
+    ],
     goalsTags: ['vitamin', 'fiber', 'variety'],
     ingredients: [
       { name: 'Dâu Tây Đà Lạt', amountPer1Serving: 150, unit: 'g' },
@@ -287,11 +373,32 @@ const recipesData = [
   {
     recipeId: 'ca-rot-xao-thit-ga',
     name: 'Gà xào nấm đông cô & cà rốt baby',
-    image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800&q=80',
+      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80',
+    ],
     description: 'Thịt gà mềm thơm xào cùng nấm đông cô Đà Lạt và cà rốt baby thái lát, vị ngọt thanh tự nhiên.',
-    prepTime: '20 phút',
+    prepTime: '10 phút',
+    cookTime: '12 phút',
+    difficulty: 'Dễ nấu',
+    calories: 390,
+    macros: {
+      protein: '31g',
+      carbs: '22g',
+      fat: '13g',
+      fiber: '7g',
+      vitamins: 'Beta-Caroten (Vitamin A), Selen, Vitamin D, B3',
+    },
     servingBase: 1,
     nutritionNote: 'Cực kỳ giàu beta-caroten (tiền vitamin A) sáng mắt, selen từ nấm và chất đạm phát triển cơ bắp.',
+    chefTips: 'Xào cà rốt với một chút dầu ăn sẽ giúp cơ thể hấp thu tiền chất Vitamin A (tan trong dầu) hiệu quả hơn gấp 3 lần.',
+    steps: [
+      { stepNumber: 1, title: 'Sơ chế nguyên liệu', detail: 'Thịt gà lọc xương thái miếng vừa ăn. Nấm đông cô tươi cắt bỏ chân, khía chữ thập trên mũ nấm. Cà rốt baby thái lát xéo.' },
+      { stepNumber: 2, title: 'Xào săn thịt gà', detail: 'Phi thơm hành tỏi với 1 thìa dầu ăn, cho thịt gà vào đảo lửa lớn 4 phút cho săn vàng.' },
+      { stepNumber: 3, title: 'Xào nấm đông cô & cà rốt', detail: 'Cho cà rốt baby và nấm đông cô vào đảo chung, thêm 2 thìa nước lọc và đậy nắp 3 phút cho nấm và cà rốt chín mềm.' },
+      { stepNumber: 4, title: 'Nêm nếm & Hoàn thiện', detail: 'Nêm chút dầu hào, hạt nêm vừa miệng, rắc hành lá và tiêu xay rồi bày ra đĩa.' },
+    ],
     goalsTags: ['protein', 'vitamin', 'variety'],
     ingredients: [
       { name: 'Gà Ta Thả Vườn Nguyên Con', amountPer1Serving: 140, unit: 'g' },
@@ -303,11 +410,32 @@ const recipesData = [
   {
     recipeId: 'tom-su-hap-cai-ngot',
     name: 'Tôm sú hấp sả & rau cải ngọt',
-    image: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=800&q=80',
+      'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&q=80',
+    ],
     description: 'Tôm sú Cà Mau tươi sống hấp sả thơm lừng giữ trọn vị ngọt tự nhiên, dùng kèm rau cải ngọt luộc thanh đạm.',
-    prepTime: '15 phút',
+    prepTime: '8 phút',
+    cookTime: '10 phút',
+    difficulty: 'Dễ nấu',
+    calories: 320,
+    macros: {
+      protein: '34g',
+      carbs: '12g',
+      fat: '8g',
+      fiber: '6g',
+      vitamins: 'Canxi, Kẽm, I-ốt, Vitamin B12, Folate',
+    },
     servingBase: 1,
     nutritionNote: 'Bổ sung canxi, kẽm, i-ốt và đạm biển dễ tiêu hóa cùng chất xơ xanh ít calo.',
+    chefTips: 'Chỉ hấp tôm sú trong khoảng 5–6 phút tính từ lúc nước sôi để thịt tôm giòn ngọt, không bị khô xác.',
+    steps: [
+      { stepNumber: 1, title: 'Sơ chế tôm sú & sả tươi', detail: 'Tôm sú rửa sạch, rút chỉ lưng. Sả tươi Bến Tre đập dập, cắt khúc lót dưới đáy xửng hấp.' },
+      { stepNumber: 2, title: 'Hấp tôm sú thơm lừng', detail: 'Xếp tôm sú lên lớp sả, hấp cách thủy 5–6 phút đến khi tôm chuyển màu đỏ gạch đẹp mắt.' },
+      { stepNumber: 3, title: 'Luộc rau cải ngọt xanh mướt', detail: 'Đun sôi nước với vài hạt muối, cho cải ngọt vào luộc 2 phút rồi vớt ra đĩa.' },
+      { stepNumber: 4, title: 'Thưởng thức', detail: 'Dùng tôm sú hấp sả kèm rau cải ngọt chấm muối tiêu chanh hoặc nước mắm nhĩ ớt tỏi.' },
+    ],
     goalsTags: ['protein', 'mineral', 'fiber', 'balance'],
     ingredients: [
       { name: 'Tôm Sú Tươi Sống Cà Mau', amountPer1Serving: 150, unit: 'g' },
@@ -319,11 +447,32 @@ const recipesData = [
   {
     recipeId: 'bo-ap-chao-bong-cai',
     name: 'Thăn bò Mỹ áp chảo & bông cải xanh hấp',
-    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80',
+      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80',
+    ],
     description: 'Thịt bò Mỹ mềm mọng áp chảo vừa chín tới, ăn kèm bông cải xanh Đà Lạt và cà rốt baby giữ trọn độ giòn ngọt.',
-    prepTime: '20 phút',
+    prepTime: '10 phút',
+    cookTime: '10 phút',
+    difficulty: 'Dễ nấu',
+    calories: 450,
+    macros: {
+      protein: '38g',
+      carbs: '16g',
+      fat: '20g',
+      fiber: '8g',
+      vitamins: 'Sắt, Kẽm, Vitamin K, Vitamin C, B12',
+    },
     servingBase: 1,
     nutritionNote: 'Hàm lượng sắt heme, kẽm, vitamin K và protein cao giúp phục hồi cơ bắp nhanh chóng.',
+    chefTips: 'Sau khi áp chảo bò, hãy để miếng thịt nghỉ trên đĩa ấm 3 phút trước khi cắt để nước ngọt phân bố đều bên trong thớ thịt.',
+    steps: [
+      { stepNumber: 1, title: 'Ướp thịt bò Mỹ', detail: 'Thấm khô thịt bò, rắc đều muối biển, tiêu đen xay thô và 1 thìa dầu ô liu lên 2 mặt thịt.' },
+      { stepNumber: 2, title: 'Hấp bông cải xanh & cà rốt', detail: 'Tách bông cải xanh Đà Lạt thành nhánh vừa ăn, hấp cách thủy cùng cà rốt baby trong 4 phút để giữ trọn màu xanh và vitamin C.' },
+      { stepNumber: 3, title: 'Áp chảo thịt bò', detail: 'Làm nóng chảo gang, áp chảo mỗi mặt thịt bò 2–3 phút cùng tỏi đập dập cho đến độ chín vừa ý.' },
+      { stepNumber: 4, title: 'Cắt lát & Trình bày', detail: 'Để thịt bò nghỉ 3 phút rồi thái lát dày 1cm, xếp cạnh bông cải xanh và cà rốt hấp.' },
+    ],
     goalsTags: ['protein', 'mineral', 'fiber', 'balance'],
     ingredients: [
       { name: 'Thịt Bò Bắp Mỹ Nhập Khẩu', amountPer1Serving: 150, unit: 'g' },
@@ -335,11 +484,32 @@ const recipesData = [
   {
     recipeId: 'salad-bo-ca-hoi',
     name: 'Salad bơ sáp Đắk Lắk & cá hồi tươi',
-    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80',
+      'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&q=80',
+    ],
     description: 'Bơ sáp béo ngậy kết hợp cá hồi Na Uy giàu Omega-3, xà lách thủy canh và cà chua bi thanh mát.',
-    prepTime: '15 phút',
+    prepTime: '10 phút',
+    cookTime: '5 phút',
+    difficulty: 'Rất dễ',
+    calories: 410,
+    macros: {
+      protein: '28g',
+      carbs: '14g',
+      fat: '24g',
+      fiber: '9g',
+      vitamins: 'Omega-3, Vitamin E, Vitamin C, Folate, Kali',
+    },
     servingBase: 1,
     nutritionNote: 'Cung cấp chất béo không bão hòa đơn tốt cho tim mạch, vitamin E đẹp da và đạm tinh khiết.',
+    chefTips: 'Vắt vài giọt nước cốt chanh lên phần bơ sáp vừa cắt để bơ luôn giữ màu xanh vàng tươi tắn, không bị thâm.',
+    steps: [
+      { stepNumber: 1, title: 'Áp chảo sơ cá hồi', detail: 'Cá hồi Na Uy cắt khối vuông 2cm, áp chảo nhanh 2 phút trên lửa lớn cho xém cạnh thơm lừng.' },
+      { stepNumber: 2, title: 'Cắt bơ sáp & cà chua bi', detail: 'Bơ sáp Đắk Lắk lột vỏ, bỏ hạt, cắt miếng vuông vừa ăn. Cà chua bi Đà Lạt rửa sạch bổ đôi.' },
+      { stepNumber: 3, title: 'Trộn sốt mè rang / chanh dây', detail: 'Cho cà chua bi và bơ sáp vào đĩa sâu lòng, xếp cá hồi lên trên và rưới sốt mè rang hoặc dầu ô liu chanh tươi.' },
+      { stepNumber: 4, title: 'Thưởng thức', detail: 'Trộn nhẹ tay để bơ không bị nát và thưởng thức ngay.' },
+    ],
     goalsTags: ['protein', 'vitamin', 'fiber', 'balance'],
     ingredients: [
       { name: 'Cá Hồi Na Uy Fillet Tươi', amountPer1Serving: 120, unit: 'g' },
@@ -351,11 +521,32 @@ const recipesData = [
   {
     recipeId: 'sup-bi-do-hat-sen',
     name: 'Súp bí đỏ Đà Lạt hầm nấm đông cô',
-    image: 'https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?w=800&q=80',
+      'https://images.unsplash.com/photo-1547592180-85f173990554?w=800&q=80',
+    ],
     description: 'Bí đỏ Đà Lạt dẻo bùi nấu nhuyễn cùng nấm đông cô thơm dịu và cà rốt baby, dễ tiêu hóa và ấm bụng.',
-    prepTime: '25 phút',
+    prepTime: '10 phút',
+    cookTime: '15 phút',
+    difficulty: 'Dễ nấu',
+    calories: 280,
+    macros: {
+      protein: '8g',
+      carbs: '38g',
+      fat: '7g',
+      fiber: '10g',
+      vitamins: 'Vitamin A (200% DV), Lutein, Vitamin C, Sắt, Magie',
+    },
     servingBase: 1,
     nutritionNote: 'Dồi dào vitamin A, Lutein tốt cho thị lực, chất xơ hòa tan tốt cho dạ dày và giấc ngủ.',
+    chefTips: 'Xào sơ bí đỏ và cà rốt với một chút bơ lạt trước khi hầm sẽ giúp món súp dậy mùi thơm béo tự nhiên.',
+    steps: [
+      { stepNumber: 1, title: 'Sơ chế bí đỏ & nấm đông cô', detail: 'Bí đỏ hồ lô Đà Lạt và cà rốt baby gọt vỏ, cắt miếng nhỏ. Nấm đông cô rửa sạch, thái lát mỏng.' },
+      { stepNumber: 2, title: 'Hầm mềm bí đỏ & cà rốt', detail: 'Cho bí đỏ và cà rốt vào nồi cùng 350ml nước dùng rau củ, hầm nhỏ lửa 12 phút đến khi chín mềm rồi tán hoặc xay mịn.' },
+      { stepNumber: 3, title: 'Nấu cùng nấm đông cô', detail: 'Đổ hỗn hợp súp bí đỏ trở lại nồi, thêm nấm đông cô thái lát vào đun sôi nhẹ 4 phút.' },
+      { stepNumber: 4, title: 'Múc ra bát & Thưởng thức', detail: 'Nêm chút muối hồng và tiêu đen, múc ra bát dùng nóng rất tốt cho tiêu hóa.' },
+    ],
     goalsTags: ['vitamin', 'fiber', 'variety', 'balance'],
     ingredients: [
       { name: 'Bí Đỏ Hồ Lô Đà Lạt', amountPer1Serving: 200, unit: 'g' },
@@ -367,11 +558,32 @@ const recipesData = [
   {
     recipeId: 'heo-thao-moc-cuon-rau',
     name: 'Thịt heo thảo mộc luộc cuốn rau xanh',
-    image: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=800&q=80',
+      'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&q=80',
+    ],
     description: 'Thịt heo thảo mộc ngọt thơm thái mỏng cuốn cùng cải xanh, xà lách và dưa leo hữu cơ thanh mát.',
-    prepTime: '20 phút',
+    prepTime: '10 phút',
+    cookTime: '15 phút',
+    difficulty: 'Dễ nấu',
+    calories: 410,
+    macros: {
+      protein: '30g',
+      carbs: '16g',
+      fat: '18g',
+      fiber: '8g',
+      vitamins: 'Vitamin B1, B6, B12, Kẽm, Vitamin K',
+    },
     servingBase: 1,
     nutritionNote: 'Cân bằng hoàn hảo giữa đạm thịt sạch, vitamin nhóm B và lượng chất xơ dồi dào từ rau sống.',
+    chefTips: 'Luộc thịt heo thảo mộc cùng 2 củ hành tím đập dập rồi ngâm qua nước sôi để nguội sẽ giúp thớ thịt trắng giòn, thái lát không bị vỡ.',
+    steps: [
+      { stepNumber: 1, title: 'Luộc thịt heo thảo mộc', detail: 'Cho thịt heo vào nồi nước lạnh cùng hành tím và 1/2 thìa muối, đun sôi nhỏ lửa 15 phút cho thịt chín mềm rồi vớt ra thái lát mỏng.' },
+      { stepNumber: 2, title: 'Sơ chế rau cải xanh & dưa leo', detail: 'Cải xanh Đà Lạt rửa sạch từng bẹ, để ráo. Dưa leo baby rửa sạch, thái thanh dài.' },
+      { stepNumber: 3, title: 'Cuốn thịt cùng rau củ', detail: 'Trải lá cải xanh, xếp thịt heo thảo mộc và dưa leo baby vào giữa rồi cuộn tròn vừa ăn.' },
+      { stepNumber: 4, title: 'Chấm kèm nước mắm chua ngọt', detail: 'Thưởng thức cuốn thịt rau xanh thanh mát cùng nước mắm tỏi ớt chua ngọt.' },
+    ],
     goalsTags: ['protein', 'fiber', 'variety', 'balance'],
     ingredients: [
       { name: 'Thịt Ba Rọi Heo Thảo Mộc', amountPer1Serving: 140, unit: 'g' },
@@ -383,11 +595,32 @@ const recipesData = [
   {
     recipeId: 'dau-hu-sot-nam-chay',
     name: 'Nấm đông cô xào cải thìa & đậu hũ thanh đạm',
-    image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&q=80',
+      'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80',
+    ],
     description: 'Món chay thanh lọc cơ thể với nấm đông cô Đà Lạt xào cải thìa baby và ớt chuông ngọt tự nhiên.',
-    prepTime: '15 phút',
+    prepTime: '8 phút',
+    cookTime: '10 phút',
+    difficulty: 'Dễ nấu',
+    calories: 260,
+    macros: {
+      protein: '14g',
+      carbs: '26g',
+      fat: '8g',
+      fiber: '11g',
+      vitamins: 'Vitamin D, Vitamin C, Canxi, Sắt thực vật, Selen',
+    },
     servingBase: 1,
     nutritionNote: 'Ít calo, không cholesterol, giàu chất chống oxy hóa Ergothioneine từ nấm và chất xơ xanh.',
+    chefTips: 'Trụng sơ cải thìa baby trong nước sôi 30 giây trước khi xào giúp rau giữ màu xanh ngọc bích và giòn ngọt.',
+    steps: [
+      { stepNumber: 1, title: 'Sơ chế nấm & rau củ', detail: 'Nấm đông cô rửa sạch cắt đôi. Cải thìa baby chẻ đôi theo chiều dọc. Ớt chuông thái miếng vuông.' },
+      { stepNumber: 2, title: 'Trụng sơ cải thìa', detail: 'Chần cải thìa baby trong nước sôi có pha chút dầu ăn 30 giây rồi vớt ra xếp quanh đĩa.' },
+      { stepNumber: 3, title: 'Xào nấm đông cô & ớt chuông', detail: 'Phi thơm đầu hành, cho nấm đông cô và ớt chuông vào xào lửa lớn 4 phút cùng nước tương và dầu hào chay.' },
+      { stepNumber: 4, title: 'Trình bày', detail: 'Múc phần nấm đông cô và ớt chuông sốt bóng mượt vào giữa đĩa cải thìa baby và dùng nóng.' },
+    ],
     goalsTags: ['fiber', 'vitamin', 'mineral', 'variety'],
     ingredients: [
       { name: 'Nấm Đông Cô Đà Lạt', amountPer1Serving: 120, unit: 'g' },
@@ -398,12 +631,33 @@ const recipesData = [
   },
   {
     recipeId: 'detox-cam-tao-ca-rot',
-    name: 'Nước ép Detox cam sành, táo đỏ & cà rốt',
-    image: 'https://images.unsplash.com/photo-1610970881699-44a5587cabec?w=600&q=80',
-    description: 'Thức uống ép lạnh nguyên chất từ cam sành mọng nước, táo nhập khẩu và cà rốt baby Đà Lạt.',
-    prepTime: '10 phút',
+    name: 'Nước ép Detox cam sành, dâu tây & cà rốt',
+    image: 'https://images.unsplash.com/photo-1610970881699-44a5587cabec?w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1610970881699-44a5587cabec?w=800&q=80',
+      'https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=800&q=80',
+    ],
+    description: 'Thức uống ép lạnh nguyên chất từ cam sành mọng nước, dâu tây Đà Lạt và cà rốt baby giàu vitamin.',
+    prepTime: '5 phút',
+    cookTime: '5 phút',
+    difficulty: 'Rất dễ',
+    calories: 195,
+    macros: {
+      protein: '3g',
+      carbs: '42g',
+      fat: '1g',
+      fiber: '6g',
+      vitamins: 'Vitamin C (180% DV), Beta-Caroten, Kali, Folate',
+    },
     servingBase: 1,
     nutritionNote: 'Cung cấp 100% nhu cầu Vitamin C và Beta-Caroten mỗi ngày, hỗ trợ sáng da và tăng miễn dịch.',
+    chefTips: 'Ép xen kẽ cà rốt baby và dâu tây, sau đó pha cùng nước cam sành vắt tươi để giữ trọn các tép cam và hương thơm tinh dầu vỏ cam.',
+    steps: [
+      { stepNumber: 1, title: 'Sơ chế nguyên liệu', detail: 'Cam sành Vĩnh Long rửa sạch, cắt đôi vắt lấy nước. Cà rốt baby và dâu tây Đà Lạt rửa sạch, cắt miếng vừa máy ép.' },
+      { stepNumber: 2, title: 'Ép lạnh cà rốt & dâu tây', detail: 'Cho cà rốt baby và dâu tây vào máy ép chậm lấy nước cốt nguyên chất.' },
+      { stepNumber: 3, title: 'Pha trộn cùng nước cam sành', detail: 'Hòa quyện nước ép cà rốt dâu tây với nước cam sành tươi, khuấy đều.' },
+      { stepNumber: 4, title: 'Thưởng thức', detail: 'Thêm vài viên đá nhỏ và thưởng thức ngay sau bữa sáng hoặc sau buổi tập.' },
+    ],
     goalsTags: ['vitamin', 'mineral', 'variety'],
     ingredients: [
       { name: 'Cam Sành Vĩnh Long', amountPer1Serving: 200, unit: 'g' },
@@ -729,6 +983,40 @@ async function runSeed() {
       { upsert: true, new: true }
     );
     console.log('✅ FooterConfig upserted');
+
+    // 3b. Fix any broken/dead external product image URLs in MongoDB
+    const Product = require('./models/Product');
+    const brokenDomains = [
+      'thumb.wikimedia.org',
+      'goce.vn',
+      'dalatfarm.net',
+      'kangaroovietnam.vn',
+      'dacsanmientay.org',
+      'traicaytonyteo.com',
+      'vcdn1-giadinh.vnecdn.net',
+    ];
+    const fallbackImages = [
+      'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&q=80',
+      'https://images.unsplash.com/photo-1518843875459-f738682238a6?w=600&q=80',
+      'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=600&q=80',
+      'https://images.unsplash.com/photo-1597362925123-77861d3fbac7?w=600&q=80',
+      'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=600&q=80',
+      'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=600&q=80',
+    ];
+    const allProds = await Product.find({}).lean();
+    let fixedCount = 0;
+    for (let i = 0; i < allProds.length; i++) {
+      const p = allProds[i];
+      const img = String(p.image || '');
+      if (!img || brokenDomains.some(d => img.includes(d))) {
+        const replacement = fallbackImages[i % fallbackImages.length];
+        await Product.updateOne({ _id: p._id }, { $set: { image: replacement } });
+        fixedCount++;
+      }
+    }
+    if (fixedCount > 0) {
+      console.log(`✅ Fixed ${fixedCount} broken product image URLs`);
+    }
 
     // 4. Ensure UserVouchers exist for customer users in Atlas
     const User = require('./models/User');
