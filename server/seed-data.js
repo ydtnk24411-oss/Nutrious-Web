@@ -1025,9 +1025,17 @@ const footerConfigData = {
 };
 
 async function runSeed() {
+  let connectedToAtlas = false;
   try {
-    await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 4000 });
-    console.log('✅ Connected to MongoDB Atlas for seeding');
+    try {
+      await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 15000 });
+      connectedToAtlas = true;
+      console.log('✅ Connected to MongoDB Atlas for seeding');
+    } catch (atlasErr) {
+      console.log('ℹ️ Atlas connection timed out or unavailable, falling back to Local MongoDB (127.0.0.1:27017/xanh-la)...');
+      await mongoose.connect('mongodb://127.0.0.1:27017/xanh-la', { serverSelectionTimeoutMS: 5000 });
+      console.log('✅ Connected to Local MongoDB for seeding');
+    }
 
     // 1. Upsert Vouchers
     for (const v of vouchersData) {
@@ -1064,9 +1072,121 @@ async function runSeed() {
     );
     console.log('✅ FooterConfig upserted');
 
-    // 3b. Ensure Yogurt products exist in MongoDB products & fix any broken product image URLs
+    // 3b. Upsert all 22 core recipe ingredient products in MongoDB with 100% accurate photos & fix any mismatched product images
     const Product = require('./models/Product');
-    const yogurtProducts = [
+    const coreIngredientProducts = [
+      {
+        name: 'Cá Hồi Na Uy Fillet Tươi',
+        slug: 'ca-hoi-na-uy-fillet-tuoi',
+        price: '165.000 ₫',
+        priceNumber: 165000,
+        image: 'https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?w=600&q=80',
+        category: 'Thịt & Hải sản',
+        categoryVi: 'Hải sản tươi sống',
+        description: 'Cá hồi Na Uy phi lê tươi rói nhập khẩu đường hàng không, giàu axit béo Omega-3, DHA và Protein tinh khiết.',
+        weight: 'Khay 250g',
+        packSize: '250g',
+        isActive: true,
+        stock: 80,
+      },
+      {
+        name: 'Bông Cải Xanh Đà Lạt',
+        slug: 'bong-cai-xanh-da-lat',
+        price: '28.000 ₫',
+        priceNumber: 28000,
+        image: 'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?w=600&q=80',
+        category: 'Rau củ hữu cơ',
+        categoryVi: 'Rau củ Đà Lạt',
+        description: 'Bông cải xanh hữu cơ trồng tại nông trại Đà Lạt, búp chặt giòn ngọt, giàu chất xơ, Vitamin C và K.',
+        weight: 'Búp 350g',
+        packSize: '350g',
+        isActive: true,
+        stock: 120,
+      },
+      {
+        name: 'Cà Rốt Baby Đà Lạt',
+        slug: 'ca-rot-baby-da-lat',
+        price: '22.000 ₫',
+        priceNumber: 22000,
+        image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=600&q=80',
+        category: 'Rau củ hữu cơ',
+        categoryVi: 'Rau củ Đà Lạt',
+        description: 'Cà rốt baby Đà Lạt củ nhỏ giòn ngọt, cực kỳ giàu Beta-Caroten (tiền Vitamin A) tốt cho mắt và làn da.',
+        weight: 'Túi 400g',
+        packSize: '400g',
+        isActive: true,
+        stock: 150,
+      },
+      {
+        name: 'Gà Ta Thả Vườn Nguyên Con',
+        slug: 'ga-ta-tha-vuon-nguyen-con',
+        price: '95.000 ₫',
+        priceNumber: 95000,
+        image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80',
+        category: 'Thịt & Hải sản',
+        categoryVi: 'Thịt gia cầm sạch',
+        description: 'Thịt gà ta thả vườn săn chắc, ít mỡ, giàu đạm nạc chất lượng cao giúp phát triển cơ bắp và giữ dáng.',
+        weight: 'Khay 500g',
+        packSize: '500g',
+        isActive: true,
+        stock: 90,
+      },
+      {
+        name: 'Dưa Leo Baby Đà Lạt',
+        slug: 'dua-leo-baby-da-lat',
+        price: '20.000 ₫',
+        priceNumber: 20000,
+        image: 'https://images.unsplash.com/photo-1449300079323-02e209d9d3a6?w=600&q=80',
+        category: 'Rau củ hữu cơ',
+        categoryVi: 'Rau củ Đà Lạt',
+        description: 'Dưa leo baby hữu cơ vỏ mỏng, ruột đặc giòn mát, rất hợp ăn sống, trộn salad hoặc cuốn thịt.',
+        weight: 'Túi 400g',
+        packSize: '400g',
+        isActive: true,
+        stock: 140,
+      },
+      {
+        name: 'Cà Chua Bi Đà Lạt',
+        slug: 'ca-chua-bi-da-lat',
+        price: '25.000 ₫',
+        priceNumber: 25000,
+        image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&q=80',
+        category: 'Rau củ hữu cơ',
+        categoryVi: 'Rau củ Đà Lạt',
+        description: 'Cà chua bi đỏ mọng thu hoạch trong ngày, giàu Lycopene chống oxy hóa và Vitamin C tự nhiên.',
+        weight: 'Hộp 350g',
+        packSize: '350g',
+        isActive: true,
+        stock: 130,
+      },
+      {
+        name: 'Thịt Bò Bắp Mỹ Nhập Khẩu',
+        slug: 'thit-bo-bap-my-nhap-khau',
+        price: '135.000 ₫',
+        priceNumber: 135000,
+        image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=600&q=80',
+        category: 'Thịt & Hải sản',
+        categoryVi: 'Thịt bò nhập khẩu',
+        description: 'Thịt bò Mỹ tươi mềm vân mỡ đều, giàu Sắt heme, Kẽm, Vitamin B12 và Protein phục hồi cơ bắp.',
+        weight: 'Khay 300g',
+        packSize: '300g',
+        isActive: true,
+        stock: 85,
+      },
+      {
+        name: 'Cải Xanh Đà Lạt',
+        slug: 'cai-xanh-da-lat',
+        price: '18.000 ₫',
+        priceNumber: 18000,
+        image: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=600&q=80',
+        category: 'Rau củ hữu cơ',
+        categoryVi: 'Rau ăn lá hữu cơ',
+        description: 'Cải xanh hữu cơ Đà Lạt lá non xanh mướt, giàu chất xơ, Folate và Vitamin K thanh nhiệt cơ thể.',
+        weight: 'Bó 350g',
+        packSize: '350g',
+        isActive: true,
+        stock: 160,
+      },
       {
         name: 'Sữa Chua Hy Lạp Hữu Cơ Không Đường',
         slug: 'sua-chua-hy-lap-huu-co',
@@ -1075,10 +1195,9 @@ async function runSeed() {
         image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=600&q=80',
         category: 'Thực phẩm khô & Đồ uống',
         categoryVi: 'Sữa chua & Chế phẩm sữa hữu cơ',
-        description: 'Sữa chua Hy Lạp hữu cơ lên men tự nhiên, đặc sánh gấp đôi, giàu đạm (Protein) và 10 tỷ lợi khuẩn Probiotics tốt cho hệ tiêu hóa, thích hợp ăn kèm trái cây, hạt dinh dưỡng hoặc trộn salad.',
+        description: 'Sữa chua Hy Lạp hữu cơ lên men tự nhiên, đặc sánh gấp đôi, giàu đạm (Protein) và 10 tỷ lợi khuẩn Probiotics tốt cho hệ tiêu hóa.',
         weight: 'Hộp 250g',
         packSize: '250g',
-        packaging: 'Hộp giấy thân thiện môi trường',
         isActive: true,
         stock: 120,
       },
@@ -1090,16 +1209,185 @@ async function runSeed() {
         image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=600&q=80',
         category: 'Thực phẩm khô & Đồ uống',
         categoryVi: 'Sữa chua & Chế phẩm sữa hữu cơ',
-        description: 'Sữa chua men sống từ nguồn sữa tươi cao nguyên Đà Lạt, vị chua thanh dịu nhẹ, ít đường, rất hợp dùng làm sốt salad hoặc tráng miệng sau bữa ăn.',
+        description: 'Sữa chua men sống từ nguồn sữa tươi cao nguyên Đà Lạt, vị chua thanh dịu nhẹ, rất hợp làm sốt salad hoặc ăn kèm trái cây.',
         weight: 'Lốc 4 hộp × 100g',
         packSize: '400g',
-        packaging: 'Lốc 4 hộp',
         isActive: true,
         stock: 150,
       },
+      {
+        name: 'Dâu Tây Đà Lạt',
+        slug: 'dau-tay-da-lat',
+        price: '85.000 ₫',
+        priceNumber: 85000,
+        image: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=600&q=80',
+        category: 'Trái cây tươi',
+        categoryVi: 'Trái cây Đà Lạt',
+        description: 'Dâu tây giống Nhật trồng nhà kính tại Đà Lạt, quả đỏ mọng thơm lừng, giàu Vitamin C và chất chống oxy hóa.',
+        weight: 'Hộp 250g',
+        packSize: '250g',
+        isActive: true,
+        stock: 100,
+      },
+      {
+        name: 'Xoài Cát Hòa Lộc',
+        slug: 'xoai-cat-hoa-loc',
+        price: '55.000 ₫',
+        priceNumber: 55000,
+        image: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=600&q=80',
+        category: 'Trái cây tươi',
+        categoryVi: 'Trái cây miền Tây',
+        description: 'Xoài cát Hòa Lộc chín cây thịt vàng ươm, ngọt thơm dẻo mịn, giàu Vitamin A, C và enzyme tiêu hóa tự nhiên.',
+        weight: 'Trái 500g',
+        packSize: '500g',
+        isActive: true,
+        stock: 110,
+      },
+      {
+        name: 'Nấm Đông Cô Đà Lạt',
+        slug: 'nam-dong-co-da-lat',
+        price: '42.000 ₫',
+        priceNumber: 42000,
+        image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80',
+        category: 'Rau củ hữu cơ',
+        categoryVi: 'Nấm tươi hữu cơ',
+        description: 'Nấm đông cô tươi Đà Lạt mũ dày thơm ngọt, giàu đạm thực vật, Selen và Vitamin D tự nhiên.',
+        weight: 'Khay 250g',
+        packSize: '250g',
+        isActive: true,
+        stock: 110,
+      },
+      {
+        name: 'Tôm Sú Tươi Sống Cà Mau',
+        slug: 'tom-su-tuoi-song-ca-mau',
+        price: '125.000 ₫',
+        priceNumber: 125000,
+        image: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=600&q=80',
+        category: 'Thịt & Hải sản',
+        categoryVi: 'Hải sản tươi sống',
+        description: 'Tôm sú sinh thái Cà Mau thịt săn ngọt, giàu Canxi, Kẽm, I-ốt và Protein biển ít béo.',
+        weight: 'Khay 350g',
+        packSize: '350g',
+        isActive: true,
+        stock: 95,
+      },
+      {
+        name: 'Rau Cải Ngọt',
+        slug: 'rau-cai-ngot-huu-co',
+        price: '18.000 ₫',
+        priceNumber: 18000,
+        image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&q=80',
+        category: 'Rau củ hữu cơ',
+        categoryVi: 'Rau ăn lá hữu cơ',
+        description: 'Rau cải ngọt VietGAP cọng non mềm ngọt, giàu chất xơ hòa tan, Canxi và Folate.',
+        weight: 'Bó 350g',
+        packSize: '350g',
+        isActive: true,
+        stock: 150,
+      },
+      {
+        name: 'Sả Tươi Bến Tre',
+        slug: 'sa-tuoi-ben-tre',
+        price: '12.000 ₫',
+        priceNumber: 12000,
+        image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=600&q=80',
+        category: 'Rau củ hữu cơ',
+        categoryVi: 'Rau gia vị',
+        description: 'Sả cây tươi Bến Tre giàu tinh dầu Citral thơm nồng, giúp khử mùi tanh hải sản và làm ấm cơ thể.',
+        weight: 'Bó 200g',
+        packSize: '200g',
+        isActive: true,
+        stock: 200,
+      },
+      {
+        name: 'Bơ Sáp Đắk Lắk',
+        slug: 'bo-sap-dak-lak',
+        price: '48.000 ₫',
+        priceNumber: 48000,
+        image: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=600&q=80',
+        category: 'Trái cây tươi',
+        categoryVi: 'Trái cây Tây Nguyên',
+        description: 'Bơ sáp Đắk Lắk cơm vàng dẻo quánh, giàu chất béo không bão hòa đơn (Omega-9), Vitamin E và Kali.',
+        weight: 'Túi 500g',
+        packSize: '500g',
+        isActive: true,
+        stock: 115,
+      },
+      {
+        name: 'Bí Đỏ Hồ Lô Đà Lạt',
+        slug: 'bi-do-ho-lo-da-lat',
+        price: '24.000 ₫',
+        priceNumber: 24000,
+        image: 'https://images.unsplash.com/photo-1570586437263-ab629fccc818?w=600&q=80',
+        category: 'Rau củ hữu cơ',
+        categoryVi: 'Rau củ Đà Lạt',
+        description: 'Bí đỏ hồ lô Đà Lạt dẻo bùi thơm ngậy, giàu Vitamin A, Lutein và chất xơ tốt cho thị lực và hệ tiêu hóa.',
+        weight: 'Trái 600g',
+        packSize: '600g',
+        isActive: true,
+        stock: 130,
+      },
+      {
+        name: 'Thịt Ba Rọi Heo Thảo Mộc',
+        slug: 'thit-ba-roi-heo-thao-moc',
+        price: '88.000 ₫',
+        priceNumber: 88000,
+        image: 'https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?w=600&q=80',
+        category: 'Thịt & Hải sản',
+        categoryVi: 'Thịt heo thảo mộc',
+        description: 'Thịt heo chăn nuôi bằng thức ăn thảo mộc tự nhiên, thớ thịt thơm ngọt, giàu Vitamin nhóm B và Protein.',
+        weight: 'Khay 350g',
+        packSize: '350g',
+        isActive: true,
+        stock: 100,
+      },
+      {
+        name: 'Cải Thìa Baby',
+        slug: 'cai-thia-baby-da-lat',
+        price: '20.000 ₫',
+        priceNumber: 20000,
+        image: 'https://images.unsplash.com/photo-1518843875459-f738682238a6?w=600&q=80',
+        category: 'Rau củ hữu cơ',
+        categoryVi: 'Rau ăn lá hữu cơ',
+        description: 'Cải thìa baby Đà Lạt bẹ trắng xanh giòn ngọt, giàu Canxi thực vật, Vitamin C và chất xơ.',
+        weight: 'Túi 350g',
+        packSize: '350g',
+        isActive: true,
+        stock: 140,
+      },
+      {
+        name: 'Ớt Chuông 3 Màu',
+        slug: 'ot-chuong-3-mau-da-lat',
+        price: '35.000 ₫',
+        priceNumber: 35000,
+        image: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=600&q=80',
+        category: 'Rau củ hữu cơ',
+        categoryVi: 'Rau củ Đà Lạt',
+        description: 'Bộ ớt chuông đỏ, vàng, xanh Đà Lạt giòn ngọt không hăng, hàm lượng Vitamin C gấp 3 lần cam.',
+        weight: 'Túi 400g',
+        packSize: '400g',
+        isActive: true,
+        stock: 120,
+      },
+      {
+        name: 'Cam Sành Vĩnh Long',
+        slug: 'cam-sanh-vinh-long',
+        price: '36.000 ₫',
+        priceNumber: 36000,
+        image: 'https://images.unsplash.com/photo-1547514701-42782101795e?w=600&q=80',
+        category: 'Trái cây tươi',
+        categoryVi: 'Trái cây miền Tây',
+        description: 'Cam sành Vĩnh Long vỏ xanh ruột vàng mọng nước, vị ngọt thanh giàu Vitamin C tăng cường đề kháng.',
+        weight: 'Túi 1kg',
+        packSize: '1kg',
+        isActive: true,
+        stock: 160,
+      },
     ];
-    for (const yp of yogurtProducts) {
-      await Product.findOneAndUpdate({ slug: yp.slug }, { $set: yp }, { upsert: true, new: true });
+    for (const cp of coreIngredientProducts) {
+      await Product.findOneAndUpdate({ slug: cp.slug }, { $set: cp }, { upsert: true, new: true });
+      // Also update any existing product with the exact same name so its image is 100% accurate
+      await Product.updateMany({ name: cp.name }, { $set: { image: cp.image, priceNumber: cp.priceNumber, price: cp.price } });
     }
     const brokenDomains = [
       'thumb.wikimedia.org',
@@ -1180,23 +1468,25 @@ async function runSeed() {
 
     await mongoose.disconnect();
 
-    try {
-      const localUri = 'mongodb://127.0.0.1:27017/xanh-la';
-      await mongoose.connect(localUri, { serverSelectionTimeoutMS: 3000 });
-      console.log('✅ Connected to Local MongoDB (127.0.0.1:27017/xanh-la) — syncing data...');
-      for (const colName of collectionsToSync) {
-        const docs = atlasData[colName] || [];
-        if (docs.length > 0) {
-          const col = mongoose.connection.db.collection(colName);
-          await col.deleteMany({});
-          await col.insertMany(docs, { ordered: false });
-          console.log(`  ↳ Synced ${docs.length} docs into local collection '${colName}'`);
+    if (connectedToAtlas) {
+      try {
+        const localUri = 'mongodb://127.0.0.1:27017/xanh-la';
+        await mongoose.connect(localUri, { serverSelectionTimeoutMS: 3000 });
+        console.log('✅ Connected to Local MongoDB (127.0.0.1:27017/xanh-la) — syncing data...');
+        for (const colName of collectionsToSync) {
+          const docs = atlasData[colName] || [];
+          if (docs.length > 0) {
+            const col = mongoose.connection.db.collection(colName);
+            await col.deleteMany({});
+            await col.insertMany(docs, { ordered: false });
+            console.log(`  ↳ Synced ${docs.length} docs into local collection '${colName}'`);
+          }
         }
+        await mongoose.disconnect();
+        console.log('✅ Local MongoDB sync completed!');
+      } catch (localErr) {
+        console.log('ℹ️ Local MongoDB not reachable or skipped:', localErr.message);
       }
-      await mongoose.disconnect();
-      console.log('✅ Local MongoDB sync completed!');
-    } catch (localErr) {
-      console.log('ℹ️ Local MongoDB not reachable or skipped:', localErr.message);
     }
 
     console.log('🎉 Seed completed successfully!');

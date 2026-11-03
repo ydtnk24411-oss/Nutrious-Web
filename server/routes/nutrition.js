@@ -1,6 +1,68 @@
 const router = require('express').Router();
 const Recipe = require('../models/Recipe');
+const Product = require('../models/Product');
 const Order = require('../models/Order');
+
+function normalizeVi(str) {
+  return String(str || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .trim();
+}
+
+function findExactProductForIngredient(ingName, products) {
+  if (!Array.isArray(products) || products.length === 0) return null;
+  const rawLower = String(ingName || '').toLowerCase().trim();
+  const target = normalizeVi(ingName);
+
+  // 1. Exact case-insensitive Vietnamese name match (preserves diacritics so "Bơ" != "Bò")
+  let found = products.find((p) => String(p.name || '').toLowerCase().trim() === rawLower);
+  if (found) return found;
+
+  // 2. Exact slug mapping for all core ingredients
+  const exactSlugMap = [
+    ['cá hồi', 'ca-hoi-na-uy-fillet-tuoi'],
+    ['bông cải xanh', 'bong-cai-xanh-da-lat'],
+    ['cà rốt', 'ca-rot-baby-da-lat'],
+    ['gà ta', 'ga-ta-tha-vuon-nguyen-con'],
+    ['thịt gà', 'ga-ta-tha-vuon-nguyen-con'],
+    ['ức gà', 'ga-ta-tha-vuon-nguyen-con'],
+    ['dưa leo', 'dua-leo-baby-da-lat'],
+    ['cà chua bi', 'ca-chua-bi-da-lat'],
+    ['thịt bò', 'thit-bo-bap-my-nhap-khau'],
+    ['bò bắp', 'thit-bo-bap-my-nhap-khau'],
+    ['cải xanh', 'cai-xanh-da-lat'],
+    ['sữa chua hy lạp', 'sua-chua-hy-lap-huu-co'],
+    ['sữa chua men sống', 'sua-chua-men-song-da-lat'],
+    ['sữa chua', 'sua-chua-hy-lap-huu-co'],
+    ['dâu tây', 'dau-tay-da-lat'],
+    ['xoài cát', 'xoai-cat-hoa-loc'],
+    ['nấm đông cô', 'nam-dong-co-da-lat'],
+    ['tôm sú', 'tom-su-tuoi-song-ca-mau'],
+    ['rau cải ngọt', 'rau-cai-ngot-huu-co'],
+    ['cải ngọt', 'rau-cai-ngot-huu-co'],
+    ['sả tươi', 'sa-tuoi-ben-tre'],
+    ['bơ sáp', 'bo-sap-dak-lak'],
+    ['quả bơ', 'bo-sap-dak-lak'],
+    ['bí đỏ', 'bi-do-ho-lo-da-lat'],
+    ['ba rọi heo', 'thit-ba-roi-heo-thao-moc'],
+    ['heo thảo mộc', 'thit-ba-roi-heo-thao-moc'],
+    ['cải thìa', 'cai-thia-baby-da-lat'],
+    ['ớt chuông', 'ot-chuong-3-mau-da-lat'],
+    ['cam sành', 'cam-sanh-vinh-long'],
+  ];
+
+  for (const [vnKw, slug] of exactSlugMap) {
+    if (rawLower.includes(vnKw)) {
+      found = products.find((p) => p.slug === slug);
+      if (found) return found;
+    }
+  }
+
+  return products.find((p) => normalizeVi(p.name) === target) || null;
+}
 
 const NUTRITION_HERO = {
   kicker: '🥗 Trợ Lý Thực Đơn Khoa Học · Dữ Liệu Trực Tuyến',
@@ -82,7 +144,16 @@ const NUTRITION_MEAL_PLANS = [
   },
 ];
 
-function mapRecipeDoc(r) {
+function mapRecipeDoc(r, products = []) {
+  const mappedIngredients = (r.ingredients || []).map((ing) => {
+    const rawIng = ing.toObject ? ing.toObject() : ing;
+    const matchedProd = findExactProductForIngredient(rawIng.name, products);
+    return {
+      ...rawIng,
+      product: matchedProd || null,
+    };
+  });
+
   return {
     id: r.recipeId,
     name: r.name,
@@ -130,15 +201,16 @@ function mapRecipeDoc(r) {
           },
         ],
     goalsTags: r.goalsTags,
-    ingredients: r.ingredients,
+    ingredients: mappedIngredients,
   };
 }
 
 // GET /api/nutrition — Lấy cấu hình hero, gói thực đơn mẫu, mục tiêu dinh dưỡng và danh sách công thức từ MongoDB
 router.get('/', async (req, res, next) => {
   try {
-    const [recipes, recentOrders] = await Promise.all([
+    const [recipes, products, recentOrders] = await Promise.all([
       Recipe.find({ isActive: true }).sort({ createdAt: 1 }),
+      Product.find({ isActive: { $ne: false } }).lean().catch(() => []),
       Order.find({}).sort({ createdAt: -1 }).limit(12).lean().catch(() => []),
     ]);
 
@@ -160,7 +232,7 @@ router.get('/', async (req, res, next) => {
         hero: NUTRITION_HERO,
         goals: NUTRITION_GOALS,
         mealPlans: NUTRITION_MEAL_PLANS,
-        recipes: recipes.map(mapRecipeDoc),
+        recipes: recipes.map((r) => mapRecipeDoc(r, products)),
         recentOrderedItems,
       },
     });
@@ -172,11 +244,14 @@ router.get('/', async (req, res, next) => {
 // GET /api/nutrition/:id — Lấy chi tiết 1 món ăn từ MongoDB
 router.get('/:id', async (req, res, next) => {
   try {
-    const recipe = await Recipe.findOne({ recipeId: req.params.id, isActive: true });
+    const [recipe, products] = await Promise.all([
+      Recipe.findOne({ recipeId: req.params.id, isActive: true }),
+      Product.find({ isActive: { $ne: false } }).lean().catch(() => []),
+    ]);
     if (!recipe) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy công thức món ăn.' });
     }
-    res.json({ success: true, data: mapRecipeDoc(recipe) });
+    res.json({ success: true, data: mapRecipeDoc(recipe, products) });
   } catch (err) {
     next(err);
   }

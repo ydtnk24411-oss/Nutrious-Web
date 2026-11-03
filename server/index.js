@@ -64,15 +64,25 @@ app.get('/api/health', (_req, res) =>
 app.use(errorHandler);
 
 // ── Database + Start ──────────────────────────────────────
-mongoose
-  .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/xanh-la')
-  .then(() => {
+async function startServer() {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/xanh-la', {
+      serverSelectionTimeoutMS: 12000,
+    });
     console.log('✅ MongoDB connected');
-    app.listen(PORT, () =>
-      console.log(`🚀 Server running at http://localhost:${PORT}`)
-    );
-  })
-  .catch((err) => {
-    console.error('❌ MongoDB connection error:', err.message);
-    process.exit(1);
-  });
+  } catch (err) {
+    console.warn('⚠️ Atlas connection failed, falling back to Local MongoDB (127.0.0.1:27017/xanh-la):', err.message);
+    try {
+      await mongoose.connect('mongodb://127.0.0.1:27017/xanh-la');
+      console.log('✅ Connected to Local MongoDB (127.0.0.1:27017/xanh-la)');
+    } catch (localErr) {
+      console.error('❌ MongoDB connection error:', localErr.message);
+      process.exit(1);
+    }
+  }
+  app.listen(PORT, () =>
+    console.log(`🚀 Server running at http://localhost:${PORT}`)
+  );
+}
+
+startServer();
