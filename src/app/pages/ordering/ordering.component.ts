@@ -13,7 +13,7 @@ import {
   CategoryApiService,
   ApiCategory
 } from '../../shared/services/category-api.service';
-
+import { removeVietnameseTones, scoreProduct } from '../../shared/utils/search.util';
 function toCartProduct(p: ApiProduct): XanhLaProduct {
   return {
     id: p._id,
@@ -200,18 +200,18 @@ export class OrderingComponent implements OnInit {
   });
 
   // Filter accordion open state
- protected openAccordions = signal<Record<string, boolean>>({
-  sort: true,
-  price: true,
-  category: true,
-  preparation: false,
-  ripeness: false,
-  sizeGroup: false,
-  type: false,
-  weight: false,
-});
+  protected openAccordions = signal<Record<string, boolean>>({
+    sort: true,
+    price: true,
+    category: true,
+    preparation: false,
+    ripeness: false,
+    sizeGroup: false,
+    type: false,
+    weight: false,
+  });
 
-    // Các lựa chọn bộ lọc tiếng Việt lấy từ dữ liệu thực tế
+  // Các lựa chọn bộ lọc tiếng Việt lấy từ dữ liệu thực tế
   protected facetOptions = computed(() => {
     const targetCat = this.activeCategory();
     const sourceProducts = targetCat === 'all'
@@ -282,16 +282,16 @@ export class OrderingComponent implements OnInit {
   // Lọc và sắp xếp sản phẩm
   protected filteredProducts = computed(() => {
     const f = this.selectedFilters();
-    const q = this.search().toLowerCase().trim();
+    const rawQ = this.search().trim();
+    const normQ = removeVietnameseTones(rawQ);
     const maxP = this.maxPrice();
 
     let list = this.allProducts().filter(p => {
-      if (
-        q &&
-        !p.name.toLowerCase().includes(q) &&
-        !(p.description || '').toLowerCase().includes(q)
-      ) {
-        return false;
+      if (normQ) {
+        const score = scoreProduct(p, rawQ.toLowerCase(), normQ);
+        if (score <= 0) {
+          return false;
+        }
       }
 
       if (p.priceNumber > maxP) return false;
@@ -333,20 +333,22 @@ export class OrderingComponent implements OnInit {
 
     if (this.sortBy() === 'price-asc') {
       list = [...list].sort((a, b) => a.priceNumber - b.priceNumber);
-    }
-
-    if (this.sortBy() === 'price-desc') {
+    } else if (this.sortBy() === 'price-desc') {
       list = [...list].sort((a, b) => b.priceNumber - a.priceNumber);
-    }
-
-    if (this.sortBy() === 'name-asc') {
-      list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+    } else if (this.sortBy() === 'name-asc') {
+      list = [...list].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+    } else if (normQ) {
+      list = [...list].sort((a, b) => {
+        const scoreB = scoreProduct(b, rawQ.toLowerCase(), normQ);
+        const scoreA = scoreProduct(a, rawQ.toLowerCase(), normQ);
+        return scoreB - scoreA;
+      });
     }
 
     return list;
   });
 
-    // Gom sản phẩm theo đúng Category trong MongoDB
+  // Gom sản phẩm theo đúng Category trong MongoDB
   protected activeCategory = signal('all');
   protected categoryProducts = computed(() => {
     const products = this.filteredProducts();
@@ -370,16 +372,16 @@ export class OrderingComponent implements OnInit {
     }
   }
   protected sections = computed(() => {
-  const products = this.categoryProducts();
+    const products = this.categoryProducts();
 
-  return this.allCategories()
-    .map(category => ({
-      id: category._id,
-      title: category.name,
-      items: products.filter(p => p.categoryId === category._id)
-    }))
-    .filter(section => section.items.length > 0);
-});
+    return this.allCategories()
+      .map(category => ({
+        id: category._id,
+        title: category.name,
+        items: products.filter(p => p.categoryId === category._id)
+      }))
+      .filter(section => section.items.length > 0);
+  });
 
   ngOnInit(): void {
     const q = this.route.snapshot.queryParamMap.get('q');
@@ -441,10 +443,12 @@ export class OrderingComponent implements OnInit {
     // Theo dõi khi query parameter thay đổi
     this.route.queryParamMap.subscribe(params => {
       const cat = params.get('category');
+      const q = params.get('q');
+      this.search.set(q ?? '');
       if (!this.loading()) {
         if (cat) {
           this.navigateToCategory(cat);
-        } else {
+        } else if (!q) {
           this.selectCategory('all');
         }
       }

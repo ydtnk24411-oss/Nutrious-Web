@@ -18,6 +18,9 @@ const voucherRoutes = require('./routes/vouchers');
 const loyaltyRoutes = require('./routes/loyalty');
 const reviewRoutes = require('./routes/reviews');
 const chatbotRoutes = require('./routes/chatbot');
+const inventoryRoutes = require('./routes/inventory');
+const supportRoutes = require('./routes/support');
+const complaintRoutes = require('./routes/complaints');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -62,6 +65,9 @@ app.use('/api/vouchers', voucherRoutes);
 app.use('/api/loyalty', loyaltyRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/support', supportRoutes);
+app.use('/api/complaints', complaintRoutes);
 
 // ── Health check ──────────────────────────────────────────
 app.get('/api/health', (_req, res) =>
@@ -81,6 +87,6 @@ mongoose
     );
   })
   .catch((err) => {
-    console.error('❌ MongoDB connection error:', err.message);
+    console.error('❌ MongoDB connection error:', err);
     process.exit(1);
   });

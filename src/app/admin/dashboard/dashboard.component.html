@@ -132,6 +132,87 @@
     }
   </div>
 
+  <!-- ── Operational Indicators (Kho, Khiếu nại, Live Chat, Voucher, Đánh giá) ──────────────── -->
+  <div class="dash-op-grid">
+    <div class="dash-op-card">
+      <div class="dash-op-icon bg-yellow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <div class="dash-op-info">
+        <span class="dash-op-label">Sắp hết hàng</span>
+        <span class="dash-op-val text-warning">{{ s.lowStockCount ?? 0 }} sp</span>
+      </div>
+    </div>
+
+    <div class="dash-op-card">
+      <div class="dash-op-icon bg-red">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      </div>
+      <div class="dash-op-info">
+        <span class="dash-op-label">Hết hàng</span>
+        <span class="dash-op-val text-danger">{{ s.outOfStockCount ?? 0 }} sp</span>
+      </div>
+    </div>
+
+    <div class="dash-op-card">
+      <div class="dash-op-icon bg-red">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <div class="dash-op-info">
+        <span class="dash-op-label">Khiếu nại chờ</span>
+        <span class="dash-op-val text-danger">{{ s.pendingComplaintsCount ?? 0 }}</span>
+      </div>
+    </div>
+
+    <div class="dash-op-card">
+      <div class="dash-op-icon bg-blue">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
+      <div class="dash-op-info">
+        <span class="dash-op-label">Hội thoại chờ</span>
+        <span class="dash-op-val text-primary">{{ s.waitingSupportCount ?? 0 }}</span>
+      </div>
+    </div>
+
+    <div class="dash-op-card">
+      <div class="dash-op-icon bg-green">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+        </svg>
+      </div>
+      <div class="dash-op-info">
+        <span class="dash-op-label">Voucher chạy</span>
+        <span class="dash-op-val text-success">{{ s.activeVouchersCount ?? 0 }}</span>
+      </div>
+    </div>
+
+    <div class="dash-op-card">
+      <div class="dash-op-icon bg-yellow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+      </div>
+      <div class="dash-op-info">
+        <span class="dash-op-label">Đánh giá sao</span>
+        <span class="dash-op-val">{{ s.reviewStats?.averageRating || 5 }} ⭐</span>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Charts Row 1: Revenue Over Time & By Category ───────────────────────────────────── -->
   <div class="dash-charts-row">
     <!-- Revenue Line Chart -->

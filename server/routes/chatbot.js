@@ -3,6 +3,7 @@ const Product = require('../models/Product');
 const Category = require('../models/Category');
 const Order = require('../models/Order');
 const Voucher = require('../models/Voucher');
+const Conversation = require('../models/Conversation');
 
 // Status dictionary for orders
 const ORDER_STATUS_MAP = {
@@ -85,6 +86,26 @@ YÊU CẦU PHẢN HỒI:
 - Khi gợi ý món hoặc nguyên liệu thay thế lành mạnh, ưu tiên nhắc các sản phẩm sạch đang có tại Xanh Lá Farm.`;
 }
 
+async function logMessageToConv(conv, userMsg, botReply) {
+  if (!conv) return;
+  try {
+    conv.messages.push({
+      sender: 'customer',
+      content: userMsg || '[Hình ảnh]',
+      timestamp: new Date(),
+    });
+    conv.messages.push({
+      sender: 'ai',
+      senderName: 'NutriBot',
+      content: botReply,
+      timestamp: new Date(),
+    });
+    conv.lastMessage = botReply;
+    conv.lastMessageAt = new Date();
+    await conv.save();
+  } catch (_) {}
+}
+
 // POST /api/chatbot/message
 router.post('/message', async (req, res, next) => {
   try {
@@ -105,6 +126,78 @@ router.post('/message', async (req, res, next) => {
     const trimmed = (message || '').trim();
     const cleanLower = removeDiacritics(trimmed);
 
+    const sessionId = req.body.sessionId || req.body.userId || 'guest_chat_session';
+    let conv = null;
+    try {
+      conv = await Conversation.findOne({ sessionId });
+      if (!conv) {
+        conv = new Conversation({
+          sessionId,
+          customerName: req.body.customerName || 'Khách hàng',
+          customerEmail: req.body.customerEmail || '',
+          messages: [],
+        });
+      }
+    } catch (_) {}
+
+    // Check if customer explicitly requests human agent
+    const wantsHuman = /gap nhan vien|gap tu van|nhan vien ho tro|tu van vien|gap nguoi|gap admin/i.test(cleanLower);
+    if (wantsHuman && conv) {
+      conv.status = 'WAITING_FOR_ADMIN';
+      conv.messages.push({
+        sender: 'customer',
+        content: trimmed,
+        timestamp: new Date(),
+      });
+      const aiReply = 'NutriBot đã chuyển yêu cầu của bạn đến chuyên viên tư vấn Xanh Lá. Bạn vui lòng đợi trong giây lát, nhân viên sẽ tham gia hỗ trợ trực tiếp tại đây! 🌿';
+      conv.messages.push({
+        sender: 'ai',
+        senderName: 'NutriBot',
+        content: aiReply,
+        timestamp: new Date(),
+      });
+      conv.lastMessage = trimmed;
+      conv.lastMessageAt = new Date();
+      conv.unreadAdminCount = (conv.unreadAdminCount || 0) + 1;
+      await conv.save();
+      return res.json({ success: true, reply: aiReply, isHandedOver: true });
+    }
+
+    // If Admin is currently handling this conversation, suspend AI automatic reply
+    if (conv && conv.status === 'ADMIN_PROCESSING') {
+      conv.messages.push({
+        sender: 'customer',
+        content: trimmed,
+        timestamp: new Date(),
+      });
+      conv.lastMessage = trimmed;
+      conv.lastMessageAt = new Date();
+      conv.unreadAdminCount = (conv.unreadAdminCount || 0) + 1;
+      await conv.save();
+      return res.json({
+        success: true,
+        reply: 'Tin nhắn của bạn đã được chuyển đến chuyên viên tư vấn đang tiếp nhận cuộc trò chuyện.',
+        isHandedOver: true,
+      });
+    }
+
+    if (conv && conv.status === 'WAITING_FOR_ADMIN') {
+      conv.messages.push({
+        sender: 'customer',
+        content: trimmed,
+        timestamp: new Date(),
+      });
+      conv.lastMessage = trimmed;
+      conv.lastMessageAt = new Date();
+      conv.unreadAdminCount = (conv.unreadAdminCount || 0) + 1;
+      await conv.save();
+      return res.json({
+        success: true,
+        reply: 'Yêu cầu của bạn đang chờ chuyên viên tư vấn tiếp nhận. Vui lòng đợi trong giây lát...',
+        isHandedOver: true,
+      });
+    }
+
     const effectiveGeminiKey = process.env.GEMINI_API_KEY || (provider === 'gemini' ? apiKey : '') || apiKey;
     const effectiveOpenAIKey = (provider === 'openai' ? apiKey : '') || process.env.OPENAI_API_KEY || apiKey;
 
@@ -116,6 +209,7 @@ router.post('/message', async (req, res, next) => {
           const visionResult = await callGeminiVision(image, trimmed, effectiveGeminiKey, persona, profile);
           if (visionResult && visionResult.text) {
             const prods = await findRelatedProducts(removeDiacritics(visionResult.text + ' ' + trimmed));
+            await logMessageToConv(conv, trimmed || '[Ảnh món ăn]', visionResult.text);
             return res.json({ success: true, reply: visionResult.text, products: prods });
           }
         } catch (err) {
@@ -129,6 +223,7 @@ router.post('/message', async (req, res, next) => {
           const visionResult = await callOpenAIVision(image, trimmed, effectiveOpenAIKey, persona, profile);
           if (visionResult && visionResult.text) {
             const prods = await findRelatedProducts(removeDiacritics(visionResult.text + ' ' + trimmed));
+            await logMessageToConv(conv, trimmed || '[Ảnh món ăn]', visionResult.text);
             return res.json({ success: true, reply: visionResult.text, products: prods });
           }
         } catch (err) {
@@ -139,6 +234,7 @@ router.post('/message', async (req, res, next) => {
       // 1.3. Built-in Food & Beverage Vision Analyzer (Local Fallback)
       const localAnalysis = await analyzeFoodImageLocal(image, trimmed, profile);
       const prods = await findRelatedProducts(removeDiacritics(localAnalysis.keywords));
+      await logMessageToConv(conv, trimmed || '[Ảnh món ăn]', localAnalysis.reply);
       return res.json({
         success: true,
         reply: localAnalysis.reply,
@@ -153,6 +249,7 @@ router.post('/message', async (req, res, next) => {
         const reply = await callGeminiAI(trimmed, history, effectiveGeminiKey, persona, profile);
         if (reply && reply.text) {
           const prods = await findRelatedProducts(cleanLower);
+          await logMessageToConv(conv, trimmed, reply.text);
           return res.json({ success: true, reply: reply.text, products: prods });
         }
       } catch (aiErr) {
@@ -163,6 +260,7 @@ router.post('/message', async (req, res, next) => {
         const reply = await callOpenAIAI(trimmed, history, effectiveOpenAIKey, persona, profile);
         if (reply && reply.text) {
           const prods = await findRelatedProducts(cleanLower);
+          await logMessageToConv(conv, trimmed, reply.text);
           return res.json({ success: true, reply: reply.text, products: prods });
         }
       } catch (aiErr) {

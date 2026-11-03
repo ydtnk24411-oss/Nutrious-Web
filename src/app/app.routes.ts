@@ -149,6 +149,36 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./admin/bookings/bookings.component').then((m) => m.AdminBookingsComponent),
       },
+      {
+        path: 'inventory',
+        loadComponent: () =>
+          import('./admin/inventory/inventory.component').then((m) => m.AdminInventoryComponent),
+      },
+      {
+        path: 'support',
+        loadComponent: () =>
+          import('./admin/support/support.component').then((m) => m.AdminSupportComponent),
+      },
+      {
+        path: 'reviews',
+        loadComponent: () =>
+          import('./admin/reviews/reviews.component').then((m) => m.AdminReviewsComponent),
+      },
+      {
+        path: 'complaints',
+        loadComponent: () =>
+          import('./admin/complaints/complaints.component').then((m) => m.AdminComplaintsComponent),
+      },
+      {
+        path: 'vouchers',
+        loadComponent: () =>
+          import('./admin/vouchers/vouchers.component').then((m) => m.AdminVouchersComponent),
+      },
+      {
+        path: 'staff',
+        loadComponent: () =>
+          import('./admin/staff/staff.component').then((m) => m.AdminStaffComponent),
+      },
     ],
   },
 

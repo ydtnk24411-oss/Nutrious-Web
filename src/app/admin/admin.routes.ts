@@ -22,19 +22,39 @@ export const adminRoutes: Routes = [
           import('./dashboard/dashboard.component').then((m) => m.AdminDashboardComponent),
       },
       {
-        path: 'products',
-        loadComponent: () =>
-          import('./products/products.component').then((m) => m.AdminProductsComponent),
-      },
-      {
         path: 'orders',
         loadComponent: () =>
           import('./orders/orders.component').then((m) => m.AdminOrdersComponent),
       },
       {
+        path: 'products',
+        loadComponent: () =>
+          import('./products/products.component').then((m) => m.AdminProductsComponent),
+      },
+      {
+        path: 'inventory',
+        loadComponent: () =>
+          import('./inventory/inventory.component').then((m) => m.AdminInventoryComponent),
+      },
+      {
         path: 'users',
         loadComponent: () =>
           import('./users/users.component').then((m) => m.AdminUsersComponent),
+      },
+      {
+        path: 'support',
+        loadComponent: () =>
+          import('./support/support.component').then((m) => m.AdminSupportComponent),
+      },
+      {
+        path: 'reviews',
+        loadComponent: () =>
+          import('./reviews/reviews.component').then((m) => m.AdminReviewsComponent),
+      },
+      {
+        path: 'complaints',
+        loadComponent: () =>
+          import('./complaints/complaints.component').then((m) => m.AdminComplaintsComponent),
       },
       {
         path: 'events',
@@ -45,6 +65,16 @@ export const adminRoutes: Routes = [
         path: 'bookings',
         loadComponent: () =>
           import('./bookings/bookings.component').then((m) => m.AdminBookingsComponent),
+      },
+      {
+        path: 'vouchers',
+        loadComponent: () =>
+          import('./vouchers/vouchers.component').then((m) => m.AdminVouchersComponent),
+      },
+      {
+        path: 'staff',
+        loadComponent: () =>
+          import('./staff/staff.component').then((m) => m.AdminStaffComponent),
       },
     ],
   },

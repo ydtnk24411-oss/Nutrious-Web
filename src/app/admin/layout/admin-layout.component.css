@@ -169,6 +169,87 @@
   pointer-events: none;
 }
 
+/* Submenu Support */
+.admin-nav-item-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-nav-chevron {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: transform 0.2s ease, color 0.15s ease;
+}
+
+.admin-nav-chevron:hover {
+  color: #ffffff;
+}
+
+.admin-nav-chevron.is-expanded {
+  transform: rotate(90deg);
+}
+
+.admin-nav-sublist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: 24px;
+  padding-left: 14px;
+  border-left: 1.5px solid rgba(255, 255, 255, 0.12);
+  margin-top: 3px;
+  margin-bottom: 5px;
+}
+
+.admin-nav-subitem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 12.5px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.admin-nav-subdot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: background 0.15s ease;
+}
+
+.admin-nav-subitem:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.admin-nav-subitem:hover .admin-nav-subdot {
+  background: #72c343;
+}
+
+.admin-nav-subitem.is-active {
+  color: #72c343;
+  font-weight: 700;
+  background: rgba(114, 195, 67, 0.12);
+}
+
+.admin-nav-subitem.is-active .admin-nav-subdot {
+  background: #72c343;
+  box-shadow: 0 0 6px rgba(114, 195, 67, 0.8);
+}
+
 /* Storefront Quick Banner */
 .admin-sidebar-store-banner {
   margin: 12px;
