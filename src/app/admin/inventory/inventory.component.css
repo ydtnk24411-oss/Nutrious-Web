@@ -26,74 +26,100 @@
 /* Tab Pill Group */
 .tab-pill-group {
   display: flex;
-  background: #e8f3e5;
-  padding: 4px;
-  border-radius: 10px;
-  gap: 4px;
+  background: #f0f7ec;
+  padding: 5px;
+  border-radius: 12px;
+  gap: 6px;
+  border: 1.5px solid #d4e6cc;
 }
 .tab-pill-btn {
   border: none;
   background: transparent;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #1b4d2e;
+  padding: 8px 18px;
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #374a3a;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
+}
+.tab-pill-btn:hover {
+  color: #10321c;
+  background: rgba(255, 255, 255, 0.6);
 }
 .tab-pill-btn.active {
-  background: #ffffff;
-  color: #10321c;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(135deg, #176b3a 0%, #10321c 100%);
+  color: #ffffff;
+  border: 1px solid rgba(133, 221, 82, 0.4);
+  box-shadow: 0 4px 12px rgba(23, 107, 58, 0.25);
 }
 
 /* KPI Cards */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 18px;
+  margin-bottom: 26px;
 }
 .kpi-card {
   background: #ffffff;
-  border: 1px solid #e1ede0;
-  border-radius: 12px;
-  padding: 16px 20px;
+  border: 1px solid #dce8d3;
+  border-radius: 16px;
+  padding: 20px 22px;
   display: flex;
   align-items: center;
   gap: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 2px 8px rgba(16, 50, 28, 0.03);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #10321c 0%, #176b3a 40%, #72c343 100%);
+}
+.kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: #85dd52;
+  box-shadow: 0 8px 20px rgba(16, 50, 28, 0.07);
 }
 .kpi-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
-.bg-green { background: #eaf4e8; color: #176b3a; }
-.bg-blue { background: #e0f2fe; color: #0284c7; }
-.bg-yellow { background: #fff8e6; color: #d97706; }
-.bg-red { background: #fee2e2; color: #dc2626; }
+.bg-green { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.bg-blue { background: #eff6ff; color: #0284c7; border: 1px solid #bfdbfe; }
+.bg-yellow { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+.bg-red { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
 
 .kpi-info {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 .kpi-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #556b57;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
 }
 .kpi-value {
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 800;
-  color: #0f172a;
+  color: #10321c;
+  letter-spacing: -0.02em;
 }
 
 /* Filter Card */
@@ -180,9 +206,11 @@
 .product-thumb {
   width: 44px;
   height: 44px;
-  border-radius: 8px;
+  border-radius: 10px;
   object-fit: cover;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dce8d3;
+  box-shadow: 0 1px 4px rgba(16, 50, 28, 0.08);
+  background: #f7faf5;
 }
 .product-info-col {
   display: flex;
@@ -213,15 +241,41 @@
   color: #0f172a;
 }
 .status-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
   font-size: 11.5px;
   font-weight: 700;
+  letter-spacing: 0.03em;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
-.badge-success { background: #dcfce7; color: #15803d; }
-.badge-warning { background: #fef3c7; color: #b45309; }
-.badge-danger  { background: #fee2e2; color: #b91c1c; }
+.status-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+  flex-shrink: 0;
+}
+.badge-success {
+  background: linear-gradient(135deg, #f4fdf6 0%, #dcfce7 100%);
+  color: #15803d;
+  border-color: #86efac;
+}
+.badge-warning {
+  background: linear-gradient(135deg, #fffdf5 0%, #fef3c7 100%);
+  color: #b45309;
+  border-color: #fcd34d;
+}
+.badge-danger {
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe4e6 100%);
+  color: #e11d48;
+  border-color: #fca5a5;
+}
 
 .btn-action-primary {
   display: inline-flex;

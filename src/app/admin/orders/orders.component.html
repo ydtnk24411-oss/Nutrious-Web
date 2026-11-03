@@ -66,7 +66,8 @@
             <tr>
               <th>Mã đơn</th>
               <th>Khách hàng</th>
-              <th>Số món</th>
+              <th>Sản phẩm</th>
+              <th style="text-align:center">Số món</th>
               <th>Tổng tiền</th>
               <th>Hình thức</th>
               <th>Trạng thái</th>
@@ -79,22 +80,44 @@
               <tr>
                 <td>
                   <code class="order-code-badge">
-                    {{ o.orderCode }}
+                    #{{ o.orderCode }}
                   </code>
                 </td>
                 <td>
-                  <div style="font-weight:600;font-size:14px;color:#1c2920">{{ o.guestName || o.user?.name || '—' }}</div>
-                  <div style="font-size:12.5px;color:#626e64">{{ o.guestEmail || o.user?.email }}</div>
+                  <div style="font-weight:700;font-size:14px;color:#10321c">{{ o.guestName || o.user?.name || '—' }}</div>
+                  <div style="font-size:12px;color:#627566">{{ o.guestEmail || o.user?.email }}</div>
                 </td>
-                <td style="text-align:center;font-weight:600;color:#2c4230">{{ o.items.length }}</td>
-                <td><strong style="color:#176b3a;font-size:14.5px">{{ formatPrice(o.total) }}</strong></td>
-                <td style="font-size:13px;color:#626e64">{{ shippingLabel[o.shippingMethod] }}</td>
+                <td>
+                  <div class="order-prod-preview">
+                    @if (o.items && o.items.length > 0) {
+                      <img
+                        [src]="o.items[0].productImage || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&q=80'"
+                        [alt]="o.items[0].productName || 'Nông sản'"
+                        class="order-prod-thumb"
+                        loading="lazy"
+                      />
+                      <div class="order-prod-meta">
+                        <span class="order-prod-title" [title]="o.items[0].productName">{{ o.items[0].productName || 'Đơn hàng' }}</span>
+                        @if (o.items.length > 1) {
+                          <span class="order-prod-more">+{{ o.items.length - 1 }} món khác</span>
+                        }
+                      </div>
+                    } @else {
+                      <span style="color:#8c9c8e;font-size:13px">—</span>
+                    }
+                  </div>
+                </td>
+                <td style="text-align:center">
+                  <span class="order-qty-pill">{{ o.items.length }}</span>
+                </td>
+                <td><strong style="color:#d63f3f;font-size:15px;font-weight:900">{{ formatPrice(o.total) }}</strong></td>
+                <td style="font-size:13px;color:#4a634e">{{ shippingLabel[o.shippingMethod] }}</td>
                 <td>
                   <span class="admin-badge" [class]="'badge-' + o.status">
                     {{ statusLabel[o.status] }}
                   </span>
                 </td>
-                <td style="font-size:13px;color:#626e64">{{ o.createdAt | date:'dd/MM/yy HH:mm' }}</td>
+                <td style="font-size:12.5px;color:#627566">{{ o.createdAt | date:'dd/MM/yy HH:mm' }}</td>
                 <td style="text-align:right">
                   <button class="admin-btn-icon" title="Xem chi tiết" (click)="openDetail(o)" aria-label="Xem chi tiết">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

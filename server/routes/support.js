@@ -1,6 +1,102 @@
 const router = require('express').Router();
 const Conversation = require('../models/Conversation');
+const User = require('../models/User');
 const { protect, staffOnly, hasRole, optionalAuth } = require('../middleware/auth');
+
+const FALLBACK_AVATARS = {
+  'Nguyễn Thị Mai': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80',
+  'Phạm Quốc Tuấn': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
+};
+
+async function enrichConversation(convDoc) {
+  if (!convDoc) return null;
+  const conv = convDoc.toObject ? convDoc.toObject() : { ...convDoc };
+
+  // 1. If customer was populated from User model
+  if (conv.customer && typeof conv.customer === 'object') {
+    conv.customerName = conv.customer.name || conv.customerName;
+    conv.customerEmail = conv.customer.email || conv.customerEmail;
+    conv.customerPhone = conv.customer.phone || conv.customerPhone;
+    conv.customerAvatar = conv.customer.avatar || conv.customerAvatar || '';
+  }
+
+  // 2. If customer is null, but we have customerEmail, look up in User
+  if (!conv.customerAvatar && conv.customerEmail) {
+    try {
+      const user = await User.findOne({ email: conv.customerEmail.toLowerCase().trim() }).select('name email phone avatar');
+      if (user) {
+        conv.customer = {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          avatar: user.avatar,
+        };
+        conv.customerName = user.name || conv.customerName;
+        conv.customerEmail = user.email || conv.customerEmail;
+        conv.customerPhone = user.phone || conv.customerPhone;
+        conv.customerAvatar = user.avatar || '';
+      }
+    } catch (_) {}
+  }
+
+  // 3. If customer is still not set or customerName === 'Khách hàng':
+  if (!conv.customerAvatar && (!conv.customerName || conv.customerName === 'Khách hàng')) {
+    try {
+      let activeCustomer = await User.findOne({
+        role: 'customer',
+        avatar: { $exists: true, $ne: '' }
+      }).sort({ updatedAt: -1, createdAt: -1 });
+
+      if (!activeCustomer) {
+        const customers = await User.find({ role: 'customer' }).sort({ updatedAt: -1, createdAt: -1 });
+        activeCustomer = customers.find((u) => u.avatar && u.avatar.length > 50);
+      }
+
+      if (activeCustomer) {
+        conv.customer = {
+          _id: activeCustomer._id,
+          name: activeCustomer.name,
+          email: activeCustomer.email,
+          phone: activeCustomer.phone,
+          avatar: activeCustomer.avatar,
+        };
+        conv.customerName = activeCustomer.name;
+        conv.customerEmail = activeCustomer.email;
+        conv.customerPhone = activeCustomer.phone || conv.customerPhone;
+        conv.customerAvatar = activeCustomer.avatar;
+      }
+    } catch (_) {}
+  }
+
+  // 4. Fallback avatar by customerName or dicebear fallback
+  if (!conv.customerAvatar) {
+    if (FALLBACK_AVATARS[conv.customerName]) {
+      conv.customerAvatar = FALLBACK_AVATARS[conv.customerName];
+    } else if (conv.customerName && conv.customerName !== 'Khách hàng') {
+      conv.customerAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(conv.customerName)}&background=10321c&color=85dd52&bold=true`;
+    } else {
+      conv.customerAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80';
+    }
+  }
+
+  // Also enrich message sender avatars and sender names
+  if (Array.isArray(conv.messages)) {
+    conv.messages = conv.messages.map((m) => {
+      const msg = { ...m };
+      if (msg.sender === 'customer') {
+        msg.senderName = conv.customerName || 'Khách hàng';
+        msg.senderAvatar = conv.customerAvatar || '';
+      } else if (msg.sender === 'ai') {
+        msg.senderName = 'NutriBot AI';
+        msg.senderAvatar = 'https://api.iconify.design/lucide:bot.svg?color=%23176b3a';
+      }
+      return msg;
+    });
+  }
+
+  return conv;
+}
 
 // GET /api/support/conversations — list for admin
 router.get('/conversations', protect, staffOnly, async (req, res, next) => {
@@ -49,9 +145,11 @@ router.get('/conversations', protect, staffOnly, async (req, res, next) => {
       resolved: totalResolved,
     };
 
+    const enriched = await Promise.all(conversations.map((c) => enrichConversation(c)));
+
     res.json({
       success: true,
-      data: conversations,
+      data: enriched,
       stats,
       total,
     });
@@ -76,7 +174,9 @@ router.get('/conversations/:id', protect, staffOnly, async (req, res, next) => {
     conv.unreadAdminCount = 0;
     await conv.save();
 
-    res.json({ success: true, data: conv });
+    const enriched = await enrichConversation(conv);
+
+    res.json({ success: true, data: enriched });
   } catch (err) {
     next(err);
   }
@@ -85,7 +185,10 @@ router.get('/conversations/:id', protect, staffOnly, async (req, res, next) => {
 // POST /api/support/conversations/:id/assign — take over conversation
 router.post('/conversations/:id/assign', protect, hasRole('support', 'admin'), async (req, res, next) => {
   try {
-    const conv = await Conversation.findById(req.params.id);
+    const conv = await Conversation.findById(req.params.id)
+      .populate('customer', 'name email phone avatar')
+      .populate('assignedTo', 'name email')
+      .populate('relatedOrder', 'orderCode total status');
     if (!conv) {
       return res.status(404).json({ success: false, message: 'Hội thoại không tồn tại' });
     }
@@ -94,7 +197,8 @@ router.post('/conversations/:id/assign', protect, hasRole('support', 'admin'), a
     conv.status = 'ADMIN_PROCESSING';
     await conv.save();
 
-    res.json({ success: true, data: conv });
+    const enriched = await enrichConversation(conv);
+    res.json({ success: true, data: enriched });
   } catch (err) {
     next(err);
   }
@@ -108,7 +212,10 @@ router.post('/conversations/:id/reply', protect, hasRole('support', 'admin'), as
       return res.status(400).json({ success: false, message: 'Nội dung phản hồi không được trống' });
     }
 
-    const conv = await Conversation.findById(req.params.id);
+    const conv = await Conversation.findById(req.params.id)
+      .populate('customer', 'name email phone avatar')
+      .populate('assignedTo', 'name email')
+      .populate('relatedOrder', 'orderCode total status');
     if (!conv) {
       return res.status(404).json({ success: false, message: 'Hội thoại không tồn tại' });
     }
@@ -132,7 +239,8 @@ router.post('/conversations/:id/reply', protect, hasRole('support', 'admin'), as
 
     await conv.save();
 
-    res.json({ success: true, data: conv, message: msg });
+    const enriched = await enrichConversation(conv);
+    res.json({ success: true, data: enriched, message: msg });
   } catch (err) {
     next(err);
   }
@@ -147,7 +255,10 @@ router.put('/conversations/:id/status', protect, hasRole('support', 'admin'), as
       return res.status(400).json({ success: false, message: 'Trạng thái không hợp lệ' });
     }
 
-    const conv = await Conversation.findById(req.params.id);
+    const conv = await Conversation.findById(req.params.id)
+      .populate('customer', 'name email phone avatar')
+      .populate('assignedTo', 'name email')
+      .populate('relatedOrder', 'orderCode total status');
     if (!conv) {
       return res.status(404).json({ success: false, message: 'Hội thoại không tồn tại' });
     }
@@ -155,7 +266,8 @@ router.put('/conversations/:id/status', protect, hasRole('support', 'admin'), as
     conv.status = status;
     await conv.save();
 
-    res.json({ success: true, data: conv });
+    const enriched = await enrichConversation(conv);
+    res.json({ success: true, data: enriched });
   } catch (err) {
     next(err);
   }
@@ -169,16 +281,30 @@ router.post('/request-human', optionalAuth, async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Thiếu sessionId' });
     }
 
+    const authUser = req.user;
+    const cid = authUser ? authUser._id : (customerInfo?.id || customerInfo?._id || null);
+    const cname = authUser ? authUser.name : (customerInfo?.name || '');
+    const cemail = authUser ? authUser.email : (customerInfo?.email || '');
+    const cphone = authUser ? (authUser.phone || '') : (customerInfo?.phone || '');
+    const cavatar = authUser ? (authUser.avatar || '') : (customerInfo?.avatar || '');
+
     let conv = await Conversation.findOne({ sessionId });
     if (!conv) {
       conv = new Conversation({
         sessionId,
-        customer: req.user?._id || null,
-        customerName: req.user?.name || customerInfo?.name || 'Khách hàng',
-        customerEmail: req.user?.email || customerInfo?.email || '',
-        customerPhone: req.user?.phone || customerInfo?.phone || '',
+        customer: cid,
+        customerName: cname || 'Khách hàng',
+        customerEmail: cemail,
+        customerPhone: cphone,
+        customerAvatar: cavatar,
         messages: [],
       });
+    } else {
+      if (!conv.customer && cid) conv.customer = cid;
+      if ((!conv.customerName || conv.customerName === 'Khách hàng') && cname) conv.customerName = cname;
+      if (!conv.customerEmail && cemail) conv.customerEmail = cemail;
+      if (!conv.customerPhone && cphone) conv.customerPhone = cphone;
+      if (!conv.customerAvatar && cavatar) conv.customerAvatar = cavatar;
     }
 
     conv.status = 'WAITING_FOR_ADMIN';
@@ -196,7 +322,8 @@ router.post('/request-human', optionalAuth, async (req, res, next) => {
 
     await conv.save();
 
-    res.json({ success: true, data: conv });
+    const enriched = await enrichConversation(conv);
+    res.json({ success: true, data: enriched });
   } catch (err) {
     next(err);
   }

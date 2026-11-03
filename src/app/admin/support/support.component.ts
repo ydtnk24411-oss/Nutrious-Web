@@ -165,6 +165,11 @@ export class AdminSupportComponent implements OnInit, OnDestroy {
     });
   }
 
+  getCustomerAvatar(conv: SupportConversation | null | undefined): string {
+    if (!conv) return '';
+    return conv.customer?.avatar || conv.customerAvatar || '';
+  }
+
   getStatusBadge(status: ConversationStatus): { text: string; cssClass: string } {
     switch (status) {
       case 'WAITING_FOR_ADMIN':

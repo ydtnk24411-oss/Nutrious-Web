@@ -84,37 +84,36 @@
 
 @if (activeTab() === 'list') {
   <!-- Filters Bar -->
-  <div class="admin-card admin-filters">
-    <div class="admin-search-box">
+  <div class="admin-toolbar">
+    <div class="admin-search-wrap">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="11" cy="11" r="8"></circle>
         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
       </svg>
       <input
         type="text"
+        class="admin-search-input"
         placeholder="Tìm kiếm theo tên sản phẩm..."
         [value]="search()"
         (input)="onSearch($any($event.target).value)"
       />
     </div>
 
-    <div class="admin-filter-group">
-      <!-- Category Filter -->
-      <select [value]="category()" (change)="onCategory($any($event.target).value)">
-        <option value="">Tất cả danh mục</option>
-        @for (c of categories(); track c._id) {
-          <option [value]="c._id">{{ c.name }}</option>
-        }
-      </select>
+    <!-- Category Filter -->
+    <select class="admin-select" [value]="category()" (change)="onCategory($any($event.target).value)">
+      <option value="">Tất cả danh mục</option>
+      @for (c of categories(); track c._id) {
+        <option [value]="c._id">{{ c.name }}</option>
+      }
+    </select>
 
-      <!-- Sort Filter -->
-      <select [value]="sort()" (change)="onSort($any($event.target).value)">
-        <option value="createdAt">Mới nhất</option>
-        <option value="name">Tên (A-Z)</option>
-        <option value="priceNumber">Giá tăng dần</option>
-        <option value="-priceNumber">Giá giảm dần</option>
-      </select>
-    </div>
+    <!-- Sort Filter -->
+    <select class="admin-select" [value]="sort()" (change)="onSort($any($event.target).value)">
+      <option value="createdAt">Mới nhất</option>
+      <option value="name">Tên (A-Z)</option>
+      <option value="priceNumber">Giá tăng dần</option>
+      <option value="-priceNumber">Giá giảm dần</option>
+    </select>
   </div>
 
   <!-- Loading State -->
@@ -138,39 +137,52 @@
   @if (!loading() && products().length > 0 && viewMode() === 'grid') {
     <div class="prod-grid">
       @for (p of products(); track p._id) {
-        <div class="prod-card">
-          <div class="prod-card-thumb">
-            <img [src]="p.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&q=80'" [alt]="p.name" />
-            <span class="prod-card-cat">{{ getCategoryName(p.categoryId, p) }}</span>
-            <span class="prod-card-status" [class.is-active]="p.isActive !== false">
+        <div class="xanhla-prod-card">
+          <div class="xanhla-prod-card-img">
+            <img [src]="p.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&q=80'" [alt]="p.name" loading="lazy" />
+            <span class="xanhla-prod-badge">{{ getCategoryName(p.categoryId, p) }}</span>
+            <span class="admin-badge prod-badge-status" [class.badge-active]="p.isActive !== false" [class.badge-inactive]="p.isActive === false">
               {{ p.isActive !== false ? 'Kinh doanh' : 'Tạm ẩn' }}
             </span>
           </div>
 
-          <div class="prod-card-body">
-            <h4 class="prod-card-name" [title]="p.name">{{ p.name }}</h4>
-            <div class="prod-card-meta">
-              <span class="prod-card-price">{{ p.price || (p.priceNumber.toLocaleString('vi-VN') + 'đ') }}</span>
-              <span class="prod-card-stock" [class.is-low]="p.stock < 10">
-                Kho: <strong>{{ p.stock }}</strong>
+          <div class="xanhla-prod-card-body">
+            <div class="xanhla-prod-card-cat">{{ getCategoryName(p.categoryId, p) }}</div>
+
+            <h4 class="xanhla-prod-card-name" [title]="p.name">{{ p.name }}</h4>
+
+            @if (p.description) {
+              <div class="xanhla-prod-card-desc">{{ p.description }}</div>
+            }
+
+            <div class="xanhla-prod-card-price-row">
+              <span class="xanhla-prod-card-price">{{ p.price || (p.priceNumber.toLocaleString('vi-VN') + 'đ') }}</span>
+
+              @if (p.weight) {
+                <span class="xanhla-prod-card-unit">/ {{ p.weight }}</span>
+              }
+
+              <span class="prod-stock-pill" [class.is-low]="p.stock < 10">
+                Kho: {{ p.stock }}
               </span>
             </div>
-          </div>
 
-          <div class="prod-card-actions">
-            <button class="prod-btn-edit" (click)="openEdit(p)" title="Chỉnh sửa sản phẩm">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 20h9"></path>
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-              </svg>
-              <span>Chỉnh sửa</span>
-            </button>
-            <button class="prod-btn-del" (click)="remove(p)" title="Xóa">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-              </svg>
-            </button>
+            <div class="prod-card-actions">
+              <button type="button" class="xanhla-prod-card-btn-edit" (click)="openEdit(p)" title="Chỉnh sửa sản phẩm">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9"></path>
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                </svg>
+                <span>Chỉnh sửa</span>
+              </button>
+
+              <button type="button" class="xanhla-prod-card-btn-del" (click)="remove(p)" title="Xóa">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       }
@@ -217,7 +229,7 @@
                   <span class="prod-table-stock" [class.is-low]="p.stock < 10">{{ p.stock }}</span>
                 </td>
                 <td>
-                  <span class="prod-table-status" [class.is-active]="p.isActive !== false">
+                  <span class="admin-badge" [class.badge-active]="p.isActive !== false" [class.badge-inactive]="p.isActive === false">
                     {{ p.isActive !== false ? 'Kinh doanh' : 'Tạm ẩn' }}
                   </span>
                 </td>
@@ -248,13 +260,19 @@
   <!-- Pagination -->
   @if (!loading() && products().length > 0) {
     <div class="admin-pagination">
-      <div class="admin-page-info">
-        Hiển thị <strong>{{ (page() - 1) * limit() + 1 }}</strong> - <strong>{{ [page() * limit(), total()].sort() }}</strong> trong tổng số <strong>{{ total() }}</strong> sản phẩm
-      </div>
-      <div class="admin-page-controls">
-        <button class="admin-page-btn" [disabled]="page() <= 1" (click)="prevPage()">Trước</button>
-        <span class="admin-page-num">{{ page() }} / {{ totalPages() }}</span>
-        <button class="admin-page-btn" [disabled]="page() >= totalPages()" (click)="nextPage()">Sau</button>
+      <span>Hiển thị {{ products().length }} / {{ total() }} sản phẩm</span>
+      <div class="admin-pagination-btns">
+        <button class="admin-btn-secondary" style="padding:7px 14px;font-size:13px"
+                [disabled]="page() === 1" (click)="prevPage()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <span>Trước</span>
+        </button>
+        <span style="padding:6px 12px;font-size:13px;font-weight:700;color:#10321c">{{ page() }} / {{ totalPages() }}</span>
+        <button class="admin-btn-secondary" style="padding:7px 14px;font-size:13px"
+                [disabled]="page() >= totalPages()" (click)="nextPage()">
+          <span>Sau</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
       </div>
     </div>
   }
@@ -285,7 +303,7 @@
               <tr>
                 <td>
                   <img
-                    [src]="cat.image || 'https://placehold.co/60x60?text=Cat'"
+                    [src]="cat.image || 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=120&q=80'"
                     [alt]="cat.name"
                     class="prod-table-thumb"
                   />
@@ -301,7 +319,7 @@
                   <span class="cat-prod-badge">{{ cat.productCount || 0 }} sản phẩm</span>
                 </td>
                 <td>
-                  <span class="prod-table-status is-active">Đang áp dụng</span>
+                  <span class="admin-badge badge-active">Đang áp dụng</span>
                 </td>
                 <td style="text-align: right;">
                   <div class="prod-table-actions">
@@ -335,13 +353,18 @@
 <!-- Product Modal -->
 @if (modalOpen()) {
   <div class="admin-modal-backdrop" (click)="closeModal()">
-    <div class="admin-modal-panel" (click)="$event.stopPropagation()" style="max-width:680px">
+    <div class="admin-modal" (click)="$event.stopPropagation()" style="max-width:680px">
 
       <div class="admin-modal-header">
         <h3 class="admin-modal-title">
           {{ modalMode() === 'create' ? 'Thêm nông sản mới' : 'Cập nhật thông tin sản phẩm' }}
         </h3>
-        <button class="admin-modal-close" (click)="closeModal()">&times;</button>
+        <button class="admin-btn-icon" (click)="closeModal()" aria-label="Đóng">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="18" x2="18" y2="6"></line>
+          </svg>
+        </button>
       </div>
 
       @if (error()) {
@@ -454,10 +477,15 @@
 <!-- Category Modal -->
 @if (catModalOpen()) {
   <div class="admin-modal-backdrop" (click)="closeCatModal()">
-    <div class="admin-modal-panel" (click)="$event.stopPropagation()" style="max-width:500px">
+    <div class="admin-modal" (click)="$event.stopPropagation()" style="max-width:500px">
       <div class="admin-modal-header">
         <h3 class="admin-modal-title">{{ editingCat() ? 'Chỉnh sửa Danh mục' : 'Thêm Danh mục mới' }}</h3>
-        <button class="admin-modal-close" (click)="closeCatModal()">&times;</button>
+        <button class="admin-btn-icon" (click)="closeCatModal()" aria-label="Đóng">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="18" x2="18" y2="6"></line>
+          </svg>
+        </button>
       </div>
 
       <div class="admin-modal-body">

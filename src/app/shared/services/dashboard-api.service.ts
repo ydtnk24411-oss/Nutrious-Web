@@ -31,6 +31,7 @@ export interface TopProduct {
   name: string;
   quantity: number;
   revenue: number;
+  image?: string;
 }
 
 export interface RevenueData {

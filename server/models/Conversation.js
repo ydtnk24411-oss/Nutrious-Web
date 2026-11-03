@@ -23,6 +23,7 @@ const conversationSchema = new mongoose.Schema(
     customerName: { type: String, default: 'Khách hàng' },
     customerEmail: { type: String, default: '' },
     customerPhone: { type: String, default: '' },
+    customerAvatar: { type: String, default: '' },
     status: {
       type: String,
       enum: ['AI_PROCESSING', 'WAITING_FOR_ADMIN', 'ADMIN_PROCESSING', 'RESOLVED'],

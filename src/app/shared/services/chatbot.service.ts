@@ -139,6 +139,21 @@ export class ChatbotService {
       .slice(-6)
       .map(m => ({ role: m.sender === 'user' ? 'user' : 'assistant', text: m.text }));
 
+    let customerInfo: any = null;
+    try {
+      const rawUser = localStorage.getItem('xanhla_user_session');
+      if (rawUser) {
+        const u = JSON.parse(rawUser);
+        customerInfo = {
+          id: u._id || u.id,
+          name: u.name,
+          email: u.email,
+          phone: u.phone,
+          avatar: u.avatar,
+        };
+      }
+    } catch {}
+
     this.api.post<{ success: boolean; reply: string; products?: ChatProduct[] }>('/chatbot/message', {
       message: trimmed,
       image: imageBase64 || null,
@@ -146,7 +161,12 @@ export class ChatbotService {
       provider: 'gemini',
       apiKey: this.apiKey() || '',
       persona: this.persona(),
-      sessionId: this.sessionId()
+      sessionId: this.sessionId(),
+      customerInfo,
+      customerName: customerInfo?.name,
+      customerEmail: customerInfo?.email,
+      customerPhone: customerInfo?.phone,
+      customerAvatar: customerInfo?.avatar,
     }).subscribe({
       next: (res) => {
         const botMsg: ChatMessage = {

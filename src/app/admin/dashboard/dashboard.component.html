@@ -43,6 +43,8 @@
     </div>
 
     <div class="dash-hero-decor">
+      <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80" alt="Nông sản Xanh Lá" class="dash-hero-img" />
+      <div class="dash-hero-img-overlay"></div>
       <div class="dash-hero-circle circle-1"></div>
       <div class="dash-hero-circle circle-2"></div>
       <div class="dash-hero-leaf">
@@ -330,6 +332,7 @@
           <table class="admin-table">
             <thead>
               <tr>
+                <th style="width: 54px;">Ảnh</th>
                 <th>Sản phẩm</th>
                 <th style="text-align:center">Đã bán</th>
                 <th style="text-align:right">Doanh số</th>
@@ -338,11 +341,21 @@
             <tbody>
               @for (item of topProducts(); track item.name) {
                 <tr>
-                  <td style="font-weight:600;color:#1c2920">{{ item.name }}</td>
+                  <td>
+                    <img
+                      [src]="item.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&q=80'"
+                      [alt]="item.name"
+                      class="dash-prod-thumb"
+                      loading="lazy"
+                    />
+                  </td>
+                  <td>
+                    <div style="font-weight:700;color:#10321c;font-size:13.5px">{{ item.name }}</div>
+                  </td>
                   <td style="text-align:center">
                     <span class="dash-qty-pill">{{ item.quantity }}</span>
                   </td>
-                  <td style="text-align:right;font-weight:700;color:#176b3a">
+                  <td style="text-align:right;font-weight:800;color:#176b3a;font-size:14px">
                     {{ formatPrice(item.revenue) }}
                   </td>
                 </tr>
