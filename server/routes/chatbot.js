@@ -461,8 +461,13 @@ async function analyzeFoodImageLocal(imageBase64, caption, profile) {
 // ── Gemini Vision API Call ───────────────────────────────────────────────────
 async function callGeminiVision(imageBase64, prompt, apiKey, persona, profile) {
   if (!apiKey) return null;
-  const products = await Product.find({ isActive: { $ne: false } }).limit(20).select('name price categoryVi');
-  const catalogSnippet = products.map(p => `- ${p.name} (${p.price}, ${p.categoryVi})`).join('\n');
+  let catalogSnippet = '';
+  try {
+    const products = await Product.find({ isActive: { $ne: false } }).limit(20).select('name price categoryVi').maxTimeMS(2500);
+    catalogSnippet = products.map(p => `- ${p.name} (${p.price}, ${p.categoryVi})`).join('\n');
+  } catch (dbErr) {
+    console.warn('Catalog snippet fetch skipped for Gemini Vision:', dbErr.message);
+  }
   const systemInstruction = buildSystemPrompt(catalogSnippet, persona, profile);
 
   // Extract base64 and mime
@@ -724,8 +729,13 @@ function handleMacroAdvice(cleanLower, profile) {
 // ── Text AI Providers (Gemini / OpenAI) ──────────────────────────────────────
 async function callGeminiAI(prompt, history, apiKey, persona, profile) {
   if (!apiKey) return null;
-  const products = await Product.find({ isActive: { $ne: false } }).limit(25).select('name price categoryVi slug');
-  const catalogSnippet = products.map(p => `- ${p.name} (${p.price}, nhóm: ${p.categoryVi})`).join('\n');
+  let catalogSnippet = '';
+  try {
+    const products = await Product.find({ isActive: { $ne: false } }).limit(25).select('name price categoryVi slug').maxTimeMS(2500);
+    catalogSnippet = products.map(p => `- ${p.name} (${p.price}, nhóm: ${p.categoryVi})`).join('\n');
+  } catch (dbErr) {
+    console.warn('Catalog snippet fetch skipped for Gemini AI:', dbErr.message);
+  }
   const systemInstruction = buildSystemPrompt(catalogSnippet, persona, profile);
 
   const candidateModels = ['gemini-3.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash'];
@@ -790,33 +800,38 @@ async function callOpenAIAI(prompt, history, apiKey, persona, profile) {
 
 // ── Search & Helpers ────────────────────────────────────────────────────────
 async function findRelatedProducts(cleanLower) {
-  const productKeywords = extractProductKeywords(cleanLower);
-  let matched = [];
+  try {
+    const productKeywords = extractProductKeywords(cleanLower);
+    let matched = [];
 
-  if (productKeywords.length > 0) {
-    const searchRegex = new RegExp(productKeywords.join('|'), 'i');
-    matched = await Product.find({
-      isActive: { $ne: false },
-      $or: [
-        { name: { $regex: searchRegex } },
-        { categoryVi: { $regex: searchRegex } }
-      ]
-    }).limit(4);
-  }
-
-  if (!matched || matched.length === 0) {
-    if (cleanLower.includes('rau') || cleanLower.includes('cu') || cleanLower.includes('salad')) {
-      matched = await Product.find({ isActive: { $ne: false }, category: 'vegetables' }).limit(4);
-    } else if (cleanLower.includes('trai cay') || cleanLower.includes('hoa qua') || cleanLower.includes('bo')) {
-      matched = await Product.find({ isActive: { $ne: false }, category: 'fruits' }).limit(4);
-    } else if (cleanLower.includes('thit') || cleanLower.includes('bo') || cleanLower.includes('uc ga')) {
-      matched = await Product.find({ isActive: { $ne: false }, category: 'meat' }).limit(4);
-    } else if (cleanLower.includes('ca') || cleanLower.includes('hai san') || cleanLower.includes('ca hoi')) {
-      matched = await Product.find({ isActive: { $ne: false }, category: 'seafood' }).limit(4);
+    if (productKeywords.length > 0) {
+      const searchRegex = new RegExp(productKeywords.join('|'), 'i');
+      matched = await Product.find({
+        isActive: { $ne: false },
+        $or: [
+          { name: { $regex: searchRegex } },
+          { categoryVi: { $regex: searchRegex } }
+        ]
+      }).limit(4).maxTimeMS(2500);
     }
-  }
 
-  return (matched || []).map(formatProductForChat);
+    if (!matched || matched.length === 0) {
+      if (cleanLower.includes('rau') || cleanLower.includes('cu') || cleanLower.includes('salad')) {
+        matched = await Product.find({ isActive: { $ne: false }, category: 'vegetables' }).limit(4).maxTimeMS(2500);
+      } else if (cleanLower.includes('trai cay') || cleanLower.includes('hoa qua') || cleanLower.includes('bo')) {
+        matched = await Product.find({ isActive: { $ne: false }, category: 'fruits' }).limit(4).maxTimeMS(2500);
+      } else if (cleanLower.includes('thit') || cleanLower.includes('bo') || cleanLower.includes('uc ga')) {
+        matched = await Product.find({ isActive: { $ne: false }, category: 'meat' }).limit(4).maxTimeMS(2500);
+      } else if (cleanLower.includes('ca') || cleanLower.includes('hai san') || cleanLower.includes('ca hoi')) {
+        matched = await Product.find({ isActive: { $ne: false }, category: 'seafood' }).limit(4).maxTimeMS(2500);
+      }
+    }
+
+    return (matched || []).map(formatProductForChat);
+  } catch (err) {
+    console.warn('findRelatedProducts error:', err.message);
+    return [];
+  }
 }
 
 function formatProductForChat(p) {

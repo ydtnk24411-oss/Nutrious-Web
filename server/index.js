@@ -26,7 +26,20 @@ const PORT = process.env.PORT || 3000;
 // ── Middleware ────────────────────────────────────────────
 app.use(
   cors({
-    origin: ['http://localhost:4200', 'http://localhost:4201'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+      // Allow all localhost and 127.0.0.1 origins on any port
+      if (
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1') ||
+        origin.endsWith('.ngrok.io') ||
+        origin.endsWith('.ngrok-free.app')
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true
   })
 );
