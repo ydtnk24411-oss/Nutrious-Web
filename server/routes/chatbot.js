@@ -1,4 +1,10 @@
 const router = require('express').Router();
+const path = require('path');
+if (!process.env.GEMINI_API_KEY) {
+  try {
+    require('dotenv').config({ path: path.join(__dirname, '../.env') });
+  } catch {}
+}
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 const Order = require('../models/Order');
@@ -598,6 +604,48 @@ async function analyzeFoodImageLocal(imageBase64, caption, profile) {
   };
 }
 
+// Dynamic detection & caching of available Gemini models for the provided API key
+let cachedGeminiModel = null;
+let lastModelCheck = 0;
+
+async function getAvailableGeminiModel(apiKey) {
+  if (cachedGeminiModel && (Date.now() - lastModelCheck < 1800000)) {
+    return cachedGeminiModel;
+  }
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    if (res.ok) {
+      const data = await res.json();
+      const models = (data.models || [])
+        .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
+        .map(m => m.name.replace(/^models\//, ''));
+
+      console.log('📋 Danh sách Gemini models khả dụng cho key này:', models);
+
+      // Ưu tiên theo chuẩn Google Gemini mới nhất: gemini-3.8-flash, gemini-3.8-pro
+      const chosen = models.find(m => m === 'gemini-3.8-flash') ||
+                     models.find(m => m === 'gemini-3.8-pro') ||
+                     models.find(m => m.includes('3.8-flash')) ||
+                     models.find(m => m.includes('3.8')) ||
+                     models.find(m => m.includes('flash') && !m.includes('2.5-flash')) ||
+                     models[0];
+
+      if (chosen) {
+        cachedGeminiModel = chosen;
+        lastModelCheck = Date.now();
+        console.log(`✅ Đã tự động kết nối Gemini model: ${chosen}`);
+        return chosen;
+      }
+    } else {
+      const errText = await res.text();
+      console.warn('Gemini ListModels error:', errText);
+    }
+  } catch (e) {
+    console.warn('Không thể tự động lấy danh sách model Gemini:', e.message);
+  }
+  return null;
+}
+
 // ── Gemini Vision API Call ───────────────────────────────────────────────────
 async function callGeminiVision(imageBase64, prompt, apiKey, persona, profile) {
   if (!apiKey) return null;
@@ -619,7 +667,13 @@ async function callGeminiVision(imageBase64, prompt, apiKey, persona, profile) {
     ? `Khách hàng vừa tải ảnh lên với lời nhắn: "${prompt}". Hãy phân tích món ăn theo chuẩn NutriBot.`
     : `Khách hàng vừa tải lên một hình ảnh đồ ăn/thức uống. Hãy phân tích chi tiết tên món, thành phần, calo và dinh dưỡng theo chuẩn NutriBot.`;
 
-  const candidateModels = ['gemini-3.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash'];
+  const autoModel = await getAvailableGeminiModel(apiKey);
+  const candidateModels = [
+    ...(autoModel ? [autoModel] : []),
+    'gemini-3.8-flash',
+    'gemini-3.8-pro',
+    'gemini-2.0-flash'
+  ].filter((v, i, a) => a.indexOf(v) === i);
   for (const model of candidateModels) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     try {
@@ -673,7 +727,13 @@ Return ONLY a valid JSON array of objects with "name" (in Vietnamese) and "categ
 Return purely the JSON array without markdown code fence or extra explanation.`;
 
   if (apiKey) {
-    const candidateModels = ['gemini-3.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash'];
+    const autoModel = await getAvailableGeminiModel(apiKey);
+    const candidateModels = [
+      ...(autoModel ? [autoModel] : []),
+      'gemini-3.8-flash',
+      'gemini-3.8-pro',
+      'gemini-2.0-flash'
+    ].filter((v, i, a) => a.indexOf(v) === i);
     for (const model of candidateModels) {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
       try {
@@ -878,7 +938,13 @@ async function callGeminiAI(prompt, history, apiKey, persona, profile) {
   }
   const systemInstruction = buildSystemPrompt(catalogSnippet, persona, profile);
 
-  const candidateModels = ['gemini-3.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash'];
+  const autoModel = await getAvailableGeminiModel(apiKey);
+  const candidateModels = [
+    ...(autoModel ? [autoModel] : []),
+    'gemini-3.8-flash',
+    'gemini-3.8-pro',
+    'gemini-2.0-flash'
+  ].filter((v, i, a) => a.indexOf(v) === i);
   for (const model of candidateModels) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     try {

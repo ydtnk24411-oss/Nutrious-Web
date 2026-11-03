@@ -7,6 +7,7 @@ import { navItems, logoImage } from '../../shared/data/xanh-la.data';
 import { CategoryApiService } from '../../shared/services/category-api.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { searchProducts, highlightMatch } from '../../shared/utils/search.util';
+
 const CATEGORIES = [
   { label: 'Rau củ', path: '/online-ordering', category: 'Rau củ' },
   { label: 'Trái cây', path: '/online-ordering', category: 'Trái cây' },
@@ -43,19 +44,41 @@ export class HeaderComponent {
   private productApi = inject(ProductApiService, { optional: true });
   private orderApi = inject(OrderApiService);
 
-  protected readonly navItems = navItems;
-  protected readonly logoImage = logoImage;
-  protected categories = CATEGORIES;
-  protected readonly areas = AREAS;
-  protected notifications = signal<HeaderNotification[]>([]);
+  protected readonly navItems    = navItems;
+  protected readonly logoImage   = logoImage;
+  protected categories           = CATEGORIES;
+  protected readonly areas       = AREAS;
+  protected notifications        = signal<HeaderNotification[]>([]);
 
-  protected mobileMenuOpen = signal(false);
-  protected userMenuOpen = signal(false);
-  protected catMenuOpen = signal(false);
-  protected areaMenuOpen = signal(false);
-  protected notifMenuOpen = signal(false);
-  protected selectedArea = signal('TP. Hồ Chí Minh');
-  protected copiedCode = signal<string | null>(null);
+  protected mobileMenuOpen  = signal(false);
+  protected userMenuOpen    = signal(false);
+  protected catMenuOpen     = signal(false);
+  protected areaMenuOpen    = signal(false);
+  protected notifMenuOpen   = signal(false);
+  protected selectedArea    = signal('TP. Hồ Chí Minh');
+  protected copiedCode      = signal<string | null>(null);
+
+  // Search & Suggestions state
+  protected searchQuery = signal('');
+  protected showSuggestions = signal(false);
+  protected selectedSuggestionIndex = signal(-1);
+  protected allProducts = signal<ApiProduct[]>([]);
+  protected popularKeywords = [
+    'Rau hữu cơ',
+    'Trái cây tươi',
+    'Thịt sạch',
+    'Cá hồi',
+    'Sữa hạt',
+    'Nấm tươi',
+    'Khoai lang mật',
+    'Gạo ST25',
+  ];
+  protected readonly fallbackImage = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=700&q=80';
+
+  protected suggestedProducts = computed(() => {
+    const q = this.searchQuery();
+    return searchProducts(this.allProducts(), q, 6);
+  });
 
   // Search & Suggestions state
   protected searchQuery = signal('');
@@ -97,6 +120,22 @@ export class HeaderComponent {
       const user = this.cart.currentUser();
       this.loadNotifications(user);
     });
+
+    // Khởi tạo tải sản phẩm để gợi ý tìm kiếm tức thì
+    this.loadProducts();
+  }
+
+  private loadProducts(): void {
+    if (!this.productApi || this.allProducts().length > 0) return;
+    this.productApi.getAll({ limit: 0, sort: 'createdAt' }).subscribe({
+      next: (res) => {
+        if (res?.data?.length) {
+          this.allProducts.set(res.data);
+        }
+      },
+      error: () => {},
+    });
+  }
 
     // Khởi tạo tải sản phẩm để gợi ý tìm kiếm tức thì
     this.loadProducts();
@@ -191,14 +230,14 @@ export class HeaderComponent {
   }
 
   toggleMobileMenu(): void { this.mobileMenuOpen.update(v => !v); }
-  closeMobileMenu(): void { this.mobileMenuOpen.set(false); }
-  toggleUserMenu(): void { this.userMenuOpen.update(v => !v); this.areaMenuOpen.set(false); this.notifMenuOpen.set(false); }
-  closeUserMenu(): void { this.userMenuOpen.set(false); }
-  toggleCatMenu(): void { this.catMenuOpen.update(v => !v); }
-  closeCatMenu(): void { this.catMenuOpen.set(false); }
-  toggleAreaMenu(): void { this.areaMenuOpen.update(v => !v); this.userMenuOpen.set(false); this.notifMenuOpen.set(false); }
-  toggleNotifMenu(): void { this.notifMenuOpen.update(v => !v); this.userMenuOpen.set(false); this.areaMenuOpen.set(false); }
-  closeNotifMenu(): void { this.notifMenuOpen.set(false); }
+  closeMobileMenu(): void  { this.mobileMenuOpen.set(false); }
+  toggleUserMenu(): void   { this.userMenuOpen.update(v => !v); this.areaMenuOpen.set(false); this.notifMenuOpen.set(false); }
+  closeUserMenu(): void    { this.userMenuOpen.set(false); }
+  toggleCatMenu(): void    { this.catMenuOpen.update(v => !v); }
+  closeCatMenu(): void     { this.catMenuOpen.set(false); }
+  toggleAreaMenu(): void   { this.areaMenuOpen.update(v => !v); this.userMenuOpen.set(false); this.notifMenuOpen.set(false); }
+  toggleNotifMenu(): void  { this.notifMenuOpen.update(v => !v); this.userMenuOpen.set(false); this.areaMenuOpen.set(false); }
+  closeNotifMenu(): void   { this.notifMenuOpen.set(false); }
 
   onSearchInput(e: Event): void {
     const val = (e.target as HTMLInputElement).value || '';
@@ -234,6 +273,8 @@ export class HeaderComponent {
   selectProduct(p: ApiProduct): void {
     this.showSuggestions.set(false);
     this.closeMobileMenu();
+    this.searchQuery.set('');
+    this.selectedSuggestionIndex.set(-1);
     const cleanSlug = (p.slug || '').replace(/^\/product-page\//, '');
     this.router.navigate(['/product-page', cleanSlug]);
   }
@@ -325,9 +366,9 @@ export class HeaderComponent {
   onDocClick(e: Event): void {
     const t = e.target as HTMLElement;
     if (!t.closest('.xl-header-search-wrapper')) this.showSuggestions.set(false);
-    if (!t.closest('.xl-cat-menu-wrapper')) this.catMenuOpen.set(false);
-    if (!t.closest('.xl-area-wrapper')) this.areaMenuOpen.set(false);
-    if (!t.closest('.xl-notif-wrapper')) this.notifMenuOpen.set(false);
+    if (!t.closest('.xl-cat-menu-wrapper'))  this.catMenuOpen.set(false);
+    if (!t.closest('.xl-area-wrapper'))      this.areaMenuOpen.set(false);
+    if (!t.closest('.xl-notif-wrapper'))     this.notifMenuOpen.set(false);
     if (!t.closest('.xanhla-user-menu') && !t.closest('.xl-icon-btn') && !t.closest('.xanhla-member-bar')) {
       this.userMenuOpen.set(false);
     }

@@ -6,6 +6,7 @@ import { CartService } from '../services/cart.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
+  const cartService = inject(CartService);
 
   return next(req).pipe(
     catchError((err: HttpErrorResponse) => {
@@ -20,7 +21,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           router.navigate(['/admin/login'], { queryParams: { expired: '1' } });
         } else {
           // Storefront (localhost:4200): xóa phiên, yêu cầu đăng nhập lại
-          inject(CartService).expireSession();
+          cartService.expireSession();
         }
       }
       return throwError(() => err);

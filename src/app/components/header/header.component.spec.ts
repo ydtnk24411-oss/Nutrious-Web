@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { routes } from '../../app.routes';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+
 describe('HeaderComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
