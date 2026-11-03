@@ -53,16 +53,55 @@ export class ProductDetailComponent implements OnInit {
   submittingReview = signal(false);
 
   ngOnInit(): void {
-    const slug = this.route.snapshot.paramMap.get('slug') ?? '';
+    if (this.route.paramMap) {
+      this.route.paramMap.subscribe(params => {
+        const slug = params.get('slug') ?? this.route.snapshot?.paramMap?.get('slug') ?? '';
+        if (slug) {
+          this.loadProduct(slug);
+        }
+      });
+    } else {
+      const slug = this.route.snapshot?.paramMap?.get('slug') ?? '';
+      if (slug) {
+        this.loadProduct(slug);
+      }
+    }
+  }
+
+  private loadProduct(slug: string): void {
+    this.loading.set(true);
+    this.error.set('');
+    this.quantity.set(1);
+    this.selectedRipeness.set('Ready to Eat');
+    this.showReviewForm.set(false);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+
     // Thử slug trực tiếp, backend hỗ trợ cả dạng slug thuần và /product-page/xxx
     this.productApi.getBySlug(slug).subscribe({
-      next: (res) => { this.product.set(res.data); this.loading.set(false); this.reviewService.load(res.data._id); },
+      next: (res) => {
+        this.product.set(res.data);
+        this.loading.set(false);
+        if (res.data?._id) {
+          this.reviewService.load(res.data._id);
+        }
+      },
       error: () => {
         // Thử thêm prefix nếu slug trực tiếp không tìm thấy
         const prefixed = slug.startsWith('/product-page/') ? slug.replace('/product-page/', '') : slug;
         this.productApi.getBySlug(prefixed).subscribe({
-          next: (r) => { this.product.set(r.data); this.loading.set(false); this.reviewService.load(r.data._id); },
-          error: () => { this.error.set('Không tìm thấy sản phẩm.'); this.loading.set(false); },
+          next: (r) => {
+            this.product.set(r.data);
+            this.loading.set(false);
+            if (r.data?._id) {
+              this.reviewService.load(r.data._id);
+            }
+          },
+          error: () => {
+            this.error.set('Không tìm thấy sản phẩm.');
+            this.loading.set(false);
+          },
         });
       },
     });

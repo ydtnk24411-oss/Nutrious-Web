@@ -48,6 +48,7 @@ export class OrderDetailComponent implements OnInit {
   order = signal<Order | null>(null);
   loading = signal(true);
   error = signal('');
+  cancelling = signal(false);
 
   get orderData(): Order | null {
     return this.order();
@@ -183,9 +184,33 @@ export class OrderDetailComponent implements OnInit {
   }
 
   cancelOrder(): void {
-    if (confirm('Bạn có chắc muốn hủy đơn hàng này?')) {
-      // In production, call API to cancel
-      alert('Đơn hàng đã được hủy (demo)');
+    const currentOrder = this.order();
+    if (!currentOrder || this.cancelling()) return;
+
+    if (!confirm(`Bạn có chắc chắn muốn hủy đơn hàng ${currentOrder.orderCode}?`)) {
+      return;
     }
+
+    this.cancelling.set(true);
+    const targetId = currentOrder.orderCode || currentOrder._id;
+
+    this.orderApi.cancel(targetId).subscribe({
+      next: (res) => {
+        this.cancelling.set(false);
+        if (res?.success) {
+          alert('Đơn hàng đã được hủy thành công!');
+          // Cập nhật trạng thái hiển thị của đơn hàng trên UI ngay lập tức
+          this.order.update(o => o ? { ...o, status: 'cancelled' } : null);
+        } else {
+          alert(res?.message || 'Không thể hủy đơn hàng.');
+        }
+      },
+      error: (err) => {
+        this.cancelling.set(false);
+        console.error('Cancel order error:', err);
+        const errMsg = err?.error?.message || 'Hủy đơn hàng thất bại. Vui lòng thử lại sau.';
+        alert(errMsg);
+      }
+    });
   }
 }

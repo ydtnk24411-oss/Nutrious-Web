@@ -14,6 +14,7 @@ import {
   ApiCategory
 } from '../../shared/services/category-api.service';
 import { removeVietnameseTones, scoreProduct } from '../../shared/utils/search.util';
+
 function toCartProduct(p: ApiProduct): XanhLaProduct {
   return {
     id: p._id,
@@ -279,7 +280,7 @@ export class OrderingComponent implements OnInit {
       || !!this.search();
   });
 
-  // Lọc và sắp xếp sản phẩm
+  // Lọc và sắp xếp sản phẩm chính xác theo từ khóa & bộ lọc
   protected filteredProducts = computed(() => {
     const f = this.selectedFilters();
     const rawQ = this.search().trim();
