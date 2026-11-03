@@ -13,6 +13,7 @@ import {
   CategoryApiService,
   ApiCategory
 } from '../../shared/services/category-api.service';
+import { removeVietnameseTones, scoreProduct } from '../../shared/utils/search.util';
 
 function toCartProduct(p: ApiProduct): XanhLaProduct {
   return {
@@ -279,19 +280,19 @@ export class OrderingComponent implements OnInit {
       || !!this.search();
   });
 
-  // Lọc và sắp xếp sản phẩm
+  // Lọc và sắp xếp sản phẩm chính xác theo từ khóa & bộ lọc
   protected filteredProducts = computed(() => {
     const f = this.selectedFilters();
-    const q = this.search().toLowerCase().trim();
+    const rawQ = this.search().trim();
+    const normQ = removeVietnameseTones(rawQ);
     const maxP = this.maxPrice();
 
     let list = this.allProducts().filter(p => {
-      if (
-        q &&
-        !p.name.toLowerCase().includes(q) &&
-        !(p.description || '').toLowerCase().includes(q)
-      ) {
-        return false;
+      if (normQ) {
+        const score = scoreProduct(p, rawQ.toLowerCase(), normQ);
+        if (score <= 0) {
+          return false;
+        }
       }
 
       if (p.priceNumber > maxP) return false;
@@ -333,14 +334,16 @@ export class OrderingComponent implements OnInit {
 
     if (this.sortBy() === 'price-asc') {
       list = [...list].sort((a, b) => a.priceNumber - b.priceNumber);
-    }
-
-    if (this.sortBy() === 'price-desc') {
+    } else if (this.sortBy() === 'price-desc') {
       list = [...list].sort((a, b) => b.priceNumber - a.priceNumber);
-    }
-
-    if (this.sortBy() === 'name-asc') {
-      list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+    } else if (this.sortBy() === 'name-asc') {
+      list = [...list].sort((a, b) => a.name.localeCompare(b.name, 'vi'));
+    } else if (normQ) {
+      list = [...list].sort((a, b) => {
+        const scoreB = scoreProduct(b, rawQ.toLowerCase(), normQ);
+        const scoreA = scoreProduct(a, rawQ.toLowerCase(), normQ);
+        return scoreB - scoreA;
+      });
     }
 
     return list;
@@ -441,10 +444,12 @@ export class OrderingComponent implements OnInit {
     // Theo dõi khi query parameter thay đổi
     this.route.queryParamMap.subscribe(params => {
       const cat = params.get('category');
+      const q = params.get('q');
+      this.search.set(q ?? '');
       if (!this.loading()) {
         if (cat) {
           this.navigateToCategory(cat);
-        } else {
+        } else if (!q) {
           this.selectCategory('all');
         }
       }
