@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const Recipe = require('../models/Recipe');
+const Order = require('../models/Order');
 
 const NUTRITION_HERO = {
   kicker: '🥗 Trợ Lý Thực Đơn Khoa Học · Dữ Liệu Trực Tuyến',
@@ -28,11 +29,11 @@ const NUTRITION_MEAL_PLANS = [
     voucherCode: 'NUTRITION10',
     calories: '1.350 – 1.500 kcal/ngày',
     targetAudience: 'Phù hợp người giảm mỡ, giữ dáng, nhân viên văn phòng',
-    description: 'Kết hợp Salad gà nướng Đà Lạt, Salad bơ cá hồi và Sinh tố dâu xoài giàu chất xơ, ít tinh bột xấu.',
+    description: 'Kết hợp Salad gà nướng Đà Lạt, Salad bơ cá hồi và Bát sữa chua Hy Lạp trái cây giàu lợi khuẩn Probiotics, ít tinh bột xấu.',
     goals: ['fiber', 'vitamin', 'balance'],
     servings: 2,
     mealsCount: 2,
-    recipeIds: ['salad-ga-nuong', 'salad-bo-ca-hoi', 'sinh-to-dau-xoai'],
+    recipeIds: ['salad-ga-nuong', 'salad-bo-ca-hoi', 'sua-chua-hy-lap-trai-cay'],
   },
   {
     id: 'plan-high-protein',
@@ -136,7 +137,23 @@ function mapRecipeDoc(r) {
 // GET /api/nutrition — Lấy cấu hình hero, gói thực đơn mẫu, mục tiêu dinh dưỡng và danh sách công thức từ MongoDB
 router.get('/', async (req, res, next) => {
   try {
-    const recipes = await Recipe.find({ isActive: true }).sort({ createdAt: 1 });
+    const [recipes, recentOrders] = await Promise.all([
+      Recipe.find({ isActive: true }).sort({ createdAt: 1 }),
+      Order.find({}).sort({ createdAt: -1 }).limit(12).lean().catch(() => []),
+    ]);
+
+    const recentOrderedItems = [];
+    for (const ord of recentOrders || []) {
+      for (const it of ord.items || []) {
+        if (it.name) {
+          recentOrderedItems.push({
+            name: it.name,
+            orderedAt: ord.createdAt || new Date(),
+          });
+        }
+      }
+    }
+
     res.json({
       success: true,
       data: {
@@ -144,6 +161,7 @@ router.get('/', async (req, res, next) => {
         goals: NUTRITION_GOALS,
         mealPlans: NUTRITION_MEAL_PLANS,
         recipes: recipes.map(mapRecipeDoc),
+        recentOrderedItems,
       },
     });
   } catch (err) {

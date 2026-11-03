@@ -692,10 +692,88 @@
               <span class="xl-results-count">{{ filteredResults().length }} món ăn phù hợp</span>
             </div>
 
+            <!-- ===== SEARCH & SMART SORT TOOLBAR ===== -->
+            <div class="xl-search-sort-toolbar">
+              <!-- Search Box + Quick Ingredient Chips -->
+              <div class="xl-search-col">
+                <div class="xl-search-input-wrap">
+                  <svg class="xl-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input
+                    type="text"
+                    class="xl-search-input"
+                    placeholder="Tìm món ăn hoặc nguyên liệu (VD: sữa chua, cá hồi, quả bơ, thịt gà, dâu tây...)"
+                    [ngModel]="searchQuery()"
+                    (ngModelChange)="searchQuery.set($event)"
+                  />
+                  @if (searchQuery()) {
+                    <button type="button" class="xl-search-clear-btn" (click)="searchQuery.set('')" title="Xóa tìm kiếm">✕</button>
+                  }
+                </div>
+                <div class="xl-quick-search-tags">
+                  <span class="xl-quick-label">Gợi ý tìm nhanh:</span>
+                  @for (tag of quickSearchTags; track tag.query) {
+                    <button
+                      type="button"
+                      class="xl-quick-chip"
+                      [class.active]="searchQuery().toLowerCase() === tag.query"
+                      (click)="applyQuickSearch(tag.query)"
+                    >
+                      {{ tag.label }}
+                    </button>
+                  }
+                </div>
+              </div>
+
+              <!-- Sort / Filter Modes: Liên quan nhất | Rẻ nhất | Đắt nhất | Gần đây đã ăn (Mua gần đây) -->
+              <div class="xl-sort-col">
+                <span class="xl-sort-label">Sắp xếp &amp; Lọc theo:</span>
+                <div class="xl-sort-pills">
+                  <button
+                    type="button"
+                    class="xl-sort-pill"
+                    [class.active]="sortBy() === 'relevant'"
+                    (click)="sortBy.set('relevant')"
+                  >
+                    🎯 Liên quan nhất
+                  </button>
+                  <button
+                    type="button"
+                    class="xl-sort-pill"
+                    [class.active]="sortBy() === 'cheapest'"
+                    (click)="sortBy.set('cheapest')"
+                  >
+                    💰 Món rẻ nhất
+                  </button>
+                  <button
+                    type="button"
+                    class="xl-sort-pill"
+                    [class.active]="sortBy() === 'most_expensive'"
+                    (click)="sortBy.set('most_expensive')"
+                  >
+                    💎 Món đắt nhất
+                  </button>
+                  <button
+                    type="button"
+                    class="xl-sort-pill xl-sort-pill--recent"
+                    [class.active]="sortBy() === 'recent'"
+                    (click)="sortBy.set('recent')"
+                  >
+                    🕒 Gần đây đã ăn / Đã mua ({{ recentMealsCount() }})
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <!-- Quick Category Filter Tabs -->
             <div class="xl-cat-tabs">
               <button type="button" class="xl-cat-tab" [class.active]="categoryTab() === 'all'" (click)="categoryTab.set('all')">
                 Tất cả món ({{ results().length }})
+              </button>
+              <button type="button" class="xl-cat-tab" [class.active]="categoryTab() === 'yogurt'" (click)="categoryTab.set('yogurt')">
+                🥛 Sữa chua &amp; Trái cây
               </button>
               <button type="button" class="xl-cat-tab" [class.active]="categoryTab() === 'protein'" (click)="categoryTab.set('protein')">
                 🥩 Giàu Protein &amp; Tăng cơ
@@ -711,9 +789,19 @@
               </button>
             </div>
 
+            @if (filteredResults().length === 0) {
+              <div class="xl-empty-state" style="padding:36px 20px">
+                <h3 class="xl-empty-title">Không tìm thấy món ăn khớp với từ khóa "{{ searchQuery() }}"</h3>
+                <p class="xl-empty-desc">Bạn hãy thử tìm bằng nguyên liệu khác (ví dụ: sữa chua, cá hồi, bơ, gà, dâu tây) hoặc đặt lại bộ lọc nhé!</p>
+                <button type="button" class="xl-reset-btn" (click)="searchQuery.set(''); categoryTab.set('all'); sortBy.set('relevant')">
+                  Xóa từ khóa &amp; Xem tất cả món
+                </button>
+              </div>
+            }
+
             <div class="xl-recipes-grid">
               @for (recipe of filteredResults(); track recipe.id) {
-                <article class="xl-recipe-card">
+                <article class="xl-recipe-card" [class.is-recent-meal]="isRecentMeal(recipe)">
                   <!-- Recipe Image Banner (Clickable to open Recipe Detail Page) -->
                   <div class="xl-recipe-img-box" (click)="openRecipeDetail(recipe.id)" style="cursor:pointer">
                     <img
@@ -726,6 +814,11 @@
                     <div class="xl-match-badge" title="Độ phù hợp theo mục tiêu đã chọn">
                       <span>{{ recipe.matchScore }}% phù hợp · 🔥 {{ recipe.calories }} kcal</span>
                     </div>
+                    @if (isRecentMeal(recipe)) {
+                      <div class="xl-recent-meal-badge">
+                        {{ getRecentBadgeText(recipe) }}
+                      </div>
+                    }
                     <div class="xl-preptime-badge">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <circle cx="12" cy="12" r="10"/>

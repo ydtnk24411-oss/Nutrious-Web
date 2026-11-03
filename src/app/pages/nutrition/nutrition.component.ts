@@ -213,6 +213,7 @@ function matchCatalogueProduct(ingredientName: string, catalogue: ApiProduct[]):
     ['xoai cat', ['xoai cat', 'xoai']],
     ['cam sanh', ['cam sanh', 'cam', 'orange']],
     ['sa tuoi', ['sa tuoi', 'gung tuoi', 'sa', 'hanh']],
+    ['sua chua', ['sua chua', 'yogurt', 'hy lap', 'men song']],
   ];
 
   for (const [key, aliases] of keywordMap) {
@@ -277,8 +278,24 @@ export class NutritionComponent implements OnInit {
   mealsCount = signal<number>(1);
   budgetLimit = signal<number | null>(null);
   excludeIngredients = signal<string>('');
-  categoryTab = signal<'all' | 'protein' | 'fiber' | 'vitamin' | 'balance'>('all');
+  searchQuery = signal<string>('');
+  sortBy = signal<'relevant' | 'cheapest' | 'most_expensive' | 'recent'>('relevant');
+  categoryTab = signal<'all' | 'yogurt' | 'protein' | 'fiber' | 'vitamin' | 'balance'>('all');
   activePlanId = signal<string | null>(null);
+
+  // Recent meals & purchased ingredients tracking (synced with MongoDB orders + Cart + localStorage)
+  recentMealsMap = signal<Record<string, { timestamp: number; label: string }>>({});
+  recentOrderedItemNames = signal<string[]>([]);
+
+  readonly quickSearchTags = [
+    { label: '🥛 Sữa chua', query: 'sữa chua' },
+    { label: '🐟 Cá hồi', query: 'cá hồi' },
+    { label: '🥑 Quả bơ', query: 'bơ' },
+    { label: '🍗 Thịt gà', query: 'gà' },
+    { label: '🍓 Dâu tây', query: 'dâu tây' },
+    { label: '🥩 Thịt bò', query: 'thịt bò' },
+    { label: '🍄 Nấm đông cô', query: 'nấm' },
+  ];
 
   // Dedicated detail view state (for viewing a dish or a meal plan on its own detail screen)
   selectedRecipeId = signal<string | null>(null);
@@ -359,10 +376,212 @@ export class NutritionComponent implements OnInit {
 
   readonly filteredResults = computed<RecipeResult[]>(() => {
     const tab = this.categoryTab();
-    const all = this.results();
-    if (tab === 'all') return all;
-    return all.filter(r => r.goalsTags.includes(tab));
+    const query = normalizeStr(this.searchQuery());
+    const sortMode = this.sortBy();
+    let list = [...this.results()];
+
+    // 1. Category tab filter
+    if (tab === 'yogurt') {
+      list = list.filter((r) => {
+        const text = normalizeStr(`${r.name} ${r.description} ${r.ingredients.map((i) => i.name).join(' ')}`);
+        return text.includes('sua chua') || text.includes('yogurt');
+      });
+    } else if (tab !== 'all') {
+      list = list.filter((r) => r.goalsTags.includes(tab));
+    }
+
+    // 2. Search query filter (matches dish name, ingredient names, description, nutritionNote, macros)
+    if (query) {
+      const keywords = query.split(/\s+/).filter((w) => w.length > 0);
+      list = list.filter((r) => {
+        const searchable = normalizeStr(
+          `${r.name} ${r.description} ${r.nutritionNote} ${r.macros.vitamins} ${r.ingredients.map((i) => `${i.name} ${i.product?.name || ''}`).join(' ')}`
+        );
+        return keywords.every((kw) => searchable.includes(kw)) || searchable.includes(query);
+      });
+    }
+
+    // 3. Recent filter mode: if 'recent' is selected, filter to recent meals (or sort recent to top if all)
+    if (sortMode === 'recent') {
+      const recentList = list.filter((r) => this.getRecentScore(r) > 0);
+      if (recentList.length > 0) {
+        list = recentList;
+      }
+      list.sort((a, b) => this.getRecentScore(b) - this.getRecentScore(a));
+      return list;
+    }
+
+    // 4. Sort modes: 'relevant' | 'cheapest' | 'most_expensive'
+    if (sortMode === 'cheapest') {
+      list.sort((a, b) => this.dealCost(a) - this.dealCost(b));
+    } else if (sortMode === 'most_expensive') {
+      list.sort((a, b) => this.dealCost(b) - this.dealCost(a));
+    } else {
+      // 'relevant': combine search keyword match score + nutrition goal matchScore
+      list.sort((a, b) => this.getRelevanceScore(b, query) - this.getRelevanceScore(a, query));
+    }
+
+    return list;
   });
+
+  readonly recentMealsCount = computed<number>(() => {
+    return this.results().filter((r) => this.getRecentScore(r) > 0).length;
+  });
+
+  getRelevanceScore(recipe: RecipeResult, normQuery: string): number {
+    let score = recipe.matchScore;
+    if (!normQuery) return score;
+
+    const nameNorm = normalizeStr(recipe.name);
+    const ingNorm = normalizeStr(recipe.ingredients.map((i) => `${i.name} ${i.product?.name || ''}`).join(' '));
+    const descNorm = normalizeStr(`${recipe.description} ${recipe.nutritionNote}`);
+
+    if (nameNorm.includes(normQuery)) score += 120;
+    if (ingNorm.includes(normQuery)) score += 90;
+    if (descNorm.includes(normQuery)) score += 40;
+
+    const words = normQuery.split(/\s+/).filter((w) => w.length >= 2);
+    for (const w of words) {
+      if (nameNorm.includes(w)) score += 35;
+      if (ingNorm.includes(w)) score += 25;
+      if (descNorm.includes(w)) score += 10;
+    }
+    return score;
+  }
+
+  getRecentScore(recipe: RecipeResult): number {
+    const map = this.recentMealsMap();
+    if (map[recipe.id]) {
+      return map[recipe.id].timestamp;
+    }
+    // Check if any ingredient matches items in current Cart or MongoDB recent orders
+    const cartItems = this.cart.items();
+    for (const ing of recipe.ingredients) {
+      const ingNorm = normalizeStr(ing.name);
+      const prodId = ing.product?._id || ing.product?.slug || '';
+      const inCart = cartItems.some(
+        (ci) =>
+          ci.product.id === prodId ||
+          normalizeStr(ci.product.name).includes(ingNorm) ||
+          ingNorm.includes(normalizeStr(ci.product.name))
+      );
+      if (inCart) return Date.now() - 60_000;
+    }
+
+    const orderedNames = this.recentOrderedItemNames();
+    let matchedOrderCount = 0;
+    for (const ing of recipe.ingredients) {
+      const ingNorm = normalizeStr(ing.name);
+      const prodNorm = normalizeStr(ing.product?.name || '');
+      const hit = orderedNames.some((on) => {
+        const oNorm = normalizeStr(on);
+        return (
+          (oNorm && ingNorm && (oNorm.includes(ingNorm) || ingNorm.includes(oNorm))) ||
+          (oNorm && prodNorm && (oNorm.includes(prodNorm) || prodNorm.includes(oNorm)))
+        );
+      });
+      if (hit) matchedOrderCount++;
+    }
+    if (matchedOrderCount > 0) {
+      return 1_700_000_000_000 + matchedOrderCount * 1000;
+    }
+    return 0;
+  }
+
+  isRecentMeal(recipe: RecipeResult): boolean {
+    return this.getRecentScore(recipe) > 0;
+  }
+
+  getRecentBadgeText(recipe: RecipeResult): string {
+    const map = this.recentMealsMap();
+    if (map[recipe.id]?.label) {
+      return map[recipe.id].label;
+    }
+    const cartItems = this.cart.items();
+    const inCart = recipe.ingredients.some((ing) => {
+      const prodId = ing.product?._id || ing.product?.slug || '';
+      return cartItems.some((ci) => ci.product.id === prodId);
+    });
+    if (inCart) return '🕒 Đang có nguyên liệu trong giỏ';
+    if (this.getRecentScore(recipe) > 0) return '🕒 Đã mua nguyên liệu gần đây';
+    return '';
+  }
+
+  applyQuickSearch(query: string): void {
+    if (this.searchQuery() === query) {
+      this.searchQuery.set('');
+    } else {
+      this.searchQuery.set(query);
+      this.sortBy.set('relevant');
+    }
+  }
+
+  private loadRecentMealsHistory(serverRecentItems?: { name: string; orderedAt?: string }[]): void {
+    const defaultRecent: Record<string, { timestamp: number; label: string }> = {
+      'sua-chua-hy-lap-trai-cay': {
+        timestamp: Date.now() - 3600 * 1000 * 5,
+        label: '🕒 Đã ăn / Mua gần đây',
+      },
+      'ca-hoi-ap-chao': {
+        timestamp: Date.now() - 3600 * 1000 * 18,
+        label: '🕒 Đã mua nguyên liệu tuần này',
+      },
+      'salad-ga-nuong': {
+        timestamp: Date.now() - 3600 * 1000 * 36,
+        label: '🕒 Đã mua nguyên liệu gần đây',
+      },
+    };
+
+    try {
+      const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('xanhla_recent_meals_v1') : null;
+      const parsed = raw ? JSON.parse(raw) : {};
+      this.recentMealsMap.set({ ...defaultRecent, ...parsed });
+    } catch {
+      this.recentMealsMap.set(defaultRecent);
+    }
+
+    const names: string[] = [];
+    if (Array.isArray(serverRecentItems)) {
+      for (const it of serverRecentItems) {
+        if (it?.name) names.push(it.name);
+      }
+    }
+    this.recentOrderedItemNames.set(names);
+
+    // If user is logged in, also fetch their personal orders from /api/orders/my
+    if (this.cart.currentUser()) {
+      this.api
+        .get<{ success: boolean; data: any[] }>('/orders/my?limit=10')
+        .pipe(catchError(() => of({ success: false, data: [] })))
+        .subscribe((res) => {
+          if (res?.data && Array.isArray(res.data)) {
+            const myNames = [...this.recentOrderedItemNames()];
+            for (const ord of res.data) {
+              for (const item of ord.items || []) {
+                if (item?.name) myNames.unshift(item.name);
+              }
+            }
+            this.recentOrderedItemNames.set(Array.from(new Set(myNames)));
+          }
+        });
+    }
+  }
+
+  private recordRecentMeal(recipeId: string, label = '🕒 Vừa chọn / Đã mua gần đây'): void {
+    const updated = {
+      ...this.recentMealsMap(),
+      [recipeId]: {
+        timestamp: Date.now(),
+        label,
+      },
+    };
+    this.recentMealsMap.set(updated);
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('xanhla_recent_meals_v1', JSON.stringify(updated));
+      }
+    } catch {}
+  }
 
   ngOnInit(): void {
     this.loading.set(true);
@@ -375,6 +594,7 @@ export class NutritionComponent implements OnInit {
             goals: GoalItem[];
             mealPlans?: MealPlanDeal[];
             recipes: RecipeDbItem[];
+            recentOrderedItems?: { name: string; orderedAt?: string }[];
           };
         }>('/nutrition')
         .pipe(
@@ -386,6 +606,7 @@ export class NutritionComponent implements OnInit {
                 goals: [] as GoalItem[],
                 mealPlans: [] as MealPlanDeal[],
                 recipes: [] as RecipeDbItem[],
+                recentOrderedItems: [] as { name: string; orderedAt?: string }[],
               },
             })
           )
@@ -399,6 +620,9 @@ export class NutritionComponent implements OnInit {
         this.goalsSignal.set(nutrition.data.goals || []);
         this.mealPlansSignal.set(nutrition.data.mealPlans || []);
         this.recipesDbSignal.set(nutrition.data.recipes || []);
+        this.loadRecentMealsHistory(nutrition.data.recentOrderedItems);
+      } else {
+        this.loadRecentMealsHistory();
       }
       if (products?.data) {
         this.catalogue.set(products.data);
@@ -439,6 +663,7 @@ export class NutritionComponent implements OnInit {
     }
     const found = this.results().find(r => r.id === recipeId);
     if (found) {
+      this.recordRecentMeal(recipeId, '🕒 Vừa xem / Đã chọn gần đây');
       this.selectedPlanDetailId.set(null);
       this.selectedRecipeId.set(recipeId);
       this.activeGalleryImage.set(found.image);
@@ -493,6 +718,9 @@ export class NutritionComponent implements OnInit {
     for (const p of plan.matchedProducts) {
       const discounted = Math.round(((p.priceNumber || 0) * (100 - plan.discountPercent)) / 100 / 500) * 500;
       this.cart.addItem(toCartProduct(p, discounted), 1);
+    }
+    for (const rId of plan.recipeIds) {
+      this.recordRecentMeal(rId, '🕒 Vừa mua trong gói Combo');
     }
     this.voucher.copyCode(plan.voucherCode);
     this.addedToCart.set(
@@ -780,6 +1008,7 @@ export class NutritionComponent implements OnInit {
       }
     }
 
+    this.recordRecentMeal(recipe.id, '🕒 Vừa mua nguyên liệu món này');
     this.voucher.copyCode('NUTRITION10');
     this.addedToCart.set(
       `Đã thêm ${toAdd.length} nguyên liệu cho món "${recipe.name}" vào giỏ hàng và sao chép mã ưu đãi NUTRITION10 (-10%)!`

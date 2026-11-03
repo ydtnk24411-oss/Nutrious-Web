@@ -2255,6 +2255,181 @@
   flex-shrink: 0;
 }
 
+/* ── SEARCH & SMART SORT TOOLBAR (LIÊN QUAN NHẤT | RẺ NHẤT | ĐẮT NHẤT | GẦN ĐÂY ĐÃ ĂN) ── */
+.xl-search-sort-toolbar {
+  background: #fff;
+  border: 1.5px solid #d7e5d2;
+  border-radius: 18px;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 16px rgba(26, 61, 34, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.xl-search-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.xl-search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.xl-search-icon {
+  position: absolute;
+  left: 14px;
+  color: #2d6a4f;
+  pointer-events: none;
+}
+
+.xl-search-input {
+  width: 100%;
+  padding: 12px 42px 12px 42px;
+  border-radius: 12px;
+  border: 1.5px solid #c7dbca;
+  background: #f9fcf8;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1a3d22;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.xl-search-input:focus {
+  outline: none;
+  border-color: #2d6a4f;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(45, 106, 79, 0.14);
+}
+
+.xl-search-clear-btn {
+  position: absolute;
+  right: 12px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: #e2ebe0;
+  color: #36503b;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.xl-search-clear-btn:hover {
+  background: #2d6a4f;
+  color: #fff;
+}
+
+.xl-quick-search-tags {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.xl-quick-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #5a6b5a;
+}
+
+.xl-quick-chip {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid #d5e5d6;
+  background: #f3f9f4;
+  color: #1a3d22;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.xl-quick-chip:hover {
+  border-color: #2d6a4f;
+  background: #e6f4ea;
+}
+
+.xl-quick-chip.active {
+  background: #2d6a4f;
+  border-color: #2d6a4f;
+  color: #fff;
+}
+
+.xl-sort-col {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px dashed #dce8d8;
+}
+
+.xl-sort-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1a3d22;
+}
+
+.xl-sort-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.xl-sort-pill {
+  padding: 8px 15px;
+  border-radius: 10px;
+  border: 1.5px solid #d5e2d0;
+  background: #fff;
+  color: #2b4c32;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.16s;
+}
+
+.xl-sort-pill:hover {
+  border-color: #2d6a4f;
+  background: #f2f9f4;
+}
+
+.xl-sort-pill.active {
+  background: #1a3d22;
+  border-color: #1a3d22;
+  color: #fef3c7;
+  box-shadow: 0 3px 10px rgba(26, 61, 34, 0.2);
+}
+
+.xl-sort-pill--recent.active {
+  background: #b45309;
+  border-color: #b45309;
+  color: #fff;
+}
+
+.xl-recent-meal-badge {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: rgba(180, 83, 9, 0.92);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.xl-recipe-card.is-recent-meal {
+  border-color: #cbd5c0;
+}
+
 @media (max-width: 1100px) {
   .xl-meal-plans-grid,
   .xl-related-grid,
