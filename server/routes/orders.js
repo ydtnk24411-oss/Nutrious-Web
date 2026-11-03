@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const jwt = require('jsonwebtoken');
 const { body } = require('express-validator');
 const Order  = require('../models/Order');
 const { protect, optionalAuth, adminOnly } = require('../middleware/auth');
@@ -137,6 +138,73 @@ router.get('/:id', protect, adminOnly, async (req, res, next) => {
     res.json({ success: true, data: order });
   } catch (err) { next(err); }
 });
+
+// PUT/POST /api/orders/:id/cancel — cancel order (customer or admin)
+const handleCancelOrder = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body || {};
+
+    const mongoose = require('mongoose');
+    let order = null;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      order = await Order.findById(id);
+    }
+    if (!order) {
+      order = await Order.findOne({ orderCode: id });
+    }
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng.' });
+    }
+
+    // Kiểm tra quyền: nếu đơn hàng thuộc về một tài khoản, yêu cầu người đặt hoặc admin
+    if (order.user) {
+      if (!req.user) {
+        return res.status(401).json({ success: false, message: 'Vui lòng đăng nhập để thực hiện thao tác này.' });
+      }
+      const orderUserId = (order.user._id || order.user).toString();
+      const currentUserId = req.user._id.toString();
+      const isOwner = orderUserId === currentUserId;
+      if (!isOwner && req.user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Bạn không có quyền hủy đơn hàng này.' });
+      }
+    } else if (req.user && req.user.role !== 'admin' && order.guestEmail && order.guestEmail !== req.user.email) {
+      return res.status(403).json({ success: false, message: 'Bạn không có quyền hủy đơn hàng này.' });
+    }
+
+    // Kiểm tra điều kiện hợp lệ trước khi hủy
+    if (order.status === 'cancelled') {
+      return res.status(400).json({ success: false, message: 'Đơn hàng này đã được hủy trước đó.' });
+    }
+
+    const cancellableStatuses = ['pending', 'confirmed'];
+    if (!cancellableStatuses.includes(order.status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Đơn hàng đang trong quá trình chuẩn bị hoặc giao hàng, không thể hủy lúc này.'
+      });
+    }
+
+    // Cập nhật trạng thái thành 'cancelled'
+    order.status = 'cancelled';
+    if (reason && typeof reason === 'string' && reason.trim()) {
+      order.note = order.note ? `${order.note} | Lý do hủy: ${reason.trim()}` : `Lý do hủy: ${reason.trim()}`;
+    }
+    await order.save();
+
+    res.json({
+      success: true,
+      message: 'Hủy đơn hàng thành công.',
+      data: order
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+router.put('/:id/cancel', optionalAuth, handleCancelOrder);
+router.post('/:id/cancel', optionalAuth, handleCancelOrder);
 
 // PUT /api/orders/:id/status — admin
 router.put('/:id/status', protect, adminOnly, async (req, res, next) => {
