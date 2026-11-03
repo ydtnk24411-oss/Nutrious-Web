@@ -74,7 +74,11 @@
             (click)="selectConversation(conv)"
           >
             <div class="conv-avatar">
-              {{ (conv.customerName || 'K').charAt(0).toUpperCase() }}
+              @if (getCustomerAvatar(conv)) {
+                <img [src]="getCustomerAvatar(conv)" [alt]="conv.customerName" class="avatar-photo" />
+              } @else {
+                <span>{{ (conv.customerName || 'K').charAt(0).toUpperCase() }}</span>
+              }
             </div>
             <div class="conv-main">
               <div class="conv-name-row">
@@ -102,7 +106,11 @@
       <header class="support-chat-header">
         <div class="chat-header-user">
           <div class="chat-avatar">
-            {{ (activeConversation()?.customerName || 'K').charAt(0).toUpperCase() }}
+            @if (getCustomerAvatar(activeConversation())) {
+              <img [src]="getCustomerAvatar(activeConversation()!)" [alt]="activeConversation()?.customerName" class="avatar-photo" />
+            } @else {
+              <span>{{ (activeConversation()?.customerName || 'K').charAt(0).toUpperCase() }}</span>
+            }
           </div>
           <div class="chat-user-details">
             <div class="chat-user-title-row">
@@ -159,12 +167,24 @@
             [class.row-ai]="msg.sender === 'ai'"
             [class.row-admin]="msg.sender === 'admin'"
           >
+            @if (msg.sender === 'customer') {
+              <div class="msg-bubble-avatar">
+                @if (getCustomerAvatar(activeConversation())) {
+                  <img [src]="getCustomerAvatar(activeConversation()!)" [alt]="activeConversation()?.customerName" />
+                } @else {
+                  <span>{{ (activeConversation()?.customerName || 'K').charAt(0).toUpperCase() }}</span>
+                }
+              </div>
+            }
+            @if (msg.sender === 'ai') {
+              <div class="msg-bubble-avatar msg-bot-avatar">🤖</div>
+            }
             <!-- Message Bubble -->
             <div class="message-bubble">
               <div class="message-header-line">
                 <span class="message-sender-tag">
                   @switch (msg.sender) {
-                    @case ('customer') { Khách hàng }
+                    @case ('customer') { {{ activeConversation()?.customerName || msg.senderName || 'Khách hàng' }} }
                     @case ('ai') { NutriBot AI 🤖 }
                     @case ('admin') { {{ msg.senderName || 'Nhân viên hỗ trợ' }} }
                   }

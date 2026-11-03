@@ -30,6 +30,7 @@ export interface SupportConversation {
   customerName: string;
   customerEmail?: string;
   customerPhone?: string;
+  customerAvatar?: string;
   status: ConversationStatus;
   lastMessage?: string;
   lastMessageAt: string;

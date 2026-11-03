@@ -260,6 +260,7 @@ router.get('/top-products', protect, staffOnly, async (req, res, next) => {
           _id: '$items.productName',
           quantity: { $sum: '$items.quantity' },
           revenue: { $sum: { $multiply: ['$items.priceNumber', '$items.quantity'] } },
+          image: { $first: '$items.productImage' },
         },
       },
       { $sort: { quantity: -1, revenue: -1 } },
@@ -270,6 +271,7 @@ router.get('/top-products', protect, staffOnly, async (req, res, next) => {
           name: '$_id',
           quantity: 1,
           revenue: 1,
+          image: { $ifNull: ['$image', ''] },
         },
       },
     ]);

@@ -173,11 +173,7 @@
     <div class="admin-sidebar-footer">
       <div class="admin-profile-card">
         <div class="admin-profile-avatar">
-          @if (auth.user()?.avatar) {
-            <img [src]="auth.user()?.avatar" [alt]="auth.user()?.name" />
-          } @else {
-            {{ (auth.user()?.name ?? 'Admin').charAt(0).toUpperCase() }}
-          }
+          <img [src]="auth.user()?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80'" [alt]="auth.user()?.name || 'Admin Xanh Lá'" />
         </div>
         @if (sidebarOpen()) {
           <div class="admin-profile-details">
@@ -252,11 +248,7 @@
         <!-- User Quick Card -->
         <div class="admin-topbar-user">
           <div class="admin-user-avatar">
-            @if (auth.user()?.avatar) {
-              <img [src]="auth.user()?.avatar" [alt]="auth.user()?.name" />
-            } @else {
-              {{ (auth.user()?.name ?? 'Admin').charAt(0).toUpperCase() }}
-            }
+            <img [src]="auth.user()?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80'" [alt]="auth.user()?.name || 'Admin Xanh Lá'" />
           </div>
           <div class="admin-user-info">
             <span class="admin-user-name">{{ auth.user()?.name ?? 'Admin Xanh Lá' }}</span>

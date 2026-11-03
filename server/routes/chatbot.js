@@ -10,6 +10,8 @@ const Category = require('../models/Category');
 const Order = require('../models/Order');
 const Voucher = require('../models/Voucher');
 const Conversation = require('../models/Conversation');
+const User = require('../models/User');
+const { optionalAuth } = require('../middleware/auth');
 
 // Status dictionary for orders
 const ORDER_STATUS_MAP = {
@@ -97,12 +99,15 @@ async function logMessageToConv(conv, userMsg, botReply) {
   try {
     conv.messages.push({
       sender: 'customer',
+      senderName: conv.customerName || 'Khách hàng',
+      senderAvatar: conv.customerAvatar || '',
       content: userMsg || '[Hình ảnh]',
       timestamp: new Date(),
     });
     conv.messages.push({
       sender: 'ai',
       senderName: 'NutriBot',
+      senderAvatar: 'https://api.iconify.design/lucide:bot.svg?color=%23176b3a',
       content: botReply,
       timestamp: new Date(),
     });
@@ -113,7 +118,7 @@ async function logMessageToConv(conv, userMsg, botReply) {
 }
 
 // POST /api/chatbot/message
-router.post('/message', async (req, res, next) => {
+router.post('/message', optionalAuth, async (req, res, next) => {
   try {
     const {
       message = '',
@@ -132,6 +137,27 @@ router.post('/message', async (req, res, next) => {
     const trimmed = (message || '').trim();
     const cleanLower = removeDiacritics(trimmed);
 
+    // Resolve customer identity from auth token or request body
+    const authUser = req.user;
+    let customerId = authUser ? authUser._id : (req.body.customerId || req.body.customerInfo?.id || req.body.customerInfo?._id || null);
+    let customerName = authUser ? authUser.name : (req.body.customerName || req.body.customerInfo?.name || '');
+    let customerEmail = authUser ? authUser.email : (req.body.customerEmail || req.body.customerInfo?.email || '');
+    let customerPhone = authUser ? (authUser.phone || '') : (req.body.customerPhone || req.body.customerInfo?.phone || '');
+    let customerAvatar = authUser ? (authUser.avatar || '') : (req.body.customerAvatar || req.body.customerInfo?.avatar || '');
+
+    // If no user found from token, try looking up User by email
+    if (!customerId && customerEmail) {
+      try {
+        const u = await User.findOne({ email: customerEmail.toLowerCase().trim() });
+        if (u) {
+          customerId = u._id;
+          if (!customerName) customerName = u.name;
+          if (!customerPhone && u.phone) customerPhone = u.phone;
+          if (!customerAvatar && u.avatar) customerAvatar = u.avatar;
+        }
+      } catch (_) {}
+    }
+
     const sessionId = req.body.sessionId || req.body.userId || 'guest_chat_session';
     let conv = null;
     try {
@@ -139,10 +165,21 @@ router.post('/message', async (req, res, next) => {
       if (!conv) {
         conv = new Conversation({
           sessionId,
-          customerName: req.body.customerName || 'Khách hàng',
-          customerEmail: req.body.customerEmail || '',
+          customer: customerId,
+          customerName: customerName || 'Khách hàng',
+          customerEmail,
+          customerPhone,
+          customerAvatar,
           messages: [],
         });
+      } else {
+        if (!conv.customer && customerId) conv.customer = customerId;
+        if ((!conv.customerName || conv.customerName === 'Khách hàng') && customerName) {
+          conv.customerName = customerName;
+        }
+        if (!conv.customerEmail && customerEmail) conv.customerEmail = customerEmail;
+        if (!conv.customerPhone && customerPhone) conv.customerPhone = customerPhone;
+        if (!conv.customerAvatar && customerAvatar) conv.customerAvatar = customerAvatar;
       }
     } catch (_) {}
 
@@ -152,6 +189,8 @@ router.post('/message', async (req, res, next) => {
       conv.status = 'WAITING_FOR_ADMIN';
       conv.messages.push({
         sender: 'customer',
+        senderName: conv.customerName || customerName || 'Khách hàng',
+        senderAvatar: conv.customerAvatar || customerAvatar || '',
         content: trimmed,
         timestamp: new Date(),
       });
@@ -159,6 +198,7 @@ router.post('/message', async (req, res, next) => {
       conv.messages.push({
         sender: 'ai',
         senderName: 'NutriBot',
+        senderAvatar: 'https://api.iconify.design/lucide:bot.svg?color=%23176b3a',
         content: aiReply,
         timestamp: new Date(),
       });
@@ -173,6 +213,8 @@ router.post('/message', async (req, res, next) => {
     if (conv && conv.status === 'ADMIN_PROCESSING') {
       conv.messages.push({
         sender: 'customer',
+        senderName: conv.customerName || customerName || 'Khách hàng',
+        senderAvatar: conv.customerAvatar || customerAvatar || '',
         content: trimmed,
         timestamp: new Date(),
       });
