@@ -43,3 +43,15 @@
   color: #dc2626 !important;
   border-color: #fca5a5 !important;
 }
+
+.badge-pending { background: #fef3c7; color: #b45309; }
+.badge-confirmed { background: #dbeafe; color: #1d4ed8; }
+.badge-preparing { background: #ede9fe; color: #6d28d9; }
+.badge-shipping { background: #e0f2fe; color: #0369a1; }
+.badge-delivered { background: #d1fae5; color: #047857; }
+.badge-cancelled { background: #fee2e2; color: #b91c1c; }
+.badge-active { background: #d1fae5; color: #047857; }
+.badge-inactive { background: #fee2e2; color: #b91c1c; }
+.badge-admin { background: #e0e7ff; color: #4338ca; }
+.badge-customer { background: #f3f4f6; color: #4b5563; }
+

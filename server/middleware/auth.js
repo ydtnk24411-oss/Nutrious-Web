@@ -45,8 +45,6 @@ const protect = async (req, res, next) => {
 };
 
 // Không bắt buộc đăng nhập (khách vãng lai vẫn đi tiếp).
-// Có token hợp lệ → gắn req.user; token sai/hết hạn → trả 401 để client đăng nhập lại
-// thay vì âm thầm tạo dữ liệu "khách" cho một tài khoản đang đăng nhập.
 const optionalAuth = async (req, res, next) => {
   const token = getBearerToken(req);
   if (!token) return next();
@@ -70,4 +68,20 @@ const adminOnly = (req, res, next) => {
   next();
 };
 
-module.exports = { protect, optionalAuth, adminOnly, signToken };
+// Staff or Admin
+const staffOnly = (req, res, next) => {
+  if (!req.user || req.user.role === 'customer') {
+    return res.status(403).json({ success: false, message: 'Yêu cầu quyền quản trị hoặc nhân viên.' });
+  }
+  next();
+};
+
+// Role-based access control
+const hasRole = (...roles) => (req, res, next) => {
+  if (!req.user || (!roles.includes(req.user.role) && req.user.role !== 'admin')) {
+    return res.status(403).json({ success: false, message: 'Bạn không có quyền thực hiện thao tác này.' });
+  }
+  next();
+};
+
+module.exports = { protect, optionalAuth, adminOnly, staffOnly, hasRole, signToken };

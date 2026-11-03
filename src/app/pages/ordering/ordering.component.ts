@@ -201,18 +201,18 @@ export class OrderingComponent implements OnInit {
   });
 
   // Filter accordion open state
- protected openAccordions = signal<Record<string, boolean>>({
-  sort: true,
-  price: true,
-  category: true,
-  preparation: false,
-  ripeness: false,
-  sizeGroup: false,
-  type: false,
-  weight: false,
-});
+  protected openAccordions = signal<Record<string, boolean>>({
+    sort: true,
+    price: true,
+    category: true,
+    preparation: false,
+    ripeness: false,
+    sizeGroup: false,
+    type: false,
+    weight: false,
+  });
 
-    // Các lựa chọn bộ lọc tiếng Việt lấy từ dữ liệu thực tế
+  // Các lựa chọn bộ lọc tiếng Việt lấy từ dữ liệu thực tế
   protected facetOptions = computed(() => {
     const targetCat = this.activeCategory();
     const sourceProducts = targetCat === 'all'
@@ -349,7 +349,7 @@ export class OrderingComponent implements OnInit {
     return list;
   });
 
-    // Gom sản phẩm theo đúng Category trong MongoDB
+  // Gom sản phẩm theo đúng Category trong MongoDB
   protected activeCategory = signal('all');
   protected categoryProducts = computed(() => {
     const products = this.filteredProducts();
@@ -373,16 +373,16 @@ export class OrderingComponent implements OnInit {
     }
   }
   protected sections = computed(() => {
-  const products = this.categoryProducts();
+    const products = this.categoryProducts();
 
-  return this.allCategories()
-    .map(category => ({
-      id: category._id,
-      title: category.name,
-      items: products.filter(p => p.categoryId === category._id)
-    }))
-    .filter(section => section.items.length > 0);
-});
+    return this.allCategories()
+      .map(category => ({
+        id: category._id,
+        title: category.name,
+        items: products.filter(p => p.categoryId === category._id)
+      }))
+      .filter(section => section.items.length > 0);
+  });
 
   ngOnInit(): void {
     const q = this.route.snapshot.queryParamMap.get('q');

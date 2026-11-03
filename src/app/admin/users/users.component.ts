@@ -1,7 +1,8 @@
 import { Component, signal, inject, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { UserApiService, ApiUser, ApiUserWithStats } from '../../shared/services/user-api.service';
+import { UserApiService, ApiUser, ApiUserWithStats, UserRole } from '../../shared/services/user-api.service';
+import { OrderApiService, ApiOrder } from '../../shared/services/order-api.service';
 
 @Component({
   selector: 'app-admin-users',
@@ -12,6 +13,7 @@ import { UserApiService, ApiUser, ApiUserWithStats } from '../../shared/services
 })
 export class AdminUsersComponent implements OnInit {
   private userApi = inject(UserApiService);
+  private orderApi = inject(OrderApiService);
 
   users    = signal<ApiUserWithStats[]>([]);
   total    = signal(0);
@@ -27,8 +29,14 @@ export class AdminUsersComponent implements OnInit {
 
   selected   = signal<ApiUserWithStats | null>(null);
   modalOpen  = signal(false);
-  editRole   = signal<'customer' | 'admin'>('customer');
+  editRole   = signal<UserRole>('customer');
   editActive = signal(true);
+
+  // Detail Drawer / Modal
+  detailUser = signal<ApiUserWithStats | null>(null);
+  detailModalOpen = signal(false);
+  userOrders = signal<ApiOrder[]>([]);
+  loadingOrders = signal(false);
 
   totalPages = computed(() => Math.ceil(this.total() / this.limit));
 
@@ -58,6 +66,42 @@ export class AdminUsersComponent implements OnInit {
     this.modalOpen.set(true);
   }
   closeModal(): void { this.modalOpen.set(false); }
+
+  openDetail(u: ApiUserWithStats): void {
+    this.detailUser.set(u);
+    this.detailModalOpen.set(true);
+    this.loadingOrders.set(true);
+    this.userOrders.set([]);
+    this.orderApi.getAll({ user: u._id, limit: 10 }).subscribe({
+      next: (res) => {
+        this.userOrders.set(res.data || []);
+        this.loadingOrders.set(false);
+      },
+      error: () => {
+        this.loadingOrders.set(false);
+      }
+    });
+  }
+  closeDetailModal(): void {
+    this.detailModalOpen.set(false);
+    this.detailUser.set(null);
+  }
+
+  toggleActive(u: ApiUserWithStats): void {
+    const action = u.isActive ? 'Khóa' : 'Kích hoạt lại';
+    if (!confirm(`Bạn có chắc muốn ${action} tài khoản "${u.name}"?`)) return;
+    this.userApi.toggleActive(u._id, !u.isActive).subscribe({
+      next: () => {
+        this.success.set(`Đã ${action.toLowerCase()} tài khoản thành công!`);
+        setTimeout(() => this.success.set(''), 3000);
+        this.load();
+        if (this.detailUser()?._id === u._id) {
+          this.detailUser.update(prev => prev ? { ...prev, isActive: !prev.isActive } : null);
+        }
+      },
+      error: () => this.error.set('Thao tác thất bại.')
+    });
+  }
 
   save(): void {
     const u = this.selected();
@@ -102,12 +146,24 @@ export class AdminUsersComponent implements OnInit {
   }
 
   formatPrice(val: number): string {
-    return val.toLocaleString('vi-VN') + ' ₫';
+    return (val || 0).toLocaleString('vi-VN') + ' ₫';
   }
 
   formatDate(dateStr: string | null): string {
     if (!dateStr) return '—';
     const date = new Date(dateStr);
     return date.toLocaleDateString('vi-VN');
+  }
+
+  getOrderStatusLabel(status: string): string {
+    const map: Record<string, string> = {
+      pending: 'Chờ xác nhận',
+      confirmed: 'Đã xác nhận',
+      preparing: 'Đang chuẩn bị',
+      shipping: 'Đang giao',
+      delivered: 'Đã giao',
+      cancelled: 'Đã hủy',
+    };
+    return map[status] || status;
   }
 }

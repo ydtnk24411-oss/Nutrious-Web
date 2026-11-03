@@ -9,13 +9,13 @@ import { ProductApiService, ApiProduct } from '../../shared/services/product-api
 import { searchProducts, highlightMatch } from '../../shared/utils/search.util';
 
 const CATEGORIES = [
-  { label: 'Rau củ',                 path: '/online-ordering', category: 'Rau củ' },
-  { label: 'Trái cây',               path: '/online-ordering', category: 'Trái cây' },
-  { label: 'Thịt',                   path: '/online-ordering', category: 'Thịt' },
-  { label: 'Cá & Hải sản',           path: '/online-ordering', category: 'Cá & Hải sản' },
-  { label: 'Sữa & Thực phẩm mát',    path: '/online-ordering', category: 'Sữa & Thực phẩm mát' },
-  { label: 'Thức uống',              path: '/online-ordering', category: 'Thức uống' },
-  { label: 'Bánh & Đồ ăn vặt',       path: '/online-ordering', category: 'Bánh & Đồ ăn vặt' },
+  { label: 'Rau củ', path: '/online-ordering', category: 'Rau củ' },
+  { label: 'Trái cây', path: '/online-ordering', category: 'Trái cây' },
+  { label: 'Thịt', path: '/online-ordering', category: 'Thịt' },
+  { label: 'Cá & Hải sản', path: '/online-ordering', category: 'Cá & Hải sản' },
+  { label: 'Sữa & Thực phẩm mát', path: '/online-ordering', category: 'Sữa & Thực phẩm mát' },
+  { label: 'Thức uống', path: '/online-ordering', category: 'Thức uống' },
+  { label: 'Bánh & Đồ ăn vặt', path: '/online-ordering', category: 'Bánh & Đồ ăn vặt' },
   { label: 'Gia vị & Thực phẩm khô', path: '/online-ordering', category: 'Gia vị & Thực phẩm khô' },
 ];
 
@@ -38,7 +38,7 @@ export interface HeaderNotification {
   styleUrl: './header.component.css',
 })
 export class HeaderComponent {
-  protected cart   = inject(CartService);
+  protected cart = inject(CartService);
   protected router = inject(Router);
   private categoryApi = inject(CategoryApiService, { optional: true });
   private productApi = inject(ProductApiService, { optional: true });
@@ -80,6 +80,27 @@ export class HeaderComponent {
     return searchProducts(this.allProducts(), q, 6);
   });
 
+  // Search & Suggestions state
+  protected searchQuery = signal('');
+  protected showSuggestions = signal(false);
+  protected selectedSuggestionIndex = signal(-1);
+  protected allProducts = signal<ApiProduct[]>([]);
+  protected popularKeywords = [
+    'Rau hữu cơ',
+    'Trái cây tươi',
+    'Thịt sạch',
+    'Cá hồi',
+    'Sữa hạt',
+    'Nấm tươi',
+    'Khoai lang mật',
+    'Gạo ST25',
+  ];
+  protected readonly fallbackImage = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=700&q=80';
+
+  protected suggestedProducts = computed(() => {
+    const q = this.searchQuery();
+    return searchProducts(this.allProducts(), q, 6);
+  });
   constructor() {
     this.categoryApi?.getAll().subscribe({
       next: (res) => {
@@ -91,7 +112,7 @@ export class HeaderComponent {
           }));
         }
       },
-      error: () => {},
+      error: () => { },
     });
 
     // Cập nhật thông báo tự động theo tài khoản người dùng
@@ -116,6 +137,20 @@ export class HeaderComponent {
     });
   }
 
+    // Khởi tạo tải sản phẩm để gợi ý tìm kiếm tức thì
+    this.loadProducts();
+  }
+  private loadProducts(): void {
+    if (!this.productApi || this.allProducts().length > 0) return;
+    this.productApi.getAll({ limit: 0, sort: 'createdAt' }).subscribe({
+      next: (res) => {
+        if (res?.data?.length) {
+          this.allProducts.set(res.data);
+        }
+      },
+      error: () => { },
+    });
+  }
   private loadNotifications(user: any): void {
     if (!user) {
       this.notifications.set([

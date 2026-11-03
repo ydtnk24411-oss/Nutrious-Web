@@ -18,6 +18,9 @@ const voucherRoutes = require('./routes/vouchers');
 const loyaltyRoutes = require('./routes/loyalty');
 const reviewRoutes = require('./routes/reviews');
 const chatbotRoutes = require('./routes/chatbot');
+const inventoryRoutes = require('./routes/inventory');
+const supportRoutes = require('./routes/support');
+const complaintRoutes = require('./routes/complaints');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -26,7 +29,20 @@ const PORT = process.env.PORT || 3000;
 // ── Middleware ────────────────────────────────────────────
 app.use(
   cors({
-    origin: ['http://localhost:4200', 'http://localhost:4201'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+      // Allow all localhost and 127.0.0.1 origins on any port
+      if (
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1') ||
+        origin.endsWith('.ngrok.io') ||
+        origin.endsWith('.ngrok-free.app')
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true
   })
 );
@@ -49,6 +65,9 @@ app.use('/api/vouchers', voucherRoutes);
 app.use('/api/loyalty', loyaltyRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/support', supportRoutes);
+app.use('/api/complaints', complaintRoutes);
 
 // ── Health check ──────────────────────────────────────────
 app.get('/api/health', (_req, res) =>
@@ -68,6 +87,6 @@ mongoose
     );
   })
   .catch((err) => {
-    console.error('❌ MongoDB connection error:', err.message);
+    console.error('❌ MongoDB connection error:', err);
     process.exit(1);
   });

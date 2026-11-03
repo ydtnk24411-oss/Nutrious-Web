@@ -10,6 +10,12 @@ export interface DashboardStats {
   pendingOrders: number;
   totalRevenue: number;
   averageOrderValue: number;
+  lowStockCount?: number;
+  outOfStockCount?: number;
+  pendingComplaintsCount?: number;
+  waitingSupportCount?: number;
+  activeVouchersCount?: number;
+  reviewStats?: { averageRating: number; totalReviews: number };
   recentOrders: {
     _id: string;
     orderCode: string;
@@ -64,11 +70,10 @@ export class DashboardApiService {
     return this.api.get<{ success: boolean; data: CategoryRevenue[] }>('/dashboard/revenue-by-category', params);
   }
 
-  getTopProducts(startDate?: string, endDate?: string, limit?: number) {
-    const params: Record<string, string | number> = {};
+  getTopProducts(startDate?: string, endDate?: string, limit = 5) {
+    const params: Record<string, string | number> = { limit };
     if (startDate) params['startDate'] = startDate;
     if (endDate) params['endDate'] = endDate;
-    if (limit) params['limit'] = limit;
     return this.api.get<{ success: boolean; data: TopProduct[] }>('/dashboard/top-products', params);
   }
 }

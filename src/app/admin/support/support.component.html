@@ -1,0 +1,222 @@
+<div class="support-page-shell">
+
+  <!-- Left Column: Conversation List -->
+  <aside class="support-sidebar">
+    <div class="support-sidebar-header">
+      <div class="support-header-title-row">
+        <h2 class="support-title">Tin nhắn Hỗ trợ</h2>
+        <span class="support-count-pill">{{ stats().total }}</span>
+      </div>
+
+      <!-- Quick Filter Pills -->
+      <div class="status-pills">
+        <button
+          type="button"
+          class="pill-btn"
+          [class.active]="statusFilter() === 'all'"
+          (click)="setStatusFilter('all')"
+        >
+          Tất cả
+        </button>
+        <button
+          type="button"
+          class="pill-btn pill-waiting"
+          [class.active]="statusFilter() === 'WAITING_FOR_ADMIN'"
+          (click)="setStatusFilter('WAITING_FOR_ADMIN')"
+        >
+          Chờ hỗ trợ ({{ stats().waitingForAdmin }})
+        </button>
+        <button
+          type="button"
+          class="pill-btn pill-admin"
+          [class.active]="statusFilter() === 'ADMIN_PROCESSING'"
+          (click)="setStatusFilter('ADMIN_PROCESSING')"
+        >
+          Đang chat ({{ stats().adminProcessing }})
+        </button>
+        <button
+          type="button"
+          class="pill-btn"
+          [class.active]="statusFilter() === 'RESOLVED'"
+          (click)="setStatusFilter('RESOLVED')"
+        >
+          Đã giải quyết
+        </button>
+      </div>
+
+      <!-- Search Box -->
+      <div class="conv-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          type="text"
+          placeholder="Tìm tên, email khách hàng..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event); loadConversations(false)"
+        />
+      </div>
+    </div>
+
+    <!-- Conversation Card List -->
+    <div class="conv-list">
+      @if (loading() && conversations().length === 0) {
+        <div class="conv-empty">Đang tải danh sách...</div>
+      } @else if (conversations().length === 0) {
+        <div class="conv-empty">Không có hội thoại nào</div>
+      } @else {
+        @for (conv of conversations(); track conv._id) {
+          @let status = getStatusBadge(conv.status);
+          <div
+            class="conv-card"
+            [class.is-active]="activeConversation()?._id === conv._id"
+            (click)="selectConversation(conv)"
+          >
+            <div class="conv-avatar">
+              {{ (conv.customerName || 'K').charAt(0).toUpperCase() }}
+            </div>
+            <div class="conv-main">
+              <div class="conv-name-row">
+                <span class="conv-name">{{ conv.customerName }}</span>
+                <span class="conv-time">{{ conv.lastMessageAt | date: 'HH:mm' }}</span>
+              </div>
+              <p class="conv-snippet">{{ conv.lastMessage || 'Chưa có tin nhắn' }}</p>
+              <div class="conv-meta">
+                <span class="conv-status-tag" [ngClass]="status.cssClass">{{ status.text }}</span>
+                @if (conv.unreadAdminCount > 0) {
+                  <span class="conv-unread-badge">{{ conv.unreadAdminCount }}</span>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </aside>
+
+  <!-- Right Column: Conversation Main Frame -->
+  <main class="support-main">
+    @if (activeConversation()) {
+      <!-- Top Action Bar -->
+      <header class="support-chat-header">
+        <div class="chat-header-user">
+          <div class="chat-avatar">
+            {{ (activeConversation()?.customerName || 'K').charAt(0).toUpperCase() }}
+          </div>
+          <div class="chat-user-details">
+            <div class="chat-user-title-row">
+              <span class="chat-user-name">{{ activeConversation()?.customerName }}</span>
+              @let status = getStatusBadge(activeConversation()!.status);
+              <span class="chat-status-pill" [ngClass]="status.cssClass">{{ status.text }}</span>
+            </div>
+            <span class="chat-user-meta">
+              {{ activeConversation()?.customerEmail || 'Khách vãng lai' }}
+              @if (activeConversation()?.customerPhone) {
+                • {{ activeConversation()?.customerPhone }}
+              }
+            </span>
+          </div>
+        </div>
+
+        <div class="chat-header-actions">
+          @if (activeConversation()?.status === 'WAITING_FOR_ADMIN') {
+            <button type="button" class="btn-take-over" (click)="assignToMe()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <polyline points="16 11 18 13 22 9"/>
+              </svg>
+              <span>Tiếp nhận hỗ trợ</span>
+            </button>
+          } @else if (activeConversation()?.status === 'ADMIN_PROCESSING') {
+            <button type="button" class="btn-action-light" (click)="updateStatus('RESOLVED')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span>Đóng hội thoại</span>
+            </button>
+            <button type="button" class="btn-action-light" (click)="updateStatus('AI_PROCESSING')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m5 12 7-7 7 7"/>
+              </svg>
+              <span>Chuyển lại AI</span>
+            </button>
+          } @else if (activeConversation()?.status === 'RESOLVED') {
+            <button type="button" class="btn-action-light" (click)="assignToMe()">
+              <span>Mở lại hội thoại</span>
+            </button>
+          }
+        </div>
+      </header>
+
+      <!-- Message History Stream -->
+      <div class="chat-messages-container">
+        @for (msg of activeConversation()?.messages; track $index) {
+          <div
+            class="message-row"
+            [class.row-customer]="msg.sender === 'customer'"
+            [class.row-ai]="msg.sender === 'ai'"
+            [class.row-admin]="msg.sender === 'admin'"
+          >
+            <!-- Message Bubble -->
+            <div class="message-bubble">
+              <div class="message-header-line">
+                <span class="message-sender-tag">
+                  @switch (msg.sender) {
+                    @case ('customer') { Khách hàng }
+                    @case ('ai') { NutriBot AI 🤖 }
+                    @case ('admin') { {{ msg.senderName || 'Nhân viên hỗ trợ' }} }
+                  }
+                </span>
+                <span class="message-time">{{ msg.timestamp | date: 'HH:mm' }}</span>
+              </div>
+              <div class="message-text">{{ msg.content }}</div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Chat Input Area -->
+      <footer class="chat-input-bar">
+        @if (activeConversation()?.status === 'RESOLVED') {
+          <div class="resolved-banner">
+            <span>Hội thoại này đã được đánh dấu hoàn tất.</span>
+            <button type="button" class="btn-reopen-link" (click)="assignToMe()">Mở lại để nhắn tin</button>
+          </div>
+        } @else {
+          <div class="input-form-wrapper">
+            <textarea
+              class="chat-textarea"
+              rows="2"
+              placeholder="Nhập nội dung phản hồi cho khách hàng... (Nhấn Gửi hoặc Ctrl + Enter)"
+              [ngModel]="replyText()"
+              (ngModelChange)="replyText.set($event)"
+              (keydown.control.enter)="sendReply()"
+            ></textarea>
+            <button
+              type="button"
+              class="btn-send-reply"
+              [disabled]="!replyText().trim() || sending()"
+              (click)="sendReply()"
+            >
+              <span>{{ sending() ? 'Đang gửi...' : 'Gửi phản hồi' }}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+          </div>
+        }
+      </footer>
+    } @else {
+      <div class="no-selection-placeholder">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <p>Chọn một hội thoại từ danh sách bên trái để bắt đầu hỗ trợ</p>
+      </div>
+    }
+  </main>
+</div>
+

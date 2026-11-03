@@ -3,10 +3,19 @@ import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/rou
 import { CommonModule } from '@angular/common';
 import { AdminAuthService } from '../../shared/services/admin-auth.service';
 
-export interface AdminNavItem {
-  id: 'dashboard' | 'orders' | 'products' | 'users' | 'events' | 'bookings';
+export interface AdminNavSubItem {
+  id: string;
   label: string;
   path: string;
+  queryParam?: Record<string, string>;
+}
+
+export interface AdminNavItem {
+  id: string;
+  label: string;
+  path: string;
+  badge?: string | number;
+  children?: AdminNavSubItem[];
 }
 
 export interface AdminNavSection {
@@ -26,10 +35,14 @@ export class AdminLayoutComponent {
   protected router = inject(Router);
 
   sidebarOpen = signal(true);
+  expandedMenus = signal<Record<string, boolean>>({
+    products: true,
+    support: true
+  });
 
   readonly navSections: AdminNavSection[] = [
     {
-      title: 'TỔNG QUAN',
+      title: '1. TỔNG QUAN',
       items: [
         {
           id: 'dashboard',
@@ -39,7 +52,7 @@ export class AdminLayoutComponent {
       ]
     },
     {
-      title: 'BÁN HÀNG & SẢN PHẨM',
+      title: '2. BÁN HÀNG & SẢN PHẨM',
       items: [
         {
           id: 'orders',
@@ -50,16 +63,40 @@ export class AdminLayoutComponent {
           id: 'products',
           label: 'Quản lý sản phẩm',
           path: '/admin/products',
+          children: [
+            { id: 'products-list', label: 'Danh sách sản phẩm', path: '/admin/products' },
+            { id: 'products-categories', label: 'Danh mục sản phẩm', path: '/admin/products', queryParam: { tab: 'categories' } }
+          ]
         }
       ]
     },
     {
-      title: 'QUẢN TRỊ & DỊCH VỤ',
+      title: '3. KHO HÀNG',
+      items: [
+        {
+          id: 'inventory',
+          label: 'Quản lý tồn kho',
+          path: '/admin/inventory',
+        }
+      ]
+    },
+    {
+      title: '4. KHÁCH HÀNG & DỊCH VỤ',
       items: [
         {
           id: 'users',
           label: 'Khách hàng',
           path: '/admin/users',
+        },
+        {
+          id: 'support',
+          label: 'Chăm sóc khách hàng',
+          path: '/admin/support',
+          children: [
+            { id: 'support-chat', label: 'Tin nhắn hỗ trợ', path: '/admin/support' },
+            { id: 'support-reviews', label: 'Đánh giá sản phẩm', path: '/admin/reviews' },
+            { id: 'support-complaints', label: 'Khiếu nại & phản hồi', path: '/admin/complaints' }
+          ]
         },
         {
           id: 'events',
@@ -72,6 +109,21 @@ export class AdminLayoutComponent {
           path: '/admin/bookings',
         }
       ]
+    },
+    {
+      title: '5. MARKETING & HỆ THỐNG',
+      items: [
+        {
+          id: 'vouchers',
+          label: 'Quản lý voucher',
+          path: '/admin/vouchers',
+        },
+        {
+          id: 'staff',
+          label: 'Tài khoản & Phân quyền',
+          path: '/admin/staff',
+        }
+      ]
     }
   ];
 
@@ -80,11 +132,33 @@ export class AdminLayoutComponent {
     return current === path || current.startsWith(path + '/');
   }
 
-  navigate(path: string, event?: Event): void {
+  isSubActive(sub: AdminNavSubItem): boolean {
+    const url = this.router.url;
+    if (sub.queryParam) {
+      const entries = Object.entries(sub.queryParam);
+      return entries.every(([k, v]) => url.includes(`${k}=${v}`));
+    }
+    const current = url.split('?')[0];
+    return current === sub.path && !url.includes('tab=');
+  }
+
+  isMenuExpanded(id: string): boolean {
+    return !!this.expandedMenus()[id];
+  }
+
+  toggleSubmenu(id: string, event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.expandedMenus.update(m => ({ ...m, [id]: !m[id] }));
+  }
+
+  navigate(path: string, event?: Event, queryParams?: Record<string, string>): void {
     if (event) {
       event.preventDefault();
     }
-    this.router.navigateByUrl(path);
+    this.router.navigate([path], { queryParams });
   }
 
   toggleSidebar(): void {

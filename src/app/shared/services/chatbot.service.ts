@@ -46,11 +46,25 @@ export class ChatbotService {
   provider = signal<AIProvider>('gemini');
   apiKey = signal<string>(this.loadStoredApiKey());
   persona = signal<AIPersona>('general');
+  sessionId = signal<string>(this.initSessionId());
 
   constructor() {
     try {
       localStorage.setItem('xanhla_chatbot_provider', 'gemini');
     } catch {}
+  }
+
+  private initSessionId(): string {
+    try {
+      let sid = localStorage.getItem('xanhla_chat_session_id');
+      if (!sid) {
+        sid = 'sess_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+        localStorage.setItem('xanhla_chat_session_id', sid);
+      }
+      return sid;
+    } catch {
+      return 'sess_' + Date.now();
+    }
   }
 
   readonly quickSuggestions = [
@@ -60,6 +74,7 @@ export class ChatbotService {
     '🥩 Nông sản thịt cá tươi sạch trong ngày',
     '🚚 Phí ship xe lạnh & thời gian giao hàng',
     '🎟️ Mã giảm giá & ưu đãi hôm nay',
+    '💬 Gặp nhân viên hỗ trợ trực tiếp',
   ];
 
   toggle(): void {
@@ -99,6 +114,11 @@ export class ChatbotService {
     ]);
   }
 
+  requestHumanSupport(): void {
+    if (this.loading()) return;
+    this.sendMessage('Tôi muốn gặp nhân viên tư vấn hỗ trợ trực tiếp.');
+  }
+
   sendMessage(text: string, imageBase64?: string): void {
     const trimmed = text.trim();
     if (!trimmed && !imageBase64) return;
@@ -125,7 +145,8 @@ export class ChatbotService {
       history: historyPayload,
       provider: 'gemini',
       apiKey: this.apiKey() || '',
-      persona: this.persona()
+      persona: this.persona(),
+      sessionId: this.sessionId()
     }).subscribe({
       next: (res) => {
         const botMsg: ChatMessage = {
