@@ -121,6 +121,38 @@ export interface NutritionHeroConfig {
   bannerImage: string;
 }
 
+export type MealSlotKey = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+
+export interface DayMealPlanMap {
+  breakfast: string;
+  lunch: string;
+  dinner: string;
+  snack: string;
+}
+
+export interface MealSlotView {
+  slotKey: MealSlotKey;
+  slotLabel: string;
+  slotTime: string;
+  slotIcon: string;
+  recipe: RecipeResult | null;
+}
+
+export interface DayPlanComputedView {
+  dayKey: string;
+  dayLabel: string;
+  slots: MealSlotView[];
+  totalCalories: number;
+  totalProtein: number;
+  totalCarbs: number;
+  totalFat: number;
+  totalFiber: number;
+  originalPrice: number;
+  dealPrice: number;
+  savedPrice: number;
+  matchedProducts: ApiProduct[];
+}
+
 export const GOAL_ICONS: Record<string, string> = {
   protein: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8c0 2.2-1.8 4-4 4-1.1 0-2.1-.4-2.8-1.1"/><path d="M3 8c0 2.2 1.8 4 4 4 1.1 0-2.1-.4 2.8-1.1"/><path d="M12 20V4"/><path d="M8 16l4 4 4-4"/></svg>',
   fiber: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22l14-14"/><path d="M4 8l14 14"/><path d="M18 4v4"/><path d="M18 8h4"/></svg>',
@@ -297,6 +329,41 @@ export class NutritionComponent implements OnInit {
     { label: '🍄 Nấm đông cô', query: 'nấm' },
   ];
 
+  // ===== DAILY & WEEKLY MEAL PLANNER STATE =====
+  readonly WEEK_DAYS = [
+    { key: 'mon', label: 'Thứ 2', short: 'T2' },
+    { key: 'tue', label: 'Thứ 3', short: 'T3' },
+    { key: 'wed', label: 'Thứ 4', short: 'T4' },
+    { key: 'thu', label: 'Thứ 5', short: 'T5' },
+    { key: 'fri', label: 'Thứ 6', short: 'T6' },
+    { key: 'sat', label: 'Thứ 7', short: 'T7' },
+    { key: 'sun', label: 'Chủ Nhật', short: 'CN' },
+  ];
+
+  readonly MEAL_SLOTS_META: { key: MealSlotKey; label: string; time: string; icon: string }[] = [
+    { key: 'breakfast', label: 'Bữa Sáng Năng Lượng', time: '07:00 – 08:30', icon: '🌅' },
+    { key: 'lunch', label: 'Bữa Trưa Đủ Chất', time: '11:30 – 13:00', icon: '☀️' },
+    { key: 'snack', label: 'Bữa Phụ & Sữa Chua', time: '15:30 – 16:30', icon: '🥛' },
+    { key: 'dinner', label: 'Bữa Tối Thanh Đạm', time: '18:30 – 20:00', icon: '🌙' },
+  ];
+
+  plannerMode = signal<'day' | 'week'>('day');
+  selectedWeekDay = signal<string>('mon');
+  weeklyOverviewMode = signal<boolean>(false);
+  plannerPreset = signal<'eatclean' | 'protein' | 'family' | 'yogurt_detox'>('eatclean');
+  showAdvancedConfig = signal<boolean>(false);
+  expandedIngredientIds = signal<Record<string, boolean>>({});
+
+  weeklySchedule = signal<Record<string, DayMealPlanMap>>({
+    mon: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'ca-hoi-ap-chao', snack: 'sinh-to-dau-xoai', dinner: 'salad-ga-nuong' },
+    tue: { breakfast: 'sinh-to-dau-xoai', lunch: 'bo-ap-chao-bong-cai', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'canh-cai-xanh-thit-bo' },
+    wed: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'tom-su-hap-cai-ngot', snack: 'detox-cam-tao-ca-rot', dinner: 'salad-uc-ga-sot-sua-chua' },
+    thu: { breakfast: 'detox-cam-tao-ca-rot', lunch: 'ca-rot-xao-thit-ga', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'salad-bo-ca-hoi' },
+    fri: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'heo-thao-moc-cuon-rau', snack: 'sinh-to-dau-xoai', dinner: 'sup-bi-do-hat-sen' },
+    sat: { breakfast: 'sinh-to-dau-xoai', lunch: 'ca-hoi-ap-chao', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'dau-hu-sot-nam-chay' },
+    sun: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'bo-ap-chao-bong-cai', snack: 'detox-cam-tao-ca-rot', dinner: 'tom-su-hap-cai-ngot' },
+  });
+
   // Dedicated detail view state (for viewing a dish or a meal plan on its own detail screen)
   selectedRecipeId = signal<string | null>(null);
   selectedPlanDetailId = signal<string | null>(null);
@@ -427,6 +494,247 @@ export class NutritionComponent implements OnInit {
   readonly recentMealsCount = computed<number>(() => {
     return this.results().filter((r) => this.getRecentScore(r) > 0).length;
   });
+
+  private parseMacroNum(val?: string): number {
+    if (!val) return 0;
+    const m = String(val).match(/[\d.]+/);
+    return m ? Number(m[0]) || 0 : 0;
+  }
+
+  private buildDayPlanView(dayKey: string, dayLabel: string): DayPlanComputedView {
+    const sched = this.weeklySchedule()[dayKey] || this.weeklySchedule()['mon'];
+    const all = this.results();
+    const slots: MealSlotView[] = this.MEAL_SLOTS_META.map((meta) => ({
+      slotKey: meta.key,
+      slotLabel: meta.label,
+      slotTime: meta.time,
+      slotIcon: meta.icon,
+      recipe: all.find((r) => r.id === sched[meta.key]) || all[0] || null,
+    }));
+
+    let totalCalories = 0;
+    let totalProtein = 0;
+    let totalCarbs = 0;
+    let totalFat = 0;
+    let totalFiber = 0;
+    const prodMap = new Map<string, ApiProduct>();
+
+    for (const s of slots) {
+      if (s.recipe) {
+        totalCalories += s.recipe.calories || 0;
+        totalProtein += this.parseMacroNum(s.recipe.macros.protein);
+        totalCarbs += this.parseMacroNum(s.recipe.macros.carbs);
+        totalFat += this.parseMacroNum(s.recipe.macros.fat);
+        totalFiber += this.parseMacroNum(s.recipe.macros.fiber);
+        for (const ing of s.recipe.ingredients) {
+          if (ing.product) {
+            prodMap.set(ing.product._id || ing.product.slug, ing.product);
+          }
+        }
+      }
+    }
+
+    const matchedProducts = Array.from(prodMap.values());
+    const originalPrice = matchedProducts.reduce((sum, p) => sum + (p.priceNumber || 0), 0);
+    const dealPrice = Math.round((originalPrice * 0.88) / 1000) * 1000;
+    const savedPrice = Math.max(0, originalPrice - dealPrice);
+
+    return {
+      dayKey,
+      dayLabel,
+      slots,
+      totalCalories,
+      totalProtein: Math.round(totalProtein),
+      totalCarbs: Math.round(totalCarbs),
+      totalFat: Math.round(totalFat),
+      totalFiber: Math.round(totalFiber),
+      originalPrice,
+      dealPrice,
+      savedPrice,
+      matchedProducts,
+    };
+  }
+
+  readonly activeDayPlan = computed<DayPlanComputedView>(() => {
+    const dKey = this.plannerMode() === 'day' ? 'mon' : this.selectedWeekDay();
+    const dObj = this.WEEK_DAYS.find((d) => d.key === dKey) || this.WEEK_DAYS[0];
+    return this.buildDayPlanView(dObj.key, this.plannerMode() === 'day' ? 'Thực đơn Hôm nay' : dObj.label);
+  });
+
+  readonly allWeekDaysPlans = computed<DayPlanComputedView[]>(() => {
+    return this.WEEK_DAYS.map((d) => this.buildDayPlanView(d.key, d.label));
+  });
+
+  readonly weeklyPlanSummary = computed(() => {
+    const days = this.allWeekDaysPlans();
+    const prodMap = new Map<string, ApiProduct>();
+    let totalCalories = 0;
+    let totalProtein = 0;
+    for (const d of days) {
+      totalCalories += d.totalCalories;
+      totalProtein += d.totalProtein;
+      for (const p of d.matchedProducts) {
+        prodMap.set(p._id || p.slug, p);
+      }
+    }
+    const matchedProducts = Array.from(prodMap.values());
+    // Weekly shopping multiplies base ingredients by 2.5x average across 7 days with 20% bundle discount
+    const originalPrice = Math.round((matchedProducts.reduce((s, p) => s + (p.priceNumber || 0), 0) * 2.2) / 1000) * 1000;
+    const dealPrice = Math.round((originalPrice * 0.8) / 1000) * 1000;
+    const savedPrice = Math.max(0, originalPrice - dealPrice);
+    return {
+      avgCaloriesPerDay: Math.round(totalCalories / 7),
+      avgProteinPerDay: Math.round(totalProtein / 7),
+      totalMeals: 28,
+      matchedProducts,
+      originalPrice,
+      dealPrice,
+      savedPrice,
+    };
+  });
+
+  applyPlannerPreset(preset: 'eatclean' | 'protein' | 'family' | 'yogurt_detox'): void {
+    this.plannerPreset.set(preset);
+    const presets: Record<'eatclean' | 'protein' | 'family' | 'yogurt_detox', Record<string, DayMealPlanMap>> = {
+      eatclean: {
+        mon: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'ca-hoi-ap-chao', snack: 'sinh-to-dau-xoai', dinner: 'salad-ga-nuong' },
+        tue: { breakfast: 'sinh-to-dau-xoai', lunch: 'salad-bo-ca-hoi', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'tom-su-hap-cai-ngot' },
+        wed: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-uc-ga-sot-sua-chua', snack: 'detox-cam-tao-ca-rot', dinner: 'dau-hu-sot-nam-chay' },
+        thu: { breakfast: 'detox-cam-tao-ca-rot', lunch: 'ca-hoi-ap-chao', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'sup-bi-do-hat-sen' },
+        fri: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-ga-nuong', snack: 'sinh-to-dau-xoai', dinner: 'tom-su-hap-cai-ngot' },
+        sat: { breakfast: 'sinh-to-dau-xoai', lunch: 'salad-bo-ca-hoi', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'salad-uc-ga-sot-sua-chua' },
+        sun: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'ca-hoi-ap-chao', snack: 'detox-cam-tao-ca-rot', dinner: 'sup-bi-do-hat-sen' },
+      },
+      protein: {
+        mon: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'bo-ap-chao-bong-cai', snack: 'sinh-to-dau-xoai', dinner: 'ca-hoi-ap-chao' },
+        tue: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'ca-rot-xao-thit-ga', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'tom-su-hap-cai-ngot' },
+        wed: { breakfast: 'sinh-to-dau-xoai', lunch: 'ca-hoi-ap-chao', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'salad-uc-ga-sot-sua-chua' },
+        thu: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'bo-ap-chao-bong-cai', snack: 'sinh-to-dau-xoai', dinner: 'heo-thao-moc-cuon-rau' },
+        fri: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'tom-su-hap-cai-ngot', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'salad-bo-ca-hoi' },
+        sat: { breakfast: 'sinh-to-dau-xoai', lunch: 'bo-ap-chao-bong-cai', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'ca-hoi-ap-chao' },
+        sun: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-ga-nuong', snack: 'sinh-to-dau-xoai', dinner: 'tom-su-hap-cai-ngot' },
+      },
+      family: {
+        mon: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'canh-cai-xanh-thit-bo', snack: 'sinh-to-dau-xoai', dinner: 'ca-rot-xao-thit-ga' },
+        tue: { breakfast: 'sinh-to-dau-xoai', lunch: 'heo-thao-moc-cuon-rau', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'tom-su-hap-cai-ngot' },
+        wed: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'bo-ap-chao-bong-cai', snack: 'detox-cam-tao-ca-rot', dinner: 'sup-bi-do-hat-sen' },
+        thu: { breakfast: 'sup-bi-do-hat-sen', lunch: 'ca-hoi-ap-chao', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'canh-cai-xanh-thit-bo' },
+        fri: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'ca-rot-xao-thit-ga', snack: 'sinh-to-dau-xoai', dinner: 'heo-thao-moc-cuon-rau' },
+        sat: { breakfast: 'sinh-to-dau-xoai', lunch: 'tom-su-hap-cai-ngot', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'bo-ap-chao-bong-cai' },
+        sun: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'ca-hoi-ap-chao', snack: 'sinh-to-dau-xoai', dinner: 'dau-hu-sot-nam-chay' },
+      },
+      yogurt_detox: {
+        mon: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-uc-ga-sot-sua-chua', snack: 'sinh-to-dau-xoai', dinner: 'dau-hu-sot-nam-chay' },
+        tue: { breakfast: 'sinh-to-dau-xoai', lunch: 'salad-bo-ca-hoi', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'sup-bi-do-hat-sen' },
+        wed: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-ga-nuong', snack: 'detox-cam-tao-ca-rot', dinner: 'salad-uc-ga-sot-sua-chua' },
+        thu: { breakfast: 'detox-cam-tao-ca-rot', lunch: 'dau-hu-sot-nam-chay', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'tom-su-hap-cai-ngot' },
+        fri: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-uc-ga-sot-sua-chua', snack: 'sinh-to-dau-xoai', dinner: 'sup-bi-do-hat-sen' },
+        sat: { breakfast: 'sinh-to-dau-xoai', lunch: 'salad-bo-ca-hoi', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'dau-hu-sot-nam-chay' },
+        sun: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-uc-ga-sot-sua-chua', snack: 'detox-cam-tao-ca-rot', dinner: 'salad-ga-nuong' },
+      },
+    };
+    this.weeklySchedule.set(presets[preset]);
+  }
+
+  swapMealInSlot(slotKey: MealSlotKey, dayKey?: string): void {
+    const targetDay = dayKey || (this.plannerMode() === 'day' ? 'mon' : this.selectedWeekDay());
+    const all = this.results();
+    if (all.length === 0) return;
+
+    const currentSched = this.weeklySchedule()[targetDay] || this.weeklySchedule()['mon'];
+    const currentId = currentSched[slotKey];
+
+    // Pick appropriate pool for snack/breakfast vs main meals
+    let pool = all;
+    if (slotKey === 'snack' || slotKey === 'breakfast') {
+      const lightPool = all.filter((r) =>
+        ['sua-chua-hy-lap-trai-cay', 'sinh-to-dau-xoai', 'detox-cam-tao-ca-rot', 'sup-bi-do-hat-sen', 'salad-uc-ga-sot-sua-chua'].includes(r.id)
+      );
+      if (lightPool.length > 1) pool = lightPool;
+    }
+
+    const idx = pool.findIndex((r) => r.id === currentId);
+    const nextRecipe = pool[(idx + 1) % pool.length];
+    if (nextRecipe) {
+      this.weeklySchedule.update((prev) => ({
+        ...prev,
+        [targetDay]: {
+          ...prev[targetDay],
+          [slotKey]: nextRecipe.id,
+        },
+      }));
+    }
+  }
+
+  assignRecipeToPlanner(recipe: RecipeResult): void {
+    const targetDay = this.plannerMode() === 'day' ? 'mon' : this.selectedWeekDay();
+    const isLight = ['sua-chua-hy-lap-trai-cay', 'sinh-to-dau-xoai', 'detox-cam-tao-ca-rot'].includes(recipe.id);
+    const slotKey: MealSlotKey = isLight ? 'snack' : 'lunch';
+
+    this.weeklySchedule.update((prev) => ({
+      ...prev,
+      [targetDay]: {
+        ...prev[targetDay],
+        [slotKey]: recipe.id,
+      },
+    }));
+
+    const dayLabel = this.plannerMode() === 'day' ? 'Hôm nay' : (this.WEEK_DAYS.find((d) => d.key === targetDay)?.label || 'Thứ 2');
+    const slotLabel = isLight ? 'Bữa Phụ / Sữa Chua' : 'Bữa Trưa';
+    this.addedToCart.set(`Đã thêm "${recipe.name}" vào ${slotLabel} (${dayLabel}) trong Kế Hoạch Thực Đơn!`);
+    setTimeout(() => this.addedToCart.set(null), 3200);
+
+    if (typeof document !== 'undefined') {
+      document.getElementById('meal-planner-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  buyDayPlanIngredients(dayPlan: DayPlanComputedView): void {
+    if (dayPlan.matchedProducts.length === 0) return;
+    for (const p of dayPlan.matchedProducts) {
+      const discounted = Math.round(((p.priceNumber || 0) * 0.88) / 500) * 500;
+      this.cart.addItem(toCartProduct(p, discounted), 1);
+    }
+    for (const s of dayPlan.slots) {
+      if (s.recipe) this.recordRecentMeal(s.recipe.id, '🕒 Đã lên thực đơn & mua gần đây');
+    }
+    this.voucher.copyCode('NUTRITION10');
+    this.addedToCart.set(
+      `Đã thêm trọn bộ ${dayPlan.matchedProducts.length} nguyên liệu cho ${dayPlan.dayLabel} (${formatPrice(dayPlan.dealPrice)}) vào giỏ hàng & sao chép mã NUTRITION10!`
+    );
+    setTimeout(() => this.addedToCart.set(null), 4000);
+  }
+
+  buyFullWeekIngredients(): void {
+    const summary = this.weeklyPlanSummary();
+    if (summary.matchedProducts.length === 0) return;
+    for (const p of summary.matchedProducts) {
+      const discounted = Math.round(((p.priceNumber || 0) * 0.8) / 500) * 500;
+      this.cart.addItem(toCartProduct(p, discounted), 2);
+    }
+    this.voucher.copyCode('COMBO30');
+    this.addedToCart.set(
+      `Đã thêm trọn gói Đi Chợ Cả Tuần 7 Ngày (${summary.matchedProducts.length} loại nông sản tươi sạch, ưu đãi -20%) vào giỏ & sao chép mã COMBO30!`
+    );
+    setTimeout(() => this.addedToCart.set(null), 4500);
+  }
+
+  toggleExpandIngredients(recipeId: string): void {
+    this.expandedIngredientIds.update((prev) => ({
+      ...prev,
+      [recipeId]: !prev[recipeId],
+    }));
+  }
+
+  isIngredientsExpanded(recipeId: string): boolean {
+    return !!this.expandedIngredientIds()[recipeId];
+  }
+
+  scrollToElement(id: string): void {
+    if (typeof document !== 'undefined') {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
 
   getRelevanceScore(recipe: RecipeResult, normQuery: string): number {
     let score = recipe.matchScore;

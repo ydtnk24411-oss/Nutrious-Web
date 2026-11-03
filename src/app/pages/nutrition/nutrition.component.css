@@ -2430,13 +2430,1078 @@
   border-color: #cbd5c0;
 }
 
+/* =========================================================================
+   MODERN HERO BANNER
+   ========================================================================= */
+.xl-modern-hero {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  align-items: center;
+  gap: 32px;
+  background: linear-gradient(135deg, #163a24 0%, #245939 60%, #2d6a4f 100%);
+  color: #fff;
+  padding: 36px 40px;
+  border-radius: 24px;
+  margin: 16px 0 36px;
+  box-shadow: 0 16px 40px rgba(22, 58, 36, 0.16);
+  position: relative;
+  overflow: hidden;
+}
+
+.xl-modern-hero .xl-hero-kicker {
+  background: rgba(254, 243, 199, 0.16);
+  border: 1px solid rgba(254, 243, 199, 0.35);
+  color: #fef3c7;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-block;
+  margin-bottom: 14px;
+}
+
+.xl-modern-hero-title {
+  margin: 0 0 12px;
+  font-size: clamp(26px, 3.2vw, 38px);
+  font-weight: 800;
+  line-height: 1.22;
+  color: #ffffff;
+}
+
+.xl-modern-hero-sub {
+  margin: 0 0 24px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.88);
+  max-width: 580px;
+}
+
+.xl-modern-hero-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.xl-hero-btn-primary {
+  padding: 13px 22px;
+  border-radius: 12px;
+  border: none;
+  background: #fbbf24;
+  color: #163a24;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.18s, background 0.18s;
+  box-shadow: 0 6px 18px rgba(251, 191, 36, 0.3);
+}
+
+.xl-hero-btn-primary:hover {
+  background: #f59e0b;
+  transform: translateY(-2px);
+}
+
+.xl-hero-btn-secondary {
+  padding: 13px 20px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.xl-hero-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.xl-hero-btn-accent {
+  display: inline-flex;
+  align-items: center;
+  padding: 13px 18px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #163a24;
+  font-size: 13.5px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: transform 0.18s;
+}
+
+.xl-hero-btn-accent:hover {
+  transform: translateY(-2px);
+}
+
+.xl-modern-hero-visual {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  aspect-ratio: 16 / 11;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+}
+
+.xl-modern-hero-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.xl-hero-floating-card {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  color: #163a24;
+  padding: 10px 14px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+
+.xl-floating-icon {
+  font-size: 24px;
+}
+
+.xl-hero-floating-card strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.xl-hero-floating-card span {
+  font-size: 11.5px;
+  color: #4b6350;
+}
+
+/* =========================================================================
+   INTERACTIVE DAILY & WEEKLY MEAL PLANNER (LÊN PLAN NGÀY & TUẦN)
+   ========================================================================= */
+.xl-planner-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbf6 100%);
+  border: 2px solid #cbe0c8;
+  border-radius: 24px;
+  padding: 28px 30px;
+  margin-bottom: 42px;
+  box-shadow: 0 12px 36px rgba(26, 61, 34, 0.08);
+}
+
+.xl-planner-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.xl-planner-kicker {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  margin-bottom: 6px;
+}
+
+.xl-planner-heading {
+  margin: 0 0 6px;
+  font-size: clamp(22px, 2.5vw, 28px);
+  font-weight: 800;
+  color: #163a24;
+}
+
+.xl-planner-sub {
+  margin: 0;
+  font-size: 13.5px;
+  color: #536856;
+  max-width: 680px;
+}
+
+.xl-planner-mode-switch {
+  display: inline-flex;
+  background: #eaf3e8;
+  padding: 5px;
+  border-radius: 14px;
+  border: 1px solid #cde0ca;
+}
+
+.xl-mode-btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #2b4c32;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.xl-mode-btn.active {
+  background: #163a24;
+  color: #fef3c7;
+  box-shadow: 0 4px 12px rgba(22, 58, 36, 0.22);
+}
+
+/* Preset Diet Chips */
+.xl-planner-presets-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  background: #f2f8f1;
+  border-radius: 14px;
+  margin-bottom: 20px;
+}
+
+.xl-preset-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: #163a24;
+}
+
+.xl-preset-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.xl-preset-chip {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1.5px solid #cde0ca;
+  background: #fff;
+  color: #24482c;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.16s;
+}
+
+.xl-preset-chip:hover {
+  border-color: #2d6a4f;
+  background: #e9f5ec;
+}
+
+.xl-preset-chip.active {
+  background: #2d6a4f;
+  border-color: #2d6a4f;
+  color: #fff;
+}
+
+/* Weekly 7-Day Selector Bar */
+.xl-week-days-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.xl-week-day-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.xl-week-day-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 78px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1.5px solid #d2e3cf;
+  background: #fff;
+  color: #24482c;
+  cursor: pointer;
+  transition: all 0.16s;
+}
+
+.xl-day-short {
+  font-size: 11px;
+  font-weight: 800;
+  color: #657c68;
+}
+
+.xl-day-full {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.xl-week-day-tab.active {
+  background: #163a24;
+  border-color: #163a24;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(22, 58, 36, 0.2);
+}
+
+.xl-week-day-tab.active .xl-day-short {
+  color: #fbbf24;
+}
+
+.xl-week-overview-toggle {
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1.5px solid #2d6a4f;
+  background: #fff;
+  color: #163a24;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.16s;
+}
+
+.xl-week-overview-toggle.active,
+.xl-week-overview-toggle:hover {
+  background: #2d6a4f;
+  color: #fff;
+}
+
+/* 4 Meal Slots Grid (Bữa Sáng · Bữa Trưa · Bữa Phụ Sữa Chua · Bữa Tối) */
+.xl-day-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.xl-slot-card {
+  background: #fff;
+  border: 1.5px solid #dce9d8;
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.xl-slot-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(22, 58, 36, 0.1);
+}
+
+.xl-slot-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.xl-slot-badge {
+  font-size: 12px;
+  font-weight: 800;
+  color: #163a24;
+  background: #eaf4eb;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.xl-slot-time {
+  font-size: 11px;
+  color: #6b7f6e;
+  font-weight: 600;
+}
+
+.xl-slot-media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 10px;
+  cursor: pointer;
+  background: #eef5ee;
+}
+
+.xl-slot-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.25s;
+}
+
+.xl-slot-card:hover .xl-slot-media img {
+  transform: scale(1.05);
+}
+
+.xl-slot-kcal {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(22, 58, 36, 0.9);
+  color: #fef3c7;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.xl-slot-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.xl-slot-dish-name {
+  margin: 0 0 6px;
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #163a24;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.xl-slot-dish-name:hover {
+  color: #2d6a4f;
+  text-decoration: underline;
+}
+
+.xl-slot-macros {
+  display: flex;
+  gap: 6px;
+  font-size: 11.5px;
+  color: #536856;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.xl-slot-ings-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.xl-slot-ing-pill {
+  font-size: 10.5px;
+  background: #f4f9f4;
+  border: 1px solid #dfece0;
+  color: #2d6a4f;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.xl-slot-actions {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.xl-slot-swap-btn {
+  padding: 7px 8px;
+  border-radius: 8px;
+  border: 1px solid #cfe0d2;
+  background: #f6faf7;
+  color: #163a24;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.xl-slot-swap-btn:hover {
+  background: #e3f1e6;
+  border-color: #2d6a4f;
+}
+
+.xl-slot-detail-btn {
+  padding: 7px 8px;
+  border-radius: 8px;
+  border: none;
+  background: #2d6a4f;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.xl-slot-detail-btn:hover {
+  background: #163a24;
+}
+
+/* 7-Day Full Calendar Matrix View */
+.xl-week-matrix-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+}
+
+.xl-week-day-col {
+  background: #fff;
+  border: 1.5px solid #dce8d8;
+  border-radius: 14px;
+  padding: 10px;
+  min-width: 155px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.xl-week-day-col.is-today {
+  border-color: #2d6a4f;
+  background: #f5fbf6;
+}
+
+.xl-week-col-head {
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e6f0e4;
+}
+
+.xl-week-col-head strong {
+  display: block;
+  font-size: 13.5px;
+  color: #163a24;
+}
+
+.xl-week-col-head span {
+  font-size: 11px;
+  color: #b45309;
+  font-weight: 700;
+}
+
+.xl-week-col-meals {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.xl-mini-slot-card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 8px;
+  background: #f9fcf9;
+  border: 1px solid #e6efe4;
+}
+
+.xl-mini-slot-card img {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  object-fit: cover;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.xl-mini-slot-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.xl-mini-slot-info small {
+  font-size: 9.5px;
+  color: #657c68;
+}
+
+.xl-mini-slot-info strong {
+  font-size: 11px;
+  color: #163a24;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.xl-mini-slot-info span {
+  font-size: 10px;
+  color: #b45309;
+  font-weight: 700;
+}
+
+.xl-mini-swap-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px;
+}
+
+.xl-week-col-buy-btn {
+  margin-top: auto;
+  padding: 7px 8px;
+  border-radius: 8px;
+  border: 1px solid #2d6a4f;
+  background: #eef7f0;
+  color: #163a24;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.xl-week-col-buy-btn:hover {
+  background: #2d6a4f;
+  color: #fff;
+}
+
+/* Planner Summary & Checkout Bar */
+.xl-planner-summary-bar {
+  background: #163a24;
+  color: #fff;
+  border-radius: 18px;
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.xl-summary-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #d1fae5;
+  margin-bottom: 8px;
+}
+
+.xl-summary-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.xl-sum-pill {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  color: #fff;
+}
+
+.xl-sum-pill--kcal {
+  background: #fbbf24;
+  color: #163a24;
+  border-color: #fbbf24;
+}
+
+.xl-planner-checkout-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.xl-planner-price-info span {
+  display: block;
+  font-size: 11.5px;
+  color: #a7f3d0;
+}
+
+.xl-planner-price-nums {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.xl-planner-price-nums strong {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fbbf24;
+}
+
+.xl-planner-price-nums del {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.xl-planner-price-nums small {
+  font-size: 11px;
+  background: rgba(16, 185, 129, 0.25);
+  color: #6ee7b7;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.xl-planner-buy-btns {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.xl-planner-buy-day {
+  padding: 11px 18px;
+  border-radius: 12px;
+  border: none;
+  background: #fbbf24;
+  color: #163a24;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.16s;
+}
+
+.xl-planner-buy-day:hover {
+  background: #f59e0b;
+}
+
+.xl-planner-buy-week {
+  padding: 11px 18px;
+  border-radius: 12px;
+  border: 1.5px solid #6ee7b7;
+  background: #059669;
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.16s;
+}
+
+.xl-planner-buy-week:hover {
+  background: #047857;
+}
+
+/* =========================================================================
+   CLEAN, MODERN 3-COLUMN RECIPE CARDS GRID
+   ========================================================================= */
+.xl-config-toggle-btn {
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: 1.5px solid #2d6a4f;
+  background: #fff;
+  color: #163a24;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.16s;
+}
+
+.xl-config-toggle-btn.active,
+.xl-config-toggle-btn:hover {
+  background: #2d6a4f;
+  color: #fff;
+}
+
+.xl-clean-recipes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+}
+
+.xl-clean-recipe-card {
+  background: #fff;
+  border: 1.5px solid #dfe9db;
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.xl-clean-recipe-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 14px 32px rgba(22, 58, 36, 0.11);
+  border-color: #95c2a3;
+}
+
+.xl-clean-card-media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: #eef5ee;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.xl-clean-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.xl-clean-recipe-card:hover .xl-clean-card-media img {
+  transform: scale(1.06);
+}
+
+.xl-clean-score-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(22, 58, 36, 0.92);
+  color: #fef3c7;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.xl-clean-time-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.xl-clean-recent-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #d97706;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.xl-clean-card-body {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.xl-clean-title {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 800;
+  color: #163a24;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.xl-clean-title:hover {
+  color: #2d6a4f;
+  text-decoration: underline;
+}
+
+.xl-clean-desc {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: #556958;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.xl-clean-macro-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.xl-cm-item {
+  background: #f4f9f4;
+  border: 1px solid #e1ede0;
+  border-radius: 10px;
+  padding: 6px 4px;
+  text-align: center;
+}
+
+.xl-cm-lbl {
+  display: block;
+  font-size: 10.5px;
+  color: #657c68;
+}
+
+.xl-cm-item strong {
+  font-size: 13px;
+  font-weight: 800;
+  color: #163a24;
+}
+
+.xl-clean-ings-preview {
+  margin-bottom: 14px;
+}
+
+.xl-clean-ings-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.xl-clean-ing-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f8fbf7;
+  border: 1px solid #dce8d8;
+  border-radius: 999px;
+  padding: 3px 9px 3px 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #24482c;
+}
+
+.xl-clean-ing-pill img {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.xl-expand-ings-btn {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px dashed #b9d3be;
+  background: #f4faf5;
+  color: #2d6a4f;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.xl-expand-ings-btn:hover {
+  background: #e6f4ea;
+}
+
+.xl-expanded-ings-drawer {
+  border: 1px solid #d5e5d6;
+  border-radius: 12px;
+  background: #fafdf9;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.xl-drawer-servings-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #eef6ef;
+  font-size: 12px;
+  font-weight: 700;
+  color: #163a24;
+}
+
+.xl-clean-card-footer {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px dashed #d8e5d5;
+}
+
+.xl-clean-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.xl-clean-price-label {
+  display: block;
+  font-size: 11px;
+  color: #657c68;
+}
+
+.xl-clean-price-vals {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.xl-clean-price-deal {
+  font-size: 18px;
+  font-weight: 800;
+  color: #dc2626;
+}
+
+.xl-clean-price-orig {
+  font-size: 12px;
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+.xl-add-to-plan-btn {
+  padding: 6px 11px;
+  border-radius: 8px;
+  border: 1.5px solid #b7dec0;
+  background: #f0f9f2;
+  color: #163a24;
+  font-size: 11.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.xl-add-to-plan-btn:hover {
+  background: #2d6a4f;
+  border-color: #2d6a4f;
+  color: #fff;
+}
+
+.xl-clean-cta-btns {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 8px;
+}
+
+.xl-clean-btn-outline {
+  padding: 10px 10px;
+  border-radius: 10px;
+  border: 1.5px solid #2d6a4f;
+  background: #fff;
+  color: #163a24;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.xl-clean-btn-outline:hover {
+  background: #f0f8f2;
+}
+
+.xl-clean-btn-solid {
+  padding: 10px 10px;
+  border-radius: 10px;
+  border: none;
+  background: #2d6a4f;
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.xl-clean-btn-solid:hover {
+  background: #163a24;
+}
+
 @media (max-width: 1100px) {
   .xl-meal-plans-grid,
   .xl-related-grid,
-  .xl-plan-products-grid {
+  .xl-plan-products-grid,
+  .xl-day-slots-grid,
+  .xl-clean-recipes-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .xl-plan-dishes-grid {
+  .xl-plan-dishes-grid,
+  .xl-modern-hero {
     grid-template-columns: 1fr;
   }
   .xl-detail-hero-grid,
@@ -2451,12 +3516,21 @@
   .xl-related-grid,
   .xl-plan-products-grid,
   .xl-recipe-footer-btns,
-  .xl-detail-cta-row {
+  .xl-detail-cta-row,
+  .xl-day-slots-grid,
+  .xl-clean-recipes-grid,
+  .xl-clean-cta-btns {
     grid-template-columns: 1fr;
   }
   .xl-detail-quick-stats,
   .xl-nf-macros-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .xl-modern-hero {
+    padding: 24px 20px;
+  }
+  .xl-planner-card {
+    padding: 20px 16px;
   }
   .xl-reset-inline-btn {
     margin-left: 0;
