@@ -1,12 +1,13 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of, catchError } from 'rxjs';
 import { ShellComponent } from '../../components/shell/shell.component';
-import { CartService } from '../../shared/services/cart.service';
+import { CartService, formatPrice } from '../../shared/services/cart.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { ApiService } from '../../shared/services/api.service';
+import { VoucherService } from '../../shared/services/voucher.service';
 import { XanhLaProduct } from '../../shared/models/xanh-la.models';
 
 export interface IngredientItem {
@@ -25,9 +26,11 @@ export interface RecipeResult {
   description: string;
   matchScore: number;
   servings: number;
+  meals: number;
   prepTime: string;
   ingredients: IngredientItem[];
   nutritionNote: string;
+  goalsTags: string[];
   goalsMet: string[];
   explanation?: string[];
 }
@@ -55,6 +58,38 @@ export interface GoalItem {
   default: number;
 }
 
+export interface MealPlanDeal {
+  id: string;
+  name: string;
+  badge: string;
+  discountPercent: number;
+  voucherCode: string;
+  calories: string;
+  targetAudience: string;
+  description: string;
+  goals: string[];
+  servings: number;
+  mealsCount: number;
+  recipeIds: string[];
+}
+
+export interface MealPlanCardView extends MealPlanDeal {
+  recipeNames: string[];
+  matchedProducts: ApiProduct[];
+  originalTotal: number;
+  originalTotalText: string;
+  dealTotal: number;
+  dealTotalText: string;
+  savedText: string;
+}
+
+export interface NutritionHeroConfig {
+  kicker: string;
+  title: string;
+  subtitle: string;
+  bannerImage: string;
+}
+
 export const GOAL_ICONS: Record<string, string> = {
   protein: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8c0 2.2-1.8 4-4 4-1.1 0-2.1-.4-2.8-1.1"/><path d="M3 8c0 2.2 1.8 4 4 4 1.1 0 2.1-.4 2.8-1.1"/><path d="M12 20V4"/><path d="M8 16l4 4 4-4"/></svg>',
   fiber: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22l14-14"/><path d="M4 8l14 14"/><path d="M18 4v4"/><path d="M18 8h4"/></svg>',
@@ -70,16 +105,17 @@ function formatProductSlug(slug?: string, id?: string): string {
   return raw.startsWith('/') ? raw : `/product-page/${raw}`;
 }
 
-function toCartProduct(p: ApiProduct): XanhLaProduct {
+function toCartProduct(p: ApiProduct, customPrice?: number): XanhLaProduct {
+  const finalPrice = customPrice ?? (p.priceNumber || 0);
   return {
     id: p._id || p.slug,
     name: p.name,
     slug: formatProductSlug(p.slug, p._id),
-    price: p.price,
-    priceNumber: p.priceNumber || 0,
+    price: customPrice !== undefined ? formatPrice(customPrice) : p.price,
+    priceNumber: finalPrice,
     image: p.image,
     category: p.categoryId,
-    categoryVi: '',
+    categoryVi: p.categoryVi || '',
     description: p.description || '',
     container: p.container || '',
     cutType: p.cutType || '',
@@ -120,23 +156,30 @@ function matchCatalogueProduct(ingredientName: string, catalogue: ApiProduct[]):
   // 2. Keyword alias mappings for Vietnamese market items
   const keywordMap: [string, string[]][] = [
     ['ca hoi', ['ca hoi', 'salmon']],
-    ['tom su', ['tom su', 'tom the']],
-    ['qua bo', ['qua bo', 'avocado']],
-    ['bo hass', ['qua bo', 'hass']],
-    ['thit bo', ['bo bap my', 'bo than', 'bo my', 'beef']],
-    ['bo my', ['bo bap my', 'bo than', 'bo my']],
+    ['tom su', ['tom su', 'tom the', 'tom']],
+    ['qua bo', ['qua bo', 'bo sap', 'avocado', 'bo 034']],
+    ['bo sap', ['bo sap', 'qua bo', 'bo 034', 'avocado']],
+    ['bo hass', ['qua bo', 'hass', 'bo sap']],
+    ['thit bo', ['bo bap my', 'bo than', 'bo my', 'beef', 'thit bo']],
+    ['bo my', ['bo bap my', 'bo than', 'bo my', 'thit bo']],
     ['thit ga', ['ga ta', 'dui ga', 'chicken', 'uc ga']],
-    ['ga ta', ['ga ta', 'dui ga', 'chicken']],
+    ['ga ta', ['ga ta', 'dui ga', 'chicken', 'uc ga']],
+    ['heo thao moc', ['heo', 'ba roi', 'thit heo', 'nac dam']],
+    ['ba roi', ['ba roi', 'thit heo', 'heo']],
     ['ca rot', ['ca rot', 'carrot']],
-    ['cai thia', ['cai thia', 'bok choy']],
+    ['cai thia', ['cai thia', 'bok choy', 'rau cai']],
     ['cai xanh', ['cai xanh', 'rau cai']],
     ['cai ngot', ['cai ngot', 'rau cai']],
+    ['bong cai', ['bong cai', 'sup lo', 'broccoli']],
+    ['bi do', ['bi do', 'bi ho lo', 'pumpkin']],
+    ['dua leo', ['dua leo', 'cucumber']],
     ['ca chua', ['ca chua', 'tomato']],
     ['ot chuong', ['ot chuong', 'bell pepper']],
-    ['nam dong co', ['nam dong co', 'nam']],
+    ['nam dong co', ['nam dong co', 'nam huong', 'nam']],
     ['dau tay', ['dau tay', 'strawberry']],
     ['xoai cat', ['xoai cat', 'xoai']],
-    ['sa tuoi', ['sa tuoi', 'gung tuoi']],
+    ['cam sanh', ['cam sanh', 'cam', 'orange']],
+    ['sa tuoi', ['sa tuoi', 'gung tuoi', 'sa', ' hành']],
   ];
 
   for (const [key, aliases] of keywordMap) {
@@ -156,7 +199,7 @@ function matchCatalogueProduct(ingredientName: string, catalogue: ApiProduct[]):
     if (match) return match;
   }
 
-  return null;
+  return catalogue[0] || null;
 }
 
 @Component({
@@ -170,12 +213,22 @@ export class NutritionComponent implements OnInit {
   protected cart = inject(CartService);
   private productApi = inject(ProductApiService);
   private api = inject(ApiService);
+  private voucher = inject(VoucherService);
 
   readonly GOAL_ICONS = GOAL_ICONS;
+
+  heroConfig = signal<NutritionHeroConfig>({
+    kicker: '🥗 Trợ Lý Thực Đơn Khoa Học · Dữ Liệu Trực Tuyến',
+    title: 'Dinh dưỡng thông minh & Thực đơn chuẩn vị',
+    subtitle:
+      'Khám phá các gói thực đơn dinh dưỡng tiết kiệm, cân đối vi chất theo thể trạng, tự động tính định lượng theo số người & số bữa ăn và thêm trọn bộ nguyên liệu tươi sạch vào giỏ hàng chỉ với một chạm.',
+    bannerImage: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&h=520&fit=crop',
+  });
 
   // Dynamic data loaded from MongoDB via /api/nutrition and /api/products
   private goalsSignal = signal<GoalItem[]>([]);
   private recipesDbSignal = signal<RecipeDbItem[]>([]);
+  private mealPlansSignal = signal<MealPlanDeal[]>([]);
   catalogue = signal<ApiProduct[]>([]);
 
   get GOALS(): GoalItem[] {
@@ -188,23 +241,78 @@ export class NutritionComponent implements OnInit {
   mealsCount = signal<number>(1);
   budgetLimit = signal<number | null>(null);
   excludeIngredients = signal<string>('');
+  categoryTab = signal<'all' | 'protein' | 'fiber' | 'vitamin' | 'balance'>('all');
+  activePlanId = signal<string | null>(null);
+
   loading = signal<boolean>(false);
   results = signal<RecipeResult[]>([]);
   addedToCart = signal<string | null>(null);
   hasSearched = signal<boolean>(false);
 
+  readonly mealPlanCards = computed<MealPlanCardView[]>(() => {
+    const plans = this.mealPlansSignal();
+    const recipes = this.recipesDbSignal();
+    const cat = this.catalogue();
+
+    return plans.map((plan) => {
+      const planRecipes = plan.recipeIds
+        .map(id => recipes.find(r => r.id === id))
+        .filter((r): r is RecipeDbItem => !!r);
+
+      const prodMap = new Map<string, ApiProduct>();
+      for (const r of planRecipes) {
+        for (const ing of r.ingredients) {
+          const p = matchCatalogueProduct(ing.name, cat);
+          if (p) prodMap.set(p._id || p.slug, p);
+        }
+      }
+      const matchedProducts = Array.from(prodMap.values());
+      const originalTotal = matchedProducts.reduce((s, p) => s + (p.priceNumber || 0), 0);
+      const dealTotal = Math.round((originalTotal * (100 - plan.discountPercent)) / 100 / 1000) * 1000;
+      const saved = Math.max(0, originalTotal - dealTotal);
+
+      return {
+        ...plan,
+        recipeNames: planRecipes.map(r => r.name),
+        matchedProducts,
+        originalTotal,
+        originalTotalText: formatPrice(originalTotal),
+        dealTotal,
+        dealTotalText: formatPrice(dealTotal),
+        savedText: formatPrice(saved),
+      };
+    });
+  });
+
+  readonly filteredResults = computed<RecipeResult[]>(() => {
+    const tab = this.categoryTab();
+    const all = this.results();
+    if (tab === 'all') return all;
+    return all.filter(r => r.goalsTags.includes(tab));
+  });
+
   ngOnInit(): void {
     this.loading.set(true);
     forkJoin({
       nutrition: this.api
-        .get<{ success: boolean; data: { goals: GoalItem[]; recipes: RecipeDbItem[] } }>('/nutrition')
-        .pipe(catchError(() => of({ success: false, data: { goals: [], recipes: [] } }))),
+        .get<{
+          success: boolean;
+          data: {
+            hero?: NutritionHeroConfig;
+            goals: GoalItem[];
+            mealPlans?: MealPlanDeal[];
+            recipes: RecipeDbItem[];
+          };
+        }>('/nutrition')
+        .pipe(catchError(() => of({ success: false, data: { hero: undefined as NutritionHeroConfig | undefined, goals: [] as GoalItem[], mealPlans: [] as MealPlanDeal[], recipes: [] as RecipeDbItem[] } }))),
       products: this.productApi
         .getAll({ limit: 0 })
         .pipe(catchError(() => of({ success: false, total: 0, page: 1, pages: 1, data: [] as ApiProduct[] }))),
     }).subscribe(({ nutrition, products }) => {
       if (nutrition?.data) {
+        if (nutrition.data.hero) this.heroConfig.set(nutrition.data.hero);
         this.goalsSignal.set(nutrition.data.goals || []);
+        this.mealPlansSignal.set(nutrition.data.mealPlans || []);
         this.recipesDbSignal.set(nutrition.data.recipes || []);
       }
       if (products?.data) {
@@ -215,11 +323,46 @@ export class NutritionComponent implements OnInit {
     });
   }
 
+  applyMealPlan(plan: MealPlanCardView): void {
+    this.activePlanId.set(plan.id);
+    this.selectedGoals.set([...plan.goals]);
+    this.servings.set(plan.servings);
+    this.mealsCount.set(plan.mealsCount);
+    this.categoryTab.set('all');
+    this.computeRecipes(plan.recipeIds);
+  }
+
+  addMealPlanToCart(plan: MealPlanCardView): void {
+    if (plan.matchedProducts.length === 0) return;
+    for (const p of plan.matchedProducts) {
+      const discounted = Math.round(((p.priceNumber || 0) * (100 - plan.discountPercent)) / 100 / 500) * 500;
+      this.cart.addItem(toCartProduct(p, discounted), 1);
+    }
+    this.voucher.copyCode(plan.voucherCode);
+    this.addedToCart.set(
+      `Đã thêm trọn bộ "${plan.name}" (${plan.matchedProducts.length} nguyên liệu, Giá Deal ${plan.dealTotalText}) và sao chép mã ${plan.voucherCode}!`
+    );
+    setTimeout(() => this.addedToCart.set(null), 4000);
+  }
+
+  updateServings(newVal: number): void {
+    const clamped = Math.max(1, Math.min(10, Number(newVal) || 1));
+    this.servings.set(clamped);
+    this.computeRecipes();
+  }
+
+  updateMealsCount(newVal: number): void {
+    const clamped = Math.max(1, Math.min(3, Number(newVal) || 1));
+    this.mealsCount.set(clamped);
+    this.computeRecipes();
+  }
+
   isGoalSelected(id: string): boolean {
     return this.selectedGoals().includes(id);
   }
 
   toggleGoal(id: string): void {
+    this.activePlanId.set(null);
     const goals = this.selectedGoals();
     const isSelected = goals.includes(id);
     const newGoals = isSelected ? goals.filter((g) => g !== id) : [...goals, id];
@@ -270,7 +413,7 @@ export class NutritionComponent implements OnInit {
           if (!originalRecipe) return ing;
           const originalIng = originalRecipe.ingredients.find((i) => i.name === ing.name);
           if (!originalIng) return ing;
-          const scaledAmount = originalIng.amountPer1Serving * newServings;
+          const scaledAmount = originalIng.amountPer1Serving * newServings * recipe.meals;
           return {
             ...ing,
             amount: `${scaledAmount}`,
@@ -287,17 +430,19 @@ export class NutritionComponent implements OnInit {
   }
 
   findRecipes(): void {
+    this.activePlanId.set(null);
     this.loading.set(true);
     setTimeout(() => {
       this.computeRecipes();
       this.loading.set(false);
-    }, 300);
+    }, 250);
   }
 
-  private computeRecipes(): void {
+  private computeRecipes(priorityRecipeIds?: string[]): void {
     const selected = this.selectedGoals();
     const targets = this.goalTargets();
     const currentServings = Math.max(1, this.servings());
+    const currentMeals = Math.max(1, this.mealsCount());
     const excludeRaw = normalizeStr(this.excludeIngredients());
     const excludeKeywords = excludeRaw
       ? excludeRaw.split(/[,;\s]+/).map((s) => s.trim()).filter((s) => s.length >= 2)
@@ -315,6 +460,10 @@ export class NutritionComponent implements OnInit {
         if (hasExcluded) return false;
       }
 
+      if (priorityRecipeIds && priorityRecipeIds.length > 0) {
+        return priorityRecipeIds.includes(recipe.id);
+      }
+
       if (selected.length === 0) return true;
       return recipe.goalsTags.some((g) => selected.includes(g));
     });
@@ -328,7 +477,7 @@ export class NutritionComponent implements OnInit {
       if (selected.length > 0) {
         const common = recipe.goalsTags.filter((g) => selected.includes(g));
         const baseScore = Math.round((common.length / selected.length) * 100);
-        matchScore = Math.min(100, Math.max(65, baseScore));
+        matchScore = Math.min(100, Math.max(70, baseScore));
 
         common.forEach((tagId) => {
           const goal = goalsList.find((g) => g.id === tagId);
@@ -348,7 +497,7 @@ export class NutritionComponent implements OnInit {
       );
 
       const ingredients: IngredientItem[] = recipe.ingredients.map((ing) => {
-        const scaledAmount = ing.amountPer1Serving * currentServings;
+        const scaledAmount = ing.amountPer1Serving * currentServings * currentMeals;
         const matchedProd = matchCatalogueProduct(ing.name, currentCatalogue);
 
         return {
@@ -368,9 +517,11 @@ export class NutritionComponent implements OnInit {
         description: recipe.description,
         matchScore,
         servings: currentServings,
+        meals: currentMeals,
         prepTime: recipe.prepTime,
         ingredients,
         nutritionNote: recipe.nutritionNote,
+        goalsTags: recipe.goalsTags,
         goalsMet,
         explanation: explanation.length > 0 ? explanation : undefined,
       };
@@ -417,9 +568,14 @@ export class NutritionComponent implements OnInit {
   }
 
   totalCost(recipe: RecipeResult): number {
-    return recipe.ingredients
+    const baseCost = recipe.ingredients
       .filter((i) => i.selected && !i.owned && i.product)
       .reduce((sum, i) => sum + (i.product?.priceNumber || 0), 0);
+    return baseCost * Math.max(1, recipe.meals);
+  }
+
+  dealCost(recipe: RecipeResult): number {
+    return Math.round((this.totalCost(recipe) * 0.9) / 1000) * 1000;
   }
 
   getProductLink(product: ApiProduct): string {
@@ -434,14 +590,16 @@ export class NutritionComponent implements OnInit {
       return;
     }
 
+    const qty = Math.max(1, recipe.meals);
     for (const item of toAdd) {
       if (item.product) {
-        this.cart.addItem(toCartProduct(item.product), 1);
+        this.cart.addItem(toCartProduct(item.product), qty);
       }
     }
 
+    this.voucher.copyCode('NUTRITION10');
     this.addedToCart.set(
-      `Đã thêm ${toAdd.length} nguyên liệu cho món "${recipe.name}" vào giỏ hàng!`
+      `Đã thêm ${toAdd.length} nguyên liệu cho món "${recipe.name}" vào giỏ hàng và sao chép mã ưu đãi NUTRITION10 (-10%)!`
     );
     setTimeout(() => this.addedToCart.set(null), 3500);
   }

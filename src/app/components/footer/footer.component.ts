@@ -19,15 +19,36 @@ export interface FooterTrustItem {
   iconKey: string;
 }
 
+export interface FooterNavLink {
+  label: string;
+  route?: string;
+  policyKey?: string;
+  icon?: string;
+}
+
+export interface FooterSocialLink {
+  platform: string;
+  label: string;
+  url: string;
+}
+
 export interface FooterConfigResponse {
   brandName: string;
   brandDesc: string;
+  newsletterTitle?: string;
+  newsletterDesc?: string;
+  copyrightText?: string;
   contactInfo: {
     hotline: string;
     email: string;
     address: string;
   };
   trustItems: FooterTrustItem[];
+  serviceLinks?: FooterNavLink[];
+  utilityLinks?: FooterNavLink[];
+  aboutLinks?: FooterNavLink[];
+  policyLinks?: FooterNavLink[];
+  socialLinks?: FooterSocialLink[];
   paymentMethods: string[];
   policies: PolicyContent[];
 }
@@ -50,15 +71,21 @@ export class FooterComponent implements OnInit {
   protected emailError = signal('');
 
   protected brandName = signal('Xanh Lá');
-  protected brandDesc = signal(
-    'Nông sản, thực phẩm lành mạnh và dịch vụ dinh dưỡng cho những bữa ăn gần gũi mỗi ngày.'
-  );
+  protected brandDesc = signal('');
+  protected newsletterTitle = signal('Bản tin dinh dưỡng & Ưu đãi xanh');
+  protected newsletterDesc = signal('');
+  protected copyrightText = signal('');
   protected contactInfo = signal({
-    hotline: '1900 6789 (07:00 – 21:00)',
-    email: 'chamsoc@xanhla.vn',
-    address: 'Khu phố 6, Phường Linh Trung, TP. Thủ Đức, TP. Hồ Chí Minh',
+    hotline: '',
+    email: '',
+    address: '',
   });
   protected trustItems = signal<FooterTrustItem[]>([]);
+  protected serviceLinks = signal<FooterNavLink[]>([]);
+  protected utilityLinks = signal<FooterNavLink[]>([]);
+  protected aboutLinks = signal<FooterNavLink[]>([]);
+  protected policyLinks = signal<FooterNavLink[]>([]);
+  protected socialLinks = signal<FooterSocialLink[]>([]);
   protected paymentMethods = signal<string[]>([]);
   protected categories = signal<ApiCategory[]>([]);
   protected policiesMap = signal<Record<string, PolicyContent>>({});
@@ -71,8 +98,16 @@ export class FooterComponent implements OnInit {
         if (!cfg) return;
         if (cfg.brandName) this.brandName.set(cfg.brandName);
         if (cfg.brandDesc) this.brandDesc.set(cfg.brandDesc);
+        if (cfg.newsletterTitle) this.newsletterTitle.set(cfg.newsletterTitle);
+        if (cfg.newsletterDesc) this.newsletterDesc.set(cfg.newsletterDesc);
+        if (cfg.copyrightText) this.copyrightText.set(cfg.copyrightText);
         if (cfg.contactInfo) this.contactInfo.set(cfg.contactInfo);
         if (cfg.trustItems?.length) this.trustItems.set(cfg.trustItems);
+        if (cfg.serviceLinks?.length) this.serviceLinks.set(cfg.serviceLinks);
+        if (cfg.utilityLinks?.length) this.utilityLinks.set(cfg.utilityLinks);
+        if (cfg.aboutLinks?.length) this.aboutLinks.set(cfg.aboutLinks);
+        if (cfg.policyLinks?.length) this.policyLinks.set(cfg.policyLinks);
+        if (cfg.socialLinks?.length) this.socialLinks.set(cfg.socialLinks);
         if (cfg.paymentMethods?.length) this.paymentMethods.set(cfg.paymentMethods);
         if (cfg.policies?.length) {
           const map: Record<string, PolicyContent> = {};
@@ -136,11 +171,13 @@ export class FooterComponent implements OnInit {
 
   scrollToSection(sectionId: string, event: Event): void {
     event.preventDefault();
+    if (this.policiesMap()[sectionId]) {
+      this.activePolicy.set(this.policiesMap()[sectionId]);
+      return;
+    }
     const el = document.getElementById(sectionId);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else if (this.policiesMap()[sectionId]) {
-      this.activePolicy.set(this.policiesMap()[sectionId]);
     }
   }
 }

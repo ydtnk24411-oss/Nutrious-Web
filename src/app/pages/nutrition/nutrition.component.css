@@ -657,3 +657,290 @@
   .xl-nutrition-hero { padding-top: 20px; }
   .xanhla-breadcrumb { font-size: 11.5px; }
 }
+
+
+/* ── MEAL PLAN DEALS SECTION ── */
+.xl-meal-plans-section {
+  margin: 0 0 36px;
+}
+
+.xl-plans-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.xl-plans-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #b45309;
+  margin-bottom: 6px;
+}
+
+.xl-plans-title {
+  margin: 0 0 4px;
+  font-size: 24px;
+  font-weight: 800;
+  color: #1a3d22;
+}
+
+.xl-plans-sub {
+  margin: 0;
+  font-size: 13.5px;
+  color: #5a6b5a;
+}
+
+.xl-plans-more-link {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #2d6a4f;
+  text-decoration: none;
+}
+
+.xl-plans-more-link:hover {
+  text-decoration: underline;
+}
+
+.xl-meal-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.xl-plan-card {
+  background: #fff;
+  border: 1.5px solid #dfe8d8;
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.xl-plan-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(26, 61, 34, 0.1);
+}
+
+.xl-plan-card.is-active {
+  border-color: #2d6a4f;
+  background: #f5fbf6;
+  box-shadow: 0 8px 20px rgba(45, 106, 79, 0.14);
+}
+
+.xl-plan-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.xl-plan-badge {
+  background: #dc2626;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.xl-plan-kcal {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #b45309;
+}
+
+.xl-plan-name {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #1a3d22;
+  line-height: 1.35;
+}
+
+.xl-plan-audience {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2d6a4f;
+}
+
+.xl-plan-desc {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  color: #5a6b5a;
+  line-height: 1.45;
+}
+
+.xl-plan-recipes {
+  margin-bottom: 14px;
+}
+
+.xl-plan-recipes-label {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.xl-plan-recipe-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.xl-plan-recipe-chip {
+  font-size: 12px;
+  color: #1a3d22;
+  background: #f2f7f1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.xl-plan-price-row {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px dashed #d5e2d0;
+  margin-bottom: 12px;
+}
+
+.xl-plan-price-label {
+  display: block;
+  font-size: 11.5px;
+  color: #6b7280;
+}
+
+.xl-plan-price-nums {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.xl-plan-price-now {
+  font-size: 18px;
+  font-weight: 800;
+  color: #dc2626;
+}
+
+.xl-plan-price-old {
+  font-size: 12.5px;
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+.xl-plan-save-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #059669;
+  margin-top: 2px;
+}
+
+.xl-plan-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.xl-plan-filter-btn {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1.5px solid #2d6a4f;
+  background: #fff;
+  color: #2d6a4f;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.xl-plan-filter-btn:hover {
+  background: #f0f8f2;
+}
+
+.xl-plan-buy-btn {
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: none;
+  background: #2d6a4f;
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.xl-plan-buy-btn:hover {
+  background: #1a3d22;
+}
+
+.xl-reset-inline-btn {
+  margin-left: 12px;
+  padding: 12px 18px;
+  border-radius: 999px;
+  border: 1.5px solid #c8dfcf;
+  background: #fff;
+  color: #2d6a4f;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.xl-cat-tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.xl-cat-tab {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1.5px solid #d5e2d0;
+  background: #fff;
+  color: #36503b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.xl-cat-tab.active {
+  background: #2d6a4f;
+  border-color: #2d6a4f;
+  color: #fff;
+}
+
+.xl-deal-hint {
+  display: block;
+  font-size: 11.5px;
+  color: #059669;
+  margin-top: 2px;
+}
+
+@media (max-width: 1100px) {
+  .xl-meal-plans-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .xl-meal-plans-grid {
+    grid-template-columns: 1fr;
+  }
+  .xl-reset-inline-btn {
+    margin-left: 0;
+    margin-top: 10px;
+    width: 100%;
+  }
+}

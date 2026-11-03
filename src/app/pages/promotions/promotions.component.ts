@@ -304,10 +304,10 @@ export class PromotionsComponent implements OnInit {
   }
 
   private loadComboDealsFromMongo(products: ApiProduct[]): void {
-    this.api.get<{ success: boolean; data: any[] }>('/nutrition').subscribe({
+    this.api.get<{ success: boolean; data: any }>('/nutrition').subscribe({
       next: (res) => {
-        const recipes = res.data || [];
-        const combos: ComboDealItem[] = recipes.slice(0, 4).map((r, idx) => {
+        const recipes = Array.isArray(res.data) ? res.data : (res.data?.recipes || []);
+        const combos: ComboDealItem[] = recipes.slice(0, 6).map((r: any, idx: number) => {
           const matchedItems: { name: string; unit: string; product: XanhLaProduct }[] = [];
           for (const ing of r.ingredients || []) {
             const p = products.find(

@@ -7,6 +7,7 @@
         <div class="xl-feedback-toast" role="status" aria-live="polite">
           <span class="xl-toast-icon">✓</span>
           <span>{{ addedToCart() }}</span>
+          <a routerLink="/checkout" [queryParams]="{ voucher: 'NUTRITION10' }" style="color:#fff;text-decoration:underline;font-weight:700;margin-left:10px">Đến Thanh toán →</a>
         </div>
       }
 
@@ -22,21 +23,78 @@
       <!-- ===== HERO SECTION ===== -->
       <header class="xl-nutrition-hero">
         <div class="xl-hero-content">
-          <span class="xl-hero-kicker">Trợ lý thực đơn khoa học</span>
-          <h1 class="xl-hero-title">Dinh dưỡng thông minh</h1>
+          <span class="xl-hero-kicker">{{ heroConfig().kicker }}</span>
+          <h1 class="xl-hero-title">{{ heroConfig().title }}</h1>
           <p class="xl-hero-subtitle">
-            Khám phá công thức món ăn cân đối vi chất, tối ưu khẩu phần cho gia đình và tự động chuẩn bị giỏ nguyên liệu tươi sạch chuẩn nguồn gốc từ Xanh Lá chỉ với một chạm.
+            {{ heroConfig().subtitle }}
           </p>
           <div class="xl-hero-quicklinks">
             <a routerLink="/cook-with-what-you-have" class="xl-hero-link">🍳 Nấu gì với đồ sẵn có?</a>
             <a routerLink="/online-ordering" class="xl-hero-link">🛒 Cửa hàng nông sản</a>
-            <a routerLink="/promotions" class="xl-hero-link xl-hero-link--accent">🎁 Ưu đãi Combo -10%</a>
+            <a routerLink="/promotions" class="xl-hero-link xl-hero-link--accent">🎁 Deal Nông Sản &amp; Voucher -30%</a>
           </div>
         </div>
         <div class="xl-hero-image">
-          <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&h=400&fit=crop" alt="Thực đơn dinh dưỡng lành mạnh Xanh Lá" />
+          <img [src]="heroConfig().bannerImage" alt="Thực đơn dinh dưỡng lành mạnh Xanh Lá" />
         </div>
       </header>
+
+      <!-- ===== GÓI COMBO THỰC ĐƠN DINH DƯỠNG TIẾT KIỆM (LOADED FROM MONGODB) ===== -->
+      @if (mealPlanCards().length > 0) {
+        <section class="xl-meal-plans-section" aria-label="Gói Combo Thực Đơn Dinh Dưỡng">
+          <div class="xl-plans-head">
+            <div>
+              <span class="xl-plans-pill">🍱 DEAL THỰC ĐƠN TRỌN GÓI TỪ MONGODB</span>
+              <h2 class="xl-plans-title">Combo Thực Đơn Dinh Dưỡng Theo Mục Tiêu</h2>
+              <p class="xl-plans-sub">Chọn nhanh gói thực đơn được thiết kế sẵn theo nhu cầu thể trạng — Mua trọn bộ nguyên liệu giảm ngay 15% – 20% kèm mã voucher</p>
+            </div>
+            <a routerLink="/promotions" class="xl-plans-more-link">Xem thêm Deal khuyến mãi →</a>
+          </div>
+
+          <div class="xl-meal-plans-grid">
+            @for (plan of mealPlanCards(); track plan.id) {
+              <article class="xl-plan-card" [class.is-active]="activePlanId() === plan.id">
+                <div class="xl-plan-top">
+                  <span class="xl-plan-badge">{{ plan.badge }}</span>
+                  <span class="xl-plan-kcal">🔥 {{ plan.calories }}</span>
+                </div>
+                <h3 class="xl-plan-name">{{ plan.name }}</h3>
+                <p class="xl-plan-audience">{{ plan.targetAudience }}</p>
+                <p class="xl-plan-desc">{{ plan.description }}</p>
+
+                <div class="xl-plan-recipes">
+                  <span class="xl-plan-recipes-label">Thực đơn gồm ({{ plan.recipeNames.length }} món):</span>
+                  <div class="xl-plan-recipe-tags">
+                    @for (rName of plan.recipeNames; track rName) {
+                      <span class="xl-plan-recipe-chip">🍽️ {{ rName }}</span>
+                    }
+                  </div>
+                </div>
+
+                <div class="xl-plan-price-row">
+                  <div>
+                    <span class="xl-plan-price-label">Trọn gói {{ plan.matchedProducts.length }} nguyên liệu:</span>
+                    <div class="xl-plan-price-nums">
+                      <strong class="xl-plan-price-now">{{ plan.dealTotalText }}</strong>
+                      <span class="xl-plan-price-old">{{ plan.originalTotalText }}</span>
+                    </div>
+                    <span class="xl-plan-save-tag">Tiết kiệm {{ plan.savedText }} · Tặng mã {{ plan.voucherCode }}</span>
+                  </div>
+                </div>
+
+                <div class="xl-plan-actions">
+                  <button type="button" class="xl-plan-filter-btn" (click)="applyMealPlan(plan)">
+                    {{ activePlanId() === plan.id ? '✓ Đang xem thực đơn này' : 'Xem chi tiết món' }}
+                  </button>
+                  <button type="button" class="xl-plan-buy-btn" (click)="addMealPlanToCart(plan)">
+                    🛒 Mua gói này (-{{ plan.discountPercent }}%)
+                  </button>
+                </div>
+              </article>
+            }
+          </div>
+        </section>
+      }
 
       <!-- ===== CONFIGURATION PANEL ===== -->
       <section class="xl-nutrition-config-card" aria-label="Thiết lập dinh dưỡng">
@@ -46,8 +104,8 @@
           <div class="xl-step-header">
             <span class="xl-step-badge">1</span>
             <div>
-              <h2 class="xl-step-title">Chọn mục tiêu dinh dưỡng</h2>
-              <p class="xl-step-desc">Chọn một hoặc nhiều tiêu chí để gợi ý món ăn phù hợp với thể trạng của bạn</p>
+              <h2 class="xl-step-title">Chọn mục tiêu dinh dưỡng cá nhân</h2>
+              <p class="xl-step-desc">Chọn một hoặc nhiều tiêu chí để hệ thống lọc công thức phù hợp với thể trạng của bạn</p>
             </div>
           </div>
 
@@ -109,7 +167,7 @@
             <span class="xl-step-badge">2</span>
             <div>
               <h2 class="xl-step-title">Điều chỉnh khẩu phần &amp; Ngân sách</h2>
-              <p class="xl-step-desc">Tuỳ biến số lượng người ăn, bữa ăn và nguyên liệu kiêng cữ</p>
+              <p class="xl-step-desc">Tuỳ biến số lượng người ăn, số bữa ăn và nguyên liệu kiêng cữ (tự động nhân định lượng nguyên liệu)</p>
             </div>
           </div>
 
@@ -121,7 +179,7 @@
                 <button
                   type="button"
                   class="xl-step-btn"
-                  (click)="servings.set(servings() > 1 ? servings() - 1 : 1)"
+                  (click)="updateServings(servings() - 1)"
                   [disabled]="servings() <= 1"
                   aria-label="Giảm số người"
                 >−</button>
@@ -131,13 +189,13 @@
                   min="1"
                   max="10"
                   [ngModel]="servings()"
-                  (ngModelChange)="servings.set($event || 1)"
+                  (ngModelChange)="updateServings($event)"
                   class="xl-input-field"
                 />
                 <button
                   type="button"
                   class="xl-step-btn"
-                  (click)="servings.set(servings() < 10 ? servings() + 1 : 10)"
+                  (click)="updateServings(servings() + 1)"
                   [disabled]="servings() >= 10"
                   aria-label="Tăng số người"
                 >+</button>
@@ -151,7 +209,7 @@
                 <button
                   type="button"
                   class="xl-step-btn"
-                  (click)="mealsCount.set(mealsCount() > 1 ? mealsCount() - 1 : 1)"
+                  (click)="updateMealsCount(mealsCount() - 1)"
                   [disabled]="mealsCount() <= 1"
                   aria-label="Giảm số bữa"
                 >−</button>
@@ -161,13 +219,13 @@
                   min="1"
                   max="3"
                   [ngModel]="mealsCount()"
-                  (ngModelChange)="mealsCount.set($event || 1)"
+                  (ngModelChange)="updateMealsCount($event)"
                   class="xl-input-field"
                 />
                 <button
                   type="button"
                   class="xl-step-btn"
-                  (click)="mealsCount.set(mealsCount() < 3 ? mealsCount() + 1 : 3)"
+                  (click)="updateMealsCount(mealsCount() + 1)"
                   [disabled]="mealsCount() >= 3"
                   aria-label="Tăng số bữa"
                 >+</button>
@@ -198,7 +256,7 @@
               <input
                 id="excludeInput"
                 type="text"
-                placeholder="Ví dụ: bơ, đậu phộng, hành tây..."
+                placeholder="Ví dụ: bơ, tôm, nấm..."
                 [ngModel]="excludeIngredients()"
                 (ngModelChange)="excludeIngredients.set($event)"
                 class="xl-input-field"
@@ -226,6 +284,15 @@
               <span>Tìm món ăn phù hợp</span>
             }
           </button>
+          @if (activePlanId() || selectedGoals().length > 0 || budgetLimit() || excludeIngredients()) {
+            <button
+              type="button"
+              class="xl-reset-inline-btn"
+              (click)="activePlanId.set(null); selectedGoals.set([]); budgetLimit.set(null); excludeIngredients.set(''); categoryTab.set('all'); findRecipes()"
+            >
+              Đặt lại bộ lọc (Xem tất cả 12 món)
+            </button>
+          }
         </div>
       </section>
 
@@ -236,14 +303,33 @@
             <div>
               <h2 class="xl-results-title">Thực đơn gợi ý dành cho bạn</h2>
               <p class="xl-results-sub">
-                Đã cân đối theo khẩu phần {{ servings() }} người ăn ({{ mealsCount() }} bữa) và mục tiêu dinh dưỡng đã chọn.
+                Đã tự động tính định lượng theo khẩu phần <strong>{{ servings() }} người ăn × {{ mealsCount() }} bữa</strong> từ dữ liệu MongoDB.
               </p>
             </div>
-            <span class="xl-results-count">{{ results().length }} món ăn phù hợp</span>
+            <span class="xl-results-count">{{ filteredResults().length }} món ăn phù hợp</span>
+          </div>
+
+          <!-- Quick Category Filter Tabs -->
+          <div class="xl-cat-tabs">
+            <button type="button" class="xl-cat-tab" [class.active]="categoryTab() === 'all'" (click)="categoryTab.set('all')">
+              Tất cả món ({{ results().length }})
+            </button>
+            <button type="button" class="xl-cat-tab" [class.active]="categoryTab() === 'protein'" (click)="categoryTab.set('protein')">
+              🥩 Giàu Protein &amp; Tăng cơ
+            </button>
+            <button type="button" class="xl-cat-tab" [class.active]="categoryTab() === 'fiber'" (click)="categoryTab.set('fiber')">
+              🥦 Eat Clean &amp; Giàu chất xơ
+            </button>
+            <button type="button" class="xl-cat-tab" [class.active]="categoryTab() === 'vitamin'" (click)="categoryTab.set('vitamin')">
+              🍊 Tăng đề kháng &amp; Vitamin
+            </button>
+            <button type="button" class="xl-cat-tab" [class.active]="categoryTab() === 'balance'" (click)="categoryTab.set('balance')">
+              ⚖️ Bữa cơm cân bằng
+            </button>
           </div>
 
           <div class="xl-recipes-grid">
-            @for (recipe of results(); track recipe.id) {
+            @for (recipe of filteredResults(); track recipe.id) {
               <article class="xl-recipe-card">
                 <!-- Recipe Image Banner -->
                 <div class="xl-recipe-img-box">
@@ -284,7 +370,7 @@
                         (click)="adjustServings(recipe.id, 1)"
                         [disabled]="recipe.servings >= 10"
                       >+</button>
-                      <span class="xl-servings-unit">người</span>
+                      <span class="xl-servings-unit">người ({{ recipe.meals }} bữa)</span>
                     </div>
                   </div>
 
@@ -323,7 +409,7 @@
                   <div class="xl-ingredients-section">
                     <div class="xl-ingredients-heading">
                       <h4>Nguyên liệu cần chuẩn bị</h4>
-                      <span class="xl-ingredients-subnote">Đã tự động tính theo {{ recipe.servings }} người</span>
+                      <span class="xl-ingredients-subnote">Định lượng cho {{ recipe.servings }} người × {{ recipe.meals }} bữa</span>
                     </div>
 
                     <ul class="xl-ingredients-list">
@@ -401,7 +487,10 @@
                   <!-- Recipe Footer with Total and Add to Cart -->
                   <div class="xl-recipe-footer">
                     <div class="xl-total-box">
-                      <span class="xl-total-label">Tổng ước tính (chưa gồm món đã có):</span>
+                      <div>
+                        <span class="xl-total-label">Tổng nguyên liệu ({{ recipe.meals }} bữa):</span>
+                        <span class="xl-deal-hint">Áp mã NUTRITION10 chỉ còn <strong>{{ dealCost(recipe).toLocaleString('vi-VN') }}đ</strong></span>
+                      </div>
                       <strong class="xl-total-price">{{ totalCost(recipe).toLocaleString('vi-VN') }}đ</strong>
                     </div>
 
@@ -415,11 +504,11 @@
                         <circle cx="20" cy="21" r="1"/>
                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
                       </svg>
-                      <span>Thêm tất cả nguyên liệu đã chọn vào giỏ</span>
+                      <span>Thêm nguyên liệu đã chọn vào giỏ (+ Tặng mã -10%)</span>
                     </button>
 
                     <p class="xl-recipe-note">
-                      * Chỉ thêm các mặt hàng nông sản, thực phẩm đang kinh doanh tại Xanh Lá.
+                      * Liên kết trực tiếp với kho nông sản MongoDB tại Xanh Lá. Tự động sao chép mã ưu đãi NUTRITION10 khi thêm trọn bộ.
                     </p>
                   </div>
                 </div>
@@ -443,7 +532,7 @@
               <button
                 type="button"
                 class="xl-reset-btn"
-                (click)="selectedGoals.set([]); budgetLimit.set(null); excludeIngredients.set(''); findRecipes()"
+                (click)="activePlanId.set(null); selectedGoals.set([]); budgetLimit.set(null); excludeIngredients.set(''); categoryTab.set('all'); findRecipes()"
               >
                 Xem tất cả món gợi ý
               </button>
