@@ -54,6 +54,10 @@ export class OrderApiService {
     return this.api.post<{ success: boolean; data: { orderCode: string; _id: string } }>('/orders', body);
   }
 
+  cancel(idOrCode: string, reason?: string) {
+    return this.api.put<{ success: boolean; message: string; data: ApiOrder }>(`/orders/${idOrCode}/cancel`, { reason });
+  }
+
   updateStatus(id: string, status: ApiOrder['status']) {
     return this.api.put<{ success: boolean; data: ApiOrder }>(`/orders/${id}/status`, { status });
   }
