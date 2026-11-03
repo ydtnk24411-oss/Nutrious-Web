@@ -547,7 +547,8 @@ async function runSeed() {
     const totalVouchers = await Voucher.countDocuments();
     console.log(`✅ Vouchers upserted & active: ${totalVouchers}`);
 
-    // 2. Upsert Recipes
+    // 2. Upsert Recipes (and remove any legacy docs missing recipeId)
+    await Recipe.deleteMany({ $or: [{ recipeId: null }, { recipeId: { $exists: false } }] });
     for (const r of recipesData) {
       await Recipe.findOneAndUpdate(
         { recipeId: r.recipeId },
@@ -566,7 +567,72 @@ async function runSeed() {
     );
     console.log('✅ FooterConfig upserted');
 
+    // 4. Ensure UserVouchers exist for customer users in Atlas
+    const User = require('./models/User');
+    const UserVoucher = require('./models/UserVoucher');
+    const customers = await User.find({ role: 'customer' }).lean();
+    const allVouchers = await Voucher.find({}).lean();
+    const vMap = new Map(allVouchers.map(v => [v.code, v]));
+    for (const u of customers.slice(0, 3)) {
+      for (const code of ['WELCOME20', 'FREESHIP', 'XANHLA30', 'NOV2026']) {
+        const vDoc = vMap.get(code);
+        if (vDoc) {
+          await UserVoucher.findOneAndUpdate(
+            { user: u._id, voucher: vDoc._id },
+            { $setOnInsert: { user: u._id, voucher: vDoc._id, status: 'available', receivedAt: new Date() } },
+            { upsert: true }
+          );
+        }
+      }
+    }
+
+    // 5. Sync all collections from Atlas to Local MongoDB (mongodb://127.0.0.1:27017/xanh-la) if running locally
+    const collectionsToSync = [
+      'categories',
+      'products',
+      'users',
+      'vouchers',
+      'uservouchers',
+      'recipes',
+      'footerconfigs',
+      'events',
+      'services',
+      'orders',
+      'reviews',
+      'bookings',
+      'pointtransactions',
+      'newslettersubscribers',
+    ];
+    const atlasData = {};
+    for (const colName of collectionsToSync) {
+      try {
+        atlasData[colName] = await mongoose.connection.db.collection(colName).find({}).toArray();
+      } catch (_) {
+        atlasData[colName] = [];
+      }
+    }
+
     await mongoose.disconnect();
+
+    try {
+      const localUri = 'mongodb://127.0.0.1:27017/xanh-la';
+      await mongoose.connect(localUri, { serverSelectionTimeoutMS: 3000 });
+      console.log('✅ Connected to Local MongoDB (127.0.0.1:27017/xanh-la) — syncing data...');
+      for (const colName of collectionsToSync) {
+        const docs = atlasData[colName] || [];
+        if (docs.length > 0) {
+          const col = mongoose.connection.db.collection(colName);
+          await col.deleteMany({});
+          await col.insertMany(docs, { ordered: false });
+          console.log(`  ↳ Synced ${docs.length} docs into local collection '${colName}'`);
+        }
+      }
+      await mongoose.disconnect();
+      console.log('✅ Local MongoDB sync completed!');
+    } catch (localErr) {
+      console.log('ℹ️ Local MongoDB not reachable or skipped:', localErr.message);
+    }
+
     console.log('🎉 Seed completed successfully!');
     process.exit(0);
   } catch (err) {
