@@ -64,6 +64,9 @@ export class VoucherService {
   readonly publicVouchers = this._publicVouchers.asReadonly();
   readonly userVouchers   = this._userVouchers.asReadonly();
 
+  /** Danh sách các mã đã sao chép (hiển thị cố định không bị ẩn khi sao chép mã khác). */
+  readonly copiedCodes = signal<Set<string>>(new Set());
+
   readonly availableVouchers = computed(() =>
     this._userVouchers().filter(v => v.status === 'available')
   );
@@ -107,6 +110,44 @@ export class VoucherService {
       },
       error: () => { /* 401 do interceptor xử lý */ },
     });
+  }
+
+  /** Sao chép mã vào clipboard và giữ hiển thị mã trên giao diện. */
+  copyCode(code: string): void {
+    const clean = code.trim().toUpperCase();
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(clean).catch(() => this.fallbackCopy(clean));
+    } else {
+      this.fallbackCopy(clean);
+    }
+    this.copiedCodes.update(prev => {
+      const next = new Set(prev);
+      next.add(clean);
+      return next;
+    });
+  }
+
+  isCopied(code: string): boolean {
+    return this.copiedCodes().has(code.trim().toUpperCase());
+  }
+
+  private fallbackCopy(code: string): void {
+    if (typeof document === 'undefined') return;
+    const input = document.createElement('textarea');
+    input.value = code;
+    input.style.position = 'fixed';
+    input.style.opacity = '0';
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    input.remove();
+  }
+
+  isSaved(voucherIdOrCode: string): boolean {
+    const key = voucherIdOrCode.trim().toUpperCase();
+    return this._userVouchers().some(
+      uv => uv.voucherId === voucherIdOrCode || uv.voucher.code.toUpperCase() === key
+    );
   }
 
   // Server kiểm tra voucher + tính số tiền giảm

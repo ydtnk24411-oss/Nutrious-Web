@@ -1,11 +1,19 @@
-import { Component, signal, inject, computed, effect } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Component, signal, inject, computed, effect, OnInit } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { CartService, formatPrice } from '../../shared/services/cart.service';
 import { OrderApiService } from '../../shared/services/order-api.service';
 import { VoucherService } from '../../shared/services/voucher.service';
+import { Voucher } from '../../shared/models/xanh-la.models';
+
+export interface CheckoutVoucherOption {
+  voucher: Voucher;
+  inWallet: boolean;
+  isEligible: boolean;
+  estimatedDiscount: number;
+}
 
 @Component({
   selector: 'app-checkout',
@@ -14,11 +22,12 @@ import { VoucherService } from '../../shared/services/voucher.service';
   templateUrl: './checkout.component.html',
   styleUrl: './checkout.component.css',
 })
-export class CheckoutComponent {
+export class CheckoutComponent implements OnInit {
   protected cart     = inject(CartService);
   private orderApi   = inject(OrderApiService);
   private router     = inject(Router);
-  private voucher   = inject(VoucherService);
+  private route      = inject(ActivatedRoute);
+  protected voucher  = inject(VoucherService);
   protected formatPrice = formatPrice;
 
   protected completed      = signal(false);
@@ -33,6 +42,8 @@ export class CheckoutComponent {
   protected selectedVoucher = signal<any>(null);
   protected voucherDiscount = signal(0);
   protected voucherMessage = signal('');
+  protected showVoucherPicker = signal(false);
+  private pendingQueryVoucher = signal('');
 
   // Chỉ thanh toán các món được chọn trong giỏ hàng
   readonly checkoutItems = computed(() => {
@@ -41,6 +52,43 @@ export class CheckoutComponent {
 
   readonly checkoutSubtotal = computed(() => {
     return this.cart.selectedSubtotal();
+  });
+
+  /** Danh sách ưu đãi để chọn trực tiếp khi thanh toán (gồm Ví voucher + ưu đãi công khai từ MongoDB). */
+  readonly checkoutVoucherOptions = computed<CheckoutVoucherOption[]>(() => {
+    const sub = this.checkoutSubtotal();
+    const walletSet = new Set(this.voucher.availableVouchers().map(uv => uv.voucher.code.toUpperCase()));
+    const byCode = new Map<string, Voucher>();
+
+    for (const uv of this.voucher.availableVouchers()) {
+      byCode.set(uv.voucher.code.toUpperCase(), uv.voucher);
+    }
+    for (const pub of this.voucher.publicVouchers()) {
+      const k = pub.code.toUpperCase();
+      if (!byCode.has(k)) byCode.set(k, pub);
+    }
+
+    return Array.from(byCode.values())
+      .map((v) => {
+        const minVal = v.minValue || 0;
+        const isEligible = sub >= minVal && sub > 0;
+        let disc = v.type === 'percentage' ? Math.floor((sub * v.value) / 100) : v.value;
+        if (v.type === 'percentage' && v.maxValue) {
+          disc = Math.min(disc, v.maxValue);
+        }
+        disc = isEligible ? Math.max(0, Math.min(disc, sub)) : 0;
+        return {
+          voucher: v,
+          inWallet: walletSet.has(v.code.toUpperCase()),
+          isEligible,
+          estimatedDiscount: disc,
+        };
+      })
+      .sort((a, b) => {
+        if (a.isEligible !== b.isEligible) return a.isEligible ? -1 : 1;
+        if (a.inWallet !== b.inWallet) return a.inWallet ? -1 : 1;
+        return b.estimatedDiscount - a.estimatedDiscount;
+      });
   });
 
   // Loyalty points estimate
@@ -61,6 +109,15 @@ export class CheckoutComponent {
 
   constructor() {
     effect(() => {
+      const code = this.pendingQueryVoucher();
+      const subtotal = this.checkoutSubtotal();
+      if (code && subtotal > 0) {
+        this.pendingQueryVoucher.set('');
+        this.applyVoucher();
+      }
+    });
+
+    effect(() => {
       const u = this.cart.currentUser();
       if (u) {
         this.guestName.set(u.name || '');
@@ -71,6 +128,17 @@ export class CheckoutComponent {
     });
   }
 
+  ngOnInit(): void {
+    this.voucher.loadPublic();
+    this.voucher.refreshMine();
+    const qCode = this.route.snapshot.queryParamMap.get('voucher');
+    if (qCode) {
+      const code = qCode.trim().toUpperCase();
+      this.voucherCode.set(code);
+      this.pendingQueryVoucher.set(code);
+    }
+  }
+
   /** Địa chỉ mặc định của tài khoản đang đăng nhập (để điền sẵn khi giao hàng). */
   private _defaultAddress(): string {
     const addrs = this.cart.currentUser()?.addresses ?? [];
@@ -78,18 +146,33 @@ export class CheckoutComponent {
     return a ? [a.address, a.city].filter(Boolean).join(', ') : '';
   }
 
-  applyVoucher(): void {
-    const code = this.voucherCode().trim();
+  onSelectVoucherDropdown(code: string): void {
     if (!code) {
-      this.voucherMessage.set('Vui lòng nhập mã voucher');
+      this.removeVoucher();
       return;
     }
+    this.voucherCode.set(code);
+    this.applyVoucher();
+  }
+
+  selectOfferCode(code: string): void {
+    this.voucherCode.set(code);
+    this.applyVoucher();
+  }
+
+  applyVoucher(): void {
+    const code = this.voucherCode().trim().toUpperCase();
+    if (!code) {
+      this.voucherMessage.set('Vui lòng nhập hoặc chọn mã voucher');
+      return;
+    }
+    this.voucherCode.set(code);
 
     this.voucher.validateVoucher(code, this.checkoutSubtotal()).subscribe((result) => {
       if (result.valid) {
         this.selectedVoucher.set({ code, discount: result.discount });
         this.voucherDiscount.set(result.discount);
-        this.voucherMessage.set(`Đã áp dụng: Giảm ${formatPrice(result.discount)}`);
+        this.voucherMessage.set(`Đã áp dụng mã ${code}: Giảm ${formatPrice(result.discount)}`);
       } else {
         this.selectedVoucher.set(null);
         this.voucherDiscount.set(0);

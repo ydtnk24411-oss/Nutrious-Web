@@ -1,4 +1,5 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -21,29 +22,30 @@ const chatbotRoutes = require('./routes/chatbot');
 const inventoryRoutes = require('./routes/inventory');
 const supportRoutes = require('./routes/support');
 const complaintRoutes = require('./routes/complaints');
+const nutritionRoutes = require('./routes/nutrition');
+const footerRoutes = require('./routes/footer');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const allowedOrigins = new Set([
+  'http://localhost:4200',
+  'http://127.0.0.1:4200',
+  'http://localhost:4201',
+  'http://127.0.0.1:4201',
+]);
 
 // ── Middleware ────────────────────────────────────────────
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, server-to-server)
       if (!origin) return callback(null, true);
-      // Allow all localhost and 127.0.0.1 origins on any port
-      if (
-        origin.includes('localhost') ||
-        origin.includes('127.0.0.1') ||
-        origin.endsWith('.ngrok.io') ||
-        origin.endsWith('.ngrok-free.app')
-      ) {
+      if (allowedOrigins.has(origin)) {
         return callback(null, true);
       }
-      return callback(null, true);
+      return callback(new Error('Origin is not allowed by CORS'));
     },
-    credentials: true
+    credentials: true,
   })
 );
 app.use(morgan('dev'));
@@ -68,6 +70,8 @@ app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/complaints', complaintRoutes);
+app.use('/api/nutrition', nutritionRoutes);
+app.use('/api/footer', footerRoutes);
 
 // ── Health check ──────────────────────────────────────────
 app.get('/api/health', (_req, res) =>
@@ -78,15 +82,25 @@ app.get('/api/health', (_req, res) =>
 app.use(errorHandler);
 
 // ── Database + Start ──────────────────────────────────────
-mongoose
-  .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/xanh-la')
-  .then(() => {
+async function startServer() {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/xanh-la', {
+      serverSelectionTimeoutMS: 12000,
+    });
     console.log('✅ MongoDB connected');
-    app.listen(PORT, () =>
-      console.log(`🚀 Server running at http://localhost:${PORT}`)
-    );
-  })
-  .catch((err) => {
-    console.error('❌ MongoDB connection error:', err);
-    process.exit(1);
-  });
+  } catch (err) {
+    console.warn('⚠️ Atlas connection failed, falling back to Local MongoDB (127.0.0.1:27017/xanh-la):', err.message);
+    try {
+      await mongoose.connect('mongodb://127.0.0.1:27017/xanh-la');
+      console.log('✅ Connected to Local MongoDB (127.0.0.1:27017/xanh-la)');
+    } catch (localErr) {
+      console.error('❌ MongoDB connection error:', localErr.message);
+      process.exit(1);
+    }
+  }
+  app.listen(PORT, () =>
+    console.log(`🚀 Server running at http://localhost:${PORT}`)
+  );
+}
+
+startServer();

@@ -862,3 +862,12 @@
 @media (prefers-reduced-motion: reduce) {
   .coop-home *, .coop-home *::before, .coop-home *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+.coop-home .coop-voucher-toast { margin: -10px 0 18px; padding: 10px 14px; border: 1px solid #cbdba6; border-radius: 8px; background: #f7fbe9; color: #29470b; font-size: 13px; }
+.coop-home .coop-voucher-toast a { color: var(--xl-forest); font-weight: 800; }
+.coop-home .coop-voucher-heading-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.coop-home .coop-voucher-save-btn, .coop-home .coop-voucher-apply-btn { display: inline-flex; align-items: center; justify-content: center; padding: 7px 10px; border: 1px solid #93b747; border-radius: 4px; background: #fff; color: var(--xl-forest); font-size: 10px; font-weight: 800; text-decoration: none; cursor: pointer; }
+.coop-home .coop-voucher-apply-btn { background: var(--xl-forest); color: #fff; }
+.coop-home .coop-voucher-save-btn:hover, .coop-home .coop-voucher-apply-btn:hover { filter: brightness(.94); }
+@media (max-width: 640px) {
+  .coop-home .coop-voucher-heading-actions { width: 100%; justify-content: flex-start; }
+}
