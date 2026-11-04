@@ -70,9 +70,9 @@ export class FooterComponent implements OnInit {
   protected subscribeMessage = signal('Đã đăng ký nhận bản tin thành công!');
   protected emailError = signal('');
 
-  protected brandName = signal('Xanh Lá');
+  protected brandName = signal('Evergreen Mart');
   protected brandDesc = signal('');
-  protected newsletterTitle = signal('Bản tin dinh dưỡng & Ưu đãi xanh');
+  protected newsletterTitle = signal('Bản tin dinh dưỡng & Ưu đãi Evergreen Mart');
   protected newsletterDesc = signal('');
   protected copyrightText = signal('');
   protected contactInfo = signal({

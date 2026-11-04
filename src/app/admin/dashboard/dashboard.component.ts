@@ -239,7 +239,7 @@ export class AdminDashboardComponent implements OnInit {
       insights.push(`Giá trị đơn hàng trung bình đạt ${this.formatPrice(stats.averageOrderValue)} - có thể bổ sung combo ưu đãi để kích thích quy mô đơn hàng.`);
     }
 
-    insights.push(`Hệ sinh thái Xanh Lá đang duy trì ${stats.totalUsers} khách hàng mua sắm thường xuyên với danh mục nông sản tươi sạch đa dạng.`);
+    insights.push(`Hệ sinh thái Evergreen Mart đang duy trì ${stats.totalUsers} khách hàng mua sắm thường xuyên với danh mục nông sản tươi sạch đa dạng.`);
 
     return insights;
   }

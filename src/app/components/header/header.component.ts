@@ -120,7 +120,7 @@ export class HeaderComponent {
       this.notifications.set([
         {
           id: 'guest-welcome',
-          title: 'Chào mừng bạn đến với Xanh Lá',
+          title: 'Chào mừng bạn đến với Evergreen Mart',
           body: 'Nông sản hữu cơ tươi ngon mỗi ngày. Đăng nhập để nhận ưu đãi thành viên.',
           path: '/online-ordering',
           unread: false,
@@ -156,7 +156,7 @@ export class HeaderComponent {
           notifs.push({
             id: 'welcome-member',
             title: `Chào mừng ${user.name}!`,
-            body: 'Cảm ơn bạn đã gia nhập Xanh Lá. Khám phá các thực phẩm hữu cơ tươi ngon ngay.',
+            body: 'Cảm ơn bạn đã gia nhập Evergreen Mart. Khám phá các thực phẩm hữu cơ tươi ngon ngay.',
             path: '/online-ordering',
             unread: true,
           });
@@ -176,7 +176,7 @@ export class HeaderComponent {
           {
             id: 'welcome-member',
             title: `Chào mừng ${user.name}!`,
-            body: 'Khám phá các nông sản tươi sạch hữu cơ tại Xanh Lá Farm.',
+            body: 'Khám phá các nông sản tươi sạch hữu cơ tại Evergreen Mart.',
             path: '/online-ordering',
             unread: false,
           },

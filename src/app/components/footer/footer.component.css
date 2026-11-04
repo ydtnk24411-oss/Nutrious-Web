@@ -68,6 +68,15 @@
   margin-bottom: 10px;
   text-decoration: none;
 }
+.evergreen-footer-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: #ffffff;
+  padding: 2px;
+  flex-shrink: 0;
+}
 .xanhla-footer-logo .xanhla-brand-mark {
   width: 30px; height: 30px;
   background: rgba(240,200,80,.14);

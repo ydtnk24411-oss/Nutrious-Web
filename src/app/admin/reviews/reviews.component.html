@@ -4,7 +4,7 @@
   <div class="page-header">
     <div>
       <h1 class="page-title">Quản lý Đánh giá sản phẩm</h1>
-      <p class="page-subtitle">Theo dõi nhận xét, sao đánh giá và phản hồi của khách hàng Xanh Lá</p>
+      <p class="page-subtitle">Theo dõi nhận xét, sao đánh giá và phản hồi của khách hàng Evergreen Mart</p>
     </div>
   </div>
 
@@ -118,7 +118,7 @@
           @for (item of reviews(); track item._id) {
             <tr>
               <td>
-                <span class="product-name">{{ item.productName || 'Sản phẩm Xanh Lá' }}</span>
+                <span class="product-name">{{ item.productName || 'Sản phẩm Evergreen Mart' }}</span>
               </td>
               <td>
                 <div class="user-col">
@@ -151,7 +151,7 @@
                   <p class="review-text">{{ item.content }}</p>
                   @if (item.adminReply) {
                     <div class="admin-reply-box">
-                      <span class="reply-badge">Xanh Lá phản hồi:</span>
+                      <span class="reply-badge">Evergreen Mart phản hồi:</span>
                       <span class="reply-text">{{ item.adminReply }}</span>
                     </div>
                   }
@@ -211,11 +211,11 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Nội dung phản hồi từ Xanh Lá *</label>
+            <label class="form-label">Nội dung phản hồi từ Evergreen Mart *</label>
             <textarea
               class="form-control"
               rows="4"
-              placeholder="VD: Cảm ơn bạn đã tin tưởng ủng hộ nông sản sạch Xanh Lá..."
+              placeholder="VD: Cảm ơn bạn đã tin tưởng ủng hộ nông sản sạch Evergreen Mart..."
               [ngModel]="replyContent()"
               (ngModelChange)="replyContent.set($event)"
             ></textarea>

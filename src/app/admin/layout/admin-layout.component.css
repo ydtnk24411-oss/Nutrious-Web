@@ -57,10 +57,18 @@
   z-index: 2;
 }
 
+.admin-sidebar-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 9px;
+}
 .admin-sidebar-logo {
+  background: #ffffff !important;
+  padding: 3px;
   width: 42px;
   height: 42px;
-  background: linear-gradient(135deg, #176b3a 0%, #10321c 100%);
+  /* background replaced by white for evergreen logo */
   border: 1.5px solid #85dd52;
   border-radius: 11px;
   display: flex;
@@ -551,7 +559,7 @@
   align-items: center;
   gap: 8px;
   padding: 9px 16px;
-  background: linear-gradient(135deg, #176b3a 0%, #10321c 100%);
+  /* background replaced by white for evergreen logo */
   color: #ffffff;
   border: 1px solid rgba(133, 221, 82, 0.35);
   border-radius: 10px;
@@ -625,7 +633,7 @@
 .admin-user-avatar {
   width: 34px;
   height: 34px;
-  background: linear-gradient(135deg, #176b3a 0%, #10321c 100%);
+  /* background replaced by white for evergreen logo */
   border-radius: 50%;
   display: flex;
   align-items: center;

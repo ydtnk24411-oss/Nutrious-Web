@@ -25,6 +25,7 @@
           </ol>
         </nav>
 
+
         <div class="xl-detail-topbar">
           <button type="button" class="xl-back-btn" (click)="closeDetailView()">
             ← Quay lại danh sách thực đơn
@@ -33,6 +34,7 @@
             <a routerLink="/promotions" class="xl-top-pill">🎁 Xem thêm Deal &amp; Voucher</a>
             <a routerLink="/cart" class="xl-top-pill xl-top-pill--primary">🛒 Giỏ hàng của tôi</a>
           </div>
+
         </div>
 
         <article class="xl-recipe-detail-page">
@@ -186,7 +188,7 @@
                       </div>
                       @if (item.product) {
                         <div class="xl-detail-ing-store">
-                          <span>Sản phẩm tại Xanh Lá: </span>
+                          <span>Sản phẩm tại Evergreen Mart: </span>
                           <a [routerLink]="getProductLink(item.product)" class="xl-prod-name-link">
                             {{ item.product.name }} ({{ item.product.weight || item.product.packSize || 'Gói chuẩn' }})
                           </a>
@@ -237,7 +239,7 @@
               </div>
 
               <div class="xl-chef-tips-box">
-                <div class="xl-chef-tips-title">🌟 Bí quyết từ Đầu bếp &amp; Chuyên gia Dinh dưỡng Xanh Lá</div>
+                <div class="xl-chef-tips-title">🌟 Bí quyết từ Đầu bếp &amp; Chuyên gia Dinh dưỡng Evergreen Mart</div>
                 <p>{{ detail.chefTips }}</p>
               </div>
             </section>
@@ -362,7 +364,7 @@
           <section class="xl-detail-section-card" style="margin-top:28px">
             <div class="xl-detail-sec-head">
               <h2>🧺 Danh sách {{ planDetail.matchedProducts.length }} nguyên liệu nông sản trong gói</h2>
-              <span>Tất cả đều đang có sẵn tại cửa hàng Xanh Lá</span>
+              <span>Tất cả đều đang có sẵn tại cửa hàng Evergreen Mart</span>
             </div>
             <div class="xl-plan-products-grid">
               @for (prod of planDetail.matchedProducts; track prod._id) {
@@ -402,7 +404,7 @@
             <span class="xl-hero-kicker">{{ heroConfig().kicker }}</span>
             <h1 class="xl-modern-hero-title">Thiết kế thực đơn cá nhân hóa theo Ngày &amp; theo Tuần</h1>
             <p class="xl-modern-hero-sub">
-              Tuỳ chỉnh mục tiêu (Tập Gym tăng cơ, Giảm cân siết mỡ, Giữ dáng), chọn số bữa ăn mỗi ngày (2, 3 hoặc 4 bữa), định lượng Kcal, Đạm, Chất xơ và Ngân sách đi chợ — kết nối 100% nông sản tươi sạch từ cửa hàng Xanh Lá.
+              Tuỳ chỉnh mục tiêu (Tập Gym tăng cơ, Giảm cân siết mỡ, Giữ dáng), chọn số bữa ăn mỗi ngày (2, 3 hoặc 4 bữa), định lượng Kcal, Đạm, Chất xơ và Ngân sách đi chợ — kết nối 100% nông sản tươi sạch từ cửa hàng Evergreen Mart.
             </p>
             <div class="xl-modern-hero-btns">
               <button type="button" class="xl-hero-btn-primary" (click)="scrollToElement('meal-planner-section')">
@@ -418,7 +420,7 @@
           </div>
 
           <div class="xl-modern-hero-visual">
-            <img [src]="heroConfig().bannerImage" alt="Thực đơn dinh dưỡng lành mạnh Xanh Lá" (error)="onImageError($event)" />
+            <img [src]="heroConfig().bannerImage" alt="Thực đơn dinh dưỡng lành mạnh Evergreen Mart" (error)="onImageError($event)" />
             <div class="xl-hero-floating-card">
               <span class="xl-floating-icon">🥗</span>
               <div>
@@ -978,6 +980,7 @@
                     }
                   </div>
 
+
                   <div class="xl-planner-buy-btns">
                     <button type="button" class="xl-planner-buy-day" (click)="buyDayPlanIngredients(dayPlan)">
                       🛒 Mua nguyên liệu {{ plannerMode() === 'day' ? 'Thực đơn Ngày (-12%)' : dayPlan.dayLabel + ' (-12%)' }}
@@ -987,6 +990,7 @@
                         🧺 Mua trọn gói Cả Tuần 7 Ngày (-20%)
                       </button>
                     }
+
                   </div>
                 </div>
               </div>
@@ -1309,7 +1313,7 @@
           </svg>
         </div>
         <p class="xl-disclaimer-text">
-          <strong>Lưu ý:</strong> Thông tin dinh dưỡng và gợi ý khẩu phần trên đây chỉ mang tính chất tham khảo dựa trên tiêu chuẩn khuyến nghị chung. Xanh Lá không đưa ra tư vấn y tế hay chẩn đoán dinh dưỡng chuyên sâu. Người đang có bệnh lý đặc biệt hoặc phụ nữ mang thai vui lòng tham khảo ý kiến của bác sĩ hoặc chuyên gia dinh dưỡng.
+          <strong>Lưu ý:</strong> Thông tin dinh dưỡng và gợi ý khẩu phần trên đây chỉ mang tính chất tham khảo dựa trên tiêu chuẩn khuyến nghị chung. Evergreen Mart không đưa ra tư vấn y tế hay chẩn đoán dinh dưỡng chuyên sâu. Người đang có bệnh lý đặc biệt hoặc phụ nữ mang thai vui lòng tham khảo ý kiến của bác sĩ hoặc chuyên gia dinh dưỡng.
         </p>
       </footer>
 

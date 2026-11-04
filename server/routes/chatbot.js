@@ -43,13 +43,13 @@ function buildSystemPrompt(catalogSnippet, persona = 'nutribot', profile = null)
 Bạn cung cấp lời khuyên chuyên sâu về thực phẩm, dinh dưỡng và lối sống lành mạnh (Eat-Clean, Giảm mỡ, Tăng cơ, Cắt nét, Huyết áp, Tiểu đường, Ăn chay).
 Bạn có khả năng nhận diện hình ảnh món ăn & đồ uống, bóc tách nguyên liệu, ước tính chính xác lượng Calo (kcal), Macro (Đạm, Tinh bột, Chất béo, Chất xơ) và đưa ra lời khuyên cá nhân hóa dựa trên thể trạng của người dùng.`;
   } else if (persona === 'chef') {
-    personaInstruction = 'Bạn đóng vai trò Bếp trưởng Xanh Lá, chuyên gia ẩm thực hữu cơ, hướng dẫn công thức nấu ăn sáng tạo, cách kết hợp rau củ thịt cá thành món ngon chuẩn vị gia đình.';
+    personaInstruction = 'Bạn đóng vai trò Bếp trưởng Evergreen Mart, chuyên gia ẩm thực hữu cơ, hướng dẫn công thức nấu ăn sáng tạo, cách kết hợp rau củ thịt cá thành món ngon chuẩn vị gia đình.';
   } else if (persona === 'nutritionist') {
-    personaInstruction = 'Bạn đóng vai trò Chuyên gia Dinh dưỡng Xanh Lá, tư vấn thực phẩm giàu vitamin, thực đơn eat-clean, kiểm soát calo và lợi ích sức khỏe từ rau củ quả tươi.';
+    personaInstruction = 'Bạn đóng vai trò Chuyên gia Dinh dưỡng Evergreen Mart, tư vấn thực phẩm giàu vitamin, thực đơn eat-clean, kiểm soát calo và lợi ích sức khỏe từ rau củ quả tươi.';
   } else if (persona === 'support') {
-    personaInstruction = 'Bạn đóng vai trò Hỗ trợ viên chăm sóc khách hàng Xanh Lá, giải đáp về vận chuyển xe lạnh, kiểm tra đơn hàng, chính sách 1 đổi 1 và voucher ưu đãi.';
+    personaInstruction = 'Bạn đóng vai trò Hỗ trợ viên chăm sóc khách hàng Evergreen Mart, giải đáp về vận chuyển xe lạnh, kiểm tra đơn hàng, chính sách 1 đổi 1 và voucher ưu đãi.';
   } else {
-    personaInstruction = 'Bạn là Trợ lý AI Nông sản Xanh Lá thông thái và thân thiện, hỗ trợ khách hàng tìm kiếm nông sản sạch, gợi ý thực đơn, tư vấn mua sắm và giải đáp thắc mắc.';
+    personaInstruction = 'Bạn là Trợ lý AI Nông sản Evergreen Mart thông thái và thân thiện, hỗ trợ khách hàng tìm kiếm nông sản sạch, gợi ý thực đơn, tư vấn mua sắm và giải đáp thắc mắc.';
   }
 
   // Inject User Health Profile if provided (from NutriBot profile engine)
@@ -79,7 +79,7 @@ Yêu cầu: Luôn dựa vào chỉ số BMI và mục tiêu này để cá nhân
   return `${personaInstruction}
 ${profileSnippet}
 
-THÔNG TIN HỆ SINH THÁI NÔNG TRẠI XANH LÁ:
+THÔNG TIN HỆ SINH THÁI NÔNG SẢN EVERGREEN MART:
 - Nông sản 100% hữu cơ chuẩn VietGAP & GlobalGAP từ Đà Lạt và Ba Vì.
 - Thu hoạch sớm mỗi ngày, vận chuyển bằng xe lạnh chuyên dụng 0°C – 4°C.
 - Miễn phí giao hàng (0₫) cho đơn từ 300.000₫. Đơn dưới 300.000₫ đồng giá 25.000₫.
@@ -91,7 +91,7 @@ ${catalogSnippet}
 YÊU CẦU PHẢN HỒI:
 - Trả lời bằng tiếng Việt lịch thiệp, khoa học, ấm áp, dùng các emoji tươi mát (🩺, 🥗, 🍎, 🥩, 🌿, ✨).
 - Định dạng Markdown rõ ràng (tiêu đề, in đậm, danh sách gạch đầu dòng).
-- Khi gợi ý món hoặc nguyên liệu thay thế lành mạnh, ưu tiên nhắc các sản phẩm sạch đang có tại Xanh Lá Farm.`;
+- Khi gợi ý món hoặc nguyên liệu thay thế lành mạnh, ưu tiên nhắc các sản phẩm sạch đang có tại Evergreen Mart.`;
 }
 
 async function logMessageToConv(conv, userMsg, botReply) {
@@ -131,7 +131,7 @@ function isInternalIssueRequiringHuman(cleanLower) {
   if (paymentIssues) {
     return {
       type: 'payment',
-      reason: 'Vấn đề **thanh toán, trừ tiền hoặc giao dịch ngân hàng** liên quan đến việc tra soát sao kê nội bộ trên hệ sinh thái tài chính Xanh Lá.',
+      reason: 'Vấn đề **thanh toán, trừ tiền hoặc giao dịch ngân hàng** liên quan đến việc tra soát sao kê nội bộ trên hệ sinh thái tài chính Evergreen Mart.',
     };
   }
   if (refundIssues) {
@@ -290,8 +290,8 @@ router.post('/message', optionalAuth, async (req, res, next) => {
         timestamp: new Date(),
       });
       const aiReply = internalIssue
-        ? `⚠️ **NutriBot thông báo chuyển tiếp:** ${internalIssue.reason}\n\nNutriBot đã kết nối cuộc trò chuyện đến **Chuyên viên tư vấn & Chăm sóc khách hàng Xanh Lá**. Nhân viên sẽ tiếp nhận và kiểm tra trực tiếp cho bạn ngay tại đây nhé! 🌿`
-        : 'NutriBot đã chuyển yêu cầu của bạn đến chuyên viên tư vấn Xanh Lá. Bạn vui lòng đợi trong giây lát, chuyên viên sẽ tham gia hỗ trợ trực tiếp tại đây! 🌿';
+        ? `⚠️ **NutriBot thông báo chuyển tiếp:** ${internalIssue.reason}\n\nNutriBot đã kết nối cuộc trò chuyện đến **Chuyên viên tư vấn & Chăm sóc khách hàng Evergreen Mart**. Nhân viên sẽ tiếp nhận và kiểm tra trực tiếp cho bạn ngay tại đây nhé! 🌿`
+        : 'NutriBot đã chuyển yêu cầu của bạn đến chuyên viên tư vấn Evergreen Mart. Bạn vui lòng đợi trong giây lát, chuyên viên sẽ tham gia hỗ trợ trực tiếp tại đây! 🌿';
 
       conv.messages.push({
         sender: 'ai',
@@ -448,7 +448,7 @@ router.post('/message', optionalAuth, async (req, res, next) => {
             `• **Hình thức:** ${order.paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng (COD)' : 'Chuyển khoản / Đã thanh toán'}\n` +
             `• **Thời gian đặt:** ${new Date(order.createdAt).toLocaleString('vi-VN')}\n\n` +
             `**Danh sách món trong đơn:**\n${itemsSummary}\n\n` +
-            `🚛 *Xanh Lá cam kết bảo quản bằng xe lạnh chuyên dụng từ nông trại đến tận cửa nhà bạn.*`;
+            `🚛 *Evergreen Mart cam kết bảo quản bằng xe lạnh chuyên dụng từ nông trại đến tận cửa nhà bạn.*`;
 
           return res.json({ success: true, reply: replyText, products: [] });
         }
@@ -469,14 +469,14 @@ router.post('/message', optionalAuth, async (req, res, next) => {
           return `🎟️ Mã: **${v.code}** — Giảm **${val}** ${minVal} - *${v.name}*`;
         }).join('\n');
 
-        const replyText = `🎉 **Xanh Lá Farm hiện đang có các ưu đãi hấp dẫn dành riêng cho bạn:**\n\n${voucherList}\n\n` +
+        const replyText = `🎉 **Evergreen Mart hiện đang có các ưu đãi hấp dẫn dành riêng cho bạn:**\n\n${voucherList}\n\n` +
           `💡 *Bạn có thể nhập mã này tại bước Thanh toán (Checkout) hoặc xem thêm ở trang [Ưu đãi / Vouchers](/vouchers).*`;
 
         return res.json({ success: true, reply: replyText, products: [] });
       } else {
         return res.json({
           success: true,
-          reply: `🌿 Hiện tại Xanh Lá đang áp dụng chính sách **Miễn phí vận chuyển xe lạnh toàn thành phố cho đơn hàng từ 300.000₫** và tích điểm thành viên hạng Kim cương nhận chiết khấu đến 10%!`,
+          reply: `🌿 Hiện tại Evergreen Mart đang áp dụng chính sách **Miễn phí vận chuyển xe lạnh toàn thành phố cho đơn hàng từ 300.000₫** và tích điểm thành viên hạng Kim cương nhận chiết khấu đến 10%!`,
           products: []
         });
       }
@@ -484,13 +484,13 @@ router.post('/message', optionalAuth, async (req, res, next) => {
 
     // 3.5. Hỏi về Chính sách giao hàng & Xe lạnh
     if (cleanLower.includes('giao hang') || cleanLower.includes('phi ship') || cleanLower.includes('van chuyen') || cleanLower.includes('xe lanh') || cleanLower.includes('bao quan')) {
-      const replyText = `🚚 **Chính sách Giao nhận & Bảo quản tại Xanh Lá Farm:**\n\n` +
+      const replyText = `🚚 **Chính sách Giao nhận & Bảo quản tại Evergreen Mart:**\n\n` +
         `1. **Giao hàng xe lạnh chuyên dụng:** Toàn bộ rau củ, quả, thịt cá tươi sống được vận chuyển ở nhiệt độ chuẩn 0°C – 4°C, cam kết độ giòn ngọt nguyên bản như vừa hái tại vườn.\n` +
         `2. **Tốc độ giao hàng:** Giao hỏa tốc 2 giờ tại nội thành Hà Nội & TP. Hồ Chí Minh.\n` +
         `3. **Phí vận chuyển:**\n` +
         `   • **Miễn phí ship (0₫)** cho đơn hàng từ **300.000₫** trở lên.\n` +
         `   • Đơn dưới 300.000₫: Đồng giá hỗ trợ 25.000₫ nội thành.\n` +
-        `4. **Bảo hành 1 đổi 1 trong 24 giờ:** Nếu sản phẩm bị dập hỏng hoặc không đạt cam kết tươi sạch, Xanh Lá đổi mới ngay lập tức!`;
+        `4. **Bảo hành 1 đổi 1 trong 24 giờ:** Nếu sản phẩm bị dập hỏng hoặc không đạt cam kết tươi sạch, Evergreen Mart đổi mới ngay lập tức!`;
 
       return res.json({ success: true, reply: replyText, products: [] });
     }
@@ -572,7 +572,7 @@ router.post('/message', optionalAuth, async (req, res, next) => {
       `Tôi có thể hỗ trợ bạn:\n` +
       `• 📷 **Nhận diện món ăn qua ảnh:** Tải ảnh đĩa ăn hoặc đồ uống lên, tôi sẽ phân tích nguyên liệu, tính lượng Calo và đưa ra lời khuyên dinh dưỡng tức thì!\n` +
       `• 🩺 **Cá nhân hóa thực đơn:** Tính toán chỉ số BMI, TDEE, thiết kế thực đơn Eat-Clean, giảm mỡ, tăng cơ hoặc ăn kiêng theo bệnh lý.\n` +
-      `• 🥗 **Nông sản hữu cơ:** Tìm kiếm rau củ quả, thịt cá chuẩn VietGAP & GlobalGAP từ nông trại Xanh Lá.\n` +
+      `• 🥗 **Nông sản hữu cơ:** Tìm kiếm rau củ quả, thịt cá chuẩn VietGAP & GlobalGAP từ nông trại Evergreen Mart.\n` +
       `• 🚚 **Đơn hàng & Giao vận:** Tra cứu lộ trình xe lạnh bảo quản 0°C – 4°C.\n\n` +
       `*Hôm nay bạn cần NutriBot phân tích món ăn hay tư vấn dinh dưỡng gì nào?*`;
 
@@ -620,7 +620,7 @@ async function analyzeFoodImageLocal(imageBase64, caption, profile) {
       calories: '550 - 750 kcal',
       protein: '32g', carbs: '52g', fat: '28g', fiber: '3g',
       isHealthy: false,
-      advice: 'Bữa ăn giàu đạm nhưng có hàm lượng chất béo bão hòa và tinh bột nhanh khá cao. Nên ăn kèm một đĩa rau xà lách tươi Xanh Lá không sốt để cân bằng vi chất.',
+      advice: 'Bữa ăn giàu đạm nhưng có hàm lượng chất béo bão hòa và tinh bột nhanh khá cao. Nên ăn kèm một đĩa rau xà lách tươi Evergreen Mart không sốt để cân bằng vi chất.',
       searchKeywords: ['thit bo', 'ca chua', 'xa lach']
     },
     {
@@ -690,7 +690,7 @@ async function analyzeFoodImageLocal(imageBase64, caption, profile) {
     `• 🥑 **Chất béo (Fat):** ${matched.fat}\n` +
     `• 🥦 **Chất xơ (Fiber):** ${matched.fiber}\n\n` +
     `🩺 **Đánh giá chuyên gia NutriBot:**\n${matched.advice}${personalNote}\n\n` +
-    `🌿 *Xanh Lá Farm hiện đang có sẵn các nguyên liệu tươi sạch thu hoạch trong ngày để bạn tự tay chế biến món ngon này:*`;
+    `🌿 *Evergreen Mart hiện đang có sẵn các nguyên liệu tươi sạch thu hoạch trong ngày để bạn tự tay chế biến món ngon này:*`;
 
   return {
     reply,
@@ -812,7 +812,7 @@ async function detectIngredientsWithGemini(imageBase64, apiKey) {
   const mimeType = match ? match[1] : 'image/jpeg';
   const cleanBase64 = match ? match[2] : imageBase64;
 
-  const promptText = `You are a culinary AI for "Xanh Lá Farm" organic supermarket.
+  const promptText = `You are a culinary AI for "Evergreen Mart" organic supermarket.
 Analyze this photo of a refrigerator, pantry, table, or food ingredients.
 Identify all individual cooking ingredients visible (e.g., vegetables, meats, seafood, eggs, fruits, roots, seasonings).
 Return ONLY a valid JSON array of objects with "name" (in Vietnamese) and "category", for example:
@@ -983,7 +983,7 @@ function handleBmiCalculation(trimmed, cleanLower, profile) {
 
   if (bmiNum < 18.5) {
     status = 'Thiếu cân (Gầy)';
-    advice = 'Bạn nên tăng nhẹ lượng calo nạp vào (+300 - 500 kcal/ngày). Ưu tiên các loại hạt giàu calo tốt (hạt điều, óc chó), sữa hạt, bơ sáp và thịt cá tươi từ Xanh Lá.';
+    advice = 'Bạn nên tăng nhẹ lượng calo nạp vào (+300 - 500 kcal/ngày). Ưu tiên các loại hạt giàu calo tốt (hạt điều, óc chó), sữa hạt, bơ sáp và thịt cá tươi từ Evergreen Mart.';
   } else if (bmiNum < 23) {
     status = 'Thể trạng Chuẩn (Lý tưởng)';
     advice = 'Chúc mừng bạn! Chỉ số hình thể rất tuyệt vời. Hãy duy trì chế độ ăn Eat-Clean giàu rau xanh và uống đủ nước để giữ vững phong độ nhé.';
@@ -992,7 +992,7 @@ function handleBmiCalculation(trimmed, cleanLower, profile) {
     advice = 'Bạn nên tạo mức thâm hụt calo vừa phải (-300 kcal/ngày). Tăng cường rau họ cải (cải thìa, cải bó xôi) để no lâu và giảm tinh bột nhanh.';
   } else {
     status = 'Béo phì';
-    advice = 'NutriBot khuyên bạn nên kiểm soát khẩu phần chặt chẽ, cắt giảm hoàn toàn nước ngọt và đồ chiên rán, thay bằng 50% đĩa ăn là rau củ hữu cơ Xanh Lá luộc/hấp.';
+    advice = 'NutriBot khuyên bạn nên kiểm soát khẩu phần chặt chẽ, cắt giảm hoàn toàn nước ngọt và đồ chiên rán, thay bằng 50% đĩa ăn là rau củ hữu cơ Evergreen Mart luộc/hấp.';
   }
 
   const minIdealWeight = (18.5 * heightM * heightM).toFixed(1);

@@ -357,7 +357,7 @@ router.post('/request-human', optionalAuth, async (req, res, next) => {
     conv.messages.push({
       sender: 'ai',
       senderName: 'NutriBot',
-      content: 'NutriBot đã chuyển yêu cầu của bạn đến chuyên viên tư vấn Xanh Lá. Nhân viên sẽ phản hồi trực tiếp cho bạn tại đây trong giây lát! 🌿',
+      content: 'NutriBot đã chuyển yêu cầu của bạn đến chuyên viên tư vấn Evergreen Mart. Nhân viên sẽ phản hồi trực tiếp cho bạn tại đây trong giây lát! 🌿',
       timestamp: new Date(),
     });
     conv.lastMessage = 'Yêu cầu gặp nhân viên tư vấn';
