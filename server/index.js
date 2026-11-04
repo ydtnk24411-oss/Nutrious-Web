@@ -19,18 +19,33 @@ const voucherRoutes = require('./routes/vouchers');
 const loyaltyRoutes = require('./routes/loyalty');
 const reviewRoutes = require('./routes/reviews');
 const chatbotRoutes = require('./routes/chatbot');
+const inventoryRoutes = require('./routes/inventory');
+const supportRoutes = require('./routes/support');
+const complaintRoutes = require('./routes/complaints');
 const nutritionRoutes = require('./routes/nutrition');
 const footerRoutes = require('./routes/footer');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const allowedOrigins = new Set([
+  'http://localhost:4200',
+  'http://127.0.0.1:4200',
+  'http://localhost:4201',
+  'http://127.0.0.1:4201',
+]);
 
 // ── Middleware ────────────────────────────────────────────
 app.use(
   cors({
-    origin: ['http://localhost:4200', 'http://127.0.0.1:4200', 'http://localhost:4201', 'http://127.0.0.1:4201'],
-    credentials: true
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.has(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Origin is not allowed by CORS'));
+    },
+    credentials: true,
   })
 );
 app.use(morgan('dev'));
@@ -52,6 +67,9 @@ app.use('/api/vouchers', voucherRoutes);
 app.use('/api/loyalty', loyaltyRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/support', supportRoutes);
+app.use('/api/complaints', complaintRoutes);
 app.use('/api/nutrition', nutritionRoutes);
 app.use('/api/footer', footerRoutes);
 

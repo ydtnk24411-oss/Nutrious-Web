@@ -1,18 +1,22 @@
 const router = require('express').Router();
-const User   = require('../models/User');
-const Order  = require('../models/Order');
-const { protect, adminOnly } = require('../middleware/auth');
+const User = require('../models/User');
+const Order = require('../models/Order');
+const bcrypt = require('bcryptjs');
+const { protect, adminOnly, staffOnly } = require('../middleware/auth');
 
-// GET /api/users — admin
-router.get('/', protect, adminOnly, async (req, res, next) => {
+// GET /api/users — admin/staff list
+router.get('/', protect, staffOnly, async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search, role } = req.query;
     const filter = {};
-    if (role)   filter.role = role;
-    if (search) filter.$or = [
-      { name:  { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } },
-    ];
+    if (role && role !== 'all') filter.role = role;
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } },
+      ];
+    }
     const skip = (Number(page) - 1) * Number(limit);
     const [users, total] = await Promise.all([
       User.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)),
@@ -23,24 +27,25 @@ router.get('/', protect, adminOnly, async (req, res, next) => {
 });
 
 // GET /api/users/purchase-stats — get customer purchase statistics
-router.get('/purchase-stats', protect, adminOnly, async (req, res, next) => {
+router.get('/purchase-stats', protect, staffOnly, async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search, role } = req.query;
     const filter = {};
-    if (role) filter.role = role;
-    if (search) filter.$or = [
-      { name:  { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } },
-    ];
+    if (role && role !== 'all') filter.role = role;
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } },
+      ];
+    }
     const skip = (Number(page) - 1) * Number(limit);
 
-    // Get users with pagination
     const [users, total] = await Promise.all([
       User.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)),
       User.countDocuments(filter),
     ]);
 
-    // For each user, calculate purchase stats from orders (active, non-cancelled)
     const usersWithStats = await Promise.all(
       users.map(async (user) => {
         const orderStats = await Order.aggregate([
@@ -50,12 +55,6 @@ router.get('/purchase-stats', protect, adminOnly, async (req, res, next) => {
               _id: '$user',
               totalSpent: { $sum: '$total' },
               orderCount: { $sum: 1 },
-            },
-          },
-          {
-            $project: {
-              totalSpent: 1,
-              orderCount: 1,
             },
           },
         ]);
@@ -77,8 +76,37 @@ router.get('/purchase-stats', protect, adminOnly, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// POST /api/users/staff — create new staff account
+router.post('/staff', protect, adminOnly, async (req, res, next) => {
+  try {
+    const { name, email, password, role = 'support', phone } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Vui lòng nhập tên, email và mật khẩu' });
+    }
+
+    const existing = await User.findOne({ email: email.toLowerCase().trim() });
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'Email này đã được sử dụng' });
+    }
+
+    const user = await User.create({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      password,
+      role,
+      phone: phone || '',
+      isActive: true,
+    });
+
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    res.status(201).json({ success: true, data: userObj });
+  } catch (err) { next(err); }
+});
+
 // GET /api/users/:id — admin
-router.get('/:id', protect, adminOnly, async (req, res, next) => {
+router.get('/:id', protect, staffOnly, async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
@@ -86,17 +114,26 @@ router.get('/:id', protect, adminOnly, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// PUT /api/users/:id — admin (update role / isActive)
+// PUT /api/users/:id — admin (update role / isActive / profile)
 router.put('/:id', protect, adminOnly, async (req, res, next) => {
   try {
-    const { role, isActive, name, phone } = req.body;
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { role, isActive, name, phone },
-      { new: true, runValidators: true }
-    );
+    const { role, isActive, name, phone, password } = req.body;
+    const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
-    res.json({ success: true, data: user });
+
+    if (role !== undefined) user.role = role;
+    if (isActive !== undefined) user.isActive = isActive;
+    if (name) user.name = name;
+    if (phone !== undefined) user.phone = phone;
+    if (password && password.trim().length >= 6) {
+      user.password = password.trim();
+    }
+
+    await user.save();
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    res.json({ success: true, data: userObj });
   } catch (err) { next(err); }
 });
 

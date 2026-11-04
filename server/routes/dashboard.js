@@ -1,11 +1,15 @@
-const router    = require('express').Router();
-const Product   = require('../models/Product');
-const Order     = require('../models/Order');
-const User      = require('../models/User');
-const Event     = require('../models/Event');
-const Booking   = require('../models/Booking');
-const Category  = require('../models/Category');
-const { protect, adminOnly } = require('../middleware/auth');
+const router = require('express').Router();
+const Product = require('../models/Product');
+const Order = require('../models/Order');
+const User = require('../models/User');
+const Event = require('../models/Event');
+const Booking = require('../models/Booking');
+const Category = require('../models/Category');
+const Complaint = require('../models/Complaint');
+const Conversation = require('../models/Conversation');
+const Voucher = require('../models/Voucher');
+const Review = require('../models/Review');
+const { protect, staffOnly } = require('../middleware/auth');
 
 function buildDateFilter(startDate, endDate) {
   const filter = {};
@@ -24,11 +28,12 @@ function buildDateFilter(startDate, endDate) {
   return filter;
 }
 
-// GET /api/dashboard/stats — admin
-router.get('/stats', protect, adminOnly, async (req, res, next) => {
+// GET /api/dashboard/stats — admin/staff
+router.get('/stats', protect, staffOnly, async (req, res, next) => {
   try {
     const { startDate, endDate } = req.query;
     const dateFilter = buildDateFilter(startDate, endDate);
+    const now = new Date();
 
     const [
       totalProducts,
@@ -41,6 +46,12 @@ router.get('/stats', protect, adminOnly, async (req, res, next) => {
       validOrdersCount,
       recentOrders,
       ordersByStatus,
+      lowStockCount,
+      outOfStockCount,
+      pendingComplaintsCount,
+      waitingSupportCount,
+      activeVouchersCount,
+      reviews,
     ] = await Promise.all([
       Product.countDocuments({ isActive: { $ne: false } }),
       Order.countDocuments(dateFilter),
@@ -67,9 +78,31 @@ router.get('/stats', protect, adminOnly, async (req, res, next) => {
         { $match: dateFilter },
         { $group: { _id: '$status', count: { $sum: 1 } } },
       ]),
+
+      // Low stock count (<= 10 and > 0)
+      Product.countDocuments({ isActive: { $ne: false }, stock: { $gt: 0, $lte: 10 } }),
+
+      // Out of stock count (<= 0)
+      Product.countDocuments({ isActive: { $ne: false }, stock: { $lte: 0 } }),
+
+      // Pending complaints
+      Complaint.countDocuments({ status: 'pending' }),
+
+      // Waiting live chat
+      Conversation.countDocuments({ status: 'WAITING_FOR_ADMIN' }),
+
+      // Active vouchers
+      Voucher.countDocuments({ isActive: true, endDate: { $gte: now } }),
+
+      // Reviews summary
+      Review.find({ isHidden: { $ne: true } }).select('rating'),
     ]);
 
     const averageOrderValue = validOrdersCount > 0 ? (revenue[0]?.total ?? 0) / validOrdersCount : 0;
+
+    let reviewSum = 0;
+    reviews.forEach((r) => (reviewSum += r.rating || 0));
+    const averageRating = reviews.length ? Math.round((reviewSum / reviews.length) * 10) / 10 : 0;
 
     res.json({
       success: true,
@@ -84,13 +117,22 @@ router.get('/stats', protect, adminOnly, async (req, res, next) => {
         averageOrderValue,
         recentOrders,
         ordersByStatus,
+        lowStockCount,
+        outOfStockCount,
+        pendingComplaintsCount,
+        waitingSupportCount,
+        activeVouchersCount,
+        reviewStats: {
+          averageRating,
+          totalReviews: reviews.length,
+        },
       },
     });
   } catch (err) { next(err); }
 });
 
 // GET /api/dashboard/revenue — revenue over time chart
-router.get('/revenue', protect, adminOnly, async (req, res, next) => {
+router.get('/revenue', protect, staffOnly, async (req, res, next) => {
   try {
     const { startDate, endDate } = req.query;
     
@@ -125,7 +167,6 @@ router.get('/revenue', protect, adminOnly, async (req, res, next) => {
       revMap[key] = { revenue: d.revenue, count: d.count };
     });
 
-    // Generate daily points between start and end
     const formattedData = [];
     const cur = new Date(start);
     cur.setHours(0, 0, 0, 0);
@@ -150,7 +191,7 @@ router.get('/revenue', protect, adminOnly, async (req, res, next) => {
 });
 
 // GET /api/dashboard/revenue-by-category — bar chart data
-router.get('/revenue-by-category', protect, adminOnly, async (req, res, next) => {
+router.get('/revenue-by-category', protect, staffOnly, async (req, res, next) => {
   try {
     const { startDate, endDate } = req.query;
     const dateFilter = {
@@ -158,16 +199,14 @@ router.get('/revenue-by-category', protect, adminOnly, async (req, res, next) =>
       status: { $ne: 'cancelled' },
     };
 
-    // 1. Lấy tất cả categories đang active
     const categories = await Category.find({ isActive: { $ne: false } });
-    const catMap = {}; // categoryId -> name
+    const catMap = {};
     categories.forEach(c => {
       catMap[c._id.toString()] = c.name;
     });
 
-    // 2. Lấy tất cả products để map sang category
     const products = await Product.find({ isActive: { $ne: false } }).select('name slug categoryId');
-    const prodMap = {}; // productId hoặc name -> categoryName
+    const prodMap = {};
     for (const p of products) {
       const catName = catMap[p.categoryId?.toString()] || 'Khác';
       prodMap[p._id.toString()] = catName;
@@ -175,82 +214,69 @@ router.get('/revenue-by-category', protect, adminOnly, async (req, res, next) =>
       if (p.slug) prodMap[p.slug] = catName;
     }
 
-    // 3. Aggregate order items
     const orderItems = await Order.aggregate([
       { $match: dateFilter },
       { $unwind: '$items' },
       {
         $group: {
-          _id: {
-            productId:   '$items.product',
-            productName: '$items.productName',
-          },
-          totalRevenue: { $sum: { $multiply: ['$items.priceNumber', '$items.quantity'] } },
-          totalQty:     { $sum: '$items.quantity' },
+          _id: { $ifNull: ['$items.product', '$items.productName'] },
+          revenue: { $sum: { $multiply: ['$items.priceNumber', '$items.quantity'] } },
         },
       },
     ]);
 
-    // 4. Tổng hợp doanh thu theo tên category
-    const revenueMap = {};
+    const catRevMap = {};
+    categories.forEach(c => { catRevMap[c.name] = 0; });
+    catRevMap['Khác'] = 0;
+
     for (const item of orderItems) {
-      const pId = item._id.productId ? item._id.productId.toString() : '';
-      const pName = item._id.productName || '';
-      const catName = prodMap[pId] || prodMap[pName] || 'Khác';
-      revenueMap[catName] = (revenueMap[catName] || 0) + (item.totalRevenue || 0);
+      const cat = prodMap[item._id] || 'Khác';
+      catRevMap[cat] = (catRevMap[cat] || 0) + item.revenue;
     }
 
-    // 5. Build result theo danh sách categories
-    const result = categories.map(cat => ({
-      label:   cat.name,
-      slug:    cat.slug,
-      revenue: revenueMap[cat.name] || 0,
-    }));
-
-    // Thêm "Khác" nếu có doanh thu nằm ngoài danh mục đã biết
-    const knownNames = new Set(categories.map(c => c.name));
-    let otherRevenue = 0;
-    for (const [key, val] of Object.entries(revenueMap)) {
-      if (!knownNames.has(key)) otherRevenue += val;
-    }
-    if (otherRevenue > 0) {
-      result.push({ label: 'Khác', slug: 'other', revenue: otherRevenue });
-    }
+    const result = Object.entries(catRevMap)
+      .map(([label, revenue]) => ({ label, slug: label, revenue }))
+      .filter(item => item.revenue > 0)
+      .sort((a, b) => b.revenue - a.revenue);
 
     res.json({ success: true, data: result });
   } catch (err) { next(err); }
 });
 
-// GET /api/dashboard/top-products — top selling products by quantity
-router.get('/top-products', protect, adminOnly, async (req, res, next) => {
+// GET /api/dashboard/top-products — top selling products
+router.get('/top-products', protect, staffOnly, async (req, res, next) => {
   try {
-    const { startDate, endDate, limit = 10 } = req.query;
+    const { startDate, endDate, limit = 5 } = req.query;
     const dateFilter = {
       ...buildDateFilter(startDate, endDate),
       status: { $ne: 'cancelled' },
     };
 
-    const topProducts = await Order.aggregate([
+    const top = await Order.aggregate([
       { $match: dateFilter },
       { $unwind: '$items' },
       {
         $group: {
           _id: '$items.productName',
-          totalQuantity: { $sum: '$items.quantity' },
-          totalRevenue:  { $sum: { $multiply: ['$items.priceNumber', '$items.quantity'] } },
+          quantity: { $sum: '$items.quantity' },
+          revenue: { $sum: { $multiply: ['$items.priceNumber', '$items.quantity'] } },
+          image: { $first: '$items.productImage' },
         },
       },
-      { $sort: { totalQuantity: -1, totalRevenue: -1 } },
-      { $limit: parseInt(limit) },
+      { $sort: { quantity: -1, revenue: -1 } },
+      { $limit: Number(limit) },
+      {
+        $project: {
+          _id: 0,
+          name: '$_id',
+          quantity: 1,
+          revenue: 1,
+          image: { $ifNull: ['$image', ''] },
+        },
+      },
     ]);
 
-    const result = topProducts.map(p => ({
-      name:     p._id,
-      quantity: p.totalQuantity,
-      revenue:  p.totalRevenue,
-    }));
-
-    res.json({ success: true, data: result });
+    res.json({ success: true, data: top });
   } catch (err) { next(err); }
 });
 

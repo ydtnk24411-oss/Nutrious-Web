@@ -12,6 +12,9 @@ const reviewSchema = new mongoose.Schema(
     images:           [{ type: String }],
     helpfulBy:        [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     verifiedPurchase: { type: Boolean, default: false },
+    adminReply:       { type: String, default: '' },
+    adminReplyAt:     { type: Date, default: null },
+    isHidden:         { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
 );

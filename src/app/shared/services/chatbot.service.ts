@@ -1,4 +1,4 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { ApiService } from './api.service';
 
 export type AIProvider = 'gemini' | 'openai' | 'local';
@@ -19,16 +19,22 @@ export interface ChatProduct {
 
 export interface ChatMessage {
   id: string;
-  sender: 'user' | 'bot';
+  sender: 'user' | 'bot' | 'admin';
+  senderRole?: 'customer' | 'ai' | 'admin';
+  senderName?: string;
+  senderAvatar?: string;
   text: string;
   timestamp: Date;
   image?: string; // base64 or url of uploaded image
   products?: ChatProduct[];
+  isHandedOver?: boolean;
 }
 
 const INITIAL_WELCOME_MESSAGE: ChatMessage = {
   id: 'welcome_1',
   sender: 'bot',
+  senderRole: 'ai',
+  senderName: 'NutriBot AI',
   text: `Xin chào! Tôi là **Trợ lý AI Xanh Lá** kết nối trực tiếp với **Google Gemini** 🌿✨\n\nTôi có thể giải đáp mọi thắc mắc về nông sản sạch, hướng dẫn cách chế biến món ngon và tư vấn dinh dưỡng. Đặc biệt, bạn có thể **bấm nút máy ảnh 📷 để tải ảnh món ăn hoặc nguyên liệu lên**, tôi sẽ tự động nhận diện và gợi ý chi tiết!\n\n*Hôm nay bạn cần tôi hỗ trợ gì nào?*`,
   timestamp: new Date(),
 };
@@ -46,11 +52,52 @@ export class ChatbotService {
   provider = signal<AIProvider>('gemini');
   apiKey = signal<string>(this.loadStoredApiKey());
   persona = signal<AIPersona>('general');
+  sessionId = signal<string>(this.initSessionId());
+
+  // Live support sync state
+  chatStatus = signal<'AI_PROCESSING' | 'WAITING_FOR_ADMIN' | 'ADMIN_PROCESSING' | 'RESOLVED'>('AI_PROCESSING');
+  assignedStaffName = signal<string>('Chuyên viên tư vấn Xanh Lá');
+  assignedStaffAvatar = signal<string>('');
+  isStaffMode = computed(() => this.chatStatus() === 'WAITING_FOR_ADMIN' || this.chatStatus() === 'ADMIN_PROCESSING');
+
+  private pollTimer: any = null;
 
   constructor() {
     try {
       localStorage.setItem('xanhla_chatbot_provider', 'gemini');
     } catch {}
+
+    // Polling session every 2.5s for real-time 2-way live sync with Admin Support
+    this.pollTimer = setInterval(() => {
+      this.syncSession();
+    }, 2500);
+
+    // Initial check
+    setTimeout(() => this.syncSession(), 600);
+  }
+
+  private initSessionId(): string {
+    try {
+      // Nếu đã đăng nhập, dùng sessionId cố định theo tài khoản người dùng để luôn quy về 1 hội thoại duy nhất
+      const rawUser = localStorage.getItem('xanhla_user_session');
+      if (rawUser) {
+        const u = JSON.parse(rawUser);
+        if (u._id || u.id) {
+          const userSid = `sess_usr_${u._id || u.id}`;
+          localStorage.setItem('xanhla_chat_session_id', userSid);
+          return userSid;
+        }
+      }
+
+      let sid = localStorage.getItem('xanhla_chat_session_id');
+      if (!sid) {
+        sid = 'sess_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+        localStorage.setItem('xanhla_chat_session_id', sid);
+      }
+      return sid;
+    } catch {
+      return 'sess_' + Date.now();
+    }
   }
 
   readonly quickSuggestions = [
@@ -60,6 +107,7 @@ export class ChatbotService {
     '🥩 Nông sản thịt cá tươi sạch trong ngày',
     '🚚 Phí ship xe lạnh & thời gian giao hàng',
     '🎟️ Mã giảm giá & ưu đãi hôm nay',
+    '💬 Gặp nhân viên hỗ trợ trực tiếp',
   ];
 
   toggle(): void {
@@ -67,12 +115,14 @@ export class ChatbotService {
     this.isOpen.set(next);
     if (next) {
       this.hasUnread.set(false);
+      this.syncSession();
     }
   }
 
   open(): void {
     this.isOpen.set(true);
     this.hasUnread.set(false);
+    this.syncSession();
   }
 
   close(): void {
@@ -97,9 +147,134 @@ export class ChatbotService {
         timestamp: new Date(),
       }
     ]);
+    this.chatStatus.set('AI_PROCESSING');
+
+    // Nếu người dùng đã đăng nhập, giữ nguyên session ID theo user để gom 1 khung chat duy nhất
+    try {
+      const rawUser = localStorage.getItem('xanhla_user_session');
+      if (rawUser) {
+        const u = JSON.parse(rawUser);
+        if (u._id || u.id) {
+          const userSid = `sess_usr_${u._id || u.id}`;
+          this.sessionId.set(userSid);
+          localStorage.setItem('xanhla_chat_session_id', userSid);
+          return;
+        }
+      }
+    } catch {}
+
+    const freshSid = 'sess_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+    this.sessionId.set(freshSid);
+    try { localStorage.setItem('xanhla_chat_session_id', freshSid); } catch {}
   }
 
-  sendMessage(text: string, imageBase64?: string): void {
+  requestHumanSupport(): void {
+    if (this.loading()) return;
+    this.chatStatus.set('WAITING_FOR_ADMIN');
+    this.sendMessage('Tôi muốn gặp nhân viên tư vấn hỗ trợ trực tiếp.', undefined, true);
+  }
+
+  returnToAi(): void {
+    if (this.loading()) return;
+    this.loading.set(true);
+    this.api.post<{
+      success: boolean;
+      reply?: string;
+      status?: any;
+      messages?: any[];
+    }>('/chatbot/switch-to-ai', {
+      sessionId: this.sessionId()
+    }).subscribe({
+      next: (res) => {
+        this.loading.set(false);
+        this.chatStatus.set('AI_PROCESSING');
+        const replyText = res.reply || 'NutriBot đã quay trở lại đồng hành cùng bạn 🌿! Bạn có câu hỏi gì về dinh dưỡng hoặc nông sản không?';
+        const botMsg: ChatMessage = {
+          id: 'ai_switch_' + Date.now(),
+          sender: 'bot',
+          senderRole: 'ai',
+          senderName: 'NutriBot AI',
+          text: replyText,
+          timestamp: new Date(),
+        };
+        this.messages.update(msgs => [...msgs, botMsg]);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.chatStatus.set('AI_PROCESSING');
+      }
+    });
+  }
+
+  syncSession(): void {
+    const sid = this.sessionId();
+    if (!sid) return;
+
+    this.api.get<{
+      success: boolean;
+      status: 'AI_PROCESSING' | 'WAITING_FOR_ADMIN' | 'ADMIN_PROCESSING' | 'RESOLVED';
+      assignedTo?: { name?: string; email?: string; avatar?: string };
+      customerName?: string;
+      customerAvatar?: string;
+      messages: Array<{
+        _id?: string;
+        sender: 'customer' | 'ai' | 'admin';
+        senderName?: string;
+        senderAvatar?: string;
+        content: string;
+        timestamp: string | Date;
+      }>;
+    }>(`/chatbot/session/${sid}`).subscribe({
+      next: (res) => {
+        if (!res.success) return;
+
+        if (res.status) {
+          this.chatStatus.set(res.status);
+        }
+
+        if (res.assignedTo?.name) {
+          this.assignedStaffName.set(res.assignedTo.name);
+          if (res.assignedTo.avatar) {
+            this.assignedStaffAvatar.set(res.assignedTo.avatar);
+          }
+        }
+
+        if (Array.isArray(res.messages) && res.messages.length > 0) {
+          const currentMsgs = this.messages();
+          const serverAdminMsgs = res.messages.filter(m => m.sender === 'admin');
+          const localAdminCount = currentMsgs.filter(m => m.sender === 'admin').length;
+
+          // If new admin reply arrived and chatbot window is closed, alert customer
+          if (serverAdminMsgs.length > localAdminCount && !this.isOpen()) {
+            this.hasUnread.set(true);
+          }
+
+          // If in staff mode or message count changed, sync stream from server
+          if (this.isStaffMode() || res.messages.length >= currentMsgs.length) {
+            const mapped: ChatMessage[] = res.messages.map((m, idx) => ({
+              id: m._id || `srv_${idx}_${new Date(m.timestamp).getTime()}`,
+              sender: m.sender === 'customer' ? 'user' : (m.sender === 'admin' ? 'admin' : 'bot'),
+              senderRole: m.sender,
+              senderName: m.senderName,
+              senderAvatar: m.senderAvatar,
+              text: m.content,
+              timestamp: new Date(m.timestamp),
+              isHandedOver: m.sender === 'ai' && /chuyên viên tư vấn|chuyển yêu cầu|tiếp nhận/i.test(m.content),
+            }));
+
+            if (mapped.length > 0) {
+              this.messages.set(mapped);
+            }
+          }
+        }
+      },
+      error: () => {
+        // Quietly ignore polling network errors
+      }
+    });
+  }
+
+  sendMessage(text: string, imageBase64?: string, requestHuman = false): void {
     const trimmed = text.trim();
     if (!trimmed && !imageBase64) return;
     if (this.loading()) return;
@@ -107,6 +282,7 @@ export class ChatbotService {
     const userMsg: ChatMessage = {
       id: 'msg_' + Date.now(),
       sender: 'user',
+      senderRole: 'customer',
       text: trimmed || (imageBase64 ? '📷 [Đã tải ảnh lên để AI phân tích]' : ''),
       image: imageBase64,
       timestamp: new Date(),
@@ -119,30 +295,71 @@ export class ChatbotService {
       .slice(-6)
       .map(m => ({ role: m.sender === 'user' ? 'user' : 'assistant', text: m.text }));
 
-    this.api.post<{ success: boolean; reply: string; products?: ChatProduct[] }>('/chatbot/message', {
+    let customerInfo: any = null;
+    try {
+      const rawUser = localStorage.getItem('xanhla_user_session');
+      if (rawUser) {
+        const u = JSON.parse(rawUser);
+        customerInfo = {
+          id: u._id || u.id,
+          name: u.name,
+          email: u.email,
+          phone: u.phone,
+          avatar: u.avatar,
+        };
+      }
+    } catch {}
+
+    this.api.post<{
+      success: boolean;
+      reply?: string;
+      products?: ChatProduct[];
+      isHandedOver?: boolean;
+      liveChat?: boolean;
+      status?: any;
+    }>('/chatbot/message', {
       message: trimmed,
       image: imageBase64 || null,
       history: historyPayload,
       provider: 'gemini',
       apiKey: this.apiKey() || '',
-      persona: this.persona()
+      persona: this.persona(),
+      sessionId: this.sessionId(),
+      requestHuman,
+      customerInfo,
+      customerName: customerInfo?.name,
+      customerEmail: customerInfo?.email,
+      customerPhone: customerInfo?.phone,
+      customerAvatar: customerInfo?.avatar,
     }).subscribe({
       next: (res) => {
-        const botMsg: ChatMessage = {
-          id: 'reply_' + Date.now(),
-          sender: 'bot',
-          text: res.reply || 'AI Xanh Lá đã tiếp nhận thông tin từ bạn!',
-          timestamp: new Date(),
-          products: res.products && res.products.length > 0 ? res.products : undefined,
-        };
-        this.messages.update(msgs => [...msgs, botMsg]);
+        if (res.status) {
+          this.chatStatus.set(res.status);
+        }
+
+        // Nếu có phản hồi (AI reply hoặc thông báo chuyển nhân viên)
+        if (res.reply && res.reply.trim()) {
+          const botMsg: ChatMessage = {
+            id: 'reply_' + Date.now(),
+            sender: 'bot',
+            senderRole: 'ai',
+            senderName: 'NutriBot AI',
+            text: res.reply,
+            timestamp: new Date(),
+            products: res.products && res.products.length > 0 ? res.products : undefined,
+            isHandedOver: res.isHandedOver,
+          };
+          this.messages.update(msgs => [...msgs, botMsg]);
+        }
+
         this.loading.set(false);
       },
       error: (err) => {
-        console.warn('Backend unavailable, activating Gemini fallback:', err?.message || err);
+        console.warn('Backend unavailable, activating fallback:', err?.message || err);
         const fallbackMsg: ChatMessage = {
           id: 'err_' + Date.now(),
           sender: 'bot',
+          senderRole: 'ai',
           text: this.getOfflineFallbackReply(trimmed, !!imageBase64),
           timestamp: new Date(),
         };

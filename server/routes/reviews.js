@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { body } = require('express-validator');
 const Review = require('../models/Review');
 const Order = require('../models/Order');
-const { protect, optionalAuth } = require('../middleware/auth');
+const { protect, optionalAuth, staffOnly, hasRole, adminOnly } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 
 const toDto = (r, viewerId) => ({
@@ -17,6 +17,9 @@ const toDto = (r, viewerId) => ({
   images: r.images || [],
   helpfulCount: (r.helpfulBy || []).length,
   isHelpful: viewerId ? (r.helpfulBy || []).some((u) => String(u) === String(viewerId)) : false,
+  adminReply: r.adminReply,
+  adminReplyAt: r.adminReplyAt,
+  isHidden: r.isHidden,
   createdAt: r.createdAt,
   verifiedPurchase: r.verifiedPurchase,
 });
@@ -24,7 +27,7 @@ const toDto = (r, viewerId) => ({
 const buildStats = (reviews) => {
   const dist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
   let sum = 0;
-  reviews.forEach((r) => { dist[r.rating] += 1; sum += r.rating; });
+  reviews.forEach((r) => { dist[r.rating] = (dist[r.rating] || 0) + 1; sum += r.rating; });
   const total = reviews.length;
   return {
     averageRating: total ? Math.round((sum / total) * 10) / 10 : 0,
@@ -33,10 +36,14 @@ const buildStats = (reviews) => {
   };
 };
 
-// GET /api/reviews/product/:productId - public
+// GET /api/reviews/product/:productId - public (only non-hidden)
 router.get('/product/:productId', optionalAuth, async (req, res, next) => {
   try {
-    const reviews = await Review.find({ product: req.params.productId }).sort({ createdAt: -1 });
+    const reviews = await Review.find({
+      product: req.params.productId,
+      isHidden: { $ne: true },
+    }).sort({ createdAt: -1 });
+
     res.json({
       success: true,
       data: reviews.map((r) => toDto(r, req.user?._id)),
@@ -45,7 +52,95 @@ router.get('/product/:productId', optionalAuth, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// POST /api/reviews - cần đăng nhập; người đánh giá luôn là tài khoản trong token
+// GET /api/reviews/admin — list all reviews for admin
+router.get('/admin', protect, staffOnly, async (req, res, next) => {
+  try {
+    const { rating, status, search, page = 1, limit = 50 } = req.query;
+    const filter = {};
+
+    if (rating && rating !== 'all') filter.rating = Number(rating);
+    if (status === 'visible') filter.isHidden = { $ne: true };
+    if (status === 'hidden') filter.isHidden = true;
+    if (search) {
+      filter.$or = [
+        { productName: { $regex: search, $options: 'i' } },
+        { userName: { $regex: search, $options: 'i' } },
+        { content: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const [allReviews, reviews, total] = await Promise.all([
+      Review.find({}), // for global stats
+      Review.find(filter)
+        .sort({ createdAt: -1 })
+        .skip((Number(page) - 1) * Number(limit))
+        .limit(Number(limit))
+        .populate('user', 'name email avatar'),
+      Review.countDocuments(filter),
+    ]);
+
+    const globalStats = buildStats(allReviews);
+    const pendingReplyCount = allReviews.filter((r) => !r.adminReply).length;
+
+    res.json({
+      success: true,
+      data: reviews,
+      stats: {
+        total: allReviews.length,
+        averageRating: globalStats.averageRating,
+        ratingDistribution: globalStats.ratingDistribution,
+        pendingReplyCount,
+      },
+      total,
+    });
+  } catch (err) { next(err); }
+});
+
+// PUT /api/reviews/:id/reply — admin reply
+router.put('/:id/reply', protect, hasRole('support', 'admin'), async (req, res, next) => {
+  try {
+    const { reply } = req.body;
+    const review = await Review.findById(req.params.id);
+    if (!review) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đánh giá.' });
+    }
+
+    review.adminReply = (reply || '').trim();
+    review.adminReplyAt = new Date();
+    await review.save();
+
+    res.json({ success: true, data: review });
+  } catch (err) { next(err); }
+});
+
+// PUT /api/reviews/:id/hide — toggle isHidden
+router.put('/:id/hide', protect, hasRole('support', 'admin'), async (req, res, next) => {
+  try {
+    const { isHidden } = req.body;
+    const review = await Review.findById(req.params.id);
+    if (!review) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đánh giá.' });
+    }
+
+    review.isHidden = typeof isHidden === 'boolean' ? isHidden : !review.isHidden;
+    await review.save();
+
+    res.json({ success: true, data: review });
+  } catch (err) { next(err); }
+});
+
+// DELETE /api/reviews/:id — admin remove
+router.delete('/:id', protect, adminOnly, async (req, res, next) => {
+  try {
+    const review = await Review.findByIdAndDelete(req.params.id);
+    if (!review) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đánh giá.' });
+    }
+    res.json({ success: true, message: 'Đã xóa đánh giá.' });
+  } catch (err) { next(err); }
+});
+
+// POST /api/reviews - customer create review
 router.post(
   '/',
   protect,
@@ -62,7 +157,6 @@ router.post(
       if (exists) {
         return res.status(409).json({ success: false, message: 'Bạn đã đánh giá sản phẩm này rồi.' });
       }
-      // "Đã mua hàng": tài khoản này có đơn (chưa huỷ) chứa sản phẩm
       const purchased = await Order.exists({
         'items.product': productId,
         status: { $ne: 'cancelled' },
@@ -83,7 +177,7 @@ router.post(
   }
 );
 
-// POST /api/reviews/:id/helpful - mỗi tài khoản chỉ bấm "hữu ích" 1 lần
+// POST /api/reviews/:id/helpful
 router.post('/:id/helpful', protect, async (req, res, next) => {
   try {
     const review = await Review.findByIdAndUpdate(
@@ -97,4 +191,3 @@ router.post('/:id/helpful', protect, async (req, res, next) => {
 });
 
 module.exports = router;
-

@@ -1,13 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
 
+export type UserRole = 'customer' | 'admin' | 'sales' | 'warehouse' | 'support' | 'content';
+
 export interface ApiUser {
   _id: string;
   name: string;
   email: string;
   phone: string;
   avatar?: string;
-  role: 'customer' | 'admin';
+  role: UserRole;
   isActive: boolean;
   createdAt: string;
   totalSpent?: number;
@@ -37,8 +39,20 @@ export class UserApiService {
     return this.api.get<{ success: boolean; data: ApiUser }>(`/users/${id}`);
   }
 
-  update(id: string, body: Partial<ApiUser>) {
+  createStaff(body: { name: string; email: string; password?: string; role: UserRole; phone?: string }) {
+    return this.api.post<{ success: boolean; data: ApiUser }>('/users/staff', body);
+  }
+
+  update(id: string, body: Partial<ApiUser> & { password?: string }) {
     return this.api.put<{ success: boolean; data: ApiUser }>(`/users/${id}`, body);
+  }
+
+  updateRole(id: string, role: UserRole) {
+    return this.api.put<{ success: boolean; data: ApiUser }>(`/users/${id}`, { role });
+  }
+
+  toggleActive(id: string, isActive: boolean) {
+    return this.api.put<{ success: boolean; data: ApiUser }>(`/users/${id}`, { isActive });
   }
 
   remove(id: string) {

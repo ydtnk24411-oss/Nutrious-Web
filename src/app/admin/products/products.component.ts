@@ -1,6 +1,7 @@
 import { Component, signal, inject, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { CategoryApiService, ApiCategory } from '../../shared/services/category-api.service';
 
@@ -37,11 +38,15 @@ const EMPTY_FORM = (): Partial<ApiProduct> => ({
   styleUrl: './products.component.css',
 })
 export class AdminProductsComponent implements OnInit {
-
   private productApi = inject(ProductApiService);
   private categoryApi = inject(CategoryApiService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
 
-  // Data
+  // Tab
+  activeTab = signal<'list' | 'categories'>('list');
+
+  // Products Data
   protected categories = signal<ApiCategory[]>([]);
   products = signal<ApiProduct[]>([]);
   total = signal(0);
@@ -50,6 +55,17 @@ export class AdminProductsComponent implements OnInit {
   saving = signal(false);
   error = signal('');
   success = signal('');
+
+  // Categories Tab Data
+  categoriesWithCounts = signal<ApiCategory[]>([]);
+  catLoading = signal(false);
+  catModalOpen = signal(false);
+  editingCat = signal<ApiCategory | null>(null);
+  catFormName = signal('');
+  catFormSlug = signal('');
+  catFormImage = signal('');
+  catFormOrder = signal(0);
+  catSubmitting = signal(false);
 
   // Filters
   search = signal('');
@@ -61,13 +77,12 @@ export class AdminProductsComponent implements OnInit {
   // View mode
   viewMode = signal<'grid' | 'table'>('grid');
 
-  // Modal
+  // Product Modal
   modalOpen = signal(false);
   modalMode = signal<ModalMode>('create');
   editId = signal('');
   form = signal<Partial<ApiProduct>>(EMPTY_FORM());
 
-  // Options
   readonly preparations = ['Raw', 'Marinated'];
   readonly types = ['Fresh', 'Dried'];
 
@@ -78,9 +93,31 @@ export class AdminProductsComponent implements OnInit {
   ngOnInit(): void {
     this.loadCategories();
     this.load();
+
+    this.route.queryParamMap.subscribe((params) => {
+      const tab = params.get('tab');
+      if (tab === 'categories') {
+        this.activeTab.set('categories');
+        this.loadCategoryCounts();
+      } else {
+        this.activeTab.set('list');
+      }
+    });
   }
 
-  // Load categories from MongoDB
+  switchTab(tab: 'list' | 'categories'): void {
+    this.activeTab.set(tab);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: tab === 'categories' ? { tab: 'categories' } : {},
+    });
+    if (tab === 'categories') {
+      this.loadCategoryCounts();
+    } else {
+      this.load();
+    }
+  }
+
   loadCategories(): void {
     this.categoryApi.getAll().subscribe({
       next: (res) => {
@@ -92,7 +129,17 @@ export class AdminProductsComponent implements OnInit {
     });
   }
 
-  // Load products
+  loadCategoryCounts(): void {
+    this.catLoading.set(true);
+    this.categoryApi.getWithCounts().subscribe({
+      next: (res) => {
+        if (res.success) this.categoriesWithCounts.set(res.data);
+        this.catLoading.set(false);
+      },
+      error: () => this.catLoading.set(false),
+    });
+  }
+
   load(): void {
     this.loading.set(true);
     this.error.set('');
@@ -106,7 +153,6 @@ export class AdminProductsComponent implements OnInit {
     if (this.search()) {
       params['search'] = this.search();
     }
-
     if (this.category()) {
       params['categoryId'] = this.category();
     }
@@ -125,7 +171,6 @@ export class AdminProductsComponent implements OnInit {
     });
   }
 
-  // Get category name by categoryId or product categoryVi
   getCategoryName(cat: any, product?: ApiProduct): string {
     if (product?.categoryVi) return product.categoryVi;
     if (!cat) return 'Chưa phân loại';
@@ -135,7 +180,6 @@ export class AdminProductsComponent implements OnInit {
     return 'Chưa phân loại';
   }
 
-  // Filter and sort
   onSearch(val: string): void {
     this.search.set(val);
     this.page.set(1);
@@ -174,7 +218,6 @@ export class AdminProductsComponent implements OnInit {
     }
   }
 
-  // Open create modal
   openCreate(): void {
     const defaultCat = this.categories().length > 0 ? this.categories()[0]._id : '';
     this.form.set({ ...EMPTY_FORM(), categoryId: defaultCat });
@@ -184,7 +227,6 @@ export class AdminProductsComponent implements OnInit {
     this.modalOpen.set(true);
   }
 
-  // Open edit modal
   openEdit(p: ApiProduct): void {
     const catId = typeof p.categoryId === 'object' && (p.categoryId as any)?._id
       ? (p.categoryId as any)._id.toString()
@@ -201,7 +243,6 @@ export class AdminProductsComponent implements OnInit {
     this.error.set('');
   }
 
-  // Update form field
   setField(key: keyof ApiProduct, val: unknown): void {
     this.form.update(f => ({
       ...f,
@@ -209,7 +250,6 @@ export class AdminProductsComponent implements OnInit {
     }));
   }
 
-  // Auto-generate slug from name
   onNameChange(val: string): void {
     this.form.update(f => ({
       ...f,
@@ -221,7 +261,6 @@ export class AdminProductsComponent implements OnInit {
     }));
   }
 
-  // Create or update product
   save(): void {
     const f = this.form();
 
@@ -262,7 +301,6 @@ export class AdminProductsComponent implements OnInit {
     });
   }
 
-  // Delete product
   remove(p: ApiProduct): void {
     if (!confirm(`Xóa sản phẩm "${p.name}"?`)) {
       return;
@@ -277,6 +315,90 @@ export class AdminProductsComponent implements OnInit {
       error: () => {
         this.error.set('Xóa thất bại.');
       },
+    });
+  }
+
+  // Category Modal Handlers
+  openCreateCategory(): void {
+    this.editingCat.set(null);
+    this.catFormName.set('');
+    this.catFormSlug.set('');
+    this.catFormImage.set('');
+    this.catFormOrder.set(this.categoriesWithCounts().length + 1);
+    this.catModalOpen.set(true);
+  }
+
+  openEditCategory(cat: ApiCategory): void {
+    this.editingCat.set(cat);
+    this.catFormName.set(cat.name);
+    this.catFormSlug.set(cat.slug);
+    this.catFormImage.set(cat.image || '');
+    this.catFormOrder.set(cat.order || 0);
+    this.catModalOpen.set(true);
+  }
+
+  closeCatModal(): void {
+    this.catModalOpen.set(false);
+    this.editingCat.set(null);
+  }
+
+  saveCategory(): void {
+    const name = this.catFormName().trim();
+    let slug = this.catFormSlug().trim();
+    if (!name) {
+      alert('Vui lòng nhập tên danh mục');
+      return;
+    }
+    if (!slug) {
+      slug = '/category/' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    }
+
+    this.catSubmitting.set(true);
+    const payload = {
+      name,
+      slug,
+      image: this.catFormImage(),
+      order: this.catFormOrder(),
+    };
+
+    const editItem = this.editingCat();
+    const req$ = editItem
+      ? this.categoryApi.update(editItem._id, payload)
+      : this.categoryApi.create(payload);
+
+    req$.subscribe({
+      next: (res) => {
+        this.catSubmitting.set(false);
+        if (res.success) {
+          this.closeCatModal();
+          this.success.set('Đã lưu danh mục thành công!');
+          setTimeout(() => this.success.set(''), 3000);
+          this.loadCategoryCounts();
+          this.loadCategories();
+        }
+      },
+      error: (err) => {
+        this.catSubmitting.set(false);
+        alert(err.error?.message || 'Không thể lưu danh mục.');
+      },
+    });
+  }
+
+  removeCategory(cat: ApiCategory): void {
+    if ((cat.productCount || 0) > 0) {
+      alert(`Không thể xóa danh mục "${cat.name}" vì đang có ${cat.productCount} sản phẩm liên kết!`);
+      return;
+    }
+    if (!confirm(`Bạn có chắc muốn xóa danh mục "${cat.name}"?`)) return;
+
+    this.categoryApi.remove(cat._id).subscribe({
+      next: (res) => {
+        if (res.success) {
+          this.loadCategoryCounts();
+          this.loadCategories();
+        }
+      },
+      error: (err) => alert(err.error?.message || 'Lỗi khi xóa danh mục.'),
     });
   }
 }

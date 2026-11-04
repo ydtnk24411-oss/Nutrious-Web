@@ -9,6 +9,9 @@ const Product = require('../models/Product');
 const Category = require('../models/Category');
 const Order = require('../models/Order');
 const Voucher = require('../models/Voucher');
+const Conversation = require('../models/Conversation');
+const User = require('../models/User');
+const { optionalAuth } = require('../middleware/auth');
 
 // Status dictionary for orders
 const ORDER_STATUS_MAP = {
@@ -91,8 +94,70 @@ YÊU CẦU PHẢN HỒI:
 - Khi gợi ý món hoặc nguyên liệu thay thế lành mạnh, ưu tiên nhắc các sản phẩm sạch đang có tại Xanh Lá Farm.`;
 }
 
+async function logMessageToConv(conv, userMsg, botReply) {
+  if (!conv) return;
+  try {
+    conv.messages.push({
+      sender: 'customer',
+      senderName: conv.customerName || 'Khách hàng',
+      senderAvatar: conv.customerAvatar || '',
+      content: userMsg || '[Hình ảnh]',
+      timestamp: new Date(),
+    });
+    conv.messages.push({
+      sender: 'ai',
+      senderName: 'NutriBot',
+      senderAvatar: 'https://api.iconify.design/lucide:bot.svg?color=%23176b3a',
+      content: botReply,
+      timestamp: new Date(),
+    });
+    conv.lastMessage = botReply;
+    conv.lastMessageAt = new Date();
+    await conv.save();
+  } catch (_) {}
+}
+
+// Helper: Check if question involves internal operational/financial issues that AI cannot resolve
+function isInternalIssueRequiringHuman(cleanLower) {
+  // 1. Payment, Money transfer, Bank transaction issues
+  const paymentIssues = /(da tru tien|bi tru tien|tru tien ma chua|chuyen khoan nham|sai cu phap|chuyen tien roi ma|loi thanh toan|treo tien|tien chua vao|sao ke ngan hang|chuyen sai so tai khoan)/i.test(cleanLower);
+
+  // 2. Refund, Compensation, Money return
+  const refundIssues = /(yeu cau hoan tien|hoan lai tien|doi lai tien|tra lai tien|hoan tien vao tai khoan|boi thuong tien)/i.test(cleanLower);
+
+  // 3. Account security, Official corporate tax invoice disputes
+  const accountIssues = /(khoa tai khoan|bi khoa nick|mat tai khoan|khoi phuc tai khoan|tranh chap hoa don|xuat hoa don vat doanh nghiep)/i.test(cleanLower);
+
+  if (paymentIssues) {
+    return {
+      type: 'payment',
+      reason: 'Vấn đề **thanh toán, trừ tiền hoặc giao dịch ngân hàng** liên quan đến việc tra soát sao kê nội bộ trên hệ sinh thái tài chính Xanh Lá.',
+    };
+  }
+  if (refundIssues) {
+    return {
+      type: 'refund',
+      reason: 'Yêu cầu **hoàn tiền hoặc bồi thường tài chính** thuộc nghiệp vụ kế toán nội bộ và cần được nhân viên phụ trách xác nhận thủ tục hoàn tiền.',
+    };
+  }
+  if (accountIssues) {
+    return {
+      type: 'account',
+      reason: 'Vấn đề **bảo mật tài khoản hoặc hóa đơn thuế doanh nghiệp** cần chuyên viên quản trị xác minh trực tiếp để đảm bảo quyền lợi.',
+    };
+  }
+  return null;
+}
+
+// Helper: Check if customer explicitly requested human agent
+function isExplicitHumanRequest(cleanLower, requestHumanFlag) {
+  if (requestHumanFlag === true || requestHumanFlag === 'true') return true;
+  return /^(gap nhan vien|gap tu van|nhan vien ho tro|tu van vien|gap nguoi|gap admin|chuyen nhan vien|gap cskh|nhan vien truc tiep)$/i.test(cleanLower) ||
+         /(muon gap|can gap|cho gap|chuyen gap|chuyen toi|noi chuyen voi|gap truc tiep) (nhan vien|tu van|cskh|nguoi that|admin)/i.test(cleanLower);
+}
+
 // POST /api/chatbot/message
-router.post('/message', async (req, res, next) => {
+router.post('/message', optionalAuth, async (req, res, next) => {
   try {
     const {
       message = '',
@@ -111,6 +176,170 @@ router.post('/message', async (req, res, next) => {
     const trimmed = (message || '').trim();
     const cleanLower = removeDiacritics(trimmed);
 
+    // Resolve customer identity from auth token or request body
+    const authUser = req.user;
+    let customerId = authUser ? authUser._id : (req.body.customerId || req.body.customerInfo?.id || req.body.customerInfo?._id || null);
+    let customerName = authUser ? authUser.name : (req.body.customerName || req.body.customerInfo?.name || '');
+    let customerEmail = authUser ? authUser.email : (req.body.customerEmail || req.body.customerInfo?.email || '');
+    let customerPhone = authUser ? (authUser.phone || '') : (req.body.customerPhone || req.body.customerInfo?.phone || '');
+    let customerAvatar = authUser ? (authUser.avatar || '') : (req.body.customerAvatar || req.body.customerInfo?.avatar || '');
+
+    // If no user found from token, try looking up User by email
+    if (!customerId && customerEmail) {
+      try {
+        const u = await User.findOne({ email: customerEmail.toLowerCase().trim() });
+        if (u) {
+          customerId = u._id;
+          if (!customerName) customerName = u.name;
+          if (!customerPhone && u.phone) customerPhone = u.phone;
+          if (!customerAvatar && u.avatar) customerAvatar = u.avatar;
+        }
+      } catch (_) {}
+    }
+
+    const sessionId = req.body.sessionId || req.body.userId || 'guest_chat_session';
+    let conv = null;
+    try {
+      // 1. Tìm hội thoại của người dùng nếu đã đăng nhập hoặc có email (tránh tạo 2 khung chat cùng 1 người)
+      if (customerId) {
+        conv = await Conversation.findOne({ customer: customerId });
+      }
+      if (!conv && customerEmail) {
+        conv = await Conversation.findOne({ customerEmail: customerEmail.toLowerCase().trim() });
+      }
+      // 2. Nếu là khách vãng lai, tìm theo sessionId
+      if (!conv && sessionId) {
+        conv = await Conversation.findOne({ sessionId });
+      }
+
+      if (!conv) {
+        conv = new Conversation({
+          sessionId,
+          customer: customerId,
+          customerName: customerName || 'Khách hàng',
+          customerEmail,
+          customerPhone,
+          customerAvatar,
+          messages: [],
+        });
+      } else {
+        // Luôn giữ sessionId mới nhất để đồng bộ mượt mà với browser
+        if (sessionId && conv.sessionId !== sessionId) {
+          conv.sessionId = sessionId;
+        }
+        if (!conv.customer && customerId) conv.customer = customerId;
+        if ((!conv.customerName || conv.customerName === 'Khách hàng') && customerName) {
+          conv.customerName = customerName;
+        }
+        if (!conv.customerEmail && customerEmail) conv.customerEmail = customerEmail;
+        if (!conv.customerPhone && customerPhone) conv.customerPhone = customerPhone;
+        if (!conv.customerAvatar && customerAvatar) conv.customerAvatar = customerAvatar;
+      }
+    } catch (_) {}
+
+    // 1. Kiểm tra nếu người dùng muốn quay lại hỏi Trợ lý AI
+    const wantsAiReturn = req.body.switchToAi === true ||
+      /^(tro ve ai|quay lai ai|hoi ai|gap ai|tro lai ai|quay ve ai|tro ve bot|quay lai bot)$/i.test(cleanLower) ||
+      /(tro ve|quay lai|noi chuyen voi) (tro ly ai|nutribot|bot|ai)/i.test(cleanLower);
+
+    if (wantsAiReturn && conv) {
+      conv.status = 'AI_PROCESSING';
+      const returnMsg = {
+        sender: 'ai',
+        senderName: 'NutriBot',
+        senderAvatar: 'https://api.iconify.design/lucide:bot.svg?color=%23176b3a',
+        content: 'NutriBot đã quay trở lại đồng hành cùng bạn 🌿! Bạn có câu hỏi gì về dinh dưỡng hoặc nông sản không?',
+        timestamp: new Date(),
+      };
+      if (trimmed) {
+        conv.messages.push({
+          sender: 'customer',
+          senderName: conv.customerName || 'Khách hàng',
+          senderAvatar: conv.customerAvatar || '',
+          content: trimmed,
+          timestamp: new Date(),
+        });
+      }
+      conv.messages.push(returnMsg);
+      conv.lastMessage = returnMsg.content;
+      conv.lastMessageAt = new Date();
+      await conv.save();
+      return res.json({
+        success: true,
+        reply: returnMsg.content,
+        status: 'AI_PROCESSING',
+        isHandedOver: false,
+        liveChat: false,
+        messages: conv.messages,
+      });
+    }
+
+    // 2. Chỉ chuyển nhân viên khi:
+    // (a) Khách hàng bấm nút chuyển / gửi yêu cầu chuyển rõ ràng (requestHuman hoặc gõ yêu cầu gặp người)
+    // (b) Hoặc AI không thể xử lý thông tin nội bộ (thanh toán, hoàn tiền, trừ tiền ngân hàng, bảo mật)
+    const isExplicitTransfer = isExplicitHumanRequest(cleanLower, req.body.requestHuman);
+    const internalIssue = isInternalIssueRequiringHuman(cleanLower);
+
+    if ((isExplicitTransfer || internalIssue) && conv) {
+      conv.status = 'WAITING_FOR_ADMIN';
+      conv.messages.push({
+        sender: 'customer',
+        senderName: conv.customerName || customerName || 'Khách hàng',
+        senderAvatar: conv.customerAvatar || customerAvatar || '',
+        content: trimmed,
+        timestamp: new Date(),
+      });
+      const aiReply = internalIssue
+        ? `⚠️ **NutriBot thông báo chuyển tiếp:** ${internalIssue.reason}\n\nNutriBot đã kết nối cuộc trò chuyện đến **Chuyên viên tư vấn & Chăm sóc khách hàng Xanh Lá**. Nhân viên sẽ tiếp nhận và kiểm tra trực tiếp cho bạn ngay tại đây nhé! 🌿`
+        : 'NutriBot đã chuyển yêu cầu của bạn đến chuyên viên tư vấn Xanh Lá. Bạn vui lòng đợi trong giây lát, chuyên viên sẽ tham gia hỗ trợ trực tiếp tại đây! 🌿';
+
+      conv.messages.push({
+        sender: 'ai',
+        senderName: 'NutriBot',
+        senderAvatar: 'https://api.iconify.design/lucide:bot.svg?color=%23176b3a',
+        content: aiReply,
+        timestamp: new Date(),
+      });
+      conv.lastMessage = trimmed;
+      conv.lastMessageAt = new Date();
+      conv.unreadAdminCount = (conv.unreadAdminCount || 0) + 1;
+      await conv.save();
+      return res.json({
+        success: true,
+        reply: aiReply,
+        isHandedOver: true,
+        liveChat: true,
+        status: 'WAITING_FOR_ADMIN',
+        messages: conv.messages,
+      });
+    }
+
+    // 3. NẾU ĐANG TRONG CHẾ ĐỘ NHÂN VIÊN (WAITING_FOR_ADMIN HOẶC ADMIN_PROCESSING):
+    // Khách hàng trò chuyện trực tiếp với nhân viên 1-1, TUYỆT ĐỐI KHÔNG GỌI GEMINI NỮA!
+    // Chỉ lưu tin nhắn vào hội thoại để nhân viên trả lời từ trang quản trị.
+    if (conv && (conv.status === 'WAITING_FOR_ADMIN' || conv.status === 'ADMIN_PROCESSING')) {
+      conv.messages.push({
+        sender: 'customer',
+        senderName: conv.customerName || customerName || 'Khách hàng',
+        senderAvatar: conv.customerAvatar || customerAvatar || '',
+        content: trimmed,
+        timestamp: new Date(),
+      });
+      conv.lastMessage = trimmed;
+      conv.lastMessageAt = new Date();
+      conv.unreadAdminCount = (conv.unreadAdminCount || 0) + 1;
+      await conv.save();
+
+      return res.json({
+        success: true,
+        liveChat: true,
+        isHandedOver: true,
+        status: conv.status,
+        reply: '', // Không gọi Gemini, giữ nguyên luồng chat trực tiếp với nhân viên
+        messages: conv.messages,
+      });
+    }
+
     const effectiveGeminiKey = process.env.GEMINI_API_KEY || (provider === 'gemini' ? apiKey : '') || apiKey;
     const effectiveOpenAIKey = (provider === 'openai' ? apiKey : '') || process.env.OPENAI_API_KEY || apiKey;
 
@@ -122,6 +351,7 @@ router.post('/message', async (req, res, next) => {
           const visionResult = await callGeminiVision(image, trimmed, effectiveGeminiKey, persona, profile);
           if (visionResult && visionResult.text) {
             const prods = await findRelatedProducts(removeDiacritics(visionResult.text + ' ' + trimmed));
+            await logMessageToConv(conv, trimmed || '[Ảnh món ăn]', visionResult.text);
             return res.json({ success: true, reply: visionResult.text, products: prods });
           }
         } catch (err) {
@@ -135,6 +365,7 @@ router.post('/message', async (req, res, next) => {
           const visionResult = await callOpenAIVision(image, trimmed, effectiveOpenAIKey, persona, profile);
           if (visionResult && visionResult.text) {
             const prods = await findRelatedProducts(removeDiacritics(visionResult.text + ' ' + trimmed));
+            await logMessageToConv(conv, trimmed || '[Ảnh món ăn]', visionResult.text);
             return res.json({ success: true, reply: visionResult.text, products: prods });
           }
         } catch (err) {
@@ -145,6 +376,7 @@ router.post('/message', async (req, res, next) => {
       // 1.3. Built-in Food & Beverage Vision Analyzer (Local Fallback)
       const localAnalysis = await analyzeFoodImageLocal(image, trimmed, profile);
       const prods = await findRelatedProducts(removeDiacritics(localAnalysis.keywords));
+      await logMessageToConv(conv, trimmed || '[Ảnh món ăn]', localAnalysis.reply);
       return res.json({
         success: true,
         reply: localAnalysis.reply,
@@ -159,6 +391,7 @@ router.post('/message', async (req, res, next) => {
         const reply = await callGeminiAI(trimmed, history, effectiveGeminiKey, persona, profile);
         if (reply && reply.text) {
           const prods = await findRelatedProducts(cleanLower);
+          await logMessageToConv(conv, trimmed, reply.text);
           return res.json({ success: true, reply: reply.text, products: prods });
         }
       } catch (aiErr) {
@@ -169,6 +402,7 @@ router.post('/message', async (req, res, next) => {
         const reply = await callOpenAIAI(trimmed, history, effectiveOpenAIKey, persona, profile);
         if (reply && reply.text) {
           const prods = await findRelatedProducts(cleanLower);
+          await logMessageToConv(conv, trimmed, reply.text);
           return res.json({ success: true, reply: reply.text, products: prods });
         }
       } catch (aiErr) {
@@ -482,12 +716,14 @@ async function getAvailableGeminiModel(apiKey) {
 
       console.log('📋 Danh sách Gemini models khả dụng cho key này:', models);
 
-      // Ưu tiên theo chuẩn Google Gemini mới nhất: gemini-3.8-flash, gemini-3.8-pro
-      const chosen = models.find(m => m === 'gemini-3.8-flash') ||
-                     models.find(m => m === 'gemini-3.8-pro') ||
-                     models.find(m => m.includes('3.8-flash')) ||
-                     models.find(m => m.includes('3.8')) ||
-                     models.find(m => m.includes('flash') && !m.includes('2.5-flash')) ||
+      // Ưu tiên các model ổn định và nhanh nhất
+      const chosen = models.find(m => m === 'gemini-3.5-flash') ||
+                     models.find(m => m === 'gemini-3.5-flash-lite') ||
+                     models.find(m => m === 'gemini-flash-lite-latest') ||
+                     models.find(m => m === 'gemini-flash-latest') ||
+                     models.find(m => m === 'gemini-3.8-flash') ||
+                     models.find(m => m.includes('3.5-flash')) ||
+                     models.find(m => m.includes('flash') && !m.includes('2.5-flash') && !m.includes('image')) ||
                      models[0];
 
       if (chosen) {
@@ -509,8 +745,13 @@ async function getAvailableGeminiModel(apiKey) {
 // ── Gemini Vision API Call ───────────────────────────────────────────────────
 async function callGeminiVision(imageBase64, prompt, apiKey, persona, profile) {
   if (!apiKey) return null;
-  const products = await Product.find({ isActive: { $ne: false } }).limit(20).select('name price categoryVi');
-  const catalogSnippet = products.map(p => `- ${p.name} (${p.price}, ${p.categoryVi})`).join('\n');
+  let catalogSnippet = '';
+  try {
+    const products = await Product.find({ isActive: { $ne: false } }).limit(20).select('name price categoryVi').maxTimeMS(2500);
+    catalogSnippet = products.map(p => `- ${p.name} (${p.price}, ${p.categoryVi})`).join('\n');
+  } catch (dbErr) {
+    console.warn('Catalog snippet fetch skipped for Gemini Vision:', dbErr.message);
+  }
   const systemInstruction = buildSystemPrompt(catalogSnippet, persona, profile);
 
   // Extract base64 and mime
@@ -525,9 +766,11 @@ async function callGeminiVision(imageBase64, prompt, apiKey, persona, profile) {
   const autoModel = await getAvailableGeminiModel(apiKey);
   const candidateModels = [
     ...(autoModel ? [autoModel] : []),
-    'gemini-3.8-flash',
-    'gemini-3.8-pro',
-    'gemini-2.0-flash'
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-flash-lite-latest',
+    'gemini-flash-latest',
+    'gemini-3.8-flash'
   ].filter((v, i, a) => a.indexOf(v) === i);
   for (const model of candidateModels) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
@@ -784,16 +1027,23 @@ function handleMacroAdvice(cleanLower, profile) {
 // ── Text AI Providers (Gemini / OpenAI) ──────────────────────────────────────
 async function callGeminiAI(prompt, history, apiKey, persona, profile) {
   if (!apiKey) return null;
-  const products = await Product.find({ isActive: { $ne: false } }).limit(25).select('name price categoryVi slug');
-  const catalogSnippet = products.map(p => `- ${p.name} (${p.price}, nhóm: ${p.categoryVi})`).join('\n');
+  let catalogSnippet = '';
+  try {
+    const products = await Product.find({ isActive: { $ne: false } }).limit(25).select('name price categoryVi slug').maxTimeMS(2500);
+    catalogSnippet = products.map(p => `- ${p.name} (${p.price}, nhóm: ${p.categoryVi})`).join('\n');
+  } catch (dbErr) {
+    console.warn('Catalog snippet fetch skipped for Gemini AI:', dbErr.message);
+  }
   const systemInstruction = buildSystemPrompt(catalogSnippet, persona, profile);
 
   const autoModel = await getAvailableGeminiModel(apiKey);
   const candidateModels = [
     ...(autoModel ? [autoModel] : []),
-    'gemini-3.8-flash',
-    'gemini-3.8-pro',
-    'gemini-2.0-flash'
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-flash-lite-latest',
+    'gemini-flash-latest',
+    'gemini-3.8-flash'
   ].filter((v, i, a) => a.indexOf(v) === i);
   for (const model of candidateModels) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
@@ -856,33 +1106,38 @@ async function callOpenAIAI(prompt, history, apiKey, persona, profile) {
 
 // ── Search & Helpers ────────────────────────────────────────────────────────
 async function findRelatedProducts(cleanLower) {
-  const productKeywords = extractProductKeywords(cleanLower);
-  let matched = [];
+  try {
+    const productKeywords = extractProductKeywords(cleanLower);
+    let matched = [];
 
-  if (productKeywords.length > 0) {
-    const searchRegex = new RegExp(productKeywords.join('|'), 'i');
-    matched = await Product.find({
-      isActive: { $ne: false },
-      $or: [
-        { name: { $regex: searchRegex } },
-        { categoryVi: { $regex: searchRegex } }
-      ]
-    }).limit(4);
-  }
-
-  if (!matched || matched.length === 0) {
-    if (cleanLower.includes('rau') || cleanLower.includes('cu') || cleanLower.includes('salad')) {
-      matched = await Product.find({ isActive: { $ne: false }, category: 'vegetables' }).limit(4);
-    } else if (cleanLower.includes('trai cay') || cleanLower.includes('hoa qua') || cleanLower.includes('bo')) {
-      matched = await Product.find({ isActive: { $ne: false }, category: 'fruits' }).limit(4);
-    } else if (cleanLower.includes('thit') || cleanLower.includes('bo') || cleanLower.includes('uc ga')) {
-      matched = await Product.find({ isActive: { $ne: false }, category: 'meat' }).limit(4);
-    } else if (cleanLower.includes('ca') || cleanLower.includes('hai san') || cleanLower.includes('ca hoi')) {
-      matched = await Product.find({ isActive: { $ne: false }, category: 'seafood' }).limit(4);
+    if (productKeywords.length > 0) {
+      const searchRegex = new RegExp(productKeywords.join('|'), 'i');
+      matched = await Product.find({
+        isActive: { $ne: false },
+        $or: [
+          { name: { $regex: searchRegex } },
+          { categoryVi: { $regex: searchRegex } }
+        ]
+      }).limit(4).maxTimeMS(2500);
     }
-  }
 
-  return (matched || []).map(formatProductForChat);
+    if (!matched || matched.length === 0) {
+      if (cleanLower.includes('rau') || cleanLower.includes('cu') || cleanLower.includes('salad')) {
+        matched = await Product.find({ isActive: { $ne: false }, category: 'vegetables' }).limit(4).maxTimeMS(2500);
+      } else if (cleanLower.includes('trai cay') || cleanLower.includes('hoa qua') || cleanLower.includes('bo')) {
+        matched = await Product.find({ isActive: { $ne: false }, category: 'fruits' }).limit(4).maxTimeMS(2500);
+      } else if (cleanLower.includes('thit') || cleanLower.includes('bo') || cleanLower.includes('uc ga')) {
+        matched = await Product.find({ isActive: { $ne: false }, category: 'meat' }).limit(4).maxTimeMS(2500);
+      } else if (cleanLower.includes('ca') || cleanLower.includes('hai san') || cleanLower.includes('ca hoi')) {
+        matched = await Product.find({ isActive: { $ne: false }, category: 'seafood' }).limit(4).maxTimeMS(2500);
+      }
+    }
+
+    return (matched || []).map(formatProductForChat);
+  } catch (err) {
+    console.warn('findRelatedProducts error:', err.message);
+    return [];
+  }
 }
 
 function formatProductForChat(p) {
@@ -983,6 +1238,102 @@ router.post('/detect-ingredients', async (req, res, next) => {
       success: true,
       ingredients: results,
       total: results.length
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/chatbot/session/:sessionId — đồng bộ tin nhắn 2 chiều giữa khách hàng và admin
+router.get('/session/:sessionId', optionalAuth, async (req, res, next) => {
+  try {
+    const { sessionId } = req.params;
+    let conv = null;
+
+    // Ưu tiên tìm hội thoại của user đã đăng nhập để gom về 1 khung chat duy nhất
+    if (req.user) {
+      conv = await Conversation.findOne({ customer: req.user._id })
+        .populate('assignedTo', 'name email avatar')
+        .populate('customer', 'name email phone avatar');
+      if (!conv && req.user.email) {
+        conv = await Conversation.findOne({ customerEmail: req.user.email.toLowerCase().trim() })
+          .populate('assignedTo', 'name email avatar')
+          .populate('customer', 'name email phone avatar');
+      }
+    }
+    if (!conv) {
+      conv = await Conversation.findOne({ sessionId })
+        .populate('assignedTo', 'name email avatar')
+        .populate('customer', 'name email phone avatar');
+    }
+
+    if (!conv) {
+      return res.json({
+        success: true,
+        status: 'AI_PROCESSING',
+        messages: [],
+        assignedTo: null,
+      });
+    }
+
+    // Đánh dấu khách đã đọc các tin nhắn từ admin
+    if (conv.unreadCustomerCount > 0) {
+      conv.unreadCustomerCount = 0;
+      await conv.save();
+    }
+
+    res.json({
+      success: true,
+      status: conv.status,
+      assignedTo: conv.assignedTo,
+      customer: conv.customer,
+      customerName: conv.customerName,
+      customerAvatar: conv.customerAvatar,
+      messages: conv.messages,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/chatbot/switch-to-ai — khách bấm nút "Trở về hỏi Trợ lý AI"
+router.post('/switch-to-ai', optionalAuth, async (req, res, next) => {
+  try {
+    const { sessionId } = req.body;
+    let conv = null;
+
+    if (req.user) {
+      conv = await Conversation.findOne({ customer: req.user._id });
+      if (!conv && req.user.email) {
+        conv = await Conversation.findOne({ customerEmail: req.user.email.toLowerCase().trim() });
+      }
+    }
+    if (!conv && sessionId) {
+      conv = await Conversation.findOne({ sessionId });
+    }
+
+    if (!conv) {
+      return res.json({ success: true, status: 'AI_PROCESSING', messages: [] });
+    }
+
+    conv.status = 'AI_PROCESSING';
+    const returnMsg = {
+      sender: 'ai',
+      senderName: 'NutriBot',
+      senderAvatar: 'https://api.iconify.design/lucide:bot.svg?color=%23176b3a',
+      content: 'NutriBot đã quay trở lại đồng hành cùng bạn 🌿! Bạn có câu hỏi gì về dinh dưỡng hoặc nông sản không?',
+      timestamp: new Date(),
+    };
+    conv.messages.push(returnMsg);
+    conv.lastMessage = returnMsg.content;
+    conv.lastMessageAt = new Date();
+    await conv.save();
+
+    res.json({
+      success: true,
+      status: 'AI_PROCESSING',
+      reply: returnMsg.content,
+      messages: conv.messages,
     });
   } catch (err) {
     next(err);
