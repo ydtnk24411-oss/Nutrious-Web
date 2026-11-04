@@ -26,7 +26,7 @@
             <span class="coop-kicker">TRỢ LÝ ẨM THỰC THÔNG MINH GEMINI AI</span>
             <h1 class="xanhla-hero-title">Nấu gì hôm nay?</h1>
             <p class="xanhla-hero-desc">
-              Chỉ cần chụp ảnh tủ lạnh hoặc nhập nguyên liệu sẵn có, Xanh Lá AI sẽ tự động phân tích, đối soát nông sản tươi sạch và gợi ý thực đơn gia đình trọn vị dinh dưỡng!
+              Chỉ cần chụp ảnh tủ lạnh hoặc nhập nguyên liệu sẵn có, Evergreen Mart AI sẽ tự động phân tích, đối soát nông sản tươi sạch và gợi ý thực đơn gia đình trọn vị dinh dưỡng!
             </p>
           </div>
           <div class="xanhla-hero-image-wrap">
@@ -34,7 +34,7 @@
             <div class="xanhla-hero-badge-overlay">
               <span class="hero-badge-icon">🥗</span>
               <div>
-                <strong>Bếp ngon Xanh Lá</strong>
+                <strong>Bếp ngon Evergreen Mart</strong>
                 <small>Nhận diện ảnh AI • Đủ món gia đình</small>
               </div>
             </div>
@@ -130,7 +130,7 @@
           <div class="xanhla-manual-input-box">
             <div class="manual-box-header">
               <strong class="manual-title">Cách 2: Tìm kiếm nguyên liệu thủ công</strong>
-              <p class="manual-sub">Nhập tên thực phẩm, hệ thống sẽ gợi ý nông sản sạch đối soát trực tiếp từ cơ sở dữ liệu Xanh Lá.</p>
+              <p class="manual-sub">Nhập tên thực phẩm, hệ thống sẽ gợi ý nông sản sạch đối soát trực tiếp từ cơ sở dữ liệu Evergreen Mart.</p>
             </div>
 
             <div class="xanhla-search-wrapper">
@@ -171,7 +171,7 @@
               @if (suggestProducts().length > 0) {
                 <div class="xanhla-autocomplete-dropdown">
                   <div class="xanhla-autocomplete-label">
-                    <span>Sản phẩm đối soát từ CSDL Xanh Lá Farm:</span>
+                    <span>Sản phẩm đối soát từ CSDL Evergreen Mart:</span>
                     <small>Chọn để lưu Product ID</small>
                   </div>
                   @for (prod of suggestProducts(); track prod._id) {
@@ -257,7 +257,7 @@
                         <span class="xanhla-tag-dot"></span>
                         <span class="xanhla-tag-name">{{ item.name }}</span>
                         @if (item.productId) {
-                          <span class="tag-matched-badge">Xanh Lá DB</span>
+                          <span class="tag-matched-badge">Evergreen DB</span>
                         }
                         <button
                           type="button"
@@ -595,7 +595,7 @@
                                 <circle cx="20" cy="21" r="1"/>
                                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
                               </svg>
-                              <span>Cần mua thêm từ Xanh Lá ({{ missingIngredients(recipe).length }})</span>
+                              <span>Cần mua thêm từ Evergreen Mart ({{ missingIngredients(recipe).length }})</span>
                             </div>
 
                             @if (missingIngredients(recipe).length === 0) {
@@ -621,7 +621,7 @@
                                         </div>
                                         @if (ing.product) {
                                           <div class="xanhla-product-match">
-                                            <span class="xanhla-badge-source">Nông sản sạch Xanh Lá:</span>
+                                            <span class="xanhla-badge-source">Nông sản sạch Evergreen Mart:</span>
                                             <span class="xanhla-prod-name">{{ ing.product.name }}</span>
                                             <span class="xanhla-prod-price">{{ ing.product.price }}</span>
                                           </div>
@@ -684,7 +684,7 @@
                           </ol>
 
                           <div class="xanhla-chef-tip">
-                            <strong>💡 Mẹo đầu bếp Xanh Lá:</strong>
+                            <strong>💡 Mẹo đầu bếp Evergreen Mart:</strong>
                             <p>Ướp và sơ chế nguyên liệu tươi trước khi xào hoặc nấu giúp giữ tối đa hàm lượng dưỡng chất, vitamin và hương vị thuần khiết tự nhiên.</p>
                           </div>
                         </div>
@@ -710,7 +710,7 @@
           </div>
           <h3 class="xanhla-welcome-title">Bắt đầu chỉ với vài nguyên liệu quen thuộc</h3>
           <p class="xanhla-welcome-text">
-            Chưa biết tối nay ăn gì? Hãy mở tủ lạnh, chụp nhanh một bức ảnh hoặc chọn vài món như thịt bò, cà chua, cà rốt hoặc rau cải để Xanh Lá gợi ý thực đơn lành mạnh cho gia đình bạn ngay tức thì!
+            Chưa biết tối nay ăn gì? Hãy mở tủ lạnh, chụp nhanh một bức ảnh hoặc chọn vài món như thịt bò, cà chua, cà rốt hoặc rau cải để Evergreen Mart gợi ý thực đơn lành mạnh cho gia đình bạn ngay tức thì!
           </p>
         </section>
       }

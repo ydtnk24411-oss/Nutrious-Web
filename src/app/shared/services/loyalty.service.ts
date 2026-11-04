@@ -98,7 +98,7 @@ export class LoyaltyService {
     {
       id: 'r4',
       name: 'Giỏ quà sinh nhật',
-      description: 'Giỏ quà đặc biệt gồm các sản phẩm Xanh Lá',
+      description: 'Giỏ quà đặc biệt gồm các sản phẩm Evergreen Mart',
       image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=200',
       pointsRequired: 2000,
       type: 'gift',

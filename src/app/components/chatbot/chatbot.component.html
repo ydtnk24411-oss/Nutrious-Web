@@ -1,12 +1,21 @@
-<!-- ── Floating Chatbot Widget ──────────────────────────────────────── -->
+<!-- ── Floating Chatbot Widget (Luxury Minimalist Design) ────────── -->
 <div class="xanh-chatbot-container">
 
   <!-- ── Floating Launcher Button ──────────────────────────────────── -->
   <div class="xanh-chat-launcher-wrap">
     @if (!chat.isOpen() && chat.hasUnread()) {
       <div class="xanh-chat-tooltip" (click)="chat.open()">
-        <span>🌿 Chào bạn! Cần AI Xanh Lá gợi ý thực đơn hoặc nhận diện ảnh món ăn hôm nay?</span>
-        <button class="xanh-tooltip-close" (click)="$event.stopPropagation(); chat.hasUnread.set(false)" aria-label="Đóng gợi ý">×</button>
+        <div class="tooltip-sparkle-dot"></div>
+        <div class="tooltip-text-content">
+          <span class="tooltip-badge">NutriBot AI</span>
+          <span class="tooltip-message">Chào bạn, cần tư vấn nông sản sạch hoặc phân tích món ăn hôm nay?</span>
+        </div>
+        <button class="xanh-tooltip-close" (click)="$event.stopPropagation(); chat.hasUnread.set(false)" aria-label="Đóng gợi ý">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="18" x2="18" y2="6"></line>
+          </svg>
+        </button>
       </div>
     }
 
@@ -14,120 +23,166 @@
       class="xanh-chat-launcher"
       [class.is-open]="chat.isOpen()"
       (click)="chat.toggle()"
-      title="Trợ lý AI Nông sản Xanh Lá · Kết nối Google Gemini"
-      aria-label="Mở cửa sổ chat với AI Xanh Lá"
+      title="Trợ lý AI Nông sản Evergreen Mart · Kết nối Google Gemini"
+      aria-label="Mở cửa sổ chat với AI Evergreen Mart"
     >
+      <div class="launcher-glow-ring"></div>
       @if (!chat.isOpen()) {
         <div class="launcher-icon-wrap">
-          <img src="/avatars/nutribot.png" alt="AI Xanh Lá" class="launcher-nutribot-avatar" />
-          <span class="launcher-sparkle">✨</span>
+          <img src="/avatars/nutribot.png" alt="AI Evergreen Mart" class="launcher-nutribot-avatar" />
+          @if (chat.hasUnread()) {
+            <span class="launcher-unread-dot"></span>
+          }
         </div>
       } @else {
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="18" x2="18" y2="6"></line>
-        </svg>
+        <div class="launcher-close-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="18" x2="18" y2="6"></line>
+          </svg>
+        </div>
       }
     </button>
   </div>
 
-  <!-- ── Chat Window ─────────────────────────────────────────────── -->
+  <!-- ── Chat Window (Ultra-Premium Frosted Glass) ──────────────────── -->
   @if (chat.isOpen()) {
     <div
-      class="xanh-chat-window animate-slide-up"
+      class="xanh-chat-window animate-chat-entrance"
       (dragover)="onDragOver($event)"
       (drop)="onDrop($event)"
     >
 
       <!-- Header -->
-      <div class="xanh-chat-header" [class.is-staff-header]="chat.isStaffMode()">
+      <header class="xanh-chat-header" [class.is-staff-header]="chat.isStaffMode()">
         <div class="xanh-chat-header-info">
-          <div class="xanh-chat-avatar">
+          <div class="xanh-chat-avatar-wrapper">
             @if (chat.isStaffMode()) {
-              <div class="header-staff-icon-circle">👨‍💼</div>
+              <div class="header-staff-circle">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
             } @else {
-              <img src="/avatars/nutribot.png" alt="AI Xanh Lá" class="header-nutri-img" />
+              <div class="header-bot-circle">
+                <img src="/avatars/nutribot.png" alt="NutriBot" class="header-nutri-img" />
+              </div>
             }
-            <span class="xanh-live-dot" title="Đang trực tuyến"></span>
+            <span class="header-beacon-dot" title="Đang trực tuyến"></span>
           </div>
-          <div>
-            <h3 class="xanh-chat-title">
-              {{ chat.isStaffMode() ? (chat.assignedStaffName() || 'Nhân viên tư vấn Xanh Lá') : 'Trợ lý AI Xanh Lá' }}
-            </h3>
+
+          <div class="header-titles">
+            <div class="header-title-row">
+              <h3 class="xanh-chat-title">
+                {{ chat.isStaffMode() ? (chat.assignedStaffName() || 'Nhân viên tư vấn Evergreen Mart') : 'NutriBot AI' }}
+              </h3>
+              <span class="header-status-pill" [class.pill-live]="chat.isStaffMode()">
+                {{ chat.isStaffMode() ? 'Live 1-1' : 'Gemini 3.5' }}
+              </span>
+            </div>
             <span class="xanh-chat-status">
-              {{ chat.isStaffMode() ? '🟢 Trực tiếp 1-1 với nhân viên' : '⚡ Google Gemini API · Trực tuyến 24/7' }}
+              {{ chat.isStaffMode() ? 'Chuyên viên đang hỗ trợ trực tiếp' : 'Trợ lý Nông sản & Dinh dưỡng 24/7' }}
             </span>
           </div>
         </div>
 
         <div class="xanh-chat-header-actions">
           @if (chat.isStaffMode()) {
-            <button class="xanh-chat-pill-btn" (click)="chat.returnToAi()" title="Trở về hỏi Trợ lý AI" aria-label="Trở về hỏi AI">
-              <span>🤖 Về AI</span>
+            <button class="header-action-pill-return" (click)="chat.returnToAi()" title="Trở về hỏi Trợ lý AI" aria-label="Trở về hỏi AI">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="10" rx="2"></rect>
+                <circle cx="12" cy="5" r="2"></circle>
+                <path d="M12 7v4"></path>
+              </svg>
+              <span>Về AI</span>
             </button>
           } @else {
-            <button class="xanh-chat-btn-icon" (click)="chat.requestHumanSupport()" title="Gặp nhân viên tư vấn hỗ trợ" aria-label="Gặp nhân viên">
+            <button class="header-icon-btn" (click)="chat.requestHumanSupport()" title="Gặp nhân viên tư vấn hỗ trợ" aria-label="Gặp nhân viên">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
               </svg>
             </button>
           }
-          <button class="xanh-chat-btn-icon" (click)="chat.clearHistory()" title="Bắt đầu hội thoại mới" aria-label="Xóa lịch sử chat">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="1 4 1 10 7 10"></polyline>
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          <button class="header-icon-btn" (click)="chat.clearHistory()" title="Làm mới đoạn hội thoại" aria-label="Xóa lịch sử chat">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+              <path d="M21 3v5h-5"></path>
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+              <path d="M8 16H3v5"></path>
             </svg>
           </button>
-          <button class="xanh-chat-btn-icon" (click)="chat.close()" title="Thu nhỏ cửa sổ" aria-label="Đóng cửa sổ chat">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <button class="header-icon-btn close-btn" (click)="chat.close()" title="Thu nhỏ cửa sổ" aria-label="Đóng cửa sổ chat">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="18" x2="18" y2="6"></line>
             </svg>
           </button>
         </div>
-      </div>
+      </header>
 
-      <!-- Messages Area -->
-      <div class="xanh-chat-body" #messagesScroll>
+      <!-- Messages Stream Area -->
+      <main class="xanh-chat-body" #messagesScroll>
+
         @if (chat.isStaffMode()) {
-          <div class="xanh-live-staff-banner">
-            <div class="xanh-live-staff-left">
-              <span class="xanh-live-pulse-dot"></span>
-              <div class="xanh-live-staff-texts">
-                <strong>Đang trò chuyện trực tiếp với Nhân viên Xanh Lá</strong>
-                <span>Mọi tin nhắn của bạn sẽ được nhân viên phản hồi trực tiếp tại đây</span>
-              </div>
+          <div class="xanh-live-staff-banner animate-fade-in">
+            <div class="banner-top-line">
+              <span class="banner-live-beacon"></span>
+              <span class="banner-badge">HỖ TRỢ 1-1</span>
+              <span class="banner-title">Đang trò chuyện cùng <strong>{{ chat.assignedStaffName() || 'Chuyên viên Evergreen Mart' }}</strong></span>
             </div>
-            <button type="button" class="xanh-btn-switch-back-ai" (click)="chat.returnToAi()" title="Chuyển về hỏi Trợ lý AI NutriBot">
-              <span>🤖 Trở về hỏi Trợ lý AI</span>
+            <p class="banner-desc">Mọi câu hỏi của bạn sẽ được nhân viên phản hồi trực tiếp tại đây.</p>
+            <button type="button" class="banner-switch-ai-btn" (click)="chat.returnToAi()" title="Chuyển về hỏi Trợ lý AI NutriBot">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="10" rx="2"></rect>
+                <circle cx="12" cy="5" r="2"></circle>
+                <path d="M12 7v4"></path>
+              </svg>
+              <span>Trở về hỏi Trợ lý AI</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
             </button>
           </div>
         } @else {
           <div class="xanh-chat-date-divider">
-            <span>Hôm nay · Trợ lý AI đồng hành cùng bữa cơm gia đình bạn</span>
+            <span class="divider-pill">Dinh dưỡng & Nông sản tươi sạch hôm nay</span>
           </div>
         }
 
+        <!-- Message List -->
         @for (msg of chat.messages(); track msg.id) {
-          <div class="xanh-chat-message-row" [class.is-user]="msg.sender === 'user'" [class.is-admin]="msg.sender === 'admin'">
+          <div
+            class="xanh-chat-message-row animate-msg-in"
+            [class.is-user]="msg.sender === 'user'"
+            [class.is-admin]="msg.sender === 'admin'"
+          >
+            <!-- Avatar Left (Bot & Admin) -->
             @if (msg.sender === 'admin') {
-              <div class="xanh-msg-avatar admin-avatar-box">
+              <div class="xanh-msg-avatar admin-avatar-circle">
                 @if (msg.senderAvatar) {
-                  <img [src]="msg.senderAvatar" [alt]="msg.senderName || 'Admin'" class="bot-bubble-avatar staff-photo-avatar" />
+                  <img [src]="msg.senderAvatar" [alt]="msg.senderName || 'Admin'" class="staff-photo-avatar" />
                 } @else {
-                  <div class="staff-bubble-icon">👨‍💼</div>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
                 }
               </div>
             } @else if (msg.sender === 'bot') {
-              <div class="xanh-msg-avatar">
-                <img src="/avatars/nutribot.png" alt="AI Xanh Lá" class="bot-bubble-avatar" />
+              <div class="xanh-msg-avatar bot-avatar-circle">
+                <img src="/avatars/nutribot.png" alt="AI Evergreen Mart" class="bot-bubble-avatar" />
               </div>
             }
 
             <div class="xanh-msg-content-wrap">
               @if (msg.sender === 'admin') {
                 <div class="xanh-admin-sender-badge">
-                  <span>👨‍💼 {{ msg.senderName || 'Chuyên viên hỗ trợ Xanh Lá' }}</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                  <span>{{ msg.senderName || 'Chuyên viên hỗ trợ Evergreen Mart' }}</span>
                 </div>
               }
 
@@ -139,19 +194,23 @@
               }
 
               <div class="xanh-msg-bubble-wrap">
-                <div class="xanh-msg-bubble" [class.bubble-admin]="msg.sender === 'admin'" [innerHTML]="formatMessageText(msg.text)"></div>
+                <div
+                  class="xanh-msg-bubble"
+                  [class.bubble-admin]="msg.sender === 'admin'"
+                  [innerHTML]="formatMessageText(msg.text)"
+                ></div>
 
                 <!-- Copy message action button -->
                 <button
                   type="button"
                   class="xanh-msg-action-btn"
                   (click)="copyMessage(msg.id, msg.text)"
-                  [title]="copiedId() === msg.id ? 'Đã chép!' : 'Sao chép văn bản'"
+                  [title]="copiedId() === msg.id ? 'Đã sao chép!' : 'Sao chép văn bản'"
                 >
                   @if (copiedId() === msg.id) {
-                    <span style="color:#176b3a;font-weight:700">✓ Đã chép</span>
+                    <span class="copy-check">✓ Đã chép</span>
                   } @else {
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                     </svg>
@@ -159,10 +218,16 @@
                 </button>
               </div>
 
+              <!-- Handover Button row -->
               @if (msg.isHandedOver) {
                 <div class="xanh-handover-action-row">
                   <button type="button" class="xanh-btn-return-ai" (click)="chat.returnToAi()" title="Quay lại hỏi AI các câu hỏi về thực phẩm, dinh dưỡng, nấu ăn">
-                    <span>🤖 Tiếp tục hỏi Trợ lý AI</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="11" width="18" height="10" rx="2"></rect>
+                      <circle cx="12" cy="5" r="2"></circle>
+                      <path d="M12 7v4"></path>
+                    </svg>
+                    <span>Tiếp tục hỏi Trợ lý AI</span>
                   </button>
                 </div>
               }
@@ -187,7 +252,7 @@
                             (click)="addChatProductToCart(prod)"
                             title="Thêm vào giỏ"
                           >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
                               <circle cx="9" cy="21" r="1"></circle>
                               <circle cx="20" cy="21" r="1"></circle>
                               <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
@@ -195,7 +260,7 @@
                             <span>Thêm giỏ</span>
                           </button>
                           <a [routerLink]="['/product-page', prod.slug]" (click)="chat.close()" class="xanh-chat-view-btn">
-                            Xem
+                            Chi tiết
                           </a>
                         </div>
                       </div>
@@ -209,25 +274,29 @@
           </div>
         }
 
-        <!-- Typing Indicator -->
+        <!-- Typing Indicator Wave -->
         @if (chat.loading()) {
-          <div class="xanh-chat-message-row">
-            <div class="xanh-msg-avatar">
-              <img src="/avatars/nutribot.png" alt="AI Xanh Lá" class="bot-bubble-avatar" />
+          <div class="xanh-chat-message-row animate-fade-in">
+            <div class="xanh-msg-avatar bot-avatar-circle">
+              <img src="/avatars/nutribot.png" alt="AI Evergreen Mart" class="bot-bubble-avatar" />
             </div>
             <div class="xanh-msg-bubble xanh-typing-bubble">
-              <div class="xanh-typing-dot"></div>
-              <div class="xanh-typing-dot"></div>
-              <div class="xanh-typing-dot"></div>
-              <span style="font-size:12px;color:#6b7c6e;margin-left:4px">Gemini AI đang trả lời...</span>
+              <div class="typing-wave">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+              </div>
+              <span class="typing-label">NutriBot đang soạn câu trả lời...</span>
             </div>
           </div>
         }
 
         <!-- Quick Suggestions -->
         @if (chat.messages().length <= 3 && !chat.loading()) {
-          <div class="xanh-chat-suggestions">
-            <div class="xanh-suggestions-label">💡 Gợi ý câu hỏi & tính năng nhanh:</div>
+          <div class="xanh-chat-suggestions animate-fade-in">
+            <div class="xanh-suggestions-label">
+              <span>Gợi ý câu hỏi nhanh:</span>
+            </div>
             <div class="xanh-suggestions-list">
               @for (s of chat.quickSuggestions; track s) {
                 <button
@@ -235,16 +304,20 @@
                   class="xanh-suggestion-chip"
                   (click)="selectSuggestion(s)"
                 >
-                  {{ s }}
+                  <span class="chip-text">{{ s }}</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" class="chip-arrow">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
                 </button>
               }
             </div>
           </div>
         }
-      </div>
+
+      </main>
 
       <!-- Footer Input Area -->
-      <div class="xanh-chat-footer">
+      <footer class="xanh-chat-footer">
 
         <!-- Hidden File Picker -->
         <input
@@ -255,7 +328,7 @@
           style="display: none"
         />
 
-        <!-- Prominent Quick Image Upload Strip (Always Visible) -->
+        <!-- Luxury Quick Image Upload Strip (Always Visible) -->
         <div class="xanh-quick-upload-strip">
           <button
             type="button"
@@ -263,21 +336,30 @@
             (click)="triggerImagePicker()"
             title="Bấm để chọn ảnh món ăn từ máy hoặc điện thoại"
           >
-            <span class="xanh-strip-icon">📸</span>
-            <span class="xanh-strip-text">Tải ảnh món ăn / nguyên liệu</span>
-            <span class="xanh-strip-badge">Gemini Vision ✨</span>
+            <div class="strip-left">
+              <span class="strip-icon-circle">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+              </span>
+              <span class="xanh-strip-text">Tải ảnh nhận diện nguyên liệu & món ăn</span>
+            </div>
+            <span class="xanh-strip-badge">
+              <span>Gemini Vision</span>
+            </span>
           </button>
         </div>
 
         <!-- Image Preview Bar (if user selected photo) -->
         @if (selectedImageBase64()) {
-          <div class="xanh-image-preview-bar">
+          <div class="xanh-image-preview-bar animate-scale-up">
             <div class="xanh-image-thumb-box">
               <img [src]="selectedImageBase64()" alt="Ảnh đã chọn" />
             </div>
             <div class="xanh-image-name-box">
-              <span class="xanh-image-title">📸 {{ selectedImageName() || 'Ảnh món ăn' }}</span>
-              <span class="xanh-image-sub">Sẵn sàng gửi để Gemini AI nhận diện</span>
+              <span class="xanh-image-title">{{ selectedImageName() || 'Hình ảnh tải lên' }}</span>
+              <span class="xanh-image-sub">Sẵn sàng phân tích dinh dưỡng cùng AI</span>
             </div>
             <button type="button" class="xanh-image-remove-btn" (click)="removeSelectedImage()" title="Hủy ảnh">
               ✕
@@ -295,13 +377,16 @@
             title="Tải ảnh đồ ăn hoặc nguyên liệu để Gemini nhận diện"
             aria-label="Tải ảnh món ăn"
           >
-            <span class="attach-cam-icon">📷</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="13" r="4"></circle>
+            </svg>
           </button>
 
           <textarea
             class="xanh-chat-input"
             rows="1"
-            [placeholder]="chat.isStaffMode() ? 'Nhập tin nhắn gửi cho nhân viên hỗ trợ... (Enter để gửi)' : 'Hỏi về rau củ, cách nấu, dán ảnh (Ctrl+V)...'"
+            [placeholder]="chat.isStaffMode() ? 'Nhắn tin trực tiếp cho nhân viên hỗ trợ...' : 'Hỏi về nông sản, món ăn, dán ảnh (Ctrl+V)...'"
             [value]="inputText()"
             (input)="inputText.set($any($event.target).value)"
             (keydown)="onKeyDown($event)"
@@ -315,7 +400,7 @@
             [disabled]="(!inputText().trim() && !selectedImageBase64()) || chat.loading()"
             aria-label="Gửi tin nhắn"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
               <line x1="22" y1="2" x2="11" y2="13"></line>
               <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
             </svg>
@@ -323,9 +408,9 @@
         </form>
 
         <div class="xanh-chat-footer-note">
-          <span>🌿 Trợ lý AI Xanh Lá Farm · Kết nối Google Gemini API</span>
+          <span class="footer-note-text">NutriBot AI • Nền tảng Nông sản hữu cơ Evergreen Mart</span>
         </div>
-      </div>
+      </footer>
 
     </div>
   }

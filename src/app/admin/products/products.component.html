@@ -3,7 +3,7 @@
   <div>
     <h2 class="admin-page-title">Quản lý Sản phẩm & Danh mục</h2>
     <span class="admin-stat-label">
-      {{ activeTab() === 'list' ? 'Tổng cộng: ' + total() + ' sản phẩm' : 'Danh mục thực phẩm Xanh Lá' }}
+      {{ activeTab() === 'list' ? 'Tổng cộng: ' + total() + ' sản phẩm' : 'Danh mục thực phẩm Evergreen Mart' }}
     </span>
   </div>
 
@@ -379,7 +379,7 @@
           <!-- Name -->
           <div class="admin-field" style="grid-column:1/-1">
             <label>Tên sản phẩm *</label>
-            <input type="text" placeholder="VD: Cải ngọt búp hữu cơ Xanh Lá"
+            <input type="text" placeholder="VD: Cải ngọt búp hữu cơ Evergreen Mart"
                    [value]="form().name" (input)="onNameChange($any($event.target).value)" />
           </div>
 

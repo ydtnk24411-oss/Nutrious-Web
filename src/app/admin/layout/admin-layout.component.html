@@ -4,15 +4,12 @@
   <aside class="admin-sidebar">
     <!-- Brand Header -->
     <div class="admin-sidebar-header">
-      <div class="admin-sidebar-logo" title="Xanh Lá Farm">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
-          <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
-        </svg>
+      <div class="admin-sidebar-logo" title="Evergreen Mart">
+        <img src="/logo.png" alt="Evergreen Mart" class="admin-sidebar-logo-img" />
       </div>
       @if (sidebarOpen()) {
         <div class="admin-sidebar-brand">
-          <span class="admin-sidebar-name">XANH LÁ</span>
+          <span class="admin-sidebar-name">EVERGREEN MART</span>
           <span class="admin-sidebar-tagline">Quản trị Nông trại & Bán hàng</span>
         </div>
       }
@@ -155,7 +152,7 @@
     @if (sidebarOpen()) {
       <div class="admin-sidebar-store-banner">
         <div class="admin-store-info">
-          <span class="admin-store-title">Cửa hàng Xanh Lá</span>
+          <span class="admin-store-title">Cửa hàng Evergreen Mart</span>
           <span class="admin-store-desc">Xem giao diện khách hàng</span>
         </div>
         <button type="button" class="admin-store-btn" (click)="openStorefront()" title="Mở trang khách hàng">
@@ -173,11 +170,11 @@
     <div class="admin-sidebar-footer">
       <div class="admin-profile-card">
         <div class="admin-profile-avatar">
-          <img [src]="auth.user()?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80'" [alt]="auth.user()?.name || 'Admin Xanh Lá'" />
+          <img [src]="auth.user()?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80'" [alt]="auth.user()?.name || 'Admin Evergreen Mart'" />
         </div>
         @if (sidebarOpen()) {
           <div class="admin-profile-details">
-            <span class="admin-profile-name">{{ auth.user()?.name ?? 'Admin Xanh Lá' }}</span>
+            <span class="admin-profile-name">{{ auth.user()?.name ?? 'Admin Evergreen Mart' }}</span>
             <span class="admin-profile-badge">Quản trị viên</span>
           </div>
           <button class="admin-sidebar-logout" (click)="logout()" title="Đăng xuất">
@@ -209,7 +206,7 @@
 
         <!-- Breadcrumb / System identity -->
         <div class="admin-topbar-breadcrumb">
-          <span class="admin-breadcrumb-home">Hệ thống Xanh Lá</span>
+          <span class="admin-breadcrumb-home">Hệ thống Evergreen Mart</span>
           <span class="admin-breadcrumb-sep">/</span>
           <span class="admin-breadcrumb-current">Khu vực Quản trị</span>
         </div>
@@ -248,10 +245,10 @@
         <!-- User Quick Card -->
         <div class="admin-topbar-user">
           <div class="admin-user-avatar">
-            <img [src]="auth.user()?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80'" [alt]="auth.user()?.name || 'Admin Xanh Lá'" />
+            <img [src]="auth.user()?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80'" [alt]="auth.user()?.name || 'Admin Evergreen Mart'" />
           </div>
           <div class="admin-user-info">
-            <span class="admin-user-name">{{ auth.user()?.name ?? 'Admin Xanh Lá' }}</span>
+            <span class="admin-user-name">{{ auth.user()?.name ?? 'Admin Evergreen Mart' }}</span>
             <span class="admin-user-role">Quản trị viên</span>
           </div>
         </div>

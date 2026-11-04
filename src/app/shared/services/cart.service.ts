@@ -327,7 +327,7 @@ export class CartService {
           persistSelectedKeys(new Set());
 
           this.loadUserData();
-          alert(`Đăng ký thành công! Chào mừng ${user.name} đến với Xanh Lá.`);
+          alert(`Đăng ký thành công! Chào mừng ${user.name} đến với Evergreen Mart.`);
           onSuccess?.();
         } else {
           alert('Đăng ký thất bại: ' + (res.message || 'Vui lòng thử lại.'));

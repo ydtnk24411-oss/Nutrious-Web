@@ -849,7 +849,7 @@ export class CookComponent implements OnInit {
   addMissingToCart(recipe: CookResult): void {
     const missingSelected = this.missingIngredients(recipe).filter(i => i.selected && i.product);
     if (missingSelected.length === 0) {
-      this.addedFeedback.set('Chưa chọn nguyên liệu nào có sẵn tại cửa hàng Xanh Lá.');
+      this.addedFeedback.set('Chưa chọn nguyên liệu nào có sẵn tại cửa hàng Evergreen Mart.');
       setTimeout(() => this.addedFeedback.set(null), 3000);
       return;
     }

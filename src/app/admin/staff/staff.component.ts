@@ -32,7 +32,7 @@ export class AdminStaffComponent implements OnInit {
     {
       key: 'admin',
       label: 'Quản trị viên (Admin)',
-      desc: 'Toàn quyền cấu hình và quản trị toàn bộ hệ thống Xanh Lá',
+      desc: 'Toàn quyền cấu hình và quản trị toàn bộ hệ thống Evergreen Mart',
       color: '#b91c1c',
       bg: '#fee2e2',
     },
