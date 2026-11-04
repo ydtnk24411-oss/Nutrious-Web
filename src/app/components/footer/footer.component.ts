@@ -138,6 +138,10 @@ export class FooterComponent implements OnInit {
     }
   }
 
+  hotlineHref(): string {
+    return `tel:${this.contactInfo().hotline.replace(/\D/g, '')}`;
+  }
+
   closePolicy(): void {
     this.activePolicy.set(null);
   }

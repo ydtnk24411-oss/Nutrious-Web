@@ -48,15 +48,15 @@
 
 /* ── Main footer ── */
 .xanhla-footer {
-  padding-top: 52px;
+  padding-top: 64px;
   background: #182f1e;
 }
 
 .xanhla-footer-main {
   display: grid;
-  grid-template-columns: 1.3fr 1fr 1.1fr 1.1fr 1fr;
-  gap: clamp(16px, 2.5vw, 40px);
-  padding-bottom: 16px;
+  grid-template-columns: minmax(190px, 1.35fr) repeat(3, minmax(145px, 1fr)) minmax(190px, 1.2fr);
+  gap: clamp(24px, 3vw, 44px);
+  padding-bottom: 48px;
 }
 
 /* Logo */
@@ -81,7 +81,7 @@
 
 .xanhla-brand-desc,
 .xanhla-newsletter-desc {
-  max-width: 260px;
+  max-width: 320px;
   font-size: 13px;
   line-height: 1.7;
   color: rgba(255,255,255,.55);
@@ -120,7 +120,7 @@
 /* Column headings */
 .xanhla-footer .xanhla-footer-col h4,
 .xanhla-footer-heading {
-  margin-bottom: 14px;
+  margin: 4px 0 18px;
   color: #e8c870;
   font-family: var(--xanh-font-text);
   font-size: 11px;
@@ -128,20 +128,21 @@
   letter-spacing: .09em;
   text-transform: uppercase;
 }
+.xanhla-footer .xanhla-footer-col .xanhla-footer-about-heading { margin-top: 26px; }
 
 /* Links */
 .xanhla-footer-links {
   margin: 0; padding: 0; list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 5px;
 }
 .xanhla-footer .xanhla-footer-links a {
   display: block;
-  padding: 4px 0;
+  padding: 5px 0;
   font-size: 13px;
   color: rgba(255,255,255,.6);
-  line-height: 1.5;
+  line-height: 1.6;
   text-decoration: none;
   transition: color .15s;
 }
@@ -423,16 +424,17 @@
 
 /* ── Responsive ── */
 @media (max-width: 1200px) {
-  .xanhla-footer-main { grid-template-columns: 1.2fr 1fr 1fr 1fr; }
-  .xanhla-footer-col--brand { grid-column: 1 / -1; }
+  .xanhla-footer-main { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 36px 28px; }
+  .xanhla-footer-col--brand { grid-column: span 2; }
   .xanhla-footer-col--brand .xanhla-brand-desc { max-width: 460px; }
-  .xanhla-contact-info { flex-direction: row; flex-wrap: wrap; gap: 12px 24px; }
+  .xanhla-contact-info { gap: 10px; }
 }
 
 @media (max-width: 1024px) {
   .xanhla-trust-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   .xanhla-footer-main { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .xanhla-footer-col--brand { grid-column: 1 / -1; }
+  .xanhla-contact-info { flex-direction: row; flex-wrap: wrap; gap: 12px 24px; }
 }
 
 @media (max-width: 600px) {
@@ -442,7 +444,7 @@
   .xanhla-trust-icon { width: 36px; height: 36px; border-radius: 8px; }
   .xanhla-trust-icon svg { width: 18px; height: 18px; }
   .xanhla-footer { padding-top: 40px; }
-  .xanhla-footer-main { grid-template-columns: 1fr 1fr; gap: 28px 18px; }
+  .xanhla-footer-main { grid-template-columns: 1fr 1fr; gap: 32px 20px; padding-bottom: 36px; }
   .xanhla-footer-col--brand { grid-column: 1 / -1; }
   .xanhla-footer-bottom {
     align-items: flex-start;

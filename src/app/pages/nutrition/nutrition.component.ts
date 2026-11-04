@@ -581,9 +581,12 @@ export class NutritionComponent implements OnInit {
   targetProtein = signal<number>(125);
   targetFiber = signal<number>(28);
   targetCarbs = signal<number>(130);
+  smartPlanConfigured = signal<boolean>(true);
   priorityNutrients = signal<string[]>(['protein', 'fiber', 'probiotic']);
   showAdvancedConfig = signal<boolean>(false);
   expandedIngredientIds = signal<Record<string, boolean>>({});
+  private planRefreshTimer: ReturnType<typeof setTimeout> | undefined;
+  private macroInputTimer: ReturnType<typeof setTimeout> | undefined;
 
   readonly NUTRIENT_BOOST_OPTIONS = [
     { id: 'protein', label: '💪 Tăng Đạm (Protein Xây Cơ)', desc: 'Thịt bò, ức gà, cá hồi, tôm sú' },
@@ -667,6 +670,77 @@ export class NutritionComponent implements OnInit {
   results = signal<RecipeResult[]>([]);
   addedToCart = signal<string | null>(null);
   hasSearched = signal<boolean>(false);
+
+  // Dynamic Macro Caloric Distribution Ratio (WHO / National Nutrition Institute standards)
+  readonly macroPercentages = computed(() => {
+    const pGrams = Math.max(0, this.targetProtein());
+    const cGrams = Math.max(0, this.targetCarbs());
+    const kcal = Math.max(1, this.targetDailyKcal());
+    const pKcal = pGrams * 4;
+    const cKcal = cGrams * 4;
+    const fKcal = Math.max(0, kcal - pKcal - cKcal);
+    const totalMacroKcal = pKcal + cKcal + fKcal;
+    const pPct = Math.round((pKcal / totalMacroKcal) * 100);
+    const cPct = Math.round((cKcal / totalMacroKcal) * 100);
+    const fPct = Math.max(0, 100 - pPct - cPct);
+    return {
+      pPct,
+      cPct,
+      fPct,
+      fGrams: Math.round(fKcal / 9),
+      overTarget: pKcal + cKcal > kcal,
+    };
+  });
+
+  setTargetDailyKcal(value: number | string): void {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      this.targetDailyKcal.set(Math.max(1000, Math.min(2800, Math.round(parsed / 50) * 50)));
+      this.schedulePlanRefresh();
+    }
+  }
+
+  setMacroTarget(kind: 'protein' | 'fiber' | 'carbs', value: number | string): void {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return;
+    const limits = kind === 'protein' ? [20, 240] : kind === 'fiber' ? [10, 60] : [40, 300];
+    const clamped = Math.max(limits[0], Math.min(limits[1], Math.round(parsed)));
+    if (kind === 'protein') this.targetProtein.set(clamped);
+    else if (kind === 'fiber') this.targetFiber.set(clamped);
+    else this.targetCarbs.set(clamped);
+    this.schedulePlanRefresh();
+  }
+
+  queueMacroTarget(kind: 'protein' | 'fiber' | 'carbs', value: string): void {
+    if (this.macroInputTimer) clearTimeout(this.macroInputTimer);
+    if (!value.trim()) return;
+    this.macroInputTimer = setTimeout(() => this.setMacroTarget(kind, value), 450);
+  }
+
+  commitMacroTarget(kind: 'protein' | 'fiber' | 'carbs', value: string): void {
+    if (this.macroInputTimer) clearTimeout(this.macroInputTimer);
+    if (!value.trim()) return;
+    this.setMacroTarget(kind, value);
+  }
+
+  private schedulePlanRefresh(): void {
+    if (!this.smartPlanConfigured()) return;
+    if (this.planRefreshTimer) clearTimeout(this.planRefreshTimer);
+    this.planRefreshTimer = setTimeout(() => this.generateSmartPlan(), 220);
+  }
+
+  getCalorieStatusText(total: number, target: number): string {
+    const diff = total - target;
+    if (Math.abs(diff) <= 80) return '🎯 Chuẩn Calo';
+    if (diff > 80) return `+${diff} kcal`;
+    return `-${Math.abs(diff)} kcal`;
+  }
+
+  getProteinStatusText(total: number, target: number): string {
+    if (total > target) return `Vượt mục tiêu ${total - target}g`;
+    if (total === target) return '💪 Đạt mục tiêu đạm';
+    return `Thiếu ${target - total}g`;
+  }
 
   readonly selectedDetailRecipe = computed<RecipeResult | null>(() => {
     const id = this.selectedRecipeId();
@@ -973,6 +1047,7 @@ export class NutritionComponent implements OnInit {
 
   setMealsPerDay(count: 2 | 3 | 4): void {
     this.mealsPerDay.set(count);
+    this.schedulePlanRefresh();
   }
 
   togglePriorityNutrient(id: string): void {
@@ -982,6 +1057,7 @@ export class NutritionComponent implements OnInit {
     } else {
       this.priorityNutrients.set([...current, id]);
     }
+    this.schedulePlanRefresh();
   }
 
   isPriorityNutrient(id: string): boolean {
@@ -990,7 +1066,7 @@ export class NutritionComponent implements OnInit {
 
   setBudgetQuick(amount: number | null): void {
     this.budgetLimit.set(amount);
-    this.computeRecipes();
+    this.schedulePlanRefresh();
   }
 
   getMacroPercent(actual: number, target: number): number {
@@ -1093,78 +1169,103 @@ export class NutritionComponent implements OnInit {
       },
     };
     this.weeklySchedule.set(presets[preset]);
+    this.smartPlanConfigured.set(true);
+    this.generateSmartPlan();
   }
 
   generateSmartPlan(): void {
     this.computeRecipes();
     const pool = this.results();
     if (pool.length === 0) return;
-
-    const boosts = this.priorityNutrients();
-    const targetKcalPerMeal = Math.round(this.targetDailyKcal() / Math.max(2, this.mealsPerDay()));
-    const targetProtPerMeal = Math.round(this.targetProtein() / Math.max(2, this.mealsPerDay()));
-
-    // Score each recipe for light slots (breakfast/snack) vs main slots (lunch/dinner)
-    const scoreRecipe = (r: RecipeResult, isLightSlot: boolean): number => {
-      let score = 100;
-      const rProt = this.parseMacroNum(r.macros.protein);
-      const rFib = this.parseMacroNum(r.macros.fiber);
-      const rCarb = this.parseMacroNum(r.macros.carbs);
-      const text = normalizeStr(`${r.name} ${r.description} ${r.ingredients.map((i) => i.name).join(' ')}`);
-
-      // Calorie proximity
-      score -= Math.abs((r.calories || 380) - targetKcalPerMeal) * 0.12;
-      // Protein proximity
-      score -= Math.abs(rProt - targetProtPerMeal) * 0.8;
-
-      if (boosts.includes('protein')) score += rProt * 1.8;
-      if (boosts.includes('fiber')) score += rFib * 2.5;
-      if (boosts.includes('probiotic') && (text.includes('sua chua') || text.includes('hy lap'))) score += 45;
-      if (boosts.includes('omega3') && (text.includes('ca hoi') || text.includes('bo'))) score += 40;
-      if (boosts.includes('vitamin') && (text.includes('dau tay') || text.includes('cam') || text.includes('ca rot'))) score += 35;
-      if (boosts.includes('lowcarb')) score -= rCarb * 1.1;
-
-      const isLightRecipe = ['sua-chua-hy-lap-trai-cay', 'sinh-to-dau-xoai', 'detox-cam-tao-ca-rot', 'sup-bi-do-hat-sen'].includes(r.id);
-      if (isLightSlot && isLightRecipe) score += 60;
-      if (!isLightSlot && !isLightRecipe) score += 50;
-      return score;
-    };
-
-    const lightSorted = [...pool].sort((a, b) => scoreRecipe(b, true) - scoreRecipe(a, true));
-    const mainSorted = [...pool].sort((a, b) => scoreRecipe(b, false) - scoreRecipe(a, false));
-
-    const bf = lightSorted[0] || pool[0];
-    const sn = lightSorted[1] || pool[0];
-    const ln = mainSorted[0] || pool[0];
-    const dn = mainSorted[1] || pool[0];
-
-    this.singleDaySchedule.set({
-      breakfast: bf.id,
-      lunch: ln.id,
-      snack: sn.id,
-      dinner: dn.id,
-    });
+    this.smartPlanConfigured.set(true);
+    const optimizedPlan = this.optimizeMealPlan(pool);
+    this.singleDaySchedule.set(optimizedPlan);
 
     const newSchedule: Record<string, DayMealPlanMap> = {};
-    this.WEEK_DAYS.forEach((d, idx) => {
-      const wBf = lightSorted[idx % Math.max(1, Math.min(3, lightSorted.length))] || pool[0];
-      const wSn = lightSorted[(idx + 1) % Math.max(1, Math.min(4, lightSorted.length))] || pool[0];
-      const wLn = mainSorted[idx % Math.max(1, Math.min(5, mainSorted.length))] || pool[0];
-      const wDn = mainSorted[(idx + 2) % Math.max(1, Math.min(6, mainSorted.length))] || pool[0];
-      newSchedule[d.key] = {
-        breakfast: wBf.id,
-        lunch: wLn.id,
-        snack: wSn.id,
-        dinner: wDn.id === wLn.id && mainSorted.length > 1 ? mainSorted[(idx + 1) % mainSorted.length].id : wDn.id,
-      };
+    const usedByEarlierDays: string[] = [];
+    this.WEEK_DAYS.forEach((day) => {
+      const plan = this.optimizeMealPlan(pool, usedByEarlierDays);
+      newSchedule[day.key] = plan;
+      usedByEarlierDays.push(...Object.values(plan));
     });
-
     this.weeklySchedule.set(newSchedule);
     const modeLabel = this.plannerMode() === 'day' ? `Thực đơn Ngày (${this.mealsPerDay()} bữa)` : `Thực đơn Cả Tuần 7 Ngày (${this.mealsPerDay()} bữa/ngày)`;
     this.addedToCart.set(
       `✨ Đã thiết lập ${modeLabel} theo mục tiêu: ${this.targetDailyKcal()} kcal/ngày · Đạm ${this.targetProtein()}g · Chất xơ ${this.targetFiber()}g!`
     );
     setTimeout(() => this.addedToCart.set(null), 3500);
+  }
+
+  private optimizeMealPlan(pool: RecipeResult[], previouslyUsed: string[] = []): DayMealPlanMap {
+    const slots = this.getActiveSlotMetas();
+    const target = {
+      calories: Math.max(1, this.targetDailyKcal()),
+      protein: Math.max(1, this.targetProtein()),
+      fiber: Math.max(1, this.targetFiber()),
+      carbs: Math.max(1, this.targetCarbs()),
+    };
+    const priorities = this.priorityNutrients();
+    const lightIds = new Set(['sua-chua-hy-lap-trai-cay', 'sinh-to-dau-xoai', 'detox-cam-tao-ca-rot', 'sup-bi-do-hat-sen']);
+    const recipeCandidates = pool.length <= 20
+      ? pool
+      : [...pool]
+          .sort((a, b) => this.recipeTargetDistance(a, target, slots.length) - this.recipeTargetDistance(b, target, slots.length))
+          .slice(0, 20);
+    let best: RecipeResult[] = [];
+    let bestScore = Number.NEGATIVE_INFINITY;
+
+    const evaluatePlan = (recipes: RecipeResult[]): void => {
+      const totals = recipes.reduce((sum, recipe) => ({
+        calories: sum.calories + (recipe.calories || 0),
+        protein: sum.protein + this.parseMacroNum(recipe.macros.protein),
+        fiber: sum.fiber + this.parseMacroNum(recipe.macros.fiber),
+        carbs: sum.carbs + this.parseMacroNum(recipe.macros.carbs),
+      }), { calories: 0, protein: 0, fiber: 0, carbs: 0 });
+      const error =
+        2 * Math.abs(totals.calories - target.calories) / target.calories +
+        (priorities.includes('protein') ? 3 : 2) * Math.abs(totals.protein - target.protein) / target.protein +
+        (priorities.includes('fiber') ? 2.5 : 1.5) * Math.abs(totals.fiber - target.fiber) / target.fiber +
+        (priorities.includes('lowcarb') ? 1.5 : 1.2) * Math.abs(totals.carbs - target.carbs) / target.carbs;
+      const repeats = recipes.length - new Set(recipes.map((recipe) => recipe.id)).size;
+      const reusePenalty = recipes.reduce((sum, recipe) => sum + Math.min(0.01, previouslyUsed.filter((id) => id === recipe.id).length * 0.001), 0);
+      const priorityBonus = recipes.reduce((sum, recipe, index) => {
+        const text = normalizeStr(`${recipe.name} ${recipe.description} ${recipe.ingredients.map((item) => item.name).join(' ')}`);
+        const lightSlot = slots[index].key === 'breakfast' || slots[index].key === 'snack';
+        const slotBonus = lightSlot ? (lightIds.has(recipe.id) ? 0.002 : 0) : (lightIds.has(recipe.id) ? 0 : 0.001);
+        return sum + slotBonus +
+          (priorities.includes('probiotic') && (text.includes('sua chua') || text.includes('hy lap')) ? 0.001 : 0) +
+          (priorities.includes('omega3') && (text.includes('ca hoi') || text.includes('bo')) ? 0.001 : 0) +
+          (priorities.includes('vitamin') && (text.includes('dau tay') || text.includes('cam') || text.includes('ca rot')) ? 0.001 : 0);
+      }, 0);
+      const score = -error - repeats * 0.01 - reusePenalty + priorityBonus;
+      if (score > bestScore) {
+        bestScore = score;
+        best = [...recipes];
+      }
+    };
+
+    const search = (index: number, chosen: RecipeResult[]): void => {
+      if (index === slots.length) {
+        evaluatePlan(chosen);
+        return;
+      }
+      for (const recipe of recipeCandidates) search(index + 1, [...chosen, recipe]);
+    };
+    search(0, []);
+
+    const plan: DayMealPlanMap = { breakfast: pool[0].id, lunch: pool[0].id, snack: pool[0].id, dinner: pool[0].id };
+    slots.forEach((slot, index) => {
+      if (best[index]) plan[slot.key] = best[index].id;
+    });
+    return plan;
+  }
+
+  private recipeTargetDistance(recipe: RecipeResult, target: { calories: number; protein: number; fiber: number; carbs: number }, mealCount: number): number {
+    const perMeal = Math.max(1, mealCount);
+    return 2.2 * Math.abs((recipe.calories || 0) - target.calories / perMeal) / target.calories +
+      1.5 * Math.abs(this.parseMacroNum(recipe.macros.protein) - target.protein / perMeal) / target.protein +
+      1.3 * Math.abs(this.parseMacroNum(recipe.macros.fiber) - target.fiber / perMeal) / target.fiber +
+      Math.abs(this.parseMacroNum(recipe.macros.carbs) - target.carbs / perMeal) / target.carbs;
   }
 
   swapMealInSlot(slotKey: MealSlotKey, dayKey?: string): void {

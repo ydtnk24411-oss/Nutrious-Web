@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { Router, RouterLink } from '@angular/router';
@@ -131,7 +131,7 @@ function toDealCartProduct(p: ApiProduct, dealPrice: number): XanhLaProduct {
   templateUrl: './promotions.component.html',
   styleUrl: './promotions.component.css',
 })
-export class PromotionsComponent implements OnInit {
+export class PromotionsComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private productApi = inject(ProductApiService);
   private api = inject(ApiService);
@@ -149,6 +149,10 @@ export class PromotionsComponent implements OnInit {
 
   toastMessage = signal<string>('');
   private pendingVoucherId = signal<string | null>(null);
+
+  // Live Flash Sale Countdown
+  flashSaleCountdown = signal<string>('04:32:18');
+  private countdownInterval: any = null;
 
   // Dynamically computed promotions from MongoDB vouchers
   readonly promotions = computed<PromoItem[]>(() => {
@@ -219,6 +223,34 @@ export class PromotionsComponent implements OnInit {
     this.voucher.loadPublic();
     this.voucher.refreshMine();
     this.loadDealsFromMongo();
+    this.startFlashCountdown();
+  }
+
+  ngOnDestroy(): void {
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+      this.countdownInterval = null;
+    }
+  }
+
+  private startFlashCountdown(): void {
+    const update = () => {
+      const now = new Date();
+      // Calculate remaining time until next 6-hour slot (06:00, 12:00, 18:00, 24:00)
+      const currentHour = now.getHours();
+      const nextSlotHour = Math.floor(currentHour / 6) * 6 + 6;
+      const target = new Date(now);
+      target.setHours(nextSlotHour, 0, 0, 0);
+      const diffMs = target.getTime() - now.getTime();
+      const totalSec = Math.max(0, Math.floor(diffMs / 1000));
+      const hours = Math.floor(totalSec / 3600);
+      const mins = Math.floor((totalSec % 3600) / 60);
+      const secs = totalSec % 60;
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      this.flashSaleCountdown.set(`${pad(hours)}:${pad(mins)}:${pad(secs)}`);
+    };
+    update();
+    this.countdownInterval = setInterval(update, 1000);
   }
 
   private loadDealsFromMongo(): void {

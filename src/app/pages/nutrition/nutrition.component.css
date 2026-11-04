@@ -4366,6 +4366,151 @@
   }
 }
 
+.xl-gsc-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.xl-gsc-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: #dcfce7;
+  color: #166534;
+}
+
+.xl-studio-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: #166534;
+  line-height: 1.5;
+}
+
+.xl-tip-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* Macro Caloric Ratio Preview Card */
+.xl-macro-dist-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 12px 0 6px;
+}
+
+.xl-md-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.xl-md-title {
+  font-weight: 700;
+  color: #334155;
+}
+
+.xl-md-badge {
+  font-size: 10.5px;
+  color: #64748b;
+  background: #e2e8f0;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.xl-md-bar-wrap {
+  display: flex;
+  height: 9px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: #e2e8f0;
+  gap: 2px;
+}
+
+.xl-md-segment--p {
+  background: #3b82f6;
+  transition: width 0.3s ease;
+}
+
+.xl-md-segment--c {
+  background: #eab308;
+  transition: width 0.3s ease;
+}
+
+.xl-md-segment--f {
+  background: #10b981;
+  transition: width 0.3s ease;
+}
+
+.xl-md-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  flex-wrap: wrap;
+}
+
+.xl-md-leg--p { color: #1d4ed8; }
+.xl-md-leg--c { color: #b45309; }
+.xl-md-leg--f { color: #047857; }
+
+.xl-md-note {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.xl-macro-warning {
+  margin: 8px 0 0;
+  color: #b45309;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+/* Status pill on goal progress bars */
+.xl-gpb-status-pill {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #15803d;
+  background: #dcfce7;
+  padding: 1px 7px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.xl-gpb-status-pill.is-over-target {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+/* Chef Tip Snippet on Recipe Card */
+.xl-clean-chef-tip {
+  background: #fefce8;
+  border-left: 3px solid #eab308;
+  padding: 6px 10px;
+  border-radius: 0 6px 6px 0;
+  font-size: 12px;
+  color: #854d0e;
+  line-height: 1.5;
+  margin: 8px 0 10px;
+}
+
 @media (max-width: 640px) {
   .xl-day-slots-grid.cols-4,
   .xl-day-slots-grid.cols-3,

@@ -128,7 +128,7 @@
                   <div class="xl-nf-macro-item">
                     <span class="xl-nf-macro-icon">🥑</span>
                     <strong class="xl-nf-macro-num">{{ detail.macros.fat }}</strong>
-                    <span class="xl-nf-macro-name">Chất béo tốt</span>
+                    <span class="xl-nf-macro-name">Chất béo</span>
                   </div>
                   <div class="xl-nf-macro-item">
                     <span class="xl-nf-macro-icon">🥦</span>
@@ -465,8 +465,11 @@
                   >
                     <span class="xl-gsc-icon">🏋️</span>
                     <div class="xl-gsc-info">
-                      <strong>Tập Gym &amp; Tăng Cơ</strong>
-                      <span>Giàu Protein (ức gà, bò Mỹ, cá hồi, sữa chua Hy Lạp) · ~2.000 kcal</span>
+                      <div class="xl-gsc-title-row">
+                        <strong>Tập Gym &amp; Tăng Cơ</strong>
+                        <span class="xl-gsc-badge">35% Đạm</span>
+                      </div>
+                      <span class="xl-gsc-desc">Tối ưu phục hồi cơ bắp với ức gà, thăn bò, cá hồi Na Uy, trứng gà ta · ~2.000 kcal</span>
                     </div>
                   </button>
 
@@ -478,8 +481,11 @@
                   >
                     <span class="xl-gsc-icon">🔥</span>
                     <div class="xl-gsc-info">
-                      <strong>Giảm Cân &amp; Siết Mỡ (Eat Clean)</strong>
-                      <span>Thâm hụt Calo thông minh, giàu chất xơ, ít tinh bột · ~1.350 kcal</span>
+                      <div class="xl-gsc-title-row">
+                        <strong>Giảm Cân &amp; Siết Mỡ (Eat Clean)</strong>
+                        <span class="xl-gsc-badge">Thâm hụt nhẹ</span>
+                      </div>
+                      <span class="xl-gsc-desc">Thâm hụt calo lành mạnh, 40g chất xơ tự nhiên, loại bỏ đường tinh luyện · ~1.350 kcal</span>
                     </div>
                   </button>
 
@@ -491,8 +497,11 @@
                   >
                     <span class="xl-gsc-icon">⚖️</span>
                     <div class="xl-gsc-info">
-                      <strong>Giữ Dáng &amp; Cơm Nhà Cân Bằng</strong>
-                      <span>Đầy đủ 4 nhóm chất, dễ nấu, ngon miệng cho cả nhà · ~1.750 kcal</span>
+                      <div class="xl-gsc-title-row">
+                        <strong>Giữ Dáng &amp; Cơm Nhà Cân Bằng</strong>
+                        <span class="xl-gsc-badge">4 nhóm chất</span>
+                      </div>
+                      <span class="xl-gsc-desc">Cân bằng vi chất chuẩn tháp dinh dưỡng, thanh mát, ngon miệng cả nhà · ~1.750 kcal</span>
                     </div>
                   </button>
 
@@ -504,8 +513,11 @@
                   >
                     <span class="xl-gsc-icon">🥛</span>
                     <div class="xl-gsc-info">
-                      <strong>Thanh Lọc &amp; Tiêu Hóa Khỏe</strong>
-                      <span>Bổ sung lợi khuẩn Sữa chua Probiotics, đẹp da nhẹ bụng · ~1.400 kcal</span>
+                      <div class="xl-gsc-title-row">
+                        <strong>Thanh Lọc &amp; Tiêu Hóa Khỏe</strong>
+                        <span class="xl-gsc-badge">10 Tỷ CFU Probiotics</span>
+                      </div>
+                      <span class="xl-gsc-desc">Bổ sung sữa chua men sống, smoothie hạt chia, nhẹ bụng và sáng da · ~1.400 kcal</span>
                     </div>
                   </button>
                 </div>
@@ -578,6 +590,10 @@
                       <span>+ Bữa Phụ Sữa Chua</span>
                     </button>
                   </div>
+                  <div class="xl-studio-tip">
+                    <span class="xl-tip-icon">💡</span>
+                    <span><strong>Mẹo chuyên gia:</strong> Phân bổ 3-4 bữa/ngày kết hợp bữa phụ Sữa chua hoặc Sinh tố hạt giúp ổn định đường huyết và giữ năng lượng bền bỉ.</span>
+                  </div>
                 </div>
 
                 <!-- Bước 2: Lựa chọn theo ngày hoặc theo tuần & số bữa -->
@@ -640,12 +656,12 @@
                     max="2800"
                     step="50"
                     [ngModel]="targetDailyKcal()"
-                    (ngModelChange)="targetDailyKcal.set(+$event)"
+                    (ngModelChange)="setTargetDailyKcal($event)"
                     class="xl-range-slider"
                   />
                   <div class="xl-kcal-quick-pills">
                     @for (k of [1200, 1500, 1800, 2200, 2500]; track k) {
-                      <button type="button" class="xl-mini-pill" [class.active]="targetDailyKcal() === k" (click)="targetDailyKcal.set(k)">
+                      <button type="button" class="xl-mini-pill" [class.active]="targetDailyKcal() === k" (click)="setTargetDailyKcal(k)">
                         {{ k }} kcal
                       </button>
                     }
@@ -657,24 +673,46 @@
                   <div class="xl-mi-box">
                     <label>💪 Đạm (Protein)</label>
                     <div class="xl-mi-val-row">
-                      <input type="number" min="40" max="240" step="5" [ngModel]="targetProtein()" (ngModelChange)="targetProtein.set(+$event)" />
+                      <input type="number" min="20" max="240" step="1" [value]="targetProtein()" (input)="queueMacroTarget('protein', $any($event.target).value)" (change)="commitMacroTarget('protein', $any($event.target).value)" />
                       <span>g/ngày</span>
                     </div>
                   </div>
                   <div class="xl-mi-box">
                     <label>🥬 Chất xơ (Fiber)</label>
                     <div class="xl-mi-val-row">
-                      <input type="number" min="10" max="60" step="2" [ngModel]="targetFiber()" (ngModelChange)="targetFiber.set(+$event)" />
+                      <input type="number" min="10" max="60" step="1" [value]="targetFiber()" (input)="queueMacroTarget('fiber', $any($event.target).value)" (change)="commitMacroTarget('fiber', $any($event.target).value)" />
                       <span>g/ngày</span>
                     </div>
                   </div>
                   <div class="xl-mi-box">
                     <label>🌾 Tinh bột (Carbs)</label>
                     <div class="xl-mi-val-row">
-                      <input type="number" min="40" max="300" step="10" [ngModel]="targetCarbs()" (ngModelChange)="targetCarbs.set(+$event)" />
+                      <input type="number" min="40" max="300" step="1" [value]="targetCarbs()" (input)="queueMacroTarget('carbs', $any($event.target).value)" (change)="commitMacroTarget('carbs', $any($event.target).value)" />
                       <span>g/ngày</span>
                     </div>
                   </div>
+                </div>
+
+                <!-- Tỷ lệ phân bổ năng lượng Caloric Ratio Preview -->
+                <div class="xl-macro-dist-card">
+                  <div class="xl-md-header">
+                    <span class="xl-md-title">📊 Tỷ lệ phân bổ calo (Caloric Ratio):</span>
+                    <span class="xl-md-badge">Tỷ lệ ước tính</span>
+                  </div>
+                  <div class="xl-md-bar-wrap">
+                    <div class="xl-md-segment xl-md-segment--p" [style.width.%]="macroPercentages().pPct" [title]="'Đạm: ' + macroPercentages().pPct + '%'"></div>
+                    <div class="xl-md-segment xl-md-segment--c" [style.width.%]="macroPercentages().cPct" [title]="'Tinh bột: ' + macroPercentages().cPct + '%'"></div>
+                    <div class="xl-md-segment xl-md-segment--f" [style.width.%]="macroPercentages().fPct" [title]="'Chất béo: ' + macroPercentages().fPct + '%'"></div>
+                  </div>
+                  <div class="xl-md-legend">
+                    <span class="xl-md-leg xl-md-leg--p">💪 Đạm: {{ macroPercentages().pPct }}%</span>
+                    <span class="xl-md-leg xl-md-leg--c">🌾 Tinh bột: {{ macroPercentages().cPct }}%</span>
+                    <span class="xl-md-leg xl-md-leg--f" title="Ước tính từ phần Calo còn lại; không phân loại chất béo bão hòa hay không bão hòa.">🥑 Chất béo ước tính: {{ macroPercentages().fPct }}%</span>
+                  </div>
+                  <p class="xl-md-note">Tính từ phần Calo còn lại sau Đạm và Tinh bột; đây không phải chỉ số riêng cho chất béo không bão hòa.</p>
+                  @if (macroPercentages().overTarget) {
+                    <p class="xl-macro-warning">Tổng Calo từ Đạm và Tinh bột đang cao hơn mục tiêu Calo/ngày.</p>
+                  }
                 </div>
 
                 <!-- Chọn loại chất muốn tăng cường -->
@@ -768,7 +806,10 @@
                   <div class="xl-gpb-metric">
                     <div class="xl-gpb-metric-top">
                       <span>🔥 Năng lượng</span>
-                      <strong>{{ dayPlan.totalCalories }} / {{ targetDailyKcal() }} kcal</strong>
+                      <div style="display:flex;align-items:center;gap:6px">
+                        <strong title="Mục tiêu / Thực tế">{{ targetDailyKcal() }} / {{ dayPlan.totalCalories }} kcal</strong>
+                        <span class="xl-gpb-status-pill">{{ getCalorieStatusText(dayPlan.totalCalories, targetDailyKcal()) }}</span>
+                      </div>
                     </div>
                     <div class="xl-gpb-track">
                       <div class="xl-gpb-fill xl-gpb-fill--kcal" [style.width.%]="getMacroPercent(dayPlan.totalCalories, targetDailyKcal())"></div>
@@ -778,7 +819,10 @@
                   <div class="xl-gpb-metric">
                     <div class="xl-gpb-metric-top">
                       <span>💪 Đạm (Protein)</span>
-                      <strong>{{ dayPlan.totalProtein }}g / {{ targetProtein() }}g</strong>
+                      <div style="display:flex;align-items:center;gap:6px">
+                        <strong title="Mục tiêu / Thực tế">{{ targetProtein() }}g / {{ dayPlan.totalProtein }}g</strong>
+                        <span class="xl-gpb-status-pill" [class.is-over-target]="dayPlan.totalProtein > targetProtein()">{{ getProteinStatusText(dayPlan.totalProtein, targetProtein()) }}</span>
+                      </div>
                     </div>
                     <div class="xl-gpb-track">
                       <div class="xl-gpb-fill xl-gpb-fill--protein" [style.width.%]="getMacroPercent(dayPlan.totalProtein, targetProtein())"></div>
@@ -788,7 +832,7 @@
                   <div class="xl-gpb-metric">
                     <div class="xl-gpb-metric-top">
                       <span>🥬 Chất xơ (Fiber)</span>
-                      <strong>{{ dayPlan.totalFiber }}g / {{ targetFiber() }}g</strong>
+                      <strong title="Mục tiêu / Thực tế">{{ targetFiber() }}g / {{ dayPlan.totalFiber }}g</strong>
                     </div>
                     <div class="xl-gpb-track">
                       <div class="xl-gpb-fill xl-gpb-fill--fiber" [style.width.%]="getMacroPercent(dayPlan.totalFiber, targetFiber())"></div>
@@ -798,7 +842,7 @@
                   <div class="xl-gpb-metric">
                     <div class="xl-gpb-metric-top">
                       <span>🌾 Tinh bột (Carbs)</span>
-                      <strong>{{ dayPlan.totalCarbs }}g / {{ targetCarbs() }}g</strong>
+                      <strong title="Mục tiêu / Thực tế">{{ targetCarbs() }}g / {{ dayPlan.totalCarbs }}g</strong>
                     </div>
                     <div class="xl-gpb-track">
                       <div class="xl-gpb-fill xl-gpb-fill--carbs" [style.width.%]="getMacroPercent(dayPlan.totalCarbs, targetCarbs())"></div>
@@ -911,7 +955,7 @@
                     <span class="xl-sum-pill">💪 Đạm: <strong>{{ dayPlan.totalProtein }}g</strong> (Mục tiêu {{ targetProtein() }}g)</span>
                     <span class="xl-sum-pill">🥬 Chất xơ: <strong>{{ dayPlan.totalFiber }}g</strong> (Mục tiêu {{ targetFiber() }}g)</span>
                     <span class="xl-sum-pill">🌾 Tinh bột: <strong>{{ dayPlan.totalCarbs }}g</strong></span>
-                    <span class="xl-sum-pill">🥑 Béo tốt: <strong>{{ dayPlan.totalFat }}g</strong></span>
+                    <span class="xl-sum-pill">🥑 Chất béo: <strong>{{ dayPlan.totalFat }}g</strong></span>
                   </div>
                 </div>
 
@@ -1135,6 +1179,12 @@
 
                     <p class="xl-clean-desc">{{ recipe.description }}</p>
 
+                    @if (recipe.chefTips) {
+                      <div class="xl-clean-chef-tip">
+                        <span>💡 <strong>Mẹo đầu bếp:</strong> {{ recipe.chefTips }}</span>
+                      </div>
+                    }
+
                     <!-- Clean 4-Macro Strip -->
                     <div class="xl-clean-macro-strip">
                       <div class="xl-cm-item">
@@ -1146,7 +1196,7 @@
                         <strong>{{ recipe.macros.carbs }}</strong>
                       </div>
                       <div class="xl-cm-item">
-                        <span class="xl-cm-lbl">Béo tốt</span>
+                        <span class="xl-cm-lbl">Chất béo</span>
                         <strong>{{ recipe.macros.fat }}</strong>
                       </div>
                       <div class="xl-cm-item">

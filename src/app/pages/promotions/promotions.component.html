@@ -73,7 +73,13 @@
           <h2 class="promo-section-title">Deal Nông Sản Tươi Sạch Giá Tốt</h2>
           <p class="promo-section-sub">Nông sản thu hoạch mới trong ngày từ nông trại Đà Lạt &amp; đối tác VietGAP — Thêm trực tiếp vào giỏ với giá ưu đãi</p>
         </div>
-        <a routerLink="/online-ordering" class="promo-section-link">Xem toàn bộ cửa hàng →</a>
+        <div class="promo-flash-timer-box">
+          <span class="pft-icon">⏳</span>
+          <div class="pft-text">
+            <span class="pft-label">Phiên Flash Sale kết thúc sau:</span>
+            <strong class="pft-clock">{{ flashSaleCountdown() }}</strong>
+          </div>
+        </div>
       </div>
 
       <div class="deal-filter-bar">
@@ -237,20 +243,22 @@
                 <p class="promo-card-desc">{{ promo.desc }}</p>
 
                 <div class="promo-code-box" [class.is-revealed]="isCopied(promo.code)">
-                  <span class="promo-code-text">
-                    @if (isCopied(promo.code)) {
-                      Mã: <strong>{{ promo.code }}</strong>
-                    } @else {
-                      Mã ưu đãi: <strong>••••••</strong>
-                    }
-                  </span>
+                  <div class="promo-code-ticket-wrap">
+                    <span class="promo-code-lbl">MÃ:</span>
+                    <strong class="promo-code-val">{{ promo.code }}</strong>
+                  </div>
                   <button
                     type="button"
                     class="promo-code-copy"
                     [class.copied]="isCopied(promo.code)"
                     (click)="copyPromoCode(promo.code, $event)"
+                    title="Sao chép mã để sử dụng"
                   >
-                    {{ isCopied(promo.code) ? '✓ ' + promo.code : 'Sao chép mã' }}
+                    @if (isCopied(promo.code)) {
+                      <span>✓ Đã chép</span>
+                    } @else {
+                      <span>📋 Sao chép</span>
+                    }
                   </button>
                 </div>
 
@@ -358,7 +366,7 @@
                       <span class="wallet-mini-badge">
                         {{ v.type === 'percentage' ? '-' + v.value + '%' : '-' + (v.value / 1000) + 'K' }}
                       </span>
-                      <span class="wallet-mini-code">{{ isCopied(v.code) ? v.code : '••••••' }}</span>
+                      <span class="wallet-mini-code">{{ v.code }}</span>
                     </div>
                     <div class="wallet-mini-mid">
                       <h4>{{ v.name }}</h4>
