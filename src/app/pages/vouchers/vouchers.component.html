@@ -24,10 +24,10 @@
         Tất cả ưu đãi ({{ publicVouchers().length }})
       </button>
       <button class="vouchers-tab" [class.active]="activeTab() === 'available'" (click)="activeTab.set('available')">
-        Chưa lưu ({{ publicVouchers().length - availableWalletVouchers().length > 0 ? publicVouchers().length - availableWalletVouchers().length : 0 }})
+        Chưa lưu ({{ uncollectedCount() }})
       </button>
       <button class="vouchers-tab" [class.active]="activeTab() === 'collected'" (click)="activeTab.set('collected')">
-        Đã lưu trong ví ({{ availableWalletVouchers().length }})
+        Đã lưu trong ví ({{ savedCount() }})
       </button>
     </div>
 
@@ -78,7 +78,7 @@
 
             @if (isCollected(v.id)) {
               <button type="button" class="voucher-btn-save saved" disabled>
-                ✓ Đã lưu ví
+                ✓ {{ walletStatus(v.id) }}
               </button>
             } @else {
               <button type="button" class="voucher-btn-save" (click)="collectVoucher(v.id, $event)">
@@ -86,13 +86,15 @@
               </button>
             }
 
-            <a
-              class="voucher-btn-use"
-              routerLink="/checkout"
-              [queryParams]="{ voucher: v.code }"
-            >
-              Dùng ngay →
-            </a>
+            @if (!isCollected(v.id) || walletStatus(v.id) === 'Đã lưu trong ví') {
+              <a
+                class="voucher-btn-use"
+                routerLink="/checkout"
+                [queryParams]="{ voucher: v.code }"
+              >
+                Dùng ngay →
+              </a>
+            }
           </div>
         </div>
       }

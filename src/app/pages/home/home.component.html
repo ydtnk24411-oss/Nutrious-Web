@@ -43,12 +43,33 @@
     <section class="coop-section coop-container coop-section-vouchers" aria-labelledby="voucher-title">
       <div class="coop-section-heading">
         <div><span class="coop-eyebrow">MUA SẮM TIẾT KIỆM</span><h2 id="voucher-title">E-voucher khuyến mãi</h2><p>Thêm mã ưu đãi, nhẹ ví hơn khi đi chợ online.</p></div>
-        <a routerLink="/event-list" class="coop-text-link">Khám phá ưu đãi</a>
+        <div class="coop-voucher-heading-actions">
+          <a routerLink="/promotions" class="coop-text-link">Khám phá ưu đãi →</a>
+          <a routerLink="/vouchers" class="coop-text-link">Ví Voucher →</a>
+        </div>
       </div>
+      @if (voucherToast()) {
+        <div class="coop-voucher-toast" role="status">{{ voucherToast() }} <a routerLink="/vouchers">Mở Ví Voucher</a></div>
+      }
       <div class="coop-voucher-grid">
-        <article *ngFor="let voucher of vouchers" class="coop-voucher-card" [class.voucher-green]="voucher.color === 'green'" [class.voucher-orange]="voucher.color === 'amber'" [class.voucher-red]="voucher.color === 'red'">
+        <article *ngFor="let voucher of vouchers()" class="coop-voucher-card" [class.voucher-green]="voucher.color === 'green'" [class.voucher-orange]="voucher.color === 'amber'" [class.voucher-red]="voucher.color === 'red'">
           <div class="coop-voucher-ticket"><small>VOUCHER</small><strong>{{ voucher.valueShort }}</strong><span>COUPON</span></div>
-          <div class="coop-voucher-info"><h3>{{ voucher.title }}</h3><p>{{ voucher.value }}</p><small>{{ voucher.expiry }}</small><div class="coop-voucher-actions"><button type="button" class="coop-copy-btn" (click)="copyVoucher(voucher.code)">{{ copiedCode === voucher.code ? 'Đã sao chép' : 'Sao chép mã' }}</button><b>{{ voucher.code }}</b></div></div>
+          <div class="coop-voucher-info">
+            <h3>{{ voucher.title }}</h3>
+            <p>{{ voucher.value }}</p>
+            <small>{{ voucher.expiry }}</small>
+            <div class="coop-voucher-actions">
+              <button type="button" class="coop-copy-btn" (click)="copyVoucher(voucher.code)">
+                {{ isVoucherCopied(voucher.code) ? '✓ Mã: ' + voucher.code : 'Sao chép mã' }}
+              </button>
+              @if (isVoucherSaved(voucher.id)) {
+                <b>✓ Đã lưu ví</b>
+              } @else {
+                <button type="button" class="coop-voucher-save-btn" (click)="saveVoucher(voucher.id)">+ Lưu vào ví</button>
+              }
+              <a class="coop-voucher-apply-btn" routerLink="/checkout" [queryParams]="{ voucher: voucher.code }">Áp dụng ngay</a>
+            </div>
+          </div>
         </article>
       </div>
     </section>

@@ -43,6 +43,7 @@ export class CheckoutComponent implements OnInit {
   protected voucherDiscount = signal(0);
   protected voucherMessage = signal('');
   protected showVoucherPicker = signal(false);
+  private pendingQueryVoucher = signal('');
 
   // Chỉ thanh toán các món được chọn trong giỏ hàng
   readonly checkoutItems = computed(() => {
@@ -108,6 +109,15 @@ export class CheckoutComponent implements OnInit {
 
   constructor() {
     effect(() => {
+      const code = this.pendingQueryVoucher();
+      const subtotal = this.checkoutSubtotal();
+      if (code && subtotal > 0) {
+        this.pendingQueryVoucher.set('');
+        this.applyVoucher();
+      }
+    });
+
+    effect(() => {
       const u = this.cart.currentUser();
       if (u) {
         this.guestName.set(u.name || '');
@@ -123,10 +133,9 @@ export class CheckoutComponent implements OnInit {
     this.voucher.refreshMine();
     const qCode = this.route.snapshot.queryParamMap.get('voucher');
     if (qCode) {
-      this.voucherCode.set(qCode.trim().toUpperCase());
-      if (this.checkoutSubtotal() > 0) {
-        this.applyVoucher();
-      }
+      const code = qCode.trim().toUpperCase();
+      this.voucherCode.set(code);
+      this.pendingQueryVoucher.set(code);
     }
   }
 

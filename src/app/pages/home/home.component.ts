@@ -1,19 +1,20 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { CartService } from '../../shared/services/cart.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { heroImage, originImage } from '../../shared/data/xanh-la.data';
-import { XanhLaProduct } from '../../shared/models/xanh-la.models';
+import { Voucher as ApiVoucher, XanhLaProduct } from '../../shared/models/xanh-la.models';
 import { CategoryApiService, ApiCategory } from '../../shared/services/category-api.service';
+import { VoucherService } from '../../shared/services/voucher.service';
 
 interface Deal {
   id: string; name: string; category: string; description: string; image: string;
   priceNew: string; priceOld: string; discountPct: number; save: string;
 }
 interface Voucher {
-  code: string; title: string; value: string; valueShort: string; expiry: string;
+  id: string; code: string; title: string; value: string; valueShort: string; expiry: string;
   color: 'green' | 'amber' | 'red';
 }
 interface NewsItem { title: string; image: string; path: string; date: string; }
@@ -29,6 +30,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private cart = inject(CartService);
   private productApi = inject(ProductApiService);
   private categoryApi = inject(CategoryApiService);
+  private voucherService = inject(VoucherService);
 
   readonly heroImage = heroImage;
   readonly originImage = originImage;
@@ -62,12 +64,17 @@ export class HomeComponent implements OnInit, OnDestroy {
     { name: 'Bánh & Đồ ăn vặt', icon: '🍪', image: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=700&q=85' },
     { name: 'Gia vị & Thực phẩm khô', icon: '🧂', image: 'https://images.unsplash.com/photo-1532336414038-cf19250c5757?auto=format&fit=crop&w=700&q=85' },
   ];
-  readonly vouchers: Voucher[] = [
-    { code: 'XANHLA30', title: 'Chào bạn mới', value: 'Tặng mã 30K cho khách hàng mới', valueShort: '30K', expiry: 'HSD: 10 ngày từ ngày nhận mã', color: 'green' },
-    { code: 'XANHLA20', title: 'Ưu đãi đi chợ online', value: 'Giảm 20K cho đơn hàng phù hợp', valueShort: '20K', expiry: 'Ưu đãi có thời hạn', color: 'amber' },
-    { code: 'COMBO30', title: 'Combo bữa nhà', value: 'Giảm 30K khi mua combo nguyên liệu', valueShort: '30K', expiry: 'Số lượng ưu đãi có hạn', color: 'red' },
-  ];
-  copiedCode = '';
+  readonly vouchers = computed<Voucher[]>(() => this.voucherService.publicVouchers().slice(0, 6).map((voucher, index) => ({
+    id: voucher.id,
+    code: voucher.code,
+    title: voucher.name,
+    value: voucher.description || this.voucherDescription(voucher),
+    valueShort: voucher.type === 'percentage' ? `${voucher.value}%` : `${Math.round(voucher.value / 1000)}K`,
+    expiry: `HSD: ${voucher.endDate}`,
+    color: (['green', 'amber', 'red'] as const)[index % 3],
+  })));
+  readonly voucherToast = signal('');
+  private pendingVoucherId = signal<string | null>(null);
   readonly deals: Deal[] = [
     { id: 'deal-1', name: 'Rau cải xanh tươi', category: 'Rau củ', description: 'Gợi ý cho món canh, món xào trong bữa cơm nhà.', image: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?auto=format&fit=crop&w=700&q=85', priceNew: '18.000đ', priceOld: '30.000đ', discountPct: 40, save: '12.000đ' },
     { id: 'deal-2', name: 'Cà chua bi đỏ', category: 'Rau củ', description: 'Thêm sắc đỏ tươi ngon cho salad và món ăn mỗi ngày.', image: 'https://images.unsplash.com/photo-1546094096-0df4bcaaa337?auto=format&fit=crop&w=700&q=85', priceNew: '22.000đ', priceOld: '38.000đ', discountPct: 42, save: '16.000đ' },
@@ -88,9 +95,22 @@ export class HomeComponent implements OnInit, OnDestroy {
   private countdownEnd = Date.now() + 5 * 60 * 60 * 1000 + 42 * 60 * 1000 + 18000;
   private countdownTimer: ReturnType<typeof setInterval> | null = null;
 
+  constructor() {
+    effect(() => {
+      const user = this.cart.currentUser();
+      const voucherId = this.pendingVoucherId();
+      if (user && voucherId) {
+        this.pendingVoucherId.set(null);
+        this.persistVoucher(voucherId);
+      }
+    });
+  }
+
   get visibleProducts(): ApiProduct[] { return this.apiProducts.slice(this.productOffset, this.productOffset + 4); }
 
   ngOnInit(): void {
+    this.voucherService.loadPublic();
+    this.voucherService.refreshMine();
     this.productApi.getAll({ limit: 12, sort: 'createdAt' }).subscribe({
       next: res => { this.apiProducts = res.data || []; this.loadingProducts = false; },
       error: () => { this.loadingProducts = false; },
@@ -115,10 +135,38 @@ export class HomeComponent implements OnInit, OnDestroy {
   prevHero(): void { this.activeHero = (this.activeHero - 1 + this.heroSlides.length) % this.heroSlides.length; }
   nextProducts(): void { this.productOffset = Math.min(Math.max(0, this.apiProducts.length - 4), this.productOffset + 1); }
   prevProducts(): void { this.productOffset = Math.max(0, this.productOffset - 1); }
+  isVoucherCopied(code: string): boolean {
+    return this.voucherService.isCopied(code);
+  }
+  isVoucherSaved(id: string): boolean {
+    return this.voucherService.isSaved(id);
+  }
   copyVoucher(code: string): void {
-    if (typeof navigator !== 'undefined' && navigator.clipboard) navigator.clipboard.writeText(code).catch(() => undefined);
-    this.copiedCode = code;
-    setTimeout(() => { if (this.copiedCode === code) this.copiedCode = ''; }, 1800);
+    this.voucherService.copyCode(code);
+    this.voucherToast.set(`Đã sao chép mã ${code}. Mã vẫn được giữ hiển thị khi bạn chuyển trang.`);
+  }
+  saveVoucher(id: string): void {
+    if (this.isVoucherSaved(id)) return;
+    if (!this.cart.currentUser()) {
+      this.pendingVoucherId.set(id);
+      this.cart.openAuthModal('login');
+      return;
+    }
+    this.persistVoucher(id);
+  }
+  private persistVoucher(id: string): void {
+    this.voucherService.collectVoucher(id).subscribe((result) => {
+      this.voucherToast.set(result.success
+        ? 'Đã lưu voucher vào Ví Voucher. Bạn có thể chọn mã tại trang thanh toán.'
+        : result.message || 'Không thể lưu voucher lúc này.');
+    });
+  }
+  private voucherDescription(voucher: ApiVoucher): string {
+    const discount = voucher.type === 'percentage'
+      ? `Giảm ${voucher.value}%`
+      : `Giảm ${voucher.value.toLocaleString('vi-VN')}đ`;
+    const minimum = voucher.minValue ? ` cho đơn từ ${voucher.minValue.toLocaleString('vi-VN')}đ` : '';
+    return `${discount}${minimum}.`;
   }
   productSlug(p: ApiProduct): string { return p.slug?.startsWith('/') ? p.slug : `/product-page/${p.slug}`; }
   addToCart(p: ApiProduct): void { this.cart.addItem(this.toCartProduct(p), 1); }

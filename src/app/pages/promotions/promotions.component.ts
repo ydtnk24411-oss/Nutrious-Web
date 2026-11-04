@@ -194,6 +194,16 @@ export class PromotionsComponent implements OnInit, OnDestroy {
     return all;
   });
 
+  readonly voucherFilterCounts = computed(() => {
+    const all = this.promotions();
+    return {
+      all: all.length,
+      percentage: all.filter(p => p.discountType === 'percentage').length,
+      fixed: all.filter(p => p.discountType === 'fixed').length,
+      lowMin: all.filter(p => p.minOrderValue <= 150000).length,
+    };
+  });
+
   readonly filteredProductDeals = computed<ProductDealItem[]>(() => {
     const filter = this.dealCategoryFilter();
     const all = this.productDeals();

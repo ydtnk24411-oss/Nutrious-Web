@@ -116,7 +116,9 @@ export class VoucherService {
   copyCode(code: string): void {
     const clean = code.trim().toUpperCase();
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(clean).catch(() => {});
+      navigator.clipboard.writeText(clean).catch(() => this.fallbackCopy(clean));
+    } else {
+      this.fallbackCopy(clean);
     }
     this.copiedCodes.update(prev => {
       const next = new Set(prev);
@@ -127,6 +129,18 @@ export class VoucherService {
 
   isCopied(code: string): boolean {
     return this.copiedCodes().has(code.trim().toUpperCase());
+  }
+
+  private fallbackCopy(code: string): void {
+    if (typeof document === 'undefined') return;
+    const input = document.createElement('textarea');
+    input.value = code;
+    input.style.position = 'fixed';
+    input.style.opacity = '0';
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    input.remove();
   }
 
   isSaved(voucherIdOrCode: string): boolean {

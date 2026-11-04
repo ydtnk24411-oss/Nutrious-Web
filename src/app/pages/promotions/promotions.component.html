@@ -212,27 +212,28 @@
           <h2 class="promo-section-title">Các Chương Trình Khuyến Mãi &amp; Mã Ưu Đãi</h2>
           <p class="promo-section-sub">Nhấn "Sao chép mã" để hiện mã giảm giá (mã sẽ hiển thị cố định không bị ẩn) hoặc "Lưu vào ví" để chọn trực tiếp lúc thanh toán</p>
         </div>
-        <a routerLink="/vouchers" class="promo-section-link">Mở trang Ví Voucher →</a>
+        <a routerLink="/vouchers" class="promo-section-link">Mở Ví Voucher →</a>
       </div>
 
       <div class="deal-filter-bar" style="margin-bottom:24px">
         <button type="button" class="deal-filter-chip" [class.active]="voucherCategoryFilter() === 'all'" (click)="voucherCategoryFilter.set('all')">
-          Tất cả ưu đãi ({{ promotions().length }})
+          Tất cả ưu đãi ({{ voucherFilterCounts().all }})
         </button>
         <button type="button" class="deal-filter-chip" [class.active]="voucherCategoryFilter() === 'percentage'" (click)="voucherCategoryFilter.set('percentage')">
-          🏷️ Giảm theo %
+          🏷️ Giảm theo % ({{ voucherFilterCounts().percentage }})
         </button>
         <button type="button" class="deal-filter-chip" [class.active]="voucherCategoryFilter() === 'fixed'" (click)="voucherCategoryFilter.set('fixed')">
-          💵 Giảm tiền trực tiếp
+          💵 Giảm tiền trực tiếp ({{ voucherFilterCounts().fixed }})
         </button>
         <button type="button" class="deal-filter-chip" [class.active]="voucherCategoryFilter() === 'low_min'" (click)="voucherCategoryFilter.set('low_min')">
-          ✨ Đơn nhỏ từ 0đ – 150K
+          ✨ Đơn nhỏ từ 0đ – 150K ({{ voucherFilterCounts().lowMin }})
         </button>
       </div>
 
       @if (promotions().length === 0) {
         <div class="promo-loading">Đang tải danh sách chương trình khuyến mãi từ cơ sở dữ liệu...</div>
       } @else {
+        @if (filteredPromotions().length > 0) {
         <div class="promo-cards-grid">
           @for (promo of filteredPromotions(); track promo.id) {
             <article class="promo-card" [class]="'promo-card--' + promo.color">
@@ -254,11 +255,7 @@
                     (click)="copyPromoCode(promo.code, $event)"
                     title="Sao chép mã để sử dụng"
                   >
-                    @if (isCopied(promo.code)) {
-                      <span>✓ Đã chép</span>
-                    } @else {
-                      <span>📋 Sao chép</span>
-                    }
+                    {{ isCopied(promo.code) ? '✓ Mã: ' + promo.code : '📋 Sao chép mã' }}
                   </button>
                 </div>
 
@@ -288,6 +285,12 @@
             </article>
           }
         </div>
+        } @else {
+          <div class="promo-filter-empty" role="status">
+            Không có ưu đãi phù hợp với bộ lọc này.
+            <button type="button" (click)="voucherCategoryFilter.set('all')">Xem tất cả ưu đãi</button>
+          </div>
+        }
       }
     </section>
 

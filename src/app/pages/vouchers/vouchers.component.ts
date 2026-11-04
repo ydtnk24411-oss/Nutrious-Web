@@ -22,14 +22,17 @@ export class VouchersComponent implements OnInit {
 
   readonly publicVouchers = this.voucher.publicVouchers;
   readonly collectedVouchers = this.voucher.userVouchers;
-  readonly availableWalletVouchers = this.voucher.availableVouchers;
+  readonly uncollectedCount = computed(() =>
+    this.publicVouchers().filter(v => !this.voucher.isSaved(v.id)).length
+  );
+  readonly savedCount = computed(() => this.collectedVouchers().length);
 
   readonly tabVouchers = computed<Voucher[]>(() => {
     switch (this.activeTab()) {
       case 'available':
         return this.publicVouchers().filter(v => !this.isCollected(v.id));
       case 'collected':
-        return this.availableWalletVouchers().map(uv => uv.voucher);
+        return this.collectedVouchers().map(uv => uv.voucher);
       case 'all':
       default:
         return this.publicVouchers();
@@ -43,6 +46,14 @@ export class VouchersComponent implements OnInit {
 
   isCollected(voucherId: string): boolean {
     return this.voucher.isSaved(voucherId);
+  }
+
+  walletStatus(voucherId: string): string | null {
+    const saved = this.collectedVouchers().find(uv => uv.voucherId === voucherId);
+    if (!saved) return null;
+    if (saved.status === 'used') return 'Đã sử dụng';
+    if (saved.status === 'expired') return 'Đã hết hạn';
+    return 'Đã lưu trong ví';
   }
 
   isCopied(code: string): boolean {
