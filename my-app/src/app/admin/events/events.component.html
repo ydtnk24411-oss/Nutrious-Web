@@ -1,0 +1,240 @@
+<div class="admin-page-header">
+  <div>
+    <h2 class="admin-page-title">Sự kiện Nông trại</h2>
+    <span class="admin-stat-label">Tổng cộng: <strong>{{ events().length }}</strong> sự kiện</span>
+  </div>
+  <button class="admin-btn-primary" (click)="openCreate()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19"></line>
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+    </svg>
+    <span>Thêm sự kiện</span>
+  </button>
+</div>
+
+@if (success()) {
+  <div class="admin-alert admin-alert-success">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <span>{{ success() }}</span>
+  </div>
+}
+@if (error() && !modalOpen()) {
+  <div class="admin-alert admin-alert-error">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+@if (loading()) {
+  <div class="admin-empty">
+    <div class="admin-spinner" style="width:36px;height:36px;border-width:3px;margin:0 auto 14px"></div>
+    <p>Đang tải danh sách sự kiện...</p>
+  </div>
+}
+
+@if (!loading()) {
+  @if (events().length === 0) {
+    <div class="admin-empty">
+      <div class="admin-empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+      </div>
+      <p>Chưa có sự kiện nào được tổ chức.</p>
+    </div>
+  } @else {
+    <div class="events-grid">
+      @for (ev of events(); track ev._id) {
+        <div class="event-card">
+          @if (ev.image) {
+            <img [src]="ev.image" [alt]="ev.name" class="event-card-img" />
+          } @else {
+            <div class="event-card-img event-card-placeholder">
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </div>
+          }
+          <div class="event-card-body">
+            <div class="event-card-meta">
+              <span class="event-card-time">{{ ev.date }} · {{ ev.time }}</span>
+              <span class="admin-badge" [class]="ev.isActive ? 'badge-active' : 'badge-inactive'">
+                {{ ev.isActive ? 'Hoạt động' : 'Ẩn' }}
+              </span>
+            </div>
+            <h4 class="event-card-name" [title]="ev.name">{{ ev.name }}</h4>
+            <p class="event-card-location">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              <span>{{ ev.location }}</span>
+            </p>
+            <div class="event-card-reg">
+              Đăng ký: <strong>{{ ev.registrations?.length ?? 0 }}</strong> / {{ ev.capacity }} người
+            </div>
+            <div class="event-card-actions">
+              <button class="admin-btn-icon" title="Xem danh sách đăng ký"
+                      (click)="openRegistrations(ev)" aria-label="Xem danh sách đăng ký">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </button>
+              <button class="admin-btn-icon" title="Chỉnh sửa sự kiện" (click)="openEdit(ev)" aria-label="Chỉnh sửa">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button class="admin-btn-icon admin-btn-icon-danger" title="Xóa sự kiện" (click)="remove(ev)" aria-label="Xóa">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+}
+
+<!-- Create / Edit Modal -->
+@if (modalOpen() && (modalMode() === 'create' || modalMode() === 'edit')) {
+  <div class="admin-modal-backdrop" (click)="closeModal()">
+    <div class="admin-modal" (click)="$event.stopPropagation()">
+      <div class="admin-modal-header">
+        <h3>{{ modalMode() === 'create' ? 'Thêm sự kiện mới' : 'Chỉnh sửa sự kiện' }}</h3>
+        <button class="admin-btn-icon" (click)="closeModal()" aria-label="Đóng">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="18" x2="18" y2="6"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="admin-modal-body">
+        @if (error()) {
+          <div class="admin-alert admin-alert-error">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span>{{ error() }}</span>
+          </div>
+        }
+        <div class="admin-form-grid">
+          <div class="admin-field" style="grid-column:1/-1">
+            <label>Tên sự kiện *</label>
+            <input type="text" [value]="form().name" (input)="onNameChange($any($event.target).value)" placeholder="Ví dụ: Ngày hội Thu hoạch Nho Evergreen Mart" />
+          </div>
+          <div class="admin-field" style="grid-column:1/-1">
+            <label>Slug *</label>
+            <input type="text" [value]="form().slug" (input)="setField('slug', $any($event.target).value)" placeholder="ngay-hoi-thu-hoach-nho" />
+          </div>
+          <div class="admin-field">
+            <label>Ngày diễn ra *</label>
+            <input type="text" [value]="form().date" (input)="setField('date', $any($event.target).value)" placeholder="Thứ 7, 24/11" />
+          </div>
+          <div class="admin-field">
+            <label>Khung giờ *</label>
+            <input type="text" [value]="form().time" (input)="setField('time', $any($event.target).value)" placeholder="08:30 – 11:30" />
+          </div>
+          <div class="admin-field" style="grid-column:1/-1">
+            <label>Địa điểm *</label>
+            <input type="text" [value]="form().location" (input)="setField('location', $any($event.target).value)" placeholder="Vườn sinh thái Evergreen Mart Farm, Ba Vì" />
+          </div>
+          <div class="admin-field">
+            <label>Số người tối đa</label>
+            <input type="number" min="1" [value]="form().capacity" (input)="setField('capacity', +$any($event.target).value)" />
+          </div>
+          <div class="admin-field">
+            <label>Nhãn nút thao tác</label>
+            <input type="text" [value]="form().action" (input)="setField('action', $any($event.target).value)" placeholder="Đăng ký tham gia" />
+          </div>
+          <div class="admin-field" style="grid-column:1/-1">
+            <label>URL hình ảnh bìa</label>
+            <input type="text" [value]="form().image" (input)="setField('image', $any($event.target).value)" placeholder="https://..." />
+          </div>
+          <div class="admin-field" style="grid-column:1/-1">
+            <label>Mô tả sự kiện</label>
+            <textarea [value]="form().description ?? ''" (input)="setField('description', $any($event.target).value)" placeholder="Giới thiệu nội dung, lịch trình trải nghiệm..."></textarea>
+          </div>
+          <div class="admin-field" style="flex-direction:row;align-items:center;gap:12px">
+            <label style="margin:0;font-weight:600;color:#2c4230">Kích hoạt hiển thị</label>
+            <input type="checkbox" [checked]="form().isActive !== false"
+                   (change)="setField('isActive', $any($event.target).checked)"
+                   style="width:18px;height:18px;accent-color:#176b3a;cursor:pointer" />
+          </div>
+        </div>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="admin-btn-secondary" (click)="closeModal()">Hủy bỏ</button>
+        <button class="admin-btn-primary" [disabled]="saving()" (click)="save()">
+          @if (saving()) { <span class="admin-spinner" style="border-top-color:#fff;border-color:rgba(255,255,255,0.2)"></span> Đang lưu... }
+          @else { {{ modalMode() === 'create' ? 'Tạo sự kiện' : 'Lưu thay đổi' }} }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Registrations Modal -->
+@if (modalOpen() && modalMode() === 'registrations' && selected(); as ev) {
+  <div class="admin-modal-backdrop" (click)="closeModal()">
+    <div class="admin-modal" style="max-width:640px" (click)="$event.stopPropagation()">
+      <div class="admin-modal-header">
+        <div style="display:flex;align-items:center;gap:8px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#176b3a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <h3>Danh sách đăng ký — {{ ev.name }}</h3>
+        </div>
+        <button class="admin-btn-icon" (click)="closeModal()" aria-label="Đóng">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="18" x2="18" y2="6"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="admin-modal-body">
+        <div style="padding:10px 14px;background:#f4f8f1;border:1px solid #dce8d3;border-radius:8px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13.5px;color:#2c4230">Tổng số đăng ký:</span>
+          <strong style="color:#176b3a;font-size:15px">{{ ev.registrations?.length ?? 0 }} / {{ ev.capacity }} người</strong>
+        </div>
+        @if (!ev.registrations || ev.registrations.length === 0) {
+          <div class="admin-empty" style="padding:32px">
+            <p>Chưa có khách hàng nào đăng ký sự kiện này.</p>
+          </div>
+        } @else {
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead><tr><th>#</th><th>Họ và tên</th><th>Email</th><th>Ngày đăng ký</th></tr></thead>
+              <tbody>
+                @for (r of ev.registrations; track $index) {
+                  <tr>
+                    <td style="color:#626e64;font-size:13px">{{ $index + 1 }}</td>
+                    <td style="font-weight:600;color:#1c2920">{{ r.name }}</td>
+                    <td style="font-size:13.5px;color:#5c6e5e">{{ r.email }}</td>
+                    <td style="font-size:13px;color:#626e64">{{ r.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+      <div class="admin-modal-footer">
+        <button class="admin-btn-secondary" (click)="closeModal()">Đóng cửa sổ</button>
+      </div>
+    </div>
+  </div>
+}

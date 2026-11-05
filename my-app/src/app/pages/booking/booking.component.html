@@ -1,0 +1,34 @@
+<app-shell>
+  <div class="xanhla-container" style="padding:56px max(24px,4vw)">
+    <div class="xanhla-sec-header-center">
+      <h1 class="xanhla-sec-title">Dịch vụ &amp; Đặt lịch trực tuyến</h1>
+      <p class="xanhla-sec-desc">Chọn trải nghiệm phù hợp và dành thời gian chăm sóc những bữa ăn tốt hơn.</p>
+    </div>
+
+    @if (loading()) {
+      <div style="text-align:center;padding:48px 0;color:var(--xanh-muted)">Đang tải dịch vụ...</div>
+    }
+    @if (error()) {
+      <div style="text-align:center;padding:32px;color:#c53030">{{ error() }}</div>
+    }
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:28px;max-width:1080px;margin:0 auto">
+      @for (svc of services(); track svc._id; let i = $index) {
+        <div style="background:#fff;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-md);padding:32px 28px;display:flex;flex-direction:column;box-shadow:var(--xanh-shadow-sm)">
+          <div style="font-size:14px;color:var(--xanh-muted);margin-bottom:8px">0{{ i + 1 }}</div>
+          <h3 style="font-family:var(--xanh-font-display);font-size:22px;margin:0 0 6px 0">{{ svc.name }}</h3>
+          <p style="color:var(--xanh-muted);font-size:14px;margin:0 0 16px 0">{{ svc.subtitle }}</p>
+          <div style="font-size:24px;font-weight:700;color:var(--xanh-moss);margin:16px 0 8px 0">{{ svc.price }}</div>
+          @if (svc.status) {
+            <div style="font-size:13px;color:var(--xanh-muted);margin-bottom:20px">{{ svc.status }}</div>
+          }
+          <a [class]="svc.status === 'Đã kết thúc' ? 'xanhla-btn-secondary' : 'xanhla-btn-primary'"
+             [routerLink]="serviceSlug(svc)"
+             style="margin-top:auto;width:100%;text-align:center">
+            {{ svc.action }}
+          </a>
+        </div>
+      }
+    </div>
+  </div>
+</app-shell>

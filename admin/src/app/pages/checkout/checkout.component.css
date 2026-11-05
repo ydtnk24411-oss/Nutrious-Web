@@ -1,0 +1,14 @@
+/* Styles for VietQR Checkout Payment */
+.qr-payment-card {
+  max-width: 680px;
+  margin: 40px auto;
+}
+
+@media (max-width: 640px) {
+  .qr-grid {
+    grid-template-columns: 1fr !important;
+    padding: 20px !important;
+    gap: 20px !important;
+    text-align: center;
+  }
+}

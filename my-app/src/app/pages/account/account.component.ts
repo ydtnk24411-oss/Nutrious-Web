@@ -1,0 +1,417 @@
+import { Component, signal, inject, OnInit, computed, HostListener, effect } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { OrderApiService } from '../../shared/services/order-api.service';
+import { ShellComponent } from '../../components/shell/shell.component';
+import { CartService } from '../../shared/services/cart.service';
+import { LoyaltyService } from '../../shared/services/loyalty.service';
+import { VoucherService } from '../../shared/services/voucher.service';
+import { XanhLaAddress } from '../../shared/models/xanh-la.models';
+
+type Tab = 'overview' | 'orders' | 'addresses' | 'settings';
+
+@Component({
+  selector: 'app-account',
+  standalone: true,
+  imports: [CommonModule, ShellComponent, RouterLink],
+  templateUrl: './account.component.html',
+  styleUrl: './account.component.css',
+})
+export class AccountComponent implements OnInit {
+  protected cart   = inject(CartService);
+  protected router = inject(Router);
+  private loyalty   = inject(LoyaltyService);
+  private voucher   = inject(VoucherService);
+  private route     = inject(ActivatedRoute);
+  private orderApi  = inject(OrderApiService);
+
+  constructor() {
+    effect(() => {
+      const u = this.cart.currentUser();
+      if (u) {
+        this.displayName.set(u.name ?? '');
+        this.firstName.set(u.firstName ?? '');
+        this.lastName.set(u.lastName ?? '');
+        this.phone.set(u.phone ?? '');
+        this.title.set(u.title ?? '');
+        this.addrFullName.set(u.name ?? '');
+        this.addrPhone.set(u.phone ?? '');
+      }
+    });
+  }
+
+  // ── Tab ──────────────────────────────────────
+  activeTab = signal<Tab>('overview');
+
+  // ── My Account form ──────────────────────────
+  displayName = signal('');
+  firstName   = signal('');
+  lastName    = signal('');
+  phone       = signal('');
+  title       = signal('');
+  avatar      = signal('');
+  saved       = signal(false);
+  saving      = signal(false);
+  uploadingAvatar = signal(false);
+  avatarMenuOpen = signal(false);
+
+  // ── My Addresses ─────────────────────────────
+  showAddressForm = signal(false);
+  addrLabel    = signal('Nhà riêng');
+  addrFullName = signal('');
+  addrPhone    = signal('');
+  addrAddress  = signal('');
+  addrCity     = signal('');
+  addrDefault  = signal(false);
+
+  // ── Order History ───────────────
+  orders = signal<any[]>([]);
+  loadingOrders = signal(false);
+
+  orderStatusFilter = signal<'all' | 'pending' | 'processing' | 'delivering' | 'completed' | 'cancelled'>('all');
+  orderSearchQuery = signal('');
+
+  filteredOrders = computed(() => {
+    const statusFilter = this.orderStatusFilter();
+    const searchQuery = this.orderSearchQuery().toLowerCase();
+
+    return this.orders().filter(order => {
+      let matchesStatus = false;
+      if (statusFilter === 'all') {
+        matchesStatus = true;
+      } else if (statusFilter === 'processing') {
+        matchesStatus = ['processing', 'confirmed', 'preparing'].includes(order.status);
+      } else if (statusFilter === 'delivering') {
+        matchesStatus = ['delivering', 'shipping'].includes(order.status);
+      } else if (statusFilter === 'completed') {
+        matchesStatus = ['completed', 'delivered'].includes(order.status);
+      } else {
+        matchesStatus = order.status === statusFilter;
+      }
+
+      const matchesSearch = searchQuery === '' || (order.orderCode && order.orderCode.toLowerCase().includes(searchQuery));
+      return matchesStatus && matchesSearch;
+    });
+  });
+
+  // ── Loyalty & Points ────────────────────────
+  readonly userPoints = computed(() => {
+    const user = this.cart.currentUser();
+    return user ? this.loyalty.getUserBalance(user.email) : 0;
+  });
+
+  readonly userTier = computed(() => {
+    const user = this.cart.currentUser();
+    if (!user) return this.loyalty.tierConfigs[0];
+    return this.loyalty.getUserTier(
+      this.userPoints(),
+      user.totalSpent || 0
+    );
+  });
+
+  readonly pointTransactions = computed(() => {
+    const user = this.cart.currentUser();
+    return user ? this.loyalty.getUserTransactions(user.email) : [];
+  });
+
+  readonly userVouchers = this.voucher.availableVouchers;
+
+  readonly availableRewards = computed(() => {
+    return this.loyalty.getAvailableRewards();
+  });
+
+  ngOnInit(): void {
+    const u = this.cart.currentUser();
+    if (!u) { this.router.navigate(['/']); return; }
+    this.displayName.set(u.name ?? '');
+    this.firstName.set(u.firstName ?? '');
+    this.lastName.set(u.lastName ?? '');
+    this.phone.set(u.phone ?? '');
+    this.title.set(u.title ?? '');
+    // avatar lay truc tiep tu cart.currentUser() de luon dong bo
+    // Pre-fill address form name
+    this.addrFullName.set(u.name ?? '');
+    this.addrPhone.set(u.phone ?? '');
+
+    // Fetch moi nhat tu backend de dam bao avatar luon dung sau login
+    this.route.queryParams.subscribe(params => {
+      const tab = params['tab'];
+      if (tab && ['overview', 'orders', 'addresses', 'settings'].includes(tab)) {
+        this.activeTab.set(tab as Tab);
+      }
+    });
+
+    this.cart.loadUserData();
+    this.loyalty.refresh();
+    this.voucher.refreshMine();
+    this.loadOrders();
+  }
+
+  // ── Load Orders ──────────────────────────────
+  loadOrders(): void {
+    this.loadingOrders.set(true);
+    this.orderApi.getMyOrders().subscribe({
+      next: (res) => {
+        this.loadingOrders.set(false);
+        if (res?.data) {
+          this.orders.set(res.data.map((order: any) => ({
+            id: order._id,
+            _id: order._id,
+            orderCode: order.orderCode,
+            date: order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : '',
+            createdAt: order.createdAt,
+            total: order.total,
+            status: order.status,
+            items: (order.items || []).map((item: any) => ({
+              name: item.productName || item.name || 'Sản phẩm',
+              productName: item.productName || item.name || 'Sản phẩm',
+              quantity: item.quantity,
+              price: item.priceNumber ?? (typeof item.productPrice === 'number' ? item.productPrice : Number(String(item.productPrice || 0).replace(/[^\d]/g, ''))),
+            })),
+          })));
+        }
+      },
+      error: (err) => {
+        this.loadingOrders.set(false);
+        console.error('Failed to load user orders:', err);
+      }
+    });
+  }
+
+  // ── Save account info ────────────────────────
+  saveAccount(e: Event): void {
+    e.preventDefault();
+    this.saving.set(true);
+    // Build full display name từ firstName + lastName nếu có
+    const fullName = [this.firstName(), this.lastName()].filter(Boolean).join(' ') || this.displayName();
+    const updateData = {
+      name:      fullName,
+      firstName: this.firstName(),
+      lastName:  this.lastName(),
+      phone:     this.phone(),
+      title:     this.title(),
+      avatar:    this.cart.currentUser()?.avatar ?? '',
+    };
+    console.log('Saving account with data:', updateData);
+    this.cart.updateUser(updateData);
+    setTimeout(() => {
+      this.saving.set(false);
+      this.saved.set(true);
+      setTimeout(() => this.saved.set(false), 3000);
+    }, 400);
+  }
+
+  // ── Upload Avatar ────────────────────────────
+  onAvatarUpload(event: Event): void {
+    console.log('onAvatarUpload triggered');
+    const input = event.target as HTMLInputElement;
+    console.log('Input element:', input);
+    console.log('Input files:', input.files);
+    console.log('Input files length:', input.files?.length);
+
+    const file = input.files?.[0];
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
+
+    console.log('Avatar upload started:', file.name, file.size, file.type);
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Kích thước ảnh không được vượt quá 2MB');
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Vui lòng chọn file ảnh');
+      return;
+    }
+
+    this.uploadingAvatar.set(true);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      this.uploadingAvatar.set(false);
+
+      // Auto-save avatar to backend
+      console.log('Saving avatar to backend...');
+      this.cart.updateUser({ avatar: base64 });
+    };
+    reader.onerror = () => {
+      console.error('FileReader error');
+      alert('Không thể đọc file ảnh');
+      this.uploadingAvatar.set(false);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  triggerAvatarInput(inputId: string): void {
+    console.log('triggerAvatarInput called with ID:', inputId);
+    const input = document.getElementById(inputId) as HTMLInputElement;
+    console.log('Input element found:', !!input);
+    if (input) {
+      console.log('Clicking input...');
+      input.click();
+    } else {
+      console.error('Input element not found');
+    }
+  }
+
+  removeAvatar(): void {
+    if (confirm('Bạn có chắc muốn xóa ảnh đại diện?')) {
+      this.avatarMenuOpen.set(false);
+
+      // Auto-save empty avatar to backend
+      this.cart.updateUser({ avatar: '' });
+    }
+  }
+
+  toggleAvatarMenu(): void {
+    console.log('toggleAvatarMenu called, current state:', this.avatarMenuOpen());
+    this.avatarMenuOpen.update(v => !v);
+    console.log('toggleAvatarMenu new state:', this.avatarMenuOpen());
+  }
+
+  closeAvatarMenu(): void {
+    console.log('closeAvatarMenu called');
+    this.avatarMenuOpen.set(false);
+  }
+
+  cancelAccount(): void {
+    const u = this.cart.currentUser();
+    if (!u) return;
+    this.displayName.set(u.name ?? '');
+    this.firstName.set(u.firstName ?? '');
+    this.lastName.set(u.lastName ?? '');
+    this.phone.set(u.phone ?? '');
+    this.title.set(u.title ?? '');
+  }
+
+  // ── Addresses ────────────────────────────────
+  addAddress(e: Event): void {
+    e.preventDefault();
+    if (!this.addrFullName() || !this.addrAddress()) return;
+    const addr: XanhLaAddress = {
+      id:        Date.now().toString(),
+      label:     this.addrLabel(),
+      fullName:  this.addrFullName(),
+      phone:     this.addrPhone(),
+      address:   this.addrAddress(),
+      city:      this.addrCity(),
+      isDefault: this.addrDefault(),
+    };
+    this.cart.addAddress(addr);
+    this.resetAddressForm();
+    this.showAddressForm.set(false);
+  }
+
+  removeAddress(id: string): void {
+    if (confirm('Xóa địa chỉ này?')) this.cart.removeAddress(id);
+  }
+
+  setDefault(id: string): void {
+    const addrs = (this.cart.currentUser()?.addresses ?? []).map(a => ({
+      ...a, isDefault: a.id === id,
+    }));
+    this.cart.updateUser({ addresses: addrs });
+  }
+
+  editAddress(id: string): void {
+    const addr = this.cart.currentUser()?.addresses?.find(a => a.id === id);
+    if (addr) {
+      this.addrLabel.set(addr.label);
+      this.addrFullName.set(addr.fullName);
+      this.addrPhone.set(addr.phone);
+      this.addrAddress.set(addr.address);
+      this.addrCity.set(addr.city);
+      this.addrDefault.set(addr.isDefault);
+      this.showAddressForm.set(true);
+    }
+  }
+
+  private resetAddressForm(): void {
+    this.addrLabel.set('Nhà riêng');
+    this.addrAddress.set('');
+    this.addrCity.set('');
+    this.addrDefault.set(false);
+  }
+
+  // ── Orders ─────────────────────────────────
+  getOrderStatusText(status: string): string {
+    const statusMap: Record<string, string> = {
+      pending: 'Chờ xác nhận',
+      confirmed: 'Đã xác nhận',
+      processing: 'Đang xử lý',
+      preparing: 'Đang chuẩn bị',
+      shipping: 'Đang giao',
+      delivering: 'Đang giao',
+      delivered: 'Đã giao',
+      completed: 'Đã giao',
+      cancelled: 'Đã hủy',
+      returned: 'Đã hoàn trả',
+    };
+    return statusMap[status] || status;
+  }
+
+  getOrderStatusClass(status: string): string {
+    const classMap: Record<string, string> = {
+      pending: 'status-pending',
+      confirmed: 'status-confirmed',
+      preparing: 'status-preparing',
+      shipping: 'status-shipping',
+      delivered: 'status-delivered',
+      cancelled: 'status-cancelled',
+      returned: 'status-returned',
+    };
+    return classMap[status] || '';
+  }
+
+  // ── Vouchers ────────────────────────────────
+  collectVoucher(voucherId: string): void {
+    this.voucher.collectVoucher(voucherId).subscribe((res) => {
+      alert(res.success ? 'Đã thu thập voucher thành công!' : (res.message || 'Không thể thu thập voucher.'));
+    });
+  }
+
+  // ── Points & Rewards ────────────────────────
+  redeemReward(rewardId: string): void {
+    const user = this.cart.currentUser();
+    if (!user) return;
+
+    this.loyalty.redeemReward(user.email, rewardId).subscribe((result) => {
+      if (result.success) {
+        alert('Đổi quà thành công!');
+      } else {
+        alert(result.message || 'Không thể đổi quà');
+      }
+    });
+  }
+
+  // ── Logout ───────────────────────────────────
+  logout(): void {
+    this.cart.logout();
+    this.router.navigate(['/']);
+  }
+
+  // ── Utils ────────────────────────────────────
+  avatarChar(): string {
+    return (this.cart.currentUser()?.name ?? 'U').charAt(0).toUpperCase();
+  }
+
+  maskPassword(): string { return '•••••••'; }
+
+  formatPrice(value: number): string {
+    return value.toLocaleString('vi-VN') + 'đ';
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocClick(e: Event): void {
+    const t = e.target as HTMLElement;
+    if (!t.closest('.acc-avatar-menu') && !t.closest('.acc-avatar-edit-btn')) {
+      this.avatarMenuOpen.set(false);
+    }
+  }
+}

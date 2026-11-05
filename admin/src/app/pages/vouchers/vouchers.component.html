@@ -1,0 +1,140 @@
+<app-shell>
+  <div class="vouchers-page xanhla-container">
+
+    <!-- ── Page header ── -->
+    <div class="vouchers-header">
+      <span class="vouchers-kicker">Kho Ưu Đãi Trực Tuyến</span>
+      <h1 class="vouchers-title">Ví Voucher &amp; Mã Khuyến Mãi</h1>
+      <p class="vouchers-subtitle">
+        Nhấn <strong>Sao chép mã</strong> để lấy mã ưu đãi, hoặc <strong>Lưu vào ví</strong> để chọn áp dụng trực tiếp lúc thanh toán.
+      </p>
+      <div class="vouchers-header-links">
+        <a routerLink="/promotions" class="vouchers-nav-pill">Xem Deal Nông Sản &amp; Combo</a>
+        <a routerLink="/checkout" class="vouchers-nav-pill vouchers-nav-pill--primary">Đến Thanh toán áp dụng mã</a>
+      </div>
+    </div>
+
+    <!-- ── Toast ── -->
+    @if (toastMessage()) {
+      <div class="vouchers-toast" role="status">
+        <span>{{ toastMessage() }}</span>
+        <a routerLink="/checkout" class="vouchers-toast-link">Đến Thanh toán →</a>
+      </div>
+    }
+
+    <!-- ── Tabs ── -->
+    <div class="vouchers-tabs">
+      <button class="vouchers-tab" [class.active]="activeTab() === 'all'" (click)="activeTab.set('all')">
+        Tất cả ưu đãi ({{ publicVouchers().length }})
+      </button>
+      <button class="vouchers-tab" [class.active]="activeTab() === 'available'" (click)="activeTab.set('available')">
+        Chưa lưu ({{ uncollectedCount() }})
+      </button>
+      <button class="vouchers-tab" [class.active]="activeTab() === 'collected'" (click)="activeTab.set('collected')">
+        Đã lưu trong ví ({{ savedCount() }})
+      </button>
+    </div>
+
+    <!-- ── Voucher grid ── -->
+    <div class="vouchers-grid">
+      @for (v of tabVouchers(); track v.id) {
+        <div class="voucher-card" [class.is-collected]="isCollected(v.id)">
+
+          <!-- Ticket left strip -->
+          <div class="voucher-strip">
+            <span class="voucher-strip-label">VOUCHER</span>
+            <strong class="voucher-strip-value">
+              {{ v.type === 'percentage' ? v.value + '%' : (v.value / 1000) + 'K' }}
+            </strong>
+            <span class="voucher-strip-sub">COUPON</span>
+          </div>
+
+          <!-- Card body -->
+          <div class="voucher-main">
+            <div class="voucher-main-top">
+              <div class="voucher-cat">{{ v.type === 'percentage' ? 'Giảm theo %' : 'Giảm cố định' }}</div>
+              <div class="voucher-code-chip" [class.revealed]="isCopied(v.code)">
+                {{ isCopied(v.code) ? v.code : '••••••' }}
+              </div>
+            </div>
+
+            <h3 class="voucher-name">{{ v.name }}</h3>
+            <p class="voucher-desc">{{ v.description }}</p>
+
+            <div class="voucher-conditions">
+              <span class="voucher-condition">
+                Đơn tối thiểu: <strong>{{ (v.minValue || 0).toLocaleString('vi-VN') }}đ</strong>
+              </span>
+              @if (v.maxValue && v.type === 'percentage') {
+                <span class="voucher-condition">
+                  Giảm tối đa: <strong>{{ v.maxValue.toLocaleString('vi-VN') }}đ</strong>
+                </span>
+              }
+            </div>
+
+            <div class="voucher-meta-row">
+              <span class="voucher-expiry">HSD: {{ v.endDate }}</span>
+              @if (v.usageLimit) {
+                <span class="voucher-usage">{{ v.usedCount }}/{{ v.usageLimit }} lượt</span>
+              }
+            </div>
+
+            <!-- Actions -->
+            <div class="voucher-actions">
+              <button
+                type="button"
+                class="voucher-btn-copy"
+                [class.copied]="isCopied(v.code)"
+                (click)="copyCode(v.code, $event)"
+              >
+                {{ isCopied(v.code) ? 'Mã: ' + v.code : 'Sao chép mã' }}
+              </button>
+
+              @if (isCollected(v.id)) {
+                <button type="button" class="voucher-btn-save saved" disabled>
+                  {{ walletStatus(v.id) }}
+                </button>
+              } @else {
+                <button type="button" class="voucher-btn-save" (click)="collectVoucher(v.id, $event)">
+                  Lưu vào ví
+                </button>
+              }
+
+              @if (!isCollected(v.id) || walletStatus(v.id) === 'Đã lưu trong ví') {
+                <a
+                  class="voucher-btn-use"
+                  routerLink="/checkout"
+                  [queryParams]="{ voucher: v.code }"
+                >
+                  Dùng ngay
+                </a>
+              }
+            </div>
+          </div>
+
+        </div>
+      }
+    </div>
+
+    <!-- ── Empty state ── -->
+    @if (tabVouchers().length === 0) {
+      <div class="vouchers-empty">
+        <div class="vouchers-empty-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="1" y="4" width="22" height="16" rx="2"/>
+            <line x1="1" y1="10" x2="23" y2="10"/>
+          </svg>
+        </div>
+        @if (activeTab() === 'collected') {
+          <p>Bạn chưa lưu voucher nào vào ví. Hãy nhấn "Lưu vào ví" ở tab Tất cả ưu đãi nhé!</p>
+          <button type="button" class="vouchers-tab active" style="margin-top:12px" (click)="activeTab.set('all')">
+            Xem tất cả ưu đãi
+          </button>
+        } @else {
+          <p>Không có voucher nào trong mục này.</p>
+        }
+      </div>
+    }
+
+  </div>
+</app-shell>
