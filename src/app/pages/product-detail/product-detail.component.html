@@ -162,10 +162,24 @@
             <div class="xanhla-review-item">
               <div class="xanhla-review-header">
                 <div class="xanhla-review-author">
-                  <strong>{{ review.userName }}</strong>
-                  @if (review.verifiedPurchase) {
-                    <span class="xanhla-verified-badge">Đã mua hàng</span>
-                  }
+                  <div class="xanhla-review-avatar-wrap">
+                    @if (review.userAvatar) {
+                      <img
+                        [src]="review.userAvatar"
+                        class="xanhla-review-avatar-img"
+                        [alt]="review.userName"
+                        (error)="review.userAvatar = ''"
+                      />
+                    } @else {
+                      <div class="xanhla-review-avatar-fallback">{{ (review.userName || 'K').charAt(0).toUpperCase() }}</div>
+                    }
+                  </div>
+                  <div class="xanhla-review-author-meta">
+                    <strong class="xanhla-review-user-name">{{ review.userName }}</strong>
+                    @if (review.verifiedPurchase) {
+                      <span class="xanhla-verified-badge">Đã mua hàng</span>
+                    }
+                  </div>
                 </div>
                 <div class="xanhla-review-date">{{ review.createdAt | date:'dd/MM/yyyy' }}</div>
               </div>
@@ -180,6 +194,22 @@
                 <h4 class="xanhla-review-title">{{ review.title }}</h4>
               }
               <p class="xanhla-review-content">{{ review.content }}</p>
+
+              <!-- Phản hồi từ Admin / Evergreen Mart -->
+              @if (review.adminReply) {
+                <div class="xanhla-review-admin-reply">
+                  <div class="admin-reply-head">
+                    <div class="admin-reply-badge">
+                      <img src="/logo.png" alt="Evergreen Mart" class="admin-reply-logo" />
+                      <span class="admin-reply-title">Evergreen Mart phản hồi</span>
+                    </div>
+                    @if (review.adminReplyAt) {
+                      <span class="admin-reply-date">{{ review.adminReplyAt | date:'dd/MM/yyyy' }}</span>
+                    }
+                  </div>
+                  <p class="admin-reply-text">{{ review.adminReply }}</p>
+                </div>
+              }
               <div class="xanhla-review-footer">
                 <button class="xanhla-helpful-btn" (click)="markHelpful(review.id)">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

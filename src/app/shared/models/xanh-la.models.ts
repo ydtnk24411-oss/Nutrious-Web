@@ -109,14 +109,18 @@ export interface ProductReview {
   id: string;
   productId: string;
   productName: string;
+  productImage?: string;
   userId: string;
   userName: string;
+  userAvatar?: string;
   rating: number; // 1-5
   title?: string;
   content: string;
   images?: string[];
   helpfulCount: number;
   isHelpful?: boolean;
+  adminReply?: string;
+  adminReplyAt?: string;
   createdAt: string;
   verifiedPurchase: boolean;
 }

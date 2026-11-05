@@ -118,14 +118,32 @@
           @for (item of reviews(); track item._id) {
             <tr>
               <td>
-                <span class="product-name">{{ item.productName || 'Sản phẩm Evergreen Mart' }}</span>
+                <div class="product-cell">
+                  <img
+                    [src]="item.productImage || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&q=80'"
+                    [alt]="item.productName || 'Sản phẩm'"
+                    class="product-thumb"
+                  />
+                  <div class="product-info-wrap">
+                    <span class="product-name" [title]="item.productName">{{ item.productName || 'Sản phẩm Evergreen Mart' }}</span>
+                  </div>
+                </div>
               </td>
               <td>
-                <div class="user-col">
-                  <span class="user-name">{{ item.userName }}</span>
-                  @if (item.verifiedPurchase) {
-                    <span class="verified-tag">✓ Đã mua hàng</span>
-                  }
+                <div class="user-cell">
+                  <div class="user-avatar-wrap">
+                    @if (getUserAvatar(item)) {
+                      <img [src]="getUserAvatar(item)" [alt]="item.userName" class="user-avatar-img" />
+                    } @else {
+                      <div class="user-avatar-fallback">{{ (item.userName || 'K').charAt(0).toUpperCase() }}</div>
+                    }
+                  </div>
+                  <div class="user-col">
+                    <span class="user-name">{{ item.userName }}</span>
+                    @if (item.verifiedPurchase) {
+                      <span class="verified-tag">✓ Đã mua hàng</span>
+                    }
+                  </div>
                 </div>
               </td>
               <td>
@@ -206,7 +224,26 @@
 
         <div class="modal-body">
           <div class="customer-review-preview">
-            <span class="preview-product">{{ activeReview()?.productName }}</span>
+            <div class="modal-preview-header">
+              <div class="modal-preview-product">
+                <img
+                  [src]="activeReview()?.productImage || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&q=80'"
+                  [alt]="activeReview()?.productName || 'Sản phẩm'"
+                  class="preview-product-thumb"
+                />
+                <span class="preview-product">{{ activeReview()?.productName }}</span>
+              </div>
+              <div class="modal-preview-user">
+                <div class="user-avatar-wrap-sm">
+                  @if (getUserAvatar(activeReview())) {
+                    <img [src]="getUserAvatar(activeReview())" [alt]="activeReview()?.userName" class="user-avatar-img" />
+                  } @else {
+                    <div class="user-avatar-fallback-sm">{{ (activeReview()?.userName || 'K').charAt(0).toUpperCase() }}</div>
+                  }
+                </div>
+                <span class="preview-username">{{ activeReview()?.userName }}</span>
+              </div>
+            </div>
             <p class="preview-text">"{{ activeReview()?.content }}"</p>
           </div>
 

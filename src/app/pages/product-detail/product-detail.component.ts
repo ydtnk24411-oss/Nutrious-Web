@@ -161,6 +161,7 @@ export class ProductDetailComponent implements OnInit {
     this.reviewService.addReview({
       productId: p._id,
       productName: p.name,
+      productImage: p.image,
       rating: this.reviewRating(),
       title: this.reviewTitle(),
       content: this.reviewContent(),
