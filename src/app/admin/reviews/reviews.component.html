@@ -66,6 +66,16 @@
 
     <div class="filter-controls">
       <select
+        [ngModel]="selectedSort()"
+        (ngModelChange)="selectedSort.set($event); loadReviews()"
+        class="filter-select"
+        aria-label="Sắp xếp thời gian"
+      >
+        <option value="newest">Mới nhất</option>
+        <option value="oldest">Cũ nhất</option>
+      </select>
+
+      <select
         [ngModel]="selectedRating()"
         (ngModelChange)="selectedRating.set($event); loadReviews()"
         class="filter-select"

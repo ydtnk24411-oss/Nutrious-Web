@@ -29,6 +29,7 @@ export class AdminReviewsComponent implements OnInit {
   searchQuery = signal('');
   selectedRating = signal<number | 'all'>('all');
   selectedStatus = signal<'all' | 'visible' | 'hidden'>('all');
+  selectedSort = signal<'newest' | 'oldest'>('newest');
 
   // Modal Reply
   replyModalOpen = signal(false);
@@ -46,6 +47,7 @@ export class AdminReviewsComponent implements OnInit {
     if (this.searchQuery()) params['search'] = this.searchQuery();
     if (this.selectedRating() !== 'all') params['rating'] = this.selectedRating();
     if (this.selectedStatus() !== 'all') params['status'] = this.selectedStatus();
+    if (this.selectedSort()) params['sort'] = this.selectedSort();
 
     this.reviewApi.getAll(params).subscribe({
       next: (res) => {

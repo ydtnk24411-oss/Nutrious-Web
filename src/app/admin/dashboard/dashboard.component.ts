@@ -21,6 +21,7 @@ export class AdminDashboardComponent implements OnInit {
   barData     = signal<CategoryRevenue[]>([]);
   lineData    = signal<LinePoint[]>([]);
   topProducts = signal<TopProduct[]>([]);
+  topLimit = signal<5 | 10>(5);
   insights    = signal<string[]>([]);
   loading     = signal(true);
   error       = signal('');
@@ -158,9 +159,17 @@ export class AdminDashboardComponent implements OnInit {
     return v.toLocaleString('vi-VN') + 'đ';
   }
 
+  get displayedTopProducts(): TopProduct[] {
+    return this.topProducts().slice(0, this.topLimit());
+  }
+
+  setTopLimit(limit: 5 | 10): void {
+    this.topLimit.set(limit);
+  }
+
   barHeight(rev: number): number {
     const max = Math.max(...this.barData().map(b => b.revenue), 1);
-    return Math.max(12, Math.round((rev / max) * 160));
+    return Math.max(10, Math.round((rev / max) * 130));
   }
 
   isHighlight(index: number): boolean {
