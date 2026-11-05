@@ -39,6 +39,3 @@ coverage/
 *.tmp
 .cache/
 
-# Uploaded external reference folder
-chatbox-main/
-nutrition-chatbot-main/
