@@ -45,7 +45,7 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Auto-generate orderCode before save
+// Tự động sinh orderCode dạng chữ + số có dấu gạch ngang (ví dụ 'XL-394737')
 orderSchema.pre('save', function (next) {
   if (!this.orderCode) {
     this.orderCode = 'XL-' + Math.floor(100000 + Math.random() * 900000);
