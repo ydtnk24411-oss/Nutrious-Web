@@ -122,8 +122,9 @@ export class ShippingMapPickerComponent implements OnInit, OnChanges, OnDestroy 
       zoomControl: true,
     });
 
-    // OpenStreetMap free tile layer (CartoDB Voyager - Cloudflare CDN siêu tốc, không bị chặn DNS tại VN)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    // OpenStreetMap tile layer (CartoDB Voyager có kèm API Key bản đồ chính thức)
+    const cartoKey = 'cb1_52qy_1_f631c7c88a518151e7549366';
+    L.tileLayer(`https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${cartoKey}`, {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       subdomains: 'abcd',
