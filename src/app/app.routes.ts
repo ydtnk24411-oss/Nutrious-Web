@@ -78,6 +78,16 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/tracker/tracker.component').then((m) => m.TrackerComponent),
   },
+  {
+    path: 'complaint',
+    loadComponent: () =>
+      import('./pages/complaint/complaint.component').then((m) => m.ComplaintComponent),
+  },
+  {
+    path: 'khieu-nai',
+    redirectTo: 'complaint',
+    pathMatch: 'full',
+  },
 
   {
     path: 'nutrition',

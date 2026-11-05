@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const Complaint = require('../models/Complaint');
+const Order = require('../models/Order');
 const { protect, staffOnly, hasRole, optionalAuth } = require('../middleware/auth');
 
 // GET /api/complaints — list for admin
@@ -55,7 +56,43 @@ router.get('/', protect, staffOnly, async (req, res, next) => {
   }
 });
 
-// GET /api/complaints/:id — detail
+// GET /api/complaints/my — list complaints for logged in customer
+router.get('/my', protect, async (req, res, next) => {
+  try {
+    const complaints = await Complaint.find({ customer: req.user._id })
+      .sort({ createdAt: -1 })
+      .populate('order', 'orderCode total status createdAt');
+    res.json({ success: true, data: complaints });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/complaints/track/:code — track complaint by code (public)
+router.get('/track/:code', async (req, res, next) => {
+  try {
+    const rawCode = String(req.params.code || '').trim();
+    if (!rawCode) {
+      return res.status(400).json({ success: false, message: 'Vui lòng cung cấp mã khiếu nại' });
+    }
+
+    const complaint = await Complaint.findOne({
+      complaintCode: { $regex: new RegExp(`^${rawCode}$`, 'i') },
+    })
+      .populate('order', 'orderCode total status createdAt')
+      .select('complaintCode customerName customerPhone customerEmail status type title description images resolutionNote resolvedAt createdAt updatedAt');
+
+    if (!complaint) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy khiếu nại với mã này' });
+    }
+
+    res.json({ success: true, data: complaint });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/complaints/:id — detail (admin/staff)
 router.get('/:id', protect, staffOnly, async (req, res, next) => {
   try {
     const complaint = await Complaint.findById(req.params.id)
@@ -76,9 +113,17 @@ router.get('/:id', protect, staffOnly, async (req, res, next) => {
 // POST /api/complaints — create complaint
 router.post('/', optionalAuth, async (req, res, next) => {
   try {
-    const { title, description, type = 'product', orderId, customerName, customerPhone, customerEmail, images } = req.body;
+    const { title, description, type = 'product', orderId, orderCode, customerName, customerPhone, customerEmail, images } = req.body;
     if (!title || !description) {
       return res.status(400).json({ success: false, message: 'Tiêu đề và nội dung khiếu nại là bắt buộc' });
+    }
+
+    let resolvedOrderId = orderId || null;
+    if (!resolvedOrderId && orderCode) {
+      try {
+        const found = await Order.findOne({ orderCode: String(orderCode).trim().toUpperCase() });
+        if (found) resolvedOrderId = found._id;
+      } catch (e) {}
     }
 
     const complaint = await Complaint.create({
@@ -86,7 +131,7 @@ router.post('/', optionalAuth, async (req, res, next) => {
       customerName: req.user?.name || customerName || 'Khách hàng',
       customerPhone: req.user?.phone || customerPhone || '',
       customerEmail: req.user?.email || customerEmail || '',
-      order: orderId || null,
+      order: resolvedOrderId,
       type,
       title,
       description,

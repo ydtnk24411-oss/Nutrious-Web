@@ -63,7 +63,15 @@ export class ComplaintApiService {
     return this.api.get<{ success: boolean; data: ComplaintItem }>(`/complaints/${id}`);
   }
 
-  create(body: Partial<ComplaintItem>) {
+  track(code: string) {
+    return this.api.get<{ success: boolean; data: ComplaintItem }>(`/complaints/track/${encodeURIComponent(code)}`);
+  }
+
+  getMyComplaints() {
+    return this.api.get<{ success: boolean; data: ComplaintItem[] }>('/complaints/my');
+  }
+
+  create(body: Partial<ComplaintItem> & { orderCode?: string }) {
     return this.api.post<{ success: boolean; data: ComplaintItem }>('/complaints', body);
   }
 

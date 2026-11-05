@@ -504,7 +504,10 @@
                 </div>
                 <div class="acc-order-footer">
                   <div class="acc-order-total">Tổng: {{ formatPrice(order.total) }}</div>
-                  <a [routerLink]="'/order/' + order.orderCode" class="acc-btn-outline acc-btn-sm">Chi tiết</a>
+                  <div style="display:flex;gap:8px">
+                    <a [routerLink]="['/complaint']" [queryParams]="{ orderCode: order.orderCode }" class="acc-btn-outline acc-btn-sm" style="color:#b91c1c;border-color:#fca5a5" title="Báo cáo sự cố hoặc khiếu nại đơn hàng này">Khiếu nại</a>
+                    <a [routerLink]="'/order/' + order.orderCode" class="acc-btn-outline acc-btn-sm">Chi tiết</a>
+                  </div>
                 </div>
               </div>
             }
