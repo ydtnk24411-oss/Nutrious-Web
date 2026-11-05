@@ -25,6 +25,14 @@ const orderSchema = new mongoose.Schema(
     discount:    { type: Number, default: 0 },
     voucherCode: { type: String, default: '' },
     shippingFee: { type: Number, default: 0 },
+    shippingDiscount: { type: Number, default: 0 },
+    shippingDistanceKm: { type: Number, default: 0 },
+    shippingCoordinates: {
+      lat: { type: Number },
+      lng: { type: Number },
+    },
+    estimatedDeliveryTime: { type: String, default: '' },
+    shippingDetails: { type: Object },
     total:       { type: Number, required: true, min: 0 },
     shippingMethod: {
       type: String, enum: ['pickup', 'delivery'], default: 'pickup',

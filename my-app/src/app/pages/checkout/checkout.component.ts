@@ -7,6 +7,8 @@ import { CartService, formatPrice } from '../../shared/services/cart.service';
 import { OrderApiService } from '../../shared/services/order-api.service';
 import { VoucherService } from '../../shared/services/voucher.service';
 import { Voucher } from '../../shared/models/xanh-la.models';
+import { ShippingMapPickerComponent } from '../../components/shipping-map-picker/shipping-map-picker.component';
+import { ShippingCalculationResult } from '../../shared/services/shipping-api.service';
 
 export interface CheckoutVoucherOption {
   voucher: Voucher;
@@ -18,7 +20,7 @@ export interface CheckoutVoucherOption {
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [CommonModule, FormsModule, ShellComponent, RouterLink],
+  imports: [CommonModule, FormsModule, ShellComponent, RouterLink, ShippingMapPickerComponent],
   templateUrl: './checkout.component.html',
   styleUrl: './checkout.component.css',
 })
@@ -102,9 +104,38 @@ export class CheckoutComponent implements OnInit {
     return Math.floor(this.checkoutSubtotal() / 1000); // 1 điểm cho mỗi 1000đ
   });
 
-  // Total after discount
+  // Vận chuyển & Bản đồ định vị
+  protected shippingCoordinates = signal<{ lat: number; lng: number } | null>({ lat: 10.852, lng: 106.772 });
+  protected shippingCalculation = signal<ShippingCalculationResult | null>(null);
+  protected isOutOfRange = signal(false);
+  protected outOfRangeMessage = signal('');
+
+  // Phí ship thực tế (lấy từ kết quả tính toán backend theo khoảng cách OSRM)
+  readonly shippingDistanceKm = computed(() => {
+    return this.shippingCalculation()?.distanceKm ?? 0;
+  });
+
+  readonly estimatedDeliveryTime = computed(() => {
+    return this.shippingCalculation()?.estimatedDeliveryTime ?? '';
+  });
+
+  readonly shippingUnsupported = computed(() => {
+    return this.isOutOfRange() || (this.shippingCalculation() !== null && this.shippingCalculation()?.supported === false);
+  });
+
+  readonly shippingFee = computed(() => {
+    if (this.shippingMethod() === 'pickup') return 0;
+    return this.shippingCalculation()?.finalFee ?? 0;
+  });
+
+  readonly shippingDiscount = computed(() => {
+    if (this.shippingMethod() === 'pickup') return 0;
+    return this.shippingCalculation()?.discount ?? 0;
+  });
+
+  // Total sau giảm giá voucher + phí vận chuyển thực tế
   readonly finalTotal = computed(() => {
-    return Math.max(0, this.checkoutSubtotal() - this.voucherDiscount());
+    return Math.max(0, this.checkoutSubtotal() - this.voucherDiscount() + this.shippingFee());
   });
 
   // form fields
@@ -194,6 +225,19 @@ export class CheckoutComponent implements OnInit {
     this.voucherMessage.set('');
   }
 
+  onLocationChanged(event: { address: string; lat: number; lng: number; result: ShippingCalculationResult }): void {
+    this.shippingAddr.set(event.address);
+    this.shippingCoordinates.set({ lat: event.lat, lng: event.lng });
+    this.shippingCalculation.set(event.result);
+    this.isOutOfRange.set(false);
+    this.outOfRangeMessage.set('');
+  }
+
+  onOutOfRange(event: { message: string; distanceKm: number }): void {
+    this.isOutOfRange.set(true);
+    this.outOfRangeMessage.set(event.message);
+  }
+
   handleSubmit(e: Event): void {
     e.preventDefault();
 
@@ -205,7 +249,15 @@ export class CheckoutComponent implements OnInit {
       this.errorMsg.set('Vui lòng điền đầy đủ thông tin liên hệ.'); return;
     }
     if (this.shippingMethod() === 'delivery' && !this.shippingAddr()) {
-      this.errorMsg.set('Vui lòng nhập địa chỉ giao hàng.'); return;
+      this.errorMsg.set('Vui lòng chọn hoặc nhập địa chỉ giao hàng trên bản đồ.'); return;
+    }
+
+    if (this.shippingMethod() === 'delivery' && this.isOutOfRange()) {
+      this.errorMsg.set(
+        this.outOfRangeMessage() ||
+          'Khu vực giao hàng vượt quá bán kính 10km cho phép đối với nông sản & thực phẩm mát. Vui lòng chọn điểm nhận hàng gần hơn hoặc chọn "Đến lấy trực tiếp".'
+      );
+      return;
     }
 
     this.submitting.set(true);
@@ -230,19 +282,22 @@ export class CheckoutComponent implements OnInit {
 
     // Không gửi `user`: server lấy chủ đơn hàng từ token đăng nhập.
     const payload = {
-      guestName:       this.guestName(),
-      guestEmail:      this.guestEmail(),
-      guestPhone:      this.guestPhone(),
+      guestName:           this.guestName(),
+      guestEmail:          this.guestEmail(),
+      guestPhone:          this.guestPhone(),
       items,
-      subtotal:        this.checkoutSubtotal(),
-      discount:        this.voucherDiscount(),
-      voucherCode:     this.selectedVoucher()?.code || null,
-      shippingFee:     0,
-      total:           this.finalTotal(),
-      shippingMethod:  this.shippingMethod(),
-      shippingAddress: this.shippingAddr(),
-      paymentMethod:   this.paymentMethod(),
-      estimatedPoints: this.estimatedPoints(),
+      subtotal:            this.checkoutSubtotal(),
+      discount:            this.voucherDiscount(),
+      voucherCode:         this.selectedVoucher()?.code || null,
+      shippingFee:         this.shippingFee(),
+      shippingDiscount:    this.shippingDiscount(),
+      shippingDistanceKm:  this.shippingCalculation()?.distanceKm || 0,
+      shippingCoordinates: this.shippingCoordinates(),
+      total:               this.finalTotal(),
+      shippingMethod:      this.shippingMethod(),
+      shippingAddress:     this.shippingAddr(),
+      paymentMethod:       this.paymentMethod(),
+      estimatedPoints:     this.estimatedPoints(),
     };
 
     this.orderApi.create(payload as any).subscribe({

@@ -94,8 +94,12 @@
             <span>Tạm tính</span>
             <span>{{ selectedCount > 0 ? formatPrice(selectedSubtotal) : '—' }}</span>
           </div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:20px;font-size:15px">
-            <span>Phí giao hàng</span><span>Miễn phí</span>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:15px">
+            <span>Phí giao hàng</span>
+            <span style="font-size:14px;color:var(--xanh-muted)">Tính theo khoảng cách (0–10 km)</span>
+          </div>
+          <div style="margin-bottom:16px;padding:8px 10px;background:#f0fdf4;border-radius:6px;font-size:12px;color:#166534">
+            🚚 {{ shippingDiscountHint.text }}
           </div>
           <div style="display:flex;justify-content:space-between;border-top:1px solid var(--xanh-line);padding-top:16px;margin-bottom:24px;font-size:18px;font-weight:700">
             <span>Tổng cộng</span>

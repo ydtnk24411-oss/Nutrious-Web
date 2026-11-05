@@ -10,6 +10,7 @@ const { protect, optionalAuth, adminOnly, staffOnly, hasRole } = require('../mid
 const { validate }           = require('../middleware/validate');
 const { evaluateVoucher, consumeVoucher } = require('../utils/voucher');
 const { creditOrderPoints }   = require('../utils/loyalty');
+const { calculateShipping }   = require('../utils/shippingCalculator');
 
 async function handleFlashSaleOrderConfirmed(order) {
   if (!order || !Array.isArray(order.items)) return;
@@ -138,12 +139,49 @@ router.post(
         orderData.guestPhone = orderData.guestPhone || req.user.phone || '';
       }
 
-      const shippingFee = Number(orderData.shippingFee) || 0;
+      // 3. Tính toán và xác thực phí vận chuyển từ server (không tin tưởng giá trị gửi từ client)
+      let finalShippingFee = 0;
+      let shippingDiscount = 0;
+      let distanceKm = 0;
+      let estimatedDeliveryTime = '30 phút (lấy tại kho)';
+
+      if (orderData.shippingMethod === 'delivery') {
+        const coords = orderData.shippingCoordinates;
+        if (coords && typeof coords.lat === 'number' && typeof coords.lng === 'number') {
+          const shipRes = await calculateShipping(coords.lat, coords.lng, serverSubtotal);
+          if (!shipRes.supported) {
+            return res.status(400).json({
+              success: false,
+              message: shipRes.message || 'Khu vực giao hàng vượt quá bán kính 10km cho phép đối với nông sản & thực phẩm tươi.',
+            });
+          }
+          finalShippingFee = shipRes.finalFee;
+          shippingDiscount = shipRes.discount;
+          distanceKm = shipRes.distanceKm;
+          estimatedDeliveryTime = shipRes.estimatedDeliveryTime;
+          orderData.shippingDetails = {
+            baseFee: shipRes.baseFee,
+            discount: shipRes.discount,
+            finalFee: shipRes.finalFee,
+            distanceKm: shipRes.distanceKm,
+            durationMin: shipRes.durationMin,
+            tierLabel: shipRes.tierLabel,
+            discountReason: shipRes.discountReason,
+          };
+        } else {
+          finalShippingFee = Number(orderData.shippingFee) || 20000;
+          estimatedDeliveryTime = 'Trong ngày (xe bảo quản lạnh)';
+        }
+      }
+
       orderData.subtotal = serverSubtotal;
-      orderData.shippingFee = shippingFee;
+      orderData.shippingFee = finalShippingFee;
+      orderData.shippingDiscount = shippingDiscount;
+      orderData.shippingDistanceKm = distanceKm;
+      orderData.estimatedDeliveryTime = estimatedDeliveryTime;
       orderData.estimatedPoints = Math.floor(serverSubtotal / 1000);
 
-      // 3. Voucher (kiểm tra với subtotal tính từ server)
+      // 4. Voucher (kiểm tra với subtotal tính từ server)
       let applied = null;
       const code = orderData.voucherCode ? String(orderData.voucherCode).trim() : '';
       if (code) {
@@ -155,8 +193,8 @@ router.post(
       orderData.voucherCode = applied ? applied.voucher.code : '';
       orderData.discount    = applied ? applied.discount : 0;
 
-      // 4. Server tự tính lại total: total = subtotal - discount + shippingFee
-      orderData.total = Math.max(0, serverSubtotal - orderData.discount + shippingFee);
+      // 5. Server tự tính lại total: total = subtotal - discount + finalShippingFee
+      orderData.total = Math.max(0, serverSubtotal - orderData.discount + finalShippingFee);
 
       const order = await Order.create(orderData);
       if (applied) await consumeVoucher(applied, req.user?._id, order._id);

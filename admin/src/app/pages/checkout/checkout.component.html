@@ -194,8 +194,7 @@
               <input type="radio" name="method" value="pickup" [checked]="shippingMethod()==='pickup'"
                 (change)="shippingMethod.set('pickup')" style="margin-right:8px" />
               <strong>Đến lấy trực tiếp</strong>
-              <p style="margin:4px 0 0 0;font-size:13px;color:var(--xanh-muted)">669 Đỗ Mười, khu phố 13, phường Linh
-                Xuân, TP.HCM (Tối đa 30p)</p>
+              <p style="margin:4px 0 0 0;font-size:13px;color:var(--xanh-muted)">Khu phố 6, Phường Linh Trung, TP. Thủ Đức, TP.HCM (Tối đa 30p)</p>
             </label>
             <label
               [style.border]="shippingMethod()==='delivery' ? '2px solid var(--xanh-moss)' : '1px solid var(--xanh-line)'"
@@ -203,15 +202,17 @@
               <input type="radio" name="method" value="delivery" [checked]="shippingMethod()==='delivery'"
                 (change)="shippingMethod.set('delivery')" style="margin-right:8px" />
               <strong>Giao hàng tận nơi</strong>
-              <p style="margin:4px 0 0 0;font-size:13px;color:var(--xanh-muted)">Giao nhanh trong ngày bằng xe lạnh</p>
+              <p style="margin:4px 0 0 0;font-size:13px;color:var(--xanh-muted)">Giao nhanh trong ngày bằng xe lạnh (Tối đa 10 km)</p>
             </label>
           </div>
           @if (shippingMethod() === 'delivery') {
-          <div>
-            <label style="display:block;font-size:14px;margin-bottom:6px">Địa chỉ giao hàng *</label>
-            <input type="text" required placeholder="Số nhà, đường, phường/xã, quận/huyện" [value]="shippingAddr()"
-              (input)="shippingAddr.set($any($event.target).value)"
-              style="width:100%;padding:10px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)" />
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <app-shipping-map-picker
+              [initialAddress]="shippingAddr()"
+              [subtotal]="checkoutSubtotal()"
+              (locationChanged)="onLocationChanged($event)"
+              (outOfRange)="onOutOfRange($event)">
+            </app-shipping-map-picker>
           </div>
           }
         </div>
@@ -361,6 +362,45 @@
             <span>Tạm tính</span>
             <span>{{ formatPrice(checkoutSubtotal()) }}</span>
           </div>
+
+          <!-- Phí giao hàng -->
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:14px">
+            <div>
+              <span>Phí giao hàng</span>
+              @if (shippingMethod() === 'delivery' && shippingDistanceKm() > 0) {
+              <div style="font-size:12px;color:var(--xanh-muted)">
+                {{ shippingDistanceKm() }} km
+                @if (estimatedDeliveryTime()) {
+                <span> • {{ estimatedDeliveryTime() }}</span>
+                }
+              </div>
+              }
+            </div>
+            <div style="text-align:right">
+              @if (shippingMethod() === 'pickup') {
+              <span style="color:#16a34a;font-weight:600">Miễn phí (Kho)</span>
+              } @else if (shippingUnsupported()) {
+              <span style="color:#dc2626;font-weight:600;font-size:13px">Ngoài bán kính</span>
+              } @else {
+              <div>
+                @if (shippingDiscount() > 0) {
+                <del style="color:var(--xanh-muted);font-size:12px;margin-right:6px">
+                  {{ formatPrice(shippingFee() + shippingDiscount()) }}
+                </del>
+                }
+                <span style="font-weight:600" [style.color]="shippingFee() === 0 ? '#16a34a' : 'inherit'">
+                  {{ shippingFee() === 0 ? 'Miễn phí' : formatPrice(shippingFee()) }}
+                </span>
+              </div>
+              @if (shippingDiscount() > 0) {
+              <span style="font-size:11px;color:#16a34a;display:block">
+                Đã giảm {{ formatPrice(shippingDiscount()) }}
+              </span>
+              }
+              }
+            </div>
+          </div>
+
           @if (voucherDiscount() > 0) {
           <div style="display:flex;justify-content:space-between;font-size:14px;color:#166534">
             <span>Giảm giá</span>
@@ -372,6 +412,12 @@
             <span>Tổng thanh toán</span>
             <span>{{ formatPrice(finalTotal()) }}</span>
           </div>
+
+          @if (shippingMethod() === 'delivery') {
+          <div style="margin-top:8px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;color:#166534;line-height:1.4">
+            🌿 <strong>Cam kết nông sản tươi ngon:</strong> Đóng thùng xốp/túi giữ nhiệt đá gel, xe lạnh chuyên dụng giao nhanh trong ngày.
+          </div>
+          }
         </div>
 
         <button class="xanhla-btn-primary" type="submit" style="width:100%;position:relative;margin-top:24px"

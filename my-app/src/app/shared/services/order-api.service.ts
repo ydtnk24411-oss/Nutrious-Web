@@ -17,6 +17,11 @@ export interface ApiOrder {
   }[];
   subtotal: number;
   total: number;
+  shippingFee?: number;
+  shippingDiscount?: number;
+  shippingDistanceKm?: number;
+  shippingCoordinates?: { lat: number; lng: number };
+  estimatedDeliveryTime?: string;
   shippingMethod: 'pickup' | 'delivery';
   shippingAddress: string;
   paymentMethod: 'cod' | 'bank_transfer';

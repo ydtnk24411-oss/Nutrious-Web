@@ -193,7 +193,36 @@
             <div class="order-info-card"><span class="order-label">Hình thức nhận hàng</span><span>{{ shippingLabel[o.shippingMethod] }}</span></div>
             <div class="order-info-card"><span class="order-label">Trạng thái hiện tại</span><span><span class="admin-badge" [class]="'badge-' + o.status">{{ statusLabel[o.status] }}</span></span></div>
             @if (o.shippingAddress) {
-              <div class="order-info-card" style="grid-column:1/-1"><span class="order-label">Địa chỉ nhận hàng</span><span>{{ o.shippingAddress }}</span></div>
+              <div class="order-info-card" style="grid-column:1/-1">
+                <span class="order-label">Địa chỉ nhận hàng</span>
+                <span>{{ o.shippingAddress }}</span>
+                @if (o.shippingCoordinates) {
+                  <span style="font-size:11px;color:#64748b;display:block;margin-top:2px">
+                    Tọa độ: ({{ o.shippingCoordinates.lat }}, {{ o.shippingCoordinates.lng }})
+                  </span>
+                }
+              </div>
+            }
+            @if (o.shippingMethod === 'delivery') {
+              <div class="order-info-card">
+                <span class="order-label">Khoảng cách giao</span>
+                <strong>{{ o.shippingDistanceKm ? (o.shippingDistanceKm + ' km') : '—' }}</strong>
+              </div>
+              <div class="order-info-card">
+                <span class="order-label">Phí ship & Ưu đãi</span>
+                <span>
+                  {{ formatPrice(o.shippingFee || 0) }}
+                  @if (o.shippingDiscount) {
+                    <span style="color:#16a34a;font-size:12px"> (Đã giảm {{ formatPrice(o.shippingDiscount) }})</span>
+                  }
+                </span>
+              </div>
+              @if (o.estimatedDeliveryTime) {
+                <div class="order-info-card">
+                  <span class="order-label">Dự kiến giao</span>
+                  <span style="color:#15803d;font-weight:600">{{ o.estimatedDeliveryTime }}</span>
+                </div>
+              }
             }
           </div>
         </div>

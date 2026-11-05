@@ -77,6 +77,11 @@ export class AdminLayoutComponent {
           id: 'inventory',
           label: 'Quản lý tồn kho',
           path: '/admin/inventory',
+        },
+        {
+          id: 'shipping',
+          label: 'Cấu hình vận chuyển',
+          path: '/admin/shipping',
         }
       ]
     },
