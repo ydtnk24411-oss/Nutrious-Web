@@ -75,6 +75,46 @@ router.get('/', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// GET /api/products/:slug/related — lấy sản phẩm liên quan cùng danh mục
+router.get('/:slug/related', async (req, res, next) => {
+  try {
+    const rawSlug = req.params.slug;
+    let product = await Product.findOne({ slug: rawSlug, isActive: { $ne: false } });
+    if (!product && mongoose.Types.ObjectId.isValid(rawSlug)) {
+      product = await Product.findOne({ _id: rawSlug, isActive: { $ne: false } });
+    }
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
+    }
+
+    const limitNum = Math.min(16, Number(req.query.limit) || 8);
+    const filter = {
+      _id: { $ne: product._id },
+      isActive: { $ne: false }
+    };
+
+    if (product.categoryId) {
+      filter.categoryId = product.categoryId;
+    } else if (product.category) {
+      filter.category = product.category;
+    }
+
+    let related = await Product.find(filter).limit(limitNum);
+
+    // Nếu danh mục có ít sản phẩm, bổ sung thêm các sản phẩm nông sản tươi khác
+    if (related.length < limitNum) {
+      const excludeIds = [product._id, ...related.map((r) => r._id)];
+      const fallbackProducts = await Product.find({
+        _id: { $nin: excludeIds },
+        isActive: { $ne: false }
+      }).limit(limitNum - related.length);
+      related = [...related, ...fallbackProducts];
+    }
+
+    res.json({ success: true, data: related });
+  } catch (err) { next(err); }
+});
+
 // GET /api/products/:slug — public
 router.get('/:slug', async (req, res, next) => {
   try {

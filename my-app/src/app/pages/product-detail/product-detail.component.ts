@@ -44,6 +44,10 @@ export class ProductDetailComponent implements OnInit {
   protected selectedRipeness = signal('Ready to Eat');
   protected openAccordions   = signal({ info: true, refund: false, shipping: false });
 
+  // Related products (WinMart style)
+  protected relatedProducts = signal<ApiProduct[]>([]);
+  protected loadingRelated  = signal(false);
+
   // Review state
   showReviewForm = signal(false);
   reviewRating = signal(0);
@@ -86,6 +90,7 @@ export class ProductDetailComponent implements OnInit {
         if (res.data?._id) {
           this.reviewService.load(res.data._id);
         }
+        this.loadRelatedProducts(res.data?.slug || slug);
       },
       error: () => {
         // Thử thêm prefix nếu slug trực tiếp không tìm thấy
@@ -97,6 +102,7 @@ export class ProductDetailComponent implements OnInit {
             if (r.data?._id) {
               this.reviewService.load(r.data._id);
             }
+            this.loadRelatedProducts(r.data?.slug || prefixed);
           },
           error: () => {
             this.error.set('Không tìm thấy sản phẩm.');
@@ -105,6 +111,26 @@ export class ProductDetailComponent implements OnInit {
         });
       },
     });
+  }
+
+  private loadRelatedProducts(slug: string): void {
+    this.loadingRelated.set(true);
+    this.productApi.getRelated(slug, 8).subscribe({
+      next: (res) => {
+        this.loadingRelated.set(false);
+        this.relatedProducts.set(res.data || []);
+      },
+      error: () => {
+        this.loadingRelated.set(false);
+        this.relatedProducts.set([]);
+      },
+    });
+  }
+
+  addRelatedToCart(p: ApiProduct, event?: Event): void {
+    event?.stopPropagation();
+    event?.preventDefault();
+    this.cart.addItem(toCartProduct(p), 1, p.ripeness || 'Fresh');
   }
 
   dec(): void { this.quantity.update(q => Math.max(1, q - 1)); }

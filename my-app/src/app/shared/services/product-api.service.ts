@@ -47,6 +47,10 @@ export class ProductApiService {
     return this.api.get<{ success: boolean; data: ApiProduct }>(`/products/${slug}`);
   }
 
+  getRelated(slug: string, limit: number = 8) {
+    return this.api.get<{ success: boolean; data: ApiProduct[] }>(`/products/${slug}/related`, { limit });
+  }
+
   create(body: Partial<ApiProduct>) {
     return this.api.post<{ success: boolean; data: ApiProduct }>('/products', body);
   }
