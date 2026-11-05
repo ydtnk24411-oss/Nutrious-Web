@@ -122,10 +122,11 @@ export class ShippingMapPickerComponent implements OnInit, OnChanges, OnDestroy 
       zoomControl: true,
     });
 
-    // OpenStreetMap free tile layer
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // OpenStreetMap free tile layer (CartoDB Voyager - Cloudflare CDN siêu tốc, không bị chặn DNS tại VN)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
       maxZoom: 19,
     }).addTo(this.map);
 
@@ -255,8 +256,10 @@ export class ShippingMapPickerComponent implements OnInit, OnChanges, OnDestroy 
 
   private reverseGeocodeAndRecalculate(lat: number, lng: number): void {
     this.shippingApi.reverseGeocodeNominatim(lat, lng).subscribe({
-      next: (res) => {
-        const addr = res?.display_name || `Tọa độ: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+      next: (res: any) => {
+        const addr =
+          (typeof res === 'string' && res.trim() ? res : res?.display_name) ||
+          `Tọa độ: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
         this.searchQuery = addr;
         this.recalculate(lat, lng, addr);
       },
@@ -349,3 +352,4 @@ export class ShippingMapPickerComponent implements OnInit, OnChanges, OnDestroy 
     return (num || 0).toLocaleString('vi-VN') + 'đ';
   }
 }
+

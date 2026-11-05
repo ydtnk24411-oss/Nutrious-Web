@@ -66,3 +66,4 @@ const shippingConfigSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model('ShippingConfig', shippingConfigSchema);
+
