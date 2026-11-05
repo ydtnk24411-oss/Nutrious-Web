@@ -1,16 +1,13 @@
+
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "services": {
-    "app": {
-      "root": ".",
+    "my-app": {
+      "root": "my-app",
       "framework": "angular"
     },
     "admin": {
       "root": "admin",
-      "framework": "angular"
-    },
-    "my-app": {
-      "root": "my-app",
       "framework": "angular"
     },
     "service": {
@@ -20,6 +17,24 @@
   },
   "rewrites": [
     {
+      "source": "/api",
+      "destination": {
+        "service": "service"
+      }
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": {
+        "service": "service"
+      }
+    },
+    {
+      "source": "/admin",
+      "destination": {
+        "service": "admin"
+      }
+    },
+    {
       "source": "/admin/(.*)",
       "destination": {
         "service": "admin"
@@ -28,7 +43,7 @@
     {
       "source": "/(.*)",
       "destination": {
-        "service": "app"
+        "service": "my-app"
       }
     }
   ]
