@@ -8,6 +8,7 @@ import { heroImage, originImage } from '../../shared/data/xanh-la.data';
 import { Voucher as ApiVoucher, XanhLaProduct } from '../../shared/models/xanh-la.models';
 import { CategoryApiService, ApiCategory } from '../../shared/services/category-api.service';
 import { VoucherService } from '../../shared/services/voucher.service';
+import { FlashSaleApiService, FlashSaleItem } from '../../shared/services/flash-sale-api.service';
 
 interface Deal {
   id: string; name: string; category: string; description: string; image: string;
@@ -31,6 +32,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   private productApi = inject(ProductApiService);
   private categoryApi = inject(CategoryApiService);
   private voucherService = inject(VoucherService);
+  private flashSaleApi = inject(FlashSaleApiService);
 
   readonly heroImage = heroImage;
   readonly originImage = originImage;
@@ -75,12 +77,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   })));
   readonly voucherToast = signal('');
   private pendingVoucherId = signal<string | null>(null);
-  readonly deals: Deal[] = [
-    { id: 'deal-1', name: 'Rau cải xanh tươi', category: 'Rau củ', description: 'Gợi ý cho món canh, món xào trong bữa cơm nhà.', image: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?auto=format&fit=crop&w=700&q=85', priceNew: '18.000đ', priceOld: '30.000đ', discountPct: 40, save: '12.000đ' },
-    { id: 'deal-2', name: 'Cà chua bi đỏ', category: 'Rau củ', description: 'Thêm sắc đỏ tươi ngon cho salad và món ăn mỗi ngày.', image: 'https://images.unsplash.com/photo-1546094096-0df4bcaaa337?auto=format&fit=crop&w=700&q=85', priceNew: '22.000đ', priceOld: '38.000đ', discountPct: 42, save: '16.000đ' },
-    { id: 'deal-3', name: 'Gừng tươi nguyên củ', category: 'Gia vị & Thực phẩm khô', description: 'Gia vị quen thuộc giúp món ăn thêm đậm đà.', image: 'https://images.unsplash.com/photo-1615485500834-bc10199bc727?auto=format&fit=crop&w=700&q=85', priceNew: '12.000đ', priceOld: '20.000đ', discountPct: 40, save: '8.000đ' },
-    { id: 'deal-4', name: 'Trái cây theo mùa', category: 'Trái cây', description: 'Lựa chọn nhiều màu sắc cho món tráng miệng.', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=700&q=85', priceNew: '39.000đ', priceOld: '55.000đ', discountPct: 29, save: '16.000đ' },
-  ];
+
+  flashSales: FlashSaleItem[] = [];
+  loadingFlashSales = true;
   readonly newsItems: NewsItem[] = [
     { title: 'Mẹo chọn rau củ tươi ngon cho cả tuần', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=900&q=85', path: '/cam-nang/meo-chon-rau-cu-tuoi-ngon', date: 'CẨM NANG MUA SẮM' },
     { title: 'Gợi ý thực đơn nhanh gọn cho ngày bận rộn', image: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=85', path: '/cam-nang/thuc-don-nhanh-gon-ngay-ban-ron', date: 'CẢM HỨNG GIAN BẾP' },
@@ -121,6 +120,18 @@ export class HomeComponent implements OnInit, OnDestroy {
       },
       error: err => {
         console.error('Failed to load categories:', err);
+      },
+    });
+    this.flashSaleApi.getActive().subscribe({
+      next: res => {
+        if (res.success && res.data) {
+          this.flashSales = res.data;
+        }
+        this.loadingFlashSales = false;
+      },
+      error: err => {
+        console.error('Failed to load flash sales:', err);
+        this.loadingFlashSales = false;
       },
     });
     this.heroTimer = setInterval(() => this.nextHero(), 6500);
@@ -173,13 +184,25 @@ export class HomeComponent implements OnInit, OnDestroy {
   getCategoryName(categoryId: string): string {
     return this.categories.find(c => c._id === categoryId)?.name ?? 'Chưa phân loại';
   }
-  addDealToCart(deal: Deal): void {
+  addDealToCart(deal: FlashSaleItem): void {
+    if (deal.isSoldOut) return;
+    const priceText = (deal.flashSalePrice || 0).toLocaleString('vi-VN') + 'đ';
     const product = {
-      id: deal.id, name: deal.name, slug: deal.id, price: deal.priceNew,
-      priceNumber: Number(deal.priceNew.replace(/\D/g, '')), image: deal.image,
-      category: 'Vegetables', categoryVi: deal.category, description: deal.description,
+      id: deal.productId || deal._id,
+      name: deal.name,
+      slug: deal.slug || deal._id,
+      price: priceText,
+      priceNumber: deal.flashSalePrice,
+      image: deal.image,
+      category: 'Vegetables',
+      categoryVi: deal.category,
+      description: deal.description,
     } as XanhLaProduct;
     this.cart.addItem(product, 1);
+  }
+
+  formatPrice(val: number): string {
+    return (val || 0).toLocaleString('vi-VN') + 'đ';
   }
   private toCartProduct(p: ApiProduct): XanhLaProduct {
     return {

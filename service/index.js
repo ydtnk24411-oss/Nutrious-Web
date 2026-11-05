@@ -24,6 +24,7 @@ const supportRoutes = require('./routes/support');
 const complaintRoutes = require('./routes/complaints');
 const nutritionRoutes = require('./routes/nutrition');
 const footerRoutes = require('./routes/footer');
+const flashSaleRoutes = require('./routes/flashSales');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -72,6 +73,7 @@ app.use('/api/support', supportRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/nutrition', nutritionRoutes);
 app.use('/api/footer', footerRoutes);
+app.use('/api/flash-sales', flashSaleRoutes);
 
 // ── Health check ──────────────────────────────────────────
 app.get('/api/health', (_req, res) =>

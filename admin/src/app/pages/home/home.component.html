@@ -88,11 +88,74 @@
 
     <section class="coop-section coop-container coop-section-flash" aria-labelledby="sale-title">
       <div class="coop-flash-panel">
-        <div class="coop-flash-heading"><div><span class="coop-eyebrow coop-eyebrow-light">SĂN DEAL MỖI NGÀY</span><h2 id="sale-title">Flash sale <em>giá cực tốt</em></h2><p>Deal ngon trong ngày — nhanh tay chọn món yêu thích.</p></div><div class="coop-countdown"><small>Ưu đãi kết thúc sau</small><strong>{{ countdown.hours }}<i>:</i>{{ countdown.minutes }}<i>:</i>{{ countdown.seconds }}</strong></div></div>
-        <div class="coop-product-grid">
-          <article *ngFor="let deal of deals" class="coop-product-card">
-            <a class="coop-product-photo" routerLink="/online-ordering"><img [src]="deal.image" [alt]="deal.name" loading="lazy"><span class="coop-discount">-{{ deal.discountPct }}%</span><span class="coop-save-label">TIẾT KIỆM</span></a>
-            <div class="coop-product-info"><small>{{ deal.category }}</small><h3>{{ deal.name }}</h3><p>{{ deal.description }}</p><div class="coop-price-row"><strong>{{ deal.priceNew }}</strong><del>{{ deal.priceOld }}</del></div><button type="button" class="coop-add-btn" (click)="addDealToCart(deal)">Thêm vào giỏ</button></div>
+        <div class="coop-flash-heading">
+          <div>
+            <span class="coop-eyebrow coop-eyebrow-light">SĂN DEAL MỖI NGÀY</span>
+            <h2 id="sale-title">Flash sale <em>giá cực tốt</em></h2>
+            <p>Deal ngon trong ngày — nhanh tay chọn món yêu thích.</p>
+          </div>
+          <div class="coop-countdown">
+            <small>Ưu đãi kết thúc sau</small>
+            <strong>{{ countdown.hours }}<i>:</i>{{ countdown.minutes }}<i>:</i>{{ countdown.seconds }}</strong>
+          </div>
+        </div>
+
+        <div *ngIf="loadingFlashSales" class="coop-loading" style="color: #f8ffe9; text-align: center; padding: 24px;">
+          Đang cập nhật Flash Sale...
+        </div>
+
+        <div class="coop-product-grid" *ngIf="!loadingFlashSales && flashSales.length">
+          <article *ngFor="let deal of flashSales" class="coop-product-card" [class.is-card-soldout]="deal.isSoldOut">
+            <a class="coop-product-photo" [routerLink]="deal.slug ? '/product-page/' + deal.slug : '/online-ordering'">
+              <img [src]="deal.image" [alt]="deal.name" loading="lazy">
+              <span class="coop-discount">-{{ deal.discountPercent }}%</span>
+              <span class="coop-save-label">TIẾT KIỆM</span>
+            </a>
+            <div class="coop-product-info">
+              <small>{{ deal.category }}</small>
+              <h3>
+                <a [routerLink]="deal.slug ? '/product-page/' + deal.slug : '/online-ordering'">{{ deal.name }}</a>
+              </h3>
+              <p>{{ deal.description }}</p>
+
+              <div class="coop-price-row">
+                <strong>{{ formatPrice(deal.flashSalePrice) }}</strong>
+                <del>{{ formatPrice(deal.originalPrice) }}</del>
+              </div>
+
+              <!-- Thanh tiến trình & chỉ số đã bán -->
+              <div class="coop-flash-progress-wrapper">
+                <div class="coop-flash-progress-bar">
+                  <div
+                    class="coop-flash-progress-fill"
+                    [class.fill-green]="deal.soldPercent < 30"
+                    [class.fill-orange]="deal.soldPercent >= 30 && deal.soldPercent < 70"
+                    [class.fill-red]="deal.soldPercent >= 70"
+                    [style.width.%]="deal.soldPercent"
+                  ></div>
+                </div>
+
+                <div class="coop-flash-quota-text" [class.is-soldout]="deal.isSoldOut">
+                  <ng-container *ngIf="deal.isSoldOut; else activeQuota">
+                    <span class="coop-flash-soldout-label">Hết suất</span>
+                    <span class="coop-flash-sold-percent">100%</span>
+                  </ng-container>
+                  <ng-template #activeQuota>
+                    <span class="coop-flash-sold-count">Đã bán {{ deal.soldQuantity }}/{{ deal.totalQuantity }} suất</span>
+                    <span class="coop-flash-sold-percent">{{ deal.soldPercent }}%</span>
+                  </ng-template>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                class="coop-add-btn"
+                [disabled]="deal.isSoldOut"
+                (click)="addDealToCart(deal)"
+              >
+                {{ deal.isSoldOut ? 'Hết suất' : 'Thêm vào giỏ' }}
+              </button>
+            </div>
           </article>
         </div>
       </div>

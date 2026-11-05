@@ -1,13 +1,73 @@
 const router = require('express').Router();
+const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const { body } = require('express-validator');
 const Order  = require('../models/Order');
 const Product = require('../models/Product');
+const FlashSale = require('../models/FlashSale');
 const InventoryLog = require('../models/InventoryLog');
 const { protect, optionalAuth, adminOnly, staffOnly, hasRole } = require('../middleware/auth');
 const { validate }           = require('../middleware/validate');
 const { evaluateVoucher, consumeVoucher } = require('../utils/voucher');
 const { creditOrderPoints }   = require('../utils/loyalty');
+
+async function handleFlashSaleOrderConfirmed(order) {
+  if (!order || !Array.isArray(order.items)) return;
+  for (const item of order.items) {
+    if (!item.quantity || item.quantity <= 0) continue;
+    const orConditions = [];
+    if (mongoose.Types.ObjectId.isValid(item.product)) {
+      orConditions.push({ product: new mongoose.Types.ObjectId(item.product) });
+      orConditions.push({ _id: new mongoose.Types.ObjectId(item.product) });
+    }
+    if (item.product) orConditions.push({ slug: item.product });
+    if (item.productName) orConditions.push({ name: item.productName });
+
+    if (orConditions.length === 0) continue;
+
+    const flashSale = await FlashSale.findOne({
+      isActive: true,
+      $or: orConditions,
+    });
+
+    if (flashSale) {
+      const currentSold = flashSale.soldQuantity || 0;
+      const total = flashSale.totalQuantity || 0;
+      const maxAdd = Math.max(0, total - currentSold);
+      const toAdd = Math.min(item.quantity, maxAdd);
+      if (toAdd > 0) {
+        flashSale.soldQuantity = currentSold + toAdd;
+        await flashSale.save();
+      }
+    }
+  }
+}
+
+async function handleFlashSaleOrderCancelled(order) {
+  if (!order || !Array.isArray(order.items)) return;
+  for (const item of order.items) {
+    if (!item.quantity || item.quantity <= 0) continue;
+    const orConditions = [];
+    if (mongoose.Types.ObjectId.isValid(item.product)) {
+      orConditions.push({ product: new mongoose.Types.ObjectId(item.product) });
+      orConditions.push({ _id: new mongoose.Types.ObjectId(item.product) });
+    }
+    if (item.product) orConditions.push({ slug: item.product });
+    if (item.productName) orConditions.push({ name: item.productName });
+
+    if (orConditions.length === 0) continue;
+
+    const flashSale = await FlashSale.findOne({
+      $or: orConditions,
+    });
+
+    if (flashSale) {
+      const currentSold = flashSale.soldQuantity || 0;
+      flashSale.soldQuantity = Math.max(0, currentSold - item.quantity);
+      await flashSale.save();
+    }
+  }
+}
 
 // POST /api/orders – khách vãng lai hoặc user đã đăng nhập.
 router.post(
@@ -226,11 +286,16 @@ const handleCancelOrder = async (req, res, next) => {
     }
 
     // Cập nhật trạng thái thành 'cancelled'
+    const oldStatus = order.status;
     order.status = 'cancelled';
     if (reason && typeof reason === 'string' && reason.trim()) {
       order.note = order.note ? `${order.note} | Lý do hủy: ${reason.trim()}` : `Lý do hủy: ${reason.trim()}`;
     }
     await order.save();
+
+    if (oldStatus === 'confirmed') {
+      await handleFlashSaleOrderCancelled(order);
+    }
 
     res.json({
       success: true,
@@ -262,6 +327,14 @@ router.put('/:id/status', protect, adminOnly, async (req, res, next) => {
     const previousStatus = currentOrder.status;
     currentOrder.status = status;
     await currentOrder.save();
+
+    // Flash sale soldQuantity updates
+    if (status === 'confirmed' && previousStatus !== 'confirmed') {
+      await handleFlashSaleOrderConfirmed(currentOrder);
+    }
+    if (status === 'cancelled' && previousStatus === 'confirmed') {
+      await handleFlashSaleOrderCancelled(currentOrder);
+    }
 
     // If order was cancelled from active state, return items to inventory
     if (status === 'cancelled' && previousStatus !== 'cancelled') {
