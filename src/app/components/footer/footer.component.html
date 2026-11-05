@@ -1,4 +1,145 @@
 <footer class="xanhla-footer" id="footer">
+  <!-- Newsletter -->
+  <div class="xanhla-footer-newsletter">
+    <div class="xanhla-container">
+      <div class="xanhla-footer-col">
+              <h4 class="xanhla-footer-heading">{{ newsletterTitle() }}</h4>
+              <p class="xanhla-newsletter-desc">{{ newsletterDesc() }}</p>
+              <form class="xanhla-newsletter-form" (submit)="handleSubscribe($event)" id="footer-newsletter-form">
+                <input
+                  type="email"
+                  id="footer-email-input"
+                  placeholder="Email của bạn"
+                  aria-label="Email của bạn"
+                  [value]="email()"
+                  (input)="email.set($any($event.target).value); emailError.set('')"
+                  required
+                />
+                <button type="submit" aria-label="Đăng ký nhận bản tin">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </button>
+              </form>
+              @if (emailError()) {
+                <div class="xanhla-subscribe-error">
+                  {{ emailError() }}
+                </div>
+              }
+              @if (subscribed()) {
+                <div class="xanhla-subscribe-success">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  {{ subscribeMessage() }}
+                </div>
+              }
+              <div class="xanhla-social-wrap">
+                <span class="xanhla-social-title">Kết nối cùng {{ brandName() }}:</span>
+                <div class="xanhla-social-icons">
+                  @for (soc of socialLinks(); track soc.platform) {
+                    <a [href]="soc.url" target="_blank" rel="noopener noreferrer" [attr.aria-label]="soc.label" [title]="soc.label">
+                      @if (soc.platform === 'facebook') {
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                      } @else if (soc.platform === 'instagram') {
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/></svg>
+                      } @else if (soc.platform === 'youtube') {
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33zM9.75 15.02V8.53l5.9 3.25-5.9 3.24z"/></svg>
+                      } @else {
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><text x="3" y="18" font-size="14" font-weight="bold" font-family="Arial">Z</text></svg>
+                      }
+                    </a>
+                  }
+                </div>
+              </div>
+            </div>
+    </div>
+  </div>
+
+  <!-- ── Main footer columns ── -->
+  <div class="xanhla-container">
+    <div class="xanhla-footer-main">
+
+      <!-- Col 1: Brand -->
+      <div class="xanhla-footer-col xanhla-footer-col--brand">
+        <a class="xanhla-footer-logo" routerLink="/" (click)="scrollToTop()" aria-label="Evergreen Mart – Trang chủ">
+          <img src="/logo.png" alt="Evergreen Mart" class="evergreen-footer-logo" />
+          <span class="xanhla-brand-word">{{ brandName() }}</span>
+        </a>
+        <p class="xanhla-brand-desc">
+          {{ brandDesc() }}
+        </p>
+        <div class="xanhla-contact-info">
+          <div class="xanhla-contact-row">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.71 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.58 2.81.71A2 2 0 0 1 22 16.92z"/></svg>
+            <a [href]="hotlineHref()" class="xanhla-contact-link">{{ contactInfo().hotline }}</a>
+          </div>
+          <div class="xanhla-contact-row">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <a [href]="'mailto:' + contactInfo().email" class="xanhla-contact-link">{{ contactInfo().email }}</a>
+          </div>
+          <div class="xanhla-contact-row">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span class="xanhla-contact-text">{{ contactInfo().address }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Col 2: About -->
+      <div class="xanhla-footer-col">
+        <h4 class="xanhla-footer-heading">Về {{ brandName() }}</h4>
+        <ul class="xanhla-footer-links">
+          @for (link of aboutLinks(); track link.label) {
+            <li>
+              @if (link.policyKey) {
+                <a href="#" (click)="openPolicy(link.policyKey, $event)">{{ cleanLabel(link.label) }}</a>
+              } @else if (link.route) {
+                <a [routerLink]="link.route" (click)="scrollToTop()">{{ cleanLabel(link.label) }}</a>
+              }
+            </li>
+          }
+        </ul>
+      </div>
+
+      <!-- Col 3: Tiện ích & Hỗ trợ -->
+      <div class="xanhla-footer-col">
+        <h4 class="xanhla-footer-heading">Tiện ích &amp; Hỗ trợ</h4>
+        <ul class="xanhla-footer-links">
+          <li><a routerLink="/complaint" (click)="scrollToTop()">Gửi khiếu nại &amp; Phản ánh</a></li>
+          @for (link of utilityLinks(); track link.label) {
+            @if (isUtilityLinkVisible(link)) {
+              <li>
+                @if (link.route) {
+                  <a [routerLink]="link.route" (click)="scrollToTop()">{{ cleanLabel(link.label) }}</a>
+                } @else if (link.policyKey) {
+                  <a href="#" (click)="openPolicy(link.policyKey, $event)">{{ cleanLabel(link.label) }}</a>
+                }
+              </li>
+            }
+          }
+        </ul>
+      </div>
+
+      <!-- Col 4: Chính sách -->
+      <div class="xanhla-footer-col">
+        <h4 class="xanhla-footer-heading">Chính sách &amp; Hỗ trợ</h4>
+        <ul class="xanhla-footer-links xanhla-footer-links--policies">
+          @for (link of policyLinks(); track link.label) {
+            <li>
+              @if (link.policyKey) {
+                <a href="#" (click)="openPolicy(link.policyKey, $event)">
+                  {{ cleanLabel(link.label) }}
+                </a>
+              } @else if (link.route) {
+                <a [routerLink]="link.route" (click)="scrollToTop()">{{ cleanLabel(link.label) }}</a>
+              }
+            </li>
+          }
+        </ul>
+      </div>
+
+
+
+    </div>
+
+  </div>
+
   <!-- ── Trust banner ── -->
   <div class="xanhla-footer-trust-banner">
     <div class="xanhla-container">
@@ -26,153 +167,7 @@
     </div>
   </div>
 
-  <!-- ── Main footer columns ── -->
   <div class="xanhla-container">
-    <div class="xanhla-footer-main">
-
-      <!-- Col 1: Brand -->
-      <div class="xanhla-footer-col xanhla-footer-col--brand">
-        <a class="xanhla-footer-logo" routerLink="/" aria-label="Evergreen Mart – Trang chủ">
-          <img src="/logo.png" alt="Evergreen Mart" class="evergreen-footer-logo" />
-          <span class="xanhla-brand-word">{{ brandName() }}</span>
-        </a>
-        <p class="xanhla-brand-desc">
-          {{ brandDesc() }}
-        </p>
-        <div class="xanhla-contact-info">
-          <div class="xanhla-contact-row">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.71 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.58 2.81.71A2 2 0 0 1 22 16.92z"/></svg>
-            <a [href]="hotlineHref()" class="xanhla-contact-link">{{ contactInfo().hotline }}</a>
-          </div>
-          <div class="xanhla-contact-row">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-            <a [href]="'mailto:' + contactInfo().email" class="xanhla-contact-link">{{ contactInfo().email }}</a>
-          </div>
-          <div class="xanhla-contact-row">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            <span class="xanhla-contact-text">{{ contactInfo().address }}</span>
-          </div>
-        </div>
-        <h4 class="xanhla-footer-heading xanhla-footer-about-heading">Về {{ brandName() }}</h4>
-        <ul class="xanhla-footer-links">
-          @for (link of aboutLinks(); track link.label) {
-            <li>
-              @if (link.policyKey) {
-                <a href="#" (click)="openPolicy(link.policyKey, $event)">{{ link.label }}</a>
-              } @else if (link.route) {
-                <a [routerLink]="link.route">{{ link.label }}</a>
-              }
-            </li>
-          }
-        </ul>
-      </div>
-
-      <!-- Col 2: Sản phẩm & dịch vụ (Loaded from MongoDB categories + serviceLinks) -->
-      <div class="xanhla-footer-col">
-        <h4 class="xanhla-footer-heading">Sản phẩm &amp; Dịch vụ</h4>
-        <ul class="xanhla-footer-links">
-          @for (cat of categories(); track cat._id) {
-            <li><a routerLink="/online-ordering" [queryParams]="{ category: cat.name }">{{ cat.name }}</a></li>
-          }
-          @for (link of serviceLinks(); track link.label) {
-            <li>
-              @if (link.route) {
-                <a [routerLink]="link.route">{{ link.label }}</a>
-              } @else if (link.policyKey) {
-                <a href="#" (click)="openPolicy(link.policyKey, $event)">{{ link.label }}</a>
-              }
-            </li>
-          }
-        </ul>
-      </div>
-
-      <!-- Col 3: Tiện ích & Hỗ trợ (Loaded from MongoDB utilityLinks & aboutLinks) -->
-      <div class="xanhla-footer-col">
-        <h4 class="xanhla-footer-heading">Tiện ích &amp; Hỗ trợ</h4>
-        <ul class="xanhla-footer-links">
-          <li><a routerLink="/complaint">Gửi khiếu nại &amp; Phản ánh</a></li>
-          @for (link of utilityLinks(); track link.label) {
-            <li>
-              @if (link.route) {
-                <a [routerLink]="link.route">{{ link.label }}</a>
-              } @else if (link.policyKey) {
-                <a href="#" (click)="openPolicy(link.policyKey, $event)">{{ link.label }}</a>
-              }
-            </li>
-          }
-        </ul>
-      </div>
-
-      <!-- Col 4: Chính sách (Loaded from MongoDB policyLinks) -->
-      <div class="xanhla-footer-col">
-        <h4 class="xanhla-footer-heading">Chính sách &amp; Hỗ trợ</h4>
-        <ul class="xanhla-footer-links xanhla-footer-links--policies">
-          @for (link of policyLinks(); track link.label) {
-            <li>
-              @if (link.policyKey) {
-                <a href="#" (click)="openPolicy(link.policyKey, $event)" class="policy-link">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                  {{ link.label }}
-                </a>
-              } @else if (link.route) {
-                <a [routerLink]="link.route">{{ link.label }}</a>
-              }
-            </li>
-          }
-        </ul>
-      </div>
-
-      <!-- Col 5: Newsletter -->
-      <div class="xanhla-footer-col">
-        <h4 class="xanhla-footer-heading">{{ newsletterTitle() }}</h4>
-        <p class="xanhla-newsletter-desc">{{ newsletterDesc() }}</p>
-        <form class="xanhla-newsletter-form" (submit)="handleSubscribe($event)" id="footer-newsletter-form">
-          <input
-            type="email"
-            id="footer-email-input"
-            placeholder="Email của bạn"
-            aria-label="Email của bạn"
-            [value]="email()"
-            (input)="email.set($any($event.target).value); emailError.set('')"
-            required
-          />
-          <button type="submit" aria-label="Đăng ký nhận bản tin">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </button>
-        </form>
-        @if (emailError()) {
-          <div class="xanhla-subscribe-error">
-            {{ emailError() }}
-          </div>
-        }
-        @if (subscribed()) {
-          <div class="xanhla-subscribe-success">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            {{ subscribeMessage() }}
-          </div>
-        }
-        <div class="xanhla-social-wrap">
-          <span class="xanhla-social-title">Kết nối cùng {{ brandName() }}:</span>
-          <div class="xanhla-social-icons">
-            @for (soc of socialLinks(); track soc.platform) {
-              <a [href]="soc.url" target="_blank" rel="noopener noreferrer" [attr.aria-label]="soc.label" [title]="soc.label">
-                @if (soc.platform === 'facebook') {
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-                } @else if (soc.platform === 'instagram') {
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/></svg>
-                } @else if (soc.platform === 'youtube') {
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33zM9.75 15.02V8.53l5.9 3.25-5.9 3.24z"/></svg>
-                } @else {
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><text x="3" y="18" font-size="14" font-weight="bold" font-family="Arial">Z</text></svg>
-                }
-              </a>
-            }
-          </div>
-        </div>
-      </div>
-
-    </div>
-
     <!-- Footer bottom -->
     <div class="xanhla-footer-bottom">
       <div class="xanhla-footer-bottom-left">
@@ -191,7 +186,23 @@
       </div>
       <div class="xanhla-payment-methods">
         @for (pm of paymentMethods(); track pm) {
-          <span class="xanhla-payment-badge">{{ pm }}</span>
+          <span class="xanhla-payment-logo" role="img" [attr.aria-label]="pm" [title]="pm">
+            @if (pm === 'COD') {
+              <svg viewBox="0 0 64 32" aria-hidden="true"><rect x="1" y="1" width="62" height="30" rx="5" fill="#fff"/><text x="32" y="21" text-anchor="middle" fill="#2d6a2d" font-size="13" font-weight="800" font-family="Arial,sans-serif">COD</text></svg>
+            } @else if (pm === 'VietQR') {
+              <svg viewBox="0 0 86 32" aria-hidden="true"><rect x="1" y="1" width="84" height="30" rx="5" fill="#fff"/><g fill="#d92732"><path d="M7 6h8v8H7zm2 2v4h4V8zm-2 9h8v8H7zm2 2v4h4v-4zm10-13h8v8h-8zm2 2v4h4V8zm-1 10h4v3h-4zm6 3h3v4h-3zm-6 2h4v3h-4z"/></g><text x="59" y="20" text-anchor="middle" fill="#263d75" font-size="12" font-weight="800" font-family="Arial,sans-serif">VietQR</text></svg>
+            } @else if (pm === 'MoMo') {
+              <svg viewBox="0 0 64 32" aria-hidden="true"><rect x="1" y="1" width="62" height="30" rx="5" fill="#ae2070"/><text x="32" y="21" text-anchor="middle" fill="#fff" font-size="13" font-weight="800" font-family="Arial,sans-serif">MoMo</text></svg>
+            } @else if (pm === 'VNPay') {
+              <svg viewBox="0 0 72 32" aria-hidden="true"><rect x="1" y="1" width="70" height="30" rx="5" fill="#fff"/><text x="36" y="21" text-anchor="middle" fill="#1769aa" font-size="12" font-weight="800" font-family="Arial,sans-serif">VNP<tspan fill="#e13b35">AY</tspan></text></svg>
+            } @else if (pm === 'ZaloPay') {
+              <svg viewBox="0 0 82 32" aria-hidden="true"><rect x="1" y="1" width="80" height="30" rx="5" fill="#fff"/><text x="41" y="21" text-anchor="middle" fill="#0878c9" font-size="12" font-weight="800" font-family="Arial,sans-serif">ZaloPay</text></svg>
+            } @else if (pm === 'Visa/Master') {
+              <svg viewBox="0 0 94 32" aria-hidden="true"><rect x="1" y="1" width="92" height="30" rx="5" fill="#fff"/><text x="31" y="21" text-anchor="middle" fill="#183b72" font-size="12" font-style="italic" font-weight="900" font-family="Arial,sans-serif">VISA</text><circle cx="61" cy="16" r="9" fill="#e3342f"/><circle cx="72" cy="16" r="9" fill="#ef9b22" fill-opacity=".9"/></svg>
+            } @else {
+              <span>{{ pm }}</span>
+            }
+          </span>
         }
       </div>
     </div>
