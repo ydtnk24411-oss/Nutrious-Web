@@ -1,0 +1,641 @@
+<app-shell>
+  <div class="cp-page">
+    <div class="xanhla-container">
+      <!-- ── Breadcrumb ── -->
+      <nav class="cp-breadcrumb" aria-label="breadcrumb">
+        <a routerLink="/" class="cp-breadcrumb-link">Trang chủ</a>
+        <span class="cp-breadcrumb-sep">/</span>
+        <span class="cp-breadcrumb-current">Gửi khiếu nại &amp; Phản hồi</span>
+      </nav>
+
+      <!-- ── Hero Banner ── -->
+      <header class="cp-hero">
+        <div class="cp-hero-badge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <span>Dịch vụ Khách hàng Evergreen Mart</span>
+        </div>
+        <h1 class="cp-hero-title">Tiếp nhận khiếu nại &amp; Phản ánh</h1>
+        <p class="cp-hero-desc">
+          Evergreen Mart trân trọng mọi ý kiến đóng góp của quý khách. Khi có bất kỳ vấn đề nào về đơn hàng, chất lượng sản phẩm
+          hay quy trình giao hàng, vui lòng gửi phản hồi để chúng tôi xử lý và phản hồi trong vòng 24 giờ làm việc.
+        </p>
+
+        <!-- 3 Cam kết tối giản -->
+        <div class="cp-commitments">
+          <div class="cp-commit-card">
+            <div class="cp-commit-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"/>
+                <polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+            </div>
+            <div class="cp-commit-body">
+              <h2 class="cp-commit-title">Đổi mới 1-1 miễn phí</h2>
+              <p class="cp-commit-sub">Áp dụng cho nông sản dập nát, giao sai quy cách</p>
+            </div>
+          </div>
+
+          <div class="cp-commit-card">
+            <div class="cp-commit-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <div class="cp-commit-body">
+              <h2 class="cp-commit-title">Phản hồi trong 2-4 giờ</h2>
+              <p class="cp-commit-sub">Nhân viên CSKH trực tiếp gọi điện giải quyết</p>
+            </div>
+          </div>
+
+          <div class="cp-commit-card">
+            <div class="cp-commit-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="5" width="20" height="14" rx="2"/>
+                <line x1="2" y1="10" x2="22" y2="10"/>
+              </svg>
+            </div>
+            <div class="cp-commit-body">
+              <h2 class="cp-commit-title">Bồi hoàn thỏa đáng</h2>
+              <p class="cp-commit-sub">Hoàn tiền hoặc cấp voucher đền bù tức thì</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ── Tab Navigation ── -->
+      <nav class="cp-nav-tabs">
+        <button
+          type="button"
+          class="cp-tab-link"
+          [class.active]="activeTab() === 'form'"
+          (click)="switchTab('form')"
+        >
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          Gửi khiếu nại mới
+        </button>
+
+        <button
+          type="button"
+          class="cp-tab-link"
+          [class.active]="activeTab() === 'track'"
+          (click)="switchTab('track')"
+        >
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          Tra cứu tiến độ xử lý
+        </button>
+
+        @if (cart.currentUser()) {
+          <button
+            type="button"
+            class="cp-tab-link"
+            [class.active]="activeTab() === 'history'"
+            (click)="switchTab('history')"
+          >
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            Lịch sử khiếu nại của tôi
+          </button>
+        }
+      </nav>
+
+      <!-- ══════════════════════════════════════════════════════════
+           TAB 1: GỬI KHIẾU NẠI MỚI
+      ══════════════════════════════════════════════════════════ -->
+      @if (activeTab() === 'form') {
+        @if (submittedComplaint(); as sub) {
+          <!-- Màn hình gửi thành công -->
+          <div class="cp-card cp-success-card">
+            <div class="cp-success-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <h2 class="cp-success-title">Đã tiếp nhận yêu cầu khiếu nại</h2>
+            <p class="cp-success-sub">
+              Hệ thống đã ghi nhận thông tin phản hồi của quý khách. Evergreen Mart chân thành xin lỗi vì sự bất tiện này.
+            </p>
+
+            <div class="cp-code-panel">
+              <span class="cp-code-caption">Mã phiếu tra cứu:</span>
+              <div class="cp-code-group">
+                <span class="cp-code-number">{{ sub.complaintCode }}</span>
+                <button type="button" class="cp-btn-copy" (click)="copyCode(sub.complaintCode)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                  Sao chép mã
+                </button>
+              </div>
+            </div>
+
+            <div class="cp-timeline-box">
+              <div class="cp-timeline-item">
+                <div class="cp-timeline-dot">1</div>
+                <div class="cp-timeline-text">
+                  <strong>Tiếp nhận hồ sơ:</strong> Chuyên viên CSKH kiểm tra thông tin và đơn hàng trong 30-60 phút.
+                </div>
+              </div>
+              <div class="cp-timeline-item">
+                <div class="cp-timeline-dot">2</div>
+                <div class="cp-timeline-text">
+                  <strong>Liên hệ xác nhận:</strong> Gọi đến số <strong>{{ sub.customerPhone }}</strong> để thống nhất phương án đổi mới hoặc hoàn tiền.
+                </div>
+              </div>
+              <div class="cp-timeline-item">
+                <div class="cp-timeline-dot">3</div>
+                <div class="cp-timeline-text">
+                  <strong>Hoàn tất giải quyết:</strong> Đổi hàng mới hoặc hoàn tiền ngay trong ngày.
+                </div>
+              </div>
+            </div>
+
+            <div class="cp-actions-row">
+              <button type="button" class="cp-btn cp-btn-primary" (click)="viewTrackDetail(sub.complaintCode)">
+                Tra cứu tiến độ phiếu này
+              </button>
+              <button type="button" class="cp-btn cp-btn-outline" (click)="resetForm()">
+                Gửi phản hồi khác
+              </button>
+              <a routerLink="/" class="cp-btn cp-btn-subtle">
+                Về trang chủ
+              </a>
+            </div>
+          </div>
+        } @else {
+          <!-- Form tiếp nhận khiếu nại -->
+          <div class="cp-card">
+            <div class="cp-card-header">
+              <h2 class="cp-card-title">Biểu mẫu tiếp nhận thông tin</h2>
+              <p class="cp-card-subtitle">Vui lòng điền chi tiết nội dung sự cố để nhân viên giải quyết nhanh nhất</p>
+            </div>
+
+            <form (submit)="onSubmit(); $event.preventDefault()" class="cp-form">
+              <!-- Thông báo lỗi nếu có -->
+              @if (errorMessage()) {
+                <div class="cp-alert cp-alert-danger" role="alert">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  <span>{{ errorMessage() }}</span>
+                </div>
+              }
+
+              <!-- Phần 1: Thông tin người gửi -->
+              <div class="cp-form-group-block">
+                <div class="cp-block-heading">
+                  <span class="cp-badge-step">1</span>
+                  <span>Thông tin khách hàng</span>
+                </div>
+                <div class="cp-grid-3">
+                  <div class="cp-field">
+                    <label class="cp-label">Họ và tên <span class="cp-req">*</span></label>
+                    <input
+                      type="text"
+                      class="cp-input"
+                      placeholder="Nguyễn Văn A"
+                      [value]="customerName()"
+                      (input)="customerName.set($any($event.target).value)"
+                      required
+                    />
+                  </div>
+
+                  <div class="cp-field">
+                    <label class="cp-label">Số điện thoại liên hệ <span class="cp-req">*</span></label>
+                    <input
+                      type="tel"
+                      class="cp-input"
+                      placeholder="0912 345 678"
+                      [value]="customerPhone()"
+                      (input)="customerPhone.set($any($event.target).value)"
+                      required
+                    />
+                  </div>
+
+                  <div class="cp-field">
+                    <label class="cp-label">Email (không bắt buộc)</label>
+                    <input
+                      type="email"
+                      class="cp-input"
+                      placeholder="nguyenvana@gmail.com"
+                      [value]="customerEmail()"
+                      (input)="customerEmail.set($any($event.target).value)"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Phần 2: Chọn danh mục vấn đề -->
+              <div class="cp-form-group-block">
+                <div class="cp-block-heading">
+                  <span class="cp-badge-step">2</span>
+                  <span>Danh mục vấn đề cần khiếu nại <span class="cp-req">*</span></span>
+                </div>
+                <div class="cp-type-grid">
+                  @for (opt of typeOptions; track opt.value) {
+                    <div
+                      class="cp-type-card"
+                      [class.is-selected]="type() === opt.value"
+                      (click)="type.set(opt.value)"
+                    >
+                      <div class="cp-type-icon">
+                        @if (opt.iconKey === 'product') {
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+                            <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+                          </svg>
+                        } @else if (opt.iconKey === 'delivery') {
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="1" y="3" width="15" height="13" rx="1"/>
+                            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+                            <circle cx="5.5" cy="18.5" r="2.5"/>
+                            <circle cx="18.5" cy="18.5" r="2.5"/>
+                          </svg>
+                        } @else if (opt.iconKey === 'order') {
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/>
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                            <line x1="12" y1="22.08" x2="12" y2="12"/>
+                          </svg>
+                        } @else if (opt.iconKey === 'payment') {
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="5" width="20" height="14" rx="2"/>
+                            <line x1="2" y1="10" x2="22" y2="10"/>
+                            <line x1="6" y1="15" x2="8" y2="15"/>
+                          </svg>
+                        } @else {
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                          </svg>
+                        }
+                      </div>
+
+                      <div class="cp-type-content">
+                        <div class="cp-type-title">{{ opt.label }}</div>
+                        <div class="cp-type-desc">{{ opt.desc }}</div>
+                      </div>
+
+                      <div class="cp-type-radio-mark">
+                        <span class="cp-radio-circle" [class.checked]="type() === opt.value"></span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Phần 3: Chi tiết sự cố -->
+              <div class="cp-form-group-block">
+                <div class="cp-block-heading">
+                  <span class="cp-badge-step">3</span>
+                  <span>Nội dung phản ánh chi tiết</span>
+                </div>
+
+                <div class="cp-field cp-mb-3">
+                  <label class="cp-label">Mã đơn hàng liên quan (nếu có)</label>
+                  <input
+                    type="text"
+                    class="cp-input cp-input-sm"
+                    placeholder="Ví dụ: XL-123456"
+                    [value]="orderCode()"
+                    (input)="orderCode.set($any($event.target).value)"
+                  />
+                  <span class="cp-hint">Nhập đúng mã đơn hàng giúp chuyên viên tra cứu sản phẩm và lịch trình nhanh chóng.</span>
+                </div>
+
+                <div class="cp-field cp-mb-3">
+                  <label class="cp-label">Tiêu đề phản ánh <span class="cp-req">*</span></label>
+                  <input
+                    type="text"
+                    class="cp-input"
+                    placeholder="Ví dụ: Cà chua bi bị dập nát, Thiếu 1 gói cải kale..."
+                    [value]="title()"
+                    (input)="title.set($any($event.target).value)"
+                    required
+                  />
+                </div>
+
+                <div class="cp-field cp-mb-3">
+                  <label class="cp-label">Mô tả cụ thể sự cố <span class="cp-req">*</span></label>
+                  <textarea
+                    rows="4"
+                    class="cp-textarea"
+                    placeholder="Mô tả chi tiết tình trạng hàng nhận được, số lượng lỗi, thời gian nhận hàng và mong muốn giải quyết của bạn (đổi mới, hoàn tiền hoặc voucher)..."
+                    [value]="description()"
+                    (input)="description.set($any($event.target).value)"
+                    required
+                  ></textarea>
+                </div>
+
+                <!-- Đính kèm ảnh minh chứng -->
+                <div class="cp-field">
+                  <label class="cp-label">Ảnh minh chứng đính kèm (tối đa 4 ảnh, dưới 3MB/ảnh)</label>
+                  <div class="cp-upload-container">
+                    <div class="cp-preview-list">
+                      @for (img of images(); track $index; let idx = $index) {
+                        <div class="cp-preview-item">
+                          <img [src]="img" alt="Minh chứng đính kèm" />
+                          <button
+                            type="button"
+                            class="cp-btn-del-img"
+                            (click)="removeImage(idx)"
+                            title="Xóa ảnh này"
+                            aria-label="Xóa ảnh"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                              <line x1="18" y1="6" x2="6" y2="18"/>
+                              <line x1="6" y1="6" x2="18" y2="18"/>
+                            </svg>
+                          </button>
+                        </div>
+                      }
+
+                      @if (images().length < 4) {
+                        <label class="cp-btn-upload-box">
+                          <input type="file" accept="image/*" multiple (change)="onImageSelect($event)" style="display:none" />
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <polyline points="21 15 16 10 5 21"/>
+                          </svg>
+                          <span>Tải ảnh lên</span>
+                        </label>
+                      }
+                    </div>
+                    <span class="cp-hint">
+                      Hình ảnh rõ nét về tem đơn hoặc phần thực phẩm lỗi giúp tăng tốc độ xét duyệt bồi hoàn.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Nút gửi khiếu nại -->
+              <div class="cp-form-footer">
+                <button type="submit" class="cp-btn cp-btn-primary cp-btn-submit" [disabled]="submitting()">
+                  @if (submitting()) {
+                    <span class="cp-spinner"></span>
+                    <span>Đang gửi hồ sơ...</span>
+                  } @else {
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13"/>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                    <span>Gửi yêu cầu khiếu nại</span>
+                  }
+                </button>
+              </div>
+            </form>
+          </div>
+        }
+      }
+
+      <!-- ══════════════════════════════════════════════════════════
+           TAB 2: TRA CỨU TIẾN ĐỘ XỬ LÝ
+      ══════════════════════════════════════════════════════════ -->
+      @if (activeTab() === 'track') {
+        <div class="cp-card">
+          <div class="cp-card-header">
+            <h2 class="cp-card-title">Tra cứu trạng thái phiếu khiếu nại</h2>
+            <p class="cp-card-subtitle">Nhập mã phiếu khiếu nại (ví dụ: KN-12345) để xem kết quả và phương án xử lý</p>
+          </div>
+
+          <!-- Thanh tìm kiếm tối giản -->
+          <form (submit)="onTrackSubmit($event)" class="cp-search-form">
+            <div class="cp-search-input-group">
+              <span class="cp-search-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </span>
+              <input
+                type="text"
+                class="cp-search-input"
+                placeholder="Nhập mã khiếu nại (ví dụ: KN-12345)..."
+                [value]="trackCode()"
+                (input)="trackCode.set($any($event.target).value)"
+                required
+              />
+            </div>
+            <button type="submit" class="cp-btn cp-btn-primary" [disabled]="tracking()">
+              @if (tracking()) {
+                <span class="cp-spinner"></span>
+                <span>Đang tra cứu...</span>
+              } @else {
+                <span>Tra cứu</span>
+              }
+            </button>
+          </form>
+
+          @if (trackError()) {
+            <div class="cp-alert cp-alert-danger cp-mt-3" role="alert">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>{{ trackError() }}</span>
+            </div>
+          }
+
+          <!-- Kết quả tra cứu chi tiết -->
+          @if (trackedComplaint(); as item) {
+            <div class="cp-tracked-box cp-mt-4">
+              <div class="cp-tracked-header">
+                <div>
+                  <div class="cp-code-tag">{{ item.complaintCode }}</div>
+                  <h3 class="cp-tracked-title">{{ item.title }}</h3>
+                  <div class="cp-tracked-meta">
+                    <span>Phân loại: <strong>{{ getTypeLabel(item.type) }}</strong></span>
+                    <span class="cp-meta-sep">•</span>
+                    <span>Ngày gửi: {{ item.createdAt | date:'HH:mm - dd/MM/yyyy' }}</span>
+                    @if (item.order?.orderCode) {
+                      <span class="cp-meta-sep">•</span>
+                      <span>Mã đơn hàng: <strong>{{ item.order?.orderCode }}</strong></span>
+                    }
+                  </div>
+                </div>
+
+                <div
+                  class="cp-badge-status"
+                  [style.background]="statusMap[item.status].bg"
+                  [style.color]="statusMap[item.status].color"
+                  [style.borderColor]="statusMap[item.status].border"
+                >
+                  {{ statusMap[item.status].label }}
+                </div>
+              </div>
+
+              <div class="cp-tracked-section">
+                <h4 class="cp-section-caption">Nội dung phản ánh từ quý khách:</h4>
+                <p class="cp-section-text">{{ item.description }}</p>
+                @if (item.images && item.images.length > 0) {
+                  <div class="cp-evidence-grid">
+                    @for (img of item.images; track $index) {
+                      <a [href]="img" target="_blank" class="cp-evidence-link" title="Xem ảnh gốc">
+                        <img [src]="img" alt="Ảnh minh chứng" />
+                      </a>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Lời phản hồi từ quản trị viên / CSKH -->
+              @if (item.resolutionNote) {
+                <div class="cp-resolution-card">
+                  <div class="cp-resolution-head">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    <h4>Phản hồi từ CSKH Evergreen Mart</h4>
+                  </div>
+                  <p class="cp-resolution-body">{{ item.resolutionNote }}</p>
+                  @if (item.resolvedAt) {
+                    <span class="cp-resolution-date">
+                      Cập nhật lúc: {{ item.resolvedAt | date:'HH:mm dd/MM/yyyy' }}
+                    </span>
+                  }
+                </div>
+              } @else {
+                <div class="cp-pending-card">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <div>
+                    <strong>Đang trong tiến trình kiểm tra:</strong>
+                    Bộ phận CSKH đang đối soát thông tin kho vận và sẽ liên hệ hỗ trợ bạn qua điện thoại trong thời gian sớm nhất.
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ══════════════════════════════════════════════════════════
+           TAB 3: LỊCH SỬ KHIẾU NẠI CỦA TÔI
+      ══════════════════════════════════════════════════════════ -->
+      @if (activeTab() === 'history' && cart.currentUser()) {
+        <div class="cp-card">
+          <div class="cp-card-header">
+            <h2 class="cp-card-title">Lịch sử khiếu nại của tôi</h2>
+            <p class="cp-card-subtitle">Các yêu cầu và phản hồi đã gửi từ tài khoản của bạn</p>
+          </div>
+
+          @if (loadingMyComplaints()) {
+            <div class="cp-loading-state">
+              <span class="cp-spinner cp-spinner-dark"></span>
+              <span>Đang tải danh sách khiếu nại...</span>
+            </div>
+          } @else if (myComplaints().length === 0) {
+            <div class="cp-empty-state">
+              <div class="cp-empty-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+              </div>
+              <h3 class="cp-empty-title">Bạn chưa có khiếu nại nào</h3>
+              <p class="cp-empty-desc">Tất cả các đơn hàng đã mua đều hoạt động tốt và không có ghi nhận sự cố.</p>
+              <button type="button" class="cp-btn cp-btn-primary" (click)="switchTab('form')">
+                Gửi khiếu nại mới
+              </button>
+            </div>
+          } @else {
+            <div class="cp-history-list">
+              @for (c of myComplaints(); track c._id) {
+                <div class="cp-history-item">
+                  <div class="cp-history-main">
+                    <div class="cp-history-tags">
+                      <span class="cp-code-tag">{{ c.complaintCode }}</span>
+                      <span class="cp-history-date">{{ c.createdAt | date:'HH:mm dd/MM/yyyy' }}</span>
+                      @if (c.order?.orderCode) {
+                        <span class="cp-order-tag">Đơn: {{ c.order?.orderCode }}</span>
+                      }
+                    </div>
+                    <h3 class="cp-history-title">{{ c.title }}</h3>
+                    <p class="cp-history-desc">{{ c.description }}</p>
+                  </div>
+
+                  <div class="cp-history-side">
+                    <span
+                      class="cp-badge-status"
+                      [style.background]="statusMap[c.status].bg"
+                      [style.color]="statusMap[c.status].color"
+                      [style.borderColor]="statusMap[c.status].border"
+                    >
+                      {{ statusMap[c.status].label }}
+                    </span>
+                    <button type="button" class="cp-btn-link" (click)="viewTrackDetail(c.complaintCode)">
+                      Chi tiết xử lý &rarr;
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ── Kênh hỗ trợ trực tiếp chân trang (Bootstrap style) ── -->
+      <footer class="cp-support-banner">
+        <div class="cp-support-col">
+          <div class="cp-support-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.71 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.58 2.81.71A2 2 0 0 1 22 16.92z"/>
+            </svg>
+          </div>
+          <div class="cp-support-info">
+            <h3 class="cp-support-title">Hotline CSKH trực tiếp</h3>
+            <a href="tel:0988888888" class="cp-support-link">0988 888 888</a>
+            <p class="cp-support-sub">Hỗ trợ 7:00 – 22:00 hàng ngày</p>
+          </div>
+        </div>
+
+        <div class="cp-support-col">
+          <div class="cp-support-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          </div>
+          <div class="cp-support-info">
+            <h3 class="cp-support-title">Hòm thư tiếp nhận</h3>
+            <a href="mailto:cskh@evergreenmart.vn" class="cp-support-link">cskh&#64;evergreenmart.vn</a>
+            <p class="cp-support-sub">Phản hồi văn bản trong 2 giờ</p>
+          </div>
+        </div>
+
+        <div class="cp-support-col">
+          <div class="cp-support-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <div class="cp-support-info">
+            <h3 class="cp-support-title">Trò chuyện trực tuyến</h3>
+            <span class="cp-support-link">Trợ lý AI &amp; Tư vấn viên</span>
+            <p class="cp-support-sub">Bấm nút tròn ở góc phải dưới</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </div>
+</app-shell>
