@@ -92,6 +92,7 @@ router.post(
 
       // 2. Validate từng sản phẩm và tự tính lại subtotal từ database (lấy priceNumber của Product, không tin client)
       let serverSubtotal = 0;
+      const mongoose = require('mongoose');
       for (const item of orderData.items) {
         const qty = Number(item.quantity);
         if (!Number.isInteger(qty) || qty <= 0) {
