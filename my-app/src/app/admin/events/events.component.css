@@ -1,0 +1,111 @@
+.events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.event-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2ebd8;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px rgba(20, 50, 25, 0.03);
+  display: flex;
+  flex-direction: column;
+}
+.event-card:hover {
+  box-shadow: 0 10px 24px rgba(20, 50, 25, 0.08);
+  transform: translateY(-3px);
+  border-color: #85dd52;
+}
+
+.event-card-img {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  display: block;
+  border-bottom: 1px solid #edf3e9;
+}
+.event-card-placeholder {
+  height: 170px;
+  background: linear-gradient(135deg, #f4f8f1 0%, #eaf4e8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #176b3a;
+}
+
+.event-card-body {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.event-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.event-card-time {
+  font-size: 13px;
+  color: #5c6e5e;
+  font-weight: 600;
+}
+
+.event-card-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1c2920;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.event-card-location {
+  font-size: 13.5px;
+  color: #626e64;
+  margin: 0;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.event-card-location svg {
+  color: #176b3a;
+  flex-shrink: 0;
+}
+
+.event-card-reg {
+  font-size: 13px;
+  color: #626e64;
+  font-weight: 500;
+  background: #f8fbf6;
+  border: 1px solid #e2ebd8;
+  padding: 6px 10px;
+  border-radius: 6px;
+  width: fit-content;
+}
+.event-card-reg strong {
+  color: #176b3a;
+}
+
+.event-card-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid #edf3e9;
+  margin-top: auto;
+  justify-content: flex-end;
+}
+
+.admin-btn-icon-danger {
+  color: #b91c1c;
+}
+.admin-btn-icon-danger:hover {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+  border-color: #fca5a5 !important;
+}

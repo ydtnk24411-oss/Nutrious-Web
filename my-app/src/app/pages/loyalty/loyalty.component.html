@@ -1,0 +1,114 @@
+<app-shell>
+  @if (cart.currentUser(); as user) {
+    <div class="loyalty-page xanhla-container">
+      <div class="loyalty-header">
+        <h1 class="loyalty-title">Chương trình khách hàng thân thiết</h1>
+        <p class="loyalty-subtitle">Tích điểm đổi quà và nhận ưu đãi đặc biệt</p>
+      </div>
+
+      <!-- Points Balance Card -->
+      <div class="loyalty-balance-card">
+        <div class="loyalty-balance-info">
+          <h2 class="loyalty-balance-title">Điểm tích lũy của bạn</h2>
+          <p class="loyalty-balance-desc">Sử dụng điểm để đổi voucher và quà tặng</p>
+        </div>
+        <div class="loyalty-balance-amount">
+          <div class="loyalty-points-value">{{ userPoints() }}</div>
+          <div class="loyalty-points-label">điểm</div>
+        </div>
+      </div>
+
+      <!-- Current Tier -->
+      <div class="loyalty-tier-section">
+        <h2 class="loyalty-section-title">Hạng thành viên hiện tại</h2>
+        <div class="loyalty-tier-card">
+          <div class="loyalty-tier-icon">{{ userTier().icon }}</div>
+          <div class="loyalty-tier-details">
+            <h3 class="loyalty-tier-name">{{ userTier().name }}</h3>
+            <p class="loyalty-tier-requirement">Yêu cầu: {{ formatPrice(userTier().minSpent) }} chi tiêu</p>
+            <div class="loyalty-tier-benefits">
+              <h4>Quyền lợi:</h4>
+              <ul>
+                @for (benefit of userTier().benefits; track benefit) {
+                  <li>{{ benefit }}</li>
+                }
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tier Progress -->
+      <div class="loyalty-progress-section">
+        <h2 class="loyalty-section-title">Tiến độ nâng hạng</h2>
+        <div class="loyalty-tiers-grid">
+          @for (tier of tierConfigs; track tier.name) {
+            <div class="loyalty-tier-item" [class.current]="tier.name === userTier().name" [class.completed]="tier.minSpent < userTier().minSpent">
+              <div class="loyalty-tier-emoji">{{ tier.icon }}</div>
+              <div class="loyalty-tier-title">{{ tier.name }}</div>
+              <div class="loyalty-tier-min">{{ formatPrice(tier.minSpent) }}</div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Rewards -->
+      <div class="loyalty-rewards-section">
+        <h2 class="loyalty-section-title">Đổi quà tặng</h2>
+        <div class="loyalty-rewards-grid">
+          @for (reward of availableRewards(); track reward.id) {
+            <div class="loyalty-reward-card">
+              <img [src]="reward.image" [alt]="reward.name" class="loyalty-reward-image" />
+              <div class="loyalty-reward-content">
+                <h3 class="loyalty-reward-name">{{ reward.name }}</h3>
+                <p class="loyalty-reward-desc">{{ reward.description }}</p>
+                <div class="loyalty-reward-points">{{ reward.pointsRequired }} điểm</div>
+                <button class="xanhla-btn-primary" (click)="redeemReward(reward.id)" [disabled]="userPoints() < reward.pointsRequired">
+                  @if (userPoints() < reward.pointsRequired) {
+                    Chưa đủ điểm
+                  } @else {
+                    Đổi ngay
+                  }
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Transaction History -->
+      <div class="loyalty-history-section">
+        <h2 class="loyalty-section-title">Lịch sử giao dịch điểm</h2>
+        @if (userTransactions().length > 0) {
+          <div class="loyalty-transaction-list">
+            @for (tx of userTransactions(); track tx.id) {
+              <div class="loyalty-transaction-item">
+                <div class="loyalty-transaction-icon">{{ tx.type === 'earned' ? '➕' : tx.type === 'redeemed' ? '➖' : '🔄' }}</div>
+                <div class="loyalty-transaction-info">
+                  <div class="loyalty-transaction-desc">{{ tx.description }}</div>
+                  <div class="loyalty-transaction-date">{{ tx.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
+                </div>
+                <div class="loyalty-transaction-amount {{ tx.type === 'earned' ? 'positive' : 'negative' }}">
+                  {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount }}
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="loyalty-empty">Chưa có giao dịch điểm nào</div>
+        }
+      </div>
+    </div>
+  } @else {
+    <div style="text-align:center;padding:80px 24px">
+      <div style="font-size:48px;margin-bottom:16px">🔒</div>
+      <h2 style="font-family:var(--xanh-font-display);font-size:24px;margin-bottom:12px">
+        Bạn chưa đăng nhập
+      </h2>
+      <p style="color:var(--xanh-muted);margin-bottom:24px">
+        Vui lòng đăng nhập để xem chương trình khách hàng thân thiết.
+      </p>
+      <button class="xanhla-btn-primary" (click)="cart.openAuthModal('login')">Đăng nhập</button>
+    </div>
+  }
+</app-shell>

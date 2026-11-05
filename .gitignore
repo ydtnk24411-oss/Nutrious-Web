@@ -11,6 +11,7 @@ dist/
 .env.local
 .env.*.local
 server/.env
+service/.env
 
 # IDE
 .vscode/
@@ -38,6 +39,3 @@ coverage/
 *.tmp
 .cache/
 
-# Uploaded external reference folder
-chatbox-main/
-nutrition-chatbot-main/

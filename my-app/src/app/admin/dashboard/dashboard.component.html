@@ -1,0 +1,501 @@
+<!-- Loading -->
+@if (loading()) {
+  <div class="dash-loading">
+    <div class="admin-spinner" style="width:36px;height:36px;margin:0 auto 16px"></div>
+    <p>Đang tổng hợp dữ liệu nông trại & kinh doanh...</p>
+  </div>
+}
+@if (error()) {
+  <div class="admin-alert admin-alert-error" style="margin-bottom:24px">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span>Lỗi: {{ error() }}</span>
+  </div>
+}
+
+@if (!loading() && stats(); as s) {
+
+  <!-- ── Hero Banner with Organic Brand Identity ───────────────────────────── -->
+  <div class="dash-hero-banner">
+    <div class="dash-hero-content">
+      <div class="dash-hero-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2C7.03 2 3 6.03 3 11c0 3.94 2.56 7.3 6.09 8.7 1.54.63 3.28.63 4.82 0C17.44 18.3 20 14.94 20 11c0-4.97-4.03-9-9-9z"/></svg>
+        <span>Evergreen Mart · Hệ thống Quản trị Hiện đại</span>
+      </div>
+      <h1 class="dash-hero-title">Xin chào, {{ auth.user()?.name ?? 'Admin' }}!</h1>
+      <p class="dash-hero-subtitle">Cùng Evergreen Mart theo dõi doanh thu và lan tỏa nông sản sạch, lành mạnh mỗi ngày.</p>
+
+      <div class="dash-hero-stats">
+        <div class="dash-hero-stat">
+          <span class="dash-hero-stat-value">{{ formatPrice(s.totalRevenue) }}</span>
+          <span class="dash-hero-stat-label">Doanh thu kỳ này</span>
+        </div>
+        <div class="dash-hero-stat-divider"></div>
+        <div class="dash-hero-stat">
+          <span class="dash-hero-stat-value">{{ s.totalOrders }}</span>
+          <span class="dash-hero-stat-label">Đơn hàng hoàn tất</span>
+        </div>
+        <div class="dash-hero-stat-divider"></div>
+        <div class="dash-hero-stat">
+          <span class="dash-hero-stat-value">{{ s.totalUsers }}</span>
+          <span class="dash-hero-stat-label">Khách hàng tích cực</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-hero-decor">
+      <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80" alt="Nông sản Evergreen Mart" class="dash-hero-img" />
+      <div class="dash-hero-img-overlay"></div>
+      <div class="dash-hero-circle circle-1"></div>
+      <div class="dash-hero-circle circle-2"></div>
+      <div class="dash-hero-leaf">
+        <svg width="180" height="180" viewBox="0 0 24 24" fill="none" stroke="rgba(114, 195, 67, 0.15)" stroke-width="1.2">
+          <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+          <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Greeting & Date Range Filters ───────────────────────────── -->
+  <div class="dash-header">
+    <div class="dash-greeting">
+      <h2 class="dash-greeting-title">Chỉ số Hiệu suất Chính (KPI)</h2>
+      <p class="dash-greeting-subtitle">Số liệu cập nhật thời gian thực từ hoạt động mua sắm và đơn hàng</p>
+    </div>
+
+    <div class="dash-date-range">
+      <div class="dash-filter-group">
+        <button
+          class="dash-filter-btn"
+          [class.is-active]="timeFilter() === '7d'"
+          (click)="onTimeFilterChange('7d')"
+        >7 ngày qua</button>
+        <button
+          class="dash-filter-btn"
+          [class.is-active]="timeFilter() === '30d'"
+          (click)="onTimeFilterChange('30d')"
+        >30 ngày</button>
+        <button
+          class="dash-filter-btn"
+          [class.is-active]="timeFilter() === '90d'"
+          (click)="onTimeFilterChange('90d')"
+        >Quý này</button>
+        <button
+          class="dash-filter-btn"
+          [class.is-active]="timeFilter() === 'custom'"
+          (click)="onTimeFilterChange('custom')"
+        >Tùy chọn</button>
+      </div>
+
+      @if (timeFilter() === 'custom') {
+        <div class="dash-custom-dates">
+          <input
+            type="date"
+            [value]="customStartDate()"
+            (input)="onCustomDateChange('start', $any($event.target).value)"
+            class="dash-date-input"
+          />
+          <span style="color:#728475">đến</span>
+          <input
+            type="date"
+            [value]="customEndDate()"
+            (input)="onCustomDateChange('end', $any($event.target).value)"
+            class="dash-date-input"
+          />
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- ── KPI Cards ─────────────────────────────────────── -->
+  <div class="dash-kpi-grid">
+    @for (card of kpiCards; track card.key) {
+      <div class="dash-kpi-card">
+        <div class="dash-kpi-top">
+          <div class="dash-kpi-icon" [style.background]="card.bgColor" [style.color]="card.color">
+            <span [innerHTML]="card.svgIcon"></span>
+          </div>
+          <span class="dash-kpi-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+            Tăng trưởng
+          </span>
+        </div>
+        <div class="dash-kpi-content">
+          <div class="dash-kpi-label">{{ card.label }}</div>
+          <div class="dash-kpi-value">
+            @if (card.isCurrency) {
+              {{ formatPrice(statValue(card.key)) }}
+            } @else {
+              {{ statValue(card.key) }}
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ── Operational Indicators (Kho, Khiếu nại, Live Chat, Voucher, Đánh giá) ──────────────── -->
+  <div class="dash-op-grid">
+    <div class="dash-op-card">
+      <div class="dash-op-icon bg-yellow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <div class="dash-op-info">
+        <span class="dash-op-label">Sắp hết hàng</span>
+        <span class="dash-op-val text-warning">{{ s.lowStockCount ?? 0 }} sp</span>
+      </div>
+    </div>
+
+    <div class="dash-op-card">
+      <div class="dash-op-icon bg-red">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      </div>
+      <div class="dash-op-info">
+        <span class="dash-op-label">Hết hàng</span>
+        <span class="dash-op-val text-danger">{{ s.outOfStockCount ?? 0 }} sp</span>
+      </div>
+    </div>
+
+    <div class="dash-op-card">
+      <div class="dash-op-icon bg-red">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <div class="dash-op-info">
+        <span class="dash-op-label">Khiếu nại chờ</span>
+        <span class="dash-op-val text-danger">{{ s.pendingComplaintsCount ?? 0 }}</span>
+      </div>
+    </div>
+
+    <div class="dash-op-card">
+      <div class="dash-op-icon bg-blue">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
+      <div class="dash-op-info">
+        <span class="dash-op-label">Hội thoại chờ</span>
+        <span class="dash-op-val text-primary">{{ s.waitingSupportCount ?? 0 }}</span>
+      </div>
+    </div>
+
+    <div class="dash-op-card">
+      <div class="dash-op-icon bg-green">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+        </svg>
+      </div>
+      <div class="dash-op-info">
+        <span class="dash-op-label">Voucher chạy</span>
+        <span class="dash-op-val text-success">{{ s.activeVouchersCount ?? 0 }}</span>
+      </div>
+    </div>
+
+    <div class="dash-op-card">
+      <div class="dash-op-icon bg-yellow">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+      </div>
+      <div class="dash-op-info">
+        <span class="dash-op-label">Đánh giá sao</span>
+        <span class="dash-op-val">{{ s.reviewStats?.averageRating || 5 }} ⭐</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Charts Row 1: Revenue Over Time & By Category ───────────────────────────────────── -->
+  <div class="dash-charts-row">
+    <!-- Revenue Line Chart -->
+    <div class="dash-chart-card dash-chart-lg">
+      <div class="dash-chart-header">
+        <div>
+          <h3 class="dash-chart-title">Xu hướng Doanh thu</h3>
+          <p class="dash-chart-subtitle">Biểu đồ doanh thu thực tế theo chu kỳ ngày</p>
+        </div>
+        <div class="dash-chart-indicator">
+          <span class="dash-dot-live"></span>
+          <span>Cập nhật liên tục</span>
+        </div>
+      </div>
+
+      <div class="dash-line-chart">
+        <svg width="100%" height="220" viewBox="0 0 600 220" preserveAspectRatio="none">
+          <!-- Grid Lines -->
+          <line x1="0" y1="50" x2="600" y2="50" stroke="#e8eee3" stroke-width="1" stroke-dasharray="4 4"/>
+          <line x1="0" y1="100" x2="600" y2="100" stroke="#e8eee3" stroke-width="1" stroke-dasharray="4 4"/>
+          <line x1="0" y1="150" x2="600" y2="150" stroke="#e8eee3" stroke-width="1" stroke-dasharray="4 4"/>
+
+          <!-- Area under line with green tint -->
+          <polygon
+            [attr.points]="lineAreaPoints"
+            fill="url(#xanhAreaGradient)"
+          />
+
+          <!-- Gradient definition -->
+          <defs>
+            <linearGradient id="xanhAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#72c343" stop-opacity="0.28"/>
+              <stop offset="60%" stop-color="#176b3a" stop-opacity="0.08"/>
+              <stop offset="100%" stop-color="#176b3a" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Main Curve Line in primary brand green -->
+          <polyline
+            [attr.points]="linePoints"
+            fill="none"
+            stroke="#176b3a"
+            stroke-width="3.5"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+          />
+
+          <!-- Dots with fresh lime accent -->
+          @for (d of lineData(); track d.date; let i = $index) {
+            <circle
+              [attr.cx]="linePointX(i)"
+              [attr.cy]="linePointY(d.revenue)"
+              [attr.r]="lineData().length > 30 ? (d.revenue > 0 ? 4 : 0) : 4.5"
+              fill="#72c343"
+              stroke="#ffffff"
+              stroke-width="2"
+            />
+          }
+        </svg>
+
+        <!-- X-axis Labels -->
+        <div class="dash-line-labels">
+          @for (d of visibleLabels; track $index) {
+            <span>{{ d.date }}</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue by Category -->
+    <div class="dash-chart-card">
+      <div class="dash-chart-header">
+        <div>
+          <h3 class="dash-chart-title">Doanh thu theo Nhóm</h3>
+          <p class="dash-chart-subtitle">Phân bổ tỷ trọng các danh mục thực phẩm</p>
+        </div>
+      </div>
+
+      @if (barData().length === 0) {
+        <div class="dash-chart-empty">Chưa có dữ liệu danh mục kỳ này</div>
+      } @else {
+        <div class="dash-bar-chart-lg">
+          @for (bar of barData(); track bar.label; let i = $index) {
+            <div class="dash-bar-col-lg">
+              <div class="dash-bar-wrap-lg">
+                <div class="dash-bar"
+                     [class.dash-bar-highlight]="isHighlight(i)"
+                     [style.height.px]="barHeight(bar.revenue)"
+                     [title]="bar.label + ': ' + formatPrice(bar.revenue)">
+                </div>
+              </div>
+              <div class="dash-bar-label" [title]="bar.label + ': ' + formatPrice(bar.revenue)">{{ bar.label }}</div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- ── Charts Row 2: Top Products & Order Status Ratio ───────────────────────────────────── -->
+  <div class="dash-charts-row">
+    <!-- Top Selling Products -->
+    <div class="dash-chart-card">
+      <div class="dash-chart-header">
+        <div>
+          <h3 class="dash-chart-title">Top Sản phẩm Bán chạy</h3>
+          <p class="dash-chart-subtitle">Mặt hàng được người tiêu dùng lựa chọn nhiều nhất</p>
+        </div>
+        <div class="dash-limit-toggle">
+          <button
+            type="button"
+            class="dash-limit-btn"
+            [class.is-active]="topLimit() === 5"
+            (click)="setTopLimit(5)"
+          >
+            Top 5
+          </button>
+          <button
+            type="button"
+            class="dash-limit-btn"
+            [class.is-active]="topLimit() === 10"
+            (click)="setTopLimit(10)"
+          >
+            Top 10
+          </button>
+        </div>
+      </div>
+
+      @if (topProducts().length === 0) {
+        <div class="dash-chart-empty">Chưa có dữ liệu bán hàng</div>
+      } @else {
+        <div class="dash-table-sm">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th style="width: 54px;">Ảnh</th>
+                <th>Sản phẩm</th>
+                <th style="text-align:center">Đã bán</th>
+                <th style="text-align:right">Doanh số</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of displayedTopProducts; track item.name) {
+                <tr>
+                  <td>
+                    <img
+                      [src]="item.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&q=80'"
+                      [alt]="item.name"
+                      class="dash-prod-thumb"
+                      loading="lazy"
+                    />
+                  </td>
+                  <td>
+                    <div style="font-weight:700;color:#10321c;font-size:13.5px">{{ item.name }}</div>
+                  </td>
+                  <td style="text-align:center">
+                    <span class="dash-qty-pill">{{ item.quantity }}</span>
+                  </td>
+                  <td style="text-align:right;font-weight:800;color:#176b3a;font-size:14px">
+                    {{ formatPrice(item.revenue) }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    <!-- Order Status Ratio -->
+    <div class="dash-chart-card">
+      <div class="dash-chart-header">
+        <div>
+          <h3 class="dash-chart-title">Trạng thái Đơn hàng</h3>
+          <p class="dash-chart-subtitle">Tỷ lệ luân chuyển và giao hàng</p>
+        </div>
+      </div>
+
+      @if (hasOrderStatusData()) {
+        <div class="dash-donut-chart">
+          <svg width="170" height="170" viewBox="0 0 180 180" style="transform: rotate(-90deg); flex-shrink: 0;">
+            @for (seg of getDonutSegments(); track seg.status) {
+              <circle cx="90" cy="90" r="70" fill="none" [attr.stroke]="seg.color" stroke-width="26" [attr.stroke-dasharray]="seg.dashArray" [attr.stroke-dashoffset]="seg.dashOffset" />
+            }
+          </svg>
+          <div class="dash-donut-legend">
+            @for (seg of getDonutSegments(); track seg.status) {
+              <div class="dash-legend-item">
+                <span class="dash-legend-dot" [style.background]="seg.color"></span>
+                <span class="dash-legend-label">{{ seg.label }}</span>
+                <span class="dash-legend-value">{{ seg.percentage }}%</span>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="dash-chart-empty">Chưa có dữ liệu đơn hàng</div>
+      }
+    </div>
+  </div>
+
+  <!-- ── Recent Orders Table ─────────────────────────────────── -->
+  <div class="dash-recent-section">
+    <div class="dash-recent-header">
+      <div>
+        <h2 class="dash-section-h" style="margin:0">Đơn hàng mới nhất</h2>
+        <p style="font-size:13px;color:#5c6e5e;margin:4px 0 0">Danh sách các đơn hàng vừa được khách đặt trên website</p>
+      </div>
+      <a routerLink="/admin/orders" class="admin-btn-secondary" style="font-size:13px;padding:8px 16px">
+        <span>Xem tất cả đơn hàng</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </a>
+    </div>
+
+    @if (s.recentOrders.length === 0) {
+      <div class="admin-empty" style="background:#fff;border-radius:14px;border:1px solid #e2ebd8">
+        <div class="admin-empty-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        </div>
+        <p>Hiện chưa có đơn hàng nào trong hệ thống.</p>
+      </div>
+    } @else {
+      <div class="admin-card" style="padding:0;overflow:hidden">
+        <div class="admin-table-wrap" style="border:none">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Mã đơn</th>
+                <th>Khách hàng</th>
+                <th>Tổng thanh toán</th>
+                <th>Trạng thái</th>
+                <th>Thời gian đặt</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (order of s.recentOrders; track order._id) {
+                <tr>
+                  <td>
+                    <code class="dash-order-code">#{{ order.orderCode }}</code>
+                  </td>
+                  <td style="font-weight:600;color:#1c2920">{{ order.guestName || '—' }}</td>
+                  <td>
+                    <strong style="color:#176b3a">{{ formatPrice(order.total) }}</strong>
+                  </td>
+                  <td>
+                    <span class="admin-badge" [class]="'badge-' + order.status">
+                      {{ orderStatusMap[order.status] || order.status }}
+                    </span>
+                  </td>
+                  <td style="color:#6b7c6e;font-size:13px">
+                    {{ order.createdAt | date:'dd/MM/yyyy · HH:mm' }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ── Sale Insights ───────────────────────────────────── -->
+  @if (insights().length > 0) {
+    <div class="dash-insights-section">
+      <div class="dash-insights-header">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#176b3a" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        <h2 class="dash-section-h" style="margin:0">Gợi ý & Phân tích Kinh doanh (AI Insights)</h2>
+      </div>
+      <div class="dash-insights-grid">
+        @for (insight of insights(); track insight) {
+          <div class="dash-insight-card">
+            <div class="dash-insight-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#176b3a" stroke-width="2.2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <span>{{ insight }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+}

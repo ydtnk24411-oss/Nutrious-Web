@@ -1,0 +1,121 @@
+.admin-login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top right, #174f2e 0%, #10321c 45%, #081a0e 100%);
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-login-page::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: 10%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(114, 195, 67, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.admin-login-card {
+  width: 100%;
+  max-width: 440px;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 44px 38px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  position: relative;
+  z-index: 1;
+}
+
+.admin-login-logo {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.admin-logo-mark {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 16px;
+  background: linear-gradient(135deg, #184a28 0%, #0d2815 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(16, 50, 28, 0.35);
+  border: 1px solid rgba(114, 195, 67, 0.25);
+}
+
+.admin-login-logo h1 {
+  font-size: 24px;
+  font-weight: 800;
+  color: #10321c;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+}
+
+.admin-login-logo p {
+  font-size: 13.5px;
+  color: #626e64;
+  margin: 0;
+  font-weight: 500;
+}
+
+.admin-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2c4230;
+}
+
+.admin-field input {
+  padding: 11px 14px;
+  border: 1.5px solid #d9e4cf;
+  border-radius: 10px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  outline: none;
+  background: #fafcfa;
+  color: #1c2920;
+  font-family: inherit;
+}
+
+.admin-field input:focus {
+  border-color: #176b3a;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(23, 107, 58, 0.12);
+}
+
+.admin-login-hint {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid #edf3e9;
+  font-size: 12.5px;
+  color: #728475;
+  text-align: center;
+}
+
+.admin-login-hint code {
+  background: #f4f8f1;
+  border: 1px solid #dce8d3;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: #176b3a;
+  font-weight: 600;
+}

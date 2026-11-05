@@ -1,0 +1,32 @@
+.booking-info-card {
+  background: #f8fbf6;
+  border: 1px solid #e2ebd8;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13.5px;
+  color: #1c2920;
+}
+
+.booking-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #626e64;
+  font-weight: 700;
+}
+
+.booking-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1c2920;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.booking-section-title svg {
+  color: #176b3a;
+}
