@@ -50,7 +50,7 @@ export class ReviewService {
   }
 
   // Add a new review (server gắn tài khoản từ token)
-  addReview(review: { productId: string; productName: string; rating: number; title?: string; content: string }): Observable<unknown> {
+  addReview(review: { productId: string; productName: string; productImage?: string; rating: number; title?: string; content: string }): Observable<unknown> {
     return this.api.post('/reviews', review).pipe(tap(() => this.load(review.productId)));
   }
 

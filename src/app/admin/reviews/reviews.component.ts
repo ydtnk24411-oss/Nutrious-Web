@@ -90,6 +90,16 @@ export class AdminReviewsComponent implements OnInit {
     });
   }
 
+  
+  getUserAvatar(item: AdminReviewItem | null | undefined): string {
+    if (!item) return '';
+    if (item.userAvatar) return item.userAvatar;
+    if (item.user && typeof item.user === 'object' && item.user.avatar) {
+      return item.user.avatar;
+    }
+    return '';
+  }
+
   toggleHideReview(item: AdminReviewItem): void {
     const newHidden = !item.isHidden;
     const confirmMsg = newHidden

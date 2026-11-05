@@ -5,6 +5,7 @@ export interface AdminReviewItem {
   _id: string;
   product: string;
   productName: string;
+  productImage?: string;
   user: {
     _id: string;
     name: string;
@@ -12,6 +13,7 @@ export interface AdminReviewItem {
     avatar?: string;
   } | string;
   userName: string;
+  userAvatar?: string;
   rating: number;
   title?: string;
   content: string;

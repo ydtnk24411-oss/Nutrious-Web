@@ -2,27 +2,35 @@ const router = require('express').Router();
 const { body } = require('express-validator');
 const Review = require('../models/Review');
 const Order = require('../models/Order');
+const Product = require('../models/Product');
 const { protect, optionalAuth, staffOnly, hasRole, adminOnly } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 
-const toDto = (r, viewerId) => ({
-  id: String(r._id),
-  productId: r.product,
-  productName: r.productName,
-  userId: String(r.user),
-  userName: r.userName,
-  rating: r.rating,
-  title: r.title || undefined,
-  content: r.content,
-  images: r.images || [],
-  helpfulCount: (r.helpfulBy || []).length,
-  isHelpful: viewerId ? (r.helpfulBy || []).some((u) => String(u) === String(viewerId)) : false,
-  adminReply: r.adminReply,
-  adminReplyAt: r.adminReplyAt,
-  isHidden: r.isHidden,
-  createdAt: r.createdAt,
-  verifiedPurchase: r.verifiedPurchase,
-});
+const toDto = (r, viewerId) => {
+  const userObj = r.user && typeof r.user === 'object' ? r.user : null;
+  const userAvatar = r.userAvatar || userObj?.avatar || '';
+  const userName = r.userName || userObj?.name || 'Khách hàng';
+  return {
+    id: String(r._id),
+    productId: r.product,
+    productName: r.productName,
+    productImage: r.productImage || '',
+    userId: userObj ? String(userObj._id) : String(r.user),
+    userName,
+    userAvatar,
+    rating: r.rating,
+    title: r.title || undefined,
+    content: r.content,
+    images: r.images || [],
+    helpfulCount: (r.helpfulBy || []).length,
+    isHelpful: viewerId ? (r.helpfulBy || []).some((u) => String(u) === String(viewerId)) : false,
+    adminReply: r.adminReply || '',
+    adminReplyAt: r.adminReplyAt || null,
+    isHidden: r.isHidden,
+    createdAt: r.createdAt,
+    verifiedPurchase: r.verifiedPurchase,
+  };
+};
 
 const buildStats = (reviews) => {
   const dist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
@@ -42,11 +50,29 @@ router.get('/product/:productId', optionalAuth, async (req, res, next) => {
     const reviews = await Review.find({
       product: req.params.productId,
       isHidden: { $ne: true },
-    }).sort({ createdAt: -1 });
+    })
+      .populate('user', 'name avatar email')
+      .sort({ createdAt: -1 });
+
+    let defaultProductImage = '';
+    const needsProdImg = reviews.some((r) => !r.productImage);
+    if (needsProdImg && req.params.productId) {
+      try {
+        const prod = await Product.findById(req.params.productId).select('image name');
+        if (prod) {
+          defaultProductImage = prod.image || '';
+        }
+      } catch (e) {}
+    }
 
     res.json({
       success: true,
-      data: reviews.map((r) => toDto(r, req.user?._id)),
+      data: reviews.map((r) => {
+        if (!r.productImage && defaultProductImage) {
+          r.productImage = defaultProductImage;
+        }
+        return toDto(r, req.user?._id);
+      }),
       stats: buildStats(reviews),
     });
   } catch (err) { next(err); }
@@ -79,12 +105,41 @@ router.get('/admin', protect, staffOnly, async (req, res, next) => {
       Review.countDocuments(filter),
     ]);
 
+    const missingProductIds = [
+      ...new Set(
+        reviews
+          .filter((r) => !r.productImage && r.product)
+          .map((r) => r.product)
+      ),
+    ];
+    let prodMap = {};
+    if (missingProductIds.length > 0) {
+      try {
+        const prods = await Product.find({ _id: { $in: missingProductIds } }).select('_id name image');
+        prods.forEach((p) => {
+          prodMap[String(p._id)] = p;
+        });
+      } catch (e) {}
+    }
+
+    const data = reviews.map((r) => {
+      const obj = r.toObject ? r.toObject() : { ...r };
+      if (!obj.productImage && prodMap[String(r.product)]) {
+        obj.productImage = prodMap[String(r.product)].image || '';
+        if (!obj.productName) obj.productName = prodMap[String(r.product)].name || '';
+      }
+      if (!obj.userAvatar && r.user && typeof r.user === 'object' && r.user.avatar) {
+        obj.userAvatar = r.user.avatar;
+      }
+      return obj;
+    });
+
     const globalStats = buildStats(allReviews);
     const pendingReplyCount = allReviews.filter((r) => !r.adminReply).length;
 
     res.json({
       success: true,
-      data: reviews,
+      data,
       stats: {
         total: allReviews.length,
         averageRating: globalStats.averageRating,
@@ -109,6 +164,7 @@ router.put('/:id/reply', protect, hasRole('support', 'admin'), async (req, res, 
     review.adminReplyAt = new Date();
     await review.save();
 
+    await review.populate('user', 'name email avatar');
     res.json({ success: true, data: review });
   } catch (err) { next(err); }
 });
@@ -162,11 +218,26 @@ router.post(
         status: { $ne: 'cancelled' },
         $or: [{ user: req.user._id }, { user: null, guestEmail: req.user.email }],
       });
+
+      let productName = req.body.productName || '';
+      let productImage = req.body.productImage || '';
+      if (!productName || !productImage) {
+        try {
+          const prod = await Product.findById(productId).select('name image');
+          if (prod) {
+            if (!productName) productName = prod.name;
+            if (!productImage) productImage = prod.image;
+          }
+        } catch (e) {}
+      }
+
       const review = await Review.create({
         product: productId,
-        productName: req.body.productName || '',
+        productName,
+        productImage,
         user: req.user._id,
         userName: req.user.name,
+        userAvatar: req.user.avatar || '',
         rating: Number(req.body.rating),
         title: req.body.title || '',
         content: req.body.content,
@@ -184,7 +255,7 @@ router.post('/:id/helpful', protect, async (req, res, next) => {
       req.params.id,
       { $addToSet: { helpfulBy: req.user._id } },
       { new: true }
-    );
+    ).populate('user', 'name avatar email');
     if (!review) return res.status(404).json({ success: false, message: 'Không tìm thấy đánh giá.' });
     res.json({ success: true, data: toDto(review, req.user._id) });
   } catch (err) { next(err); }
