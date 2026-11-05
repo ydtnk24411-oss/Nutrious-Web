@@ -548,7 +548,9 @@
 }
 
 @keyframes cp-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ── Success Screen ── */
@@ -723,8 +725,13 @@
   outline: none;
 }
 
-.cp-mt-3 { margin-top: 16px; }
-.cp-mt-4 { margin-top: 24px; }
+.cp-mt-3 {
+  margin-top: 16px;
+}
+
+.cp-mt-4 {
+  margin-top: 24px;
+}
 
 .cp-tracked-box {
   border: 1px solid #dce8d5;
@@ -1070,23 +1077,330 @@ a.cp-support-link:hover {
   .cp-hero {
     padding: 22px 18px;
   }
+
   .cp-hero-title {
     font-size: 22px;
   }
+
   .cp-card {
     padding: 20px 16px;
   }
+
   .cp-grid-3,
   .cp-type-grid {
     grid-template-columns: 1fr;
   }
+
   .cp-history-item {
     flex-direction: column;
   }
+
   .cp-history-side {
     flex-direction: row;
     justify-content: space-between;
     width: 100%;
     align-items: center;
+  }
+}
+
+/* =========================================
+   COMPLAINT PAGE - UI REFINEMENT
+   Evergreen Mart / Xanh Lá
+========================================= */
+
+.cp-page {
+  background: #f6faf5;
+  min-height: calc(100vh - 76px);
+  padding: 22px 0 40px;
+  color: #183b25;
+}
+
+.cp-page .xanhla-container {
+  max-width: 1280px;
+}
+
+/* BREADCRUMB */
+.cp-breadcrumb {
+  font-size: 13px;
+  margin-bottom: 18px;
+}
+
+/* HERO */
+.cp-hero {
+  padding: 26px 28px 22px;
+  border: 1px solid #dce9d7;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  box-shadow: 0 3px 12px rgba(23, 107, 58, 0.035);
+}
+
+.cp-hero-badge {
+  font-size: 12px;
+  padding: 5px 11px;
+  margin-bottom: 12px;
+}
+
+.cp-hero-title {
+  font-size: 27px;
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+
+.cp-hero-desc {
+  max-width: 900px;
+  font-size: 14px;
+  line-height: 1.65;
+  margin-bottom: 20px;
+}
+
+.cp-commitments {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  padding-top: 17px;
+}
+
+.cp-commit-card {
+  align-items: center;
+  gap: 11px;
+}
+
+.cp-commit-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  background: #f3f9ed;
+}
+
+.cp-commit-title {
+  font-size: 13.5px;
+}
+
+.cp-commit-sub {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* TABS */
+.cp-nav-tabs {
+  gap: 5px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #dce8d5;
+  scrollbar-width: none;
+}
+
+.cp-nav-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.cp-tab-link {
+  padding: 12px 17px;
+  font-size: 13.5px;
+  gap: 8px;
+  border-radius: 8px 8px 0 0;
+  color: #647568;
+}
+
+.cp-tab-link.active {
+  color: #176b3a;
+  background: #fff;
+  border: 1px solid #dce8d5;
+  border-bottom: 2px solid #fff;
+  border-top: 3px solid #72c343;
+  margin-bottom: -1px;
+}
+
+/* MAIN CONTENT */
+.cp-card {
+  padding: 26px 28px;
+  border: 1px solid #dce8d5;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  box-shadow: 0 3px 12px rgba(23, 107, 58, 0.025);
+}
+
+.cp-card-header {
+  padding-bottom: 16px;
+  margin-bottom: 22px;
+}
+
+.cp-card-title {
+  font-size: 19px;
+  margin-bottom: 5px;
+}
+
+.cp-card-subtitle {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* EMPTY STATE */
+.cp-empty-state {
+  min-height: 205px;
+  justify-content: center;
+  padding: 30px 20px;
+  gap: 9px;
+}
+
+.cp-empty-icon {
+  width: 58px;
+  height: 58px;
+  background: #f1f8eb;
+  color: #72c343;
+  margin-bottom: 5px;
+}
+
+.cp-empty-title {
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.cp-empty-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+/* BUTTONS */
+.cp-btn {
+  border-radius: 7px;
+  padding: 10px 19px;
+  font-size: 13px;
+  transition: background .2s, border-color .2s, color .2s;
+}
+
+.cp-btn-primary {
+  background: #176b3a;
+}
+
+.cp-btn-primary:hover:not(:disabled) {
+  background: #10552d;
+}
+
+/* HISTORY */
+.cp-history-item {
+  padding: 17px 19px;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.cp-history-item:hover {
+  border-color: #a7d58b;
+  background: #fbfef9;
+}
+
+/* CONTACT FOOTER
+   Nếu HTML có class riêng cho khu vực liên hệ,
+   áp dụng grid 3 cột cho khu vực đó. */
+
+/* FORM */
+.cp-input,
+.cp-textarea {
+  border-radius: 8px;
+  border-color: #d8e5d2;
+  background: #fff;
+  padding: 10px 13px;
+  font-size: 13.5px;
+}
+
+.cp-input:focus,
+.cp-textarea:focus {
+  border-color: #72c343;
+  box-shadow: 0 0 0 3px rgba(114, 195, 67, .12);
+}
+
+.cp-type-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cp-type-card {
+  padding: 13px 15px;
+  border-radius: 9px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .cp-page {
+    padding: 16px 0 28px;
+  }
+
+  .cp-hero {
+    padding: 21px 18px;
+  }
+
+  .cp-hero-title {
+    font-size: 23px;
+  }
+
+  .cp-hero-desc {
+    font-size: 13px;
+  }
+
+  .cp-commitments {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .cp-nav-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .cp-tab-link {
+    flex-shrink: 0;
+    padding: 11px 13px;
+    font-size: 12.5px;
+  }
+
+  .cp-card {
+    padding: 21px 17px;
+  }
+
+  .cp-type-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cp-history-item {
+    flex-direction: column;
+  }
+
+  .cp-history-side {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .cp-search-input-group {
+    min-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .cp-hero-title {
+    font-size: 21px;
+  }
+
+  .cp-hero {
+    border-radius: 11px;
+  }
+
+  .cp-card {
+    padding: 18px 14px;
+  }
+
+  .cp-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .cp-actions-row {
+    flex-direction: column;
+  }
+
+  .cp-actions-row .cp-btn {
+    width: 100%;
+  }
+
+  .cp-code-group {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 }
