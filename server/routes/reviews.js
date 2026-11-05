@@ -81,7 +81,7 @@ router.get('/product/:productId', optionalAuth, async (req, res, next) => {
 // GET /api/reviews/admin — list all reviews for admin
 router.get('/admin', protect, staffOnly, async (req, res, next) => {
   try {
-    const { rating, status, search, page = 1, limit = 50 } = req.query;
+    const { rating, status, search, sort = 'newest', page = 1, limit = 50 } = req.query;
     const filter = {};
 
     if (rating && rating !== 'all') filter.rating = Number(rating);
@@ -95,10 +95,12 @@ router.get('/admin', protect, staffOnly, async (req, res, next) => {
       ];
     }
 
+    const sortOption = sort === 'oldest' ? { createdAt: 1 } : { createdAt: -1 };
+
     const [allReviews, reviews, total] = await Promise.all([
       Review.find({}), // for global stats
       Review.find(filter)
-        .sort({ createdAt: -1 })
+        .sort(sortOption)
         .skip((Number(page) - 1) * Number(limit))
         .limit(Number(limit))
         .populate('user', 'name email avatar'),

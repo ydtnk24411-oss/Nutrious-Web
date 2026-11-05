@@ -303,10 +303,10 @@
                 <div class="dash-bar"
                      [class.dash-bar-highlight]="isHighlight(i)"
                      [style.height.px]="barHeight(bar.revenue)"
-                     [title]="formatPrice(bar.revenue)">
+                     [title]="bar.label + ': ' + formatPrice(bar.revenue)">
                 </div>
               </div>
-              <div class="dash-bar-label">{{ bar.label }}</div>
+              <div class="dash-bar-label" [title]="bar.label + ': ' + formatPrice(bar.revenue)">{{ bar.label }}</div>
             </div>
           }
         </div>
@@ -322,6 +322,24 @@
         <div>
           <h3 class="dash-chart-title">Top Sản phẩm Bán chạy</h3>
           <p class="dash-chart-subtitle">Mặt hàng được người tiêu dùng lựa chọn nhiều nhất</p>
+        </div>
+        <div class="dash-limit-toggle">
+          <button
+            type="button"
+            class="dash-limit-btn"
+            [class.is-active]="topLimit() === 5"
+            (click)="setTopLimit(5)"
+          >
+            Top 5
+          </button>
+          <button
+            type="button"
+            class="dash-limit-btn"
+            [class.is-active]="topLimit() === 10"
+            (click)="setTopLimit(10)"
+          >
+            Top 10
+          </button>
         </div>
       </div>
 
@@ -339,7 +357,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (item of topProducts(); track item.name) {
+              @for (item of displayedTopProducts; track item.name) {
                 <tr>
                   <td>
                     <img
