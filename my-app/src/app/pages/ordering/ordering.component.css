@@ -536,10 +536,20 @@
 }
 
 .ord-page .xanhla-prod-card-cat {
-  color: #a96b00;
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  background: #eff6eb;
+  color: #1e532b;
+  border-left: 3.5px solid #5ca32a;
+  border-radius: 0 4px 4px 0;
+  padding: 2.5px 8px 2.5px 7px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  width: fit-content;
+  line-height: 1.35;
+  margin-bottom: 2px;
 }
 
 .ord-page .xanhla-prod-card-name,

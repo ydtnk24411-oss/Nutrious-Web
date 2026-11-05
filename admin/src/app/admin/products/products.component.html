@@ -140,14 +140,15 @@
         <div class="xanhla-prod-card">
           <div class="xanhla-prod-card-img">
             <img [src]="p.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&q=80'" [alt]="p.name" loading="lazy" />
-            <span class="xanhla-prod-badge">{{ getCategoryName(p.categoryId, p) }}</span>
-            <span class="admin-badge prod-badge-status" [class.badge-active]="p.isActive !== false" [class.badge-inactive]="p.isActive === false">
-              {{ p.isActive !== false ? 'Kinh doanh' : 'Tạm ẩn' }}
-            </span>
           </div>
 
           <div class="xanhla-prod-card-body">
-            <div class="xanhla-prod-card-cat">{{ getCategoryName(p.categoryId, p) }}</div>
+            <div class="xanhla-prod-card-meta-row">
+              <span class="xanhla-prod-card-cat">{{ getCategoryName(p.categoryId, p) }}</span>
+              <span class="admin-badge prod-badge-status-inline" [class.badge-active]="p.isActive !== false" [class.badge-inactive]="p.isActive === false">
+                {{ p.isActive !== false ? 'Kinh doanh' : 'Tạm ẩn' }}
+              </span>
+            </div>
 
             <h4 class="xanhla-prod-card-name" [title]="p.name">{{ p.name }}</h4>
 
