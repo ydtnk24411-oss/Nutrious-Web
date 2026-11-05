@@ -75,8 +75,6 @@ router.post(
   optionalAuth,
   [
     body('items').isArray({ min: 1 }).withMessage('Đơn hàng phải có ít nhất 1 sản phẩm.'),
-    body('subtotal').isNumeric().withMessage('Subtotal phải là số.'),
-    body('total').isNumeric().withMessage('Total phải là số.'),
   ],
   validate,
   async (req, res, next) => {
@@ -86,32 +84,84 @@ router.post(
       delete orderData.status;
       delete orderData.orderCode;
 
+      // 1. Validate giỏ hàng rỗng
+      if (!Array.isArray(orderData.items) || orderData.items.length === 0) {
+        return res.status(400).json({ success: false, message: 'Giỏ hàng rỗng, vui lòng chọn ít nhất 1 sản phẩm.' });
+      }
+
+      // 2. Validate từng sản phẩm và tự tính lại subtotal từ database (lấy priceNumber của Product, không tin client)
+      let serverSubtotal = 0;
+      for (const item of orderData.items) {
+        const qty = Number(item.quantity);
+        if (!Number.isInteger(qty) || qty <= 0) {
+          return res.status(400).json({
+            success: false,
+            message: `Số lượng của sản phẩm "${item.productName || 'trong giỏ'}" không hợp lệ, phải là số nguyên dương.`
+          });
+        }
+        item.quantity = qty;
+
+        // Tìm sản phẩm trong DB bằng ObjectId, slug hoặc tên
+        let prod = null;
+        if (item.product && mongoose.Types.ObjectId.isValid(item.product)) {
+          prod = await Product.findById(item.product);
+        }
+        if (!prod && item.product) {
+          prod = await Product.findOne({ slug: item.product });
+        }
+        if (!prod && item.productName) {
+          prod = await Product.findOne({ name: item.productName });
+        }
+
+        if (!prod) {
+          return res.status(400).json({
+            success: false,
+            message: `Sản phẩm "${item.productName || item.product || 'trong đơn hàng'}" không tồn tại hoặc đã ngừng kinh doanh.`
+          });
+        }
+
+        // Lấy giá chuẩn từ database (trường số priceNumber, KHÔNG parse chuỗi)
+        const priceNum = typeof prod.priceNumber === 'number' ? prod.priceNumber : Number(prod.priceNumber || 0);
+        item.product = prod._id.toString();
+        item.productName = prod.name;
+        item.productImage = prod.image || item.productImage || '';
+        item.productPrice = prod.price;
+        item.priceNumber = priceNum;
+
+        serverSubtotal += priceNum * qty;
+      }
+
       if (req.user) {
         orderData.user       = req.user._id;
         orderData.guestName  = orderData.guestName  || req.user.name;
         orderData.guestEmail = orderData.guestEmail || req.user.email;
         orderData.guestPhone = orderData.guestPhone || req.user.phone || '';
       }
-      const subtotal = Number(orderData.subtotal);
-      orderData.estimatedPoints = Math.floor(subtotal / 1000);
 
-      // Voucher
+      const shippingFee = Number(orderData.shippingFee) || 0;
+      orderData.subtotal = serverSubtotal;
+      orderData.shippingFee = shippingFee;
+      orderData.estimatedPoints = Math.floor(serverSubtotal / 1000);
+
+      // 3. Voucher (kiểm tra với subtotal tính từ server)
       let applied = null;
       const code = orderData.voucherCode ? String(orderData.voucherCode).trim() : '';
       if (code) {
-        applied = await evaluateVoucher(code, subtotal, req.user?._id);
+        applied = await evaluateVoucher(code, serverSubtotal, req.user?._id);
         if (!applied.valid) {
           return res.status(400).json({ success: false, message: applied.message });
         }
       }
       orderData.voucherCode = applied ? applied.voucher.code : '';
       orderData.discount    = applied ? applied.discount : 0;
-      orderData.total = Math.max(0, subtotal - orderData.discount + (Number(orderData.shippingFee) || 0));
+
+      // 4. Server tự tính lại total: total = subtotal - discount + shippingFee
+      orderData.total = Math.max(0, serverSubtotal - orderData.discount + shippingFee);
 
       const order = await Order.create(orderData);
       if (applied) await consumeVoucher(applied, req.user?._id, order._id);
 
-      // Deduct product stock automatically
+      // Khấu trừ số lượng tồn kho tự động
       for (const item of order.items) {
         if (item.product) {
           const prod = await Product.findById(item.product);
@@ -129,16 +179,41 @@ router.post(
               oldStock,
               newStock,
               reason: `Đơn hàng ${order.orderCode}`,
-              note: `Trừ kho khi tạo đơn hàng`,
+              note: 'Trừ kho khi tạo đơn hàng',
               updatedBy: req.user?._id || null,
             });
           }
         }
       }
 
+      // 5. Tạo link VietQR nếu phương thức là bank_transfer
+      const bankId = (process.env.BANK_ID || 'MB').trim();
+      const accountNo = (process.env.ACCOUNT_NO || '0962299122').trim();
+      const accountName = (process.env.ACCOUNT_NAME || 'VY TAM NHU').trim();
+
+      let qrUrl = null;
+      if (order.paymentMethod === 'bank_transfer') {
+        const encodedAccountName = encodeURIComponent(accountName);
+        qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${order.total}&addInfo=${encodeURIComponent(order.orderCode)}&accountName=${encodedAccountName}`;
+      }
+
       res.status(201).json({
         success: true,
-        data: { orderCode: order.orderCode, _id: order._id, discount: order.discount, total: order.total },
+        orderCode: order.orderCode,
+        total: order.total,
+        qrUrl,
+        data: {
+          orderCode: order.orderCode,
+          _id: order._id,
+          discount: order.discount,
+          total: order.total,
+          qrUrl,
+          bankInfo: order.paymentMethod === 'bank_transfer' ? {
+            bankId,
+            accountNo,
+            accountName,
+          } : null,
+        },
       });
     } catch (err) { next(err); }
   }
@@ -182,8 +257,17 @@ router.get('/', protect, staffOnly, async (req, res, next) => {
 // GET /api/orders/track/:code — public order tracking
 router.get('/track/:code', async (req, res, next) => {
   try {
-    const order = await Order.findOne({ orderCode: req.params.code })
-      .populate('items.product', 'name image');
+    const rawCode = String(req.params.code).trim();
+    const normalizedCode = rawCode.replace(/^XL-?/i, 'XL-');
+    const noHyphenCode = rawCode.replace(/^XL-?/i, 'XL');
+    const order = await Order.findOne({
+      $or: [
+        { orderCode: rawCode },
+        { orderCode: normalizedCode },
+        { orderCode: noHyphenCode },
+        { orderCode: rawCode.toUpperCase() }
+      ]
+    }).populate('items.product', 'name image');
     if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng.' });
     res.json({ success: true, data: order });
   } catch (err) { next(err); }
@@ -216,8 +300,17 @@ router.get('/my', protect, async (req, res, next) => {
 // GET /api/orders/:code — get order by code (authenticated)
 router.get('/:code', protect, async (req, res, next) => {
   try {
-    const order = await Order.findOne({ orderCode: req.params.code })
-      .populate('user', 'name email phone');
+    const rawCode = String(req.params.code).trim();
+    const normalizedCode = rawCode.replace(/^XL-?/i, 'XL-');
+    const noHyphenCode = rawCode.replace(/^XL-?/i, 'XL');
+    const order = await Order.findOne({
+      $or: [
+        { orderCode: rawCode },
+        { orderCode: normalizedCode },
+        { orderCode: noHyphenCode },
+        { orderCode: rawCode.toUpperCase() }
+      ]
+    }).populate('user', 'name email phone');
     if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng.' });
     
     const isOwner = (order.user && (order.user._id?.toString() === req.user.id || order.user.toString() === req.user.id)) ||
@@ -244,13 +337,22 @@ const handleCancelOrder = async (req, res, next) => {
     const { id } = req.params;
     const { reason } = req.body || {};
 
-    const mongoose = require('mongoose');
     let order = null;
     if (mongoose.Types.ObjectId.isValid(id)) {
       order = await Order.findById(id);
     }
     if (!order) {
-      order = await Order.findOne({ orderCode: id });
+      const rawCode = String(id).trim();
+      const normalizedCode = rawCode.replace(/^XL-?/i, 'XL-');
+      const noHyphenCode = rawCode.replace(/^XL-?/i, 'XL');
+      order = await Order.findOne({
+        $or: [
+          { orderCode: rawCode },
+          { orderCode: normalizedCode },
+          { orderCode: noHyphenCode },
+          { orderCode: rawCode.toUpperCase() }
+        ]
+      });
     }
 
     if (!order) {

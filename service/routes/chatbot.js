@@ -423,14 +423,19 @@ router.post('/message', optionalAuth, async (req, res, next) => {
     }
 
     // 3.3. Tra cứu đơn hàng
-    const orderMatch = trimmed.match(/([a-zA-Z0-9]{6,24})/g);
+    const orderMatch = trimmed.match(/(?:XL-?[0-9]{6}|[a-zA-Z0-9]{6,24})/gi);
     const isOrderQuery = cleanLower.includes('don hang') || cleanLower.includes('kiem tra don') || cleanLower.includes('ma don') || cleanLower.includes('order');
     if (isOrderQuery && orderMatch) {
       for (const code of orderMatch) {
+        const rawCode = String(code).trim();
+        const normalizedCode = rawCode.replace(/^XL-?/i, 'XL-');
+        const noHyphenCode = rawCode.replace(/^XL-?/i, 'XL');
         const order = await Order.findOne({
           $or: [
-            { orderCode: code },
-            { orderCode: code.toUpperCase() },
+            { orderCode: rawCode },
+            { orderCode: normalizedCode },
+            { orderCode: noHyphenCode },
+            { orderCode: rawCode.toUpperCase() },
             ...(code.length === 24 ? [{ _id: code }] : [])
           ]
         }).populate('items.product');

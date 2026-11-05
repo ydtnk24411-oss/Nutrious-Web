@@ -37,6 +37,12 @@ export class CheckoutComponent implements OnInit {
   protected shippingMethod = signal<'pickup' | 'delivery'>('pickup');
   protected paymentMethod  = signal<'cod' | 'bank_transfer'>('cod');
 
+  // VietQR & Chuyển khoản ngân hàng
+  protected qrUrl        = signal<string | null>(null);
+  protected createdTotal = signal<number>(0);
+  protected bankInfo     = signal<{ bankId: string; accountNo: string; accountName: string } | null>(null);
+  protected copiedField  = signal<string | null>(null);
+
   // Voucher
   protected voucherCode = signal('');
   protected selectedVoucher = signal<any>(null);
@@ -240,9 +246,21 @@ export class CheckoutComponent implements OnInit {
     };
 
     this.orderApi.create(payload as any).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.submitting.set(false);
-        this.orderCode.set(res.data.orderCode);
+        const code = res.data?.orderCode || res.orderCode;
+        const total = res.data?.total ?? res.total ?? this.finalTotal();
+        const qr = res.data?.qrUrl || res.qrUrl || null;
+        const bank = res.data?.bankInfo || (this.paymentMethod() === 'bank_transfer' ? {
+          bankId: 'MB',
+          accountNo: '0962299122',
+          accountName: 'VY TAM NHU'
+        } : null);
+
+        this.orderCode.set(code);
+        this.createdTotal.set(total);
+        this.qrUrl.set(qr);
+        this.bankInfo.set(bank);
         this.completed.set(true);
 
         // Đồng bộ lại dữ liệu tài khoản từ server sau khi đặt hàng
@@ -257,6 +275,22 @@ export class CheckoutComponent implements OnInit {
         this.submitting.set(false);
         this.errorMsg.set(err.error?.message || 'Đặt hàng thất bại, vui lòng thử lại.');
       },
+    });
+  }
+
+  /** Sao chép thông tin (STK hoặc Nội dung CK) vào clipboard kèm thông báo */
+  copyToClipboard(text: string, fieldName: string): void {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      this.copiedField.set(fieldName);
+      setTimeout(() => {
+        if (this.copiedField() === fieldName) {
+          this.copiedField.set(null);
+        }
+      }, 2000);
+    }).catch(() => {
+      this.copiedField.set(fieldName);
+      setTimeout(() => this.copiedField.set(null), 2000);
     });
   }
 }
