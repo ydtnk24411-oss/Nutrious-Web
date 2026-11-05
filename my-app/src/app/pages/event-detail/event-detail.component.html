@@ -1,0 +1,90 @@
+<app-shell>
+  @if (loading()) {
+    <div class="xanhla-container" style="padding:64px max(24px,4vw);text-align:center;color:var(--xanh-muted)">
+      Đang tải sự kiện...
+    </div>
+  }
+
+  @if (error()) {
+    <div class="xanhla-container" style="padding:64px max(24px,4vw);text-align:center">
+      <p style="color:#c53030;margin-bottom:20px">{{ error() }}</p>
+      <a class="xanhla-btn-primary" routerLink="/event-list">Quay lại danh sách</a>
+    </div>
+  }
+
+  @if (!loading() && event(); as ev) {
+    <div class="xanhla-container" style="padding:40px max(24px,4vw)">
+      <div class="xanhla-breadcrumb">
+        <a routerLink="/">Trang chủ</a>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <a routerLink="/event-list">Sự kiện</a>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <span>{{ ev.name }}</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:24px">
+        <img [src]="ev.image" [alt]="ev.name"
+             style="width:100%;border-radius:var(--xanh-radius-md);object-fit:cover;max-height:480px" />
+        <div>
+          <h1 style="font-family:var(--xanh-font-display);font-size:34px;margin:0 0 16px 0">{{ ev.name }}</h1>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px;color:var(--xanh-muted)">
+            <div>📅 <strong>Ngày:</strong> {{ ev.date }}</div>
+            <div>🕐 <strong>Thời gian:</strong> {{ ev.time }}</div>
+            <div>📍 <strong>Địa điểm:</strong> {{ ev.location }}</div>
+            <div>👥 <strong>Đã đăng ký:</strong> {{ ev.registrations?.length ?? 0 }} / {{ ev.capacity }}</div>
+          </div>
+          <p style="line-height:1.7;margin-bottom:32px">{{ ev.description }}</p>
+
+          @if (registered()) {
+            <div style="padding:24px;background:var(--xanh-paper-deep);border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-moss)">
+              <h4 style="color:var(--xanh-moss);margin:0 0 8px 0">✓ Đăng ký tham gia thành công!</h4>
+              <p style="margin:0;font-size:14px">
+                Chúng tôi đã ghi nhận đăng ký cho <strong>{{ fullName() }}</strong>.<br/>
+                Thông tin xác nhận sẽ được gửi tới <strong>{{ email() }}</strong>.
+              </p>
+            </div>
+          } @else {
+            @if (regError()) {
+              <div style="background:#fff5f5;color:#c53030;border:1px solid #feb2b2;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:14px">
+                ⚠ {{ regError() }}
+              </div>
+            }
+            <form (submit)="handleRegister($event)"
+                  style="background:#fff;padding:28px;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line)">
+              <h3 style="margin:0 0 16px 0;font-size:18px">Đăng ký tham gia / Mua vé</h3>
+
+              <div style="margin-bottom:16px">
+                <label style="display:block;font-size:14px;margin-bottom:6px">Họ và tên *</label>
+                <input type="text" required
+                       [value]="fullName()" (input)="fullName.set($any($event.target).value)"
+                       placeholder="Nguyễn Văn A"
+                       style="width:100%;padding:10px 14px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)" />
+              </div>
+
+              <div style="margin-bottom:16px">
+                <label style="display:block;font-size:14px;margin-bottom:6px">Email nhận vé *</label>
+                <input type="email" required
+                       [value]="email()" (input)="email.set($any($event.target).value)"
+                       placeholder="name@example.com"
+                       style="width:100%;padding:10px 14px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)" />
+              </div>
+
+              <div style="margin-bottom:20px">
+                <label style="display:block;font-size:14px;margin-bottom:6px">Số điện thoại</label>
+                <input type="tel"
+                       [value]="phone()" (input)="phone.set($any($event.target).value)"
+                       placeholder="0987 654 321"
+                       style="width:100%;padding:10px 14px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)" />
+              </div>
+
+              <button class="xanhla-btn-primary" type="submit" style="width:100%"
+                      [disabled]="submitting()">
+                @if (submitting()) { Đang gửi... } @else { {{ ev.action }} }
+              </button>
+            </form>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</app-shell>
