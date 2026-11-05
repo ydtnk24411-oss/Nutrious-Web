@@ -11,6 +11,8 @@ router.get('/', async (req, res, next) => {
   try {
     const { categoryId, category, search, sort = 'createdAt', page = 1, limit = 20 } = req.query;
     const filter = { isActive: { $ne: false } };
+    // Combo chỉ hiển thị ở trang chi tiết, không lẫn vào danh sách sản phẩm (trừ khi yêu cầu)
+    if (req.query.includeCombos !== 'true') filter.isCombo = { $ne: true };
 
     const catParam = categoryId || category;
     if (catParam && catParam !== 'all') {
@@ -90,7 +92,8 @@ router.get('/:slug/related', async (req, res, next) => {
     const limitNum = Math.min(16, Number(req.query.limit) || 8);
     const filter = {
       _id: { $ne: product._id },
-      isActive: { $ne: false }
+      isActive: { $ne: false },
+      isCombo: { $ne: true }
     };
 
     if (product.categoryId) {
@@ -106,12 +109,43 @@ router.get('/:slug/related', async (req, res, next) => {
       const excludeIds = [product._id, ...related.map((r) => r._id)];
       const fallbackProducts = await Product.find({
         _id: { $nin: excludeIds },
-        isActive: { $ne: false }
+        isActive: { $ne: false },
+        isCombo: { $ne: true }
       }).limit(limitNum - related.length);
       related = [...related, ...fallbackProducts];
     }
 
     res.json({ success: true, data: related });
+  } catch (err) { next(err); }
+});
+
+// GET /api/products/:slug/combos — combo mua kèm tiết kiệm có chứa sản phẩm này
+router.get('/:slug/combos', async (req, res, next) => {
+  try {
+    const rawSlug = req.params.slug;
+    let product = await Product.findOne({ slug: rawSlug, isActive: { $ne: false } });
+    if (!product && mongoose.Types.ObjectId.isValid(rawSlug)) {
+      product = await Product.findOne({ _id: rawSlug, isActive: { $ne: false } });
+    }
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
+    }
+
+    const limitNum = Math.min(6, Number(req.query.limit) || 3);
+    const combos = await Product.find({
+      isCombo: true,
+      isActive: { $ne: false },
+      'comboItems.product': product._id,
+    })
+      .populate('comboItems.product', 'name slug image price priceNumber unit weight stock isActive')
+      .limit(limitNum);
+
+    // Bỏ combo có thành phần đã ngừng kinh doanh
+    const valid = combos.filter((c) =>
+      c.comboItems.every((it) => it.product && it.product.isActive !== false)
+    );
+
+    res.json({ success: true, data: valid });
   } catch (err) { next(err); }
 });
 
