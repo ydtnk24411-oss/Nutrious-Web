@@ -1,0 +1,35 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "app": {
+      "root": ".",
+      "framework": "angular"
+    },
+    "admin": {
+      "root": "admin",
+      "framework": "angular"
+    },
+    "my-app": {
+      "root": "my-app",
+      "framework": "angular"
+    },
+    "service": {
+      "root": "service",
+      "framework": "express"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/admin/(.*)",
+      "destination": {
+        "service": "admin"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "app"
+      }
+    }
+  ]
+}
