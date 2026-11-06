@@ -9,6 +9,10 @@ const orderItemSchema = new mongoose.Schema(
     priceNumber:    { type: Number, required: true },
     quantity:       { type: Number, required: true, min: 1 },
     selectedOption: { type: String, default: '' },
+    isCombo:        { type: Boolean, default: false },
+    comboItems:     { type: Array, default: [] },
+    originalPriceNumber: { type: Number, default: 0 },
+    comboSaving:    { type: Number, default: 0 },
   },
   { _id: false }
 );
@@ -23,6 +27,7 @@ const orderSchema = new mongoose.Schema(
     items:       [orderItemSchema],
     subtotal:    { type: Number, required: true, min: 0 },
     discount:    { type: Number, default: 0 },
+    comboDiscount: { type: Number, default: 0 },
     voucherCode: { type: String, default: '' },
     shippingFee: { type: Number, default: 0 },
     shippingDiscount: { type: Number, default: 0 },

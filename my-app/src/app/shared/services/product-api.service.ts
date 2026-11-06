@@ -1,6 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
 
+export interface ApiComboItem {
+  product: Pick<ApiProduct, '_id' | 'name' | 'slug' | 'image' | 'price' | 'priceNumber' | 'unit' | 'weight' | 'stock'>;
+  quantity: number;
+}
+
 export interface ApiProduct {
   _id: string;
   name: string;
@@ -12,6 +17,16 @@ export interface ApiProduct {
   category?: string;
   categoryVi?: string;
   description: string;
+  brand?: string;
+  manufacturer?: string;
+  origin?: string;
+  unit?: string;
+  storageInstructions?: string;
+  usageInstructions?: string;
+  specifications?: Record<string, string>;
+  isCombo?: boolean;
+  comboItems?: ApiComboItem[];
+  originalPriceNumber?: number;
   stock: number;
   isActive: boolean;
   container: string; cutType: string; cutting: string;
@@ -45,6 +60,14 @@ export class ProductApiService {
 
   getBySlug(slug: string) {
     return this.api.get<{ success: boolean; data: ApiProduct }>(`/products/${slug}`);
+  }
+
+  getRelated(slug: string, limit: number = 8) {
+    return this.api.get<{ success: boolean; data: ApiProduct[] }>(`/products/${slug}/related`, { limit });
+  }
+
+  getCombos(slug: string, limit: number = 3) {
+    return this.api.get<{ success: boolean; data: ApiProduct[] }>(`/products/${slug}/combos`, { limit });
   }
 
   create(body: Partial<ApiProduct>) {

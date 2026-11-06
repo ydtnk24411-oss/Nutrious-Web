@@ -239,11 +239,77 @@
       <div
         style="background:#fff;padding:28px;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line);height:fit-content">
         <h3 style="margin:0 0 16px 0;font-size:18px">Đơn hàng ({{ checkoutItems().length }} món)</h3>
-        <div style="display:flex;flex-direction:column;gap:12px;max-height:280px;overflow-y:auto;margin-bottom:16px">
-          @for (item of checkoutItems(); track item.product.slug) {
-          <div style="display:flex;justify-content:space-between;font-size:14px;gap:8px">
-            <span style="flex:1">{{ item.product.name }} × {{ item.quantity }}</span>
-            <span style="white-space:nowrap;font-weight:600">{{ item.product.price }}</span>
+        <div style="display:flex;flex-direction:column;gap:12px;max-height:480px;overflow-y:auto;margin-bottom:16px;padding-right:2px">
+          @for (item of checkoutItems(); track item.product.slug + (item.selectedOption ?? '')) {
+          <div style="padding:14px;border:1px solid #eef2ed;border-radius:12px;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.02)">
+            <!-- Header hàng: Ảnh + Tên + Giá -->
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
+                <img
+                  [src]="item.product.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=120&q=80'"
+                  [alt]="item.product.name"
+                  style="width:52px;height:52px;object-fit:cover;border-radius:10px;border:1px solid #e2e8f0;flex-shrink:0;background:#f8faf7"
+                  loading="lazy"
+                />
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                    @if (item.product.isCombo) {
+                      <span style="display:inline-block;padding:2px 7px;background:#ecfdf5;color:#15803d;border:1px solid #86efac;border-radius:4px;font-size:11px;font-weight:700">COMBO</span>
+                    }
+                    <span style="font-weight:700;font-size:15px;color:#0f381e;line-height:1.3" [title]="item.product.name">
+                      {{ item.product.name }}
+                    </span>
+                  </div>
+                  @if (item.selectedOption) {
+                    <div style="font-size:12px;color:#64748b;margin-top:2px">{{ item.selectedOption }}</div>
+                  }
+                </div>
+              </div>
+              <div style="white-space:nowrap;text-align:right;flex-shrink:0">
+                <div style="font-size:13.5px;color:#64748b;font-weight:500;margin-bottom:2px">
+                  {{ item.product.price }} × {{ item.quantity }}
+                </div>
+                <div style="font-size:16px;font-weight:800;color:#047857">
+                  {{ formatPrice(item.product.priceNumber * item.quantity) }}
+                </div>
+                @if (item.product.isCombo && item.product.originalPriceNumber && item.product.originalPriceNumber > item.product.priceNumber) {
+                  <div style="font-size:11.5px;color:#16a34a;font-weight:600;margin-top:2px">
+                    Tiết kiệm {{ formatPrice((item.product.originalPriceNumber - item.product.priceNumber) * item.quantity) }}
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Danh sách sản phẩm thành phần trong combo (Hiển thị rộng rãi, rõ ràng) -->
+            @if (item.product.isCombo && item.product.comboItems?.length) {
+              <div style="margin-top:12px;padding:10px 12px;background:#f8fbf7;border:1px solid #dcfce7;border-radius:10px">
+                <div style="font-weight:700;color:#166534;font-size:12.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Gồm {{ item.product.comboItems?.length }} sản phẩm trong combo này:
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  @for (ci of item.product.comboItems; track $index) {
+                    <div style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:#ffffff;border:1px solid #eef2ed;border-radius:8px">
+                      <img
+                        [src]="getComboItemImage(ci) || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&q=80'"
+                        alt=""
+                        style="width:36px;height:36px;border-radius:6px;object-fit:cover;border:1px solid #e2e8f0;flex-shrink:0"
+                      />
+                      <div style="flex:1;min-width:0">
+                        <span style="font-size:13.5px;font-weight:600;color:#1e293b;line-height:1.3;display:block">
+                          {{ getComboItemName(ci) }}
+                        </span>
+                      </div>
+                      <div style="flex-shrink:0;text-align:right">
+                        <span style="font-size:13.5px;font-weight:700;color:#15803d">
+                          {{ getComboItemPrice(ci) }}
+                        </span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
           </div>
           }
         </div>
@@ -359,7 +425,7 @@
         <!-- Totals -->
         <div style="border-top:1px solid var(--xanh-line);padding-top:14px;display:flex;flex-direction:column;gap:8px">
           <div style="display:flex;justify-content:space-between;font-size:14px">
-            <span>Tạm tính</span>
+            <span>Tạm tính tiền hàng</span>
             <span>{{ formatPrice(checkoutSubtotal()) }}</span>
           </div>
 

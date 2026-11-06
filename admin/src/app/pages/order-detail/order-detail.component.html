@@ -72,9 +72,41 @@
             <div class="order-item">
               <img [src]="item.productImage" [alt]="item.productName" class="item-image" />
               <div class="item-details">
-                <div class="item-name">{{ item.productName }}</div>
+                <div class="item-name">
+                  {{ item.productName }}
+                  @if (item.isCombo || (item.comboItems && item.comboItems.length > 0)) {
+                    <span style="display:inline-block;margin-left:6px;padding:2px 6px;border-radius:4px;background:#d8f56a;color:#203d0b;font-size:11px;font-weight:700">
+                      Combo tiết kiệm
+                    </span>
+                  }
+                </div>
                 @if (item.selectedOption) {
                   <div class="item-option">{{ item.selectedOption }}</div>
+                }
+                @if (item.comboItems && item.comboItems.length > 0) {
+                  <div class="order-combo-sublist" style="margin-top:10px;padding:10px 12px;background:#f8fbf7;border:1px solid #dcfce7;border-radius:8px">
+                    <div style="font-weight:700;color:#166534;font-size:12px;margin-bottom:6px;display:flex;align-items:center;gap:6px">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                      Gồm {{ item.comboItems.length }} sản phẩm trong gói combo này:
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:6px">
+                      @for (sub of item.comboItems; track $index) {
+                        <div style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:#ffffff;border:1px solid #eef2ed;border-radius:6px">
+                          <img
+                            [src]="getComboItemImage(sub) || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&q=80'"
+                            alt=""
+                            style="width:36px;height:36px;border-radius:6px;object-fit:cover;border:1px solid #e2e8f0;flex-shrink:0"
+                          />
+                          <div style="flex:1;min-width:0">
+                            <span style="font-size:13px;font-weight:600;color:#1e293b;display:block">{{ getComboItemName(sub) }}</span>
+                          </div>
+                          <div style="flex-shrink:0;text-align:right">
+                            <span style="font-size:13px;font-weight:700;color:#15803d">{{ getComboItemPrice(sub) }}</span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
                 }
                 <div class="item-qty">Số lượng: {{ item.quantity }}</div>
               </div>
@@ -89,7 +121,7 @@
         <div class="summary-card">
           <h3 class="card-title">Tóm tắt đơn hàng</h3>
           <div class="summary-row">
-            <span>Tạm tính</span>
+            <span>Tạm tính tiền hàng</span>
             <span>{{ formatPrice(order()!.subtotal) }}</span>
           </div>
           @if (order()!.discount > 0) {
