@@ -9,9 +9,15 @@ const { validate }           = require('../middleware/validate');
 // GET /api/products  — public, supports ?categoryId=&category=&search=&sort=&page=&limit=
 router.get('/', async (req, res, next) => {
   try {
-    const { categoryId, category, search, sort = 'createdAt', page = 1, limit = 20 } = req.query;
+    const { categoryId, category, search, sort = 'createdAt', page = 1, limit = 20, isCombo } = req.query;
     const catParam = categoryId || category;
     const filter = { isActive: { $ne: false } };
+
+    if (isCombo === 'true') {
+      filter.isCombo = true;
+    } else if (isCombo === 'false') {
+      filter.isCombo = { $ne: true };
+    }
 
     if (catParam && catParam !== 'all') {
       if (mongoose.Types.ObjectId.isValid(catParam)) {

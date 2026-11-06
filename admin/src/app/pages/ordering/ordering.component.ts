@@ -431,9 +431,12 @@ export class OrderingComponent implements OnInit {
     this.productApi.getAll({
       limit: 0,
       sort: 'createdAt',
+      isCombo: 'false',
     }).subscribe({
       next: res => {
-        this.allProducts.set(res.data);
+        // Chỉ hiển thị sản phẩm đơn lẻ thông thường trên trang ordering, không hiển thị combo như 1 sản phẩm được mua
+        const regularProducts = (res.data || []).filter(p => !p.isCombo);
+        this.allProducts.set(regularProducts);
         productsLoaded = true;
         finishLoading();
       },
