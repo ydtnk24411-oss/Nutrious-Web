@@ -18,7 +18,7 @@ const publicUser = (u) => ({
 router.get('/config', (req, res) => {
   res.json({
     success: true,
-    googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+    googleClientId: process.env.GOOGLE_CLIENT_ID || '188871008521-46hp48f411gfkh501b0g6rvvj6g5n31n.apps.googleusercontent.com',
   });
 });
 
@@ -95,18 +95,7 @@ router.post('/google', async (req, res, next) => {
 
     const isForAdmin = req.body.forAdmin === true || req.body.role === 'admin';
 
-    if (tokenToVerify && (tokenToVerify === 'demo_google_token' || tokenToVerify.startsWith('demo_'))) {
-      // Mock Google Profile khi chưa cấu hình Google Client ID
-      payload = {
-        sub: isForAdmin ? 'google_admin_9876543210' : 'google_customer_1234567890',
-        email: req.body.demoEmail || (isForAdmin ? 'admin.google@nutrious.vn' : 'khachhang.google@gmail.com'),
-        name: req.body.demoName || (isForAdmin ? 'Quản Trị Viên Google' : 'Khách Hàng Google'),
-        picture: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80',
-        given_name: isForAdmin ? 'Quản Trị Viên' : 'Khách Hàng',
-        family_name: 'Google',
-        email_verified: true,
-      };
-    } else if (tokenToVerify) {
+    if (tokenToVerify) {
       // Xác thực ID Token qua Google OAuth2 tokeninfo
       const googleRes = await fetch(
         `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(tokenToVerify)}`
@@ -124,7 +113,7 @@ router.post('/google', async (req, res, next) => {
       payload = await googleRes.json();
 
       // Kiểm tra audience nếu server có cấu hình GOOGLE_CLIENT_ID
-      const expectedClientId = process.env.GOOGLE_CLIENT_ID;
+      const expectedClientId = process.env.GOOGLE_CLIENT_ID || '188871008521-46hp48f411gfkh501b0g6rvvj6g5n31n.apps.googleusercontent.com';
       if (expectedClientId && payload.aud && payload.aud !== expectedClientId) {
         return res.status(401).json({
           success: false,

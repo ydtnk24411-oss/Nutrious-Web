@@ -3,6 +3,8 @@ import { ApiService } from './api.service';
 
 declare const google: any;
 
+export const DEFAULT_GOOGLE_CLIENT_ID = '188871008521-46hp48f411gfkh501b0g6rvvj6g5n31n.apps.googleusercontent.com';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -18,9 +20,9 @@ export class GoogleAuthService {
 
   private getStoredClientId(): string {
     try {
-      return localStorage.getItem('GOOGLE_CLIENT_ID') || '';
+      return localStorage.getItem('GOOGLE_CLIENT_ID') || DEFAULT_GOOGLE_CLIENT_ID;
     } catch {
-      return '';
+      return DEFAULT_GOOGLE_CLIENT_ID;
     }
   }
 
@@ -124,43 +126,38 @@ export class GoogleAuthService {
   }
 
   /**
-   * Đăng nhập trực tiếp bằng Google:
-   * 1. Nếu đã có Google Client ID: mở cửa sổ Google OAuth chuẩn (popup chọn tài khoản Gmail).
-   * 2. Nếu chưa có Google Client ID: tự động đăng nhập trực tiếp bằng tài khoản Google mà KHÔNG hiển thị hộp thoại phiền phức.
+   * Đăng nhập thật bằng Google qua Google Identity Services OAuth 2.0:
+   * Mở popup chính thức của Google để người dùng chọn tài khoản Gmail trên máy của họ.
    */
   async promptSignIn(
     onSuccess: (data: { credential?: string; accessToken?: string }) => void,
     onError?: (msg: string) => void
   ): Promise<void> {
     const ready = await this.waitForGoogleScript();
-    const cid = this.clientId();
-
-    // Nếu chưa cấu hình Google Client ID, tự động đăng nhập trực tiếp ngay lập tức
-    if (!cid) {
-      onSuccess({ credential: 'demo_google_token' });
+    if (!ready) {
+      onError?.('Không thể tải thư viện Google Identity Services. Vui lòng kiểm tra kết nối mạng và thử lại.');
       return;
     }
 
-    if (!ready) {
-      // Script Google không thể tải (ví dụ mạng chặn accounts.google.com), fallback đăng nhập trực tiếp
-      onSuccess({ credential: 'demo_google_token' });
+    const cid = this.clientId() || DEFAULT_GOOGLE_CLIENT_ID;
+    if (!cid) {
+      onError?.('Chưa cấu hình Google Client ID.');
       return;
     }
 
     try {
-      // Ưu tiên Token Client OAuth2 (mở popup chọn tài khoản Google chuẩn)
       if (google.accounts?.oauth2) {
         const client = google.accounts.oauth2.initTokenClient({
           client_id: cid,
           scope: 'email profile openid',
+          prompt: 'select_account',
           callback: (tokenRes: any) => {
             if (tokenRes.error) {
-              console.warn('Google OAuth response notice:', tokenRes);
+              console.error('Google OAuth error:', tokenRes);
               if (tokenRes.error === 'access_denied') {
                 onError?.('Bạn đã đóng cửa sổ đăng nhập Google.');
               } else {
-                // Nếu Client ID chưa đăng ký localhost origin, tự động hoàn tất đăng nhập trực tiếp
-                onSuccess({ credential: 'demo_google_token' });
+                onError?.(`Lỗi đăng nhập Google: ${tokenRes.error_description || tokenRes.error}`);
               }
             } else if (tokenRes.access_token) {
               onSuccess({ accessToken: tokenRes.access_token });
@@ -171,16 +168,15 @@ export class GoogleAuthService {
         return;
       }
 
-      // Fallback: Google One Tap / Credential prompt
       await this.initIdListener((credential) => onSuccess({ credential }));
       google.accounts.id.prompt((notification: any) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          onSuccess({ credential: 'demo_google_token' });
+        if (notification.isNotDisplayed()) {
+          console.warn('Google prompt not displayed:', notification.getNotDisplayedReason());
         }
       });
     } catch (err: any) {
-      console.warn('Google sign-in notice:', err);
-      onSuccess({ credential: 'demo_google_token' });
+      console.error('Google sign-in error:', err);
+      onError?.(err?.message || 'Không thể khởi động cửa sổ đăng nhập Google.');
     }
   }
 }
