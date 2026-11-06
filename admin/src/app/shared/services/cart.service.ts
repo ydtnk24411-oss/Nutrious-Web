@@ -131,6 +131,26 @@ export class CartService {
     this.selectedItems().reduce((t, i) => t + priceValue(i.product.price) * i.quantity, 0)
   );
 
+  /** Tổng giá gốc của các sản phẩm được chọn (trước khi giảm combo) */
+  readonly selectedOriginalSubtotal = computed(() => {
+    return this.selectedItems().reduce((t, i) => {
+      const orig = (i.product.isCombo && i.product.originalPriceNumber && i.product.originalPriceNumber > priceValue(i.product.price))
+        ? i.product.originalPriceNumber
+        : priceValue(i.product.price);
+      return t + orig * i.quantity;
+    }, 0);
+  });
+
+  /** Tổng tiền tiết kiệm được từ combo */
+  readonly selectedComboDiscount = computed(() => {
+    return this.selectedItems().reduce((t, i) => {
+      if (i.product.isCombo && i.product.originalPriceNumber && i.product.originalPriceNumber > priceValue(i.product.price)) {
+        return t + (i.product.originalPriceNumber - priceValue(i.product.price)) * i.quantity;
+      }
+      return t;
+    }, 0);
+  });
+
   /** Khi mua ngay 1 sản phẩm: chỉ chọn duy nhất sản phẩm đó */
   selectOnly(slug: string, selectedOption?: string): void {
     const next = new Set([cartItemKey(slug, selectedOption)]);

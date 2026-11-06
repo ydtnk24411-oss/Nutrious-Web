@@ -10,11 +10,9 @@ const { validate }           = require('../middleware/validate');
 router.get('/', async (req, res, next) => {
   try {
     const { categoryId, category, search, sort = 'createdAt', page = 1, limit = 20 } = req.query;
-    const filter = { isActive: { $ne: false } };
-    // Combo chỉ hiển thị ở trang chi tiết, không lẫn vào danh sách sản phẩm (trừ khi yêu cầu)
-    if (req.query.includeCombos !== 'true') filter.isCombo = { $ne: true };
-
     const catParam = categoryId || category;
+    const filter = { isActive: { $ne: false } };
+
     if (catParam && catParam !== 'all') {
       if (mongoose.Types.ObjectId.isValid(catParam)) {
         filter.categoryId = new mongoose.Types.ObjectId(catParam);
@@ -64,7 +62,9 @@ router.get('/', async (req, res, next) => {
 
     const limitNum = Number(limit);
     const pageNum  = Math.max(1, Number(page) || 1);
-    let query = Product.find(filter).sort(sortObj);
+    let query = Product.find(filter)
+      .sort(sortObj)
+      .populate('comboItems.product', 'name slug image price priceNumber unit weight stock');
     if (limitNum > 0) {
       const skip = (pageNum - 1) * limitNum;
       query = query.skip(skip).limit(limitNum);
@@ -152,9 +152,11 @@ router.get('/:slug/combos', async (req, res, next) => {
 // GET /api/products/:slug — public
 router.get('/:slug', async (req, res, next) => {
   try {
-    let product = await Product.findOne({ slug: req.params.slug, isActive: { $ne: false } });
+    let product = await Product.findOne({ slug: req.params.slug, isActive: { $ne: false } })
+      .populate('comboItems.product', 'name slug image price priceNumber unit weight stock');
     if (!product && mongoose.Types.ObjectId.isValid(req.params.slug)) {
-      product = await Product.findOne({ _id: req.params.slug, isActive: { $ne: false } });
+      product = await Product.findOne({ _id: req.params.slug, isActive: { $ne: false } })
+        .populate('comboItems.product', 'name slug image price priceNumber unit weight stock');
     }
     if (!product) return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
     res.json({ success: true, data: product });

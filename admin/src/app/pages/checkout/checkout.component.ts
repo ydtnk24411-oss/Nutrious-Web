@@ -62,6 +62,14 @@ export class CheckoutComponent implements OnInit {
     return this.cart.selectedSubtotal();
   });
 
+  readonly originalSubtotal = computed(() => {
+    return this.cart.selectedOriginalSubtotal();
+  });
+
+  readonly comboDiscount = computed(() => {
+    return this.cart.selectedComboDiscount();
+  });
+
   /** Danh sách ưu đãi để chọn trực tiếp khi thanh toán (gồm Ví voucher + ưu đãi công khai từ MongoDB). */
   readonly checkoutVoucherOptions = computed<CheckoutVoucherOption[]>(() => {
     const sub = this.checkoutSubtotal();
@@ -277,6 +285,8 @@ export class CheckoutComponent implements OnInit {
         priceNumber:    i.product.priceNumber,
         quantity:       i.quantity,
         selectedOption: i.selectedOption ?? '',
+        isCombo:        !!i.product.isCombo,
+        comboItems:     i.product.comboItems || [],
       };
     });
 
@@ -287,6 +297,7 @@ export class CheckoutComponent implements OnInit {
       guestPhone:          this.guestPhone(),
       items,
       subtotal:            this.checkoutSubtotal(),
+      comboDiscount:       this.comboDiscount(),
       discount:            this.voucherDiscount(),
       voucherCode:         this.selectedVoucher()?.code || null,
       shippingFee:         this.shippingFee(),
@@ -347,5 +358,25 @@ export class CheckoutComponent implements OnInit {
       this.copiedField.set(fieldName);
       setTimeout(() => this.copiedField.set(null), 2000);
     });
+  }
+
+  getComboItemName(it: any): string {
+    return it?.product?.name || it?.name || 'Sản phẩm';
+  }
+
+  getComboItemQty(it: any): number {
+    return Number(it?.quantity || 1);
+  }
+
+  getComboItemImage(it: any): string {
+    return it?.product?.image || it?.image || '';
+  }
+
+  getComboItemPrice(it: any): string {
+    if (it?.price) return String(it.price);
+    if (it?.product?.price) return String(it.product.price);
+    if (it?.priceNumber) return this.formatPrice(it.priceNumber);
+    if (it?.product?.priceNumber) return this.formatPrice(it.product.priceNumber);
+    return '';
   }
 }

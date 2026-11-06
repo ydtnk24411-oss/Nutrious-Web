@@ -101,8 +101,14 @@
               }
               <tr>
                 <th>Hạn sử dụng</th>
-                <td>Xem trên bao bì sản phẩm</td>
+                <td>{{ getExpiry(p.specifications) }}</td>
               </tr>
+              @for (k of getSpecKeys(p.specifications); track k) {
+                <tr>
+                  <th>{{ k }}</th>
+                  <td>{{ getSpecValue(p.specifications, k) }}</td>
+                </tr>
+              }
               @if (p.storageInstructions) {
                 <tr>
                   <th>Bảo quản</th>

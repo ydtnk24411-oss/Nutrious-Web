@@ -20,6 +20,9 @@ description: p.description,
     quantity: p.quantity, ripeness: p.ripeness, sizeGroup: p.sizeGroup,
     thickness: p.thickness, type: p.type, weight: p.weight,
     options: p.options,
+    isCombo: p.isCombo,
+    originalPriceNumber: p.originalPriceNumber,
+    comboItems: p.comboItems,
   };
 }
 
@@ -237,7 +240,24 @@ export class ProductDetailComponent implements OnInit {
   }
 
   getSpecKeys(specs: any): string[] {
-    return specs && typeof specs === 'object' ? Object.keys(specs) : [];
+    if (!specs || typeof specs !== 'object') return [];
+    const ignored = new Set([
+      'danh mục', 'danhmuc', 'category', 'đóng gói', 'donggoi', 'packaging',
+      'sơ chế', 'soche', 'preparation', 'đặc tính', 'dactinh',
+      'dung tích', 'dungtich', 'khối lượng', 'khoiluong', 'khối lượng tịnh', 'khoiluongtinh',
+      'quy cách', 'quycach', 'trọng lượng', 'trongluong',
+      'xuất xứ', 'xuatxu', 'origin', 'thương hiệu', 'thuonghieu', 'brand',
+      'nhà sản xuất', 'nhasanxuat', 'hạn sử dụng', 'hansudung'
+    ]);
+    return Object.keys(specs).filter(k => !ignored.has(k.trim().toLowerCase()) && specs[k]);
+  }
+
+  getSpecValue(specs: any, key: string): string {
+    return specs && typeof specs === 'object' && specs[key] ? String(specs[key]) : '';
+  }
+
+  getExpiry(specs?: Record<string, string>): string {
+    return specs && specs['Hạn sử dụng'] ? specs['Hạn sử dụng'] : 'Xem trên bao bì sản phẩm';
   }
 
   dec(): void { this.quantity.update(q => Math.max(1, q - 1)); }

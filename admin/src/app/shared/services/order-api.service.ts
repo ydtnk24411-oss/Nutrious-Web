@@ -14,8 +14,23 @@ export interface ApiOrder {
     priceNumber: number;
     quantity: number;
     selectedOption?: string;
+    isCombo?: boolean;
+    comboItems?: {
+      product?: any;
+      name?: string;
+      price?: string;
+      image?: string;
+      weight?: string;
+      unit?: string;
+      quantity?: number;
+    }[];
+    originalPriceNumber?: number;
+    comboSaving?: number;
   }[];
   subtotal: number;
+  discount?: number;
+  comboDiscount?: number;
+  voucherCode?: string;
   total: number;
   shippingFee?: number;
   shippingDiscount?: number;
