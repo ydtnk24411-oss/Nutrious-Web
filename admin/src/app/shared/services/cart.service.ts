@@ -7,8 +7,8 @@ const TOKEN_KEY    = 'xanhla_auth_token';
 const SELECTED_KEY = 'xanhla_selected_keys';
 
 // Key giỏ hàng riêng theo từng user
-function cartKey(email: string): string {
-  return `xanhla_cart__${email}`;
+function cartKey(ident: string): string {
+  return `xanhla_cart__${ident || 'guest'}`;
 }
 
 export function cartItemKey(slug: string, selectedOption?: string): string {
@@ -67,7 +67,8 @@ export class CartService {
   constructor() {
     const user = this._currentUser();
     if (user) {
-      const loaded = this._loadCartForUser(user.email);
+      const ident = user.phone || user.email || user._id || 'guest';
+      const loaded = this._loadCartForUser(ident);
       this._items.set(loaded);
 
       const saved = loadSavedSelectedKeys();
@@ -254,7 +255,7 @@ export class CartService {
     this._selectedKeys.set(new Set());
     persistSelectedKeys(new Set());
     if (u) {
-      try { localStorage.removeItem(cartKey(u.email)); } catch { /**/ }
+      try { localStorage.removeItem(cartKey(u.phone || u.email || u._id || 'guest')); } catch { /**/ }
     }
   }
 
@@ -270,91 +271,310 @@ export class CartService {
     this.openAuthModal('login');
   }
 
-  // Login with email and password
-  loginWithPassword(email: string, password: string): void {
-    this.api.post('/auth/login', {
-      email: email.trim().toLowerCase(),
-      password
+  // ── Phone-First Registration ─────────────────────────────
+
+  requestRegisterOtp(
+    name: string,
+    phone: string,
+    password: string,
+    confirmPassword: string,
+    onSuccess: (data: { phone: string; expiresInSeconds?: number; demoOtp?: string }) => void,
+    onError: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      message: string;
+      phone: string;
+      expiresInSeconds?: number;
+      demoOtp?: string;
+    }>('/auth/register/request-otp', {
+      name: name.trim(),
+      phone: phone.trim(),
+      password,
+      confirmPassword,
     }).subscribe({
-      next: (res: any) => {
-        if (res.success && res.user && res.token) {
-          const user: XanhLaUser = res.user;
-
-          this._currentUser.set(user);
-          localStorage.setItem(USER_KEY, JSON.stringify(user));
-          localStorage.setItem(TOKEN_KEY, res.token);
-
-          this._authModalOpen.set(false);
-
-          // Khôi phục giỏ hàng
-          const loaded = this._loadCartForUser(user.email);
-          this._items.set(loaded);
-          const allKeys = new Set(loaded.map(i => cartItemKey(i.product.slug, i.selectedOption)));
-          this._selectedKeys.set(allKeys);
-          persistSelectedKeys(allKeys);
-
-          // Load full user data từ backend
-          this.loadUserData();
+      next: (res) => {
+        if (res.success) {
+          onSuccess(res);
         } else {
-          alert('Đăng nhập thất bại: ' + (res.message || 'Dữ liệu trả về không hợp lệ.'));
+          onError(res.message || 'Gửi mã OTP thất bại.');
         }
       },
       error: (err) => {
-        console.error('Login error:', err);
-        const errorMsg = err.error?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
-        alert(errorMsg);
+        onError(err.error?.message || 'Không thể gửi mã xác minh OTP. Vui lòng thử lại.');
       }
     });
   }
 
-  // Đăng nhập / Đăng ký bằng Google
-  loginWithGoogle(
-    data: { credential?: string; accessToken?: string },
-    onSuccess?: () => void,
-    onError?: (err: any) => void
+  verifyRegisterOtp(
+    phone: string,
+    otp: string,
+    onSuccess: (user: XanhLaUser) => void,
+    onError: (errMsg: string) => void
   ): void {
     this.api.post<{
       success: boolean;
       token: string;
       user: XanhLaUser;
-      isNewUser?: boolean;
+      message: string;
+    }>('/auth/register/verify-otp', {
+      phone: phone.trim(),
+      otp: otp.trim(),
+    }).subscribe({
+      next: (res) => {
+        if (res.success && res.user && res.token) {
+          const user: XanhLaUser = res.user;
+          this.applyUserSession(user, res.token);
+          this._authModalOpen.set(false);
+          this.loadUserData();
+          onSuccess(user);
+        } else {
+          onError(res.message || 'Xác minh OTP thất bại.');
+        }
+      },
+      error: (err) => {
+        onError(err.error?.message || 'Mã OTP không chính xác hoặc đã hết hạn.');
+      }
+    });
+  }
+
+  resendRegisterOtp(
+    phone: string,
+    onSuccess: (data: { phone: string; demoOtp?: string }) => void,
+    onError: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      message: string;
+      phone: string;
+      demoOtp?: string;
+    }>('/auth/register/resend-otp', {
+      phone: phone.trim(),
+    }).subscribe({
+      next: (res) => {
+        if (res.success) {
+          onSuccess(res);
+        } else {
+          onError(res.message || 'Gửi lại mã OTP thất bại.');
+        }
+      },
+      error: (err) => {
+        onError(err.error?.message || 'Không thể gửi lại mã OTP.');
+      }
+    });
+  }
+
+  // ── Phone-First Login ─────────────────────────────────────
+
+  login(
+    identifier: string,
+    password: string,
+    onSuccess?: (user: XanhLaUser) => void,
+    onError?: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      token: string;
+      user: XanhLaUser;
       message?: string;
+    }>('/auth/login', {
+      identifier: identifier.trim(),
+      password,
+    }).subscribe({
+      next: (res) => {
+        if (res.success && res.user && res.token) {
+          const user: XanhLaUser = res.user;
+          this.applyUserSession(user, res.token);
+          this._authModalOpen.set(false);
+          this.loadUserData();
+          onSuccess?.(user);
+        } else {
+          const msg = res.message || 'Đăng nhập thất bại.';
+          onError ? onError(msg) : alert(msg);
+        }
+      },
+      error: (err) => {
+        const errorMsg = err.error?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
+        onError ? onError(errorMsg) : alert(errorMsg);
+      }
+    });
+  }
+
+  // Backward compatibility alias
+  loginWithPassword(identifier: string, password: string): void {
+    this.login(identifier, password);
+  }
+
+  // ── Google Login (Chỉ cho phép tài khoản đã liên kết) ─────
+
+  loginWithGoogle(
+    data: { credential?: string; accessToken?: string },
+    onSuccess?: () => void,
+    onError?: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      token?: string;
+      user?: XanhLaUser;
+      message?: string;
+      code?: string;
     }>('/auth/google', data).subscribe({
       next: (res) => {
         if (res.success && res.user && res.token) {
           const user: XanhLaUser = res.user;
-
-          this._currentUser.set(user);
-          localStorage.setItem(USER_KEY, JSON.stringify(user));
-          localStorage.setItem(TOKEN_KEY, res.token);
-
+          this.applyUserSession(user, res.token);
           this._authModalOpen.set(false);
-
-          // Khôi phục giỏ hàng
-          const loaded = this._loadCartForUser(user.email);
-          this._items.set(loaded);
-          const allKeys = new Set(loaded.map(i => cartItemKey(i.product.slug, i.selectedOption)));
-          this._selectedKeys.set(allKeys);
-          persistSelectedKeys(allKeys);
-
-          // Load full user data từ backend
           this.loadUserData();
-
-          const welcomeMsg = res.isNewUser
-            ? `Đăng ký thành công! Chào mừng ${user.name} đến với Evergreen Mart.`
-            : `Đăng nhập thành công! Chào mừng trở lại, ${user.name}.`;
-          alert(welcomeMsg);
           onSuccess?.();
         } else {
-          alert('Đăng nhập Google thất bại: ' + (res.message || 'Dữ liệu không hợp lệ.'));
-          onError?.(res);
+          const msg = res.message || 'Đăng nhập Google thất bại.';
+          onError ? onError(msg) : alert(msg);
         }
       },
       error: (err) => {
-        console.error('Google login error:', err);
         const errorMsg = err.error?.message || 'Đăng nhập Google thất bại. Vui lòng thử lại.';
-        alert(errorMsg);
-        onError?.(err);
+        onError ? onError(errorMsg) : alert(errorMsg);
+      }
+    });
+  }
+
+  // ── Google Account Linking & Unlinking ────────────────────
+
+  linkGoogleAccount(
+    tokenData: { credential?: string; accessToken?: string },
+    onSuccess: (user: XanhLaUser) => void,
+    onError: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      message: string;
+      user: XanhLaUser;
+    }>('/auth/google/link', tokenData).subscribe({
+      next: (res) => {
+        if (res.success && res.user) {
+          this._currentUser.set(res.user);
+          localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+          onSuccess(res.user);
+        } else {
+          onError(res.message || 'Liên kết Google thất bại.');
+        }
+      },
+      error: (err) => {
+        onError(err.error?.message || 'Không thể liên kết Google. Vui lòng thử lại.');
+      }
+    });
+  }
+
+  unlinkGoogleAccount(
+    password: string,
+    onSuccess: (user: XanhLaUser) => void,
+    onError: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      message: string;
+      user: XanhLaUser;
+    }>('/auth/google/unlink', { password }).subscribe({
+      next: (res) => {
+        if (res.success && res.user) {
+          this._currentUser.set(res.user);
+          localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+          onSuccess(res.user);
+        } else {
+          onError(res.message || 'Hủy liên kết Google thất bại.');
+        }
+      },
+      error: (err) => {
+        onError(err.error?.message || 'Không thể hủy liên kết Google. Vui lòng kiểm tra lại mật khẩu.');
+      }
+    });
+  }
+
+  // ── Change Phone Number ───────────────────────────────────
+
+  requestChangePhoneOtp(
+    newPhone: string,
+    password: string,
+    onSuccess: (data: { newPhone: string; expiresInSeconds?: number; demoOtp?: string }) => void,
+    onError: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      message: string;
+      newPhone: string;
+      expiresInSeconds?: number;
+      demoOtp?: string;
+    }>('/auth/phone/change/request', {
+      newPhone: newPhone.trim(),
+      password,
+    }).subscribe({
+      next: (res) => {
+        if (res.success) {
+          onSuccess(res);
+        } else {
+          onError(res.message || 'Yêu cầu đổi số điện thoại thất bại.');
+        }
+      },
+      error: (err) => {
+        onError(err.error?.message || 'Không thể gửi mã xác nhận đổi số điện thoại.');
+      }
+    });
+  }
+
+  verifyChangePhoneOtp(
+    newPhone: string,
+    otp: string,
+    onSuccess: (user: XanhLaUser) => void,
+    onError: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      message: string;
+      user: XanhLaUser;
+    }>('/auth/phone/change/verify', {
+      newPhone: newPhone.trim(),
+      otp: otp.trim(),
+    }).subscribe({
+      next: (res) => {
+        if (res.success && res.user) {
+          this._currentUser.set(res.user);
+          localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+          onSuccess(res.user);
+        } else {
+          onError(res.message || 'Xác minh đổi số điện thoại thất bại.');
+        }
+      },
+      error: (err) => {
+        onError(err.error?.message || 'Mã OTP xác minh không hợp lệ.');
+      }
+    });
+  }
+
+  // Legacy signup alias
+  signup(
+    name: string,
+    email: string,
+    password: string,
+    onSuccess?: () => void
+  ): void {
+    this.api.post('/auth/register', {
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      password
+    }).subscribe({
+      next: (res: any) => {
+        if (res.success && res.token && (res.user || res.data)) {
+          const user: XanhLaUser = res.user || res.data;
+          this.applyUserSession(user, res.token);
+          this._authModalOpen.set(false);
+          this.loadUserData();
+          onSuccess?.();
+        } else {
+          alert('Đăng ký thất bại: ' + (res.message || 'Vui lòng thử lại.'));
+        }
+      },
+      error: (err) => {
+        alert(err.error?.message || 'Đăng ký thất bại. Vui lòng thử lại.');
       }
     });
   }
@@ -373,44 +593,18 @@ export class CartService {
     });
   }
 
-  signup(
-    name: string,
-    email: string,
-    password: string,
-    onSuccess?: () => void
-  ): void {
-    this.api.post('/auth/register', {
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      password
-    }).subscribe({
-      next: (res: any) => {
-        if (res.success && res.token && (res.user || res.data)) {
-          // Tự động đăng nhập luôn với tài khoản vừa tạo
-          const user: XanhLaUser = res.user || res.data;
+  private applyUserSession(user: XanhLaUser, token: string): void {
+    this._currentUser.set(user);
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    localStorage.setItem(TOKEN_KEY, token);
 
-          this._currentUser.set(user);
-          localStorage.setItem(USER_KEY, JSON.stringify(user));
-          localStorage.setItem(TOKEN_KEY, res.token);
-
-          this._authModalOpen.set(false);
-          this._items.set([]);
-          this._selectedKeys.set(new Set());
-          persistSelectedKeys(new Set());
-
-          this.loadUserData();
-          alert(`Đăng ký thành công! Chào mừng ${user.name} đến với Evergreen Mart.`);
-          onSuccess?.();
-        } else {
-          alert('Đăng ký thất bại: ' + (res.message || 'Vui lòng thử lại.'));
-        }
-      },
-      error: (err) => {
-        console.error('Signup error:', err);
-        const errorMsg = err.error?.message || 'Đăng ký thất bại. Vui lòng thử lại.';
-        alert(errorMsg);
-      }
-    });
+    // Khôi phục giỏ hàng cho user
+    const ident = user.phone || user.email || user._id || 'guest';
+    const loaded = this._loadCartForUser(ident);
+    this._items.set(loaded);
+    const allKeys = new Set(loaded.map(i => cartItemKey(i.product.slug, i.selectedOption)));
+    this._selectedKeys.set(allKeys);
+    persistSelectedKeys(allKeys);
   }
 
   updateUser(patch: Partial<XanhLaUser>): void {

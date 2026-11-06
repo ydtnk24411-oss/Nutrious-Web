@@ -1416,3 +1416,244 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Phone Display & Change Phone */
+.phone-display-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-top: 6px;
+}
+
+.phone-value-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #1e293b;
+}
+
+.phone-text {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.verified-tag {
+  font-size: 11.5px;
+  font-weight: 600;
+  background: #dcfce7;
+  color: #15803d;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.change-phone-btn {
+  font-size: 13px;
+  padding: 6px 14px;
+}
+
+.acc-field-hint {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 6px;
+}
+
+/* Google Linking Card */
+.google-linking-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+}
+
+.google-linking-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+.acc-security-icon-col {
+  flex-shrink: 0;
+}
+
+.google-header-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.status-badge {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.badge-linked {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badge-unlinked {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.btn-link-google {
+  white-space: nowrap;
+  padding: 8px 16px;
+  font-size: 13.5px;
+}
+
+.btn-unlink-google {
+  white-space: nowrap;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-unlink-google:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+}
+
+/* Dialog Modals */
+.acc-dialog-modal {
+  width: min(440px, 92vw);
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  animation: popIn 0.2s ease-out;
+}
+
+.acc-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.acc-dialog-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.acc-dialog-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.acc-dialog-close:hover {
+  color: #0f172a;
+}
+
+.acc-dialog-body {
+  padding: 20px 24px 24px;
+}
+
+.acc-dialog-desc {
+  font-size: 13.5px;
+  color: #475569;
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+.acc-dialog-field {
+  margin-bottom: 16px;
+}
+
+.acc-dialog-field label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+
+.acc-dialog-field input {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14.5px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.acc-dialog-field input:focus {
+  border-color: var(--green-700, #16a34a);
+}
+
+.acc-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.btn-unlink-confirm {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-unlink-confirm:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.btn-unlink-confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.acc-alert-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.acc-alert-success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+

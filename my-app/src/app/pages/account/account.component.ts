@@ -1,9 +1,11 @@
-import { Component, signal, inject, OnInit, computed, HostListener, effect } from '@angular/core';
+import { Component, signal, inject, OnInit, computed, HostListener, effect, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { OrderApiService } from '../../shared/services/order-api.service';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { CartService } from '../../shared/services/cart.service';
+import { GoogleAuthService } from '../../shared/services/google-auth.service';
 import { LoyaltyService } from '../../shared/services/loyalty.service';
 import { VoucherService } from '../../shared/services/voucher.service';
 import { XanhLaAddress } from '../../shared/models/xanh-la.models';
@@ -13,17 +15,18 @@ type Tab = 'overview' | 'orders' | 'addresses' | 'settings';
 @Component({
   selector: 'app-account',
   standalone: true,
-  imports: [CommonModule, ShellComponent, RouterLink],
+  imports: [CommonModule, FormsModule, ShellComponent, RouterLink],
   templateUrl: './account.component.html',
   styleUrl: './account.component.css',
 })
-export class AccountComponent implements OnInit {
-  protected cart   = inject(CartService);
-  protected router = inject(Router);
-  private loyalty   = inject(LoyaltyService);
-  private voucher   = inject(VoucherService);
-  private route     = inject(ActivatedRoute);
-  private orderApi  = inject(OrderApiService);
+export class AccountComponent implements OnInit, OnDestroy {
+  protected cart       = inject(CartService);
+  protected googleAuth = inject(GoogleAuthService);
+  protected router     = inject(Router);
+  private loyalty      = inject(LoyaltyService);
+  private voucher      = inject(VoucherService);
+  private route        = inject(ActivatedRoute);
+  private orderApi     = inject(OrderApiService);
 
   constructor() {
     effect(() => {
@@ -413,5 +416,287 @@ export class AccountComponent implements OnInit {
     if (!t.closest('.acc-avatar-menu') && !t.closest('.acc-avatar-edit-btn')) {
       this.avatarMenuOpen.set(false);
     }
+  }
+
+  // ── Đổi số điện thoại (Change Phone Number) ──
+  showChangePhoneModal = signal(false);
+  changePhoneStep = signal<'input' | 'otp'>('input');
+  newPhoneInput = signal('');
+  changePhonePassword = signal('');
+  changePhoneOtpDigits = signal<string[]>(['', '', '', '', '', '']);
+  changePhoneLoading = signal(false);
+  changePhoneError = signal('');
+  changePhoneSuccess = signal('');
+  changePhoneCountdown = signal(60);
+  changePhoneCanResend = signal(false);
+  changePhoneDemoOtp = signal('123456');
+  private phoneCountdownInterval: any = null;
+
+  // ── Liên kết tài khoản Google ────────────────
+  googleLinkingLoading = signal(false);
+  googleActionError = signal('');
+  googleActionSuccess = signal('');
+
+  // ── Hủy liên kết Google ─────────────────────
+  showUnlinkModal = signal(false);
+  unlinkPassword = signal('');
+  unlinkLoading = signal(false);
+  unlinkError = signal('');
+
+  ngOnDestroy(): void {
+    if (this.phoneCountdownInterval) {
+      clearInterval(this.phoneCountdownInterval);
+    }
+  }
+
+  openChangePhoneModal(): void {
+    this.newPhoneInput.set('');
+    this.changePhonePassword.set('');
+    this.changePhoneOtpDigits.set(['', '', '', '', '', '']);
+    this.changePhoneError.set('');
+    this.changePhoneSuccess.set('');
+    this.changePhoneStep.set('input');
+    this.showChangePhoneModal.set(true);
+  }
+
+  closeChangePhoneModal(): void {
+    this.showChangePhoneModal.set(false);
+    if (this.phoneCountdownInterval) {
+      clearInterval(this.phoneCountdownInterval);
+    }
+  }
+
+  submitChangePhoneRequest(e: Event): void {
+    e.preventDefault();
+    this.changePhoneError.set('');
+    const newPhone = this.newPhoneInput().trim();
+    const password = this.changePhonePassword();
+
+    if (!newPhone) {
+      this.changePhoneError.set('Vui lòng nhập số điện thoại mới.');
+      return;
+    }
+    if (!password) {
+      this.changePhoneError.set('Vui lòng nhập mật khẩu tài khoản hiện tại.');
+      return;
+    }
+
+    this.changePhoneLoading.set(true);
+    this.cart.requestChangePhoneOtp(
+      newPhone,
+      password,
+      (res) => {
+        this.changePhoneLoading.set(false);
+        if (res.demoOtp) {
+          this.changePhoneDemoOtp.set(res.demoOtp);
+        }
+        this.changePhoneStep.set('otp');
+        this.changePhoneOtpDigits.set(['', '', '', '', '', '']);
+        this.startPhoneCountdown();
+        setTimeout(() => this.focusPhoneOtp(0), 100);
+      },
+      (errMsg) => {
+        this.changePhoneLoading.set(false);
+        this.changePhoneError.set(errMsg);
+      }
+    );
+  }
+
+  submitChangePhoneVerify(e?: Event): void {
+    if (e) e.preventDefault();
+    this.changePhoneError.set('');
+    const otp = this.changePhoneOtpDigits().join('');
+    if (otp.length !== 6) {
+      this.changePhoneError.set('Vui lòng nhập đủ 6 chữ số mã OTP.');
+      return;
+    }
+
+    this.changePhoneLoading.set(true);
+    this.cart.verifyChangePhoneOtp(
+      this.newPhoneInput().trim(),
+      otp,
+      (updatedUser) => {
+        this.changePhoneLoading.set(false);
+        this.phone.set(updatedUser.phone || '');
+        this.changePhoneSuccess.set('Cập nhật số điện thoại thành công!');
+        if (this.phoneCountdownInterval) clearInterval(this.phoneCountdownInterval);
+        setTimeout(() => {
+          this.closeChangePhoneModal();
+          this.changePhoneSuccess.set('');
+        }, 1500);
+      },
+      (errMsg) => {
+        this.changePhoneLoading.set(false);
+        this.changePhoneError.set(errMsg);
+      }
+    );
+  }
+
+  resendChangePhoneOtp(): void {
+    if (!this.changePhoneCanResend()) return;
+    this.changePhoneError.set('');
+    const newPhone = this.newPhoneInput().trim();
+    const password = this.changePhonePassword();
+
+    this.cart.requestChangePhoneOtp(
+      newPhone,
+      password,
+      (res) => {
+        if (res.demoOtp) this.changePhoneDemoOtp.set(res.demoOtp);
+        this.startPhoneCountdown();
+        this.changePhoneOtpDigits.set(['', '', '', '', '', '']);
+        setTimeout(() => this.focusPhoneOtp(0), 100);
+      },
+      (errMsg) => {
+        this.changePhoneError.set(errMsg);
+      }
+    );
+  }
+
+  onPhoneOtpInput(index: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const val = input.value.replace(/[^0-9]/g, '');
+    const current = [...this.changePhoneOtpDigits()];
+    if (val) {
+      current[index] = val.slice(-1);
+      this.changePhoneOtpDigits.set(current);
+      if (index < 5) {
+        this.focusPhoneOtp(index + 1);
+      } else {
+        if (current.join('').length === 6) {
+          this.submitChangePhoneVerify();
+        }
+      }
+    } else {
+      current[index] = '';
+      this.changePhoneOtpDigits.set(current);
+    }
+  }
+
+  onPhoneOtpKeyDown(index: number, event: KeyboardEvent): void {
+    if (event.key === 'Backspace') {
+      const current = [...this.changePhoneOtpDigits()];
+      if (!current[index] && index > 0) {
+        current[index - 1] = '';
+        this.changePhoneOtpDigits.set(current);
+        this.focusPhoneOtp(index - 1);
+        event.preventDefault();
+      } else {
+        current[index] = '';
+        this.changePhoneOtpDigits.set(current);
+      }
+    } else if (event.key === 'ArrowLeft' && index > 0) {
+      this.focusPhoneOtp(index - 1);
+    } else if (event.key === 'ArrowRight' && index < 5) {
+      this.focusPhoneOtp(index + 1);
+    }
+  }
+
+  onPhoneOtpPaste(event: ClipboardEvent): void {
+    event.preventDefault();
+    const pasted = event.clipboardData?.getData('text') || '';
+    const digits = pasted.replace(/[^0-9]/g, '').slice(0, 6).split('');
+    if (digits.length > 0) {
+      const current = ['', '', '', '', '', ''];
+      for (let i = 0; i < digits.length; i++) current[i] = digits[i];
+      this.changePhoneOtpDigits.set(current);
+      if (digits.length === 6) {
+        this.focusPhoneOtp(5);
+        this.submitChangePhoneVerify();
+      } else {
+        this.focusPhoneOtp(digits.length);
+      }
+    }
+  }
+
+  private focusPhoneOtp(index: number): void {
+    const el = document.getElementById(`phone-otp-${index}`) as HTMLInputElement;
+    if (el) {
+      el.focus();
+      el.select();
+    }
+  }
+
+  private startPhoneCountdown(): void {
+    if (this.phoneCountdownInterval) clearInterval(this.phoneCountdownInterval);
+    this.changePhoneCountdown.set(60);
+    this.changePhoneCanResend.set(false);
+    this.phoneCountdownInterval = setInterval(() => {
+      const cur = this.changePhoneCountdown();
+      if (cur <= 1) {
+        this.changePhoneCountdown.set(0);
+        this.changePhoneCanResend.set(true);
+        clearInterval(this.phoneCountdownInterval);
+      } else {
+        this.changePhoneCountdown.set(cur - 1);
+      }
+    }, 1000);
+  }
+
+  // ── Liên kết tài khoản Google ────────────────
+  handleLinkGoogle(): void {
+    this.googleActionError.set('');
+    this.googleActionSuccess.set('');
+    this.googleLinkingLoading.set(true);
+
+    this.googleAuth.promptSignIn(
+      (tokenData) => {
+        this.cart.linkGoogleAccount(
+          tokenData,
+          () => {
+            this.googleLinkingLoading.set(false);
+            this.googleActionSuccess.set('Liên kết tài khoản Google thành công!');
+            setTimeout(() => this.googleActionSuccess.set(''), 4000);
+          },
+          (errMsg) => {
+            this.googleLinkingLoading.set(false);
+            this.googleActionError.set(errMsg);
+            setTimeout(() => this.googleActionError.set(''), 5000);
+          }
+        );
+      },
+      (errorMsg) => {
+        this.googleLinkingLoading.set(false);
+        this.googleActionError.set(errorMsg);
+        setTimeout(() => this.googleActionError.set(''), 5000);
+      }
+    );
+  }
+
+  openUnlinkGoogleModal(): void {
+    this.unlinkPassword.set('');
+    this.unlinkError.set('');
+    this.showUnlinkModal.set(true);
+  }
+
+  closeUnlinkGoogleModal(): void {
+    this.showUnlinkModal.set(false);
+    this.unlinkPassword.set('');
+    this.unlinkError.set('');
+  }
+
+  submitUnlinkGoogle(e: Event): void {
+    e.preventDefault();
+    this.unlinkError.set('');
+    const pwd = this.unlinkPassword();
+    if (!pwd) {
+      this.unlinkError.set('Vui lòng nhập mật khẩu tài khoản để xác nhận.');
+      return;
+    }
+
+    this.unlinkLoading.set(true);
+    this.cart.unlinkGoogleAccount(
+      pwd,
+      () => {
+        this.unlinkLoading.set(false);
+        this.closeUnlinkGoogleModal();
+        this.googleActionSuccess.set('Đã hủy liên kết Google thành công.');
+        setTimeout(() => this.googleActionSuccess.set(''), 4000);
+      },
+      (errMsg) => {
+        this.unlinkLoading.set(false);
+        this.unlinkError.set(errMsg);
+      }
+    );
   }
 }

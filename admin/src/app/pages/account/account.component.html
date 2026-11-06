@@ -225,10 +225,22 @@
               </div>
 
               <div class="acc-field">
-                <label>Số điện thoại</label>
-                <input type="tel" [value]="phone()"
-                       (input)="phone.set($any($event.target).value)"
-                       placeholder="0987 654 321" />
+                <label>Số điện thoại (Định danh chính)</label>
+                <div class="phone-display-row">
+                  <div class="phone-value-box">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                    <span class="phone-text">{{ user.phone || 'Chưa cập nhật' }}</span>
+                    @if (user.phone) {
+                      <span class="verified-tag">✓ Đã xác thực</span>
+                    }
+                  </div>
+                  <button type="button" class="acc-btn-outline change-phone-btn" (click)="openChangePhoneModal()">
+                    Đổi số điện thoại
+                  </button>
+                </div>
+                <span class="acc-field-hint">Số điện thoại là định danh chính của bạn tại EvergreenMart.</span>
               </div>
 
               <div class="acc-form-actions">
@@ -240,18 +252,68 @@
             </form>
           </div>
 
-          <!-- Section 2: Bảo mật -->
+          <!-- Section 2: Bảo mật & Phương thức đăng nhập -->
           <div class="acc-settings-section">
             <div class="acc-section-header">
-              <h2 class="acc-section-title">Bảo mật</h2>
-              <p class="acc-section-desc">Quản lý mật khẩu và bảo mật tài khoản</p>
+              <h2 class="acc-section-title">Bảo mật & Liên kết tài khoản</h2>
+              <p class="acc-section-desc">Quản lý mật khẩu và phương thức đăng nhập dự phòng</p>
             </div>
             <div class="acc-divider"></div>
 
+            @if (googleActionSuccess()) {
+              <div class="acc-alert-success">{{ googleActionSuccess() }}</div>
+            }
+            @if (googleActionError()) {
+              <div class="acc-alert-error">{{ googleActionError() }}</div>
+            }
+
+            <!-- Thẻ liên kết Google -->
+            <div class="acc-security-card google-linking-card">
+              <div class="acc-security-icon-col">
+                <svg width="28" height="28" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+              </div>
+              <div class="acc-security-info">
+                <div class="google-header-line">
+                  <h3 class="acc-security-title">Liên kết tài khoản Google</h3>
+                  @if (user.isGoogleLinked) {
+                    <span class="status-badge badge-linked">✓ Đã liên kết</span>
+                  } @else {
+                    <span class="status-badge badge-unlinked">Chưa liên kết</span>
+                  }
+                </div>
+                <p class="acc-security-desc">
+                  @if (user.isGoogleLinked) {
+                    Đã liên kết với email: <strong>{{ user.googleEmail || 'Google Account' }}</strong>. Bạn có thể sử dụng Google để đăng nhập dự phòng.
+                  } @else {
+                    Liên kết tài khoản Google để đăng nhập thuận tiện hơn. Google chỉ đóng vai trò là phương thức đăng nhập bổ sung cho tài khoản của bạn.
+                  }
+                </p>
+              </div>
+              <div class="acc-security-action">
+                @if (user.isGoogleLinked) {
+                  <button type="button" class="btn-unlink-google" (click)="openUnlinkGoogleModal()">
+                    Hủy liên kết
+                  </button>
+                } @else {
+                  <button type="button" class="acc-btn-primary btn-link-google"
+                          [disabled]="googleLinkingLoading()"
+                          (click)="handleLinkGoogle()">
+                    @if (googleLinkingLoading()) { Đang kết nối... } @else { Liên kết Google }
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Thẻ đổi mật khẩu -->
             <div class="acc-security-card">
               <div class="acc-security-info">
                 <h3 class="acc-security-title">Đổi mật khẩu</h3>
-                <p class="acc-security-desc">Thay đổi mật khẩu để bảo vệ tài khoản của bạn</p>
+                <p class="acc-security-desc">Thay đổi mật khẩu định kỳ để bảo vệ tài khoản EvergreenMart</p>
               </div>
               <button class="acc-btn-outline">Đổi mật khẩu</button>
             </div>
@@ -529,6 +591,148 @@
         Vui lòng đăng nhập để xem thông tin tài khoản.
       </p>
       <button class="xanhla-btn-primary" (click)="cart.openAuthModal('login')">Đăng nhập</button>
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════
+       MODAL 1: ĐỔI SỐ ĐIỆN THOẠI (Change Phone Modal)
+  ══════════════════════════════════════════════════════════ -->
+  @if (showChangePhoneModal()) {
+    <div class="xanhla-modal-backdrop" (click)="closeChangePhoneModal()">
+      <div class="acc-dialog-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+        <div class="acc-dialog-header">
+          <h3 class="acc-dialog-title">Đổi số điện thoại tài khoản</h3>
+          <button type="button" class="acc-dialog-close" (click)="closeChangePhoneModal()">✕</button>
+        </div>
+
+        <div class="acc-dialog-body">
+          @if (changePhoneSuccess()) {
+            <div class="acc-alert-success">{{ changePhoneSuccess() }}</div>
+          }
+          @if (changePhoneError()) {
+            <div class="acc-alert-error">{{ changePhoneError() }}</div>
+          }
+
+          <!-- Bước 1: Nhập số mới và mật khẩu -->
+          @if (changePhoneStep() === 'input') {
+            <p class="acc-dialog-desc">
+              Sau khi đổi số, bạn sẽ đăng nhập bằng số điện thoại mới. Toàn bộ lịch sử đơn hàng, địa chỉ và thông tin tài khoản được giữ nguyên vẹn.
+            </p>
+
+            <form (submit)="submitChangePhoneRequest($event)">
+              <div class="acc-dialog-field">
+                <label>Số điện thoại mới *</label>
+                <input type="tel" placeholder="Ví dụ: 0912345678"
+                       [value]="newPhoneInput()"
+                       (input)="newPhoneInput.set($any($event.target).value)"
+                       required />
+              </div>
+
+              <div class="acc-dialog-field">
+                <label>Mật khẩu tài khoản hiện tại (Xác thực danh tính) *</label>
+                <input type="password" placeholder="Nhập mật khẩu để tiếp tục"
+                       [value]="changePhonePassword()"
+                       (input)="changePhonePassword.set($any($event.target).value)"
+                       required />
+              </div>
+
+              <div class="acc-dialog-actions">
+                <button type="button" class="acc-btn-outline" (click)="closeChangePhoneModal()">Hủy</button>
+                <button type="submit" class="acc-btn-primary" [disabled]="changePhoneLoading()">
+                  @if (changePhoneLoading()) { Đang gửi OTP... } @else { Tiếp tục xác nhận OTP }
+                </button>
+              </div>
+            </form>
+          }
+
+          <!-- Bước 2: Nhập OTP gửi về số mới -->
+          @if (changePhoneStep() === 'otp') {
+            <div class="otp-view-container">
+              <p class="acc-dialog-desc">
+                Mã xác thực gồm 6 số đã được gửi đến: <strong>{{ newPhoneInput() }}</strong>
+              </p>
+
+              <div class="otp-boxes-grid" (paste)="onPhoneOtpPaste($event)">
+                @for (digit of changePhoneOtpDigits(); track $index) {
+                  <input
+                    [id]="'phone-otp-' + $index"
+                    class="otp-digit-box"
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="1"
+                    pattern="[0-9]*"
+                    [value]="digit"
+                    (input)="onPhoneOtpInput($index, $event)"
+                    (keydown)="onPhoneOtpKeyDown($index, $event)"
+                  />
+                }
+              </div>
+
+              <div class="otp-demo-badge">
+                <span>⚡ Môi trường thử nghiệm: Mã OTP là <strong>{{ changePhoneDemoOtp() }}</strong></span>
+              </div>
+
+              <div class="acc-dialog-actions" style="margin-top:16px">
+                <button type="button" class="acc-btn-outline" (click)="changePhoneStep.set('input')">Quay lại</button>
+                <button type="button" class="acc-btn-primary" [disabled]="changePhoneLoading()" (click)="submitChangePhoneVerify()">
+                  @if (changePhoneLoading()) { Đang kiểm tra... } @else { Xác nhận đổi số }
+                </button>
+              </div>
+
+              <div class="otp-resend-row" style="margin-top:12px">
+                @if (!changePhoneCanResend()) {
+                  <span class="resend-timer">Gửi lại mã sau <strong>{{ changePhoneCountdown() }}s</strong></span>
+                } @else {
+                  <button type="button" class="resend-action-btn" (click)="resendChangePhoneOtp()">
+                    Gửi lại mã OTP
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════════════════════
+       MODAL 2: HỦY LIÊN KẾT GOOGLE (Unlink Google Modal)
+  ══════════════════════════════════════════════════════════ -->
+  @if (showUnlinkModal()) {
+    <div class="xanhla-modal-backdrop" (click)="closeUnlinkGoogleModal()">
+      <div class="acc-dialog-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+        <div class="acc-dialog-header">
+          <h3 class="acc-dialog-title">Hủy liên kết tài khoản Google</h3>
+          <button type="button" class="acc-dialog-close" (click)="closeUnlinkGoogleModal()">✕</button>
+        </div>
+
+        <div class="acc-dialog-body">
+          @if (unlinkError()) {
+            <div class="acc-alert-error">{{ unlinkError() }}</div>
+          }
+
+          <p class="acc-dialog-desc">
+            Bạn đang yêu cầu hủy liên kết tài khoản Google. Sau khi hủy, bạn sẽ không thể sử dụng tài khoản Google này để đăng nhập nhanh. Vui lòng nhập mật khẩu tài khoản EvergreenMart để xác nhận:
+          </p>
+
+          <form (submit)="submitUnlinkGoogle($event)">
+            <div class="acc-dialog-field">
+              <label>Mật khẩu tài khoản của bạn *</label>
+              <input type="password" placeholder="Nhập mật khẩu tài khoản"
+                     [value]="unlinkPassword()"
+                     (input)="unlinkPassword.set($any($event.target).value)"
+                     required />
+            </div>
+
+            <div class="acc-dialog-actions">
+              <button type="button" class="acc-btn-outline" (click)="closeUnlinkGoogleModal()">Hủy bỏ</button>
+              <button type="submit" class="btn-unlink-confirm" [disabled]="unlinkLoading()">
+                @if (unlinkLoading()) { Đang xử lý... } @else { Xác nhận hủy liên kết }
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   }
 </app-shell>

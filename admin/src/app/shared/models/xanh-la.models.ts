@@ -70,6 +70,12 @@ export interface XanhLaUser {
   loyaltyTier?: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
   points?: number;
   totalSpent?: number;
+  authProvider?: string;
+  isGoogleLinked?: boolean;
+  googleEmail?: string;
+  googleLinkedAt?: string | null;
+  googleName?: string;
+  googleAvatar?: string;
   createdAt?: string;
 }
 

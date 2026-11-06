@@ -16,12 +16,16 @@ const userSchema = new mongoose.Schema(
     firstName: { type: String, default: '' },
     lastName:  { type: String, default: '' },
     title:     { type: String, default: '' },
-    email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
-    password: { type: String, required: false, minlength: 6, select: false },
-    googleId: { type: String, default: '' },
+    email:     { type: String, default: '', lowercase: true, trim: true },
+    password:  { type: String, required: false, minlength: 6, select: false },
+    phone:     { type: String, default: '', trim: true },
+    avatar:    { type: String, default: '' },
+    googleId:  { type: String, default: '' },
+    googleEmail: { type: String, default: '' },
+    googleLinkedAt: { type: Date, default: null },
+    googleName: { type: String, default: '' },
+    googleAvatar: { type: String, default: '' },
     authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
-    phone:    { type: String, default: '' },
-    avatar:   { type: String, default: '' },
     role:     { type: String, enum: ['customer', 'admin', 'sales', 'warehouse', 'support', 'content'], default: 'customer' },
     isActive: { type: Boolean, default: true },
     // Loyalty program
@@ -46,5 +50,19 @@ userSchema.methods.comparePassword = async function (plain) {
   if (!this.password) return false;
   return bcrypt.compare(plain, this.password);
 };
+
+// Partial unique indexes để bảo đảm tính duy nhất nhưng không xung đột với các bản ghi rỗng
+userSchema.index(
+  { phone: 1 },
+  { unique: true, partialFilterExpression: { phone: { $type: 'string', $gt: '' } } }
+);
+userSchema.index(
+  { email: 1 },
+  { unique: true, partialFilterExpression: { email: { $type: 'string', $gt: '' } } }
+);
+userSchema.index(
+  { googleId: 1 },
+  { unique: true, partialFilterExpression: { googleId: { $type: 'string', $gt: '' } } }
+);
 
 module.exports = mongoose.model('User', userSchema);
