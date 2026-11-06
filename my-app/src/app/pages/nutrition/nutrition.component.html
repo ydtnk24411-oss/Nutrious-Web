@@ -5,7 +5,7 @@
       <!-- ===== Toast Notification ===== -->
       @if (addedToCart()) {
         <div class="xl-feedback-toast" role="status" aria-live="polite">
-          <span class="xl-toast-icon">✓</span>
+          <span class="xl-toast-icon"></span>
           <span>{{ addedToCart() }}</span>
           <a routerLink="/checkout" [queryParams]="{ voucher: 'NUTRITION10' }" style="color:#fff;text-decoration:underline;font-weight:700;margin-left:10px">Đến Thanh toán →</a>
         </div>
@@ -31,8 +31,8 @@
             ← Quay lại danh sách thực đơn
           </button>
           <div class="xl-detail-top-actions">
-            <a routerLink="/promotions" class="xl-top-pill">🎁 Xem thêm Deal &amp; Voucher</a>
-            <a routerLink="/cart" class="xl-top-pill xl-top-pill--primary">🛒 Giỏ hàng của tôi</a>
+            <a routerLink="/promotions" class="xl-top-pill"> Xem thêm Deal &amp; Voucher</a>
+            <a routerLink="/cart" class="xl-top-pill xl-top-pill--primary"> Giỏ hàng của tôi</a>
           </div>
 
         </div>
@@ -50,7 +50,7 @@
                   class="xl-detail-main-img"
                 />
                 <span class="xl-detail-match-badge">{{ detail.matchScore }}% phù hợp mục tiêu</span>
-                <span class="xl-detail-kcal-badge">🔥 {{ detail.calories }} kcal / khẩu phần</span>
+                <span class="xl-detail-kcal-badge"> {{ detail.calories }} kcal / khẩu phần</span>
               </div>
 
               @if (detail.gallery.length > 1) {
@@ -73,7 +73,7 @@
             <div class="xl-detail-summary">
               <div class="xl-detail-tags">
                 @for (goalLabel of detail.goalsMet; track goalLabel) {
-                  <span class="xl-goal-pill">✓ {{ goalLabel }}</span>
+                  <span class="xl-goal-pill"> {{ goalLabel }}</span>
                 }
               </div>
 
@@ -83,19 +83,19 @@
               <!-- Quick Time & Difficulty Stats -->
               <div class="xl-detail-quick-stats">
                 <div class="xl-stat-box">
-                  <span class="xl-stat-label">⏱ Sơ chế</span>
+                  <span class="xl-stat-label"> Sơ chế</span>
                   <strong class="xl-stat-val">{{ detail.prepTime }}</strong>
                 </div>
                 <div class="xl-stat-box">
-                  <span class="xl-stat-label">🍳 Thời gian nấu</span>
+                  <span class="xl-stat-label"> Thời gian nấu</span>
                   <strong class="xl-stat-val">{{ detail.cookTime }}</strong>
                 </div>
                 <div class="xl-stat-box">
-                  <span class="xl-stat-label">👨‍🍳 Độ khó</span>
+                  <span class="xl-stat-label"> Độ khó</span>
                   <strong class="xl-stat-val">{{ detail.difficulty }}</strong>
                 </div>
                 <div class="xl-stat-box">
-                  <span class="xl-stat-label">🍽️ Khẩu phần</span>
+                  <span class="xl-stat-label"> Khẩu phần</span>
                   <div class="xl-servings-adjust" style="margin-top:2px">
                     <button type="button" class="xl-servings-btn" (click)="adjustServings(detail.id, -1)" [disabled]="detail.servings <= 1">−</button>
                     <span class="xl-servings-value">{{ detail.servings }}</span>
@@ -108,41 +108,41 @@
               <!-- Nutrition Facts Box -->
               <div class="xl-nutrition-facts-card">
                 <div class="xl-nf-header">
-                  <h3>📊 Bảng Giá Trị Dinh Dưỡng (1 khẩu phần)</h3>
-                  <span>Chuẩn Viện Dinh Dưỡng</span>
+                  <h3> Bảng Giá Trị Dinh Dưỡng (1 khẩu phần)</h3>
+                  <span>Thông tin tham khảo</span>
                 </div>
                 <div class="xl-nf-macros-grid">
                   <div class="xl-nf-macro-item">
-                    <span class="xl-nf-macro-icon">🔥</span>
+                    <span class="xl-nf-macro-icon"></span>
                     <strong class="xl-nf-macro-num">{{ detail.calories }} kcal</strong>
                     <span class="xl-nf-macro-name">Năng lượng</span>
                   </div>
                   <div class="xl-nf-macro-item">
-                    <span class="xl-nf-macro-icon">🥩</span>
+                    <span class="xl-nf-macro-icon"></span>
                     <strong class="xl-nf-macro-num">{{ detail.macros.protein }}</strong>
                     <span class="xl-nf-macro-name">Chất đạm (Protein)</span>
                   </div>
                   <div class="xl-nf-macro-item">
-                    <span class="xl-nf-macro-icon">🌾</span>
+                    <span class="xl-nf-macro-icon"></span>
                     <strong class="xl-nf-macro-num">{{ detail.macros.carbs }}</strong>
                     <span class="xl-nf-macro-name">Tinh bột (Carbs)</span>
                   </div>
                   <div class="xl-nf-macro-item">
-                    <span class="xl-nf-macro-icon">🥑</span>
+                    <span class="xl-nf-macro-icon"></span>
                     <strong class="xl-nf-macro-num">{{ detail.macros.fat }}</strong>
                     <span class="xl-nf-macro-name">Chất béo</span>
                   </div>
                   <div class="xl-nf-macro-item">
-                    <span class="xl-nf-macro-icon">🥦</span>
+                    <span class="xl-nf-macro-icon"></span>
                     <strong class="xl-nf-macro-num">{{ detail.macros.fiber }}</strong>
                     <span class="xl-nf-macro-name">Chất xơ tự nhiên</span>
                   </div>
                 </div>
                 <div class="xl-nf-vitamins">
-                  <strong>🍊 Vitamin &amp; Khoáng chất chủ đạo:</strong> {{ detail.macros.vitamins }}
+                  <strong> Vitamin &amp; Khoáng chất chủ đạo:</strong> {{ detail.macros.vitamins }}
                 </div>
                 <div class="xl-nf-note">
-                  <strong>💡 Lợi ích sức khỏe:</strong> {{ detail.nutritionNote }}
+                  <strong> Lợi ích sức khỏe:</strong> {{ detail.nutritionNote }}
                 </div>
               </div>
 
@@ -157,7 +157,7 @@
                   </div>
                 </div>
                 <button type="button" class="xl-detail-buy-btn" (click)="addAllToCart(detail)">
-                  🛒 Mua trọn bộ nguyên liệu món này
+                   Mua trọn bộ nguyên liệu món này
                 </button>
               </div>
             </div>
@@ -168,7 +168,7 @@
             <!-- Left: Ingredients with Product Images -->
             <section class="xl-detail-section-card">
               <div class="xl-detail-sec-head">
-                <h2>🥬 Nguyên liệu tươi sạch cần chuẩn bị</h2>
+                <h2> Nguyên liệu tươi sạch cần chuẩn bị</h2>
                 <span>Định lượng cho {{ detail.servings }} người ăn</span>
               </div>
 
@@ -222,7 +222,7 @@
             <!-- Right: Step-by-Step Cooking Guide & Chef Tips -->
             <section class="xl-detail-section-card">
               <div class="xl-detail-sec-head">
-                <h2>👨‍🍳 Hướng dẫn chế biến giữ trọn dinh dưỡng</h2>
+                <h2> Hướng dẫn chế biến giữ trọn dinh dưỡng</h2>
                 <span>{{ detail.steps.length }} bước thực hiện</span>
               </div>
 
@@ -239,7 +239,7 @@
               </div>
 
               <div class="xl-chef-tips-box">
-                <div class="xl-chef-tips-title">🌟 Bí quyết từ Đầu bếp &amp; Chuyên gia Dinh dưỡng Evergreen Mart</div>
+                <div class="xl-chef-tips-title"> Bí quyết từ Đầu bếp &amp; Chuyên gia Dinh dưỡng Evergreen Mart</div>
                 <p>{{ detail.chefTips }}</p>
               </div>
             </section>
@@ -249,7 +249,7 @@
           @if (relatedRecipes().length > 0) {
             <section class="xl-related-recipes-section">
               <div class="xl-detail-sec-head">
-                <h2>🍽️ Các món ăn bổ dưỡng tương tự</h2>
+                <h2> Các món ăn bổ dưỡng tương tự</h2>
                 <button type="button" class="xl-back-btn" (click)="closeDetailView()">Xem tất cả 12 món →</button>
               </div>
               <div class="xl-related-grid">
@@ -257,7 +257,7 @@
                   <div class="xl-related-card" (click)="openRecipeDetail(rel.id)">
                     <img [src]="rel.image" [alt]="rel.name" (error)="onImageError($event)" />
                     <div class="xl-related-card-body">
-                      <span class="xl-related-kcal">🔥 {{ rel.calories }} kcal · ⏱ {{ rel.prepTime }}</span>
+                      <span class="xl-related-kcal"> {{ rel.calories }} kcal ·  {{ rel.prepTime }}</span>
                       <h4>{{ rel.name }}</h4>
                       <p>{{ rel.description }}</p>
                       <span class="xl-related-cta">Xem công thức &amp; nguyên liệu →</span>
@@ -289,8 +289,8 @@
             ← Quay lại trang Dinh dưỡng thông minh
           </button>
           <div class="xl-detail-top-actions">
-            <a routerLink="/promotions" class="xl-top-pill">🎁 Săn thêm Deal Nông Sản</a>
-            <a routerLink="/checkout" [queryParams]="{ voucher: planDetail.voucherCode }" class="xl-top-pill xl-top-pill--primary">🛒 Đến Thanh toán →</a>
+            <a routerLink="/promotions" class="xl-top-pill"> Săn thêm Deal Nông Sản</a>
+            <a routerLink="/checkout" [queryParams]="{ voucher: planDetail.voucherCode }" class="xl-top-pill xl-top-pill--primary"> Đến Thanh toán →</a>
           </div>
         </div>
 
@@ -301,9 +301,9 @@
               <span class="xl-plan-badge">{{ planDetail.badge }}</span>
             </div>
             <div class="xl-plan-detail-info">
-              <span class="xl-plans-pill">🍱 GÓI THỰC ĐƠN THIẾT KẾ SẴN</span>
+              <span class="xl-plans-pill"> GÓI THỰC ĐƠN THIẾT KẾ SẴN</span>
               <h1>{{ planDetail.name }}</h1>
-              <p class="xl-plan-audience" style="font-size:14px">🎯 {{ planDetail.targetAudience }} · 🔥 {{ planDetail.calories }}</p>
+              <p class="xl-plan-audience" style="font-size:14px"> {{ planDetail.targetAudience }} ·  {{ planDetail.calories }}</p>
               <p class="xl-detail-desc">{{ planDetail.description }}</p>
 
               <div class="xl-detail-buy-box" style="margin-top:20px">
@@ -316,7 +316,7 @@
                   </div>
                 </div>
                 <button type="button" class="xl-detail-buy-btn" (click)="addMealPlanToCart(planDetail)">
-                  🛒 Mua trọn gói thực đơn này (-{{ planDetail.discountPercent }}%)
+                   Mua trọn gói thực đơn này (-{{ planDetail.discountPercent }}%)
                 </button>
               </div>
             </div>
@@ -325,7 +325,7 @@
           <!-- Dishes inside this Meal Plan -->
           <section class="xl-plan-dishes-section">
             <div class="xl-detail-sec-head">
-              <h2>🍽️ Chi tiết {{ planDetail.recipes.length }} món ăn trong gói thực đơn này</h2>
+              <h2> Chi tiết {{ planDetail.recipes.length }} món ăn trong gói thực đơn này</h2>
               <span>Nhấn vào từng món để xem hướng dẫn nấu từng bước</span>
             </div>
 
@@ -334,21 +334,21 @@
                 <div class="xl-plan-dish-card">
                   <div class="xl-plan-dish-img-wrap" (click)="openRecipeDetail(dish.id)">
                     <img [src]="dish.image" [alt]="dish.name" (error)="onImageError($event)" />
-                    <span class="xl-detail-kcal-badge">🔥 {{ dish.calories }} kcal</span>
+                    <span class="xl-detail-kcal-badge"> {{ dish.calories }} kcal</span>
                   </div>
                   <div class="xl-plan-dish-body">
-                    <div class="xl-plan-dish-meta">⏱ Sơ chế {{ dish.prepTime }} · 🍳 Nấu {{ dish.cookTime }} · 🥩 Đạm {{ dish.macros.protein }}</div>
+                    <div class="xl-plan-dish-meta"> Sơ chế {{ dish.prepTime }} ·  Nấu {{ dish.cookTime }} ·  Đạm {{ dish.macros.protein }}</div>
                     <h3 (click)="openRecipeDetail(dish.id)" style="cursor:pointer">{{ dish.name }}</h3>
                     <p>{{ dish.description }}</p>
                     <div class="xl-plan-dish-ings">
                       <strong>Nguyên liệu chính:</strong>
                       @for (ing of dish.ingredients; track ing.name) {
-                        <span class="xl-plan-ing-tag">✓ {{ ing.name }} ({{ ing.amount }}{{ ing.unit }})</span>
+                        <span class="xl-plan-ing-tag"> {{ ing.name }} ({{ ing.amount }}{{ ing.unit }})</span>
                       }
                     </div>
                     <div class="xl-plan-dish-actions">
                       <button type="button" class="xl-plan-filter-btn" (click)="openRecipeDetail(dish.id)">
-                        📖 Xem công thức &amp; cách nấu →
+                         Xem công thức &amp; cách nấu →
                       </button>
                       <button type="button" class="xl-plan-buy-btn" (click)="addAllToCart(dish)">
                         + Thêm riêng món này
@@ -363,7 +363,7 @@
           <!-- All matched store products in this Meal Plan -->
           <section class="xl-detail-section-card" style="margin-top:28px">
             <div class="xl-detail-sec-head">
-              <h2>🧺 Danh sách {{ planDetail.matchedProducts.length }} nguyên liệu nông sản trong gói</h2>
+              <h2> Danh sách {{ planDetail.matchedProducts.length }} nguyên liệu nông sản trong gói</h2>
               <span>Tất cả đều đang có sẵn tại cửa hàng Evergreen Mart</span>
             </div>
             <div class="xl-plan-products-grid">
@@ -402,19 +402,19 @@
         <header class="xl-modern-hero">
           <div class="xl-modern-hero-text">
             <span class="xl-hero-kicker">{{ heroConfig().kicker }}</span>
-            <h1 class="xl-modern-hero-title">Thiết kế thực đơn cá nhân hóa theo Ngày &amp; theo Tuần</h1>
+            <h1 class="xl-modern-hero-title">Lên thực đơn phù hợp với bạn</h1>
             <p class="xl-modern-hero-sub">
-              Tuỳ chỉnh mục tiêu (Tập Gym tăng cơ, Giảm cân siết mỡ, Giữ dáng), chọn số bữa ăn mỗi ngày (2, 3 hoặc 4 bữa), định lượng Kcal, Đạm, Chất xơ và Ngân sách đi chợ — kết nối 100% nông sản tươi sạch từ cửa hàng Evergreen Mart.
+              Chọn mục tiêu, số bữa và ngân sách để tham khảo thực đơn theo ngày hoặc cả tuần. Bạn có thể điều chỉnh nguyên liệu và chỉ số dinh dưỡng theo nhu cầu.
             </p>
             <div class="xl-modern-hero-btns">
               <button type="button" class="xl-hero-btn-primary" (click)="scrollToElement('meal-planner-section')">
-                🗓️ Bắt Đầu Lên Thực Đơn Ngay
+                 Bắt Đầu Lên Thực Đơn Ngay
               </button>
               <button type="button" class="xl-hero-btn-secondary" (click)="scrollToElement('nutrition-results-section')">
-                🔍 Khám Phá {{ results().length }} Món Ăn
+                 Khám Phá {{ results().length }} Món Ăn
               </button>
               <a routerLink="/promotions" class="xl-hero-btn-accent">
-                🎁 Săn Voucher Giảm 30%
+                 Săn Voucher Giảm 30%
               </a>
             </div>
           </div>
@@ -422,10 +422,10 @@
           <div class="xl-modern-hero-visual">
             <img [src]="heroConfig().bannerImage" alt="Thực đơn dinh dưỡng lành mạnh Evergreen Mart" (error)="onImageError($event)" />
             <div class="xl-hero-floating-card">
-              <span class="xl-floating-icon">🥗</span>
+              <span class="xl-floating-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21V10"/><path d="M12 14c-5 0-7-3-7-7 5 0 7 3 7 7Z"/><path d="M12 11c0-4 2-6 7-6 0 4-2 6-7 6Z"/></svg></span>
               <div>
-                <strong>Kết nối 100% Dữ liệu Nông sản Thực tế</strong>
-                <span>Định lượng chuẩn Calo · Protein · Chất xơ · Giá bán trực tuyến</span>
+                <strong>Thực đơn theo nhu cầu</strong>
+                <span>Tham khảo calo, đạm, chất xơ và chi phí nguyên liệu</span>
               </div>
             </div>
           </div>
@@ -435,13 +435,13 @@
              PHẦN 1: STUDIO LẬP KẾ HOẠCH THỰC ĐƠN CÁ NHÂN (THEO NGÀY / THEO TUẦN)
              ========================================================================= -->
         @if (results().length > 0) {
-          <section class="xl-planner-card" id="meal-planner-section" aria-label="Studio lập kế hoạch thực đơn cá nhân">
+          <section class="xl-planner-card" id="meal-planner-section" aria-label="Thiết lập thực đơn cá nhân">
             <!-- Header -->
             <div class="xl-planner-top">
               <div>
-                <span class="xl-planner-kicker">🗓️ PERSONAL NUTRITION &amp; MEAL PLANNER STUDIO</span>
-                <h2 class="xl-planner-heading">Thiết Kế Thực Đơn Theo Mục Tiêu, Calo &amp; Ngân Sách Của Bạn</h2>
-                <p class="xl-planner-sub">Hoàn thành 3 bước thiết lập bên dưới để hệ thống tự động lên thực đơn chuẩn Kcal, hàm lượng chất dinh dưỡng và ngân sách đi chợ</p>
+                <span class="xl-planner-kicker">LẬP THỰC ĐƠN</span>
+                <h2 class="xl-planner-heading">Thiết lập thực đơn</h2>
+                <p class="xl-planner-sub">Chọn mục tiêu, lịch ăn và mức chi tiêu. Bạn có thể thay đổi các lựa chọn bất cứ lúc nào.</p>
               </div>
             </div>
 
@@ -465,7 +465,7 @@
                     [class.active]="plannerPreset() === 'protein'"
                     (click)="applyPlannerPreset('protein')"
                   >
-                    <span class="xl-gsc-icon">🏋️</span>
+                    <span class="xl-gsc-icon"></span>
                     <div class="xl-gsc-info">
                       <div class="xl-gsc-title-row">
                         <strong>Tập Gym &amp; Tăng Cơ</strong>
@@ -481,7 +481,7 @@
                     [class.active]="plannerPreset() === 'eatclean'"
                     (click)="applyPlannerPreset('eatclean')"
                   >
-                    <span class="xl-gsc-icon">🔥</span>
+                    <span class="xl-gsc-icon"></span>
                     <div class="xl-gsc-info">
                       <div class="xl-gsc-title-row">
                         <strong>Giảm Cân &amp; Siết Mỡ (Eat Clean)</strong>
@@ -497,7 +497,7 @@
                     [class.active]="plannerPreset() === 'family'"
                     (click)="applyPlannerPreset('family')"
                   >
-                    <span class="xl-gsc-icon">⚖️</span>
+                    <span class="xl-gsc-icon"></span>
                     <div class="xl-gsc-info">
                       <div class="xl-gsc-title-row">
                         <strong>Giữ Dáng &amp; Cơm Nhà Cân Bằng</strong>
@@ -513,7 +513,7 @@
                     [class.active]="plannerPreset() === 'yogurt_detox'"
                     (click)="applyPlannerPreset('yogurt_detox')"
                   >
-                    <span class="xl-gsc-icon">🥛</span>
+                    <span class="xl-gsc-icon"></span>
                     <div class="xl-gsc-info">
                       <div class="xl-gsc-title-row">
                         <strong>Thanh Lọc &amp; Tiêu Hóa Khỏe</strong>
@@ -545,7 +545,7 @@
                       [class.active]="plannerMode() === 'day'"
                       (click)="plannerMode.set('day'); weeklyOverviewMode.set(false)"
                     >
-                      <strong>📅 Theo Từng Ngày</strong>
+                      <strong> Theo Từng Ngày</strong>
                       <span>Tập trung thực đơn 1 ngày cụ thể</span>
                     </button>
                     <button
@@ -554,7 +554,7 @@
                       [class.active]="plannerMode() === 'week'"
                       (click)="plannerMode.set('week')"
                     >
-                      <strong>🗓️ Theo Tuần (7 Ngày)</strong>
+                      <strong> Theo Tuần (7 Ngày)</strong>
                       <span>Lộ trình Thứ 2 → Chủ Nhật</span>
                     </button>
                   </div>
@@ -593,7 +593,7 @@
                     </button>
                   </div>
                   <div class="xl-studio-tip">
-                    <span class="xl-tip-icon">💡</span>
+                    <span class="xl-tip-icon"></span>
                     <span><strong>Mẹo chuyên gia:</strong> Phân bổ 3-4 bữa/ngày kết hợp bữa phụ Sữa chua hoặc Sinh tố hạt giúp ổn định đường huyết và giữ năng lượng bền bỉ.</span>
                   </div>
                 </div>
@@ -649,7 +649,7 @@
                 <!-- Mục tiêu Kcal mỗi ngày -->
                 <div class="xl-macro-slider-block">
                   <div class="xl-ms-top">
-                    <span>🔥 Mục tiêu Calo mỗi ngày:</span>
+                    <span> Mục tiêu Calo mỗi ngày:</span>
                     <strong class="xl-ms-val">{{ targetDailyKcal() }} kcal / ngày</strong>
                   </div>
                   <input
@@ -673,21 +673,21 @@
                 <!-- Định lượng 3 nhóm chất chính muốn nạp mỗi ngày -->
                 <div class="xl-three-macros-inputs">
                   <div class="xl-mi-box">
-                    <label>💪 Đạm (Protein)</label>
+                    <label> Đạm (Protein)</label>
                     <div class="xl-mi-val-row">
                       <input type="number" min="20" max="240" step="1" [value]="targetProtein()" (input)="queueMacroTarget('protein', $any($event.target).value)" (change)="commitMacroTarget('protein', $any($event.target).value)" />
                       <span>g/ngày</span>
                     </div>
                   </div>
                   <div class="xl-mi-box">
-                    <label>🥬 Chất xơ (Fiber)</label>
+                    <label> Chất xơ (Fiber)</label>
                     <div class="xl-mi-val-row">
                       <input type="number" min="10" max="60" step="1" [value]="targetFiber()" (input)="queueMacroTarget('fiber', $any($event.target).value)" (change)="commitMacroTarget('fiber', $any($event.target).value)" />
                       <span>g/ngày</span>
                     </div>
                   </div>
                   <div class="xl-mi-box">
-                    <label>🌾 Tinh bột (Carbs)</label>
+                    <label> Tinh bột (Carbs)</label>
                     <div class="xl-mi-val-row">
                       <input type="number" min="40" max="300" step="1" [value]="targetCarbs()" (input)="queueMacroTarget('carbs', $any($event.target).value)" (change)="commitMacroTarget('carbs', $any($event.target).value)" />
                       <span>g/ngày</span>
@@ -698,7 +698,7 @@
                 <!-- Tỷ lệ phân bổ năng lượng Caloric Ratio Preview -->
                 <div class="xl-macro-dist-card">
                   <div class="xl-md-header">
-                    <span class="xl-md-title">📊 Tỷ lệ phân bổ calo (Caloric Ratio):</span>
+                    <span class="xl-md-title"> Tỷ lệ phân bổ calo (Caloric Ratio):</span>
                     <span class="xl-md-badge">Tỷ lệ ước tính</span>
                   </div>
                   <div class="xl-md-bar-wrap">
@@ -707,9 +707,9 @@
                     <div class="xl-md-segment xl-md-segment--f" [style.width.%]="macroPercentages().fPct" [title]="'Chất béo: ' + macroPercentages().fPct + '%'"></div>
                   </div>
                   <div class="xl-md-legend">
-                    <span class="xl-md-leg xl-md-leg--p">💪 Đạm: {{ macroPercentages().pPct }}%</span>
-                    <span class="xl-md-leg xl-md-leg--c">🌾 Tinh bột: {{ macroPercentages().cPct }}%</span>
-                    <span class="xl-md-leg xl-md-leg--f" title="Ước tính từ phần Calo còn lại; không phân loại chất béo bão hòa hay không bão hòa.">🥑 Chất béo ước tính: {{ macroPercentages().fPct }}%</span>
+                    <span class="xl-md-leg xl-md-leg--p"> Đạm: {{ macroPercentages().pPct }}%</span>
+                    <span class="xl-md-leg xl-md-leg--c"> Tinh bột: {{ macroPercentages().cPct }}%</span>
+                    <span class="xl-md-leg xl-md-leg--f" title="Ước tính từ phần Calo còn lại; không phân loại chất béo bão hòa hay không bão hòa."> Chất béo ước tính: {{ macroPercentages().fPct }}%</span>
                   </div>
                   <p class="xl-md-note">Tính từ phần Calo còn lại sau Đạm và Tinh bột; đây không phải chỉ số riêng cho chất béo không bão hòa.</p>
                   @if (macroPercentages().overTarget) {
@@ -738,7 +738,7 @@
                 <!-- Ngân sách tối đa (Budget) & Nguyên liệu tránh -->
                 <div class="xl-budget-exclude-row">
                   <div class="xl-budget-col">
-                    <label class="xl-studio-label">💰 Ngân sách đi chợ (Budget):</label>
+                    <label class="xl-studio-label"> Ngân sách đi chợ (Budget):</label>
                     <div class="xl-budget-pills">
                       <button type="button" class="xl-mini-pill" [class.active]="budgetLimit() === null" (click)="setBudgetQuick(null)">Tất cả</button>
                       <button type="button" class="xl-mini-pill" [class.active]="budgetLimit() === 150000" (click)="setBudgetQuick(150000)">≤ 150k</button>
@@ -747,7 +747,7 @@
                     </div>
                   </div>
                   <div class="xl-exclude-col">
-                    <label class="xl-studio-label" for="studioExcludeInput">🚫 Dị ứng / Tránh:</label>
+                    <label class="xl-studio-label" for="studioExcludeInput"> Dị ứng / Tránh:</label>
                     <input
                       id="studioExcludeInput"
                       type="text"
@@ -760,7 +760,7 @@
                 </div>
 
                 <button type="button" class="xl-generate-plan-btn" (click)="generateSmartPlan()">
-                  ✨ Tự Động Thiết Lập Thực Đơn Theo Mục Tiêu Này
+                   Tự Động Thiết Lập Thực Đơn Theo Mục Tiêu Này
                 </button>
               </div>
             </div>
@@ -788,7 +788,7 @@
                   [class.active]="weeklyOverviewMode()"
                   (click)="weeklyOverviewMode.set(!weeklyOverviewMode())"
                 >
-                  {{ weeklyOverviewMode() ? '📋 Xem chi tiết từng ngày' : '📊 Xem bảng tổng hợp 7 ngày' }}
+                  {{ weeklyOverviewMode() ? ' Xem chi tiết từng ngày' : ' Xem bảng tổng hợp 7 ngày' }}
                 </button>
               </div>
             }
@@ -797,19 +797,19 @@
             @if (activeDayPlan(); as dayPlan) {
               <div class="xl-goal-progress-banner">
                 <div class="xl-gpb-left">
-                  <span class="xl-gpb-badge">🎯 LỘ TRÌNH TRONG NGÀY</span>
+                  <span class="xl-gpb-badge"> LỘ TRÌNH TRONG NGÀY</span>
                   <h3 class="xl-gpb-theme">{{ dayPlan.dayTheme }}</h3>
                   <span class="xl-gpb-sub">
-                    Hiển thị <strong>{{ dayPlan.mealsPerDayCount }} bữa ăn</strong> cho <strong>{{ servings() }} người</strong> — Nhấn "🔄 Đổi món" ở bất kỳ bữa nào để thay đổi theo ý thích
+                    Hiển thị <strong>{{ dayPlan.mealsPerDayCount }} bữa ăn</strong> cho <strong>{{ servings() }} người</strong> — Nhấn " Đổi món" ở bất kỳ bữa nào để thay đổi theo ý thích
                   </span>
                 </div>
 
                 <div class="xl-gpb-bars">
                   <div class="xl-gpb-metric">
                     <div class="xl-gpb-metric-top">
-                      <span>🔥 Năng lượng</span>
+                      <span> Năng lượng</span>
                       <div style="display:flex;align-items:center;gap:6px">
-                        <strong title="Mục tiêu / Thực tế">{{ targetDailyKcal() }} / {{ dayPlan.totalCalories }} kcal</strong>
+                      <strong title="Thực tế / Mục tiêu">{{ dayPlan.totalCalories }} / {{ targetDailyKcal() }} kcal</strong>
                         <span class="xl-gpb-status-pill">{{ getCalorieStatusText(dayPlan.totalCalories, targetDailyKcal()) }}</span>
                       </div>
                     </div>
@@ -820,9 +820,9 @@
 
                   <div class="xl-gpb-metric">
                     <div class="xl-gpb-metric-top">
-                      <span>💪 Đạm (Protein)</span>
+                      <span> Đạm (Protein)</span>
                       <div style="display:flex;align-items:center;gap:6px">
-                        <strong title="Mục tiêu / Thực tế">{{ targetProtein() }}g / {{ dayPlan.totalProtein }}g</strong>
+                        <strong title="Thực tế / Mục tiêu">{{ dayPlan.totalProtein }}g / {{ targetProtein() }}g</strong>
                         <span class="xl-gpb-status-pill" [class.is-over-target]="dayPlan.totalProtein > targetProtein()">{{ getProteinStatusText(dayPlan.totalProtein, targetProtein()) }}</span>
                       </div>
                     </div>
@@ -833,8 +833,11 @@
 
                   <div class="xl-gpb-metric">
                     <div class="xl-gpb-metric-top">
-                      <span>🥬 Chất xơ (Fiber)</span>
-                      <strong title="Mục tiêu / Thực tế">{{ targetFiber() }}g / {{ dayPlan.totalFiber }}g</strong>
+                      <span> Chất xơ (Fiber)</span>
+                      <div style="display:flex;align-items:center;gap:6px">
+                        <strong title="Thực tế / Mục tiêu">{{ dayPlan.totalFiber }}g / {{ targetFiber() }}g</strong>
+                        <span class="xl-gpb-status-pill" [class.is-over-target]="dayPlan.totalFiber > targetFiber()">{{ getNutrientStatusText(dayPlan.totalFiber, targetFiber()) }}</span>
+                      </div>
                     </div>
                     <div class="xl-gpb-track">
                       <div class="xl-gpb-fill xl-gpb-fill--fiber" [style.width.%]="getMacroPercent(dayPlan.totalFiber, targetFiber())"></div>
@@ -843,8 +846,11 @@
 
                   <div class="xl-gpb-metric">
                     <div class="xl-gpb-metric-top">
-                      <span>🌾 Tinh bột (Carbs)</span>
-                      <strong title="Mục tiêu / Thực tế">{{ targetCarbs() }}g / {{ dayPlan.totalCarbs }}g</strong>
+                      <span> Tinh bột (Carbs)</span>
+                      <div style="display:flex;align-items:center;gap:6px">
+                        <strong title="Thực tế / Mục tiêu">{{ dayPlan.totalCarbs }}g / {{ targetCarbs() }}g</strong>
+                        <span class="xl-gpb-status-pill" [class.is-over-target]="dayPlan.totalCarbs > targetCarbs()">{{ getNutrientStatusText(dayPlan.totalCarbs, targetCarbs()) }}</span>
+                      </div>
                     </div>
                     <div class="xl-gpb-track">
                       <div class="xl-gpb-fill xl-gpb-fill--carbs" [style.width.%]="getMacroPercent(dayPlan.totalCarbs, targetCarbs())"></div>
@@ -861,7 +867,7 @@
                   <div class="xl-week-day-col" [class.is-today]="selectedWeekDay() === dayPlan.dayKey">
                     <div class="xl-week-col-head" (click)="weeklyOverviewMode.set(false); selectedWeekDay.set(dayPlan.dayKey)" style="cursor:pointer">
                       <strong>{{ dayPlan.dayLabel }} ({{ dayPlan.mealsPerDayCount }} bữa)</strong>
-                      <span>🔥 {{ dayPlan.totalCalories }} kcal · 💪 {{ dayPlan.totalProtein }}g đạm</span>
+                      <span> {{ dayPlan.totalCalories }} kcal ·  {{ dayPlan.totalProtein }}g đạm</span>
                     </div>
                     <div class="xl-week-col-meals">
                       @for (slot of dayPlan.slots; track slot.slotKey) {
@@ -873,7 +879,7 @@
                               <strong (click)="openRecipeDetail(r.id)">{{ r.name }}</strong>
                               <span>{{ r.calories }} kcal · Đạm {{ r.macros.protein }}</span>
                             </div>
-                            <button type="button" class="xl-mini-swap-btn" (click)="swapMealInSlot(slot.slotKey, dayPlan.dayKey)" title="Đổi món khác">🔄</button>
+                            <button type="button" class="xl-mini-swap-btn" (click)="swapMealInSlot(slot.slotKey, dayPlan.dayKey)" title="Đổi món khác"></button>
                           </div>
                         }
                       }
@@ -903,17 +909,17 @@
                       @if (slot.recipe; as dish) {
                         <div class="xl-slot-media" (click)="openRecipeDetail(dish.id)">
                           <img [src]="dish.image" [alt]="dish.name" (error)="onImageError($event)" />
-                          <span class="xl-slot-kcal">🔥 {{ dish.calories }} kcal</span>
+                          <span class="xl-slot-kcal"> {{ dish.calories }} kcal</span>
                         </div>
 
                         <div class="xl-slot-body">
                           <h3 class="xl-slot-dish-name" (click)="openRecipeDetail(dish.id)">{{ dish.name }}</h3>
                           <div class="xl-slot-macros">
-                            <span>💪 Đạm {{ dish.macros.protein }}</span>
+                            <span> Đạm {{ dish.macros.protein }}</span>
                             <span>·</span>
-                            <span>🥬 Xơ {{ dish.macros.fiber }}</span>
+                            <span> Xơ {{ dish.macros.fiber }}</span>
                             <span>·</span>
-                            <span>⏱ {{ dish.prepTime }}</span>
+                            <span> {{ dish.prepTime }}</span>
                           </div>
                           <!-- Ingredient Product Avatars with 100% accurate MongoDB product images -->
                           <div class="xl-slot-ings-preview">
@@ -928,10 +934,10 @@
 
                         <div class="xl-slot-actions">
                           <button type="button" class="xl-slot-swap-btn" (click)="swapMealInSlot(slot.slotKey)">
-                            🔄 Đổi món khác
+                             Đổi món khác
                           </button>
                           <button type="button" class="xl-slot-detail-btn" (click)="openRecipeDetail(dish.id)">
-                            📖 Công thức
+                             Công thức
                           </button>
                         </div>
                       }
@@ -947,17 +953,17 @@
                 <div class="xl-planner-macros-summary">
                   <div class="xl-summary-title">
                     @if (plannerMode() === 'day') {
-                      📊 Tổng dinh dưỡng thực đơn ({{ dayPlan.mealsPerDayCount }} bữa · {{ servings() }} người):
+                       Tổng dinh dưỡng thực đơn ({{ dayPlan.mealsPerDayCount }} bữa · {{ servings() }} người):
                     } @else {
-                      📊 Dinh dưỡng {{ dayPlan.dayLabel }} (TB tuần 7 ngày: ~{{ weeklyPlanSummary().avgCaloriesPerDay }} kcal/ngày · {{ weeklyPlanSummary().totalMeals }} bữa):
+                       Dinh dưỡng {{ dayPlan.dayLabel }} (TB tuần 7 ngày: ~{{ weeklyPlanSummary().avgCaloriesPerDay }} kcal/ngày · {{ weeklyPlanSummary().totalMeals }} bữa):
                     }
                   </div>
                   <div class="xl-summary-pills">
-                    <span class="xl-sum-pill xl-sum-pill--kcal">🔥 <strong>{{ dayPlan.totalCalories }}</strong> / {{ targetDailyKcal() }} kcal</span>
-                    <span class="xl-sum-pill">💪 Đạm: <strong>{{ dayPlan.totalProtein }}g</strong> (Mục tiêu {{ targetProtein() }}g)</span>
-                    <span class="xl-sum-pill">🥬 Chất xơ: <strong>{{ dayPlan.totalFiber }}g</strong> (Mục tiêu {{ targetFiber() }}g)</span>
-                    <span class="xl-sum-pill">🌾 Tinh bột: <strong>{{ dayPlan.totalCarbs }}g</strong></span>
-                    <span class="xl-sum-pill">🥑 Chất béo: <strong>{{ dayPlan.totalFat }}g</strong></span>
+                    <span class="xl-sum-pill xl-sum-pill--kcal"> <strong>{{ dayPlan.totalCalories }}</strong> / {{ targetDailyKcal() }} kcal</span>
+                    <span class="xl-sum-pill"> Đạm: <strong>{{ dayPlan.totalProtein }}g</strong> (Mục tiêu {{ targetProtein() }}g)</span>
+                    <span class="xl-sum-pill"> Chất xơ: <strong>{{ dayPlan.totalFiber }}g</strong> (Mục tiêu {{ targetFiber() }}g)</span>
+                    <span class="xl-sum-pill"> Tinh bột: <strong>{{ dayPlan.totalCarbs }}g</strong></span>
+                    <span class="xl-sum-pill"> Chất béo: <strong>{{ dayPlan.totalFat }}g</strong></span>
                   </div>
                 </div>
 
@@ -983,11 +989,11 @@
 
                   <div class="xl-planner-buy-btns">
                     <button type="button" class="xl-planner-buy-day" (click)="buyDayPlanIngredients(dayPlan)">
-                      🛒 Mua nguyên liệu {{ plannerMode() === 'day' ? 'Thực đơn Ngày (-12%)' : dayPlan.dayLabel + ' (-12%)' }}
+                       Mua nguyên liệu {{ plannerMode() === 'day' ? 'Thực đơn Ngày (-12%)' : dayPlan.dayLabel + ' (-12%)' }}
                     </button>
                     @if (plannerMode() === 'week') {
                       <button type="button" class="xl-planner-buy-week" (click)="buyFullWeekIngredients()">
-                        🧺 Mua trọn gói Cả Tuần 7 Ngày (-20%)
+                         Mua trọn gói Cả Tuần 7 Ngày (-20%)
                       </button>
                     }
 
@@ -1004,8 +1010,8 @@
         <section class="xl-results-section" id="nutrition-results-section" aria-label="Kết quả gợi ý món ăn">
           <div class="xl-results-header">
             <div>
-              <span class="xl-plans-pill" style="background:#dcfce7;color:#166534">🥗 KHO 14 MÓN ĂN &amp; NGUYÊN LIỆU TƯƠI SẠCH TỪ MONGODB</span>
-              <h2 class="xl-results-title">Khám Phá Món Ăn &amp; Gói Combo Thực Đơn</h2>
+              <span class="xl-plans-pill" style="background:#dcfce7;color:#166534">GỢI Ý MÓN ĂN</span>
+              <h2 class="xl-results-title">Món ăn và thực đơn</h2>
               <p class="xl-results-sub">
                 Tìm kiếm theo nguyên liệu (sữa chua, cá hồi, quả bơ, thịt bò, gà...), lọc theo <strong>Liên quan nhất · Món rẻ nhất · Món đắt nhất · Gần đây đã ăn</strong> hoặc nhấn <strong>"+ Vào Plan"</strong> để đưa món bất kỳ vào lịch ăn của bạn.
               </p>
@@ -1016,7 +1022,7 @@
               [class.active]="showAdvancedConfig()"
               (click)="showAdvancedConfig.set(!showAdvancedConfig())"
             >
-              🍱 {{ showAdvancedConfig() ? 'Ẩn 4 Gói Combo Đi Chợ Nhanh' : 'Xem 4 Gói Combo Đi Chợ Tiết Kiệm (-20%)' }}
+               {{ showAdvancedConfig() ? 'Ẩn 4 Gói Combo Đi Chợ Nhanh' : 'Xem 4 Gói Combo Đi Chợ Tiết Kiệm (-20%)' }}
             </button>
           </div>
 
@@ -1028,7 +1034,7 @@
                   <div class="xl-plan-img-banner" (click)="openPlanDetail(plan.id)">
                     <img [src]="plan.image" [alt]="plan.name" (error)="onImageError($event)" loading="lazy" />
                     <span class="xl-plan-badge">{{ plan.badge }}</span>
-                    <span class="xl-plan-kcal">🔥 {{ plan.calories }}</span>
+                    <span class="xl-plan-kcal"> {{ plan.calories }}</span>
                   </div>
 
                   <h3 class="xl-plan-name xl-plan-name-clickable" (click)="openPlanDetail(plan.id)">{{ plan.name }}</h3>
@@ -1045,10 +1051,10 @@
 
                   <div class="xl-plan-actions">
                     <button type="button" class="xl-plan-filter-btn" (click)="openPlanDetail(plan.id)">
-                      📖 Xem chi tiết gói
+                       Xem chi tiết gói
                     </button>
                     <button type="button" class="xl-plan-buy-btn" (click)="addMealPlanToCart(plan)">
-                      🛒 Mua gói (-{{ plan.discountPercent }}%)
+                       Mua gói (-{{ plan.discountPercent }}%)
                     </button>
                   </div>
                 </article>
@@ -1072,7 +1078,7 @@
                   (ngModelChange)="searchQuery.set($event)"
                 />
                 @if (searchQuery()) {
-                  <button type="button" class="xl-search-clear-btn" (click)="searchQuery.set('')" title="Xóa tìm kiếm">✕</button>
+                  <button type="button" class="xl-search-clear-btn" (click)="searchQuery.set('')" title="Xóa tìm kiếm"></button>
                 }
               </div>
 
@@ -1098,16 +1104,16 @@
                   Tất cả ({{ results().length }})
                 </button>
                 <button type="button" class="xl-cat-tab" [class.active]="categoryTab() === 'yogurt'" (click)="categoryTab.set('yogurt')">
-                  🥛 Sữa chua &amp; Trái cây
+                   Sữa chua &amp; Trái cây
                 </button>
                 <button type="button" class="xl-cat-tab" [class.active]="categoryTab() === 'protein'" (click)="categoryTab.set('protein')">
-                  🥩 Giàu Đạm
+                   Giàu Đạm
                 </button>
                 <button type="button" class="xl-cat-tab" [class.active]="categoryTab() === 'fiber'" (click)="categoryTab.set('fiber')">
-                  🥦 Eat Clean
+                   Eat Clean
                 </button>
                 <button type="button" class="xl-cat-tab" [class.active]="categoryTab() === 'vitamin'" (click)="categoryTab.set('vitamin')">
-                  🍊 Vitamin
+                   Vitamin
                 </button>
               </div>
 
@@ -1118,7 +1124,7 @@
                   [class.active]="sortBy() === 'relevant'"
                   (click)="sortBy.set('relevant')"
                 >
-                  🎯 Liên quan nhất
+                   Liên quan nhất
                 </button>
                 <button
                   type="button"
@@ -1126,7 +1132,7 @@
                   [class.active]="sortBy() === 'cheapest'"
                   (click)="sortBy.set('cheapest')"
                 >
-                  💰 Món rẻ nhất
+                   Món rẻ nhất
                 </button>
                 <button
                   type="button"
@@ -1134,7 +1140,7 @@
                   [class.active]="sortBy() === 'most_expensive'"
                   (click)="sortBy.set('most_expensive')"
                 >
-                  💎 Món đắt nhất
+                   Món đắt nhất
                 </button>
                 <button
                   type="button"
@@ -1142,7 +1148,7 @@
                   [class.active]="sortBy() === 'recent'"
                   (click)="sortBy.set('recent')"
                 >
-                  🕒 Gần đây đã ăn ({{ recentMealsCount() }})
+                   Gần đây đã ăn ({{ recentMealsCount() }})
                 </button>
               </div>
             </div>
@@ -1169,7 +1175,7 @@
                       loading="lazy"
                     />
                     <span class="xl-clean-score-badge">{{ recipe.matchScore }}% phù hợp</span>
-                    <span class="xl-clean-time-badge">🔥 {{ recipe.calories }} kcal · ⏱ {{ recipe.prepTime }}</span>
+                    <span class="xl-clean-time-badge"> {{ recipe.calories }} kcal ·  {{ recipe.prepTime }}</span>
                     @if (isRecentMeal(recipe)) {
                       <span class="xl-clean-recent-badge">{{ getRecentBadgeText(recipe) }}</span>
                     }
@@ -1185,7 +1191,7 @@
 
                     @if (recipe.chefTips) {
                       <div class="xl-clean-chef-tip">
-                        <span>💡 <strong>Mẹo đầu bếp:</strong> {{ recipe.chefTips }}</span>
+                        <span> <strong>Mẹo đầu bếp:</strong> {{ recipe.chefTips }}</span>
                       </div>
                     }
 
@@ -1282,16 +1288,16 @@
                           (click)="assignRecipeToPlanner(recipe)"
                           title="Thêm món này vào lịch thực đơn Ngày/Tuần"
                         >
-                          📅 + Vào Plan
+                           + Vào Plan
                         </button>
                       </div>
 
                       <div class="xl-clean-cta-btns">
                         <button type="button" class="xl-clean-btn-outline" (click)="openRecipeDetail(recipe.id)">
-                          📖 Chi tiết &amp; Cách nấu
+                           Chi tiết &amp; Cách nấu
                         </button>
                         <button type="button" class="xl-clean-btn-solid" (click)="addAllToCart(recipe)">
-                          🛒 Mua nguyên liệu (-10%)
+                           Mua nguyên liệu (-10%)
                         </button>
                       </div>
                     </div>

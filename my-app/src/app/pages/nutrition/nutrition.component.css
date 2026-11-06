@@ -645,6 +645,28 @@
   .xl-primary-btn { width: 100%; justify-content: center; }
 }
 
+/* Simplified nutrition planner visual hierarchy. */
+.xl-planner-card { border: 1px solid #d3dfb9; border-radius: 8px; background: #fff; box-shadow: 4px 5px 0 #e5edcf; padding: 26px; }
+.xl-planner-kicker { border-radius: 4px; background: #edf4e5; color: #31540d; }
+.xl-studio-steps-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.xl-studio-step-box { border: 1px solid #e1e8d8; border-radius: 7px; box-shadow: none; padding: 18px; }
+.xl-studio-step-num { border-radius: 4px; background: #31540d; }
+.xl-goal-style-cards { gap: 8px; }
+.xl-goal-style-card { gap: 10px; padding: 11px; border: 1px solid #e1e8d8; border-radius: 6px; background: #fff; }
+.xl-goal-style-card.active { border-color: #93b747; background: #f7fbe9; box-shadow: inset 3px 0 #31540d; }
+.xl-gsc-icon { display: none; }
+.xl-mode-card-btn, .xl-boost-chip, .xl-mini-pill { border-radius: 5px; }
+.xl-detail-hero-grid { gap: 24px; }
+.xl-clean-recipe-card { border-radius: 7px 20px 7px 20px; box-shadow: 3px 4px 0 #e5edcf; }
+.xl-clean-recipe-card:hover { box-shadow: 5px 6px 0 #d8f56a; }
+.xl-floating-icon { display: inline-flex; width: 34px; height: 34px; align-items: center; justify-content: center; }
+.xl-floating-icon svg { width: 24px; height: 24px; }
+@media (max-width: 980px) { .xl-studio-steps-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  .xl-planner-card { padding: 18px 14px; border-radius: 7px; }
+  .xl-studio-steps-grid { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 480px) {
   .xl-goals-grid { grid-template-columns: 1fr; gap: 8px; }
   .xl-controls-grid { grid-template-columns: 1fr; }
@@ -4524,3 +4546,123 @@
     flex-direction: column;
   }
 }
+
+/* Page-wide visual cleanup: calmer hierarchy, fewer decorative surfaces. */
+.xanhla-nutrition-page { background: #fbfcf8; }
+.xanhla-nutrition-page > .xanhla-container { max-width: 1240px; }
+.xl-modern-hero {
+  grid-template-columns: minmax(0, 1.05fr) minmax(280px, .8fr);
+  gap: 36px; margin: 18px 0 34px; padding: 38px 42px;
+  border: 1px solid #dbe6d2; border-radius: 10px;
+  background: #f3f7ed; color: #203323; box-shadow: none;
+}
+.xl-modern-hero .xl-hero-kicker {
+  padding: 0; margin-bottom: 13px; border: 0; border-radius: 0;
+  background: transparent; color: #58713f; font-size: 11px; letter-spacing: .1em;
+}
+.xl-modern-hero-title { max-width: 600px; color: #263d27; font-size: clamp(30px, 3vw, 42px); line-height: 1.12; letter-spacing: -.035em; }
+.xl-modern-hero-sub { max-width: 560px; margin-bottom: 20px; color: #586555; font-size: 14px; line-height: 1.75; }
+.xl-modern-hero-visual { border-radius: 8px; aspect-ratio: 16 / 10; box-shadow: 0 8px 22px rgba(27, 53, 24, .1); }
+.xl-hero-floating-card { bottom: 10px; left: 10px; right: 10px; padding: 12px 14px; border-radius: 6px; box-shadow: none; }
+.xl-hero-floating-card strong { color: #29470b; }
+.xl-hero-floating-card span { color: #65705e; }
+.xl-hero-btn-primary, .xl-hero-btn-secondary, .xl-hero-btn-accent { min-height: 42px; padding: 11px 16px; border-radius: 5px; box-shadow: none; font-size: 12px; }
+.xl-hero-btn-primary { background: #31540d; color: #fff; }
+.xl-hero-btn-primary:hover { background: #243f0a; }
+.xl-hero-btn-secondary { border: 1px solid #c7d3bd; background: #fff; color: #31540d; }
+.xl-hero-btn-secondary:hover { background: #f7f9f3; }
+.xl-hero-btn-accent { border: 1px solid #c7d3bd; background: transparent; color: #31540d; }
+.xl-planner-card { margin-bottom: 34px; padding: 26px; border: 1px solid #dfe7d8; border-radius: 8px; background: #fff; box-shadow: none; }
+.xl-planner-top { margin-bottom: 14px; }
+.xl-planner-heading { color: #293a29; font-size: 24px; letter-spacing: -.02em; }
+.xl-planner-sub { max-width: 720px; color: #687264; font-size: 13px; }
+.xl-planner-kicker { padding: 0; margin: 0 0 8px; background: none; color: #728264; font-size: 10px; letter-spacing: .1em; }
+.xl-studio-steps-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 20px; }
+.xl-studio-step-box { padding: 18px; border: 1px solid #e4e9df; border-radius: 7px; background: #fff; }
+.xl-studio-step-box:nth-child(3) { grid-column: 1 / -1; }
+.xl-studio-step-head { flex-direction: row; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+.xl-studio-step-num { flex: 0 0 auto; margin: 0; padding: 4px 8px; border-radius: 3px; background: #edf3e7; color: #496236; font-size: 9px; }
+.xl-studio-step-head h3 { color: #344333; font-size: 14px; }
+.xl-studio-step-head p { color: #7a8275; font-size: 11px; }
+.xl-goal-style-card { border-radius: 5px; }
+.xl-gsc-icon { display: none !important; }
+.xl-goal-style-card.active { box-shadow: inset 3px 0 #6e8b46; }
+.xl-results-section { margin-top: 38px; }
+.xl-results-header { align-items: flex-end; margin-bottom: 18px; }
+.xl-results-title { margin: 7px 0 6px; color: #293a29; font-size: 26px; letter-spacing: -.025em; }
+.xl-results-sub { max-width: 800px; color: #687264; line-height: 1.65; }
+.xl-config-toggle-btn { border-radius: 5px; border-color: #cbd7bf; color: #31540d; }
+.xl-clean-recipes-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.xl-clean-recipe-card { border: 1px solid #e0e6da; border-radius: 7px; box-shadow: none; }
+.xl-clean-recipe-card:hover { transform: translateY(-2px); border-color: #a9bd8e; box-shadow: 0 8px 20px rgba(37, 61, 22, .08); }
+.xl-clean-score-badge, .xl-clean-time-badge, .xl-clean-recent-badge { border-radius: 3px; }
+.xl-clean-card-body { padding: 16px; }
+@media (max-width: 900px) {
+  .xl-modern-hero { gap: 24px; padding: 30px; }
+  .xl-clean-recipes-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 680px) {
+  .xl-modern-hero { grid-template-columns: 1fr; gap: 22px; padding: 24px 20px; }
+  .xl-modern-hero-visual { max-height: 260px; }
+  .xl-modern-hero-btns { gap: 8px; }
+  .xl-studio-steps-grid { grid-template-columns: 1fr; }
+  .xl-studio-step-box:nth-child(3) { grid-column: auto; }
+  .xl-planner-card { padding: 18px 14px; }
+  .xl-clean-recipes-grid { grid-template-columns: 1fr; }
+}
+
+/* Use the shared Home, Cook and Events colors across nutrition views. */
+.xanhla-nutrition-page {
+  --nutrition-forest: var(--green-900, #1b3d1b);
+  --nutrition-green: var(--green-700, #2d6a2d);
+  --nutrition-leaf: var(--green-500, #4a8f4a);
+  --nutrition-pale: var(--green-50, #f2faf2);
+  --nutrition-soft: var(--green-100, #e8f5e8);
+  --nutrition-amber: var(--amber-500, #e8a020);
+  --nutrition-line: var(--border, #d4e8d4);
+  --nutrition-muted: var(--muted, #5a7a5a);
+  background: #fff;
+  color: var(--ink, #1c3a1c);
+}
+.xl-modern-hero { border-color: var(--nutrition-line); background: var(--nutrition-pale); }
+.xl-modern-hero .xl-hero-kicker, .xl-planner-kicker { color: var(--nutrition-green); }
+.xl-modern-hero-title, .xl-planner-heading, .xl-studio-step-head h3,
+.xl-results-title { color: var(--nutrition-forest); }
+.xl-modern-hero-sub, .xl-planner-sub, .xl-studio-step-head p,
+.xl-results-sub { color: var(--nutrition-muted); }
+.xl-hero-btn-primary, .xl-studio-step-num, .xl-clean-btn-solid,
+.xl-plan-buy-btn, .xl-cat-tab.active, .xl-sort-pill.active,
+.xl-quick-chip.active, .xl-mode-card-btn.active {
+  border-color: var(--nutrition-green);
+  background: var(--nutrition-green);
+  color: #fff;
+}
+.xl-hero-btn-primary:hover, .xl-clean-btn-solid:hover, .xl-plan-buy-btn:hover,
+.xl-cat-tab.active:hover, .xl-sort-pill.active:hover,
+.xl-quick-chip.active:hover { background: var(--nutrition-forest); color: #fff; }
+.xl-hero-btn-secondary, .xl-hero-btn-accent, .xl-config-toggle-btn,
+.xl-goal-style-card, .xl-mode-card-btn, .xl-boost-chip, .xl-mini-pill {
+  border-color: var(--nutrition-line);
+}
+.xl-hero-btn-secondary, .xl-hero-btn-accent, .xl-config-toggle-btn { color: var(--nutrition-green); }
+.xl-hero-btn-secondary:hover, .xl-hero-btn-accent:hover,
+.xl-goal-style-card:hover, .xl-mode-card-btn:hover,
+.xl-boost-chip:hover, .xl-mini-pill:hover { background: var(--nutrition-pale); border-color: var(--nutrition-leaf); }
+.xl-planner-card, .xl-studio-step-box, .xl-clean-recipe-card { border-color: var(--nutrition-line); }
+.xl-studio-step-num { border: 0; background: var(--nutrition-soft); color: var(--nutrition-green); }
+.xl-goal-style-card.active, .xl-mode-card-btn.active, .xl-boost-chip.active,
+.xl-mini-pill.active { border-color: var(--nutrition-green); background: var(--nutrition-soft); color: var(--nutrition-forest); }
+.xl-goal-style-card.active { box-shadow: inset 3px 0 var(--nutrition-green); }
+.xl-clean-recipe-card:hover { border-color: var(--nutrition-leaf); }
+.xl-clean-card-media { background: var(--nutrition-pale); }
+.xl-clean-score-badge, .xl-clean-recent-badge { background: var(--nutrition-green); color: #fff; }
+.xl-clean-time-badge { background: rgba(255, 255, 255, .95); color: var(--nutrition-forest); }
+.xl-gpb-status-pill { color: var(--nutrition-green); background: var(--nutrition-soft); }
+.xl-feedback-toast { background: var(--nutrition-forest); }
+.xl-range-slider, .xl-checkbox { accent-color: var(--nutrition-green); }
+.xl-search-input-wrap:focus-within { border-color: var(--nutrition-green); }
+.xl-md-segment--p { background: var(--nutrition-green); }
+.xl-md-segment--c { background: var(--nutrition-amber); }
+.xl-md-leg--p, .xl-md-leg--f { color: var(--nutrition-green); }
+.xl-md-leg--c, .xl-macro-warning { color: #9a650d; }
+.xl-clean-chef-tip { background: var(--amber-100, #fff8e6); border-left-color: var(--nutrition-amber); color: #76520d; }

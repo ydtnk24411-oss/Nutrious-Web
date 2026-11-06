@@ -13,40 +13,38 @@
     <!-- ===== HERO BANNER ===== -->
     <section class="promo-hero-banner">
       <div class="promo-hero-content">
-        <span class="promo-hero-kicker">🎁 Săn Deal Tươi Sạch · Dữ Liệu Trực Tuyến</span>
+        <span class="promo-hero-kicker"> Săn Deal Tươi Sạch · Dữ Liệu Trực Tuyến</span>
         <h1 class="promo-hero-title">Khuyến mãi, Deal Nông Sản &amp; Ví Voucher</h1>
         <p class="promo-hero-sub">
           Săn ngay các deal rau củ quả hữu cơ giảm giá mỗi ngày, đặt combo bữa ăn tiết kiệm, sao chép mã giảm giá hoặc lưu vào Ví Voucher để chọn áp dụng trực tiếp khi thanh toán.
         </p>
         <div class="promo-hero-ctas">
           <button type="button" class="btn-primary-hero" (click)="scrollToSection('deals-section')">
-            🔥 Săn Deal Nông Sản ({{ productDeals().length }})
+             Săn Deal Nông Sản ({{ productDeals().length }})
           </button>
-          <button type="button" class="btn-outline-hero" (click)="scrollToSection('wallet-section')">
-            🎟️ Ví Voucher của tôi ({{ voucher.availableVouchers().length }})
-          </button>
+          <a class="btn-outline-hero" routerLink="/vouchers">Ví Voucher của tôi ({{ voucher.availableVouchers().length }})</a>
           <button type="button" class="btn-outline-hero" (click)="goToLoyalty()">
-            ⭐ Điểm thưởng ({{ cart.currentUser()?.points || 0 }} điểm)
+            Điểm thưởng ({{ cart.currentUser()?.points || 0 }} điểm)
           </button>
         </div>
       </div>
       <div class="promo-hero-badges">
         <button type="button" class="hero-badge-card" (click)="scrollToSection('deals-section')">
-          <span class="hero-badge-icon">🥬</span>
+          <span class="hero-badge-icon"></span>
           <div>
             <span class="hero-badge-label">Flash Sale Nông Sản ({{ productDeals().length }} deal)</span>
             <span class="hero-badge-desc">Giảm trực tiếp 15% – 35% mỗi ngày</span>
           </div>
         </button>
         <button type="button" class="hero-badge-card" (click)="scrollToSection('combos-section')">
-          <span class="hero-badge-icon">🍱</span>
+          <span class="hero-badge-icon"></span>
           <div>
             <span class="hero-badge-label">Combo Bữa Ăn Tiết Kiệm ({{ comboDeals().length }} gói)</span>
             <span class="hero-badge-desc">Mua trọn gói nguyên liệu giảm 22%</span>
           </div>
         </button>
         <button type="button" class="hero-badge-card" (click)="scrollToSection('vouchers-section')">
-          <span class="hero-badge-icon">🎟️</span>
+          <span class="hero-badge-icon"></span>
           <div>
             <span class="hero-badge-label">Kho Voucher ({{ promotions().length }} mã)</span>
             <span class="hero-badge-desc">Sao chép &amp; Lưu vào ví dùng khi thanh toán</span>
@@ -57,7 +55,7 @@
 
     @if (toastMessage()) {
       <div class="promo-toast" role="status">
-        <span>✨ {{ toastMessage() }}</span>
+        <span> {{ toastMessage() }}</span>
         <div style="display:flex;gap:12px;align-items:center">
           <a routerLink="/cart" class="promo-toast-link">Xem Giỏ hàng</a>
           <a routerLink="/checkout" class="promo-toast-link">Đến Thanh toán →</a>
@@ -69,12 +67,12 @@
     <section class="promo-deals-section" id="deals-section">
       <div class="promo-section-head">
         <div>
-          <span class="section-pill">🔥 FLASH SALE TRONG NGÀY</span>
+          <span class="section-pill"> FLASH SALE TRONG NGÀY</span>
           <h2 class="promo-section-title">Deal Nông Sản Tươi Sạch Giá Tốt</h2>
           <p class="promo-section-sub">Nông sản thu hoạch mới trong ngày từ nông trại Đà Lạt &amp; đối tác VietGAP — Thêm trực tiếp vào giỏ với giá ưu đãi</p>
         </div>
         <div class="promo-flash-timer-box">
-          <span class="pft-icon">⏳</span>
+          <span class="pft-icon"></span>
           <div class="pft-text">
             <span class="pft-label">Phiên Flash Sale kết thúc sau:</span>
             <strong class="pft-clock">{{ flashSaleCountdown() }}</strong>
@@ -87,16 +85,16 @@
           Tất cả Deal ({{ productDeals().length }})
         </button>
         <button type="button" class="deal-filter-chip" [class.active]="dealCategoryFilter() === 'vegetables'" (click)="dealCategoryFilter.set('vegetables')">
-          🥬 Rau củ hữu cơ
+           Rau củ hữu cơ
         </button>
         <button type="button" class="deal-filter-chip" [class.active]="dealCategoryFilter() === 'fruits'" (click)="dealCategoryFilter.set('fruits')">
-          🍎 Trái cây tươi
+           Trái cây tươi
         </button>
         <button type="button" class="deal-filter-chip" [class.active]="dealCategoryFilter() === 'meat'" (click)="dealCategoryFilter.set('meat')">
-          🥩 Thịt &amp; Hải sản
+           Thịt &amp; Hải sản
         </button>
         <button type="button" class="deal-filter-chip" [class.active]="dealCategoryFilter() === 'dry'" (click)="dealCategoryFilter.set('dry')">
-          🌾 Hạt, Khô &amp; Đồ uống
+           Hạt, Khô &amp; Đồ uống
         </button>
       </div>
 
@@ -128,7 +126,7 @@
                   <div class="deal-progress-bar">
                     <div class="deal-progress-fill" [style.width.%]="deal.soldPercent"></div>
                   </div>
-                  <span class="deal-progress-text">🔥 Đã bán {{ deal.soldCount }}/{{ deal.totalQuota }} suất</span>
+                  <span class="deal-progress-text"> Đã bán {{ deal.soldCount }}/{{ deal.totalQuota }} suất</span>
                 </div>
 
                 <div class="deal-card-actions">
@@ -149,7 +147,7 @@
       <section class="promo-combos-section" id="combos-section">
         <div class="promo-section-head">
           <div>
-            <span class="section-pill section-pill--amber">🍱 COMBO ĐI CHỢ THÔNG MINH</span>
+            <span class="section-pill section-pill--amber"> COMBO ĐI CHỢ THÔNG MINH</span>
             <h2 class="promo-section-title">Combo Nguyên Liệu Theo Bữa Ăn Tiết Kiệm</h2>
             <p class="promo-section-sub">Trọn bộ nguyên liệu tươi sạch từ thực đơn dinh dưỡng — Mua theo combo tiết kiệm 22% kèm mã giảm giá</p>
           </div>
@@ -162,7 +160,7 @@
               <a [routerLink]="['/nutrition']" [queryParams]="{ recipe: combo.id }" class="combo-deal-img-wrap" style="display:block;text-decoration:none">
                 <img [src]="combo.image" [alt]="combo.name" loading="lazy" (error)="onImageError($event)" />
                 <span class="combo-badge">{{ combo.badge }}</span>
-                <span class="combo-time">⏱ {{ combo.prepTime }}</span>
+                <span class="combo-time"> {{ combo.prepTime }}</span>
               </a>
               <div class="combo-deal-body">
                 <h3 class="combo-deal-title">
@@ -174,7 +172,7 @@
                   <div class="combo-ingredients-label">Nguyên liệu trong combo ({{ combo.items.length }} món):</div>
                   <div class="combo-ingredients-tags">
                     @for (item of combo.items; track item.name) {
-                      <span class="combo-ing-chip">✓ {{ item.name }} ({{ item.unit }})</span>
+                      <span class="combo-ing-chip"> {{ item.name }} ({{ item.unit }})</span>
                     }
                   </div>
                 </div>
@@ -190,10 +188,10 @@
                   </div>
                   <div class="combo-actions-group">
                     <a [routerLink]="['/nutrition']" [queryParams]="{ recipe: combo.id }" class="combo-detail-link">
-                      📖 Xem chi tiết món
+                       Xem chi tiết món
                     </a>
                     <button type="button" class="combo-buy-btn" (click)="addComboToCart(combo)">
-                      🛒 Thêm Combo vào giỏ
+                       Thêm Combo vào giỏ
                     </button>
                   </div>
                 </div>
@@ -208,7 +206,7 @@
     <section class="promo-cards-section" id="vouchers-section">
       <div class="promo-section-head">
         <div>
-          <span class="section-pill section-pill--teal">🎟️ KHO MÃ GIẢM GIÁ XANH LÁ</span>
+          <span class="section-pill section-pill--teal"> KHO MÃ GIẢM GIÁ XANH LÁ</span>
           <h2 class="promo-section-title">Các Chương Trình Khuyến Mãi &amp; Mã Ưu Đãi</h2>
           <p class="promo-section-sub">Nhấn "Sao chép mã" để hiện mã giảm giá (mã sẽ hiển thị cố định không bị ẩn) hoặc "Lưu vào ví" để chọn trực tiếp lúc thanh toán</p>
         </div>
@@ -220,13 +218,13 @@
           Tất cả ưu đãi ({{ voucherFilterCounts().all }})
         </button>
         <button type="button" class="deal-filter-chip" [class.active]="voucherCategoryFilter() === 'percentage'" (click)="voucherCategoryFilter.set('percentage')">
-          🏷️ Giảm theo % ({{ voucherFilterCounts().percentage }})
+           Giảm theo % ({{ voucherFilterCounts().percentage }})
         </button>
         <button type="button" class="deal-filter-chip" [class.active]="voucherCategoryFilter() === 'fixed'" (click)="voucherCategoryFilter.set('fixed')">
-          💵 Giảm tiền trực tiếp ({{ voucherFilterCounts().fixed }})
+           Giảm tiền trực tiếp ({{ voucherFilterCounts().fixed }})
         </button>
         <button type="button" class="deal-filter-chip" [class.active]="voucherCategoryFilter() === 'low_min'" (click)="voucherCategoryFilter.set('low_min')">
-          ✨ Đơn nhỏ từ 0đ – 150K ({{ voucherFilterCounts().lowMin }})
+           Đơn nhỏ từ 0đ – 150K ({{ voucherFilterCounts().lowMin }})
         </button>
       </div>
 
@@ -239,7 +237,9 @@
             <article class="promo-card" [class]="'promo-card--' + promo.color">
               <div class="promo-card-badge">{{ promo.badge }}</div>
               <div class="promo-card-body">
-                <div class="promo-card-icon">{{ promo.icon }}</div>
+                <div class="promo-card-icon" aria-hidden="true">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7.5A2.5 2.5 0 0 0 6.5 5h11A2.5 2.5 0 0 0 20 7.5v1a2 2 0 0 0 0 4v1a2.5 2.5 0 0 0-2.5 2.5h-11A2.5 2.5 0 0 0 4 13.5v-1a2 2 0 0 0 0-4z"/><path d="M12 8v1m0 3v1m0 3v1"/></svg>
+                </div>
                 <h3 class="promo-card-title">{{ promo.title }}</h3>
                 <p class="promo-card-desc">{{ promo.desc }}</p>
 
@@ -255,7 +255,7 @@
                     (click)="copyPromoCode(promo.code, $event)"
                     title="Sao chép mã để sử dụng"
                   >
-                    {{ isCopied(promo.code) ? '✓ Mã: ' + promo.code : '📋 Sao chép mã' }}
+                    {{ isCopied(promo.code) ? ' Mã: ' + promo.code : ' Sao chép mã' }}
                   </button>
                 </div>
 
@@ -276,7 +276,7 @@
                   [disabled]="isSaved(promo.voucherId)"
                   (click)="savePromoVoucher(promo.voucherId, $event)"
                 >
-                  {{ isSaved(promo.voucherId) ? '✓ Đã lưu ví' : '+ Lưu vào ví' }}
+                  {{ isSaved(promo.voucherId) ? ' Đã lưu ví' : '+ Lưu vào ví' }}
                 </button>
                 <button type="button" class="promo-card-cta" (click)="handlePromoAction(promo)">
                   {{ promo.cta }} →
@@ -294,134 +294,7 @@
       }
     </section>
 
-    <!-- ===== 4. TABS: VÍ VOUCHER / ĐIỂM THƯỞNG ===== -->
-    <section class="promo-manage-section" id="wallet-section">
-      <h2 class="promo-section-title">Quản lý ưu đãi của tôi</h2>
-
-      <div class="promotions-tabs" role="tablist">
-        <button
-          type="button"
-          class="promotions-tab"
-          id="tab-vouchers"
-          role="tab"
-          [attr.aria-selected]="activeTab() === 'vouchers'"
-          [class.is-active]="activeTab() === 'vouchers'"
-          (click)="setTab('vouchers')"
-          aria-controls="panel-vouchers"
-        >
-          🎟️ Ví Voucher &amp; Ưu đãi ({{ voucher.availableVouchers().length }} đã lưu)
-        </button>
-        <button
-          type="button"
-          class="promotions-tab"
-          id="tab-points"
-          role="tab"
-          [attr.aria-selected]="activeTab() === 'points'"
-          [class.is-active]="activeTab() === 'points'"
-          (click)="setTab('points')"
-          aria-controls="panel-points"
-        >
-          ⭐ Điểm thưởng ({{ cart.currentUser()?.points || 0 }} điểm)
-        </button>
-      </div>
-
-      <div class="promotions-content">
-        @if (activeTab() === 'vouchers') {
-          <div id="panel-vouchers" role="tabpanel">
-            <div class="wallet-toolbar">
-              <div class="wallet-filters">
-                <button
-                  type="button"
-                  class="wallet-filter-btn"
-                  [class.active]="walletFilter() === 'all'"
-                  (click)="walletFilter.set('all')"
-                >
-                  Tất cả ưu đãi ({{ voucher.publicVouchers().length }})
-                </button>
-                <button
-                  type="button"
-                  class="wallet-filter-btn"
-                  [class.active]="walletFilter() === 'saved'"
-                  (click)="walletFilter.set('saved')"
-                >
-                  Đã lưu trong ví ({{ voucher.availableVouchers().length }})
-                </button>
-              </div>
-              <a routerLink="/checkout" class="btn-redirect-secondary">Đến trang Thanh toán →</a>
-            </div>
-
-            @if (filteredWalletVouchers().length === 0) {
-              <div class="redirect-notice">
-                <div class="redirect-notice-icon">🎟️</div>
-                <h2>Bạn chưa lưu voucher nào vào ví</h2>
-                <p>Hãy nhấn "Lưu vào ví" ở các thẻ ưu đãi phía trên hoặc xem toàn bộ danh sách ưu đãi để sử dụng khi thanh toán.</p>
-                <div class="redirect-notice-actions">
-                  <button type="button" class="btn-redirect" (click)="walletFilter.set('all')">
-                    Xem tất cả ưu đãi
-                  </button>
-                </div>
-              </div>
-            } @else {
-              <div class="wallet-mini-grid">
-                @for (v of filteredWalletVouchers(); track v.id) {
-                  <div class="wallet-mini-card">
-                    <div class="wallet-mini-left">
-                      <span class="wallet-mini-badge">
-                        {{ v.type === 'percentage' ? '-' + v.value + '%' : '-' + (v.value / 1000) + 'K' }}
-                      </span>
-                      <span class="wallet-mini-code">{{ v.code }}</span>
-                    </div>
-                    <div class="wallet-mini-mid">
-                      <h4>{{ v.name }}</h4>
-                      <p>{{ v.description }}</p>
-                      <small>Đơn tối thiểu: {{ (v.minValue || 0).toLocaleString('vi-VN') }}đ · HSD: {{ v.endDate }}</small>
-                    </div>
-                    <div class="wallet-mini-right">
-                      <button
-                        type="button"
-                        class="promo-code-copy"
-                        [class.copied]="isCopied(v.code)"
-                        (click)="copyPromoCode(v.code, $event)"
-                      >
-                        {{ isCopied(v.code) ? '✓ ' + v.code : 'Sao chép mã' }}
-                      </button>
-                      @if (isSaved(v.id)) {
-                        <span class="wallet-saved-pill">✓ Đã lưu ví</span>
-                      } @else {
-                        <button type="button" class="wallet-save-btn" (click)="savePromoVoucher(v.id, $event)">
-                          + Lưu vào ví
-                        </button>
-                      }
-                      <a routerLink="/checkout" [queryParams]="{ voucher: v.code }" class="wallet-apply-link">
-                        Dùng ngay →
-                      </a>
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        } @else {
-          <div class="redirect-notice" id="panel-points" role="tabpanel">
-            <div class="redirect-notice-icon">⭐</div>
-            <h2>Điểm thưởng Xanh Lá Club</h2>
-            <p>Kiểm tra số dư điểm tích lũy sau mỗi đơn hàng, đổi phiếu giảm giá và nâng hạng thành viên thân thiết.</p>
-            <div class="redirect-notice-actions">
-              <button type="button" class="btn-redirect" (click)="goToLoyalty()">
-                Đến trang Điểm thưởng
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-              </button>
-              <a routerLink="/account" class="btn-redirect-secondary">Xem tài khoản</a>
-            </div>
-            <div class="redirect-features">
-              <span>✓ 1.000đ = 1 điểm thưởng</span>
-              <span>✓ Đổi voucher trực tiếp bằng điểm</span>
-              <span>✓ Đặc quyền thành viên VIP</span>
-            </div>
-          </div>
-        }
-      </div>
-    </section>
+    <!-- The saved voucher wallet lives on the dedicated /vouchers page. -->
 
     <!-- ===== HOW IT WORKS ===== -->
     <section class="promo-how-section">
