@@ -56,7 +56,7 @@ export class AdminAuthService {
       user: AdminUser;
       isNewUser?: boolean;
       message?: string;
-    }>('/auth/google', data).pipe(
+    }>('/auth/google', { ...data, forAdmin: true }).pipe(
       tap(res => {
         if (res.success && ['admin', 'sales', 'warehouse', 'support', 'content'].includes(res.user.role)) {
           localStorage.setItem(TOKEN_KEY, res.token);

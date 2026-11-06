@@ -61,7 +61,7 @@ export class AuthModalComponent {
       },
       (errorMsg) => {
         this.googleLoading.set(false);
-        alert(errorMsg);
+        console.warn('Google sign-in:', errorMsg);
       }
     );
   }

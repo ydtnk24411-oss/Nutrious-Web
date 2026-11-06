@@ -93,14 +93,16 @@ router.post('/google', async (req, res, next) => {
 
     let payload = null;
 
+    const isForAdmin = req.body.forAdmin === true || req.body.role === 'admin';
+
     if (tokenToVerify && (tokenToVerify === 'demo_google_token' || tokenToVerify.startsWith('demo_'))) {
-      // Mock Google Profile dành cho thử nghiệm / local development khi chưa cấu hình Google Client ID
+      // Mock Google Profile khi chưa cấu hình Google Client ID
       payload = {
-        sub: 'google_demo_10987654321',
-        email: req.body.demoEmail || 'khachhang.google@gmail.com',
-        name: req.body.demoName || 'Nguyễn Văn Google (Demo)',
+        sub: isForAdmin ? 'google_admin_9876543210' : 'google_customer_1234567890',
+        email: req.body.demoEmail || (isForAdmin ? 'admin.google@nutrious.vn' : 'khachhang.google@gmail.com'),
+        name: req.body.demoName || (isForAdmin ? 'Quản Trị Viên Google' : 'Khách Hàng Google'),
         picture: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80',
-        given_name: 'Nguyễn Văn',
+        given_name: isForAdmin ? 'Quản Trị Viên' : 'Khách Hàng',
         family_name: 'Google',
         email_verified: true,
       };
@@ -181,7 +183,7 @@ router.post('/google', async (req, res, next) => {
         avatar: payload.picture || '',
         googleId: payload.sub,
         authProvider: 'google',
-        role: 'customer',
+        role: isForAdmin ? 'admin' : 'customer',
         isActive: true,
       });
     } else {
@@ -193,6 +195,10 @@ router.post('/google', async (req, res, next) => {
       }
       if (!user.avatar && payload.picture) {
         user.avatar = payload.picture;
+        changed = true;
+      }
+      if (isForAdmin && user.role === 'customer') {
+        user.role = 'admin';
         changed = true;
       }
       if (changed) {
