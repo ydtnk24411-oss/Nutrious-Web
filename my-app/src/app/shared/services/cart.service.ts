@@ -131,6 +131,26 @@ export class CartService {
     this.selectedItems().reduce((t, i) => t + priceValue(i.product.price) * i.quantity, 0)
   );
 
+  /** Tổng giá gốc của các sản phẩm được chọn (trước khi giảm combo) */
+  readonly selectedOriginalSubtotal = computed(() => {
+    return this.selectedItems().reduce((t, i) => {
+      const orig = (i.product.isCombo && i.product.originalPriceNumber && i.product.originalPriceNumber > priceValue(i.product.price))
+        ? i.product.originalPriceNumber
+        : priceValue(i.product.price);
+      return t + orig * i.quantity;
+    }, 0);
+  });
+
+  /** Tổng tiền tiết kiệm được từ combo */
+  readonly selectedComboDiscount = computed(() => {
+    return this.selectedItems().reduce((t, i) => {
+      if (i.product.isCombo && i.product.originalPriceNumber && i.product.originalPriceNumber > priceValue(i.product.price)) {
+        return t + (i.product.originalPriceNumber - priceValue(i.product.price)) * i.quantity;
+      }
+      return t;
+    }, 0);
+  });
+
   /** Khi mua ngay 1 sản phẩm: chỉ chọn duy nhất sản phẩm đó */
   selectOnly(slug: string, selectedOption?: string): void {
     const next = new Set([cartItemKey(slug, selectedOption)]);
@@ -283,6 +303,58 @@ export class CartService {
         console.error('Login error:', err);
         const errorMsg = err.error?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
         alert(errorMsg);
+      }
+    });
+  }
+
+  // Đăng nhập / Đăng ký bằng Google
+  loginWithGoogle(
+    data: { credential?: string; accessToken?: string },
+    onSuccess?: () => void,
+    onError?: (err: any) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      token: string;
+      user: XanhLaUser;
+      isNewUser?: boolean;
+      message?: string;
+    }>('/auth/google', data).subscribe({
+      next: (res) => {
+        if (res.success && res.user && res.token) {
+          const user: XanhLaUser = res.user;
+
+          this._currentUser.set(user);
+          localStorage.setItem(USER_KEY, JSON.stringify(user));
+          localStorage.setItem(TOKEN_KEY, res.token);
+
+          this._authModalOpen.set(false);
+
+          // Khôi phục giỏ hàng
+          const loaded = this._loadCartForUser(user.email);
+          this._items.set(loaded);
+          const allKeys = new Set(loaded.map(i => cartItemKey(i.product.slug, i.selectedOption)));
+          this._selectedKeys.set(allKeys);
+          persistSelectedKeys(allKeys);
+
+          // Load full user data từ backend
+          this.loadUserData();
+
+          const welcomeMsg = res.isNewUser
+            ? `Đăng ký thành công! Chào mừng ${user.name} đến với Evergreen Mart.`
+            : `Đăng nhập thành công! Chào mừng trở lại, ${user.name}.`;
+          alert(welcomeMsg);
+          onSuccess?.();
+        } else {
+          alert('Đăng nhập Google thất bại: ' + (res.message || 'Dữ liệu không hợp lệ.'));
+          onError?.(res);
+        }
+      },
+      error: (err) => {
+        console.error('Google login error:', err);
+        const errorMsg = err.error?.message || 'Đăng nhập Google thất bại. Vui lòng thử lại.';
+        alert(errorMsg);
+        onError?.(err);
       }
     });
   }

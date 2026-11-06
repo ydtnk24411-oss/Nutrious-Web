@@ -2,6 +2,7 @@ import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CartService, AuthTab } from '../../shared/services/cart.service';
+import { GoogleAuthService } from '../../shared/services/google-auth.service';
 
 @Component({
   selector: 'app-auth-modal',
@@ -12,11 +13,13 @@ import { CartService, AuthTab } from '../../shared/services/cart.service';
 })
 export class AuthModalComponent {
   protected cart = inject(CartService);
+  protected googleAuth = inject(GoogleAuthService);
 
   protected name = signal('');
   protected email = signal('');
   protected password = signal('');
   protected confirmPassword = signal('');
+  protected googleLoading = signal(false);
 
  handleSubmit(e: Event): void {
   e.preventDefault();
@@ -50,7 +53,17 @@ export class AuthModalComponent {
 }
 
   handleGoogleLogin(): void {
-    alert('Đăng nhập bằng Google chưa được hỗ trợ. Vui lòng đăng nhập bằng email và mật khẩu.');
+    this.googleLoading.set(true);
+    this.googleAuth.promptSignIn(
+      (data) => {
+        this.googleLoading.set(false);
+        this.cart.loginWithGoogle(data);
+      },
+      (errorMsg) => {
+        this.googleLoading.set(false);
+        alert(errorMsg);
+      }
+    );
   }
 
   handleForgotPassword(): void {

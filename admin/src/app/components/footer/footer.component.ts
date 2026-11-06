@@ -2,7 +2,6 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../shared/services/api.service';
-import { CategoryApiService, ApiCategory } from '../../shared/services/category-api.service';
 import { logoImage } from '../../shared/data/xanh-la.data';
 
 export interface PolicyContent {
@@ -44,7 +43,6 @@ export interface FooterConfigResponse {
     address: string;
   };
   trustItems: FooterTrustItem[];
-  serviceLinks?: FooterNavLink[];
   utilityLinks?: FooterNavLink[];
   aboutLinks?: FooterNavLink[];
   policyLinks?: FooterNavLink[];
@@ -62,7 +60,6 @@ export interface FooterConfigResponse {
 })
 export class FooterComponent implements OnInit {
   private api = inject(ApiService);
-  private categoryApi = inject(CategoryApiService);
 
   protected readonly logoImage = logoImage;
   protected email = signal('');
@@ -81,13 +78,11 @@ export class FooterComponent implements OnInit {
     address: '',
   });
   protected trustItems = signal<FooterTrustItem[]>([]);
-  protected serviceLinks = signal<FooterNavLink[]>([]);
   protected utilityLinks = signal<FooterNavLink[]>([]);
   protected aboutLinks = signal<FooterNavLink[]>([]);
   protected policyLinks = signal<FooterNavLink[]>([]);
   protected socialLinks = signal<FooterSocialLink[]>([]);
   protected paymentMethods = signal<string[]>([]);
-  protected categories = signal<ApiCategory[]>([]);
   protected policiesMap = signal<Record<string, PolicyContent>>({});
   protected activePolicy = signal<PolicyContent | null>(null);
 
@@ -103,7 +98,6 @@ export class FooterComponent implements OnInit {
         if (cfg.copyrightText) this.copyrightText.set(cfg.copyrightText);
         if (cfg.contactInfo) this.contactInfo.set(cfg.contactInfo);
         if (cfg.trustItems?.length) this.trustItems.set(cfg.trustItems);
-        if (cfg.serviceLinks?.length) this.serviceLinks.set(cfg.serviceLinks);
         if (cfg.utilityLinks?.length) this.utilityLinks.set(cfg.utilityLinks);
         if (cfg.aboutLinks?.length) this.aboutLinks.set(cfg.aboutLinks);
         if (cfg.policyLinks?.length) this.policyLinks.set(cfg.policyLinks);
@@ -120,14 +114,6 @@ export class FooterComponent implements OnInit {
       error: () => {},
     });
 
-    this.categoryApi.getAll().subscribe({
-      next: res => {
-        if (res?.data?.length) {
-          this.categories.set(res.data.slice(0, 4));
-        }
-      },
-      error: () => {},
-    });
   }
 
   openPolicy(key: string, event: Event): void {
@@ -140,6 +126,18 @@ export class FooterComponent implements OnInit {
 
   hotlineHref(): string {
     return `tel:${this.contactInfo().hotline.replace(/\D/g, '')}`;
+  }
+
+  scrollToTop(): void {
+    window.setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 0);
+  }
+
+  cleanLabel(label: string): string {
+    return label.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27FF}\u{2300}-\u{23FF}\u{2B00}-\u{2BFF}\uFE0E\uFE0F\u200D]/gu, '').trim();
+  }
+
+  isUtilityLinkVisible(link: FooterNavLink): boolean {
+    return link.route !== '/loyalty' && !/tích điểm/i.test(this.cleanLabel(link.label));
   }
 
   closePolicy(): void {

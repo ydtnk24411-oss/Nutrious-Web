@@ -3,7 +3,7 @@ import { Component, signal, inject, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
-import { CartService } from '../../shared/services/cart.service';
+import { CartService, formatPrice } from '../../shared/services/cart.service';
 import {
   ProductApiService,
   ApiProduct
@@ -40,6 +40,9 @@ function toCartProduct(p: ApiProduct): XanhLaProduct {
     type: p.type,
     weight: p.weight,
     options: p.options,
+    isCombo: p.isCombo,
+    originalPriceNumber: p.originalPriceNumber,
+    comboItems: p.comboItems,
   };
 }
 
@@ -175,6 +178,7 @@ export class OrderingComponent implements OnInit {
   }
 
   // Lấy tên Category từ categoryId
+  protected formatPrice = formatPrice;
   protected getCategoryName(categoryId: string): string {
     return this.allCategories().find(
       category => category._id === categoryId
@@ -553,5 +557,9 @@ export class OrderingComponent implements OnInit {
 
   goToCart(): void {
     this.router.navigate(['/checkout']);
+  }
+
+  getComboItemName(it: any): string {
+    return it?.product?.name || it?.name || 'Sản phẩm';
   }
 }

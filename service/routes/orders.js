@@ -92,7 +92,10 @@ router.post(
 
       // 2. Validate từng sản phẩm và tự tính lại subtotal từ database (lấy priceNumber của Product, không tin client)
       let serverSubtotal = 0;
+      let totalComboSaving = 0;
+      const finalItems = [];
       const mongoose = require('mongoose');
+
       for (const item of orderData.items) {
         const qty = Number(item.quantity);
         if (!Number.isInteger(qty) || qty <= 0) {
@@ -124,14 +127,67 @@ router.post(
 
         // Lấy giá chuẩn từ database (trường số priceNumber, KHÔNG parse chuỗi)
         const priceNum = typeof prod.priceNumber === 'number' ? prod.priceNumber : Number(prod.priceNumber || 0);
-        item.product = prod._id.toString();
-        item.productName = prod.name;
-        item.productImage = prod.image || item.productImage || '';
-        item.productPrice = prod.price;
-        item.priceNumber = priceNum;
 
+        if (prod.isCombo) {
+          const popProd = await Product.findById(prod._id).populate('comboItems.product', 'name price priceNumber image weight unit slug');
+          const comboSubItems = [];
+          let comboItemsSum = 0;
+          if (popProd && Array.isArray(popProd.comboItems) && popProd.comboItems.length > 0) {
+            for (const ci of popProd.comboItems) {
+              if (!ci.product) continue;
+              const ciPrice = typeof ci.product.priceNumber === 'number' ? ci.product.priceNumber : Number(ci.product.priceNumber || 0);
+              const singleQty = ci.quantity || 1;
+              comboItemsSum += ciPrice * singleQty;
+              comboSubItems.push({
+                product: ci.product._id ? String(ci.product._id) : '',
+                name: ci.product.name,
+                image: ci.product.image || '',
+                price: ci.product.price || '',
+                priceNumber: ciPrice,
+                quantity: singleQty,
+                unit: ci.product.unit || '',
+                weight: ci.product.weight || '',
+              });
+            }
+          }
+          const comboRetail = prod.originalPriceNumber && prod.originalPriceNumber > priceNum
+            ? prod.originalPriceNumber
+            : (comboItemsSum > priceNum ? comboItemsSum : priceNum);
+          const saving = Math.max(0, (comboRetail - priceNum) * qty);
+          totalComboSaving += saving;
+          serverSubtotal += priceNum * qty;
+
+          finalItems.push({
+            product: prod._id.toString(),
+            productName: prod.name,
+            productImage: prod.image || item.productImage || '',
+            productPrice: prod.price,
+            priceNumber: priceNum,
+            quantity: qty,
+            selectedOption: item.selectedOption || '',
+            isCombo: true,
+            comboItems: comboSubItems,
+            originalPriceNumber: comboRetail,
+            comboSaving: saving,
+          });
+          continue;
+        }
+
+        finalItems.push({
+          product: prod._id.toString(),
+          productName: prod.name,
+          productImage: prod.image || item.productImage || '',
+          productPrice: prod.price,
+          priceNumber: priceNum,
+          quantity: qty,
+          selectedOption: item.selectedOption || '',
+        });
         serverSubtotal += priceNum * qty;
       }
+
+      orderData.items = finalItems;
+      orderData.subtotal = serverSubtotal;
+      orderData.comboDiscount = totalComboSaving;
 
       if (req.user) {
         orderData.user       = req.user._id;
@@ -180,13 +236,14 @@ router.post(
       orderData.shippingDiscount = shippingDiscount;
       orderData.shippingDistanceKm = distanceKm;
       orderData.estimatedDeliveryTime = estimatedDeliveryTime;
-      orderData.estimatedPoints = Math.floor(serverSubtotal / 1000);
+      const payableGoods = serverSubtotal;
+      orderData.estimatedPoints = Math.floor(payableGoods / 1000);
 
-      // 4. Voucher (kiểm tra với subtotal tính từ server)
+      // 4. Voucher (kiểm tra với giá trị hàng hóa sau khi đã áp dụng combo saving)
       let applied = null;
       const code = orderData.voucherCode ? String(orderData.voucherCode).trim() : '';
       if (code) {
-        applied = await evaluateVoucher(code, serverSubtotal, req.user?._id);
+        applied = await evaluateVoucher(code, payableGoods, req.user?._id);
         if (!applied.valid) {
           return res.status(400).json({ success: false, message: applied.message });
         }
@@ -194,8 +251,8 @@ router.post(
       orderData.voucherCode = applied ? applied.voucher.code : '';
       orderData.discount    = applied ? applied.discount : 0;
 
-      // 5. Server tự tính lại total: total = subtotal - discount + finalShippingFee
-      orderData.total = Math.max(0, serverSubtotal - orderData.discount + finalShippingFee);
+      // 5. Server tự tính lại total: total = subtotal - comboDiscount - discount + finalShippingFee
+      orderData.total = Math.max(0, payableGoods - orderData.discount + finalShippingFee);
 
       const order = await Order.create(orderData);
       if (applied) await consumeVoucher(applied, req.user?._id, order._id);
@@ -221,6 +278,32 @@ router.post(
               note: 'Trừ kho khi tạo đơn hàng',
               updatedBy: req.user?._id || null,
             });
+
+            // Nếu là combo, đồng thời trừ kho cho các sản phẩm thành phần
+            if (item.isCombo && Array.isArray(item.comboItems)) {
+              for (const ci of item.comboItems) {
+                if (ci.product) {
+                  const subProd = await Product.findById(ci.product);
+                  if (subProd) {
+                    const subQty = (ci.quantity || 1) * item.quantity;
+                    const oldSubStock = subProd.stock ?? 0;
+                    subProd.stock = Math.max(0, oldSubStock - subQty);
+                    await subProd.save();
+                    await InventoryLog.create({
+                      product: subProd._id,
+                      productName: subProd.name,
+                      type: 'order_confirmed',
+                      delta: -subQty,
+                      oldStock: oldSubStock,
+                      newStock: subProd.stock,
+                      reason: `Đơn hàng ${order.orderCode} (trong combo ${item.productName})`,
+                      note: 'Trừ kho thành phần combo',
+                      updatedBy: req.user?._id || null,
+                    });
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -258,6 +341,74 @@ router.post(
   }
 );
 
+async function attachComboDetailsToOrders(orders) {
+  if (!orders) return orders;
+  const isArray = Array.isArray(orders);
+  const list = isArray ? orders : [orders];
+
+  for (const o of list) {
+    if (!o || !Array.isArray(o.items)) continue;
+    let addedComboSaving = 0;
+
+    for (const it of o.items) {
+      if (!it) continue;
+      let prod = null;
+      if (it.product && mongoose.Types.ObjectId.isValid(it.product)) {
+        prod = await Product.findById(it.product)
+          .populate('comboItems.product', 'name price priceNumber image weight unit slug')
+          .lean();
+      }
+      if (!prod && it.productName) {
+        prod = await Product.findOne({ name: it.productName })
+          .populate('comboItems.product', 'name price priceNumber image weight unit slug')
+          .lean();
+      }
+
+      if (it.isCombo || (prod && prod.isCombo)) {
+        it.isCombo = true;
+        const comboSubItems = [];
+        let subSum = 0;
+        const sourceComboItems = (prod && Array.isArray(prod.comboItems) && prod.comboItems.length > 0)
+          ? prod.comboItems
+          : (Array.isArray(it.comboItems) ? it.comboItems : []);
+
+        for (const ci of sourceComboItems) {
+          const subP = ci.product || ci;
+          const priceNum = typeof subP.priceNumber === 'number' ? subP.priceNumber : Number(subP.priceNumber || 0);
+          const singleQty = ci.quantity || 1;
+          subSum += priceNum * singleQty;
+          comboSubItems.push({
+            product: subP._id ? String(subP._id) : (subP.product ? String(subP.product) : ''),
+            name: subP.name || 'Sản phẩm thành phần',
+            image: subP.image || '',
+            price: subP.price || '',
+            priceNumber: priceNum,
+            quantity: singleQty,
+            unit: subP.unit || '',
+            weight: subP.weight || '',
+          });
+        }
+
+        if (comboSubItems.length > 0) {
+          it.comboItems = comboSubItems;
+        }
+
+        const basePrice = typeof it.priceNumber === 'number' ? it.priceNumber : Number(it.priceNumber || 0);
+        const retail = (prod && prod.originalPriceNumber && prod.originalPriceNumber > basePrice)
+          ? prod.originalPriceNumber
+          : (subSum > basePrice ? subSum : basePrice);
+        const saving = Math.max(0, (retail - basePrice) * (it.quantity || 1));
+
+        if (!it.comboSaving) it.comboSaving = saving;
+        if (!it.originalPriceNumber) it.originalPriceNumber = retail;
+        addedComboSaving += saving;
+      }
+    }
+  }
+
+  return orders;
+}
+
 // GET /api/orders — admin & sales & support: all orders with filters
 router.get('/', protect, staffOnly, async (req, res, next) => {
   try {
@@ -286,9 +437,10 @@ router.get('/', protect, staffOnly, async (req, res, next) => {
     const skip = (Number(page) - 1) * Number(limit);
     const [orders, total] = await Promise.all([
       Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit))
-        .populate('user', 'name email phone'),
+        .populate('user', 'name email phone').lean(),
       Order.countDocuments(filter),
     ]);
+    await attachComboDetailsToOrders(orders);
     res.json({ success: true, total, page: Number(page), data: orders });
   } catch (err) { next(err); }
 });
@@ -306,8 +458,9 @@ router.get('/track/:code', async (req, res, next) => {
         { orderCode: noHyphenCode },
         { orderCode: rawCode.toUpperCase() }
       ]
-    }).populate('items.product', 'name image');
+    }).populate('items.product', 'name image').lean();
     if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng.' });
+    await attachComboDetailsToOrders(order);
     res.json({ success: true, data: order });
   } catch (err) { next(err); }
 });
@@ -329,9 +482,10 @@ router.get('/my', protect, async (req, res, next) => {
 
     const skip = (Number(page) - 1) * Number(limit);
     const [orders, total] = await Promise.all([
-      Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)),
+      Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)).lean(),
       Order.countDocuments(filter),
     ]);
+    await attachComboDetailsToOrders(orders);
     res.json({ success: true, total, page: Number(page), data: orders });
   } catch (err) { next(err); }
 });
@@ -349,8 +503,9 @@ router.get('/:code', protect, async (req, res, next) => {
         { orderCode: noHyphenCode },
         { orderCode: rawCode.toUpperCase() }
       ]
-    }).populate('user', 'name email phone');
+    }).populate('user', 'name email phone').lean();
     if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng.' });
+    await attachComboDetailsToOrders(order);
     
     const isOwner = (order.user && (order.user._id?.toString() === req.user.id || order.user.toString() === req.user.id)) ||
                     (!order.user && order.guestEmail === req.user.email);
@@ -364,8 +519,10 @@ router.get('/:code', protect, async (req, res, next) => {
 // GET /api/orders/:id — admin
 router.get('/:id', protect, adminOnly, async (req, res, next) => {
   try {
-    const order = await Order.findById(req.params.id).populate('user', 'name email');
+    const order = await Order.findById(req.params.id).populate('user', 'name email').lean();
     if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng.' });
+    await attachComboDetailsToOrders(order);
+    res.json({ success: true, data: order });
     res.json({ success: true, data: order });
   } catch (err) { next(err); }
 });

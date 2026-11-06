@@ -35,84 +35,117 @@
       </button>
     </div>
 
-    <!-- ── Voucher grid ── -->
+    <!-- ── Voucher grid — dùng layout giống promo-card ── -->
     <div class="vouchers-grid">
-      @for (v of tabVouchers(); track v.id) {
-        <div class="voucher-card" [class.is-collected]="isCollected(v.id)">
-
-          <!-- Ticket left strip -->
-          <div class="voucher-strip">
-            <span class="voucher-strip-label">VOUCHER</span>
-            <strong class="voucher-strip-value">
-              {{ v.type === 'percentage' ? v.value + '%' : (v.value / 1000) + 'K' }}
-            </strong>
-            <span class="voucher-strip-sub">COUPON</span>
+      @for (v of tabVouchers(); track v.id; let i = $index) {
+        <article class="voucher-card"
+          [class.voucher-card--green]="i % 4 === 0"
+          [class.voucher-card--amber]="i % 4 === 1"
+          [class.voucher-card--teal]="i % 4 === 2"
+          [class.voucher-card--rose]="i % 4 === 3"
+          [class.is-collected]="isCollected(v.id)"
+        >
+          <!-- Discount badge góc phải -->
+          <div class="voucher-card-badge">
+            {{ v.type === 'percentage' ? '-' + v.value + '%' : '-' + (v.value / 1000) + 'K' }}
           </div>
 
-          <!-- Card body -->
-          <div class="voucher-main">
-            <div class="voucher-main-top">
-              <div class="voucher-cat">{{ v.type === 'percentage' ? 'Giảm theo %' : 'Giảm cố định' }}</div>
-              <div class="voucher-code-chip" [class.revealed]="isCopied(v.code)">
-                {{ isCopied(v.code) ? v.code : '••••••' }}
+          <!-- Body -->
+          <div class="voucher-card-body">
+
+            <!-- Icon hình ảnh theo loại -->
+            <div class="voucher-card-img">
+              @if (i % 4 === 0) {
+                <!-- Cây xanh / rau củ -->
+                <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
+                  <circle cx="32" cy="32" r="32" fill="#e8f5e9"/>
+                  <path d="M32 48V28" stroke="#2d6a4f" stroke-width="2.5" stroke-linecap="round"/>
+                  <path d="M32 36c0 0-8-4-8-12 0 0 8 2 8 12z" fill="#52b788"/>
+                  <path d="M32 32c0 0 8-4 8-12 0 0-8 2-8 12z" fill="#2d6a4f"/>
+                  <path d="M32 44c0 0-6-3-6-9 0 0 6 1.5 6 9z" fill="#74c69d"/>
+                </svg>
+              } @else if (i % 4 === 1) {
+                <!-- Giỏ hàng / mua sắm -->
+                <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
+                  <circle cx="32" cy="32" r="32" fill="#fff8e1"/>
+                  <path d="M14 20h6l4 16h16l4-16h6" stroke="#d4860f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="26" cy="40" r="2.5" fill="#d4860f"/>
+                  <circle cx="38" cy="40" r="2.5" fill="#d4860f"/>
+                  <path d="M20 20l2-6h20l2 6" stroke="#f0c850" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              } @else if (i % 4 === 2) {
+                <!-- Giao hàng / xe tải -->
+                <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
+                  <circle cx="32" cy="32" r="32" fill="#e0f7fa"/>
+                  <rect x="12" y="26" width="26" height="14" rx="2" fill="#0e7490"/>
+                  <path d="M38 30h8l4 8v4h-12V30z" fill="#22d3ee"/>
+                  <circle cx="20" cy="42" r="3" fill="#fff" stroke="#0e7490" stroke-width="1.5"/>
+                  <circle cx="44" cy="42" r="3" fill="#fff" stroke="#0e7490" stroke-width="1.5"/>
+                </svg>
+              } @else {
+                <!-- Rau củ / bát ăn -->
+                <svg width="48" height="48" viewBox="0 0 64 64" fill="none">
+                  <circle cx="32" cy="32" r="32" fill="#fce4ec"/>
+                  <ellipse cx="32" cy="36" rx="14" ry="8" fill="#be123c"/>
+                  <ellipse cx="32" cy="34" rx="14" ry="8" fill="#fb7185"/>
+                  <path d="M24 28c2-4 6-6 8-6s6 2 8 6" stroke="#be123c" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="32" y1="22" x2="32" y2="28" stroke="#be123c" stroke-width="2"/>
+                </svg>
+              }
+            </div>
+
+            <!-- Title & desc -->
+            <h3 class="voucher-card-title">{{ v.name }}</h3>
+            <p class="voucher-card-desc">{{ v.description }}</p>
+
+            <!-- Code box dashed giống promotions -->
+            <div class="voucher-code-box" [class.is-revealed]="isCopied(v.code)">
+              <div class="voucher-code-ticket-wrap">
+                <span class="voucher-code-lbl">MÃ:</span>
+                <strong class="voucher-code-val">{{ v.code }}</strong>
               </div>
-            </div>
-
-            <h3 class="voucher-name">{{ v.name }}</h3>
-            <p class="voucher-desc">{{ v.description }}</p>
-
-            <div class="voucher-conditions">
-              <span class="voucher-condition">
-                Đơn tối thiểu: <strong>{{ (v.minValue || 0).toLocaleString('vi-VN') }}đ</strong>
-              </span>
-              @if (v.maxValue && v.type === 'percentage') {
-                <span class="voucher-condition">
-                  Giảm tối đa: <strong>{{ v.maxValue.toLocaleString('vi-VN') }}đ</strong>
-                </span>
-              }
-            </div>
-
-            <div class="voucher-meta-row">
-              <span class="voucher-expiry">HSD: {{ v.endDate }}</span>
-              @if (v.usageLimit) {
-                <span class="voucher-usage">{{ v.usedCount }}/{{ v.usageLimit }} lượt</span>
-              }
-            </div>
-
-            <!-- Actions -->
-            <div class="voucher-actions">
               <button
                 type="button"
-                class="voucher-btn-copy"
+                class="voucher-code-copy"
                 [class.copied]="isCopied(v.code)"
                 (click)="copyCode(v.code, $event)"
               >
                 {{ isCopied(v.code) ? 'Mã: ' + v.code : 'Sao chép mã' }}
               </button>
-
-              @if (isCollected(v.id)) {
-                <button type="button" class="voucher-btn-save saved" disabled>
-                  {{ walletStatus(v.id) }}
-                </button>
-              } @else {
-                <button type="button" class="voucher-btn-save" (click)="collectVoucher(v.id, $event)">
-                  Lưu vào ví
-                </button>
-              }
-
-              @if (!isCollected(v.id) || walletStatus(v.id) === 'Đã lưu trong ví') {
-                <a
-                  class="voucher-btn-use"
-                  routerLink="/checkout"
-                  [queryParams]="{ voucher: v.code }"
-                >
-                  Dùng ngay
-                </a>
-              }
             </div>
+
+            <!-- Meta: HSD + đơn tối thiểu -->
+            <div class="voucher-card-meta">
+              <span class="voucher-card-expiry">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                HSD: {{ v.endDate }}
+              </span>
+              <span class="voucher-card-tag">Đơn từ {{ (v.minValue || 0).toLocaleString('vi-VN') }}đ</span>
+            </div>
+
           </div>
 
-        </div>
+          <!-- Actions -->
+          <div class="voucher-card-actions">
+            @if (isCollected(v.id)) {
+              <button type="button" class="voucher-save-btn is-saved" disabled>
+                Đã lưu ví
+              </button>
+            } @else {
+              <button type="button" class="voucher-save-btn" (click)="collectVoucher(v.id, $event)">
+                + Lưu vào ví
+              </button>
+            }
+            @if (!isCollected(v.id) || walletStatus(v.id) === 'Đã lưu trong ví') {
+              <a class="voucher-use-btn" routerLink="/checkout" [queryParams]="{ voucher: v.code }">
+                Dùng ưu đãi ngay →
+              </a>
+            }
+          </div>
+
+        </article>
       }
     </div>
 

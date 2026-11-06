@@ -17,7 +17,9 @@ const userSchema = new mongoose.Schema(
     lastName:  { type: String, default: '' },
     title:     { type: String, default: '' },
     email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
-    password: { type: String, required: true, minlength: 6, select: false },
+    password: { type: String, required: false, minlength: 6, select: false },
+    googleId: { type: String, default: '' },
+    authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
     phone:    { type: String, default: '' },
     avatar:   { type: String, default: '' },
     role:     { type: String, enum: ['customer', 'admin', 'sales', 'warehouse', 'support', 'content'], default: 'customer' },
@@ -34,13 +36,14 @@ const userSchema = new mongoose.Schema(
 
 // Hash password before save
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+  if (!this.password || !this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });
 
 // Compare password
 userSchema.methods.comparePassword = async function (plain) {
+  if (!this.password) return false;
   return bcrypt.compare(plain, this.password);
 };
 

@@ -401,4 +401,13 @@ export class AdminProductsComponent implements OnInit {
       error: (err) => alert(err.error?.message || 'Lỗi khi xóa danh mục.'),
     });
   }
+
+  getComboItemName(ci: any): string {
+    if (!ci) return '';
+    return ci.product?.name || ci.name || 'Sản phẩm';
+  }
+
+  getComboItemQty(ci: any): number {
+    return ci?.quantity || 1;
+  }
 }

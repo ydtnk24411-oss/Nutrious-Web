@@ -113,5 +113,29 @@ export class AdminOrdersComponent implements OnInit {
     });
   }
 
+  getOrderSubtotal(o: ApiOrder): number {
+    return o.items.reduce((s, it) => s + (it.priceNumber * it.quantity), 0);
+  }
+
   formatPrice(v: number): string { return v.toLocaleString('vi-VN') + ' ₫'; }
+
+  getComboItemName(it: any): string {
+    return it?.product?.name || it?.name || 'Sản phẩm';
+  }
+
+  getComboItemQty(it: any): number {
+    return Number(it?.quantity || 1);
+  }
+
+  getComboItemImage(it: any): string {
+    return it?.product?.image || it?.image || '';
+  }
+
+  getComboItemPrice(it: any): string {
+    if (it?.price) return String(it.price);
+    if (it?.product?.price) return String(it.product.price);
+    if (it?.priceNumber) return this.formatPrice(it.priceNumber);
+    if (it?.product?.priceNumber) return this.formatPrice(it.product.priceNumber);
+    return '';
+  }
 }
