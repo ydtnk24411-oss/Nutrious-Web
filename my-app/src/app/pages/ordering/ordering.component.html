@@ -150,6 +150,114 @@
           }
         </div>
 
+        <!-- Chế độ ăn chuyên biệt (Theo thông số dinh dưỡng) -->
+        <div class="ord-filter-group">
+          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('diet')">
+            <span>Chế độ ăn chuyên biệt</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 [style.transform]="openAccordions()['diet'] ? 'rotate(180deg)' : 'none'"
+                 style="transition:transform .2s">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          @if (openAccordions()['diet']) {
+            <div class="ord-filter-body">
+              @for (opt of facetOptions().diet; track opt.value) {
+                <label class="ord-filter-label">
+                  <input type="checkbox" [checked]="isChecked('diet', opt.value)"
+                         (change)="toggleFilter('diet', opt.value)" />
+                  <span>{{ opt.label }}</span>
+                  <span class="ord-filter-count">({{ opt.count }})</span>
+                </label>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Lọc theo thông số dinh dưỡng mong muốn -->
+        <div class="ord-filter-group">
+          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('nutritionTarget')">
+            <span>Thông số dinh dưỡng mong muốn</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 [style.transform]="openAccordions()['nutritionTarget'] ? 'rotate(180deg)' : 'none'"
+                 style="transition:transform .2s">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          @if (openAccordions()['nutritionTarget']) {
+            <div class="ord-filter-body ord-nut-filter-body">
+              <div class="ord-nut-hint">
+                Tick chọn chỉ số dinh dưỡng và kéo thanh trượt hoặc nhập số lượng mong muốn (tự động hiển thị sản phẩm có mức chênh lệch <strong>± 1 – 5{{ 'g' }}</strong> nếu không trùng khớp tuyệt đối):
+              </div>
+
+              <div class="ord-nut-sliders">
+                @for (item of nutritionSliders(); track item.key) {
+                  <div class="ord-nut-slider-item" [class.active]="item.enabled">
+                    <div class="ord-nut-slider-head">
+                      <label class="ord-nut-check-label">
+                        <input
+                          type="checkbox"
+                          [checked]="item.enabled"
+                          (change)="toggleNutritionSlider(item.key, $any($event.target).checked)"
+                        />
+                        <span class="ord-nut-name">{{ item.label }}</span>
+                      </label>
+
+                      <div class="ord-nut-input-wrap">
+                        <input
+                          type="number"
+                          class="ord-nut-num-input"
+                          [min]="item.min"
+                          [max]="item.max"
+                          [step]="item.step"
+                          [value]="item.value"
+                          (input)="onNutritionNumberInput(item.key, $any($event.target).value)"
+                        />
+                        <span class="ord-nut-unit">{{ item.unit }}</span>
+                      </div>
+                    </div>
+
+                    <div class="ord-nut-range-wrap">
+                      <input
+                        type="range"
+                        class="ord-nut-range"
+                        [min]="item.min"
+                        [max]="item.max"
+                        [step]="item.step"
+                        [value]="item.value"
+                        (input)="onNutritionSliderChange(item.key, +$any($event.target).value)"
+                      />
+                      <div class="ord-nut-range-meta">
+                        <span>{{ item.min }}{{ item.unit }}</span>
+                        @if (item.enabled) {
+                          <span class="ord-nut-tolerance">
+                            Phạm vi: {{ item.value > item.tolerance ? item.value - item.tolerance : 0 }} – {{ item.value + item.tolerance }}{{ item.unit }}
+                          </span>
+                        }
+                        <span>{{ item.max }}{{ item.unit }}</span>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              @if (activeNutritionSliders().length) {
+                <div class="ord-nut-active-box">
+                  <div class="ord-nut-active-head">
+                    <span class="ord-nut-active-title">Đang lọc ({{ filteredProducts().length }} SP phù hợp):</span>
+                    <button type="button" class="ord-nut-reset-link" (click)="clearNutritionTargets()">Bỏ chọn</button>
+                  </div>
+                  @for (s of activeNutritionSliders(); track s.key) {
+                    <div class="ord-nut-active-item">
+                      • {{ s.label }}: <strong>{{ s.value }}{{ s.unit }}</strong> (±{{ s.tolerance }}{{ s.unit }})
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+
         <!-- Chế biến -->
         <div class="ord-filter-group">
           <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('preparation')">

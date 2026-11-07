@@ -143,6 +143,406 @@ export function getFacetLabel(field: string, val: string): string {
   return FACET_LABEL_MAP[field]?.[val] || val;
 }
 
+export const DIET_FACET_OPTIONS: { value: string; label: string }[] = [
+  { value: 'eat-clean', label: 'Eat Clean (Tươi sạch, ít chế biến)' },
+  { value: 'keto', label: 'Keto (Ít tinh bột, giàu béo tốt)' },
+  { value: 'low-carb', label: 'Low-Carb (Giảm tinh bột & đường)' },
+  { value: 'vegetarian', label: 'Ăn chay (Thuần thực vật)' },
+  { value: 'gym', label: 'Tập Gym (Tăng cơ / Giảm mỡ)' },
+  { value: 'diabetic', label: 'Người tiểu đường (Ít đường, GI thấp)' },
+  { value: 'hypertension', label: 'Người cao huyết áp (Ít muối, giàu Kali)' },
+];
+
+function parseMetric(val: unknown, unitRegex: RegExp): number {
+  if (!val) return 0;
+  const str = String(val).replace(',', '.');
+  const m = str.match(unitRegex);
+  return m ? parseFloat(m[1]) : 0;
+}
+
+export function getProductDiets(p: ApiProduct): string[] {
+  if (p.isCombo) return [];
+  const specs = p.specifications || {};
+
+  // 1. Tự động đọc thông số dinh dưỡng từ specifications
+  const kcal = parseMetric(specs['Năng lượng'], /(\d+(?:\.\d+)?)\s*kcal/i);
+  const protein = parseMetric(
+    specs['Chất đạm (Protein)'] || specs['Protein'],
+    /(\d+(?:\.\d+)?)\s*g\b/i
+  );
+  const fat = parseMetric(
+    specs['Chất béo (Lipid)'] || specs['Lipid'],
+    /(\d+(?:\.\d+)?)\s*g\b/i
+  );
+  const carb = parseMetric(
+    specs['Carbohydrate'] || specs['Tinh bột'],
+    /(\d+(?:\.\d+)?)\s*g\b/i
+  );
+  const fiber = parseMetric(specs['Chất xơ'], /(\d+(?:\.\d+)?)\s*g\b/i);
+  const netCarb = Math.max(0, carb - fiber);
+
+  const hasNutrition = !!(
+    specs['Năng lượng'] ||
+    specs['Chất đạm (Protein)'] ||
+    specs['Protein'] ||
+    specs['Chất béo (Lipid)'] ||
+    specs['Carbohydrate']
+  );
+  if (!hasNutrition) return [];
+
+  // 2. Tự động đọc tên, đặc điểm, mô tả, hướng dẫn sử dụng, thành phần và danh mục
+  const nameNorm = removeVietnameseTones(p.name || '');
+  const slug = (p.slug || '').toLowerCase();
+  const descNorm = removeVietnameseTones(
+    [p.description, p.usageInstructions, p.storageInstructions].filter(Boolean).join(' ')
+  );
+  const specsNorm = removeVietnameseTones(
+    Object.entries(specs)
+      .map(([k, v]) => `${k} ${v}`)
+      .join(' ')
+  );
+  const vitaminsNorm = removeVietnameseTones(specs['Vitamin & Khoáng chất'] || '');
+  const fullText = `${nameNorm} ${slug} ${descNorm} ${specsNorm}`;
+
+  const catNorm = removeVietnameseTones([p.category, p.categoryVi].filter(Boolean).join(' '));
+  const type = p.type || '';
+
+  const isVegetable =
+    catNorm.includes('vegetables') ||
+    catNorm.includes('rau cu');
+  const isFruit =
+    (catNorm.includes('fruits') || catNorm.includes('trai cay')) &&
+    type !== 'Dried Fruit' &&
+    !/\bsay\b/.test(nameNorm);
+  const isDriedFruit =
+    type === 'Dried Fruit' ||
+    /\b(xoai say|mit say|trai cay say|tao do kho|ky tu)\b/.test(nameNorm);
+  const isMeat =
+    catNorm.includes('meat') ||
+    (catNorm.includes('thit') && !catNorm.includes('hai san')) ||
+    /\b(thit bo|ba chi bo|bap bo|than ngoai bo|loi vai bo|de suon bo|luoi bo|bo vien|bo wagyu|thit heo|nac dam heo|nac vai heo|nac than heo|suon canh buom|chan gio heo|cot let heo|tim heo|thit xay heo|thit ba roi|ga ta|dui ga|uc ga|canh ga|me ga|ma dui ga|uc vit|dui cuu|suon cuu|thit vai cuu)\b/.test(nameNorm);
+  const isSeafood =
+    catNorm.includes('seafood') ||
+    (!isMeat &&
+      (catNorm.includes('hai san') ||
+        /\b(ca hoi|ca ngu|ca chim|ca dieu hong|ca bop|ca nuc|ca tuyet|ca chem|ca thu|ca loc|ca mu|cha ca|trung ca|tom hum|tom su|tom kho|muc ong|muc la|bach tuoc|so diep|so huyet|ngheu|hau sua|bao ngu|cua ca mau|thit cang cua|thanh cua|oc mong tay|oc huong|sua bien)\b/.test(nameNorm)));
+
+  // Nhận diện thành phần có nguồn gốc động vật (thịt, cá, hải sản, trứng, sữa bò, phô mai, bơ động vật, gelatin, yến sào, dầu hào, nước mắm)
+  const isPlantMilkOrSoy =
+    /\b(sua hat|sua hanh nhan|sua oc cho|sua dau nanh|sua yen mach|dau hu|tau hu)\b/.test(nameNorm);
+  const isAnimalProduct =
+    isMeat ||
+    isSeafood ||
+    (!isPlantMilkOrSoy &&
+      /\b(trung ga|trung cut|trung vit|sua tuoi|sua bo|sua chua|sua cacao|milo|probi|vang sua|banh flan|whipping cream|kem sua|bo lat man|bo dong vat|pho mai|pudding|tra sua|ca phe sua|nuoc mam|dau hao|cha bong|kho bo|kho ga|haribo|gelatin|nuoc yen)\b/.test(nameNorm)) ||
+    /\b(gelatin|collagen thuy phan|chiet xuat hao|dam ca com|cha bong heo)\b/.test(specsNorm);
+
+  // Nhận diện đồ ngọt, bánh kẹo, snack chiên rán, nước ngọt có ga, nước tăng lực
+  const isSweetOrJunk =
+    type === 'Confectionery' ||
+    type === 'Snack' ||
+    type === 'Energy' ||
+    type === 'Beverage' ||
+    /\b(snack|khoai tay chien|pringles|lays|oishi|banh quy nhan|banh quy bo|banh quy oreo|banh xop|banh bong lan|banh mi ngot|banh mi hoa cuc|banh tai yen|banh crepe|banh que|banh pho mai|pocky|kitkat|oreo|choco pie|danisa|solite|loacker|nabati|keo|socola|haribo|ricola|com chay|banh flan|pudding|vang sua|sua chua nep cam|tra sua|ca phe sua|milo|probi co duong|sua tuoi tiet trung vinamilk co duong|sua chua an vinamilk co duong|nuoc ngot|coca|pepsi|fanta|sprite|soda|nuoc tang luc|red bull|monster|compact|tra xanh khong do|tra o long c2|tra dao|tra bi dao|duong cat trang)\b/.test(nameNorm);
+
+  // Nhận diện gia vị mặn, bột nấu ăn, đồ khô tẩm ướp nhiều muối
+  const isCondimentOrCookingPowderOrSalted =
+    /\b(nuoc mam|nuoc tuong|dau hao|tuong ot|muoi bot|bot ngot|hat nem|bot ngu vi|ot bot|bot nghe|bot ca re|tieu den|hoa hoi|que thanh|bot chien|bot nang|bot nuong|duong cat trang|banh da nem|pho kho|bun tuoi kho|kho bo|kho ga|com chay|tom kho|ca thu mot nang|bo lat man|cai be xanh muoi dua|sua bien uop gia vi|dau hat dieu rang muoi)\b/.test(nameNorm);
+
+  const diets: string[] = [];
+
+  // ── 1. EAT CLEAN (Tươi sạch, nguyên bản, ít chế biến, giàu dinh dưỡng) ──
+  const isEatCleanCandidate =
+    !isSweetOrJunk &&
+    !isCondimentOrCookingPowderOrSalted &&
+    !isDriedFruit &&
+    (
+      (isVegetable && !/\b(sa tuoi)\b/.test(nameNorm)) ||
+      (isFruit &&
+        carb <= 16.5 &&
+        !/\b(sau rieng|chom chom|nho xanh|nho den|hong gion|mang cut|mang cau|dua le trang sieu ngot)\b/.test(nameNorm)) ||
+      (isMeat &&
+        (protein >= 17 || /\buc ga\b/.test(nameNorm)) &&
+        fat <= 12.0 &&
+        !/\b(ba chi|ba roi|suon|chan gio|wagyu|bo vien|luoi bo|canh ga|dui ga goc tu|nac dam)\b/.test(nameNorm)) ||
+      (isSeafood &&
+        fat <= 14.5 &&
+        !/\b(thanh cua|sua bien uop gia vi|ca thu mot nang|ca nuc chuoi hap san|trung ca hoi|cha ca)\b/.test(nameNorm)) ||
+      /\b(trung ga|trung cut|dau hu|sua hanh nhan khong duong|sua hat oc cho|sua yen mach|sua dau nanh|sua tuoi thanh trung|sua bo tuoi thanh trung|sua chua hy lap|sua chua men song da lat|suong sao den hat chia|nuoc dua tuoi|nuoc tinh khiet|nuoc khoang|tra lipton|banh quy yen mach|moc nhi|nam huong|mang dang)\b/.test(nameNorm)
+    );
+  if (isEatCleanCandidate) {
+    diets.push('eat-clean');
+  }
+
+  // ── 2. KETO (Ít tinh bột Net Carb <= 6g/100g, giàu béo tốt & đạm) ──
+  const isKetoCandidate =
+    !isSweetOrJunk &&
+    !isCondimentOrCookingPowderOrSalted &&
+    !isDriedFruit &&
+    netCarb <= 6.0 &&
+    (
+      (isMeat && !/\b(bo vien)\b/.test(nameNorm)) ||
+      (isSeafood && !/\b(thanh cua|sua bien uop gia vi)\b/.test(nameNorm)) ||
+      /\b(trung ga|trung cut|pho mai|bo dong vat|whipping cream|dau an simply|dau hu|sua hanh nhan khong duong|sua chua hy lap)\b/.test(nameNorm) ||
+      /\b(bo sap|bo wax 034)\b/.test(nameNorm) ||
+      (isVegetable && netCarb <= 4.5 && !/\b(ca rot|bi do|sa tuoi|cai be xanh muoi dua)\b/.test(nameNorm)) ||
+      /\b(nuoc tinh khiet|nuoc khoang|tra lipton)\b/.test(nameNorm)
+    );
+  if (isKetoCandidate) {
+    diets.push('keto');
+  }
+
+  // ── 3. LOW-CARB (Giảm tinh bột & đường: Carb <= 12g/100g hoặc Net Carb <= 9g/100g) ──
+  const isLowCarbCandidate =
+    !isSweetOrJunk &&
+    !isCondimentOrCookingPowderOrSalted &&
+    !isDriedFruit &&
+    (carb <= 12.0 || netCarb <= 9.0) &&
+    (
+      (isMeat && !/\b(bo vien)\b/.test(nameNorm)) ||
+      (isSeafood && !/\b(thanh cua)\b/.test(nameNorm)) ||
+      (isVegetable && !/\b(sa tuoi)\b/.test(nameNorm)) ||
+      (isFruit && carb <= 12.0 && !/\b(dua le trang sieu ngot)\b/.test(nameNorm)) ||
+      /\b(trung ga|trung cut|trung vit lon|pho mai|bo dong vat|whipping cream|dau hu|sua hanh nhan|sua hat oc cho|sua tuoi thanh trung|sua bo tuoi thanh trung|sua dau nanh|sua yen mach|sua chua hy lap|sua chua men song da lat|suong sao den hat chia|rau cau dua|nuoc dua tuoi|nuoc tinh khiet|nuoc khoang|tra lipton|ca phe den)\b/.test(nameNorm)
+    );
+  if (isLowCarbCandidate) {
+    diets.push('low-carb');
+  }
+
+  // ── 4. ĂN CHAY (Thuần thực vật: Không thịt, cá, hải sản, trứng, sữa bò, mỡ/bơ động vật, gelatin, nước mắm, dầu hào) ──
+  const isRawCookingSpiceOrFlour =
+    /\b(muoi bot|bot ngot|bot ngu vi|ot bot|bot nghe|bot ca re|tieu den|hoa hoi|que thanh|bot chien|bot nang|bot nuong|duong cat trang)\b/.test(nameNorm);
+  const isVegetarianCandidate =
+    !isAnimalProduct &&
+    !isSweetOrJunk &&
+    !isRawCookingSpiceOrFlour &&
+    (
+      isVegetable ||
+      isFruit ||
+      isDriedFruit ||
+      /\b(dau hu|sua hanh nhan|sua hat oc cho|sua dau nanh|sua yen mach|suong sao den hat chia|rau cau dua|dau hat dieu|dau phong|rong bien say gion|banh quy yen mach|banh sandwich|moc nhi|nam huong|mang dang|tao do|ky tu|mien rieng|bun tuoi kho|pho kho|banh da nem|dau an simply|nuoc tuong|hat nem knorr nam huong|nuoc dua tuoi|nuoc gao|nuoc ep|nuoc trai cay|tra lipton|ca phe den|nuoc tinh khiet|nuoc khoang)\b/.test(nameNorm)
+    );
+  if (isVegetarianCandidate) {
+    diets.push('vegetarian');
+  }
+
+  // ── 5. TẬP GYM (Tăng cơ / Giảm mỡ: Giàu Protein nạc, trứng, sữa, yến mạch, chuối, bông cải, bù khoáng) ──
+  const isGymCandidate =
+    !isSweetOrJunk &&
+    !isCondimentOrCookingPowderOrSalted &&
+    (
+      (isMeat &&
+        (protein >= 17 || /\buc ga\b/.test(nameNorm)) &&
+        fat <= 14.0 &&
+        !/\b(ba chi|ba roi|chan gio|suon canh buom|suon cuu|de suon|wagyu|bo vien|luoi bo|canh ga|dui ga goc tu|nac dam|thit vai cuu)\b/.test(nameNorm)) ||
+      (isSeafood &&
+        protein >= 14.5 &&
+        fat <= 14.5 &&
+        !/\b(thanh cua|sua bien|ca nuc chuoi hap san)\b/.test(nameNorm)) ||
+      /\b(trung ga|trung cut|dau hu|sua chua hy lap|sua tuoi thanh trung|sua bo tuoi thanh trung|sua hanh nhan|sua hat oc cho|sua dau nanh|sua yen mach|pho mai bao mozzarella|pho mai lat cheddar)\b/.test(nameNorm) ||
+      /\b(bong cai|sup lo|rau bo xoi|cai bo xoi|cai kale|bo sap|bo wax 034|chuoi laba|viet quat|tao envy|banh quy yen mach|banh sandwich|pocari sweat|revive|nuoc dua tuoi)\b/.test(nameNorm) ||
+      fullText.includes('gymer')
+    );
+  if (isGymCandidate) {
+    diets.push('gym');
+  }
+
+  // ── 6. NGƯỜI TIỂU ĐƯỜNG (Ít đường, GI thấp, giàu chất xơ hoặc đạm nạc) ──
+  const isDiabeticCandidate =
+    !isSweetOrJunk &&
+    !isCondimentOrCookingPowderOrSalted &&
+    !isDriedFruit &&
+    (
+      (isVegetable && carb <= 9.0 && !/\b(cai be xanh muoi dua|sa tuoi|bi do)\b/.test(nameNorm)) ||
+      (isFruit &&
+        netCarb <= 11.5 &&
+        !/\b(sau rieng|chom chom|vai thieu|nhan|xoai|chuoi|nho|mit|mang cau|dua hau|dua le trang sieu ngot|hong gion|mang cut|chanh day)\b/.test(nameNorm)) ||
+      (isSeafood &&
+        carb <= 4.0 &&
+        !/\b(thanh cua|sua bien uop gia vi|ca thu mot nang|trung ca hoi|ca nuc chuoi hap san|cha ca)\b/.test(nameNorm)) ||
+      (isMeat &&
+        (protein >= 18 || /\buc ga\b/.test(nameNorm)) &&
+        fat <= 12.0 &&
+        carb <= 1.0 &&
+        !/\b(bo vien)\b/.test(nameNorm)) ||
+      /\b(dau hu|trung ga|sua hanh nhan khong duong|sua hat oc cho|sua tuoi thanh trung th true milk khong duong|sua bo tuoi thanh trung|sua dau nanh|sua yen mach|sua chua hy lap|suong sao den hat chia|mien rieng|moc nhi|nam huong|mang dang|tra lipton|nuoc tinh khiet|nuoc khoang)\b/.test(nameNorm) ||
+      fullText.includes('chi so duong huyet gi thap')
+    );
+  if (isDiabeticCandidate) {
+    diets.push('diabetic');
+  }
+
+  // ── 7. NGƯỜI CAO HUYẾT ÁP (Ít muối/Natri, giàu Kali, Magie, Canxi, Omega-3, hạn chế mỡ bão hòa) ──
+  const hasHeartMinerals =
+    vitaminsNorm.includes('kali') ||
+    vitaminsNorm.includes('magie') ||
+    vitaminsNorm.includes('canxi') ||
+    vitaminsNorm.includes('omega-3') ||
+    specsNorm.includes('omega-3') ||
+    descNorm.includes('omega-3') ||
+    descNorm.includes('tim mach');
+
+  const isHypertensionCandidate =
+    !isSweetOrJunk &&
+    !isCondimentOrCookingPowderOrSalted &&
+    !isDriedFruit &&
+    (
+      (isVegetable && hasHeartMinerals && !/\b(cai be xanh muoi dua|sa tuoi)\b/.test(nameNorm)) ||
+      (isFruit &&
+        hasHeartMinerals &&
+        !/\b(sau rieng|chom chom|vai thieu|dua le trang sieu ngot)\b/.test(nameNorm)) ||
+      (isSeafood &&
+        hasHeartMinerals &&
+        !/\b(thanh cua|sua bien uop gia vi|ca thu mot nang|tom kho|trung ca hoi|ca nuc chuoi hap san|cha ca)\b/.test(nameNorm)) ||
+      /\b(uc ga phi le|dau hu|sua hanh nhan khong duong|sua hat oc cho|sua dau nanh|sua yen mach|sua tuoi thanh trung|sua bo tuoi thanh trung|sua chua hy lap|suong sao den hat chia|dau an simply|moc nhi|nam huong|mang dang|nuoc dua tuoi|tra lipton)\b/.test(nameNorm)
+    );
+  if (isHypertensionCandidate) {
+    diets.push('hypertension');
+  }
+
+  return diets;
+}
+
+export type NutritionMetricKey = 'protein' | 'fiber' | 'carb' | 'fat' | 'kcal';
+
+export interface NutritionSliderConfig {
+  key: NutritionMetricKey;
+  label: string;
+  unit: string;
+  min: number;
+  max: number;
+  step: number;
+  tolerance: number;
+  defaultValue: number;
+}
+
+export interface NutritionSliderState extends NutritionSliderConfig {
+  enabled: boolean;
+  value: number;
+}
+
+export const NUTRITION_SLIDER_CONFIGS: NutritionSliderConfig[] = [
+  {
+    key: 'protein',
+    label: 'Chất đạm (Protein)',
+    unit: 'g',
+    min: 0,
+    max: 80,
+    step: 1,
+    tolerance: 5,
+    defaultValue: 20,
+  },
+  {
+    key: 'fiber',
+    label: 'Chất xơ',
+    unit: 'g',
+    min: 0,
+    max: 55,
+    step: 1,
+    tolerance: 5,
+    defaultValue: 5,
+  },
+  {
+    key: 'carb',
+    label: 'Carbohydrate (Tinh bột)',
+    unit: 'g',
+    min: 0,
+    max: 100,
+    step: 1,
+    tolerance: 5,
+    defaultValue: 10,
+  },
+  {
+    key: 'fat',
+    label: 'Chất béo (Lipid)',
+    unit: 'g',
+    min: 0,
+    max: 100,
+    step: 1,
+    tolerance: 5,
+    defaultValue: 5,
+  },
+  {
+    key: 'kcal',
+    label: 'Năng lượng (Calo)',
+    unit: 'kcal',
+    min: 0,
+    max: 900,
+    step: 5,
+    tolerance: 5,
+    defaultValue: 100,
+  },
+];
+
+export function getProductNutritionValue(
+  p: ApiProduct,
+  key: NutritionMetricKey
+): number | null {
+  if (p.isCombo) return null;
+  const specs = p.specifications || {};
+  const hasNutrition = !!(
+    specs['Năng lượng'] ||
+    specs['Chất đạm (Protein)'] ||
+    specs['Protein'] ||
+    specs['Chất béo (Lipid)'] ||
+    specs['Carbohydrate']
+  );
+  if (!hasNutrition) return null;
+
+  if (key === 'protein') {
+    const raw = specs['Chất đạm (Protein)'] || specs['Protein'];
+    return raw ? parseMetric(raw, /(\d+(?:\.\d+)?)\s*g\b/i) : 0;
+  }
+  if (key === 'fiber') {
+    const raw = specs['Chất xơ'];
+    return raw ? parseMetric(raw, /(\d+(?:\.\d+)?)\s*g\b/i) : 0;
+  }
+  if (key === 'carb') {
+    const raw = specs['Carbohydrate'] || specs['Tinh bột'];
+    return raw ? parseMetric(raw, /(\d+(?:\.\d+)?)\s*g\b/i) : 0;
+  }
+  if (key === 'fat') {
+    const raw = specs['Chất béo (Lipid)'] || specs['Lipid'];
+    return raw ? parseMetric(raw, /(\d+(?:\.\d+)?)\s*g\b/i) : 0;
+  }
+  if (key === 'kcal') {
+    const raw = specs['Năng lượng'];
+    return raw ? parseMetric(raw, /(\d+(?:\.\d+)?)\s*kcal/i) : 0;
+  }
+  return null;
+}
+
+export function matchProductByNutritionSliders(
+  p: ApiProduct,
+  activeSliders: NutritionSliderState[]
+): { matches: boolean; totalDiff: number } {
+  if (!activeSliders.length) {
+    return { matches: true, totalDiff: 0 };
+  }
+  if (p.isCombo) {
+    return { matches: false, totalDiff: 999999 };
+  }
+
+  let totalDiff = 0;
+  for (const s of activeSliders) {
+    const val = getProductNutritionValue(p, s.key);
+    if (val === null) {
+      return { matches: false, totalDiff: 999999 };
+    }
+    // Nếu người dùng chọn mức > 0 thì sản phẩm phải thực sự có chỉ số đó (> 0)
+    if (s.value > 0 && val <= 0) {
+      return { matches: false, totalDiff: 999999 };
+    }
+    const diff = Math.abs(val - s.value);
+    if (diff > s.tolerance) {
+      return { matches: false, totalDiff: 999999 };
+    }
+    totalDiff += diff;
+  }
+
+  return { matches: true, totalDiff };
+}
+
 @Component({
   selector: 'app-ordering',
   standalone: true,
@@ -195,8 +595,22 @@ export class OrderingComponent implements OnInit {
   protected maxPrice = signal(300);
   protected sortBy = signal('default');
 
+  // Bộ lọc thông số dinh dưỡng dạng tick chọn + thanh kéo
+  protected nutritionSliders = signal<NutritionSliderState[]>(
+    NUTRITION_SLIDER_CONFIGS.map(cfg => ({
+      ...cfg,
+      enabled: false,
+      value: cfg.defaultValue,
+    }))
+  );
+
+  protected activeNutritionSliders = computed(() =>
+    this.nutritionSliders().filter(s => s.enabled)
+  );
+
   protected selectedFilters = signal<Record<string, string[]>>({
     category: [],
+    diet: [],
     preparation: [],
     ripeness: [],
     sizeGroup: [],
@@ -209,6 +623,8 @@ export class OrderingComponent implements OnInit {
     sort: true,
     price: true,
     category: true,
+    diet: true,
+    nutritionTarget: true,
     preparation: false,
     ripeness: false,
     sizeGroup: false,
@@ -253,12 +669,24 @@ export class OrderingComponent implements OnInit {
         }));
     };
 
+    const dietCounts: Record<string, number> = {};
+    for (const p of sourceProducts) {
+      for (const d of getProductDiets(p)) {
+        dietCounts[d] = (dietCounts[d] || 0) + 1;
+      }
+    }
+
     return {
       category: this.allCategories().map(c => ({
         value: c._id,
         label: c.name,
         count: this.allProducts().filter(p => p.categoryId === c._id).length,
       })),
+      diet: DIET_FACET_OPTIONS.map(opt => ({
+        value: opt.value,
+        label: opt.label,
+        count: dietCounts[opt.value] || 0,
+      })).filter(opt => opt.count > 0),
       preparation: buildFacetList('preparation'),
       ripeness: buildFacetList('ripeness'),
       sizeGroup: buildFacetList('sizeGroup'),
@@ -281,7 +709,8 @@ export class OrderingComponent implements OnInit {
 
     return Object.values(f).some(a => a.length > 0)
       || this.maxPrice() < this.maxPriceInDB()
-      || !!this.search();
+      || !!this.search()
+      || this.activeNutritionSliders().length > 0;
   });
 
   // Lọc và sắp xếp sản phẩm chính xác theo từ khóa & bộ lọc
@@ -290,6 +719,7 @@ export class OrderingComponent implements OnInit {
     const rawQ = this.search().trim();
     const normQ = removeVietnameseTones(rawQ);
     const maxP = this.maxPrice();
+    const activeSliders = this.activeNutritionSliders();
 
     let list = this.allProducts().filter(p => {
       if (normQ) {
@@ -301,11 +731,25 @@ export class OrderingComponent implements OnInit {
 
       if (p.priceNumber > maxP) return false;
 
+      if (activeSliders.length > 0) {
+        const res = matchProductByNutritionSliders(p, activeSliders);
+        if (!res.matches) {
+          return false;
+        }
+      }
+
       if (
         f['category'].length &&
         !f['category'].includes(p.categoryId)
       ) {
         return false;
+      }
+
+      if (f['diet']?.length) {
+        const diets = getProductDiets(p);
+        if (!f['diet'].some(d => diets.includes(d))) {
+          return false;
+        }
       }
 
       if (
@@ -347,6 +791,12 @@ export class OrderingComponent implements OnInit {
         const scoreB = scoreProduct(b, rawQ.toLowerCase(), normQ);
         const scoreA = scoreProduct(a, rawQ.toLowerCase(), normQ);
         return scoreB - scoreA;
+      });
+    } else if (activeSliders.length > 0) {
+      list = [...list].sort((a, b) => {
+        const diffA = matchProductByNutritionSliders(a, activeSliders).totalDiff;
+        const diffB = matchProductByNutritionSliders(b, activeSliders).totalDiff;
+        return diffA - diffB;
       });
     }
 
@@ -523,9 +973,61 @@ export class OrderingComponent implements OnInit {
     return (this.selectedFilters()[facet] ?? []).includes(val);
   }
 
+  toggleNutritionSlider(key: NutritionMetricKey, checked?: boolean): void {
+    this.nutritionSliders.update(list =>
+      list.map(item =>
+        item.key === key
+          ? { ...item, enabled: checked !== undefined ? checked : !item.enabled }
+          : item
+      )
+    );
+  }
+
+  onNutritionSliderChange(key: NutritionMetricKey, val: number): void {
+    const safeVal = isNaN(val) || val < 0 ? 0 : val;
+    this.nutritionSliders.update(list =>
+      list.map(item =>
+        item.key === key
+          ? { ...item, enabled: true, value: safeVal }
+          : item
+      )
+    );
+  }
+
+  onNutritionNumberInput(key: NutritionMetricKey, rawVal: string): void {
+    const trimmed = String(rawVal ?? '').trim().replace(',', '.');
+    if (trimmed === '') {
+      this.nutritionSliders.update(list =>
+        list.map(item =>
+          item.key === key ? { ...item, enabled: false, value: 0 } : item
+        )
+      );
+      return;
+    }
+    const parsed = parseFloat(trimmed);
+    if (!isNaN(parsed) && parsed >= 0) {
+      this.nutritionSliders.update(list =>
+        list.map(item =>
+          item.key === key ? { ...item, enabled: true, value: parsed } : item
+        )
+      );
+    }
+  }
+
+  clearNutritionTargets(): void {
+    this.nutritionSliders.set(
+      NUTRITION_SLIDER_CONFIGS.map(cfg => ({
+        ...cfg,
+        enabled: false,
+        value: cfg.defaultValue,
+      }))
+    );
+  }
+
   clearAllFilters(): void {
     this.selectedFilters.set({
       category: [],
+      diet: [],
       preparation: [],
       ripeness: [],
       sizeGroup: [],
@@ -534,6 +1036,7 @@ export class OrderingComponent implements OnInit {
     });
 
     this.search.set('');
+    this.clearNutritionTargets();
     this.maxPrice.set(this.maxPriceInDB());
     this.sortBy.set('default');
   }

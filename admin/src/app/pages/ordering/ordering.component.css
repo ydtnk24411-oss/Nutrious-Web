@@ -490,6 +490,187 @@
   color: var(--xl-forest);
   font-weight: 850;
 }
+
+/* Nutrition Target Filter (Sliders + Checkboxes) */
+.ord-nut-filter-body {
+  gap: 10px;
+}
+
+.ord-nut-hint {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #556440;
+}
+
+.ord-nut-hint strong {
+  color: var(--xl-forest);
+  font-weight: 800;
+}
+
+.ord-nut-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ord-nut-slider-item {
+  padding: 8px 10px;
+  border: 1.5px solid #e1ecd0;
+  border-radius: 4px 12px 4px 12px;
+  background: #fafdf4;
+  transition: border-color .2s, background .2s, box-shadow .2s;
+}
+
+.ord-nut-slider-item.active {
+  border-color: var(--xl-green);
+  background: #f1f9dd;
+  box-shadow: 2px 2px 0 rgba(169, 217, 67, 0.35);
+}
+
+.ord-nut-slider-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.ord-nut-check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.ord-nut-check-label input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--xl-forest);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.ord-nut-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #3f5226;
+  line-height: 1.25;
+}
+
+.ord-nut-slider-item.active .ord-nut-name {
+  color: var(--xl-forest);
+  font-weight: 850;
+}
+
+.ord-nut-input-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #fff;
+  border: 1px solid #cadb9d;
+  border-radius: 3px 8px 3px 8px;
+  padding: 2px 6px;
+  flex-shrink: 0;
+}
+
+.ord-nut-slider-item.active .ord-nut-input-wrap {
+  border-color: var(--xl-forest);
+}
+
+.ord-nut-num-input {
+  width: 44px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--xl-forest);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
+  padding: 1px 0;
+}
+
+.ord-nut-unit {
+  font-size: 11px;
+  font-weight: 700;
+  color: #5d6e46;
+}
+
+.ord-nut-range-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ord-nut-range {
+  width: 100%;
+  height: 5px;
+  accent-color: var(--xl-green);
+  cursor: pointer;
+  margin: 2px 0;
+}
+
+.ord-nut-slider-item.active .ord-nut-range {
+  accent-color: var(--xl-forest);
+}
+
+.ord-nut-range-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: #71805b;
+  font-weight: 600;
+}
+
+.ord-nut-tolerance {
+  color: var(--xl-forest);
+  font-weight: 800;
+  background: rgba(169, 217, 67, 0.35);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.ord-nut-active-box {
+  padding: 8px 10px;
+  border-radius: 4px 12px 4px 12px;
+  background: #f2f9dc;
+  border: 1px dashed #a8c66c;
+  font-size: 11px;
+  color: var(--xl-forest);
+  display: grid;
+  gap: 3px;
+}
+
+.ord-nut-active-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.ord-nut-active-title {
+  font-weight: 850;
+  color: var(--xl-forest);
+}
+
+.ord-nut-reset-link {
+  border: 0;
+  background: transparent;
+  color: var(--xl-coral);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.ord-nut-active-item {
+  font-weight: 650;
+  color: #36491e;
+  line-height: 1.35;
+}
 /* PRODUCT GRID */
 .ord-page .ord-grid {
   display: grid;
@@ -536,10 +717,20 @@
 }
 
 .ord-page .xanhla-prod-card-cat {
-  color: #a96b00;
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  background: #eff6eb;
+  color: #1e532b;
+  border-left: 3.5px solid #5ca32a;
+  border-radius: 0 4px 4px 0;
+  padding: 2.5px 8px 2.5px 7px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  width: fit-content;
+  line-height: 1.35;
+  margin-bottom: 2px;
 }
 
 .ord-page .xanhla-prod-card-name,

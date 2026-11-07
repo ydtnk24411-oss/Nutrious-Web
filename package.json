@@ -1,21 +1,27 @@
 {
   "name": "@workspace/xanh-la",
   "version": "0.0.0",
+  "private": true,
   "scripts": {
     "ng": "ng",
     "start": "ng serve xanh-la --host 0.0.0.0 --port $PORT",
     "dev": "ng serve xanh-la --port 4200",
     "admin": "ng serve admin --port 4201",
     "build": "ng build xanh-la --configuration production --base-href /",
+    "build:admin": "ng build admin --configuration production --base-href /",
     "typecheck": "ng build xanh-la --configuration development",
     "watch": "ng build xanh-la --watch --configuration development",
-    "test": "ng test xanh-la",
-    "build:admin": "ng build admin --configuration production --base-href /"
+    "test": "ng test xanh-la"
   },
-  "private": true,
   "dependencies": {
     "@angular/animations": "^19.0.0",
+    "@angular/common": "^19.0.0",
+    "@angular/compiler": "^19.0.0",
+    "@angular/core": "^19.0.0",
     "@angular/forms": "^19.0.0",
+    "@angular/platform-browser": "^19.0.0",
+    "@angular/platform-browser-dynamic": "^19.0.0",
+    "@angular/router": "^19.0.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
@@ -23,14 +29,9 @@
   "devDependencies": {
     "@angular-devkit/build-angular": "^19.0.0",
     "@angular/cli": "^19.0.0",
-    "@angular/common": "^19.0.0",
-    "@angular/compiler": "^19.0.0",
     "@angular/compiler-cli": "^19.0.0",
-    "@angular/core": "^19.0.0",
-    "@angular/platform-browser": "^19.0.0",
-    "@angular/platform-browser-dynamic": "^19.0.0",
-    "@angular/router": "^19.0.0",
     "@types/jasmine": "~5.1.0",
+    "@types/node": "^22.0.0",
     "jasmine-core": "~5.4.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
