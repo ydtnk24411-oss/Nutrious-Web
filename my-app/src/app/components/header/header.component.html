@@ -197,7 +197,7 @@
     <!-- Account -->
     @if (cart.currentUser()) {
     <div style="position:relative">
-      <button class="xl-icon-btn" type="button" (click)="toggleUserMenu()" title="{{ cart.currentUser()!.name }}">
+      <button class="xl-icon-btn xl-user-avatar-btn" type="button" (click)="toggleUserMenu()" title="{{ cart.currentUser()!.name }}">
         @if (cart.currentUser()!.avatar) {
         <img [src]="cart.currentUser()!.avatar" class="xanhla-member-avatar-img" alt="Avatar" />
         } @else {
