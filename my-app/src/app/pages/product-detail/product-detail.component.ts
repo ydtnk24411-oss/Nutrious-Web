@@ -63,6 +63,8 @@ export class ProductDetailComponent implements OnInit {
   reviewRating = signal(0);
   reviewTitle = signal('');
   reviewContent = signal('');
+  reviewImages = signal<string[]>([]);
+  previewImageUrl = signal<string | null>(null);
   reviewFilter = signal<'all' | '5' | '4' | '3' | '2' | '1' | 'latest' | 'withImages'>('all');
   submittingReview = signal(false);
 
@@ -88,6 +90,8 @@ export class ProductDetailComponent implements OnInit {
     this.quantity.set(1);
     this.selectedRipeness.set('Ready to Eat');
     this.showReviewForm.set(false);
+    this.reviewImages.set([]);
+    this.previewImageUrl.set(null);
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
@@ -300,6 +304,52 @@ export class ProductDetailComponent implements OnInit {
     this.reviewRating.set(rating);
   }
 
+  onReviewImagesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    if (!input?.files?.length) return;
+
+    const current = this.reviewImages();
+    const remainingSlots = Math.max(0, 5 - current.length);
+    if (remainingSlots <= 0) {
+      alert('Bạn chỉ có thể đính kèm tối đa 5 hình ảnh cho mỗi đánh giá.');
+      input.value = '';
+      return;
+    }
+
+    const files = Array.from(input.files)
+      .filter(f => f.type.startsWith('image/'))
+      .slice(0, remainingSlots);
+
+    for (const file of files) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`Ảnh "${file.name}" vượt quá 5MB, vui lòng chọn ảnh nhẹ hơn.`);
+        continue;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = typeof reader.result === 'string' ? reader.result : '';
+        if (dataUrl && this.reviewImages().length < 5) {
+          this.reviewImages.update(imgs => [...imgs, dataUrl]);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    input.value = '';
+  }
+
+  removeReviewImage(index: number): void {
+    this.reviewImages.update(imgs => imgs.filter((_, i) => i !== index));
+  }
+
+  openImagePreview(url: string): void {
+    if (url) this.previewImageUrl.set(url);
+  }
+
+  closeImagePreview(): void {
+    this.previewImageUrl.set(null);
+  }
+
   submitReview(): void {
     const p = this.product();
     if (!p || this.reviewRating() === 0 || !this.reviewContent()) return;
@@ -318,6 +368,7 @@ export class ProductDetailComponent implements OnInit {
       rating: this.reviewRating(),
       title: this.reviewTitle(),
       content: this.reviewContent(),
+      images: this.reviewImages(),
     }).subscribe({
       next: () => {
         this.submittingReview.set(false);
@@ -325,6 +376,7 @@ export class ProductDetailComponent implements OnInit {
         this.reviewRating.set(0);
         this.reviewTitle.set('');
         this.reviewContent.set('');
+        this.reviewImages.set([]);
       },
       error: (err) => {
         this.submittingReview.set(false);

@@ -356,6 +356,48 @@
             </div>
             <input type="text" placeholder="Tiêu đề (tùy chọn)" [(ngModel)]="reviewTitle" class="xanhla-input" style="margin-bottom:12px">
             <textarea placeholder="Nội dung đánh giá..." [(ngModel)]="reviewContent" class="xanhla-input" rows="4" style="margin-bottom:12px"></textarea>
+
+            <!-- Thêm hình ảnh sản phẩm -->
+            <div class="xanhla-review-upload-wrap">
+              <div class="xanhla-review-upload-head">
+                <span class="xanhla-review-upload-label">Hình ảnh sản phẩm thực tế ({{ reviewImages().length }}/5):</span>
+                @if (reviewImages().length < 5) {
+                  <label class="xanhla-review-upload-btn">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      hidden
+                      (change)="onReviewImagesSelected($event)"
+                    />
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5"/>
+                      <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    <span>Thêm hình ảnh</span>
+                  </label>
+                }
+              </div>
+
+              @if (reviewImages().length > 0) {
+                <div class="xanhla-review-upload-previews">
+                  @for (img of reviewImages(); track $index) {
+                    <div class="xanhla-review-upload-thumb">
+                      <img [src]="img" alt="Ảnh đánh giá" (click)="openImagePreview(img)" />
+                      <button
+                        type="button"
+                        class="xanhla-review-upload-remove"
+                        title="Xóa ảnh"
+                        (click)="removeReviewImage($index)">
+                        ✕
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
             <button class="xanhla-btn-primary" type="button" (click)="submitReview()" [disabled]="submittingReview()">
               @if (submittingReview()) { Đang gửi... } @else { Gửi đánh giá }
             </button>
@@ -411,6 +453,19 @@
               }
               <p class="xanhla-review-content">{{ review.content }}</p>
 
+              @if (review.images && review.images.length > 0) {
+                <div class="xanhla-review-images-grid">
+                  @for (imgUrl of review.images; track $index) {
+                    <button
+                      type="button"
+                      class="xanhla-review-img-item"
+                      (click)="openImagePreview(imgUrl)">
+                      <img [src]="imgUrl" [alt]="review.title || 'Ảnh đánh giá sản phẩm'" loading="lazy" />
+                    </button>
+                  }
+                </div>
+              }
+
               <!-- Phản hồi từ Admin / Evergreen Mart -->
               @if (review.adminReply) {
                 <div class="xanhla-review-admin-reply">
@@ -441,6 +496,15 @@
             <div class="xanhla-empty-reviews">Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá!</div>
           }
         </div>
+
+        @if (previewImageUrl(); as previewUrl) {
+          <div class="xanhla-review-lightbox" (click)="closeImagePreview()">
+            <div class="xanhla-review-lightbox-inner" (click)="$event.stopPropagation()">
+              <button type="button" class="xanhla-review-lightbox-close" (click)="closeImagePreview()" aria-label="Đóng">✕</button>
+              <img [src]="previewUrl" alt="Xem ảnh đánh giá" />
+            </div>
+          </div>
+        }
       </div>
     </div>
   } @else {

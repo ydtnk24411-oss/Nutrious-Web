@@ -233,6 +233,12 @@ router.post(
         } catch (e) {}
       }
 
+      const rawImages = Array.isArray(req.body.images)
+        ? req.body.images
+            .filter((img) => typeof img === 'string' && img.trim().length > 0)
+            .slice(0, 5)
+        : [];
+
       const review = await Review.create({
         product: productId,
         productName,
@@ -243,6 +249,7 @@ router.post(
         rating: Number(req.body.rating),
         title: req.body.title || '',
         content: req.body.content,
+        images: rawImages,
         verifiedPurchase: !!purchased,
       });
       res.status(201).json({ success: true, data: toDto(review, req.user._id) });
