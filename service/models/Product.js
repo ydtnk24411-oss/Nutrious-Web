@@ -5,6 +5,14 @@ const optionSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const comboItemSchema = new mongoose.Schema(
+  {
+    product:  { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+    quantity: { type: Number, default: 1, min: 1 },
+  },
+  { _id: false }
+);
+
 const productSchema = new mongoose.Schema(
   {
     name:        { type: String, required: true, trim: true },
@@ -16,6 +24,13 @@ const productSchema = new mongoose.Schema(
     categoryId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Category', default: null },
     categoryVi:  { type: String, default: '' },
     description: { type: String, default: '' },
+    brand:       { type: String, default: '' },
+    manufacturer:{ type: String, default: '' },
+    origin:      { type: String, default: '' },
+    unit:        { type: String, default: '' },
+    storageInstructions: { type: String, default: '' },
+    usageInstructions:   { type: String, default: '' },
+    specifications:      { type: mongoose.Schema.Types.Mixed, default: {} },
     container:   { type: String, default: '' },
     cutType:     { type: String, default: '' },
     cutting:     { type: String, default: '' },
@@ -31,6 +46,10 @@ const productSchema = new mongoose.Schema(
     options:     [optionSchema],
     isActive:    { type: Boolean, default: true },
     stock:       { type: Number, default: 100, min: 0 },
+    // Combo mua kèm tiết kiệm: combo là một sản phẩm riêng có giá ưu đãi
+    isCombo:     { type: Boolean, default: false },
+    comboItems:  [comboItemSchema],
+    originalPriceNumber: { type: Number, default: 0, min: 0 }, // tổng giá mua lẻ
   },
   { timestamps: true }
 );

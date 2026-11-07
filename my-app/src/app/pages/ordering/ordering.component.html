@@ -305,7 +305,7 @@
 
             <div class="xanhla-prod-card-body">
               <div class="xanhla-prod-card-cat">
-                {{ getCategoryName(prod.categoryId) }}
+                <span>{{ getCategoryName(prod.categoryId) }}</span>
               </div>
 
               <a class="xanhla-prod-card-name" [routerLink]="'/product-page/' + prod.slug">

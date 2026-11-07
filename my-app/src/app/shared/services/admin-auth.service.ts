@@ -49,6 +49,25 @@ export class AdminAuthService {
     );
   }
 
+  loginWithGoogle(data: { credential?: string; accessToken?: string }) {
+    return this.api.post<{
+      success: boolean;
+      token: string;
+      user: AdminUser;
+      isNewUser?: boolean;
+      message?: string;
+    }>('/auth/google', { ...data, forAdmin: true }).pipe(
+      tap(res => {
+        if (res.success && ['admin', 'sales', 'warehouse', 'support', 'content'].includes(res.user.role)) {
+          localStorage.setItem(TOKEN_KEY, res.token);
+          localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+          this._token.set(res.token);
+          this._user.set(res.user);
+        }
+      })
+    );
+  }
+
   logout(): void {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);

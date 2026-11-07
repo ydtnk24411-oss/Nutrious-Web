@@ -29,6 +29,9 @@ export interface XanhLaProduct {
   options?: { name: string; values: string[] }[];
   averageRating?: number;
   reviewCount?: number;
+  isCombo?: boolean;
+  originalPriceNumber?: number;
+  comboItems?: any[];
 }
 
 export interface XanhLaMeal {
@@ -67,6 +70,12 @@ export interface XanhLaUser {
   loyaltyTier?: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
   points?: number;
   totalSpent?: number;
+  authProvider?: string;
+  isGoogleLinked?: boolean;
+  googleEmail?: string;
+  googleLinkedAt?: string | null;
+  googleName?: string;
+  googleAvatar?: string;
   createdAt?: string;
 }
 
@@ -74,6 +83,10 @@ export interface XanhLaCartItem {
   product: XanhLaProduct;
   quantity: number;
   selectedOption?: string;
+  isCombo?: boolean;
+  comboItems?: any[];
+  originalPriceNumber?: number;
+  comboSaving?: number;
 }
 
 export interface EventItem {
@@ -222,6 +235,10 @@ export interface OrderItem {
   price: number;
   quantity: number;
   selectedOption?: string;
+  isCombo?: boolean;
+  comboItems?: any[];
+  originalPriceNumber?: number;
+  comboSaving?: number;
 }
 
 export interface Order {
@@ -230,12 +247,14 @@ export interface Order {
   userId: string;
   items: OrderItem[];
   subtotal: number;
+  comboDiscount?: number;
   shippingFee: number;
   discount: number;
   voucherCode?: string;
   voucherDiscount?: number;
   pointsUsed?: number;
   pointsEarned?: number;
+  estimatedPoints?: number;
   total: number;
   status: OrderStatus;
   shippingAddress: XanhLaAddress;

@@ -10,6 +10,15 @@ interface OrderItem {
   productPrice: number;
   quantity: number;
   selectedOption?: string;
+  isCombo?: boolean;
+  comboItems?: {
+    name: string;
+    price?: string;
+    image?: string;
+    weight?: string;
+    unit?: string;
+    quantity: number;
+  }[];
 }
 
 interface Order {
@@ -20,6 +29,7 @@ interface Order {
   guestPhone: string;
   items: OrderItem[];
   subtotal: number;
+  comboDiscount?: number;
   discount: number;
   voucherCode?: string;
   shippingFee: number;
@@ -177,6 +187,22 @@ export class OrderDetailComponent implements OnInit {
   formatPrice(value: number | string): string {
     const num = typeof value === 'number' ? value : Number(String(value || 0).replace(/[^\d]/g, ''));
     return num.toLocaleString('vi-VN') + 'đ';
+  }
+
+  getComboItemImage(sub: any): string {
+    return sub?.image || sub?.product?.image || '';
+  }
+
+  getComboItemName(sub: any): string {
+    return sub?.name || sub?.product?.name || 'Sản phẩm thành phần';
+  }
+
+  getComboItemPrice(sub: any): string {
+    if (sub?.price) return String(sub.price);
+    if (sub?.product?.price) return String(sub.product.price);
+    if (sub?.priceNumber) return this.formatPrice(sub.priceNumber);
+    if (sub?.product?.priceNumber) return this.formatPrice(sub.product.priceNumber);
+    return '';
   }
 
   formatDate(date: string): string {

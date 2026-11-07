@@ -16,8 +16,19 @@ router.get('/me', protect, async (req, res, next) => {
 // PUT /api/account/me - Update profile
 router.put('/me', protect, async (req, res, next) => {
   try {
+    // Không cho phép đổi số điện thoại trực tiếp mà không qua xác minh OTP
+    if (req.body.phone !== undefined) {
+      const currentUser = await User.findById(req.user.id);
+      if (currentUser && currentUser.phone && req.body.phone !== currentUser.phone) {
+        return res.status(400).json({
+          success: false,
+          message: 'Vui lòng sử dụng tính năng Đổi số điện thoại trong Cài đặt tài khoản để xác minh OTP.',
+        });
+      }
+    }
+
     // Only update fields that were actually sent in the request body
-    const allowedFields = ['name', 'phone', 'avatar', 'firstName', 'lastName', 'title'];
+    const allowedFields = ['name', 'avatar', 'firstName', 'lastName', 'title'];
     const updateData = {};
     for (const field of allowedFields) {
       if (req.body[field] !== undefined) {

@@ -3,6 +3,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminAuthService } from '../../shared/services/admin-auth.service';
+import { GoogleAuthService } from '../../shared/services/google-auth.service';
 
 @Component({
   selector: 'app-admin-login',
@@ -13,12 +14,14 @@ import { AdminAuthService } from '../../shared/services/admin-auth.service';
 })
 export class AdminLoginComponent implements OnInit {
   private auth  = inject(AdminAuthService);
+  private googleAuth = inject(GoogleAuthService);
   private router = inject(Router);
   private route  = inject(ActivatedRoute);
 
   email    = signal('admin@xanhla.farm');
   password = signal('admin123');
   loading  = signal(false);
+  googleLoading = signal(false);
   error    = signal('');
   expired  = signal(false);  // ← hiện banner token hết hạn
 
@@ -53,5 +56,32 @@ export class AdminLoginComponent implements OnInit {
         this.error.set(err.error?.message || 'Đăng nhập thất bại.');
       },
     });
+  }
+
+  loginWithGoogle(): void {
+    this.googleLoading.set(true);
+    this.error.set('');
+    this.googleAuth.promptSignIn(
+      (data) => {
+        this.auth.loginWithGoogle(data).subscribe({
+          next: (res) => {
+            this.googleLoading.set(false);
+            if (res.success && ['admin', 'sales', 'warehouse', 'support', 'content'].includes(res.user.role)) {
+              this.router.navigate(['/admin/dashboard']);
+            } else {
+              this.error.set('Tài khoản Google này không có quyền truy cập trang quản trị.');
+            }
+          },
+          error: (err) => {
+            this.googleLoading.set(false);
+            this.error.set(err.error?.message || 'Đăng nhập Google thất bại.');
+          }
+        });
+      },
+      (errorMsg) => {
+        this.googleLoading.set(false);
+        this.error.set(errorMsg);
+      }
+    );
   }
 }

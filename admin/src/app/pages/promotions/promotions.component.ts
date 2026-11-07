@@ -11,7 +11,6 @@ import { Voucher, XanhLaProduct } from '../../shared/models/xanh-la.models';
 export interface PromoItem {
   id: string;
   voucherId: string;
-  icon: string;
   title: string;
   desc: string;
   badge: string;
@@ -64,11 +63,11 @@ export interface ComboDealItem {
   savedText: string;
 }
 
-const CARD_THEMES: { icon: string; color: 'green' | 'amber' | 'teal' | 'rose' }[] = [
-  { icon: '🌱', color: 'green' },
-  { icon: '🛒', color: 'amber' },
-  { icon: '🚚', color: 'teal' },
-  { icon: '🥗', color: 'rose' },
+const CARD_THEMES: { color: 'green' | 'amber' | 'teal' | 'rose' }[] = [
+  { color: 'green' },
+  { color: 'amber' },
+  { color: 'teal' },
+  { color: 'rose' },
 ];
 
 const DEAL_DISCOUNTS = [25, 20, 30, 15, 35, 20, 25, 18, 30, 22, 15, 28];
@@ -167,7 +166,6 @@ export class PromotionsComponent implements OnInit, OnDestroy {
       return {
         id: v.id,
         voucherId: v.id,
-        icon: theme.icon,
         title: v.name,
         desc: v.description || `${discountText} cho đơn hàng từ ${(v.minValue || 0).toLocaleString('vi-VN')}đ.`,
         badge: isPercent ? `-${v.value}%` : `-${Math.round(v.value / 1000)}K`,
