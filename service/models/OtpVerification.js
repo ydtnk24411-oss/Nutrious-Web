@@ -45,3 +45,4 @@ const otpVerificationSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model('OtpVerification', otpVerificationSchema);
+
