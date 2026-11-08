@@ -6,7 +6,7 @@ module.exports = {
     unit: 'Hộp (12 cái x 30g)',
     storageInstructions: 'Bảo quản nơi khô ráo, thoáng mát, tránh ánh nắng trực tiếp và nhiệt độ cao.',
     usageInstructions: 'Dùng trực tiếp sau khi mở gói. Ngon hơn khi thưởng thức cùng trà hoặc sữa ấm.',
-    specifications: { 'Quy cách': 'Hộp 12 gói', 'Khối lượng tịnh': '360g', 'Hạn sử dụng': '12 tháng', 'Tiêu chuẩn': 'HACCP / ISO 22000' },
+    specifications: { 'Quy cách': 'Hộp 12 gói', 'Khối lượng tịnh': '360g', 'Hạn sử dụng': '12 tháng', 'Tiêu chuẩn': 'HACCP / ISO 22000', 'Năng lượng': '433 kcal / 100g (130 kcal / bánh 30g)', 'Chất đạm (Protein)': '4.7g / 100g', 'Chất béo (Lipid)': '17.0g / 100g', 'Carbohydrate': '65.3g / 100g', 'Chất xơ': '1.5g / 100g', 'Vitamin & Khoáng chất': 'Canxi, Sắt, Natri (180mg), Kali' },
     description: 'Bánh ChocoPie Orion truyền thống với lớp vỏ bánh xốp mềm phủ socola béo ngậy, kết hợp nhân kẹo dẻo marshmallow dai dai ngọt dịu đặc trưng, mang lại hương vị thơm ngon tròn đầy tình thân.'
   },
   'snack-khoai-tay-lays-vi-tu-nhien-classic-150g': {
@@ -16,7 +16,7 @@ module.exports = {
     unit: 'Gói (150g)',
     storageInstructions: 'Bảo quản nơi khô ráo, thoáng mát, đậy kín sau khi mở nếu chưa dùng hết.',
     usageInstructions: 'Dùng ngay sau khi mở gói làm món ăn vặt giòn ngon hoặc dùng trong các buổi tiệc.',
-    specifications: { 'Quy cách': 'Gói lớn', 'Khối lượng tịnh': '150g', 'Hạn sử dụng': '6 tháng', 'Nguyên liệu': '100% khoai tây tươi chọn lọc' },
+    specifications: { 'Quy cách': 'Gói lớn', 'Khối lượng tịnh': '150g', 'Hạn sử dụng': '6 tháng', 'Nguyên liệu': '100% khoai tây tươi chọn lọc', 'Năng lượng': '536 kcal / 100g', 'Chất đạm (Protein)': '6.7g / 100g', 'Chất béo (Lipid)': '33.3g / 100g', 'Carbohydrate': '53.3g / 100g', 'Chất xơ': '4.2g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C, Vitamin B6, Kali (1190mg), Natri' },
     description: 'Khoai tây chiên Lay’s Classic được làm từ những củ khoai tây tươi tuyển chọn, thái lát mỏng vàng ruộm và chiên giòn rụm với vị muối tự nhiên thơm bùi khó cưỡng.'
   },
   'banh-quy-bo-danisa-nhap-khau-dan-mach-454g': {
@@ -26,7 +26,7 @@ module.exports = {
     unit: 'Hộp thiếc (454g)',
     storageInstructions: 'Bảo quản nơi khô ráo, sạch sẽ, đậy kín nắp hộp sau khi dùng.',
     usageInstructions: 'Dùng trực tiếp cùng trà đen hoặc cà phê. Thích hợp làm quà biếu trang trọng.',
-    specifications: { 'Quy cách': 'Hộp thiếc cao cấp', 'Khối lượng tịnh': '454g', 'Hạn sử dụng': '15 tháng', 'Công thức': 'Bơ Đan Mạch truyền thống' },
+    specifications: { 'Quy cách': 'Hộp thiếc cao cấp', 'Khối lượng tịnh': '454g', 'Hạn sử dụng': '15 tháng', 'Công thức': 'Bơ Đan Mạch truyền thống', 'Năng lượng': '508 kcal / 100g', 'Chất đạm (Protein)': '5.8g / 100g', 'Chất béo (Lipid)': '25.4g / 100g', 'Carbohydrate': '64.0g / 100g', 'Chất xơ': '1.8g / 100g', 'Vitamin & Khoáng chất': 'Vitamin A, Vitamin D, Canxi, Sắt' },
     description: 'Bánh quy bơ Danisa danh tiếng sản xuất theo công thức hoàng gia Đan Mạch, hương bơ sữa thơm lừng quyến rũ, giòn tan trong miệng với nhiều hình dáng bánh cổ điển tinh tế.'
   },
   'banh-gao-an-vi-tao-tao-bien-orion-150g': {
@@ -36,7 +36,7 @@ module.exports = {
     unit: 'Gói (150g)',
     storageInstructions: 'Bảo quản nơi khô ráo, tránh ánh sáng trực tiếp.',
     usageInstructions: 'Ăn trực tiếp sau khi mở gói.',
-    specifications: { 'Quy cách': 'Gói 14 túi nhỏ', 'Khối lượng tịnh': '150g', 'Hạn sử dụng': '8 tháng', 'Nguyên liệu': '100% gạo Japonica' },
+    specifications: { 'Quy cách': 'Gói 14 túi nhỏ', 'Khối lượng tịnh': '150g', 'Hạn sử dụng': '8 tháng', 'Nguyên liệu': '100% gạo Japonica', 'Năng lượng': '472 kcal / 100g', 'Chất đạm (Protein)': '6.2g / 100g', 'Chất béo (Lipid)': '17.5g / 100g', 'Carbohydrate': '72.4g / 100g', 'Chất xơ': '2.1g / 100g', 'Vitamin & Khoáng chất': 'I-ốt tự nhiên từ tảo biển, Vitamin B1, Canxi, Magie' },
     description: 'Bánh gạo nướng An vị tảo biển làm từ 100% hạt gạo Japonica cao cấp, được nướng chín vàng giòn rụm không qua chiên dầu, rắc thêm tảo biển tự nhiên mặn mà thanh vị.'
   },
   'banh-wafers-keo-socola-kitkat-thanh-4-ngon': {
@@ -46,7 +46,7 @@ module.exports = {
     unit: 'Thanh (35g)',
     storageInstructions: 'Bảo quản nơi khô mát dưới 25°C, tránh nhiệt độ cao làm chảy socola.',
     usageInstructions: 'Bẻ từng ngón bánh và thưởng thức trọn vẹn vị xốp giòn phủ socola.',
-    specifications: { 'Quy cách': 'Thanh 4 ngón (Finger)', 'Khối lượng tịnh': '35g', 'Hạn sử dụng': '12 tháng', 'Tiêu chuẩn': 'Nestlé Cocoa Plan' },
+    specifications: { 'Quy cách': 'Thanh 4 ngón (Finger)', 'Khối lượng tịnh': '35g', 'Hạn sử dụng': '12 tháng', 'Tiêu chuẩn': 'Nestlé Cocoa Plan', 'Năng lượng': '518 kcal / 100g (181 kcal / thanh 35g)', 'Chất đạm (Protein)': '6.5g / 100g', 'Chất béo (Lipid)': '26.8g / 100g', 'Carbohydrate': '62.1g / 100g', 'Chất xơ': '2.3g / 100g', 'Vitamin & Khoáng chất': 'Canxi (150mg), Sắt, Magie, Kali' },
     description: 'Thanh socola KitKat 4 ngón huyền thoại với các lớp bánh xốp giòn tan xen kẽ socola sữa mịn màng, là món ăn nhẹ hoàn hảo giúp bạn nạp năng lượng và thư giãn tức thì.'
   },
   'keo-deo-haribo-goldbaren-vi-trai-cay-80g': {
@@ -56,7 +56,7 @@ module.exports = {
     unit: 'Gói (80g)',
     storageInstructions: 'Bảo quản nơi khô ráo, thoáng mát, tránh ánh nắng mặt trời.',
     usageInstructions: 'Dùng trực tiếp, nhai kỹ khi ăn.',
-    specifications: { 'Quy cách': 'Gói hình chú gấu', 'Khối lượng tịnh': '80g', 'Hạn sử dụng': '18 tháng', 'Màu sắc': 'Chiết xuất từ rau củ quả tự nhiên' },
+    specifications: { 'Quy cách': 'Gói hình chú gấu', 'Khối lượng tịnh': '80g', 'Hạn sử dụng': '18 tháng', 'Màu sắc': 'Chiết xuất từ rau củ quả tự nhiên', 'Năng lượng': '343 kcal / 100g', 'Chất đạm (Protein)': '6.9g / 100g (Gelatin)', 'Chất béo (Lipid)': '0.1g / 100g', 'Carbohydrate': '77.0g / 100g', 'Chất xơ': '0g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C tự nhiên từ nước ép trái cây, Collagen thủy phân' },
     description: 'Kẹo dẻo hình gấu Haribo Goldbären nổi tiếng toàn cầu với độ dai dẻo sảng khoái và 6 hương vị trái cây tự nhiên thơm mát (dâu, táo, cam, mâm xôi, dứa, chanh), không chứa phẩm màu nhân tạo.'
   },
   'banh-sandwich-lat-mem-fresca-275g': {
@@ -66,7 +66,7 @@ module.exports = {
     unit: 'Gói (275g - 10 lát)',
     storageInstructions: 'Bảo quản nơi khô ráo, thoáng mát, buộc kín miệng túi sau khi mở.',
     usageInstructions: 'Dùng ăn sáng trực tiếp, kẹp thịt nguội, trứng, phô mai hoặc nướng giòn.',
-    specifications: { 'Quy cách': 'Túi 10 lát cắt sẵn', 'Khối lượng tịnh': '275g', 'Hạn sử dụng': '5 - 7 ngày', 'Bột mì': 'Bột mì thượng hạng' },
+    specifications: { 'Quy cách': 'Túi 10 lát cắt sẵn', 'Khối lượng tịnh': '275g', 'Hạn sử dụng': '5 - 7 ngày', 'Bột mì': 'Bột mì thượng hạng', 'Năng lượng': '265 kcal / 100g', 'Chất đạm (Protein)': '8.8g / 100g', 'Chất béo (Lipid)': '3.5g / 100g', 'Carbohydrate': '49.2g / 100g', 'Chất xơ': '2.7g / 100g', 'Vitamin & Khoáng chất': 'Vitamin B1, B2, B3, Axit Folic, Canxi, Sắt' },
     description: 'Bánh mì sandwich Fresca mềm mịn xốp tơi, được làm từ bột mì cao cấp lên men tự nhiên, cung cấp nguồn năng lượng sạch và tiện lợi cho bữa sáng nhanh của mọi gia đình.'
   },
   'banh-bong-lan-solite-nhan-kem-vi-bo-sua-hop-12-cai': {
@@ -76,7 +76,7 @@ module.exports = {
     unit: 'Hộp (12 cái x 18g)',
     storageInstructions: 'Bảo quản nơi khô ráo, thoáng mát, tránh ánh nắng trực tiếp.',
     usageInstructions: 'Dùng trực tiếp sau khi mở gói nhỏ.',
-    specifications: { 'Quy cách': 'Hộp 12 cái bọc riêng', 'Khối lượng tịnh': '216g', 'Hạn sử dụng': '10 tháng', 'Thành phần': 'Trứng gà tươi, sữa bơ' },
+    specifications: { 'Quy cách': 'Hộp 12 cái bọc riêng', 'Khối lượng tịnh': '216g', 'Hạn sử dụng': '10 tháng', 'Thành phần': 'Trứng gà tươi, sữa bơ', 'Năng lượng': '440 kcal / 100g (79 kcal / bánh 18g)', 'Chất đạm (Protein)': '6.1g / 100g', 'Chất béo (Lipid)': '21.5g / 100g', 'Carbohydrate': '55.4g / 100g', 'Chất xơ': '1.1g / 100g', 'Vitamin & Khoáng chất': 'Vitamin A, Vitamin D, Canxi, Phốt pho, Sắt' },
     description: 'Bánh bông lan tròn Solite nhân kem bơ sữa béo ngậy, vỏ bánh nướng vàng óng mềm xốp thơm mùi trứng gà tươi, là món ăn xế ngọt ngào giàu dinh dưỡng cho các bé và cả nhà.'
   },
   'banh-quy-oreo-kep-kem-vi-vanila-119-6g': {
@@ -86,7 +86,7 @@ module.exports = {
     unit: 'Cây (119.6g)',
     storageInstructions: 'Bảo quản nơi khô ráo, thoáng mát, tránh ánh nắng trực tiếp.',
     usageInstructions: 'Xoay bánh, nếm kem, chấm sữa để cảm nhận hương vị kinh điển.',
-    specifications: { 'Quy cách': 'Dạng cây cuộn', 'Khối lượng tịnh': '119.6g', 'Hạn sử dụng': '12 tháng', 'Vỏ bánh': 'Cacao đen nguyên chất' },
+    specifications: { 'Quy cách': 'Dạng cây cuộn', 'Khối lượng tịnh': '119.6g', 'Hạn sử dụng': '12 tháng', 'Vỏ bánh': 'Cacao đen nguyên chất', 'Năng lượng': '480 kcal / 100g', 'Chất đạm (Protein)': '4.9g / 100g', 'Chất béo (Lipid)': '20.2g / 100g', 'Carbohydrate': '69.8g / 100g', 'Chất xơ': '3.0g / 100g', 'Vitamin & Khoáng chất': 'Sắt (4.2mg), Magie, Kali, chất chống oxy hóa từ Cacao' },
     description: 'Bánh quy socola kẹp kem vani Oreo số 1 thế giới với 2 lát bánh quy cacao đen giòn rụm kẹp lớp kem vani ngọt thơm dịu dàng, ăn kèm sữa tươi mát lạnh vô cùng hấp dẫn.'
   },
   'banh-que-pocky-huong-socola-glico-40g': {
@@ -96,7 +96,7 @@ module.exports = {
     unit: 'Hộp (40g)',
     storageInstructions: 'Bảo quản nơi khô mát dưới 28°C.',
     usageInstructions: 'Mở nắp hộp và thưởng thức từng que bánh giòn rụm.',
-    specifications: { 'Quy cách': 'Hộp giấy bỏ túi', 'Khối lượng tịnh': '40g', 'Hạn sử dụng': '12 tháng', 'Phủ kem': 'Socola sữa béo ngậy' },
+    specifications: { 'Quy cách': 'Hộp giấy bỏ túi', 'Khối lượng tịnh': '40g', 'Hạn sử dụng': '12 tháng', 'Phủ kem': 'Socola sữa béo ngậy', 'Năng lượng': '492 kcal / 100g (197 kcal / hộp 40g)', 'Chất đạm (Protein)': '8.2g / 100g', 'Chất béo (Lipid)': '21.0g / 100g', 'Carbohydrate': '67.5g / 100g', 'Chất xơ': '2.8g / 100g', 'Vitamin & Khoáng chất': 'Canxi, Sắt, Kali, Vitamin B1' },
     description: 'Bánh que Pocky Glico giòn tan phủ lớp socola kem sữa mịn màng đậm đà, thiết kế phần tay cầm không dính tay tiện lợi, mang lại trải nghiệm nhâm nhi vui vẻ bất tận.'
   },
   'rong-bien-say-gion-taokaenoi-vi-truyen-thong-32g': {
@@ -106,7 +106,7 @@ module.exports = {
     unit: 'Gói (32g)',
     storageInstructions: 'Bảo quản nơi khô mát, kéo khoá zip lại nếu chưa dùng hết.',
     usageInstructions: 'Dùng trực tiếp như snack hoặc ăn kèm cơm trắng, mì gói.',
-    specifications: { 'Quy cách': 'Gói zip', 'Khối lượng tịnh': '32g', 'Hạn sử dụng': '12 tháng', 'Phương pháp': 'Sấy nướng giòn rụm' },
+    specifications: { 'Quy cách': 'Gói zip', 'Khối lượng tịnh': '32g', 'Hạn sử dụng': '12 tháng', 'Phương pháp': 'Sấy nướng giòn rụm', 'Năng lượng': '560 kcal / 100g (179 kcal / gói 32g)', 'Chất đạm (Protein)': '12.5g / 100g', 'Chất béo (Lipid)': '40.6g / 100g', 'Carbohydrate': '34.4g / 100g', 'Chất xơ': '9.4g / 100g', 'Vitamin & Khoáng chất': 'I-ốt, Vitamin A, Vitamin B12, Sắt, Canxi, Kẽm' },
     description: 'Rong biển sấy giòn Taokaenoi vị truyền thống được sản xuất từ rong biển thiên nhiên sạch, giữ trọn khoáng chất và vị umami đậm đà giòn tan khó cưỡng.'
   },
   'banh-xop-loacker-quadratini-vi-cacao-napolitaner-125g': {
@@ -116,7 +116,7 @@ module.exports = {
     unit: 'Gói (125g)',
     storageInstructions: 'Bảo quản nơi khô ráo, thoáng mát dưới 22°C.',
     usageInstructions: 'Dùng trực tiếp, ngon tuyệt khi dùng kèm cà phê Espresso hoặc Cappuccino.',
-    specifications: { 'Quy cách': 'Gói vuông Quadratini', 'Khối lượng tịnh': '125g', 'Hạn sử dụng': '18 tháng', 'Tiêu chuẩn': '100% hạt phỉ Ý tự nhiên' },
+    specifications: { 'Quy cách': 'Gói vuông Quadratini', 'Khối lượng tịnh': '125g', 'Hạn sử dụng': '18 tháng', 'Tiêu chuẩn': '100% hạt phỉ Ý tự nhiên', 'Năng lượng': '518 kcal / 100g', 'Chất đạm (Protein)': '7.6g / 100g', 'Chất béo (Lipid)': '27.0g / 100g', 'Carbohydrate': '60.0g / 100g', 'Chất xơ': '3.4g / 100g', 'Vitamin & Khoáng chất': 'Vitamin E (từ hạt phỉ Ý), Magie, Canxi, Sắt' },
     description: 'Bánh xốp Loacker Quadratini Napolitaner nhập khẩu trực tiếp từ dãy Alps nước Ý, gồm 5 lớp bánh xốp giòn siêu mỏng xen kẽ 4 lớp kem hạt phỉ cacao nguyên chất hảo hạng.'
   },
   'banh-mi-ngot-custard-kinh-do-hop-6-cai': {
@@ -126,7 +126,7 @@ module.exports = {
     unit: 'Hộp (6 cái)',
     storageInstructions: 'Bảo quản nơi khô ráo, thoáng mát, tránh ẩm ướt.',
     usageInstructions: 'Dùng ngay trong bữa ăn sáng hoặc ăn nhẹ trong ngày.',
-    specifications: { 'Quy cách': 'Hộp 6 bánh bọc riêng', 'Khối lượng tịnh': '240g', 'Hạn sử dụng': '14 ngày', 'Nhân bánh': 'Kem trứng Custard vàng óng' },
+    specifications: { 'Quy cách': 'Hộp 6 bánh bọc riêng', 'Khối lượng tịnh': '240g', 'Hạn sử dụng': '14 ngày', 'Nhân bánh': 'Kem trứng Custard vàng óng', 'Năng lượng': '338 kcal / 100g (135 kcal / bánh 40g)', 'Chất đạm (Protein)': '7.5g / 100g', 'Chất béo (Lipid)': '11.2g / 100g', 'Carbohydrate': '51.8g / 100g', 'Chất xơ': '1.9g / 100g', 'Vitamin & Khoáng chất': 'Vitamin A, Vitamin B2, Canxi, Sắt, Kẽm' },
     description: 'Bánh mì ngọt Custard Kinh Đô có lớp vỏ bánh mì mềm mịn thơm lừng, nhân kem trứng sữa custard ngọt thanh béo nhẹ tan chảy, là món ăn tiếp sức tiện lợi mỗi ngày.'
   },
   'dau-hat-dieu-rang-muoi-vo-lua-tan-tan-200g': {
@@ -136,7 +136,7 @@ module.exports = {
     unit: 'Hũ (200g)',
     storageInstructions: 'Bảo quản nơi khô ráo, đậy kín nắp hũ sau khi dùng.',
     usageInstructions: 'Tách nhẹ lớp vỏ lụa và thưởng thức trực tiếp hạt điều giòn béo.',
-    specifications: { 'Quy cách': 'Hũ nắp nhôm', 'Khối lượng tịnh': '200g', 'Hạn sử dụng': '12 tháng', 'Nguồn gốc': 'Hạt điều Bình Phước loại 1' },
+    specifications: { 'Quy cách': 'Hũ nắp nhôm', 'Khối lượng tịnh': '200g', 'Hạn sử dụng': '12 tháng', 'Nguồn gốc': 'Hạt điều Bình Phước loại 1', 'Năng lượng': '574 kcal / 100g', 'Chất đạm (Protein)': '18.2g / 100g', 'Chất béo (Lipid)': '46.3g / 100g (chất béo không bão hòa tốt cho tim mạch)', 'Carbohydrate': '30.2g / 100g', 'Chất xơ': '3.3g / 100g', 'Vitamin & Khoáng chất': 'Magie (292mg), Đồng, Kẽm, Sắt, Phốt pho, Vitamin K' },
     description: 'Hạt điều rang muối còn vỏ lụa Tân Tân chọn lọc từ vùng đất đỏ Bình Phước, hạt to đều chắc mẩy, rang củi thủ công giữ trọn vị bùi béo đậm đà và độ giòn rụm tự nhiên.'
   },
   'dau-phong-nuoc-cot-dua-tan-tan-200g': {
@@ -146,7 +146,7 @@ module.exports = {
     unit: 'Hũ (200g)',
     storageInstructions: 'Bảo quản nơi khô ráo, thoáng mát, đậy kín nắp sau khi mở.',
     usageInstructions: 'Dùng trực tiếp làm món ăn vặt nhâm nhi hoặc tráng miệng.',
-    specifications: { 'Quy cách': 'Hũ nhựa Pet', 'Khối lượng tịnh': '200g', 'Hạn sử dụng': '12 tháng', 'Đặc điểm': 'Vỏ giòn tan bọc nước cốt dừa' },
+    specifications: { 'Quy cách': 'Hũ nhựa Pet', 'Khối lượng tịnh': '200g', 'Hạn sử dụng': '12 tháng', 'Đặc điểm': 'Vỏ giòn tan bọc nước cốt dừa', 'Năng lượng': '525 kcal / 100g', 'Chất đạm (Protein)': '19.5g / 100g', 'Chất béo (Lipid)': '31.8g / 100g', 'Carbohydrate': '40.2g / 100g', 'Chất xơ': '5.8g / 100g', 'Vitamin & Khoáng chất': 'Vitamin E, Vitamin B3 (Niacin), Folate, Magie, Kali' },
     description: 'Đậu phộng da cá nước cốt dừa Tân Tân kết hợp hạt đậu phộng giòn thơm bên trong với lớp bột áo nước cốt dừa béo ngậy ngọt mặn hài hòa bên ngoài, thơm bùi cuốn hút.'
   },
   'khoai-tay-chien-pringles-vi-pho-mai-107g': {
@@ -156,7 +156,7 @@ module.exports = {
     unit: 'Ống (107g)',
     storageInstructions: 'Bảo quản nơi khô mát, đóng chặt nắp ống sau khi ăn.',
     usageInstructions: 'Mở nắp và dùng trực tiếp các lát khoai tây uốn cong đều đặn.',
-    specifications: { 'Quy cách': 'Ống giấy đặc trưng', 'Khối lượng tịnh': '107g', 'Hạn sử dụng': '15 tháng', 'Hương vị': 'Phô mai Cheddar đậm đà' },
+    specifications: { 'Quy cách': 'Ống giấy đặc trưng', 'Khối lượng tịnh': '107g', 'Hạn sử dụng': '15 tháng', 'Hương vị': 'Phô mai Cheddar đậm đà', 'Năng lượng': '522 kcal / 100g', 'Chất đạm (Protein)': '5.4g / 100g', 'Chất béo (Lipid)': '31.0g / 100g', 'Carbohydrate': '55.0g / 100g', 'Chất xơ': '3.2g / 100g', 'Vitamin & Khoáng chất': 'Canxi, Vitamin C, Kali, Phốt pho' },
     description: 'Khoai tây Pringles vị Phô Mai đậm đà với những lát khoai tây xếp chồng hoàn hảo hình yên ngựa, giòn rụm thơm ngậy ngập tràn vị phô mai hảo hạng.'
   },
   'banh-snack-oishi-vi-tom-cay-80g': {
@@ -166,7 +166,7 @@ module.exports = {
     unit: 'Gói (80g)',
     storageInstructions: 'Bảo quản nơi khô ráo thoáng mát, tránh ánh nắng mặt trời.',
     usageInstructions: 'Dùng trực tiếp sau khi mở gói.',
-    specifications: { 'Quy cách': 'Gói tiện lợi', 'Khối lượng tịnh': '80g', 'Hạn sử dụng': '6 tháng', 'Hương vị': 'Tôm cay đặc trưng Oishi' },
+    specifications: { 'Quy cách': 'Gói tiện lợi', 'Khối lượng tịnh': '80g', 'Hạn sử dụng': '6 tháng', 'Hương vị': 'Tôm cay đặc trưng Oishi', 'Năng lượng': '485 kcal / 100g', 'Chất đạm (Protein)': '5.2g / 100g', 'Chất béo (Lipid)': '22.4g / 100g', 'Carbohydrate': '65.8g / 100g', 'Chất xơ': '1.6g / 100g', 'Vitamin & Khoáng chất': 'Canxi từ tôm tự nhiên, Phốt pho, I-ốt' },
     description: 'Snack tôm cay Oishi tuổi thơ giòn xốp rôm rả, đượm vị ngọt của tôm hòa quyện chút cay the nồng nàn và vị mặn ngọt vừa miệng, kích thích vị giác cực độ.'
   },
   'banh-pho-mai-nabati-vi-pho-mai-kem-140g': {
@@ -176,7 +176,7 @@ module.exports = {
     unit: 'Hộp (140g)',
     storageInstructions: 'Bảo quản nơi khô ráo, tránh nhiệt độ cao làm mềm bánh.',
     usageInstructions: 'Dùng ăn nhẹ liền tay.',
-    specifications: { 'Quy cách': 'Hộp nhiều gói nhỏ', 'Khối lượng tịnh': '140g', 'Hạn sử dụng': '12 tháng', 'Vitamin': 'Giàu Vitamin A, B1, B2, B6, B12' },
+    specifications: { 'Quy cách': 'Hộp nhiều gói nhỏ', 'Khối lượng tịnh': '140g', 'Hạn sử dụng': '12 tháng', 'Vitamin': 'Giàu Vitamin A, B1, B2, B6, B12', 'Năng lượng': '495 kcal / 100g', 'Chất đạm (Protein)': '6.0g / 100g', 'Chất béo (Lipid)': '21.8g / 100g', 'Carbohydrate': '68.5g / 100g', 'Chất xơ': '1.4g / 100g', 'Khoáng chất': 'Canxi (220mg), Phốt pho, Natri' },
     description: 'Bánh xốp phô mai Nabati Indonesia nổi bật với từng lớp bánh xốp giòn kẹp kem phô mai béo mặn thơm ngậy khó quên, bổ sung vitamin thiết yếu cho cơ thể.'
   },
   'banh-mi-hoa-cuc-harrys-brioche-tressee-500g': {
@@ -186,7 +186,7 @@ module.exports = {
     unit: 'Ổ (500g)',
     storageInstructions: 'Bảo quản nơi khô ráo thoáng mát, buộc kín miệng túi sau mỗi lần cắt lát.',
     usageInstructions: 'Xé từng thớ bánh ăn liền hoặc phết mứt trái cây, bơ lạt.',
-    specifications: { 'Quy cách': 'Ổ bện hoa cúc lớn', 'Khối lượng tịnh': '500g', 'Hạn sử dụng': '30 - 45 ngày', 'Hương vị': 'Bơ Pháp & hoa cam tinh tế' },
+    specifications: { 'Quy cách': 'Ổ bện hoa cúc lớn', 'Khối lượng tịnh': '500g', 'Hạn sử dụng': '30 - 45 ngày', 'Hương vị': 'Bơ Pháp & hoa cam tinh tế', 'Năng lượng': '361 kcal / 100g', 'Chất đạm (Protein)': '8.5g / 100g', 'Chất béo (Lipid)': '13.0g / 100g', 'Carbohydrate': '51.5g / 100g', 'Chất xơ': '2.4g / 100g', 'Vitamin & Khoáng chất': 'Vitamin A, B1, B2, D, Canxi, Sắt' },
     description: 'Bánh mì hoa cúc Harrys Brioche Tressée nhập khẩu từ Pháp, thớ bánh dai mềm màu vàng ươm thơm lừng mùi bơ tươi quyện cùng hương hoa cam thanh khiết trứ danh nước Pháp.'
   },
   'trai-cay-say-deo-vinamit-thap-cam-200g': {
@@ -196,7 +196,7 @@ module.exports = {
     unit: 'Gói (200g)',
     storageInstructions: 'Bảo quản nơi khô mát, kéo khóa miệng túi zip cẩn thận.',
     usageInstructions: 'Dùng ăn vặt trực tiếp hoặc trộn sữa chua ngũ cốc Granola.',
-    specifications: { 'Quy cách': 'Túi zip nhôm', 'Khối lượng tịnh': '200g', 'Hạn sử dụng': '12 tháng', 'Thành phần': 'Chuối, mít, khoai môn, khoai lang sấy dẻo' },
+    specifications: { 'Quy cách': 'Túi zip nhôm', 'Khối lượng tịnh': '200g', 'Hạn sử dụng': '12 tháng', 'Thành phần': 'Chuối, mít, khoai môn, khoai lang sấy dẻo', 'Năng lượng': '335 kcal / 100g', 'Chất đạm (Protein)': '3.2g / 100g', 'Chất béo (Lipid)': '1.5g / 100g', 'Carbohydrate': '76.8g / 100g', 'Chất xơ': '6.5g / 100g', 'Vitamin & Khoáng chất': 'Vitamin A, Vitamin C, Kali (650mg), Magie, Sắt' },
     description: 'Trái cây sấy dẻo thập cẩm Vinamit chắt lọc tinh hoa từ các loại nông sản nhiệt đới Việt Nam, vị ngọt thanh tự nhiên dẻo thơm không đường hóa học, tốt cho sức khỏe.'
   },
   'mit-say-gion-vinamit-100g': {
@@ -206,7 +206,7 @@ module.exports = {
     unit: 'Gói (100g)',
     storageInstructions: 'Bảo quản nơi khô ráo, tránh gió để giữ độ giòn.',
     usageInstructions: 'Ăn ngay sau khi mở gói.',
-    specifications: { 'Quy cách': 'Gói zip', 'Khối lượng tịnh': '100g', 'Hạn sử dụng': '12 tháng', 'Công nghệ': 'Sấy chân không hiện đại' },
+    specifications: { 'Quy cách': 'Gói zip', 'Khối lượng tịnh': '100g', 'Hạn sử dụng': '12 tháng', 'Công nghệ': 'Sấy chân không hiện đại', 'Năng lượng': '412 kcal / 100g', 'Chất đạm (Protein)': '4.5g / 100g', 'Chất béo (Lipid)': '11.2g / 100g', 'Carbohydrate': '73.5g / 100g', 'Chất xơ': '7.2g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C, Vitamin B6, Kali, Magie, Mangan' },
     description: 'Mít sấy giòn Vinamit sản xuất bằng công nghệ sấy chân không giữ nguyên màu vàng tươi và hương thơm nồng nàn đặc trưng của mít chín cây, giòn tan đậm đà tự nhiên.'
   },
   'xoai-say-deo-nong-lam-food-100g': {
@@ -216,7 +216,7 @@ module.exports = {
     unit: 'Gói (100g)',
     storageInstructions: 'Bảo quản nơi khô ráo thoáng mát, tránh ánh nắng trực tiếp.',
     usageInstructions: 'Dùng trực tiếp, nhâm nhi cùng trà xanh thanh tao.',
-    specifications: { 'Quy cách': 'Gói zip sang trọng', 'Khối lượng tịnh': '100g', 'Hạn sử dụng': '12 tháng', 'Tiêu chuẩn': 'ĐH Nông Lâm TP.HCM nghiên cứu' },
+    specifications: { 'Quy cách': 'Gói zip sang trọng', 'Khối lượng tịnh': '100g', 'Hạn sử dụng': '12 tháng', 'Tiêu chuẩn': 'ĐH Nông Lâm TP.HCM nghiên cứu', 'Năng lượng': '319 kcal / 100g', 'Chất đạm (Protein)': '2.5g / 100g', 'Chất béo (Lipid)': '0.8g / 100g', 'Carbohydrate': '78.2g / 100g', 'Chất xơ': '5.2g / 100g', 'Vitamin & Khoáng chất': 'Beta-Carotene (tiền Vitamin A), Vitamin C, Vitamin E, Kali' },
     description: 'Xoài sấy dẻo Nông Lâm Food chế biến từ xoài cát chín mọng, giữ nguyên vị chua ngọt thanh dịu cùng độ mềm dẻo tự nhiên, chứa hàm lượng chất xơ và vitamin dồi dào.'
   },
   'kho-ga-la-chanh-xe-phay-150g': {
@@ -226,7 +226,7 @@ module.exports = {
     unit: 'Hũ (150g)',
     storageInstructions: 'Bảo quản nơi khô ráo thoáng mát, đậy kín nắp sau khi dùng.',
     usageInstructions: 'Dùng trực tiếp, vắt thêm chút chanh tươi làm món nhậu hoặc ăn vặt tuyệt hảo.',
-    specifications: { 'Quy cách': 'Hũ nhựa nắp nhôm bật', 'Khối lượng tịnh': '150g', 'Hạn sử dụng': '6 tháng', 'Nguyên liệu': '100% ức gà tươi, lá chanh tươi' },
+    specifications: { 'Quy cách': 'Hũ nhựa nắp nhôm bật', 'Khối lượng tịnh': '150g', 'Hạn sử dụng': '6 tháng', 'Nguyên liệu': '100% ức gà tươi, lá chanh tươi', 'Năng lượng': '328 kcal / 100g', 'Chất đạm (Protein)': '42.5g / 100g', 'Chất béo (Lipid)': '6.2g / 100g', 'Carbohydrate': '25.4g / 100g', 'Chất xơ': '1.2g / 100g', 'Vitamin & Khoáng chất': 'Vitamin B3, B6, Selen, Phốt pho, Kẽm, Tinh dầu lá chanh' },
     description: 'Khô gà lá chanh xé sợi Evergreen Mart làm từ 100% ức gà tươi đạt chuẩn kiểm dịch, tẩm ướp ớt cay nồng và lá chanh bánh tẻ sấy khô giòn rụm, thơm thơm cay cay đậm đà vị truyền thống.'
   },
   'kho-bo-soi-cay-vi-tay-bac-100g': {
@@ -236,7 +236,7 @@ module.exports = {
     unit: 'Hũ (100g)',
     storageInstructions: 'Bảo quản nơi khô mát hoặc ngăn mát tủ lạnh sau khi mở nắp.',
     usageInstructions: 'Dùng trực tiếp, ngon xuất sắc khi vắt thêm quất hoặc chanh tươi.',
-    specifications: { 'Quy cách': 'Hũ nắp xé', 'Khối lượng tịnh': '100g', 'Hạn sử dụng': '6 tháng', 'Gia vị': 'Mắc khén, hạt dổi, ớt nướng than hoa' },
+    specifications: { 'Quy cách': 'Hũ nắp xé', 'Khối lượng tịnh': '100g', 'Hạn sử dụng': '6 tháng', 'Gia vị': 'Mắc khén, hạt dổi, ớt nướng than hoa', 'Năng lượng': '352 kcal / 100g', 'Chất đạm (Protein)': '46.8g / 100g', 'Chất béo (Lipid)': '7.5g / 100g', 'Carbohydrate': '24.0g / 100g', 'Chất xơ': '1.0g / 100g', 'Vitamin & Khoáng chất': 'Sắt heme (4.5mg), Kẽm, Vitamin B12, B6, Phốt pho' },
     description: 'Khô bò sợi cay Tây Bắc Evergreen Mart tuyển chọn từ thăn bò tươi thả đồi vùng cao, tẩm ướp cùng hạt mắc khén, hạt dổi rừng thơm lừng, thịt bò dai ngọt thấm vị đậm đà nguyên bản vùng Tây Bắc.'
   },
   'keo-ngam-moc-huong-co-hong-ricola-original-40g': {
@@ -246,7 +246,7 @@ module.exports = {
     unit: 'Hộp (40g)',
     storageInstructions: 'Bảo quản nơi khô ráo, tránh ánh nắng và nhiệt độ cao.',
     usageInstructions: 'Ngậm tan từ từ trong miệng khi bị rát họng, khản tiếng hoặc cần hơi thở thơm mát.',
-    specifications: { 'Quy cách': 'Hộp giấy bỏ túi', 'Khối lượng tịnh': '40g', 'Hạn sử dụng': '24 tháng', 'Thành phần': '13 loại thảo mộc tự nhiên Thụy Sĩ' },
+    specifications: { 'Quy cách': 'Hộp giấy bỏ túi', 'Khối lượng tịnh': '40g', 'Hạn sử dụng': '24 tháng', 'Thành phần': '13 loại thảo mộc tự nhiên Thụy Sĩ', 'Năng lượng': '398 kcal / 100g (10 kcal / viên 2.5g)', 'Chất đạm (Protein)': '0g / 100g', 'Chất béo (Lipid)': '0g / 100g', 'Carbohydrate': '98.0g / 100g', 'Chất xơ': '0g / 100g', 'Vitamin & Khoáng chất': 'Tinh dầu bạc hà (Menthol) & chiết xuất 13 thảo mộc núi Alps' },
     description: 'Kẹo ngậm thảo mộc Ricola Original chắt lọc từ 13 loại thảo mộc tự nhiên quý giá vùng núi Alps Thụy Sĩ, giúp làm dịu cổ họng, thông mũi mát họng và đem lại hơi thở thơm mát dễ chịu.'
   },
   'keo-socola-m-ms-nhan-dau-phong-40g': {
@@ -256,7 +256,7 @@ module.exports = {
     unit: 'Gói (40g)',
     storageInstructions: 'Bảo quản nơi khô mát dưới 25°C, tránh ánh nắng trực tiếp.',
     usageInstructions: 'Thưởng thức trực tiếp từng viên kẹo socola sắc màu.',
-    specifications: { 'Quy cách': 'Gói nhỏ bỏ túi', 'Khối lượng tịnh': '40g', 'Hạn sử dụng': '12 tháng', 'Vỏ bọc': 'Lớp đường giòn rực rỡ sắc màu' },
+    specifications: { 'Quy cách': 'Gói nhỏ bỏ túi', 'Khối lượng tịnh': '40g', 'Hạn sử dụng': '12 tháng', 'Vỏ bọc': 'Lớp đường giòn rực rỡ sắc màu', 'Năng lượng': '512 kcal / 100g (205 kcal / gói 40g)', 'Chất đạm (Protein)': '9.8g / 100g', 'Chất béo (Lipid)': '26.2g / 100g', 'Carbohydrate': '59.4g / 100g', 'Chất xơ': '3.5g / 100g', 'Vitamin & Khoáng chất': 'Canxi, Sắt, Vitamin E, Magie, Kali' },
     description: 'Kẹo socola M&M’s nhân đậu phộng nổi tiếng với lớp vỏ đường giòn tan rực rỡ sắc màu bọc lấy socola sữa ngọt ngào và hạt đậu phộng rang giòn bùi béo bên trong, tan ngay trong miệng chứ không tan trên tay.'
   },
   'banh-quy-yen-mach-sunrise-oat-crunch-178g': {
@@ -266,7 +266,7 @@ module.exports = {
     unit: 'Gói (178g)',
     storageInstructions: 'Bảo quản nơi khô ráo, thoáng mát, đậy kín sau khi mở.',
     usageInstructions: 'Dùng ăn sáng hoặc các bữa phụ giàu chất xơ cho người ăn kiêng.',
-    specifications: { 'Quy cách': 'Gói chia túi nhỏ tiện lợi', 'Khối lượng tịnh': '178g', 'Hạn sử dụng': '12 tháng', 'Dinh dưỡng': 'Giàu chất xơ Yến mạch nguyên cám' },
+    specifications: { 'Quy cách': 'Gói chia túi nhỏ tiện lợi', 'Khối lượng tịnh': '178g', 'Hạn sử dụng': '12 tháng', 'Dinh dưỡng': 'Giàu chất xơ Yến mạch nguyên cám', 'Năng lượng': '465 kcal / 100g', 'Chất đạm (Protein)': '8.9g / 100g', 'Chất béo (Lipid)': '18.5g / 100g', 'Carbohydrate': '64.2g / 100g', 'Chất xơ': '6.8g / 100g (Beta-glucan từ yến mạch)', 'Vitamin & Khoáng chất': 'Vitamin B1, B5, Sắt, Magie, Kẽm, Phốt pho' },
     description: 'Bánh quy yến mạch Sunrise Oat Crunch giòn tan thơm bùi mùi ngũ cốc tự nhiên, chứa hàm lượng chất xơ cao từ yến mạch nguyên cám, phù hợp cho người theo đuổi lối sống lành mạnh, ăn kiêng eat clean.'
   },
   'banh-tai-yen-chien-gion-truyen-thong-200g': {
@@ -276,7 +276,7 @@ module.exports = {
     unit: 'Hộp (200g - 4 cái)',
     storageInstructions: 'Bảo quản nơi khô mát, dùng trong 3 ngày hoặc làm nóng lại bằng lò nướng/nồi chiên không dầu.',
     usageInstructions: 'Ăn liền hoặc nướng lại 2 phút ở 160°C để viền bánh giòn tan như mới chiên.',
-    specifications: { 'Quy cách': 'Hộp 4 cái', 'Khối lượng tịnh': '200g', 'Hạn sử dụng': '5 ngày', 'Bột': 'Bột gạo, nước cốt dừa tươi, đường thốt nốt' },
+    specifications: { 'Quy cách': 'Hộp 4 cái', 'Khối lượng tịnh': '200g', 'Hạn sử dụng': '5 ngày', 'Bột': 'Bột gạo, nước cốt dừa tươi, đường thốt nốt', 'Năng lượng': '385 kcal / 100g', 'Chất đạm (Protein)': '4.8g / 100g', 'Chất béo (Lipid)': '15.6g / 100g', 'Carbohydrate': '56.4g / 100g', 'Chất xơ': '1.5g / 100g', 'Vitamin & Khoáng chất': 'Vitamin B1, Kali, Magie, Sắt từ đường thốt nốt & cốt dừa' },
     description: 'Bánh tai yến chiên giòn truyền thống miền Tây hình chiếc tổ yến xinh xắn, viền bánh giòn rụm lượn sóng, lòng bánh dẻo mềm béo ngậy mùi nước cốt dừa và thoang thoảng hương đường thốt nốt.'
   },
   'com-chay-cha-bong-sai-gon-150g': {
@@ -286,7 +286,7 @@ module.exports = {
     unit: 'Gói (150g)',
     storageInstructions: 'Bảo quản nơi khô ráo, đậy kín miệng túi tránh gió làm mềm bánh.',
     usageInstructions: 'Bẻ miếng vừa ăn và thưởng thức vị giòn rụm đậm đà.',
-    specifications: { 'Quy cách': 'Túi zip hút chân không', 'Khối lượng tịnh': '150g', 'Hạn sử dụng': '3 tháng', 'Topping': 'Chà bông thịt heo thượng hạng ngập tràn' },
+    specifications: { 'Quy cách': 'Túi zip hút chân không', 'Khối lượng tịnh': '150g', 'Hạn sử dụng': '3 tháng', 'Topping': 'Chà bông thịt heo thượng hạng ngập tràn', 'Năng lượng': '445 kcal / 100g', 'Chất đạm (Protein)': '16.5g / 100g', 'Chất béo (Lipid)': '14.8g / 100g', 'Carbohydrate': '61.2g / 100g', 'Chất xơ': '1.8g / 100g', 'Vitamin & Khoáng chất': 'Vitamin B1, B12, Sắt, Kẽm, Phốt pho từ chà bông heo' },
     description: 'Cơm cháy chà bông Sài Gòn Evergreen Mart được nấu từ hạt gạo nếp dẻo thơm, chiên phồng xốp giòn rụm, phủ đều lớp sốt mắm ớt hành cay ngọt quyện cùng lớp chà bông heo dày mịn thơm nức mũi.'
   },
   'banh-crepe-sau-rieng-kem-tuoi-hop-4-cai': {
@@ -296,7 +296,7 @@ module.exports = {
     unit: 'Hộp (4 cái)',
     storageInstructions: 'Bảo quản liên tục trong ngăn mát tủ lạnh từ 2°C – 6°C.',
     usageInstructions: 'Dùng lạnh trực tiếp sau khi lấy khỏi tủ mát. Không để ngoài nhiệt độ phòng quá lâu.',
-    specifications: { 'Quy cách': 'Hộp 4 chiếc', 'Khối lượng tịnh': '220g', 'Hạn sử dụng': '3 ngày', 'Nhân': '100% cơm sầu riêng Ri6 tươi nguyên chất' },
+    specifications: { 'Quy cách': 'Hộp 4 chiếc', 'Khối lượng tịnh': '220g', 'Hạn sử dụng': '3 ngày', 'Nhân': '100% cơm sầu riêng Ri6 tươi nguyên chất', 'Năng lượng': '295 kcal / 100g', 'Chất đạm (Protein)': '4.6g / 100g', 'Chất béo (Lipid)': '16.2g / 100g', 'Carbohydrate': '32.8g / 100g', 'Chất xơ': '2.4g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C, Vitamin A, Vitamin B6, Kali, Canxi' },
     description: 'Bánh crepe sầu riêng ngàn lớp vỏ mỏng tang mềm mịn bọc lấy lớp kem tươi béo ngậy và cơm sầu riêng Ri6 tươi nguyên chất thơm lừng ngọt ngào, tạo nên hương vị bùng nổ tan ngay đầu lưỡi.'
   }
 };

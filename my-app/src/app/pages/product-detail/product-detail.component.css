@@ -377,6 +377,174 @@
   line-height: 1.55;
 }
 
+/* Review Image Upload & Gallery */
+.xanhla-review-upload-wrap {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1px dashed #9fc49f;
+  border-radius: 10px;
+}
+
+.xanhla-review-upload-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.xanhla-review-upload-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1c3a1c;
+}
+
+.xanhla-review-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: #edf7ed;
+  border: 1px solid #2d6a2d;
+  border-radius: 8px;
+  color: #1c3a1c;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.xanhla-review-upload-btn:hover {
+  background: #2d6a2d;
+  color: #ffffff;
+}
+
+.xanhla-review-upload-previews {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.xanhla-review-upload-thumb {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1.5px solid #d4e8d4;
+  background: #f8fafc;
+}
+
+.xanhla-review-upload-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: zoom-in;
+  display: block;
+}
+
+.xanhla-review-upload-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(17, 24, 39, 0.75);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.xanhla-review-upload-remove:hover {
+  background: #dc2626;
+}
+
+.xanhla-review-images-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 4px 0 14px 0;
+}
+
+.xanhla-review-img-item {
+  width: 82px;
+  height: 82px;
+  padding: 0;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f8fafc;
+  cursor: zoom-in;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.xanhla-review-img-item:hover {
+  transform: translateY(-2px);
+  border-color: #2d6a2d;
+}
+
+.xanhla-review-img-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.xanhla-review-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.xanhla-review-lightbox-inner {
+  position: relative;
+  max-width: min(90vw, 720px);
+  max-height: 85vh;
+  background: #ffffff;
+  padding: 8px;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+
+.xanhla-review-lightbox-inner img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(85vh - 16px);
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.xanhla-review-lightbox-close {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #1c3a1c;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
 /* ═════════════════════════════════════════════════════════════
    THÔNG TIN & MÔ TẢ SẢN PHẨM
    ═════════════════════════════════════════════════════════════ */

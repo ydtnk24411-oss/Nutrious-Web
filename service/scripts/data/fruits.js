@@ -6,7 +6,7 @@ module.exports = {
     unit: 'Kg (khoảng 3 - 4 quả)',
     storageInstructions: 'Bảo quản ngăn mát tủ lạnh từ 0°C – 4°C để táo luôn giòn rụm và mọng nước.',
     usageInstructions: 'Rửa sạch ăn liền cả vỏ, làm salad táo hạt óc chó hoặc ép nước táo nguyên chất.',
-    specifications: { 'Size': 'Size 30 - 35 chuẩn xuất khẩu', 'Đặc điểm': 'Thịt táo giòn đanh, không bị thâm sau khi cắt' },
+    specifications: { 'Size': 'Size 30 - 35 chuẩn xuất khẩu', 'Đặc điểm': 'Thịt táo giòn đanh, không bị thâm sau khi cắt', 'Năng lượng': '52 kcal / 100g', 'Chất đạm (Protein)': '0.3g / 100g', 'Chất béo (Lipid)': '0.2g / 100g', 'Carbohydrate': '13.8g / 100g', 'Chất xơ': '2.4g / 100g (Giàu Pectin hòa tan)', 'Vitamin & Khoáng chất': 'Vitamin C, Vitamin K, Kali (107mg), Quercetin & Catechin' },
     description: 'Táo Envy Mỹ nhập khẩu vỏ đỏ ruby vân vàng quyến rũ, thịt táo vàng ngà giòn đanh tan trong miệng, vị ngọt đậm đà hương thơm nồng nàn thanh lịch, giữ màu trắng tươi lâu sau khi bổ.'
   },
   'chuoi-laba-da-lat-tuoi': {
@@ -16,7 +16,7 @@ module.exports = {
     unit: 'Nải (khoảng 1.2kg – 1.5kg)',
     storageInstructions: 'Để nơi thoáng mát tự nhiên, tránh để tủ lạnh khi chuối chưa chín vàng.',
     usageInstructions: 'Ăn trực tiếp khi vỏ chuối lốm đốm trứng cuốc, xay sinh tố chuối bơ, làm bánh chuối nướng.',
-    specifications: { 'Danh hiệu': 'Chuối tiến vua huyền thoại đất Lâm Đồng', 'Khối lượng': '1.2kg - 1.5kg/nải' },
+    specifications: { 'Danh hiệu': 'Chuối tiến vua huyền thoại đất Lâm Đồng', 'Khối lượng': '1.2kg - 1.5kg/nải', 'Năng lượng': '89 kcal / 100g', 'Chất đạm (Protein)': '1.1g / 100g', 'Chất béo (Lipid)': '0.3g / 100g', 'Carbohydrate': '22.8g / 100g', 'Chất xơ': '2.6g / 100g', 'Vitamin & Khoáng chất': 'Kali (358mg), Vitamin B6 (0.4mg), Vitamin C, Magie (27mg), Tryptophan' },
     description: 'Chuối Laba Đà Lạt tiến vua huyền thoại quả cong đều đặn, khi chín vỏ vàng óng ruột dẻo quánh thơm nức mùi mật ong, vị ngọt đậm béo bùi giàu kali cung cấp năng lượng tức thì.'
   },
   'nho-den-khong-hat-my': {
@@ -26,7 +26,7 @@ module.exports = {
     unit: 'Hộp / Túi (500g)',
     storageInstructions: 'Bảo quản ngăn mát tủ lạnh từ 0°C – 2°C trong hộp kín, không rửa trước khi bảo quản.',
     usageInstructions: 'Rửa sạch nhẹ nhàng dưới vòi nước lạnh trước khi ăn, thưởng thức trọn vẹn cả vỏ.',
-    specifications: { 'Giống nho': 'Midnight Beauty không hạt cao cấp', 'Độ ngọt': 'Brix 18+ ngọt sắc lịm' },
+    specifications: { 'Giống nho': 'Midnight Beauty không hạt cao cấp', 'Độ ngọt': 'Brix 18+ ngọt sắc lịm', 'Năng lượng': '69 kcal / 100g', 'Chất đạm (Protein)': '0.7g / 100g', 'Chất béo (Lipid)': '0.2g / 100g', 'Carbohydrate': '18.1g / 100g', 'Chất xơ': '0.9g / 100g', 'Vitamin & Khoáng chất': 'Resveratrol & Anthocyanin chống lão hóa, Vitamin C, Vitamin K, Kali' },
     description: 'Nho đen không hạt Mỹ Sun World chùm quả khít chắc, quả thuôn dài đen bóng phủ lớp phấn tự nhiên dày mịn, cắn giòn sần sật ngọt lịm đậm đà mọng nước không chát vỏ.'
   },
   'cam-vang-navel-uc': {
@@ -36,7 +36,7 @@ module.exports = {
     unit: 'Kg (khoảng 3 - 4 quả)',
     storageInstructions: 'Bảo quản nơi thoáng mát hoặc ngăn mát tủ lạnh.',
     usageInstructions: 'Gọt vỏ cắt múi ăn trực tiếp, làm salad cam tôm hoặc vắt nước cam vàng óng.',
-    specifications: { 'Đặc điểm': 'Cam không hạt, rốn quả lồi hình Navel đặc trưng', 'Vỏ': 'Vỏ vàng tươi rực rỡ mỏng thơm' },
+    specifications: { 'Đặc điểm': 'Cam không hạt, rốn quả lồi hình Navel đặc trưng', 'Vỏ': 'Vỏ vàng tươi rực rỡ mỏng thơm', 'Năng lượng': '47 kcal / 100g', 'Chất đạm (Protein)': '0.9g / 100g', 'Chất béo (Lipid)': '0.1g / 100g', 'Carbohydrate': '11.8g / 100g', 'Chất xơ': '2.4g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C (59.1mg), Folate, Vitamin B1, Kali (181mg), Canxi' },
     description: 'Cam vàng Navel Úc quả tròn trĩnh vàng ươm rực rỡ, tép cam mọng nước không hạt ngọt thanh đậm đà xen chút chua nhẹ tinh tế, hương tinh dầu vỏ cam thơm ngát dễ chịu.'
   },
   'xoai-cat-hoa-loc-tien-giang': {
@@ -46,7 +46,7 @@ module.exports = {
     unit: 'Kg (khoảng 2 quả)',
     storageInstructions: 'Để nhiệt độ phòng cho xoài tỏa hương thơm và mềm vỏ, sau đó bảo quản tủ mát.',
     usageInstructions: 'Gọt vỏ cắt hạt lựu ăn tráng miệng, làm xôi xoài nước cốt dừa, sinh tố xoài cát.',
-    specifications: { 'Trọng lượng': '450g - 600g/quả', 'Chỉ dẫn địa lý': 'Xoài Cát Hòa Lộc Tiền Giang chuẩn gốc' },
+    specifications: { 'Trọng lượng': '450g - 600g/quả', 'Chỉ dẫn địa lý': 'Xoài Cát Hòa Lộc Tiền Giang chuẩn gốc', 'Năng lượng': '60 kcal / 100g', 'Chất đạm (Protein)': '0.8g / 100g', 'Chất béo (Lipid)': '0.4g / 100g', 'Carbohydrate': '15.0g / 100g', 'Chất xơ': '1.6g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C (36.4mg), Vitamin A (Beta-carotene), Vitamin E, Folate, Kali' },
     description: 'Xoài cát Hòa Lộc Tiền Giang quả thuôn dài thon đáy, khi chín vỏ vàng tươi mịn màng, thịt quả vàng óng mịn màng không chút xơ, vị ngọt sắc lịm quyện hương thơm ngát nồng nàn mê đắm.'
   },
   'dua-hau-khong-hat-mat-troi-red': {
@@ -56,7 +56,7 @@ module.exports = {
     unit: 'Trái (2.5kg – 3.5kg)',
     storageInstructions: 'Bảo quản nơi khô ráo thoáng mát hoặc ngăn mát sau khi bổ.',
     usageInstructions: 'Cắt lát ăn lạnh, ép nước dưa hấu giải nhiệt ngày hè oi bức.',
-    specifications: { 'Giống': 'Dưa hấu không hạt Mặt Trời Đỏ ruột đỏ au', 'Khối lượng': '2.5kg - 3.5kg/trái' },
+    specifications: { 'Giống': 'Dưa hấu không hạt Mặt Trời Đỏ ruột đỏ au', 'Khối lượng': '2.5kg - 3.5kg/trái', 'Năng lượng': '30 kcal / 100g (91.5% Nước)', 'Chất đạm (Protein)': '0.6g / 100g', 'Chất béo (Lipid)': '0.2g / 100g', 'Carbohydrate': '7.6g / 100g', 'Chất xơ': '0.4g / 100g', 'Vitamin & Khoáng chất': 'Lycopene (4532mcg), Citrulline, Vitamin C, Vitamin A, Kali, Magie' },
     description: 'Dưa hấu không hạt Mặt Trời Đỏ vỏ mỏng xanh sọc đen bóng, ruột dưa đỏ thẫm đặc ruột hoàn toàn không có hạt đen, cắn giòn rụm ngập tràn nước ngọt lịm mát lạnh giải khát sảng khoái.'
   },
   'kiwi-vang-new-zealand-zespri': {
@@ -66,7 +66,7 @@ module.exports = {
     unit: 'Hộp (4 quả - khoảng 500g)',
     storageInstructions: 'Bảo quản ngăn mát tủ lạnh 1°C – 4°C để kiwi chậm chín, hoặc để cạnh chuối nếu muốn chín nhanh.',
     usageInstructions: 'Bổ đôi dùng thìa xúc ăn trực tiếp, làm salad hoa quả hoặc sinh tố kiwi.',
-    specifications: { 'Giống': 'SunGold Kiwifruit ruột vàng óng', 'Dinh dưỡng': 'Gấp 3 lần Vitamin C trong quả cam' },
+    specifications: { 'Giống': 'SunGold Kiwifruit ruột vàng óng', 'Dinh dưỡng': 'Gấp 3 lần Vitamin C trong quả cam', 'Năng lượng': '63 kcal / 100g', 'Chất đạm (Protein)': '1.0g / 100g', 'Chất béo (Lipid)': '0.3g / 100g', 'Carbohydrate': '15.8g / 100g', 'Chất xơ': '1.4g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C (161.3mg), Vitamin E, Folate, Kali (315mg), Enzyme Actinidin' },
     description: 'Kiwi vàng Zespri SunGold nhập khẩu New Zealand vỏ mịn màng không lông, thịt quả màu vàng óng ả mọng nước, vị ngọt dịu như mật ong nhiệt đới quyện chút chua thanh giàu vitamin C vô địch.'
   },
   'dau-tay-da-lat-giong-nhat': {
@@ -76,7 +76,7 @@ module.exports = {
     unit: 'Hộp (250g)',
     storageInstructions: 'Bảo quản ngăn mát tủ lạnh 2°C – 5°C, không rửa trước khi cất tủ.',
     usageInstructions: 'Rửa sạch nhẹ tay ăn liền, chấm sữa đặc, dầm sữa chua hoặc làm bánh kem dâu.',
-    specifications: { 'Giống': 'Dâu tây giống Nhật Bản Tochiotome canh tác giá thể treo', 'Quy cách': 'Hộp 250g' },
+    specifications: { 'Giống': 'Dâu tây giống Nhật Bản Tochiotome canh tác giá thể treo', 'Quy cách': 'Hộp 250g', 'Năng lượng': '32 kcal / 100g', 'Chất đạm (Protein)': '0.7g / 100g', 'Chất béo (Lipid)': '0.3g / 100g', 'Carbohydrate': '7.7g / 100g', 'Chất xơ': '2.0g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C (58.8mg), Anthocyanin, Axit Ellagic, Folate, Mangan, Kali' },
     description: 'Dâu tây giống Nhật trồng nhà kính công nghệ cao Đà Lạt, quả hình nón đỏ tươi bóng bẩy, thịt quả mềm mọng ngọt ngào xen lẫn vị chua thanh thanh thơm ngát mùi hoa dại tự nhiên.'
   },
   'thang-long-ruot-do-binh-thuan': {
@@ -86,7 +86,7 @@ module.exports = {
     unit: 'Kg (khoảng 2 quả)',
     storageInstructions: 'Bảo quản nơi thoáng mát hoặc ngăn mát tủ lạnh.',
     usageInstructions: 'Cắt lát ăn tráng miệng lạnh, làm sinh tố thanh long đỏ, làm rau câu.',
-    specifications: { 'Trọng lượng': '450g - 600g/quả', 'Đặc tính': 'Ruột đỏ tím thẫm giàu Anthocyanin' },
+    specifications: { 'Trọng lượng': '450g - 600g/quả', 'Đặc tính': 'Ruột đỏ tím thẫm giàu Anthocyanin', 'Năng lượng': '50 kcal / 100g', 'Chất đạm (Protein)': '1.1g / 100g', 'Chất béo (Lipid)': '0.4g / 100g (Omega-3 từ hạt thanh long)', 'Carbohydrate': '11.0g / 100g', 'Chất xơ': '3.0g / 100g', 'Vitamin & Khoáng chất': 'Betalain & Anthocyanin, Sắt (1.9mg), Magie (40mg), Vitamin C' },
     description: 'Thanh long ruột đỏ Bình Thuận quả tròn căng vỏ mỏng tai xanh tươi, ruột màu đỏ tím thẫm mọng nước ngọt đậm đà hơn thanh long trắng, chứa hàm lượng chất chống oxy hóa vượt trội.'
   },
   'buoi-da-xanh-ben-tre': {
@@ -96,7 +96,7 @@ module.exports = {
     unit: 'Trái (1.2kg – 1.5kg)',
     storageInstructions: 'Bảo quản nơi khô ráo thoáng mát (càng để lâu vỏ héo tép càng ngọt đậm mọng nước).',
     usageInstructions: 'Bóc vỏ tách múi ăn trực tiếp chấm muối tôm, làm gỏi bưởi tôm thịt.',
-    specifications: { 'Trọng lượng': '1.2kg - 1.5kg/trái', 'Chất lượng': 'Tép hồng đỏ, róc vỏ, không hạt hoặc rất ít hạt' },
+    specifications: { 'Trọng lượng': '1.2kg - 1.5kg/trái', 'Chất lượng': 'Tép hồng đỏ, róc vỏ, không hạt hoặc rất ít hạt', 'Năng lượng': '38 kcal / 100g', 'Chất đạm (Protein)': '0.8g / 100g', 'Chất béo (Lipid)': '0.1g / 100g', 'Carbohydrate': '9.6g / 100g', 'Chất xơ': '1.0g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C (61mg), Lycopene, Kali (216mg), Vitamin B1, B6' },
     description: 'Bưởi da xanh Bến Tre vỏ mỏng xanh thẫm, tép bưởi màu hồng đỏ căng mọng róc vỏ dễ bóc, vị ngọt thanh mát không he đắng nhiều nước, là món quà sức khỏe quý giá từ xứ dừa.'
   },
   'le-han-quoc-nhap-khau': {
@@ -106,7 +106,7 @@ module.exports = {
     unit: 'Trái (khoảng 800g – 1kg)',
     storageInstructions: 'Bảo quản ngăn mát tủ lạnh 1°C – 4°C.',
     usageInstructions: 'Gọt vỏ cắt miếng ăn mát lạnh, hầm lê kỷ tử trị ho, ép nước lê thanh nhiệt.',
-    specifications: { 'Giống': 'Lê nâu Singo Hàn Quốc', 'Trọng lượng': '800g - 1kg/quả to khủng' },
+    specifications: { 'Giống': 'Lê nâu Singo Hàn Quốc', 'Trọng lượng': '800g - 1kg/quả to khủng', 'Năng lượng': '42 kcal / 100g (88% Nước)', 'Chất đạm (Protein)': '0.5g / 100g', 'Chất béo (Lipid)': '0.2g / 100g', 'Carbohydrate': '10.6g / 100g', 'Chất xơ': '3.6g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C, Vitamin K, Kali (121mg), Đồng, Folate' },
     description: 'Lê nâu Hàn Quốc nhập khẩu quả to tròn trĩnh màu vàng nâu nhạt, thịt lê trắng muốt giòn tan ngập tràn dòng nước ngọt lịm mát rượi, giúp thanh giọng nhuận phế và giải nhiệt đỉnh cao.'
   },
   'sau-rieng-ri6-moi-hai': {
@@ -116,7 +116,7 @@ module.exports = {
     unit: 'Trái (2.2kg – 3kg)',
     storageInstructions: 'Để nhiệt độ phòng cho nứt gai tỏa hương, bóc múi để hộp kín bảo quản ngăn mát hoặc ngăn đông.',
     usageInstructions: 'Ăn múi tươi trực tiếp, làm chè sầu riêng, kem sầu riêng béo ngậy.',
-    specifications: { 'Giống': 'Sầu riêng Ri6 cơm vàng hạt lép chín cây tự nhiên', 'Bao ăn': 'Cam kết cơm vàng dẻo khô ráo, hạt lép' },
+    specifications: { 'Giống': 'Sầu riêng Ri6 cơm vàng hạt lép chín cây tự nhiên', 'Bao ăn': 'Cam kết cơm vàng dẻo khô ráo, hạt lép', 'Năng lượng': '147 kcal / 100g cơm sầu riêng', 'Chất đạm (Protein)': '1.5g / 100g', 'Chất béo (Lipid)': '5.3g / 100g (Chất béo thực vật tốt)', 'Carbohydrate': '27.1g / 100g', 'Chất xơ': '3.8g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C (19.7mg), Vitamin B1, B6, Kali (436mg), Magie, Đồng' },
     description: 'Sầu riêng Ri6 chín cây tự nhiên Evergreen Mart gai nở to đều, cơm sầu vàng ươm dẻo quánh béo ngậy hạt lép xẹp, hương thơm ngào ngạt nồng say đặc trưng khiến các tín đồ mê mẩn.'
   },
   'mang-cut-ben-tre-tuoi': {
@@ -126,7 +126,7 @@ module.exports = {
     unit: 'Kg (khoảng 10 - 14 quả)',
     storageInstructions: 'Bảo quản nơi thoáng mát hoặc ngăn mát tủ lạnh bọc túi kín.',
     usageInstructions: 'Cắt nhẹ vòng quanh vỏ, tách đôi lấy múi trắng ngần ăn liền hoặc làm gỏi gà măng cụt trứ danh.',
-    specifications: { 'Mùa vụ': 'Chính vụ trái ngọt mọng', 'Đặc điểm': 'Vỏ mềm dễ bóc, múi trắng nõn không sượng' },
+    specifications: { 'Mùa vụ': 'Chính vụ trái ngọt mọng', 'Đặc điểm': 'Vỏ mềm dễ bóc, múi trắng nõn không sượng', 'Năng lượng': '73 kcal / 100g', 'Chất đạm (Protein)': '0.4g / 100g', 'Chất béo (Lipid)': '0.6g / 100g', 'Carbohydrate': '17.9g / 100g', 'Chất xơ': '1.8g / 100g', 'Vitamin & Khoáng chất': 'Xanthones kháng viêm, Vitamin C, Folate, Mangan, Magie, Kali' },
     description: 'Măng cụt Chợ Lách Bến Tre mệnh danh nữ hoàng trái cây nhiệt đới, vỏ tím sẫm mềm tay, múi măng cụt trắng nõn mọng nước vị chua ngọt thanh tao quý phái tan chảy êm dịu.'
   },
   'bo-wax-034-lam-dong': {
@@ -136,7 +136,7 @@ module.exports = {
     unit: 'Kg (khoảng 2 - 3 quả dài)',
     storageInstructions: 'Để nơi khô thoáng đầu bơ mềm là chín, sau đó bảo quản ngăn mát tủ lạnh.',
     usageInstructions: 'Bóc vỏ cắt khoanh dầm sữa đặc, làm sinh tố bơ béo ngậy, cắt lát kẹp salad bánh mì.',
-    specifications: { 'Giống': 'Bơ 034 quả dài 25 - 35cm', 'Đặc tính': 'Hạt siêu nhỏ, cơm vàng dẻo quánh béo ngậy' },
+    specifications: { 'Giống': 'Bơ 034 quả dài 25 - 35cm', 'Đặc tính': 'Hạt siêu nhỏ, cơm vàng dẻo quánh béo ngậy', 'Năng lượng': '160 kcal / 100g', 'Chất đạm (Protein)': '2.0g / 100g', 'Chất béo (Lipid)': '14.7g / 100g (Axit Oleic không bão hòa đơn)', 'Carbohydrate': '8.5g / 100g', 'Chất xơ': '6.7g / 100g', 'Vitamin & Khoáng chất': 'Kali (485mg), Vitamin E, Vitamin K, Vitamin B5, B6, Folate, Lutein' },
     description: 'Bơ sáp 034 Lâm Đồng hình dáng quả thon dài độc đáo, hạt nhỏ xíu ruột dày đặc màu vàng mỡ gà dẻo quánh, vị béo ngậy đậm đà không chút xơ chỉ, là giống bơ ngon bậc nhất Việt Nam.'
   },
   'oi-nu-hoang-gion-sweet': {
@@ -146,7 +146,7 @@ module.exports = {
     unit: 'Kg (khoảng 3 - 4 quả)',
     storageInstructions: 'Bảo quản ngăn mát tủ lạnh để ổi luôn giòn ngọt.',
     usageInstructions: 'Rửa sạch ăn liền cả vỏ chấm muối ớt, ép nước ổi tươi thơm mát.',
-    specifications: { 'Giống': 'Ổi Nữ Hoàng ruột ít hạt', 'Tiêu chuẩn': 'VietGAP' },
+    specifications: { 'Giống': 'Ổi Nữ Hoàng ruột ít hạt', 'Tiêu chuẩn': 'VietGAP', 'Năng lượng': '68 kcal / 100g', 'Chất đạm (Protein)': '2.6g / 100g', 'Chất béo (Lipid)': '1.0g / 100g', 'Carbohydrate': '14.3g / 100g', 'Chất xơ': '5.4g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C siêu cao (228mg / 100g), Vitamin A, Kali (417mg), Folate' },
     description: 'Ổi Nữ Hoàng quả tròn đều màu xanh nõn nà da căng bóng, cùi dày thịt giòn rụm ít hạt, vị ngọt thanh tự nhiên mọng nước chứa hàm lượng vitamin C cao gấp 4 lần quả cam.'
   },
   'dua-moi-luoi-taki-nhat-ban': {
@@ -156,7 +156,7 @@ module.exports = {
     unit: 'Trái (1.4kg – 1.8kg)',
     storageInstructions: 'Bảo quản nơi thoáng mát, trước khi ăn để tủ lạnh 2 tiếng để dưa mát lạnh.',
     usageInstructions: 'Gọt vỏ bỏ ruột, cắt miếng ăn tráng miệng hoặc cuốn thịt nguội Iberico sang trọng.',
-    specifications: { 'Giống': 'Dưa lưới Taki Nhật Bản vân lưới nổi đều', 'Độ ngọt': 'Brix 14 - 16 ngọt lịm' },
+    specifications: { 'Giống': 'Dưa lưới Taki Nhật Bản vân lưới nổi đều', 'Độ ngọt': 'Brix 14 - 16 ngọt lịm', 'Năng lượng': '34 kcal / 100g', 'Chất đạm (Protein)': '0.8g / 100g', 'Chất béo (Lipid)': '0.2g / 100g', 'Carbohydrate': '8.2g / 100g', 'Chất xơ': '0.9g / 100g', 'Vitamin & Khoáng chất': 'Beta-Carotene, Vitamin C (36.7mg), Kali (267mg), Folate, Magie' },
     description: 'Dưa lưới Taki Nhật Bản trồng trong nhà màng công nghệ cao, vỏ xám bạc vân lưới nổi dày tinh xảo, ruột dưa màu cam đỏ giòn ngọt mọng nước thơm nức hương hoa quả quý phái.'
   },
   'viet-quat-my-nhap-khau': {
@@ -166,7 +166,7 @@ module.exports = {
     unit: 'Hộp (125g)',
     storageInstructions: 'Bảo quản ngăn mát tủ lạnh từ 0°C – 2°C, rửa ngay trước khi thưởng thức.',
     usageInstructions: 'Ăn tươi từng quả, mix cùng sữa chua Hy Lạp, yến mạch, làm bánh muffin việt quất.',
-    specifications: { 'Quy cách': 'Hộp nhựa 125g có lỗ thoáng khí', 'Chất lượng': 'Trái to cứng cáp, phấn trắng tự nhiên' },
+    specifications: { 'Quy cách': 'Hộp nhựa 125g có lỗ thoáng khí', 'Chất lượng': 'Trái to cứng cáp, phấn trắng tự nhiên', 'Năng lượng': '57 kcal / 100g', 'Chất đạm (Protein)': '0.7g / 100g', 'Chất béo (Lipid)': '0.3g / 100g', 'Carbohydrate': '14.5g / 100g', 'Chất xơ': '2.4g / 100g', 'Vitamin & Khoáng chất': 'Anthocyanin (Pterostilbene), Vitamin K (19.3mcg), Vitamin C, Mangan' },
     description: 'Việt quất tươi Driscoll’s nhập khẩu Mỹ trái tròn đều màu xanh tím thẫm phủ lớp phấn trắng bảo vệ tự nhiên, cắn vỡ giòn ngọt thanh thơm lừng, là vua chống oxy hóa cho đôi mắt và não bộ.'
   },
   'man-hau-son-la-chuan-vi': {
@@ -176,7 +176,7 @@ module.exports = {
     unit: 'Hộp (1kg)',
     storageInstructions: 'Bảo quản ngăn mát tủ lạnh để mận luôn giòn sần sật.',
     usageInstructions: 'Rửa sạch chấm muối ớt chéo Tây Bắc, dầm muối ớt đường ăn vặt rôm rả.',
-    specifications: { 'Vùng trồng': 'Thung lũng Nà Ka - Mộc Châu', 'Chất lượng': 'Quả to đều, phấn trắng dày cộm' },
+    specifications: { 'Vùng trồng': 'Thung lũng Nà Ka - Mộc Châu', 'Chất lượng': 'Quả to đều, phấn trắng dày cộm', 'Năng lượng': '46 kcal / 100g', 'Chất đạm (Protein)': '0.7g / 100g', 'Chất béo (Lipid)': '0.3g / 100g', 'Carbohydrate': '11.4g / 100g', 'Chất xơ': '1.4g / 100g (Sorbitol hỗ trợ tiêu hóa)', 'Vitamin & Khoáng chất': 'Vitamin C, Vitamin A, Vitamin K, Kali (157mg), Polyphenol' },
     description: 'Mận hậu Mộc Châu thung lũng Nà Ka quả to tròn phủ lớp phấn trắng tự nhiên, vỏ đỏ tía giòn tan thịt quả đỏ au mọng nước, vị chua ngọt hài hòa chấm cùng muối ớt chéo làm say lòng thực khách.'
   },
   'chom-chom-nhan-ben-tre': {
@@ -186,7 +186,7 @@ module.exports = {
     unit: 'Kg (khoảng 25 - 30 quả)',
     storageInstructions: 'Bảo quản nơi thoáng mát hoặc bọc túi để ngăn mát tủ lạnh.',
     usageInstructions: 'Tách vỏ ăn múi dẻo ngọt tráng miệng.',
-    specifications: { 'Đặc tính': 'Chôm chôm nhãn (chôm chôm đường) hạt lép tróc cơm' },
+    specifications: { 'Đặc tính': 'Chôm chôm nhãn (chôm chôm đường) hạt lép tróc cơm', 'Năng lượng': '82 kcal / 100g', 'Chất đạm (Protein)': '0.7g / 100g', 'Chất béo (Lipid)': '0.2g / 100g', 'Carbohydrate': '20.9g / 100g', 'Chất xơ': '0.9g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C (4.9mg), Đồng, Mangan, Sắt, Phốt pho, Vitamin B3' },
     description: 'Chôm chôm nhãn Bến Tre quả nhỏ râu ngắn ngả vàng cam, vỏ giòn dễ tách, cơm chôm chôm dày giòn ráo tróc hoàn toàn khỏi hạt, vị ngọt sắc thơm nức mùi nhãn lồng chín cây.'
   },
   'vai-thieu-bac-giang': {
@@ -196,7 +196,7 @@ module.exports = {
     unit: 'Kg (khoảng 28 - 32 quả)',
     storageInstructions: 'Cắt cuống bọc màng thực phẩm để ngăn mát tủ lạnh 3°C – 6°C.',
     usageInstructions: 'Bóc vỏ ăn tươi, làm trà vải hoa hồng, chè vải hạt sen ngọt mát.',
-    specifications: { 'Chỉ dẫn địa lý': 'Vải thiều Lục Ngạn chính gốc xuất khẩu' },
+    specifications: { 'Chỉ dẫn địa lý': 'Vải thiều Lục Ngạn chính gốc xuất khẩu', 'Năng lượng': '66 kcal / 100g', 'Chất đạm (Protein)': '0.8g / 100g', 'Chất béo (Lipid)': '0.4g / 100g', 'Carbohydrate': '16.5g / 100g', 'Chất xơ': '1.3g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C (71.5mg), Vitamin B6, Kali (171mg), Đồng, Oligonol' },
     description: 'Vải thiều Lục Ngạn Bắc Giang vỏ đỏ au gai nhẵn, cùi vải dày trắng trong mọng nước hạt bé xíu, vị ngọt sắc lịm như mật hoa rừng hòa quyện hương thơm thanh tao làm xao xuyến lòng người.'
   },
   'cherry-do-my-size-28mm': {
@@ -206,7 +206,7 @@ module.exports = {
     unit: 'Hộp (500g)',
     storageInstructions: 'Bảo quản ngăn mát tủ lạnh ở 0°C – 2°C, rửa ngay trước khi ăn.',
     usageInstructions: 'Ăn tươi nguyên quả mát lạnh tráng miệng sang trọng.',
-    specifications: { 'Size': 'Size 9.5 (28mm - 30mm) quả to đùng', 'Độ tươi': 'Cuống xanh tươi rói, quả đỏ đen bóng' },
+    specifications: { 'Size': 'Size 9.5 (28mm - 30mm) quả to đùng', 'Độ tươi': 'Cuống xanh tươi rói, quả đỏ đen bóng', 'Năng lượng': '63 kcal / 100g', 'Chất đạm (Protein)': '1.1g / 100g', 'Chất béo (Lipid)': '0.2g / 100g', 'Carbohydrate': '16.0g / 100g', 'Chất xơ': '2.1g / 100g', 'Vitamin & Khoáng chất': 'Melatonin tự nhiên, Anthocyanin, Vitamin C, Kali (222mg), Sắt' },
     description: 'Cherry đỏ Mỹ Chelan Fresh size lớn 28mm cuống xanh ngắt, vỏ quả đỏ thẫm đen bóng căng tròn, cắn ngập răng thịt quả giòn đanh mọng nước ngọt lịm quý phái ngập tràn dưỡng chất.'
   },
   'luu-do-peru-nhap-khau': {
@@ -216,7 +216,7 @@ module.exports = {
     unit: 'Trái (khoảng 600g – 800g)',
     storageInstructions: 'Bảo quản nơi khô ráo thoáng mát hoặc ngăn mát tủ lạnh.',
     usageInstructions: 'Tách hạt ăn trực tiếp, làm topping salad hoặc ép nước lựu đỏ nguyên chất.',
-    specifications: { 'Trọng lượng': '600g - 800g/quả to tròn', 'Hạt': 'Hạt đỏ ruby mọng nước, hạt mềm' },
+    specifications: { 'Trọng lượng': '600g - 800g/quả to tròn', 'Hạt': 'Hạt đỏ ruby mọng nước, hạt mềm', 'Năng lượng': '83 kcal / 100g', 'Chất đạm (Protein)': '1.7g / 100g', 'Chất béo (Lipid)': '1.2g / 100g (Axit Punicic)', 'Carbohydrate': '18.7g / 100g', 'Chất xơ': '4.0g / 100g', 'Vitamin & Khoáng chất': 'Punicalagins, Vitamin C, Vitamin K (16.4mcg), Folate, Kali (236mg)' },
     description: 'Lựu đỏ Peru nhập khẩu quả to khủng vỏ hồng hào bóng bẩy, từng tép hạt đỏ au óng ánh như ngọc ruby mọng nước hạt mềm ngọt lịm thanh mát, chứa hàm lượng chất chống lão hóa dồi dào.'
   },
   'dao-hong-sapa-tuoi': {
@@ -226,7 +226,7 @@ module.exports = {
     unit: 'Kg (khoảng 8 - 10 quả)',
     storageInstructions: 'Bảo quản ngăn mát tủ lạnh.',
     usageInstructions: 'Rửa sạch lông tơ ăn cả vỏ giòn tan, ngâm đào đường phèn làm trà đào thơm lừng.',
-    specifications: { 'Vùng trồng': 'Đào má đào khí hậu lạnh Sapa' },
+    specifications: { 'Vùng trồng': 'Đào má đào khí hậu lạnh Sapa', 'Năng lượng': '39 kcal / 100g', 'Chất đạm (Protein)': '0.9g / 100g', 'Chất béo (Lipid)': '0.3g / 100g', 'Carbohydrate': '9.5g / 100g', 'Chất xơ': '1.5g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C, Vitamin A, Vitamin E, Niacin (B3), Kali (190mg)' },
     description: 'Đào hồng Sapa quả nhỏ phủ lớp lông tơ mịn màng má ửng hồng phớt, cùi thịt giòn rụm rôm rả vị chua ngọt thanh mát thơm dịu dàng hơi thở núi rừng Tây Bắc.'
   },
   'dua-le-trang-sieu-ngot': {
@@ -236,7 +236,7 @@ module.exports = {
     unit: 'Kg (khoảng 2 - 3 quả)',
     storageInstructions: 'Bảo quản nơi khô ráo thoáng mát hoặc ngăn mát sau khi gọt.',
     usageInstructions: 'Gọt vỏ mỏng ăn trực tiếp mát lạnh.',
-    specifications: { 'Tiêu chuẩn': 'VietGAP', 'Độ ngọt': 'Brix 13+' },
+    specifications: { 'Tiêu chuẩn': 'VietGAP', 'Độ ngọt': 'Brix 13+', 'Năng lượng': '36 kcal / 100g (90% Nước)', 'Chất đạm (Protein)': '0.5g / 100g', 'Chất béo (Lipid)': '0.1g / 100g', 'Carbohydrate': '9.1g / 100g', 'Chất xơ': '0.8g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C (18mg), Vitamin B6, Folate, Kali (228mg), Magie' },
     description: 'Dưa lê trắng siêu ngọt vỏ mỏng màu trắng ngà mịn màng, thịt dưa dày giòn tan mọng nước thơm mát bùi béo, hạt mềm bọc trong lớp mật ngọt thanh giải nhiệt ngày oi bức.'
   },
   'khom-dua-cau-deo-got-san': {
@@ -246,7 +246,7 @@ module.exports = {
     unit: 'Hộp (500g)',
     storageInstructions: 'Bảo quản ngăn mát tủ lạnh 2°C – 6°C dùng trong 2 ngày.',
     usageInstructions: 'Ăn trực tiếp chấm muối ớt, xào chua ngọt thịt bò hoặc nấu canh chua cá lóc.',
-    specifications: { 'Quy cách': 'Gọt sạch vỏ tỉa mắt đóng hộp kín 500g' },
+    specifications: { 'Quy cách': 'Gọt sạch vỏ tỉa mắt đóng hộp kín 500g', 'Năng lượng': '50 kcal / 100g', 'Chất đạm (Protein)': '0.5g / 100g', 'Chất béo (Lipid)': '0.1g / 100g', 'Carbohydrate': '13.1g / 100g', 'Chất xơ': '1.4g / 100g', 'Vitamin & Khoáng chất': 'Enzyme Bromelain hỗ trợ tiêu hóa, Vitamin C (47.8mg), Mangan, B1' },
     description: 'Khóm Cầu Đúc Hậu Giang đã được gọt sạch vỏ và khía mắt tỉ mỉ tiện lợi, thịt khóm vàng ươm mọng nước ít xơ vị ngọt đậm không rát lưỡi, sẵn sàng cho món tráng miệng mát lạnh.'
   },
   'mang-cau-ta-na-chiem-hoa': {
@@ -256,7 +256,7 @@ module.exports = {
     unit: 'Kg (khoảng 3 - 4 quả)',
     storageInstructions: 'Để nơi ấm thoáng cho na mở mắt mềm tay, sau đó bảo quản tủ mát.',
     usageInstructions: 'Bóc vỏ ăn múi na dai ngọt lịm thơm phức.',
-    specifications: { 'Giống': 'Na dai Chiêm Hóa thịt dày dai hạt nhỏ' },
+    specifications: { 'Giống': 'Na dai Chiêm Hóa thịt dày dai hạt nhỏ', 'Năng lượng': '94 kcal / 100g', 'Chất đạm (Protein)': '2.1g / 100g', 'Chất béo (Lipid)': '0.3g / 100g', 'Carbohydrate': '23.6g / 100g', 'Chất xơ': '4.4g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C (36.3mg), Vitamin B6, Kali (247mg), Magie (21mg)' },
     description: 'Mãng cầu ta (quả na dai) Chiêm Hóa mắt nở to phẳng kẽ mắt trắng ngà, múi na dày cùi dai giòn ngọt sắc đậm đà hương thơm nồng nàn quyến rũ đặc trưng mùa thu miền Bắc.'
   },
   'dua-xiem-xanh-troc-ben-tre': {
@@ -266,7 +266,7 @@ module.exports = {
     unit: 'Trái (khoảng 1.2kg)',
     storageInstructions: 'Bảo quản ngăn mát tủ lạnh giữ được 2 tuần.',
     usageInstructions: 'Cắm ống hút qua mắt dừa uống trực tiếp nước dừa mát ngọt, nạo cùi dừa non ăn dẻo béo.',
-    specifications: { 'Quy cách': 'Đã gọt sạch xơ dừa trọc tiện lợi', 'Dung tích nước': '250ml - 350ml nước dừa ngọt lịm' },
+    specifications: { 'Quy cách': 'Đã gọt sạch xơ dừa trọc tiện lợi', 'Dung tích nước': '250ml - 350ml nước dừa ngọt lịm', 'Năng lượng': '19 kcal / 100ml nước dừa', 'Chất đạm (Protein)': '0.7g / 100ml', 'Chất béo (Lipid)': '0.2g / 100ml', 'Carbohydrate': '3.7g / 100ml', 'Chất xơ': '1.1g / 100ml', 'Vitamin & Khoáng chất': 'Chất điện giải tự nhiên: Kali (250mg), Natri (105mg), Magie, Canxi, C' },
     description: 'Dừa xiêm xanh gọt trọc Bến Tre tiện lợi gọn gàng dễ bảo quản, nước dừa ngọt lịm thanh mát giàu khoáng chất điện giải tự nhiên, cùi dừa non mềm dẻo béo ngậy thơm ngon.'
   },
   'chanh-day-tim-da-lat': {
@@ -276,7 +276,7 @@ module.exports = {
     unit: 'Túi (500g - khoảng 6 - 8 quả)',
     storageInstructions: 'Bảo quản nơi thoáng mát cho vỏ nhăn ngọt nước, hoặc cất tủ mát.',
     usageInstructions: 'Cắt đôi múc ruột pha nước chanh dây mật ong, làm mousse chanh dây hoặc sốt cá hồi.',
-    specifications: { 'Giống': 'Chanh leo vỏ tím giống Đài Loan trồng Đà Lạt', 'Chất lượng': 'Ruột vàng ươm thơm nức' },
+    specifications: { 'Giống': 'Chanh leo vỏ tím giống Đài Loan trồng Đà Lạt', 'Chất lượng': 'Ruột vàng ươm thơm nức', 'Năng lượng': '97 kcal / 100g ruột quả', 'Chất đạm (Protein)': '2.2g / 100g', 'Chất béo (Lipid)': '0.7g / 100g', 'Carbohydrate': '23.4g / 100g', 'Chất xơ': '10.4g / 100g (Cực giàu chất xơ)', 'Vitamin & Khoáng chất': 'Vitamin C (30mg), Vitamin A (1272 IU), Kali (348mg), Sắt (1.6mg)' },
     description: 'Chanh dây tím Đà Lạt quả to vỏ tím bóng bẩy ruột vàng ươm sánh đặc hạt giòn, hương thơm nồng nàn quyến rũ vị chua ngọt cân bằng hoàn hảo, giàu vitamin A và C giải nhiệt tuyệt vời.'
   },
   'nho-xanh-mau-don-shine-muscat': {
@@ -286,7 +286,7 @@ module.exports = {
     unit: 'Chùm / Hộp (600g – 700g)',
     storageInstructions: 'Bảo quản ngăn mát tủ lạnh 1°C – 4°C trong hộp bảo vệ.',
     usageInstructions: 'Rửa nhẹ ăn trực tiếp cả vỏ để cảm nhận trọn vẹn hương hoa mẫu đơn.',
-    specifications: { 'Giống': 'Shine Muscat thượng hạng hoàng gia Nhật Bản', 'Độ ngọt': 'Brix 18 - 20 ngọt như mật' },
+    specifications: { 'Giống': 'Shine Muscat thượng hạng hoàng gia Nhật Bản', 'Độ ngọt': 'Brix 18 - 20 ngọt như mật', 'Năng lượng': '69 kcal / 100g', 'Chất đạm (Protein)': '0.6g / 100g', 'Chất béo (Lipid)': '0.2g / 100g', 'Carbohydrate': '17.8g / 100g', 'Chất xơ': '0.9g / 100g', 'Vitamin & Khoáng chất': 'Polyphenol, Vitamin C, Vitamin K, Vitamin B6, Kali (191mg)' },
     description: 'Nho xanh Mẫu Đơn Shine Muscat thượng hạng Nhật Bản quả to tròn như ngọc bích xanh mướt, vỏ mỏng tang không chát không hạt, giòn tan mọng nước thơm ngát mùi hoa mẫu đơn vương giả.'
   },
   'hong-gion-da-lat': {
@@ -296,7 +296,7 @@ module.exports = {
     unit: 'Kg (khoảng 6 - 8 quả)',
     storageInstructions: 'Bảo quản ngăn mát tủ lạnh để quả giữ độ giòn tan lâu dài.',
     usageInstructions: 'Gọt vỏ cắt miếng ăn mát lạnh giòn rụm.',
-    specifications: { 'Giống': 'Hồng vuông giòn Fuyu ủ hơi tự nhiên', 'Đặc tính': 'Không chát, giòn rụm ngọt thanh' },
+    specifications: { 'Giống': 'Hồng vuông giòn Fuyu ủ hơi tự nhiên', 'Đặc tính': 'Không chát, giòn rụm ngọt thanh', 'Năng lượng': '70 kcal / 100g', 'Chất đạm (Protein)': '0.6g / 100g', 'Chất béo (Lipid)': '0.2g / 100g', 'Carbohydrate': '18.6g / 100g', 'Chất xơ': '3.6g / 100g', 'Vitamin & Khoáng chất': 'Beta-Carotene (Vitamin A), Vitamin C, Mangan, Kali, Zeaxanthin' },
     description: 'Hồng giòn Đà Lạt giống Fuyu vỏ vàng cam bóng mịn ủ hơi tự nhiên hoàn toàn không hóa chất, thịt quả vàng óng giòn sần sật mọng nước ngọt thanh tao không chút vị chát.'
   },
   'dau-tay-da-lat': {
@@ -306,7 +306,7 @@ module.exports = {
     unit: 'Hộp (500g)',
     storageInstructions: 'Bảo quản ngăn mát tủ lạnh 2°C – 5°C.',
     usageInstructions: 'Ăn tươi, chấm muối ớt, xay sinh tố hoặc làm mứt dâu tây.',
-    specifications: { 'Quy cách': 'Hộp 500g quả chín đỏ mọng' },
+    specifications: { 'Quy cách': 'Hộp 500g quả chín đỏ mọng', 'Năng lượng': '32 kcal / 100g', 'Chất đạm (Protein)': '0.7g / 100g', 'Chất béo (Lipid)': '0.3g / 100g', 'Carbohydrate': '7.7g / 100g', 'Chất xơ': '2.0g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C (58.8mg), Anthocyanin, Folate, Mangan, Kali (153mg)' },
     description: 'Dâu tây tươi Đà Lạt hái tại vườn sương sớm, quả đỏ au bóng bẩy mùi thơm thanh khiết tự nhiên, vị chua thanh ngọt nhẹ thích hợp cho các bữa ăn nhẹ và tráng miệng lành mạnh.'
   },
   'xoai-cat-hoa-loc': {
@@ -316,7 +316,7 @@ module.exports = {
     unit: 'Kg (khoảng 2 quả)',
     storageInstructions: 'Để nhiệt độ phòng cho xoài chín thơm, sau đó bảo quản tủ mát.',
     usageInstructions: 'Gọt vỏ ăn tươi, làm sinh tố xoài cát thơm nức.',
-    specifications: { 'Chất lượng': 'Xoài cát Hòa Lộc tuyển chọn loại 1' },
+    specifications: { 'Chất lượng': 'Xoài cát Hòa Lộc tuyển chọn loại 1', 'Năng lượng': '60 kcal / 100g', 'Chất đạm (Protein)': '0.8g / 100g', 'Chất béo (Lipid)': '0.4g / 100g', 'Carbohydrate': '15.0g / 100g', 'Chất xơ': '1.6g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C, Vitamin A, Vitamin E, Vitamin B6, Kali, Đồng' },
     description: 'Xoài cát Hòa Lộc nổi tiếng đệ nhất miền Tây, cùi dày hạt dẹp thịt quả vàng tươi dẻo mịn thơm lừng mùi mật ong, ngọt lịm không hề có xơ.'
   },
   'bo-sap-dak-lak': {
@@ -326,7 +326,7 @@ module.exports = {
     unit: 'Kg (khoảng 3 quả)',
     storageInstructions: 'Để nơi thoáng mát quả mềm tay là chín, không ủ trong túi nilon kín.',
     usageInstructions: 'Dầm sữa chua, làm sinh tố bơ thơm béo, cắt lát ăn kèm salad.',
-    specifications: { 'Chất lượng': 'Bơ sáp da xanh Đắk Lắk dẻo béo mỡ gà' },
+    specifications: { 'Chất lượng': 'Bơ sáp da xanh Đắk Lắk dẻo béo mỡ gà', 'Năng lượng': '160 kcal / 100g', 'Chất đạm (Protein)': '2.0g / 100g', 'Chất béo (Lipid)': '14.7g / 100g (Chất béo tốt không bão hòa)', 'Carbohydrate': '8.5g / 100g', 'Chất xơ': '6.7g / 100g', 'Vitamin & Khoáng chất': 'Kali (485mg), Vitamin E, Vitamin K, Folate, Vitamin B5, B6' },
     description: 'Bơ sáp Đắk Lắk vùng đất đỏ bazan trù phú, vỏ mỏng da xanh lấm tấm cám, ruột vàng ươm dẻo quánh béo ngậy ngát hương bơ rừng, giàu chất béo không bão hòa tốt cho tim mạch.'
   },
   'cam-sanh-vinh-long': {
@@ -336,7 +336,7 @@ module.exports = {
     unit: 'Kg (khoảng 3 - 4 quả)',
     storageInstructions: 'Bảo quản nơi khô ráo thoáng mát hoặc ngăn mát tủ lạnh.',
     usageInstructions: 'Vắt nước uống trực tiếp, thêm chút mật ong hoặc đường đá bồi bổ thể lực.',
-    specifications: { 'Đặc điểm': 'Cam sành vỏ sần sùi ruột vàng cam mọng nước' },
+    specifications: { 'Đặc điểm': 'Cam sành vỏ sần sùi ruột vàng cam mọng nước', 'Năng lượng': '47 kcal / 100g', 'Chất đạm (Protein)': '0.9g / 100g', 'Chất béo (Lipid)': '0.1g / 100g', 'Carbohydrate': '11.5g / 100g', 'Chất xơ': '2.2g / 100g', 'Vitamin & Khoáng chất': 'Vitamin C (53.2mg), Hesperidin, Folate, Kali, Canxi' },
     description: 'Cam sành Tam Bình Vĩnh Long vỏ sần sùi màu xanh đậm tép cam vàng óng ả mọng nước, vị chua ngọt đậm đà nhiều nước thanh mát, là thức uống bổ sung vitamin C tự nhiên số 1.'
   }
 };
