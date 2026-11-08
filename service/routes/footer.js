@@ -2,11 +2,30 @@ const router = require('express').Router();
 const FooterConfig = require('../models/FooterConfig');
 const NewsletterSubscriber = require('../models/NewsletterSubscriber');
 
+function filterRemovedNavLinks(links) {
+  if (!Array.isArray(links)) return [];
+  const blockedRoutes = /^\/(event-list|event-details|book-online|service-page)(\/|$)/i;
+  const blockedLabels = /(sự kiện|đặt lịch|lớp học nấu ăn)/i;
+  return links.filter((l) => {
+    const route = String(l?.route || '').trim();
+    const label = String(l?.label || '').trim();
+    if (route && blockedRoutes.test(route)) return false;
+    if (label && blockedLabels.test(label) && !l?.policyKey) return false;
+    return true;
+  });
+}
+
 // GET /api/footer — Lấy cấu hình footer, thông tin liên hệ và các chính sách từ MongoDB
 router.get('/', async (req, res, next) => {
   try {
-    const config = await FooterConfig.findOne({ key: 'main' });
-    res.json({ success: true, data: config });
+    const doc = await FooterConfig.findOne({ key: 'main' }).lean();
+    if (doc) {
+      doc.serviceLinks = filterRemovedNavLinks(doc.serviceLinks);
+      doc.utilityLinks = filterRemovedNavLinks(doc.utilityLinks);
+      doc.aboutLinks = filterRemovedNavLinks(doc.aboutLinks);
+      doc.policyLinks = filterRemovedNavLinks(doc.policyLinks);
+    }
+    res.json({ success: true, data: doc });
   } catch (err) {
     next(err);
   }

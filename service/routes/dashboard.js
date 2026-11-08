@@ -2,8 +2,6 @@ const router = require('express').Router();
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const User = require('../models/User');
-const Event = require('../models/Event');
-const Booking = require('../models/Booking');
 const Category = require('../models/Category');
 const Complaint = require('../models/Complaint');
 const Conversation = require('../models/Conversation');
@@ -39,8 +37,6 @@ router.get('/stats', protect, staffOnly, async (req, res, next) => {
       totalProducts,
       totalOrders,
       totalUsers,
-      totalEvents,
-      totalBookings,
       pendingOrders,
       revenue,
       validOrdersCount,
@@ -56,8 +52,6 @@ router.get('/stats', protect, staffOnly, async (req, res, next) => {
       Product.countDocuments({ isActive: { $ne: false } }),
       Order.countDocuments(dateFilter),
       User.countDocuments({ role: 'customer' }),
-      Event.countDocuments({ isActive: { $ne: false } }),
-      Booking.countDocuments(),
       Order.countDocuments({ ...dateFilter, status: 'pending' }),
 
       // Total revenue from all active orders (not cancelled)
@@ -110,8 +104,6 @@ router.get('/stats', protect, staffOnly, async (req, res, next) => {
         totalProducts,
         totalOrders,
         totalUsers,
-        totalEvents,
-        totalBookings,
         pendingOrders,
         totalRevenue: revenue[0]?.total ?? 0,
         averageOrderValue,

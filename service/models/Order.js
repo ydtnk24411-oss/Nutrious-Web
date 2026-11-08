@@ -13,6 +13,14 @@ const orderItemSchema = new mongoose.Schema(
     comboItems:     { type: Array, default: [] },
     originalPriceNumber: { type: Number, default: 0 },
     comboSaving:    { type: Number, default: 0 },
+    itemType:       { type: String, enum: ['regular', 'combo', 'addon'], default: 'regular' },
+    linkedMainProduct:     { type: String, default: '' },
+    linkedMainProductName: { type: String, default: '' },
+    addonDiscountType:     { type: String, default: '' },
+    addonDiscountValue:    { type: Number, default: 0 },
+    addonSaving:           { type: Number, default: 0 },
+    discountedByAddon:     { type: Boolean, default: false },
+    promoNote:             { type: String, default: '' },
   },
   { _id: false }
 );
@@ -28,6 +36,7 @@ const orderSchema = new mongoose.Schema(
     subtotal:    { type: Number, required: true, min: 0 },
     discount:    { type: Number, default: 0 },
     comboDiscount: { type: Number, default: 0 },
+    addonDiscount: { type: Number, default: 0 },
     voucherCode: { type: String, default: '' },
     shippingFee: { type: Number, default: 0 },
     shippingDiscount: { type: Number, default: 0 },

@@ -12,6 +12,16 @@ const { evaluateVoucher, consumeVoucher } = require('../utils/voucher');
 const { creditOrderPoints }   = require('../utils/loyalty');
 const { calculateShipping }   = require('../utils/shippingCalculator');
 
+function calcDealUnitDiscount(targetUnitPrice, deal) {
+  if (!deal || deal.isActive === false) return 0;
+  const val = Number(deal.discountValue) || 0;
+  if (val <= 0 || targetUnitPrice <= 0) return 0;
+  const rawDisc = deal.discountType === 'fixed'
+    ? Math.round(val)
+    : Math.round((targetUnitPrice * Math.min(99, val)) / 100);
+  return Math.max(0, Math.min(targetUnitPrice, rawDisc));
+}
+
 async function handleFlashSaleOrderConfirmed(order) {
   if (!order || !Array.isArray(order.items)) return;
   for (const item of order.items) {
@@ -93,8 +103,10 @@ router.post(
       // 2. Validate từng sản phẩm và tự tính lại subtotal từ database (lấy priceNumber của Product, không tin client)
       let serverSubtotal = 0;
       let totalComboSaving = 0;
+      let totalAddonSaving = 0;
       const finalItems = [];
-      const mongoose = require('mongoose');
+      const regularEntries = [];
+      const addonEntries = [];
 
       for (const item of orderData.items) {
         const qty = Number(item.quantity);
@@ -118,7 +130,7 @@ router.post(
           prod = await Product.findOne({ name: item.productName });
         }
 
-        if (!prod) {
+        if (!prod || prod.isActive === false) {
           return res.status(400).json({
             success: false,
             message: `Sản phẩm "${item.productName || item.product || 'trong đơn hàng'}" không tồn tại hoặc đã ngừng kinh doanh.`
@@ -166,6 +178,7 @@ router.post(
             quantity: qty,
             selectedOption: item.selectedOption || '',
             isCombo: true,
+            itemType: 'combo',
             comboItems: comboSubItems,
             originalPriceNumber: comboRetail,
             comboSaving: saving,
@@ -173,21 +186,266 @@ router.post(
           continue;
         }
 
-        finalItems.push({
-          product: prod._id.toString(),
-          productName: prod.name,
-          productImage: prod.image || item.productImage || '',
-          productPrice: prod.price,
-          priceNumber: priceNum,
-          quantity: qty,
-          selectedOption: item.selectedOption || '',
-        });
-        serverSubtotal += priceNum * qty;
+        const requestedType = item.itemType === 'addon' && item.linkedMainProduct ? 'addon' : 'regular';
+        if (requestedType === 'addon') {
+          addonEntries.push({
+            inputItem: item,
+            prod,
+            prodId: prod._id.toString(),
+            priceNum,
+            qty,
+            linkedMainKey: String(item.linkedMainProduct).trim(),
+          });
+        } else {
+          regularEntries.push({
+            inputItem: item,
+            prod,
+            prodId: prod._id.toString(),
+            priceNum,
+            qty,
+          });
+        }
+      }
+
+      // 2b. Xử lý chương trình "Mua kèm tiết kiệm hơn" (quy tắc: SP có giá thấp hơn nhận ưu đãi, không chồng chéo giảm giá)
+      const mainByKey = new Map();
+      const mainRegularQty = new Map();
+      for (const reg of regularEntries) {
+        mainByKey.set(reg.prodId, reg.prod);
+        if (reg.prod.slug) mainByKey.set(reg.prod.slug, reg.prod);
+        mainRegularQty.set(reg.prodId, (mainRegularQty.get(reg.prodId) || 0) + reg.qty);
+      }
+
+      const unclaimedMainUnits = new Map(mainRegularQty);
+      const pairQuotaRemaining = new Map();
+      const mainDiscountsAllocated = new Map(); // mainProdId -> Array<{ qty, unitDisc, addonProdName, discountType, discountValue }>
+
+      // Xác thực từng sản phẩm mua kèm và sắp xếp ưu tiên mức giảm tốt nhất khi giảm giá rơi vào sản phẩm chính
+      const resolvedAddons = addonEntries.map((ae) => {
+        const mainProd = mainByKey.get(ae.linkedMainKey) || null;
+        if (!mainProd) {
+          return { ...ae, valid: false };
+        }
+        const mainProdId = mainProd._id.toString();
+        const mainPriceNum = typeof mainProd.priceNumber === 'number' ? mainProd.priceNumber : Number(mainProd.priceNumber || 0);
+        const deal = (mainProd.addOnDeals || []).find(
+          (d) =>
+            d &&
+            d.isActive !== false &&
+            String(d.product?._id || d.product) === ae.prodId &&
+            Number(d.discountValue) > 0
+        );
+        if (!deal || mainProdId === ae.prodId) {
+          return { ...ae, valid: false };
+        }
+        const discountTarget = ae.priceNum <= mainPriceNum ? 'addon' : 'main';
+        const potentialUnitDisc = discountTarget === 'addon'
+          ? calcDealUnitDiscount(ae.priceNum, deal)
+          : calcDealUnitDiscount(mainPriceNum, deal);
+        return {
+          ...ae,
+          valid: potentialUnitDisc > 0,
+          mainProd,
+          mainProdId,
+          mainPriceNum,
+          deal,
+          discountTarget,
+          potentialUnitDisc,
+        };
+      });
+
+      // Sắp xếp Case 2 (giảm trên main) giảm dần theo mức giảm để khách nhận ưu đãi tốt nhất khi số lượng main giới hạn
+      resolvedAddons.sort((a, b) => {
+        if (a.discountTarget === 'main' && b.discountTarget === 'main') {
+          return (b.potentialUnitDisc || 0) - (a.potentialUnitDisc || 0);
+        }
+        return 0;
+      });
+
+      const emittedAddonItems = [];
+      for (const ae of resolvedAddons) {
+        if (!ae.valid) {
+          // Không có SP chính hợp lệ hoặc chương trình đã tắt -> tính giá lẻ bình thường
+          emittedAddonItems.push({
+            product: ae.prodId,
+            productName: ae.prod.name,
+            productImage: ae.prod.image || ae.inputItem.productImage || '',
+            productPrice: ae.prod.price,
+            priceNumber: ae.priceNum,
+            originalPriceNumber: ae.priceNum,
+            quantity: ae.qty,
+            selectedOption: ae.inputItem.selectedOption || '',
+            itemType: 'regular',
+            addonSaving: 0,
+            discountedByAddon: false,
+          });
+          continue;
+        }
+
+        const pairKey = `${ae.mainProdId}:${ae.prodId}`;
+        const maxPairQuota = pairQuotaRemaining.has(pairKey)
+          ? pairQuotaRemaining.get(pairKey)
+          : (mainRegularQty.get(ae.mainProdId) || 0);
+
+        if (ae.discountTarget === 'addon') {
+          const pairedQty = Math.min(ae.qty, maxPairQuota);
+          pairQuotaRemaining.set(pairKey, maxPairQuota - pairedQty);
+          const unitDisc = ae.potentialUnitDisc;
+
+          if (pairedQty > 0 && unitDisc > 0) {
+            const finalUnitPrice = ae.priceNum - unitDisc;
+            const saving = unitDisc * pairedQty;
+            emittedAddonItems.push({
+              product: ae.prodId,
+              productName: ae.prod.name,
+              productImage: ae.prod.image || ae.inputItem.productImage || '',
+              productPrice: ae.prod.price,
+              priceNumber: finalUnitPrice,
+              originalPriceNumber: ae.priceNum,
+              quantity: pairedQty,
+              selectedOption: ae.inputItem.selectedOption || '',
+              itemType: 'addon',
+              linkedMainProduct: ae.mainProdId,
+              linkedMainProductName: ae.mainProd.name,
+              addonDiscountType: ae.deal.discountType,
+              addonDiscountValue: ae.deal.discountValue,
+              addonSaving: saving,
+              discountedByAddon: true,
+              promoNote: `Mua kèm cùng "${ae.mainProd.name}" (áp dụng giảm giá cho SP giá thấp hơn)`,
+            });
+          }
+          const excessQty = ae.qty - pairedQty;
+          if (excessQty > 0) {
+            emittedAddonItems.push({
+              product: ae.prodId,
+              productName: ae.prod.name,
+              productImage: ae.prod.image || ae.inputItem.productImage || '',
+              productPrice: ae.prod.price,
+              priceNumber: ae.priceNum,
+              originalPriceNumber: ae.priceNum,
+              quantity: excessQty,
+              selectedOption: ae.inputItem.selectedOption || '',
+              itemType: 'regular',
+              addonSaving: 0,
+              discountedByAddon: false,
+            });
+          }
+        } else {
+          // ae.discountTarget === 'main' (SP chính có giá thấp hơn SP mua kèm)
+          const availMain = unclaimedMainUnits.get(ae.mainProdId) || 0;
+          const pairedQty = Math.min(ae.qty, maxPairQuota, availMain);
+          pairQuotaRemaining.set(pairKey, maxPairQuota - pairedQty);
+          const unitDiscOnMain = ae.potentialUnitDisc;
+
+          if (pairedQty > 0 && unitDiscOnMain > 0) {
+            unclaimedMainUnits.set(ae.mainProdId, availMain - pairedQty);
+            const allocList = mainDiscountsAllocated.get(ae.mainProdId) || [];
+            allocList.push({
+              qty: pairedQty,
+              unitDisc: unitDiscOnMain,
+              addonProdName: ae.prod.name,
+              discountType: ae.deal.discountType,
+              discountValue: ae.deal.discountValue,
+            });
+            mainDiscountsAllocated.set(ae.mainProdId, allocList);
+
+            emittedAddonItems.push({
+              product: ae.prodId,
+              productName: ae.prod.name,
+              productImage: ae.prod.image || ae.inputItem.productImage || '',
+              productPrice: ae.prod.price,
+              priceNumber: ae.priceNum,
+              originalPriceNumber: ae.priceNum,
+              quantity: pairedQty,
+              selectedOption: ae.inputItem.selectedOption || '',
+              itemType: 'addon',
+              linkedMainProduct: ae.mainProdId,
+              linkedMainProductName: ae.mainProd.name,
+              addonDiscountType: ae.deal.discountType,
+              addonDiscountValue: ae.deal.discountValue,
+              addonSaving: 0,
+              discountedByAddon: false,
+              promoNote: `Mua kèm cùng "${ae.mainProd.name}" (ưu đãi áp dụng cho "${ae.mainProd.name}" do có giá thấp hơn)`,
+            });
+          }
+          const excessQty = ae.qty - pairedQty;
+          if (excessQty > 0) {
+            emittedAddonItems.push({
+              product: ae.prodId,
+              productName: ae.prod.name,
+              productImage: ae.prod.image || ae.inputItem.productImage || '',
+              productPrice: ae.prod.price,
+              priceNumber: ae.priceNum,
+              originalPriceNumber: ae.priceNum,
+              quantity: excessQty,
+              selectedOption: ae.inputItem.selectedOption || '',
+              itemType: 'regular',
+              addonSaving: 0,
+              discountedByAddon: false,
+            });
+          }
+        }
+      }
+
+      // Phát sinh danh sách sản phẩm mua lẻ / sản phẩm chính (áp dụng giảm giá nếu thuộc Case 2)
+      for (const reg of regularEntries) {
+        let remQty = reg.qty;
+        const allocList = mainDiscountsAllocated.get(reg.prodId) || [];
+        for (const alloc of allocList) {
+          if (remQty <= 0) break;
+          if (alloc.qty <= 0) continue;
+          const take = Math.min(remQty, alloc.qty);
+          alloc.qty -= take;
+          remQty -= take;
+          const finalUnitPrice = reg.priceNum - alloc.unitDisc;
+          const saving = alloc.unitDisc * take;
+          finalItems.push({
+            product: reg.prodId,
+            productName: reg.prod.name,
+            productImage: reg.prod.image || reg.inputItem.productImage || '',
+            productPrice: reg.prod.price,
+            priceNumber: finalUnitPrice,
+            originalPriceNumber: reg.priceNum,
+            quantity: take,
+            selectedOption: reg.inputItem.selectedOption || '',
+            itemType: 'regular',
+            addonDiscountType: alloc.discountType,
+            addonDiscountValue: alloc.discountValue,
+            addonSaving: saving,
+            discountedByAddon: true,
+            promoNote: `Được giảm giá Mua kèm khi mua cùng "${alloc.addonProdName}" (SP có giá thấp hơn)`,
+          });
+          serverSubtotal += finalUnitPrice * take;
+          totalAddonSaving += saving;
+        }
+        if (remQty > 0) {
+          finalItems.push({
+            product: reg.prodId,
+            productName: reg.prod.name,
+            productImage: reg.prod.image || reg.inputItem.productImage || '',
+            productPrice: reg.prod.price,
+            priceNumber: reg.priceNum,
+            originalPriceNumber: reg.priceNum,
+            quantity: remQty,
+            selectedOption: reg.inputItem.selectedOption || '',
+            itemType: 'regular',
+            addonSaving: 0,
+            discountedByAddon: false,
+          });
+          serverSubtotal += reg.priceNum * remQty;
+        }
+      }
+
+      for (const ai of emittedAddonItems) {
+        finalItems.push(ai);
+        serverSubtotal += ai.priceNumber * ai.quantity;
+        totalAddonSaving += ai.addonSaving || 0;
       }
 
       orderData.items = finalItems;
       orderData.subtotal = serverSubtotal;
       orderData.comboDiscount = totalComboSaving;
+      orderData.addonDiscount = totalAddonSaving;
 
       if (req.user) {
         orderData.user       = req.user._id;
@@ -328,6 +586,8 @@ router.post(
           orderCode: order.orderCode,
           _id: order._id,
           discount: order.discount,
+          comboDiscount: order.comboDiscount || 0,
+          addonDiscount: order.addonDiscount || 0,
           total: order.total,
           qrUrl,
           bankInfo: order.paymentMethod === 'bank_transfer' ? {

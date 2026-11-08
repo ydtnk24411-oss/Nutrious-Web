@@ -1221,3 +1221,586 @@
   }
 }
 
+/* ═════════════════════════════════════════════════════════════
+   MUA KÈM TIẾT KIỆM HƠN (ĐỘC LẬP VỚI COMBO)
+   ═════════════════════════════════════════════════════════════ */
+
+.pd-addon {
+  margin-top: 40px;
+  padding: 24px;
+  background: linear-gradient(180deg, #f6fceb 0%, #ffffff 100%);
+  border: 1.5px solid #bdd982;
+  border-radius: 16px 26px 12px 26px;
+  box-shadow: 5px 6px 0 #e2f2b4;
+}
+
+.pd-addon-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.pd-addon-eyebrow {
+  display: inline-block;
+  padding: 3px 10px;
+  margin-bottom: 6px;
+  border-radius: 999px;
+  background: #203d0b;
+  color: #d8f56a;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.pd-addon-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 850;
+  color: #203d0b;
+  letter-spacing: -0.01em;
+}
+
+.pd-addon-sub {
+  margin: 5px 0 0;
+  font-size: 13.5px;
+  color: #4f5f43;
+  line-height: 1.5;
+  max-width: 720px;
+}
+
+.pd-addon-sub strong {
+  color: #203d0b;
+}
+
+.pd-addon-select-all {
+  padding: 7px 14px;
+  border: 1.5px solid #203d0b;
+  border-radius: 8px 14px 6px 14px;
+  background: #ffffff;
+  color: #203d0b;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pd-addon-select-all:hover {
+  background: #d8f56a;
+}
+
+.pd-addon-main-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  background: #ffffff;
+  border: 1px dashed #a7c966;
+  border-radius: 12px;
+}
+
+.pd-addon-main-tag {
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: #eff6eb;
+  color: #1e532b;
+  font-size: 11.5px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.pd-addon-main-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #e5ebe1;
+  flex-shrink: 0;
+}
+
+.pd-addon-main-info {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pd-addon-main-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: #203d0b;
+}
+
+.pd-addon-main-price {
+  font-size: 13px;
+  color: #4f5f43;
+}
+
+.pd-addon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.pd-addon-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 13px 14px;
+  background: #ffffff;
+  border: 1.5px solid #dce8c4;
+  border-radius: 12px 20px 10px 20px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.pd-addon-card:hover {
+  border-color: #6f9f18;
+  transform: translateY(-1px);
+}
+
+.pd-addon-card.is-selected {
+  border-color: #203d0b;
+  background: #fcfff6;
+  box-shadow: 3px 4px 0 #d8f56a;
+}
+
+.pd-addon-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pd-addon-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #203d0b;
+  cursor: pointer;
+}
+
+.pd-addon-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #203d0b;
+  cursor: pointer;
+}
+
+.pd-addon-disc-pill {
+  padding: 2.5px 8px;
+  border-radius: 999px;
+  background: #ffe9e6;
+  color: #d93829;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.pd-addon-card-body {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.pd-addon-img-link {
+  width: 78px;
+  height: 78px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #eef2eb;
+  background: #f8f8f4;
+}
+
+.pd-addon-img-link img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pd-addon-meta {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pd-addon-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #203d0b;
+  text-decoration: none;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.pd-addon-name:hover {
+  color: #558b2f;
+  text-decoration: underline;
+}
+
+.pd-addon-prices {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.pd-addon-price-final {
+  font-size: 16px;
+  font-weight: 900;
+  color: #e94d3b;
+}
+
+.pd-addon-price-orig {
+  font-size: 12.5px;
+  color: #94a38e;
+  text-decoration: line-through;
+}
+
+.pd-addon-save-line {
+  font-size: 11.5px;
+  font-weight: 750;
+  color: #1e6b34;
+}
+
+.pd-addon-save-line--main {
+  color: #1c532b;
+  background: #eef8e3;
+  padding: 2px 7px;
+  border-radius: 5px;
+  width: fit-content;
+}
+
+.pd-addon-target-note {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin-top: 2px;
+  padding: 4px 7px;
+  border-radius: 6px;
+  background: #f2f8e6;
+  color: #2c4c14;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.pd-addon-target-note svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #558b2f;
+}
+
+.pd-addon-target-note.is-main-target {
+  background: #fff7e0;
+  color: #7c4d05;
+}
+
+.pd-addon-qty-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed #e3ecd2;
+}
+
+.pd-addon-qty-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #556648;
+}
+
+.pd-addon-qty-ctrl {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 6px;
+  border: 1px solid #cadb9d;
+  border-radius: 6px;
+  background: #f6fbe9;
+}
+
+.pd-addon-qty-ctrl button {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  background: #ffffff;
+  border-radius: 4px;
+  color: #203d0b;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.pd-addon-qty-ctrl span {
+  min-width: 16px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #203d0b;
+}
+
+.pd-addon-summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 18px;
+  background: #ffffff;
+  border: 1.5px solid #203d0b;
+  border-radius: 12px 20px 10px 20px;
+  flex-wrap: wrap;
+}
+
+.pd-addon-summary-left {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.pd-addon-summary-title {
+  font-size: 14px;
+  color: #23321a;
+  margin-bottom: 6px;
+}
+
+.pd-addon-summary-targets {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4f5f43;
+}
+
+.pd-addon-target-chip {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #e9f7d4;
+  color: #1b4d20;
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+.pd-addon-summary-empty {
+  font-size: 13px;
+  color: #66715c;
+  font-weight: 600;
+}
+
+.pd-addon-summary-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pd-addon-totals {
+  text-align: right;
+}
+
+.pd-addon-total-orig {
+  font-size: 12px;
+  color: #7c8773;
+}
+
+.pd-addon-total-orig span {
+  text-decoration: line-through;
+}
+
+.pd-addon-total-save {
+  font-size: 12.5px;
+  color: #1e6b34;
+}
+
+.pd-addon-total-final {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 13px;
+  color: #203d0b;
+}
+
+.pd-addon-total-final strong {
+  font-size: 21px;
+  font-weight: 900;
+  color: #e94d3b;
+}
+
+.pd-addon-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pd-addon-btn-cart,
+.pd-addon-btn-buy {
+  min-height: 40px;
+  padding: 9px 16px;
+  border-radius: 8px 15px 6px 15px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 850;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s, opacity 0.15s;
+}
+
+.pd-addon-btn-cart {
+  border: 1.5px solid #203d0b;
+  background: #d8f56a;
+  color: #203d0b;
+}
+
+.pd-addon-btn-cart:hover:not(:disabled) {
+  background: #c9e855;
+  transform: translateY(-1px);
+}
+
+.pd-addon-btn-cart:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pd-addon-btn-buy {
+  border: 1.5px solid #203d0b;
+  background: #203d0b;
+  color: #ffffff;
+}
+
+.pd-addon-btn-buy:hover {
+  background: #2d5410;
+  transform: translateY(-1px);
+}
+
+/* ═════════════════════════════════════════════════════════════
+   SẢN PHẨM ĐÃ XEM TRÊN TRANG CHI TIẾT
+   ═════════════════════════════════════════════════════════════ */
+
+.pd-viewed-section {
+  margin-bottom: 48px;
+  padding: 20px 22px;
+  background: #fbfff3;
+  border: 1px solid #d7e5b7;
+  border-radius: 14px 24px 10px 24px;
+}
+
+.pd-viewed-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.pd-viewed-title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 850;
+  color: #203d0b;
+}
+
+.pd-viewed-sub {
+  font-size: 12.5px;
+  color: #66715c;
+}
+
+.pd-viewed-track {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.pd-viewed-card {
+  flex: 0 0 176px;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid #dce8c4;
+  border-radius: 10px 18px 8px 18px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+.pd-viewed-card:hover {
+  transform: translateY(-2px);
+  border-color: #203d0b;
+  box-shadow: 3px 3px 0 #d8f56a;
+}
+
+.pd-viewed-img {
+  height: 98px;
+  background: #f8f8f4;
+  overflow: hidden;
+}
+
+.pd-viewed-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pd-viewed-body {
+  padding: 9px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pd-viewed-name {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #23321a;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  min-height: 32px;
+}
+
+.pd-viewed-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.pd-viewed-price {
+  font-size: 13.5px;
+  font-weight: 900;
+  color: #e94d3b;
+}
+
+.pd-viewed-time {
+  font-size: 10.5px;
+  color: #71805b;
+}
+
+@media (max-width: 768px) {
+  .pd-addon {
+    padding: 16px;
+  }
+  .pd-addon-totals {
+    text-align: left;
+  }
+}
+

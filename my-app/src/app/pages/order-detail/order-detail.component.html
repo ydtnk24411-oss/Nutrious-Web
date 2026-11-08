@@ -69,19 +69,39 @@
     <div class="order-items-section">
       <h2 class="section-title">Sản phẩm đã đặt</h2>
       <div class="order-items-list">
-        @for (item of order()!.items; track item.productName) {
+        @for (item of order()!.items; track $index) {
         <div class="order-item">
           <img [src]="item.productImage" [alt]="item.productName" class="item-image" />
           <div class="item-details">
-            <div class="item-name">
-              {{ item.productName }}
-              @if (item.isCombo || (item.comboItems && item.comboItems.length > 0)) {
+            <div class="item-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <span>{{ item.productName }}</span>
+              @if (item.isCombo || item.itemType === 'combo' || (item.comboItems && item.comboItems.length > 0)) {
               <span
-                style="display:inline-block;margin-left:6px;padding:2px 6px;border-radius:4px;background:#d8f56a;color:#203d0b;font-size:11px;font-weight:700">
+                style="display:inline-block;padding:2px 7px;border-radius:4px;background:#d8f56a;color:#203d0b;font-size:11px;font-weight:700">
                 Combo tiết kiệm
+              </span>
+              } @else if (item.itemType === 'addon') {
+              <span
+                style="display:inline-block;padding:2px 7px;border-radius:4px;background:#eff6eb;color:#203d0b;border:1px solid #bdd982;font-size:11px;font-weight:700">
+                Mua kèm tiết kiệm
+              </span>
+              } @else if (item.discountedByAddon) {
+              <span
+                style="display:inline-block;padding:2px 7px;border-radius:4px;background:#fef9c3;color:#854d0e;border:1px solid #fde047;font-size:11px;font-weight:700">
+                SP chính (giảm Mua kèm)
+              </span>
+              } @else {
+              <span
+                style="display:inline-block;padding:2px 6px;border-radius:4px;background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;font-size:10.5px;font-weight:600">
+                Mua lẻ
               </span>
               }
             </div>
+            @if (item.promoNote || item.linkedMainProductName) {
+            <div style="font-size:12px;color:#1e532b;font-weight:600;margin-top:3px">
+              {{ item.promoNote || ('Mua kèm cùng: ' + item.linkedMainProductName) }}
+            </div>
+            }
             @if (item.selectedOption) {
             <div class="item-option">{{ item.selectedOption }}</div>
             }
@@ -117,7 +137,17 @@
             }
             <div class="item-qty">Số lượng: {{ item.quantity }}</div>
           </div>
-          <div class="item-price">{{ formatPrice(item.productPrice) }}</div>
+          <div class="item-price" style="text-align:right">
+            <div>{{ formatPrice(itemLinePayable(item)) }}</div>
+            @if ((item.addonSaving && item.addonSaving > 0) || (item.comboSaving && item.comboSaving > 0)) {
+              <div style="font-size:12px;color:#94a3b8;text-decoration:line-through;font-weight:500">
+                {{ formatPrice(itemLineOriginal(item)) }}
+              </div>
+              <div style="font-size:11.5px;color:#16a34a;font-weight:700">
+                -{{ formatPrice((item.addonSaving || 0) + (item.comboSaving || 0)) }}
+              </div>
+            }
+          </div>
         </div>
         }
       </div>
@@ -127,8 +157,20 @@
     <div class="order-summary-section">
       <div class="summary-card">
         <h3 class="card-title">Tóm tắt đơn hàng</h3>
+        @if (order()!.comboDiscount && order()!.comboDiscount! > 0) {
+        <div class="summary-row discount">
+          <span>Tiết kiệm Combo</span>
+          <span>-{{ formatPrice(order()!.comboDiscount!) }}</span>
+        </div>
+        }
+        @if (order()!.addonDiscount && order()!.addonDiscount! > 0) {
+        <div class="summary-row discount">
+          <span>Ưu đãi Mua kèm tiết kiệm</span>
+          <span>-{{ formatPrice(order()!.addonDiscount!) }}</span>
+        </div>
+        }
         <div class="summary-row">
-          <span>Tạm tính tiền hàng</span>
+          <span>Tạm tính tiền hàng (sau ưu đãi)</span>
           <span>{{ formatPrice(order()!.subtotal) }}</span>
         </div>
         @if (order()!.discount > 0) {

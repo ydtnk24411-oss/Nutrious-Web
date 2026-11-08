@@ -3,8 +3,6 @@ import {
   XanhLaProduct,
   XanhLaMeal,
   XanhLaNutritionGoal,
-  EventItem,
-  ServiceItem,
   NavItem,
 } from '../models/xanh-la.models';
 
@@ -273,8 +271,6 @@ export const navItems: NavItem[] = [
   { label: 'Đặt hàng',        path: '/online-ordering' },
   { label: 'Dinh dưỡng TM',   path: '/nutrition' },
   { label: 'Nấu gì hôm nay?', path: '/cook-with-what-you-have' },
-  { label: 'Sự kiện',         path: '/event-list' },
-  { label: 'Đặt lịch',        path: '/book-online' },
 ];
 
 export const FILTER_FACETS = {
@@ -292,48 +288,6 @@ export const FILTER_FACETS = {
   weight:      ['200g', '250g', '300g', '500g', '1000g'],
 };
 
-export const eventsList: EventItem[] = [
-  {
-    id: 'xanh-la-fresh-food-festival', name: 'Xanh Lá Fresh Food Festival',
-    slug: '/event-details/xanh-la-fresh-food-festival',
-    date: 'Thứ 5, 22 thg 10', time: '14:01 – 16:01', location: 'Festival Center',
-    description: 'Trải nghiệm lễ hội thực phẩm tươi với nhà cung cấp địa phương, trình diễn nấu ăn và hoạt động tương tác cho mọi lứa tuổi.',
-    action: 'Mua vé', image: meals[1].image,
-  },
-  {
-    id: 'fresh-ingredients-cooking-workshop', name: 'Fresh Ingredients Cooking Workshop',
-    slug: '/event-details/fresh-ingredients-cooking-workshop',
-    date: 'Thứ 5, 22 thg 10', time: '14:01 – 16:01', location: 'Xanh Lá Headquarters',
-    description: 'Tham gia workshop cùng chuyên gia để nấu ăn với nguyên liệu tươi, kết hợp mẹo dinh dưỡng và ý tưởng công thức sáng tạo.',
-    action: 'Trả lời', image: meals[0].image,
-  },
-  {
-    id: 'nutrition-and-wellness-conference', name: 'Nutrition and Wellness Conference',
-    slug: '/event-details/nutrition-and-wellness-conference',
-    date: 'Thứ 5, 22 thg 10', time: '14:01 – 16:01', location: 'Healthy Living Institute',
-    description: 'Khám phá vai trò của thực phẩm tươi với sức khỏe qua những buổi trò chuyện dinh dưỡng, hoạt động thực hành và tư vấn cá nhân.',
-    action: 'Trả lời', image: nutritionGoals[0].image,
-  },
-];
-
-export const servicesList: ServiceItem[] = [
-  {
-    id: 'meal-prep-course',   name: 'Meal Prep Course',   slug: '/service-page/meal-prep-course',
-    subtitle: 'Master the art of meal prepping', price: '1.200.000đ', status: 'Đã kết thúc', action: 'Xem khóa học',
-    description: 'Học kỹ thuật chuẩn bị thực phẩm tươi cho cả tuần để tiết kiệm thời gian, tối ưu dưỡng chất và ăn uống lành mạnh hơn.',
-  },
-  {
-    id: 'nutrition-planning', name: 'Nutrition Planning', slug: '/service-page/nutrition-planning',
-    subtitle: 'Plan your meals for nutrition goals', price: '500.000đ', status: '', action: 'Đặt ngay',
-    description: 'Buổi tư vấn 1-1 với chuyên gia dinh dưỡng để xây dựng chế độ ăn cân bằng dựa trên mục tiêu thể trạng.',
-  },
-  {
-    id: 'cooking-class',      name: 'Cooking Class',      slug: '/service-page/cooking-class',
-    subtitle: 'Cook delicious meals from scratch', price: '700.000đ', status: 'Đang tải ngày...', action: 'Đặt ngay',
-    description: 'Tham gia lớp học nấu ăn thực hành từ nguyên liệu tươi hữu cơ. Khám phá kỹ thuật chế biến giữ trọn vitamin.',
-  },
-];
-
 // ── Slug lookup maps ──────────────────────────────────
 export const productBySlug: Record<string, XanhLaProduct> = products.reduce(
   (acc, prod) => {
@@ -342,22 +296,4 @@ export const productBySlug: Record<string, XanhLaProduct> = products.reduce(
     return acc;
   },
   {} as Record<string, XanhLaProduct>
-);
-
-export const eventBySlug: Record<string, EventItem> = eventsList.reduce(
-  (acc, evt) => {
-    acc[evt.slug] = evt;
-    acc[evt.slug.replace(/^\/event-details\//, '')] = evt;
-    return acc;
-  },
-  {} as Record<string, EventItem>
-);
-
-export const serviceBySlug: Record<string, ServiceItem> = servicesList.reduce(
-  (acc, svc) => {
-    acc[svc.slug] = svc;
-    acc[svc.slug.replace(/^\/service-page\//, '')] = svc;
-    return acc;
-  },
-  {} as Record<string, ServiceItem>
 );

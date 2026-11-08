@@ -45,7 +45,7 @@ export class LoyaltyService {
       name: 'Vàng',
       minPoints: 5000,
       minSpent: 10000000,
-      benefits: ['Tích 1.5 điểm cho mỗi 10.000đ', 'Miễn phí giao hàng mọi đơn hàng', 'Quà tặng sinh nhật', 'Được mời sự kiện độc quyền'],
+      benefits: ['Tích 1.5 điểm cho mỗi 10.000đ', 'Miễn phí giao hàng mọi đơn hàng', 'Quà tặng sinh nhật', 'Ưu đãi thành viên Vàng độc quyền'],
       icon: '🥇',
     },
     {

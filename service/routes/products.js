@@ -6,6 +6,41 @@ const Category = require('../models/Category');
 const { protect, adminOnly } = require('../middleware/auth');
 const { validate }           = require('../middleware/validate');
 
+const ADDON_POPULATE_FIELDS = 'name slug image price priceNumber unit weight stock isActive isCombo categoryVi category';
+
+function sanitizeAddOnDeals(rawDeals, selfId) {
+  if (!Array.isArray(rawDeals)) return [];
+  const seen = new Set();
+  const selfStr = selfId ? String(selfId) : '';
+  const result = [];
+
+  for (const d of rawDeals) {
+    if (!d) continue;
+    const rawProd = d.product;
+    const prodId = typeof rawProd === 'object' && rawProd !== null
+      ? String(rawProd._id || rawProd.id || '')
+      : String(rawProd || '');
+    if (!mongoose.Types.ObjectId.isValid(prodId)) continue;
+    if (selfStr && prodId === selfStr) continue;
+    if (seen.has(prodId)) continue;
+    seen.add(prodId);
+
+    const discountType = d.discountType === 'fixed' ? 'fixed' : 'percent';
+    const rawVal = Math.max(0, Number(d.discountValue) || 0);
+    const discountValue = discountType === 'percent'
+      ? Math.min(99, Math.round(rawVal))
+      : Math.round(rawVal);
+
+    result.push({
+      product: new mongoose.Types.ObjectId(prodId),
+      discountType,
+      discountValue,
+      isActive: d.isActive !== false,
+    });
+  }
+  return result;
+}
+
 // GET /api/products  — public, supports ?categoryId=&category=&search=&sort=&page=&limit=
 router.get('/', async (req, res, next) => {
   try {
@@ -70,7 +105,8 @@ router.get('/', async (req, res, next) => {
     const pageNum  = Math.max(1, Number(page) || 1);
     let query = Product.find(filter)
       .sort(sortObj)
-      .populate('comboItems.product', 'name slug image price priceNumber unit weight stock');
+      .populate('comboItems.product', 'name slug image price priceNumber unit weight stock')
+      .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     if (limitNum > 0) {
       const skip = (pageNum - 1) * limitNum;
       query = query.skip(skip).limit(limitNum);
@@ -159,10 +195,12 @@ router.get('/:slug/combos', async (req, res, next) => {
 router.get('/:slug', async (req, res, next) => {
   try {
     let product = await Product.findOne({ slug: req.params.slug, isActive: { $ne: false } })
-      .populate('comboItems.product', 'name slug image price priceNumber unit weight stock');
+      .populate('comboItems.product', 'name slug image price priceNumber unit weight stock')
+      .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     if (!product && mongoose.Types.ObjectId.isValid(req.params.slug)) {
       product = await Product.findOne({ _id: req.params.slug, isActive: { $ne: false } })
-        .populate('comboItems.product', 'name slug image price priceNumber unit weight stock');
+        .populate('comboItems.product', 'name slug image price priceNumber unit weight stock')
+        .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     }
     if (!product) return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
     res.json({ success: true, data: product });
@@ -185,7 +223,13 @@ router.post('/', protect, adminOnly, productValidation, validate, async (req, re
         req.body.categoryVi = cat.name;
       }
     }
-    const product = await Product.create(req.body);
+    if (req.body.addOnDeals !== undefined) {
+      req.body.addOnDeals = req.body.isCombo ? [] : sanitizeAddOnDeals(req.body.addOnDeals, null);
+    }
+    const created = await Product.create(req.body);
+    const product = await Product.findById(created._id)
+      .populate('comboItems.product', 'name slug image price priceNumber unit weight stock')
+      .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     res.status(201).json({ success: true, data: product });
   } catch (err) { next(err); }
 });
@@ -200,7 +244,12 @@ router.put('/:id', protect, adminOnly, async (req, res, next) => {
         req.body.categoryVi = cat.name;
       }
     }
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (req.body.addOnDeals !== undefined) {
+      req.body.addOnDeals = req.body.isCombo ? [] : sanitizeAddOnDeals(req.body.addOnDeals, req.params.id);
+    }
+    const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
+      .populate('comboItems.product', 'name slug image price priceNumber unit weight stock')
+      .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     if (!product) return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
     res.json({ success: true, data: product });
   } catch (err) { next(err); }

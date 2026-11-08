@@ -6,6 +6,13 @@ export interface ApiComboItem {
   quantity: number;
 }
 
+export interface ApiAddOnDeal {
+  product: Pick<ApiProduct, '_id' | 'name' | 'slug' | 'image' | 'price' | 'priceNumber' | 'unit' | 'weight' | 'stock' | 'isActive' | 'isCombo' | 'category' | 'categoryVi'> | string;
+  discountType: 'percent' | 'fixed';
+  discountValue: number;
+  isActive: boolean;
+}
+
 export interface ApiProduct {
   _id: string;
   name: string;
@@ -27,6 +34,7 @@ export interface ApiProduct {
   isCombo?: boolean;
   comboItems?: ApiComboItem[];
   originalPriceNumber?: number;
+  addOnDeals?: ApiAddOnDeal[];
   stock: number;
   isActive: boolean;
   container: string; cutType: string; cutting: string;

@@ -4,6 +4,40 @@ export interface XanhLaCategory {
   image: string;
 }
 
+export interface AddOnDealInfo {
+  product: {
+    _id: string;
+    name: string;
+    slug: string;
+    image: string;
+    price: string;
+    priceNumber: number;
+    unit?: string;
+    weight?: string;
+    stock?: number;
+    isActive?: boolean;
+    isCombo?: boolean;
+    category?: string;
+    categoryVi?: string;
+  };
+  discountType: 'percent' | 'fixed';
+  discountValue: number;
+  isActive: boolean;
+}
+
+export interface ViewedProductItem {
+  productId: string;
+  slug: string;
+  name: string;
+  image: string;
+  price: string;
+  priceNumber: number;
+  weight?: string;
+  unit?: string;
+  categoryVi?: string;
+  viewedAt: string;
+}
+
 export interface XanhLaProduct {
   id: string;
   name: string;
@@ -32,6 +66,7 @@ export interface XanhLaProduct {
   isCombo?: boolean;
   originalPriceNumber?: number;
   comboItems?: any[];
+  addOnDeals?: AddOnDealInfo[];
 }
 
 export interface XanhLaMeal {
@@ -87,29 +122,30 @@ export interface XanhLaCartItem {
   comboItems?: any[];
   originalPriceNumber?: number;
   comboSaving?: number;
+  itemType?: 'regular' | 'combo' | 'addon';
+  linkedMainProductId?: string;
+  linkedMainProductSlug?: string;
+  linkedMainProductName?: string;
+  addonDiscountType?: 'percent' | 'fixed';
+  addonDiscountValue?: number;
 }
 
-export interface EventItem {
-  id: string;
-  name: string;
-  slug: string;
-  date: string;
-  time: string;
-  location: string;
-  description: string;
-  action: string;
-  image: string;
-}
-
-export interface ServiceItem {
-  id: string;
-  name: string;
-  slug: string;
-  subtitle: string;
-  price: string;
-  status: string;
-  action: string;
-  description: string;
+export interface EvaluatedCartItemPricing {
+  key: string;
+  itemType: 'regular' | 'combo' | 'addon';
+  originalUnitPrice: number;
+  effectiveUnitPrice: number;
+  lineOriginalTotal: number;
+  linePayableTotal: number;
+  lineSaving: number;
+  comboSaving: number;
+  addonSaving: number;
+  discountedByAddon: boolean;
+  discountedQty: number;
+  isAddonActive: boolean;
+  missingMainWarning: string;
+  promoBadge: string;
+  relationLabel: string;
 }
 
 export interface NavItem {
@@ -239,6 +275,14 @@ export interface OrderItem {
   comboItems?: any[];
   originalPriceNumber?: number;
   comboSaving?: number;
+  itemType?: 'regular' | 'combo' | 'addon';
+  linkedMainProduct?: string;
+  linkedMainProductName?: string;
+  addonDiscountType?: string;
+  addonDiscountValue?: number;
+  addonSaving?: number;
+  discountedByAddon?: boolean;
+  promoNote?: string;
 }
 
 export interface Order {
@@ -248,6 +292,7 @@ export interface Order {
   items: OrderItem[];
   subtotal: number;
   comboDiscount?: number;
+  addonDiscount?: number;
   shippingFee: number;
   discount: number;
   voucherCode?: string;

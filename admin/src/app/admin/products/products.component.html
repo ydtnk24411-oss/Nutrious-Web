@@ -152,6 +152,12 @@
 
             <h4 class="xanhla-prod-card-name" [title]="p.name">{{ p.name }}</h4>
 
+            @if (!p.isCombo && activeAddOnCount(p) > 0) {
+              <div style="margin:4px 0;padding:4px 8px;background:#f2fadf;border:1px solid #bdd982;border-radius:6px;font-size:11px;font-weight:700;color:#203d0b;width:fit-content">
+                Mua kèm tiết kiệm: {{ activeAddOnCount(p) }} SP gợi ý
+              </div>
+            }
+
             @if (p.isCombo && p.comboItems && p.comboItems.length > 0) {
               <div style="margin:8px 0;padding:6px 10px;background:#f0fdf4;border:1px dashed #86efac;border-radius:8px;font-size:11.5px">
                 <div style="font-weight:700;color:#166534;margin-bottom:4px;display:flex;align-items:center;gap:5px">
@@ -235,10 +241,12 @@
                   />
                 </td>
                 <td>
-                  <div style="display:flex;align-items:center;gap:6px">
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                     <span class="prod-table-name">{{ p.name }}</span>
                     @if (p.isCombo) {
                       <span style="background:#ecfdf5;color:#15803d;border:1px solid #bbf7d0;border-radius:3px;padding:1px 5px;font-size:10px;font-weight:700">COMBO</span>
+                    } @else if (activeAddOnCount(p) > 0) {
+                      <span style="background:#f2fadf;color:#203d0b;border:1px solid #bdd982;border-radius:3px;padding:1px 6px;font-size:10px;font-weight:700">MUA KÈM ({{ activeAddOnCount(p) }})</span>
                     }
                   </div>
                   <span class="prod-table-slug">{{ p.slug }}</span>
@@ -498,6 +506,127 @@
                    (change)="setField('isActive', $any($event.target).checked)"
                    style="width:18px;height:18px;accent-color:#176b3a;cursor:pointer" />
           </div>
+
+          <!-- Thiết lập Mua kèm tiết kiệm hơn (chỉ áp dụng cho sản phẩm đơn lẻ, độc lập với Combo) -->
+          @if (!form().isCombo) {
+            <div class="admin-field" style="grid-column:1/-1;margin-top:8px;padding:16px;background:#f7fcf1;border:1.5px solid #c5de92;border-radius:12px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+                <div>
+                  <strong style="font-size:14.5px;color:#1b3b10">Chương trình "Mua kèm tiết kiệm hơn"</strong>
+                  <div style="font-size:12px;color:#526444;margin-top:2px">
+                    Chọn các sản phẩm gợi ý mua kèm và thiết lập mức giảm riêng. Khi mua cùng nhau, sản phẩm có đơn giá thấp hơn sẽ được áp dụng giảm giá.
+                  </div>
+                </div>
+                <span style="padding:3px 9px;border-radius:999px;background:#203d0b;color:#d8f56a;font-size:11px;font-weight:800">
+                  {{ formAddOnDeals().length }} SP mua kèm
+                </span>
+              </div>
+
+              <!-- Ô tìm kiếm & thêm nhanh sản phẩm mua kèm -->
+              <div style="margin-bottom:12px">
+                <input
+                  type="text"
+                  placeholder="Nhập tên sản phẩm để thêm vào danh sách mua kèm..."
+                  [value]="addonSearch()"
+                  (input)="addonSearch.set($any($event.target).value)"
+                  style="width:100%;padding:9px 12px;border:1px solid #b8d384;border-radius:8px;background:#ffffff;font-size:13px"
+                />
+                @if (addonSearch().trim() && filteredAddOnCandidates().length > 0) {
+                  <div style="margin-top:6px;max-height:190px;overflow-y:auto;background:#ffffff;border:1px solid #cfe3a8;border-radius:8px;padding:4px">
+                    @for (cand of filteredAddOnCandidates(); track cand._id) {
+                      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 8px;border-bottom:1px solid #f1f5ec">
+                        <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1">
+                          <img [src]="cand.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=80&q=80'"
+                               alt="" style="width:32px;height:32px;border-radius:6px;object-fit:cover;flex-shrink:0" />
+                          <div style="min-width:0;flex:1">
+                            <div style="font-size:13px;font-weight:700;color:#1b3b10;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ cand.name }}</div>
+                            <div style="font-size:11.5px;color:#64748b">{{ formatPrice(cand.priceNumber) }}</div>
+                          </div>
+                        </div>
+                        <button type="button"
+                                (click)="addAddOnCandidate(cand)"
+                                style="padding:5px 10px;border:1px solid #203d0b;border-radius:6px;background:#d8f56a;color:#203d0b;font-size:12px;font-weight:800;cursor:pointer;flex-shrink:0">
+                          + Thêm mua kèm
+                        </button>
+                      </div>
+                    }
+                  </div>
+                } @else if (!addonSearch().trim() && formAddOnDeals().length === 0 && filteredAddOnCandidates().length > 0) {
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+                    @for (cand of filteredAddOnCandidates().slice(0, 4); track cand._id) {
+                      <button type="button"
+                              (click)="addAddOnCandidate(cand)"
+                              style="padding:4px 9px;border:1px dashed #7ea835;border-radius:999px;background:#ffffff;color:#203d0b;font-size:11.5px;font-weight:700;cursor:pointer">
+                        + {{ cand.name }} ({{ formatPrice(cand.priceNumber) }})
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Danh sách sản phẩm mua kèm đã gắn -->
+              @if (formAddOnDeals().length > 0) {
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  @for (row of formAddOnDeals(); track row.productId; let idx = $index) {
+                    <div style="padding:10px 12px;background:#ffffff;border:1px solid #dce8c4;border-radius:10px;display:flex;flex-direction:column;gap:8px"
+                         [style.opacity]="row.isActive ? '1' : '0.65'">
+                      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+                        <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1">
+                          <img [src]="row.productImage || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=80&q=80'"
+                               alt="" style="width:38px;height:38px;border-radius:8px;object-fit:cover;border:1px solid #e2e8f0;flex-shrink:0" />
+                          <div style="min-width:0;flex:1">
+                            <div style="font-size:13.5px;font-weight:700;color:#10321c">{{ row.productName }}</div>
+                            <div style="font-size:12px;color:#64748b">Giá bán lẻ: <strong>{{ formatPrice(row.productPriceNumber) }}</strong></div>
+                          </div>
+                        </div>
+
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                          <select
+                            [value]="row.discountType"
+                            (change)="updateAddOnRow(idx, { discountType: $any($event.target).value })"
+                            style="padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12.5px;background:#f8fafc">
+                            <option value="percent">Giảm %</option>
+                            <option value="fixed">Giảm tiền (đ)</option>
+                          </select>
+
+                          <input
+                            type="number"
+                            min="0"
+                            [max]="row.discountType === 'percent' ? 99 : 10000000"
+                            [step]="row.discountType === 'percent' ? 1 : 1000"
+                            [value]="row.discountValue"
+                            (input)="updateAddOnRow(idx, { discountValue: +$any($event.target).value })"
+                            style="width:92px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;font-weight:700"
+                          />
+
+                          <label style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:#1e532b;cursor:pointer">
+                            <input
+                              type="checkbox"
+                              [checked]="row.isActive"
+                              (change)="updateAddOnRow(idx, { isActive: $any($event.target).checked })"
+                              style="width:15px;height:15px;accent-color:#176b3a;cursor:pointer"
+                            />
+                            <span>{{ row.isActive ? 'Đang bật' : 'Đang tắt' }}</span>
+                          </label>
+
+                          <button type="button"
+                                  (click)="removeAddOnRow(idx)"
+                                  title="Xóa sản phẩm mua kèm này"
+                                  style="padding:5px 8px;border:1px solid #fecaca;border-radius:6px;background:#fff1f2;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer">
+                            Xóa
+                          </button>
+                        </div>
+                      </div>
+
+                      <div style="font-size:11.5px;color:#1e532b;background:#f0fdf4;padding:5px 9px;border-radius:6px;font-weight:600">
+                        ✓ {{ previewAddOnRow(row) }}
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
 
         </div>
       </div>

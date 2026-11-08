@@ -13,31 +13,15 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/ordering/ordering.component').then((m) => m.OrderingComponent),
   },
-  {
-    path: 'event-list',
-    loadComponent: () =>
-      import('./pages/events/events.component').then((m) => m.EventsComponent),
-  },
-  {
-    path: 'event-details/:slug',
-    loadComponent: () =>
-      import('./pages/event-detail/event-detail.component').then((m) => m.EventDetailComponent),
-  },
+  { path: 'event-list', redirectTo: 'online-ordering', pathMatch: 'full' },
+  { path: 'event-details/:slug', redirectTo: 'online-ordering' },
   {
     path: 'product-page/:slug',
     loadComponent: () =>
       import('./pages/product-detail/product-detail.component').then((m) => m.ProductDetailComponent),
   },
-  {
-    path: 'book-online',
-    loadComponent: () =>
-      import('./pages/booking/booking.component').then((m) => m.BookingComponent),
-  },
-  {
-    path: 'service-page/:slug',
-    loadComponent: () =>
-      import('./pages/service-detail/service-detail.component').then((m) => m.ServiceDetailComponent),
-  },
+  { path: 'book-online', redirectTo: 'online-ordering', pathMatch: 'full' },
+  { path: 'service-page/:slug', redirectTo: 'online-ordering' },
   {
     path: 'cart',
     loadComponent: () =>
@@ -149,16 +133,8 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./admin/users/users.component').then((m) => m.AdminUsersComponent),
       },
-      {
-        path: 'events',
-        loadComponent: () =>
-          import('./admin/events/events.component').then((m) => m.AdminEventsComponent),
-      },
-      {
-        path: 'bookings',
-        loadComponent: () =>
-          import('./admin/bookings/bookings.component').then((m) => m.AdminBookingsComponent),
-      },
+      { path: 'events', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'bookings', redirectTo: 'dashboard', pathMatch: 'full' },
       {
         path: 'inventory',
         loadComponent: () =>

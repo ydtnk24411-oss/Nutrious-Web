@@ -206,10 +206,15 @@ img { display: block; max-width: 100%; }
 .xanhla-member-bar:hover { background: var(--green-700); color: #fff; }
 
 .xanhla-member-avatar {
-  width: 28px; height: 28px; border-radius: 50%;
+  width: 34px; height: 34px; border-radius: 50% !important;
   background: var(--green-700); color: #fff;
   display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 700;
+  font-size: 13px; font-weight: 700; overflow: hidden; flex-shrink: 0;
+}
+.xanhla-member-avatar-img {
+  width: 34px; height: 34px; min-width: 34px; min-height: 34px; max-width: 34px; max-height: 34px;
+  border-radius: 50% !important; object-fit: cover; display: block; overflow: hidden;
+  aspect-ratio: 1 / 1;
 }
 .xanhla-member-avatar-placeholder {
   width: 28px; height: 28px; border-radius: 50%;

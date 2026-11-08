@@ -3,10 +3,10 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ShellComponent } from '../../components/shell/shell.component';
-import { CartService, formatPrice } from '../../shared/services/cart.service';
+import { CartService, formatPrice, getCartItemKey } from '../../shared/services/cart.service';
 import { OrderApiService } from '../../shared/services/order-api.service';
 import { VoucherService } from '../../shared/services/voucher.service';
-import { Voucher } from '../../shared/models/xanh-la.models';
+import { Voucher, XanhLaCartItem, EvaluatedCartItemPricing } from '../../shared/models/xanh-la.models';
 import { ShippingMapPickerComponent } from '../../components/shipping-map-picker/shipping-map-picker.component';
 import { ShippingCalculationResult } from '../../shared/services/shipping-api.service';
 
@@ -69,6 +69,16 @@ export class CheckoutComponent implements OnInit {
   readonly comboDiscount = computed(() => {
     return this.cart.selectedComboDiscount();
   });
+
+  readonly addonDiscount = computed(() => {
+    return this.cart.selectedAddonDiscount();
+  });
+
+  protected itemKey = getCartItemKey;
+
+  itemPricing(item: XanhLaCartItem): EvaluatedCartItemPricing {
+    return this.cart.getItemPricing(item, 'selected');
+  }
 
   /** Danh sách ưu đãi để chọn trực tiếp khi thanh toán (gồm Ví voucher + ưu đãi công khai từ MongoDB). */
   readonly checkoutVoucherOptions = computed<CheckoutVoucherOption[]>(() => {
@@ -277,16 +287,21 @@ export class CheckoutComponent implements OnInit {
       const prod = i.product as any;
       // id có dạng 24-char hex (MongoDB ObjectId)
       const isObjectId = /^[a-f\d]{24}$/i.test(prod.id ?? '');
+      const itemType = i.product.isCombo
+        ? 'combo'
+        : (i.itemType === 'addon' ? 'addon' : 'regular');
       return {
-        ...(isObjectId ? { product: prod.id } : {}),
-        productName:    i.product.name,
-        productImage:   i.product.image,
-        productPrice:   i.product.price,
-        priceNumber:    i.product.priceNumber,
-        quantity:       i.quantity,
-        selectedOption: i.selectedOption ?? '',
-        isCombo:        !!i.product.isCombo,
-        comboItems:     i.product.comboItems || [],
+        ...(isObjectId ? { product: prod.id } : { product: i.product.slug }),
+        productName:       i.product.name,
+        productImage:      i.product.image,
+        productPrice:      i.product.price,
+        priceNumber:       i.product.priceNumber,
+        quantity:          i.quantity,
+        selectedOption:    i.selectedOption ?? '',
+        isCombo:           !!i.product.isCombo,
+        itemType,
+        linkedMainProduct: itemType === 'addon' ? (i.linkedMainProductId || i.linkedMainProductSlug || '') : '',
+        comboItems:        i.product.comboItems || [],
       };
     });
 
@@ -298,6 +313,7 @@ export class CheckoutComponent implements OnInit {
       items,
       subtotal:            this.checkoutSubtotal(),
       comboDiscount:       this.comboDiscount(),
+      addonDiscount:       this.addonDiscount(),
       discount:            this.voucherDiscount(),
       voucherCode:         this.selectedVoucher()?.code || null,
       shippingFee:         this.shippingFee(),

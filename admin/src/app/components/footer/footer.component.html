@@ -86,13 +86,15 @@
         <h4 class="xanhla-footer-heading">Về {{ brandName() }}</h4>
         <ul class="xanhla-footer-links">
           @for (link of aboutLinks(); track link.label) {
-            <li>
-              @if (link.policyKey) {
-                <a href="#" (click)="openPolicy(link.policyKey, $event)">{{ cleanLabel(link.label) }}</a>
-              } @else if (link.route) {
-                <a [routerLink]="link.route" (click)="scrollToTop()">{{ cleanLabel(link.label) }}</a>
-              }
-            </li>
+            @if (isFooterLinkVisible(link)) {
+              <li>
+                @if (link.policyKey) {
+                  <a href="#" (click)="openPolicy(link.policyKey, $event)">{{ cleanLabel(link.label) }}</a>
+                } @else if (link.route) {
+                  <a [routerLink]="link.route" (click)="scrollToTop()">{{ cleanLabel(link.label) }}</a>
+                }
+              </li>
+            }
           }
         </ul>
       </div>
