@@ -1,20 +1,35 @@
-import { Component, signal, inject, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ShellComponent } from '../../components/shell/shell.component';
-import { CartService, formatPrice } from '../../shared/services/cart.service';
+import { CartService, formatPrice, calcAddOnUnitDiscount } from '../../shared/services/cart.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { ReviewService } from '../../shared/services/review.service';
 import { XanhLaProduct } from '../../shared/models/xanh-la.models';
+
+export interface AddOnCardView {
+  addonId: string;
+  addonProd: ApiProduct;
+  discountType: 'percent' | 'fixed';
+  discountValue: number;
+  mainUnitPrice: number;
+  addonUnitPrice: number;
+  discountTarget: 'addon' | 'main';
+  unitSaving: number;
+  addonFinalPrice: number;
+  mainFinalPrice: number;
+  discountLabel: string;
+  targetBadge: string;
+}
 
 function toCartProduct(p: ApiProduct): XanhLaProduct {
   return {
     id: p._id, name: p.name, slug: p.slug, price: p.price,
     priceNumber: p.priceNumber, image: p.image,
     category: p.categoryId,
-categoryVi: '',
-description: p.description,
+    categoryVi: p.categoryVi || '',
+    description: p.description,
     container: p.container, cutType: p.cutType, cutting: p.cutting,
     packSize: p.packSize, packaging: p.packaging, preparation: p.preparation,
     quantity: p.quantity, ripeness: p.ripeness, sizeGroup: p.sizeGroup,
@@ -23,6 +38,7 @@ description: p.description,
     isCombo: p.isCombo,
     originalPriceNumber: p.originalPriceNumber,
     comboItems: p.comboItems,
+    addOnDeals: p.addOnDeals as any,
   };
 }
 
@@ -54,9 +70,139 @@ export class ProductDetailComponent implements OnInit {
   protected canScrollPrev   = signal(false);
   protected canScrollNext   = signal(false);
 
-  // Combo mua kèm tiết kiệm
+  // Combo mua kèm tiết kiệm (giữ nguyên độc lập)
   protected combos          = signal<ApiProduct[]>([]);
   protected addedComboId    = signal<string | null>(null);
+
+  // Mua kèm tiết kiệm hơn (chức năng bổ sung độc lập với Combo)
+  protected selectedAddOnIds = signal<Set<string>>(new Set());
+  protected addOnQuantities  = signal<Record<string, number>>({});
+  protected addedBundleNotice = signal(false);
+
+  protected availableAddOnDeals = computed<AddOnCardView[]>(() => {
+    const p = this.product();
+    if (!p || p.isCombo || !Array.isArray(p.addOnDeals)) return [];
+    const mainPrice = Number(p.priceNumber) || 0;
+    const views: AddOnCardView[] = [];
+
+    for (const d of p.addOnDeals) {
+      if (!d || d.isActive === false || Number(d.discountValue) <= 0) continue;
+      const rawAp = d.product;
+      if (!rawAp || typeof rawAp !== 'object') continue;
+      const ap = rawAp as ApiProduct;
+      if (!ap._id || ap._id === p._id || ap.isActive === false || ap.isCombo) continue;
+      if (typeof ap.stock === 'number' && ap.stock <= 0) continue;
+
+      const addonPrice = Number(ap.priceNumber) || 0;
+      const discountTarget: 'addon' | 'main' = addonPrice <= mainPrice ? 'addon' : 'main';
+      const unitSaving = discountTarget === 'addon'
+        ? calcAddOnUnitDiscount(addonPrice, d.discountType, d.discountValue)
+        : calcAddOnUnitDiscount(mainPrice, d.discountType, d.discountValue);
+      if (unitSaving <= 0) continue;
+
+      const discountLabel = d.discountType === 'fixed'
+        ? `Giảm ${formatPrice(d.discountValue)}`
+        : `Giảm ${d.discountValue}%`;
+
+      const targetBadge = discountTarget === 'addon'
+        ? `Ưu đãi tính trên "${ap.name}" (có giá thấp hơn)`
+        : `Ưu đãi tính trên "${p.name}" (SP chính có giá thấp hơn)`;
+
+      views.push({
+        addonId: ap._id,
+        addonProd: ap,
+        discountType: d.discountType,
+        discountValue: d.discountValue,
+        mainUnitPrice: mainPrice,
+        addonUnitPrice: addonPrice,
+        discountTarget,
+        unitSaving,
+        addonFinalPrice: discountTarget === 'addon' ? addonPrice - unitSaving : addonPrice,
+        mainFinalPrice: discountTarget === 'main' ? mainPrice - unitSaving : mainPrice,
+        discountLabel,
+        targetBadge,
+      });
+    }
+    return views;
+  });
+
+  protected liveAddOnSummary = computed(() => {
+    const p = this.product();
+    const cards = this.availableAddOnDeals();
+    const selectedSet = this.selectedAddOnIds();
+    const qtyMap = this.addOnQuantities();
+    const mainQty = Math.max(1, this.quantity());
+
+    const chosen = cards.filter((c) => selectedSet.has(c.addonId));
+    const mainPrice = p ? Number(p.priceNumber) || 0 : 0;
+    const mainOrigTotal = mainPrice * mainQty;
+
+    if (!p || chosen.length === 0) {
+      return {
+        selectedCount: 0,
+        originalTotal: mainOrigTotal,
+        totalSaving: 0,
+        finalTotal: mainOrigTotal,
+        discountedDescriptions: [] as string[],
+      };
+    }
+
+    // Áp dụng đúng quy tắc sản phẩm giá thấp hơn nhận giảm giá & không chồng chéo trên cùng 1 đơn vị SP chính
+    let unclaimedMainUnits = mainQty;
+    let totalSaving = 0;
+    let addonsOrigTotal = 0;
+    const discountedDescriptions: string[] = [];
+
+    const sorted = [...chosen].sort((a, b) => {
+      if (a.discountTarget === 'main' && b.discountTarget === 'main') {
+        return b.unitSaving - a.unitSaving;
+      }
+      return 0;
+    });
+
+    for (const c of sorted) {
+      const aoQty = Math.max(1, qtyMap[c.addonId] || 1);
+      addonsOrigTotal += c.addonUnitPrice * aoQty;
+
+      if (c.discountTarget === 'addon') {
+        const pairedQty = Math.min(aoQty, mainQty);
+        const saving = c.unitSaving * pairedQty;
+        if (saving > 0) {
+          totalSaving += saving;
+          discountedDescriptions.push(
+            `${c.addonProd.name} (x${pairedQty}): -${formatPrice(saving)}`
+          );
+        }
+      } else {
+        const pairedQty = Math.min(aoQty, mainQty, unclaimedMainUnits);
+        if (pairedQty > 0 && c.unitSaving > 0) {
+          unclaimedMainUnits -= pairedQty;
+          const saving = c.unitSaving * pairedQty;
+          totalSaving += saving;
+          discountedDescriptions.push(
+            `${p.name} (x${pairedQty}, khi mua kèm ${c.addonProd.name}): -${formatPrice(saving)}`
+          );
+        }
+      }
+    }
+
+    const originalTotal = mainOrigTotal + addonsOrigTotal;
+    return {
+      selectedCount: chosen.length,
+      originalTotal,
+      totalSaving,
+      finalTotal: Math.max(0, originalTotal - totalSaving),
+      discountedDescriptions,
+    };
+  });
+
+  protected recentViewedExcludingCurrent = computed(() => {
+    const cur = this.product();
+    return this.cart
+      .viewedProducts()
+      .filter((v) => !cur || (v.slug !== cur.slug && v.productId !== cur._id))
+      .slice(0, 10);
+  });
 
   // Review state
   showReviewForm = signal(false);
@@ -89,6 +235,9 @@ export class ProductDetailComponent implements OnInit {
     this.error.set('');
     this.quantity.set(1);
     this.selectedRipeness.set('Ready to Eat');
+    this.selectedAddOnIds.set(new Set());
+    this.addOnQuantities.set({});
+    this.addedBundleNotice.set(false);
     this.showReviewForm.set(false);
     this.reviewImages.set([]);
     this.previewImageUrl.set(null);
@@ -101,6 +250,9 @@ export class ProductDetailComponent implements OnInit {
       next: (res) => {
         this.product.set(res.data);
         this.loading.set(false);
+        if (res.data && !res.data.isCombo) {
+          this.cart.recordViewedProduct(res.data);
+        }
         if (res.data?._id) {
           this.reviewService.load(res.data._id);
         }
@@ -113,6 +265,9 @@ export class ProductDetailComponent implements OnInit {
           next: (r) => {
             this.product.set(r.data);
             this.loading.set(false);
+            if (r.data && !r.data.isCombo) {
+              this.cart.recordViewedProduct(r.data);
+            }
             if (r.data?._id) {
               this.reviewService.load(r.data._id);
             }
@@ -219,7 +374,125 @@ export class ProductDetailComponent implements OnInit {
   }
 
   itemQty(slug: string): number {
-    return this.cart.items().find(i => i.product.slug === slug)?.quantity ?? 0;
+    return this.cart.items().find(i => i.product.slug === slug && i.itemType !== 'addon')?.quantity ?? 0;
+  }
+
+  isAddOnSelected(addonId: string): boolean {
+    return this.selectedAddOnIds().has(addonId);
+  }
+
+  toggleAddOn(addonId: string): void {
+    this.selectedAddOnIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(addonId)) {
+        next.delete(addonId);
+      } else {
+        next.add(addonId);
+        this.addOnQuantities.update((q) => ({ ...q, [addonId]: q[addonId] || 1 }));
+      }
+      return next;
+    });
+  }
+
+  selectAllAddOns(): void {
+    const allIds = this.availableAddOnDeals().map((c) => c.addonId);
+    const current = this.selectedAddOnIds();
+    if (allIds.length > 0 && allIds.every((id) => current.has(id))) {
+      this.selectedAddOnIds.set(new Set());
+    } else {
+      const nextQ = { ...this.addOnQuantities() };
+      for (const id of allIds) {
+        if (!nextQ[id]) nextQ[id] = 1;
+      }
+      this.addOnQuantities.set(nextQ);
+      this.selectedAddOnIds.set(new Set(allIds));
+    }
+  }
+
+  getAddOnQty(addonId: string): number {
+    return Math.max(1, this.addOnQuantities()[addonId] || 1);
+  }
+
+  changeAddOnQty(addonId: string, delta: number, event?: Event): void {
+    event?.stopPropagation();
+    event?.preventDefault();
+    this.addOnQuantities.update((q) => {
+      const cur = Math.max(1, q[addonId] || 1);
+      return { ...q, [addonId]: Math.max(1, cur + delta) };
+    });
+    if (!this.selectedAddOnIds().has(addonId)) {
+      this.selectedAddOnIds.update((s) => new Set([...s, addonId]));
+    }
+  }
+
+  private buildSelectedAddOnEntries() {
+    const selectedSet = this.selectedAddOnIds();
+    const qtyMap = this.addOnQuantities();
+    return this.availableAddOnDeals()
+      .filter((c) => selectedSet.has(c.addonId))
+      .map((c) => ({
+        product: toCartProduct(c.addonProd),
+        discountType: c.discountType,
+        discountValue: c.discountValue,
+        quantity: Math.max(1, qtyMap[c.addonId] || 1),
+      }));
+  }
+
+  addSelectedBundleToCart(): void {
+    const p = this.product();
+    if (!p) return;
+    const entries = this.buildSelectedAddOnEntries();
+    if (entries.length === 0) {
+      this.addToCart();
+      return;
+    }
+    const ok = this.cart.addMainWithAddOns(
+      toCartProduct(p),
+      this.quantity(),
+      this.selectedRipeness(),
+      entries,
+      { openDrawer: true }
+    );
+    if (ok) {
+      this.addedBundleNotice.set(true);
+      setTimeout(() => this.addedBundleNotice.set(false), 2500);
+    }
+  }
+
+  buySelectedBundleNow(): void {
+    const p = this.product();
+    if (!p) return;
+    const entries = this.buildSelectedAddOnEntries();
+    if (entries.length === 0) {
+      this.buyNow();
+      return;
+    }
+    const ok = this.cart.addMainWithAddOns(
+      toCartProduct(p),
+      this.quantity(),
+      this.selectedRipeness(),
+      entries,
+      { openDrawer: false, selectOnlyBundle: true }
+    );
+    if (ok) {
+      this.cart.closeCartDrawer();
+      this.router.navigate(['/checkout']);
+    }
+  }
+
+  formatViewedTime(iso: string): string {
+    if (!iso) return '';
+    const time = new Date(iso).getTime();
+    if (Number.isNaN(time)) return '';
+    const diffSec = Math.max(0, Math.floor((Date.now() - time) / 1000));
+    if (diffSec < 60) return 'Vừa xem';
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin} phút trước`;
+    const diffHr = Math.floor(diffMin / 60);
+    if (diffHr < 24) return `${diffHr} giờ trước`;
+    const d = new Date(time);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}`;
   }
 
   addOne(prod: ApiProduct, event?: Event): void {
@@ -273,14 +546,29 @@ export class ProductDetailComponent implements OnInit {
 
   addToCart(): void {
     const p = this.product();
-    if (p) this.cart.addItem(toCartProduct(p), this.quantity(), this.selectedRipeness());
+    if (!p) return;
+    const entries = this.buildSelectedAddOnEntries();
+    if (entries.length > 0) {
+      this.addSelectedBundleToCart();
+      return;
+    }
+    this.cart.addItem(toCartProduct(p), this.quantity(), this.selectedRipeness());
   }
 
   buyNow(): void {
     const p = this.product();
     if (!p) return;
+    const entries = this.buildSelectedAddOnEntries();
+    if (entries.length > 0) {
+      this.buySelectedBundleNow();
+      return;
+    }
     const cartProd = toCartProduct(p);
     const ripeness = this.selectedRipeness();
+    if (!this.cart.currentUser()) {
+      this.cart.openAuthModal('login');
+      return;
+    }
     this.cart.addItem(cartProd, this.quantity(), ripeness);
     this.cart.selectOnly(cartProd.slug, ripeness);
     this.cart.closeCartDrawer();

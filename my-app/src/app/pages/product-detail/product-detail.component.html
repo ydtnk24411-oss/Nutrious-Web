@@ -135,6 +135,177 @@
         </div>
       </section>
 
+      <!-- ── Mua kèm tiết kiệm hơn (Độc lập với Combo) ── -->
+      @if (availableAddOnDeals().length > 0) {
+        <section class="pd-addon" aria-label="Mua kèm tiết kiệm hơn">
+          <div class="pd-addon-header">
+            <div>
+              <div class="pd-addon-eyebrow">Ưu đãi chọn thêm linh hoạt</div>
+              <h2 class="pd-addon-title">Mua kèm tiết kiệm hơn</h2>
+              <p class="pd-addon-sub">
+                Chọn thêm một hoặc nhiều sản phẩm gợi ý bên dưới khi mua cùng
+                <strong>{{ p.name }}</strong>. Hệ thống tự động áp dụng mức giảm cho
+                <strong>sản phẩm có đơn giá thấp hơn</strong>.
+              </p>
+            </div>
+            <button type="button" class="pd-addon-select-all" (click)="selectAllAddOns()">
+              @if (selectedAddOnIds().size === availableAddOnDeals().length) {
+                Bỏ chọn tất cả
+              } @else {
+                Chọn tất cả ({{ availableAddOnDeals().length }})
+              }
+            </button>
+          </div>
+
+          <!-- Sản phẩm chính đang xem -->
+          <div class="pd-addon-main-bar">
+            <div class="pd-addon-main-tag">Sản phẩm chính</div>
+            <img class="pd-addon-main-img" [src]="p.image" [alt]="p.name" />
+            <div class="pd-addon-main-info">
+              <div class="pd-addon-main-name">{{ p.name }}</div>
+              <div class="pd-addon-main-price">
+                Đơn giá: <strong>{{ p.price }}</strong> × {{ quantity() }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Danh sách sản phẩm có thể mua kèm -->
+          <div class="pd-addon-grid">
+            @for (card of availableAddOnDeals(); track card.addonId) {
+              <div class="pd-addon-card"
+                   [class.is-selected]="isAddOnSelected(card.addonId)"
+                   (click)="toggleAddOn(card.addonId)">
+                <div class="pd-addon-card-top">
+                  <label class="pd-addon-check" (click)="$event.stopPropagation()">
+                    <input type="checkbox"
+                           [checked]="isAddOnSelected(card.addonId)"
+                           (change)="toggleAddOn(card.addonId)" />
+                    <span>Chọn mua kèm</span>
+                  </label>
+                  <span class="pd-addon-disc-pill">{{ card.discountLabel }}</span>
+                </div>
+
+                <div class="pd-addon-card-body">
+                  <a class="pd-addon-img-link"
+                     [routerLink]="'/product-page/' + card.addonProd.slug"
+                     (click)="$event.stopPropagation()">
+                    <img [src]="card.addonProd.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300&q=80'"
+                         [alt]="card.addonProd.name" loading="lazy" />
+                  </a>
+
+                  <div class="pd-addon-meta">
+                    <a class="pd-addon-name"
+                       [routerLink]="'/product-page/' + card.addonProd.slug"
+                       (click)="$event.stopPropagation()">
+                      {{ card.addonProd.name }}
+                    </a>
+
+                    @if (card.discountTarget === 'addon') {
+                      <div class="pd-addon-prices">
+                        <span class="pd-addon-price-final">{{ money(card.addonFinalPrice) }}</span>
+                        <span class="pd-addon-price-orig">{{ money(card.addonUnitPrice) }}</span>
+                      </div>
+                      <div class="pd-addon-save-line">
+                        Tiết kiệm {{ money(card.unitSaving) }}/SP
+                      </div>
+                    } @else {
+                      <div class="pd-addon-prices">
+                        <span class="pd-addon-price-final">{{ money(card.addonUnitPrice) }}</span>
+                      </div>
+                      <div class="pd-addon-save-line pd-addon-save-line--main">
+                        Giảm {{ money(card.unitSaving) }} trên SP chính ({{ money(card.mainUnitPrice) }} → {{ money(card.mainFinalPrice) }})
+                      </div>
+                    }
+
+                    <div class="pd-addon-target-note"
+                         [class.is-main-target]="card.discountTarget === 'main'">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                      <span>{{ card.targetBadge }}</span>
+                    </div>
+
+                    @if (isAddOnSelected(card.addonId)) {
+                      <div class="pd-addon-qty-row" (click)="$event.stopPropagation()">
+                        <span class="pd-addon-qty-label">Số lượng mua kèm:</span>
+                        <div class="pd-addon-qty-ctrl">
+                          <button type="button" (click)="changeAddOnQty(card.addonId, -1, $event)">−</button>
+                          <span>{{ getAddOnQty(card.addonId) }}</span>
+                          <button type="button" (click)="changeAddOnQty(card.addonId, 1, $event)">+</button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Thanh tổng kết & nút hành động Mua kèm -->
+          <div class="pd-addon-summary-bar">
+            <div class="pd-addon-summary-left">
+              @if (liveAddOnSummary().selectedCount > 0) {
+                <div class="pd-addon-summary-title">
+                  Đã chọn <strong>1 sản phẩm chính</strong> (×{{ quantity() }}) +
+                  <strong>{{ liveAddOnSummary().selectedCount }} sản phẩm mua kèm</strong>
+                </div>
+                @if (liveAddOnSummary().discountedDescriptions.length > 0) {
+                  <div class="pd-addon-summary-targets">
+                    <span>Sản phẩm được giảm giá:</span>
+                    @for (desc of liveAddOnSummary().discountedDescriptions; track desc) {
+                      <span class="pd-addon-target-chip">{{ desc }}</span>
+                    }
+                  </div>
+                }
+              } @else {
+                <div class="pd-addon-summary-empty">
+                  Tick chọn sản phẩm mua kèm bên trên để hệ thống tự động tính giá sau ưu đãi.
+                </div>
+              }
+            </div>
+
+            <div class="pd-addon-summary-right">
+              <div class="pd-addon-totals">
+                @if (liveAddOnSummary().totalSaving > 0) {
+                  <div class="pd-addon-total-orig">
+                    Tổng giá gốc: <span>{{ money(liveAddOnSummary().originalTotal) }}</span>
+                  </div>
+                  <div class="pd-addon-total-save">
+                    Tiết kiệm mua kèm: <strong>-{{ money(liveAddOnSummary().totalSaving) }}</strong>
+                  </div>
+                }
+                <div class="pd-addon-total-final">
+                  <span>Tổng thanh toán:</span>
+                  <strong>{{ money(liveAddOnSummary().finalTotal) }}</strong>
+                </div>
+              </div>
+
+              <div class="pd-addon-actions">
+                <button type="button"
+                        class="pd-addon-btn-cart"
+                        [disabled]="liveAddOnSummary().selectedCount === 0"
+                        (click)="addSelectedBundleToCart()">
+                  @if (addedBundleNotice()) {
+                    Đã thêm gói mua kèm!
+                  } @else if (liveAddOnSummary().selectedCount > 0) {
+                    Thêm cùng {{ liveAddOnSummary().selectedCount }} SP mua kèm
+                  } @else {
+                    Chọn SP mua kèm để thêm
+                  }
+                </button>
+                @if (liveAddOnSummary().selectedCount > 0) {
+                  <button type="button"
+                          class="pd-addon-btn-buy"
+                          (click)="buySelectedBundleNow()">
+                    Mua ngay gói này
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+        </section>
+      }
+
       <!-- ── Combo mua kèm tiết kiệm ── -->
       @if (combos().length > 0) {
         <section class="pd-combo">
@@ -303,6 +474,35 @@
           </div>
         }
       </div>
+
+      <!-- ── Sản phẩm đã xem gần đây ── -->
+      @if (recentViewedExcludingCurrent().length > 0) {
+        <section class="pd-viewed-section" aria-label="Sản phẩm đã xem">
+          <div class="pd-viewed-header">
+            <h2 class="pd-viewed-title">Sản phẩm đã xem</h2>
+            <span class="pd-viewed-sub">Nhấn vào sản phẩm để xem lại chi tiết</span>
+          </div>
+          <div class="pd-viewed-track">
+            @for (vp of recentViewedExcludingCurrent(); track vp.slug) {
+              <a class="pd-viewed-card" [routerLink]="'/product-page/' + vp.slug" [title]="vp.name">
+                <div class="pd-viewed-img">
+                  <img [src]="vp.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300&q=80'"
+                       [alt]="vp.name" loading="lazy" />
+                </div>
+                <div class="pd-viewed-body">
+                  <div class="pd-viewed-name">{{ vp.name }}</div>
+                  <div class="pd-viewed-row">
+                    <span class="pd-viewed-price">{{ vp.price || money(vp.priceNumber) }}</span>
+                    @if (vp.viewedAt) {
+                      <span class="pd-viewed-time">{{ formatViewedTime(vp.viewedAt) }}</span>
+                    }
+                  </div>
+                </div>
+              </a>
+            }
+          </div>
+        </section>
+      }
 
       <!-- ── Review Section ─────────────────────────────── -->
       <div class="xanhla-reviews-section">

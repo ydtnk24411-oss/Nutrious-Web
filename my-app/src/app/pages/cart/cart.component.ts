@@ -2,7 +2,8 @@ import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ShellComponent } from '../../components/shell/shell.component';
-import { CartService, formatPrice } from '../../shared/services/cart.service';
+import { CartService, formatPrice, getCartItemKey } from '../../shared/services/cart.service';
+import { XanhLaCartItem, EvaluatedCartItemPricing } from '../../shared/models/xanh-la.models';
 
 @Component({
   selector: 'app-cart',
@@ -15,15 +16,20 @@ export class CartComponent {
   protected cart = inject(CartService);
   private router = inject(Router);
   protected formatPrice = formatPrice;
+  protected itemKey = getCartItemKey;
 
   /** Kiểm tra item có đang được chọn không */
-  isSelected(slug: string, selectedOption?: string): boolean {
-    return this.cart.isSelected(slug, selectedOption);
+  isSelected(item: XanhLaCartItem): boolean {
+    return this.cart.isSelectedItem(item);
   }
 
   /** Toggle chọn/bỏ chọn một item */
-  toggleItem(slug: string, selectedOption?: string): void {
-    this.cart.toggleItem(slug, selectedOption);
+  toggleItem(item: XanhLaCartItem): void {
+    this.cart.toggleCartItem(item);
+  }
+
+  pricing(item: XanhLaCartItem): EvaluatedCartItemPricing {
+    return this.cart.getItemPricing(item, 'selected');
   }
 
   /** Kiểm tra tất cả item đang được chọn */

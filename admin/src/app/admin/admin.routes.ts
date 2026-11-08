@@ -61,16 +61,8 @@ export const adminRoutes: Routes = [
         loadComponent: () =>
           import('./complaints/complaints.component').then((m) => m.AdminComplaintsComponent),
       },
-      {
-        path: 'events',
-        loadComponent: () =>
-          import('./events/events.component').then((m) => m.AdminEventsComponent),
-      },
-      {
-        path: 'bookings',
-        loadComponent: () =>
-          import('./bookings/bookings.component').then((m) => m.AdminBookingsComponent),
-      },
+      { path: 'events', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'bookings', redirectTo: 'dashboard', pathMatch: 'full' },
       {
         path: 'vouchers',
         loadComponent: () =>

@@ -1,6 +1,10 @@
 const router = require('express').Router();
+const mongoose = require('mongoose');
 const User = require('../models/User');
+const Product = require('../models/Product');
 const { protect } = require('../middleware/auth');
+
+const MAX_VIEWED_PRODUCTS = 24;
 
 // GET /api/account/me - Get current user profile
 router.get('/me', protect, async (req, res, next) => {
@@ -148,6 +152,148 @@ router.put('/addresses/:id/default', protect, async (req, res, next) => {
     user.addresses = user.addresses.map(addr => ({ ...addr.toObject(), isDefault: addr._id.toString() === req.params.id }));
     await user.save();
     res.json({ success: true, data: user.addresses });
+  } catch (err) { next(err); }
+});
+
+// GET /api/account/viewed-products - Lấy lịch sử sản phẩm đã xem của tài khoản hiện tại
+router.get('/viewed-products', protect, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id).select('+viewedProducts').lean();
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
+    }
+
+    const rawList = Array.isArray(user.viewedProducts) ? user.viewedProducts : [];
+    if (rawList.length === 0) {
+      return res.json({ success: true, data: [] });
+    }
+
+    // Kiểm tra sản phẩm còn hoạt động để đảm bảo liên kết chi tiết không bị lỗi
+    const productIds = rawList
+      .map((v) => v.product)
+      .filter((id) => id && mongoose.Types.ObjectId.isValid(id));
+    const activeDocs = await Product.find({
+      _id: { $in: productIds },
+      isActive: { $ne: false },
+      isCombo: { $ne: true },
+    })
+      .select('_id slug')
+      .lean();
+    const activeSlugMap = new Map(activeDocs.map((p) => [String(p._id), p.slug]));
+
+    const sorted = rawList
+      .filter((v) => activeSlugMap.has(String(v.product)))
+      .map((v) => ({
+        productId: String(v.product),
+        slug: activeSlugMap.get(String(v.product)) || v.slug,
+        name: v.name,
+        image: v.image || '',
+        price: v.price,
+        priceNumber: v.priceNumber,
+        weight: v.weight || '',
+        unit: v.unit || '',
+        categoryVi: v.categoryVi || '',
+        viewedAt: v.viewedAt,
+      }))
+      .sort((a, b) => new Date(b.viewedAt).getTime() - new Date(a.viewedAt).getTime());
+
+    res.json({ success: true, data: sorted });
+  } catch (err) { next(err); }
+});
+
+// POST /api/account/viewed-products - Ghi nhận sản phẩm vừa xem (không trùng lặp, cập nhật viewedAt mới nhất)
+router.post('/viewed-products', protect, async (req, res, next) => {
+  try {
+    const { productId, slug, name, image, price, priceNumber } = req.body || {};
+    let prod = null;
+    if (productId && mongoose.Types.ObjectId.isValid(productId)) {
+      prod = await Product.findOne({ _id: productId, isActive: { $ne: false } }).lean();
+    }
+    if (!prod && slug) {
+      const cleanSlug = String(slug).replace(/^\/product-page\//, '').trim();
+      prod = await Product.findOne({ slug: cleanSlug, isActive: { $ne: false } }).lean();
+    }
+    if (!prod) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
+    }
+    if (prod.isCombo) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const user = await User.findById(req.user.id).select('+viewedProducts');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
+    }
+
+    const recordedPriceNumber =
+      typeof priceNumber === 'number' && priceNumber >= 0 ? priceNumber : (prod.priceNumber || 0);
+    const recordedPrice =
+      price && String(price).trim()
+        ? String(price).trim()
+        : (prod.price || `${recordedPriceNumber.toLocaleString('vi-VN')}đ`);
+
+    const now = new Date();
+    const entry = {
+      product: prod._id,
+      slug: prod.slug,
+      name: (name && String(name).trim()) || prod.name,
+      image: (image !== undefined ? String(image) : prod.image) || '',
+      price: recordedPrice,
+      priceNumber: recordedPriceNumber,
+      weight: prod.weight || '',
+      unit: prod.unit || '',
+      categoryVi: prod.categoryVi || '',
+      viewedAt: now,
+    };
+
+    const existing = Array.isArray(user.viewedProducts) ? user.viewedProducts : [];
+    const deduped = existing.filter(
+      (item) =>
+        String(item.product) !== String(prod._id) &&
+        String(item.slug || '') !== String(prod.slug || '')
+    );
+
+    const updated = [entry, ...deduped]
+      .sort((a, b) => new Date(b.viewedAt).getTime() - new Date(a.viewedAt).getTime())
+      .slice(0, MAX_VIEWED_PRODUCTS);
+
+    user.viewedProducts = updated;
+    await user.save();
+
+    const responseData = user.viewedProducts.map((v) => ({
+      productId: String(v.product),
+      slug: v.slug,
+      name: v.name,
+      image: v.image || '',
+      price: v.price,
+      priceNumber: v.priceNumber,
+      weight: v.weight || '',
+      unit: v.unit || '',
+      categoryVi: v.categoryVi || '',
+      viewedAt: v.viewedAt,
+    }));
+
+    res.json({ success: true, data: responseData });
+  } catch (err) { next(err); }
+});
+
+// DELETE /api/account/viewed-products - Xóa lịch sử xem của tài khoản hiện tại (toàn bộ hoặc 1 sản phẩm)
+router.delete('/viewed-products', protect, async (req, res, next) => {
+  try {
+    const { productId } = req.query;
+    const user = await User.findById(req.user.id).select('+viewedProducts');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
+    }
+    if (productId) {
+      user.viewedProducts = (user.viewedProducts || []).filter(
+        (v) => String(v.product) !== String(productId)
+      );
+    } else {
+      user.viewedProducts = [];
+    }
+    await user.save();
+    res.json({ success: true, data: user.viewedProducts });
   } catch (err) { next(err); }
 });
 

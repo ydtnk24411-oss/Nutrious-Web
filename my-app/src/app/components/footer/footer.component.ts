@@ -136,8 +136,24 @@ export class FooterComponent implements OnInit {
     return label.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27FF}\u{2300}-\u{23FF}\u{2B00}-\u{2BFF}\uFE0E\uFE0F\u200D]/gu, '').trim();
   }
 
+  isFooterLinkVisible(link: FooterNavLink): boolean {
+    const route = (link.route || '').trim();
+    const cleaned = this.cleanLabel(link.label);
+    if (/^\/(event-list|event-details|book-online|service-page)(\/|$)/i.test(route)) {
+      return false;
+    }
+    if (!link.policyKey && /(sự kiện|đặt lịch|lớp học nấu ăn)/i.test(cleaned)) {
+      return false;
+    }
+    return true;
+  }
+
   isUtilityLinkVisible(link: FooterNavLink): boolean {
-    return link.route !== '/loyalty' && !/tích điểm/i.test(this.cleanLabel(link.label));
+    return (
+      this.isFooterLinkVisible(link) &&
+      link.route !== '/loyalty' &&
+      !/tích điểm/i.test(this.cleanLabel(link.label))
+    );
   }
 
   closePolicy(): void {

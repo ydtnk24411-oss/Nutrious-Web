@@ -194,8 +194,7 @@
               <input type="radio" name="method" value="pickup" [checked]="shippingMethod()==='pickup'"
                 (change)="shippingMethod.set('pickup')" style="margin-right:8px" />
               <strong>Đến lấy trực tiếp</strong>
-              <p style="margin:4px 0 0 0;font-size:13px;color:var(--xanh-muted)">Khu phố 6, Phường Linh Trung, TP. Thủ
-                Đức, TP.HCM (Tối đa 30p)</p>
+              <p style="margin:4px 0 0 0;font-size:13px;color:var(--xanh-muted)">Khu phố 6, Phường Linh Trung, TP. Thủ Đức, TP.HCM (Tối đa 30p)</p>
             </label>
             <label
               [style.border]="shippingMethod()==='delivery' ? '2px solid var(--xanh-moss)' : '1px solid var(--xanh-line)'"
@@ -203,14 +202,16 @@
               <input type="radio" name="method" value="delivery" [checked]="shippingMethod()==='delivery'"
                 (change)="shippingMethod.set('delivery')" style="margin-right:8px" />
               <strong>Giao hàng tận nơi</strong>
-              <p style="margin:4px 0 0 0;font-size:13px;color:var(--xanh-muted)">Giao nhanh trong ngày bằng xe lạnh (Tối
-                đa 10 km)</p>
+              <p style="margin:4px 0 0 0;font-size:13px;color:var(--xanh-muted)">Giao nhanh trong ngày bằng xe lạnh (Tối đa 10 km)</p>
             </label>
           </div>
           @if (shippingMethod() === 'delivery') {
           <div style="display:flex;flex-direction:column;gap:16px">
-            <app-shipping-map-picker [initialAddress]="shippingAddr()" [subtotal]="checkoutSubtotal()"
-              (locationChanged)="onLocationChanged($event)" (outOfRange)="onOutOfRange($event)">
+            <app-shipping-map-picker
+              [initialAddress]="shippingAddr()"
+              [subtotal]="checkoutSubtotal()"
+              (locationChanged)="onLocationChanged($event)"
+              (outOfRange)="onOutOfRange($event)">
             </app-shipping-map-picker>
           </div>
           }
@@ -239,7 +240,8 @@
         style="background:#fff;padding:28px;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line);height:fit-content">
         <h3 style="margin:0 0 16px 0;font-size:18px">Đơn hàng ({{ checkoutItems().length }} món)</h3>
         <div style="display:flex;flex-direction:column;gap:12px;max-height:480px;overflow-y:auto;margin-bottom:16px;padding-right:2px">
-          @for (item of checkoutItems(); track item.product.slug + (item.selectedOption ?? '')) {
+          @for (item of checkoutItems(); track itemKey(item)) {
+          @let p = itemPricing(item);
           <div style="padding:14px;border:1px solid #eef2ed;border-radius:12px;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.02)">
             <!-- Header hàng: Ảnh + Tên + Giá -->
             <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
@@ -252,28 +254,40 @@
                 />
                 <div style="flex:1;min-width:0">
                   <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                    @if (item.product.isCombo) {
-                      <span style="display:inline-block;padding:2px 7px;background:#ecfdf5;color:#15803d;border:1px solid #86efac;border-radius:4px;font-size:11px;font-weight:700">COMBO</span>
+                    @if (p.itemType === 'combo') {
+                      <span style="display:inline-block;padding:2px 7px;background:#ecfdf5;color:#15803d;border:1px solid #86efac;border-radius:4px;font-size:10.5px;font-weight:700">COMBO TIẾT KIỆM</span>
+                    } @else if (p.itemType === 'addon') {
+                      <span style="display:inline-block;padding:2px 7px;background:#eff6eb;color:#203d0b;border:1px solid #bdd982;border-radius:4px;font-size:10.5px;font-weight:700">MUA KÈM TIẾT KIỆM</span>
+                    } @else if (p.discountedByAddon) {
+                      <span style="display:inline-block;padding:2px 7px;background:#fef9c3;color:#854d0e;border:1px solid #fde047;border-radius:4px;font-size:10.5px;font-weight:700">SP CHÍNH (GIẢM MUA KÈM)</span>
+                    } @else {
+                      <span style="display:inline-block;padding:1.5px 6px;background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;border-radius:4px;font-size:10px;font-weight:600">MUA LẺ</span>
                     }
                     <span style="font-weight:700;font-size:15px;color:#0f381e;line-height:1.3" [title]="item.product.name">
                       {{ item.product.name }}
                     </span>
                   </div>
+                  @if (p.relationLabel) {
+                    <div style="font-size:11.5px;color:#1e532b;font-weight:600;margin-top:2px">{{ p.relationLabel }}</div>
+                  }
                   @if (item.selectedOption) {
                     <div style="font-size:12px;color:#64748b;margin-top:2px">{{ item.selectedOption }}</div>
                   }
                 </div>
               </div>
               <div style="white-space:nowrap;text-align:right;flex-shrink:0">
-                <div style="font-size:13.5px;color:#64748b;font-weight:500;margin-bottom:2px">
-                  {{ item.product.price }} × {{ item.quantity }}
+                <div style="font-size:13px;color:#64748b;font-weight:500;margin-bottom:2px">
+                  {{ formatPrice(p.effectiveUnitPrice) }} × {{ item.quantity }}
                 </div>
                 <div style="font-size:16px;font-weight:800;color:#047857">
-                  {{ formatPrice(item.product.priceNumber * item.quantity) }}
+                  {{ formatPrice(p.linePayableTotal) }}
                 </div>
-                @if (item.product.isCombo && item.product.originalPriceNumber && item.product.originalPriceNumber > item.product.priceNumber) {
-                  <div style="font-size:11.5px;color:#16a34a;font-weight:600;margin-top:2px">
-                    Tiết kiệm {{ formatPrice((item.product.originalPriceNumber - item.product.priceNumber) * item.quantity) }}
+                @if (p.lineSaving > 0) {
+                  <div style="font-size:11.5px;color:#94a3b8;text-decoration:line-through">
+                    {{ formatPrice(p.lineOriginalTotal) }}
+                  </div>
+                  <div style="font-size:11.5px;color:#16a34a;font-weight:700;margin-top:1px">
+                    Tiết kiệm {{ formatPrice(p.lineSaving) }}
                   </div>
                 }
               </div>
@@ -423,7 +437,25 @@
 
         <!-- Totals -->
         <div style="border-top:1px solid var(--xanh-line);padding-top:14px;display:flex;flex-direction:column;gap:8px">
-          <div style="display:flex;justify-content:space-between;font-size:14px">
+          @if (comboDiscount() > 0 || addonDiscount() > 0) {
+            <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#64748b">
+              <span>Tổng giá gốc hàng hóa</span>
+              <del>{{ formatPrice(originalSubtotal()) }}</del>
+            </div>
+            @if (comboDiscount() > 0) {
+              <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#16a34a;font-weight:600">
+                <span>Tiết kiệm Combo</span>
+                <span>-{{ formatPrice(comboDiscount()) }}</span>
+              </div>
+            }
+            @if (addonDiscount() > 0) {
+              <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#16a34a;font-weight:600">
+                <span>Ưu đãi Mua kèm tiết kiệm</span>
+                <span>-{{ formatPrice(addonDiscount()) }}</span>
+              </div>
+            }
+          }
+          <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:600">
             <span>Tạm tính tiền hàng</span>
             <span>{{ formatPrice(checkoutSubtotal()) }}</span>
           </div>
@@ -479,10 +511,8 @@
           </div>
 
           @if (shippingMethod() === 'delivery') {
-          <div
-            style="margin-top:8px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;color:#166534;line-height:1.4">
-            🌿 <strong>Cam kết nông sản tươi ngon:</strong> Đóng thùng xốp/túi giữ nhiệt đá gel, xe lạnh chuyên dụng
-            giao nhanh trong ngày.
+          <div style="margin-top:8px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;color:#166534;line-height:1.4">
+            🌿 <strong>Cam kết nông sản tươi ngon:</strong> Đóng thùng xốp/túi giữ nhiệt đá gel, xe lạnh chuyên dụng giao nhanh trong ngày.
           </div>
           }
         </div>

@@ -7,7 +7,16 @@ import { OrderApiService } from '../../shared/services/order-api.service';
 interface OrderItem {
   productName: string;
   productImage: string;
-  productPrice: number;
+  productPrice: number | string;
+  priceNumber?: number;
+  originalPriceNumber?: number;
+  comboSaving?: number;
+  itemType?: 'regular' | 'combo' | 'addon';
+  linkedMainProduct?: string;
+  linkedMainProductName?: string;
+  addonSaving?: number;
+  discountedByAddon?: boolean;
+  promoNote?: string;
   quantity: number;
   selectedOption?: string;
   isCombo?: boolean;
@@ -30,6 +39,7 @@ interface Order {
   items: OrderItem[];
   subtotal: number;
   comboDiscount?: number;
+  addonDiscount?: number;
   discount: number;
   voucherCode?: string;
   shippingFee: number;
@@ -187,6 +197,20 @@ export class OrderDetailComponent implements OnInit {
   formatPrice(value: number | string): string {
     const num = typeof value === 'number' ? value : Number(String(value || 0).replace(/[^\d]/g, ''));
     return num.toLocaleString('vi-VN') + 'đ';
+  }
+
+  itemLinePayable(item: OrderItem): number {
+    const unit = typeof item.priceNumber === 'number'
+      ? item.priceNumber
+      : (typeof item.productPrice === 'number' ? item.productPrice : Number(String(item.productPrice || 0).replace(/[^\d]/g, '')));
+    return unit * (item.quantity || 1);
+  }
+
+  itemLineOriginal(item: OrderItem): number {
+    const orig = item.originalPriceNumber && item.originalPriceNumber > 0
+      ? item.originalPriceNumber
+      : (typeof item.priceNumber === 'number' ? item.priceNumber : 0);
+    return orig * (item.quantity || 1);
   }
 
   getComboItemImage(sub: any): string {

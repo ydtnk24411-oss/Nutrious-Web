@@ -4,8 +4,19 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { CategoryApiService, ApiCategory } from '../../shared/services/category-api.service';
+import { calcAddOnUnitDiscount, formatPrice } from '../../shared/services/cart.service';
 
 type ModalMode = 'create' | 'edit';
+
+export interface AdminAddOnDealRow {
+  productId: string;
+  productName: string;
+  productImage: string;
+  productPriceNumber: number;
+  discountType: 'percent' | 'fixed';
+  discountValue: number;
+  isActive: boolean;
+}
 
 const EMPTY_FORM = (): Partial<ApiProduct> => ({
   name: '',
@@ -82,6 +93,30 @@ export class AdminProductsComponent implements OnInit {
   modalMode = signal<ModalMode>('create');
   editId = signal('');
   form = signal<Partial<ApiProduct>>(EMPTY_FORM());
+
+  // Cấu hình "Mua kèm tiết kiệm hơn" trong Modal sản phẩm
+  allCandidateProducts = signal<ApiProduct[]>([]);
+  addonSearch = signal('');
+  formAddOnDeals = signal<AdminAddOnDealRow[]>([]);
+  protected formatPrice = formatPrice;
+
+  filteredAddOnCandidates = computed(() => {
+    const q = this.addonSearch().trim().toLowerCase();
+    const selfId = this.editId();
+    const chosenIds = new Set(this.formAddOnDeals().map((r) => r.productId));
+    return this.allCandidateProducts()
+      .filter((p) => {
+        if (!p || !p._id || p.isCombo || p.isActive === false) return false;
+        if (selfId && p._id === selfId) return false;
+        if (chosenIds.has(p._id)) return false;
+        if (!q) return true;
+        return (
+          p.name.toLowerCase().includes(q) ||
+          (p.slug || '').toLowerCase().includes(q)
+        );
+      })
+      .slice(0, 8);
+  });
 
   readonly preparations = ['Raw', 'Marinated'];
   readonly types = ['Fresh', 'Dried'];
@@ -218,9 +253,22 @@ export class AdminProductsComponent implements OnInit {
     }
   }
 
+  private ensureCandidateProductsLoaded(): void {
+    if (this.allCandidateProducts().length > 0) return;
+    this.productApi.getAll({ limit: 0, isCombo: 'false' }).subscribe({
+      next: (res) => {
+        this.allCandidateProducts.set((res.data ?? []).filter((p) => !p.isCombo));
+      },
+      error: () => {},
+    });
+  }
+
   openCreate(): void {
     const defaultCat = this.categories().length > 0 ? this.categories()[0]._id : '';
     this.form.set({ ...EMPTY_FORM(), categoryId: defaultCat });
+    this.formAddOnDeals.set([]);
+    this.addonSearch.set('');
+    this.ensureCandidateProductsLoaded();
     this.modalMode.set('create');
     this.editId.set('');
     this.error.set('');
@@ -232,6 +280,29 @@ export class AdminProductsComponent implements OnInit {
       ? (p.categoryId as any)._id.toString()
       : (p.categoryId ? p.categoryId.toString() : '');
     this.form.set({ ...p, categoryId: catId });
+    this.addonSearch.set('');
+    this.ensureCandidateProductsLoaded();
+
+    const mappedDeals: AdminAddOnDealRow[] = (p.addOnDeals ?? [])
+      .map((d) => {
+        const prodObj = typeof d.product === 'object' && d.product !== null ? (d.product as ApiProduct) : null;
+        const pid = prodObj ? prodObj._id : String(d.product || '');
+        const fallback = !prodObj ? this.allCandidateProducts().find((x) => x._id === pid) : null;
+        const src = prodObj || fallback;
+        if (!pid) return null;
+        return {
+          productId: pid,
+          productName: src?.name || 'Sản phẩm mua kèm',
+          productImage: src?.image || '',
+          productPriceNumber: Number(src?.priceNumber) || 0,
+          discountType: d.discountType === 'fixed' ? 'fixed' : 'percent',
+          discountValue: Number(d.discountValue) || 0,
+          isActive: d.isActive !== false,
+        } as AdminAddOnDealRow;
+      })
+      .filter((x): x is AdminAddOnDealRow => !!x);
+
+    this.formAddOnDeals.set(mappedDeals);
     this.modalMode.set('edit');
     this.editId.set(p._id);
     this.error.set('');
@@ -244,10 +315,60 @@ export class AdminProductsComponent implements OnInit {
   }
 
   setField(key: keyof ApiProduct, val: unknown): void {
-    this.form.update(f => ({
-      ...f,
-      [key]: val,
-    }));
+    this.form.update(f => {
+      const next: Partial<ApiProduct> = { ...f, [key]: val };
+      if (key === 'priceNumber' && typeof val === 'number' && val >= 0) {
+        next.price = val.toLocaleString('vi-VN') + 'đ';
+      }
+      return next;
+    });
+  }
+
+  addAddOnCandidate(cand: ApiProduct): void {
+    this.formAddOnDeals.update((rows) => [
+      ...rows,
+      {
+        productId: cand._id,
+        productName: cand.name,
+        productImage: cand.image || '',
+        productPriceNumber: Number(cand.priceNumber) || 0,
+        discountType: 'percent',
+        discountValue: 10,
+        isActive: true,
+      },
+    ]);
+    this.addonSearch.set('');
+  }
+
+  updateAddOnRow(idx: number, patch: Partial<AdminAddOnDealRow>): void {
+    this.formAddOnDeals.update((rows) =>
+      rows.map((r, i) => (i === idx ? { ...r, ...patch } : r))
+    );
+  }
+
+  removeAddOnRow(idx: number): void {
+    this.formAddOnDeals.update((rows) => rows.filter((_, i) => i !== idx));
+  }
+
+  previewAddOnRow(row: AdminAddOnDealRow): string {
+    const mainPrice = Number(this.form().priceNumber) || 0;
+    const addonPrice = Number(row.productPriceNumber) || 0;
+    const mainName = this.form().name || 'SP chính';
+    if (Number(row.discountValue) <= 0) {
+      return 'Nhập mức giảm > 0 để kích hoạt ưu đãi';
+    }
+    if (addonPrice <= mainPrice) {
+      const disc = calcAddOnUnitDiscount(addonPrice, row.discountType, row.discountValue);
+      return `Giảm ${formatPrice(disc)} trên "${row.productName}" (còn ${formatPrice(addonPrice - disc)}) vì có giá thấp hơn`;
+    } else {
+      const disc = calcAddOnUnitDiscount(mainPrice, row.discountType, row.discountValue);
+      return `Giảm ${formatPrice(disc)} trên "${mainName}" (còn ${formatPrice(mainPrice - disc)}) vì SP chính có giá thấp hơn`;
+    }
+  }
+
+  activeAddOnCount(p: ApiProduct): number {
+    if (p.isCombo || !Array.isArray(p.addOnDeals)) return 0;
+    return p.addOnDeals.filter((d) => d && d.isActive !== false && Number(d.discountValue) > 0).length;
   }
 
   onNameChange(val: string): void {
@@ -273,12 +394,24 @@ export class AdminProductsComponent implements OnInit {
       f.price = f.priceNumber.toLocaleString('vi-VN') + 'đ';
     }
 
+    const payload: Partial<ApiProduct> = {
+      ...f,
+      addOnDeals: f.isCombo
+        ? []
+        : this.formAddOnDeals().map((r) => ({
+            product: r.productId as any,
+            discountType: r.discountType,
+            discountValue: Math.max(0, Number(r.discountValue) || 0),
+            isActive: r.isActive,
+          })),
+    };
+
     this.saving.set(true);
     this.error.set('');
 
     const obs = this.modalMode() === 'create'
-      ? this.productApi.create(f)
-      : this.productApi.update(this.editId(), f);
+      ? this.productApi.create(payload)
+      : this.productApi.update(this.editId(), payload);
 
     obs.subscribe({
       next: () => {

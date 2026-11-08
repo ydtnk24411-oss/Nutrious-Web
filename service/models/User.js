@@ -10,6 +10,22 @@ const addressSchema = new mongoose.Schema({
   isDefault: { type: Boolean, default: false },
 }, { _id: true });
 
+const viewedProductSchema = new mongoose.Schema(
+  {
+    product:     { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+    slug:        { type: String, required: true },
+    name:        { type: String, required: true },
+    image:       { type: String, default: '' },
+    price:       { type: String, required: true },
+    priceNumber: { type: Number, required: true, min: 0 },
+    weight:      { type: String, default: '' },
+    unit:        { type: String, default: '' },
+    categoryVi:  { type: String, default: '' },
+    viewedAt:    { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
+
 const userSchema = new mongoose.Schema(
   {
     name:      { type: String, required: true, trim: true },
@@ -34,6 +50,8 @@ const userSchema = new mongoose.Schema(
     totalSpent: { type: Number, default: 0 },
     // Addresses
     addresses: [addressSchema],
+    // Lịch sử sản phẩm đã xem (gắn riêng theo từng tài khoản)
+    viewedProducts: { type: [viewedProductSchema], default: [], select: false },
   },
   { timestamps: true }
 );

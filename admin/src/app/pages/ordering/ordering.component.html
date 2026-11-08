@@ -384,6 +384,43 @@
            CONTENT (phải)
       ════════════════════════════════════════ -->
       <div class="ord-content">
+        @if (cart.viewedProducts().length > 0) {
+          <section class="ord-viewed-section" aria-label="Sản phẩm đã xem">
+            <div class="ord-viewed-header">
+              <div class="ord-viewed-title-wrap">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <h3 class="ord-viewed-title">Sản phẩm đã xem</h3>
+                <span class="ord-viewed-count">{{ cart.viewedProducts().length }} gần đây</span>
+              </div>
+              <button type="button" class="ord-viewed-clear" (click)="cart.clearViewedProducts()">
+                Xóa lịch sử
+              </button>
+            </div>
+
+            <div class="ord-viewed-track">
+              @for (vp of cart.viewedProducts(); track vp.slug) {
+                <a class="ord-viewed-card" [routerLink]="'/product-page/' + vp.slug" [title]="vp.name">
+                  <div class="ord-viewed-img">
+                    <img [src]="vp.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300&q=80'"
+                         [alt]="vp.name" loading="lazy" />
+                  </div>
+                  <div class="ord-viewed-body">
+                    <div class="ord-viewed-name">{{ vp.name }}</div>
+                    <div class="ord-viewed-meta">
+                      <span class="ord-viewed-price">{{ vp.price || formatPrice(vp.priceNumber) }}</span>
+                      @if (vp.viewedAt) {
+                        <span class="ord-viewed-time">{{ formatViewedTime(vp.viewedAt) }}</span>
+                      }
+                    </div>
+                  </div>
+                </a>
+              }
+            </div>
+          </section>
+        }
+
         <div class="ord-content-toolbar">
           <h2 class="ord-menu-title" style="margin:0">Fresh Ingredients</h2>
           <span class="ord-result-count">{{ categoryProducts().length }} sản phẩm</span>
@@ -409,6 +446,9 @@
           <div class="xanhla-prod-card">
             <a class="xanhla-prod-card-img" [routerLink]="'/product-page/' + prod.slug">
               <img [src]="prod.image" [alt]="prod.name" loading="lazy" />
+              @if (hasActiveAddOnDeals(prod)) {
+                <span class="ord-addon-promo-tag">Mua kèm tiết kiệm</span>
+              }
             </a>
 
             <div class="xanhla-prod-card-body">

@@ -24,7 +24,7 @@ function toCartProduct(p: ApiProduct): XanhLaProduct {
     priceNumber: p.priceNumber,
     image: p.image,
     category: p.categoryId,
-    categoryVi: '',
+    categoryVi: p.categoryVi || '',
     description: p.description,
 
     container: p.container,
@@ -43,6 +43,7 @@ function toCartProduct(p: ApiProduct): XanhLaProduct {
     isCombo: p.isCombo,
     originalPriceNumber: p.originalPriceNumber,
     comboItems: p.comboItems,
+    addOnDeals: p.addOnDeals as any,
   };
 }
 
@@ -839,6 +840,7 @@ export class OrderingComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.cart.loadViewedProducts();
     const q = this.route.snapshot.queryParamMap.get('q');
 
     if (q) {
@@ -1043,8 +1045,32 @@ export class OrderingComponent implements OnInit {
 
   itemQty(slug: string): number {
     return this.cart.items().find(
-      i => i.product.slug === slug
+      i => i.product.slug === slug && i.itemType !== 'addon'
     )?.quantity ?? 0;
+  }
+
+  hasActiveAddOnDeals(prod: ApiProduct): boolean {
+    if (!Array.isArray(prod.addOnDeals) || prod.addOnDeals.length === 0) return false;
+    return prod.addOnDeals.some((d) => {
+      if (!d || d.isActive === false || Number(d.discountValue) <= 0) return false;
+      const p = d.product as any;
+      return p && typeof p === 'object' && p.isActive !== false && !p.isCombo;
+    });
+  }
+
+  formatViewedTime(iso: string): string {
+    if (!iso) return '';
+    const time = new Date(iso).getTime();
+    if (Number.isNaN(time)) return '';
+    const diffSec = Math.max(0, Math.floor((Date.now() - time) / 1000));
+    if (diffSec < 60) return 'Vừa xem';
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin} phút trước`;
+    const diffHr = Math.floor(diffMin / 60);
+    if (diffHr < 24) return `${diffHr} giờ trước`;
+    const d = new Date(time);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
   addOne(prod: ApiProduct): void {

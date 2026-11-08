@@ -102,16 +102,6 @@ export class AdminLayoutComponent {
             { id: 'support-reviews', label: 'Đánh giá sản phẩm', path: '/admin/reviews' },
             { id: 'support-complaints', label: 'Khiếu nại & phản hồi', path: '/admin/complaints' }
           ]
-        },
-        {
-          id: 'events',
-          label: 'Sự kiện nông trại',
-          path: '/admin/events',
-        },
-        {
-          id: 'bookings',
-          label: 'Đặt lịch trải nghiệm',
-          path: '/admin/bookings',
         }
       ]
     },

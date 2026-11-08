@@ -387,8 +387,6 @@
       @case ('/online-ordering') { Đặt hàng }
       @case ('/nutrition') { Dinh dưỡng TM }
       @case ('/cook-with-what-you-have') { Nấu gì? }
-      @case ('/event-list') { Sự kiện }
-      @case ('/book-online') { Đặt lịch }
       @default { {{ item.label }} }
       }
     </a>
@@ -430,12 +428,6 @@
       <a routerLink="/cook-with-what-you-have"
         style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line);color:var(--green-700)"
         (click)="closeMobileMenu()">Nấu gì hôm nay?</a>
-      <a routerLink="/event-list"
-        style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)"
-        (click)="closeMobileMenu()">Sự kiện</a>
-      <a routerLink="/book-online"
-        style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)"
-        (click)="closeMobileMenu()">Đặt lịch</a>
 
       <div class="xl-drawer-section-label" style="margin-top:12px">Danh mục sản phẩm</div>
       @for (cat of categories; track cat.label) {
