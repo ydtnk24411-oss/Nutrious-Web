@@ -1,5 +1,263 @@
 const ShippingConfig = require('../models/ShippingConfig');
 
+const DEFAULT_WAREHOUSES = [
+  // TP. Hồ Chí Minh
+  {
+    id: 'store-thuduc',
+    name: 'Tổng kho Evergreen Mart Thủ Đức (Trụ sở chính)',
+    address: 'Khu phố 6, Phường Linh Trung, TP. Thủ Đức, TP. Hồ Chí Minh',
+    province: 'Thành phố Hồ Chí Minh',
+    district: 'TP. Thủ Đức',
+    lat: 10.8703,
+    lng: 106.7782,
+    phone: '0962 299 122',
+    openingHours: '07:00 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+    isHeadquarter: true,
+  },
+  {
+    id: 'store-q1',
+    name: 'Cửa hàng Evergreen Mart Quận 1',
+    address: '128 Hai Bà Trưng, Phường Đa Kao, Quận 1, TP. Hồ Chí Minh',
+    province: 'Thành phố Hồ Chí Minh',
+    district: 'Quận 1',
+    lat: 10.7865,
+    lng: 106.6998,
+    phone: '028 3822 5588',
+    openingHours: '07:30 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+  {
+    id: 'store-binhthanh',
+    name: 'Cửa hàng Evergreen Mart Bình Thạnh',
+    address: '45 Điện Biên Phủ, Phường 15, Quận Bình Thạnh, TP. Hồ Chí Minh',
+    province: 'Thành phố Hồ Chí Minh',
+    district: 'Quận Bình Thạnh',
+    lat: 10.7981,
+    lng: 106.7058,
+    phone: '028 3514 6677',
+    openingHours: '07:00 - 21:00',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+  {
+    id: 'store-q7',
+    name: 'Cửa hàng Evergreen Mart Quận 7',
+    address: '105 Nguyễn Thị Thập, Phường Tân Phú, Quận 7, TP. Hồ Chí Minh',
+    province: 'Thành phố Hồ Chí Minh',
+    district: 'Quận 7',
+    lat: 10.7382,
+    lng: 106.7196,
+    phone: '028 5410 8899',
+    openingHours: '07:30 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+  {
+    id: 'store-tanbinh',
+    name: 'Cửa hàng Evergreen Mart Tân Bình',
+    address: '32 Phổ Quang, Phường 2, Quận Tân Bình, TP. Hồ Chí Minh',
+    province: 'Thành phố Hồ Chí Minh',
+    district: 'Quận Tân Bình',
+    lat: 10.8038,
+    lng: 106.6662,
+    phone: '028 3844 1122',
+    openingHours: '07:00 - 21:00',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+  {
+    id: 'store-govap',
+    name: 'Cửa hàng Evergreen Mart Gò Vấp',
+    address: '366 Phan Văn Trị, Phường 5, Quận Gò Vấp, TP. Hồ Chí Minh',
+    province: 'Thành phố Hồ Chí Minh',
+    district: 'Quận Gò Vấp',
+    lat: 10.8228,
+    lng: 106.6908,
+    phone: '028 3894 3355',
+    openingHours: '07:00 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+  {
+    id: 'store-binhtan',
+    name: 'Cửa hàng Evergreen Mart Bình Tân',
+    address: 'Số 1 Đường Số 17A, Phường Bình Trị Đông B, Quận Bình Tân, TP. Hồ Chí Minh',
+    province: 'Thành phố Hồ Chí Minh',
+    district: 'Quận Bình Tân',
+    lat: 10.7516,
+    lng: 106.6083,
+    phone: '028 3752 9988',
+    openingHours: '07:00 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+
+  // Bình Dương
+  {
+    id: 'store-dian',
+    name: 'Kho Evergreen Mart Dĩ An',
+    address: '01/08 Quốc Lộ 1K, Phường Tân Hòa, TP. Dĩ An, Bình Dương',
+    province: 'Tỉnh Bình Dương',
+    district: 'TP. Dĩ An',
+    lat: 10.8986,
+    lng: 106.7865,
+    phone: '0274 377 8899',
+    openingHours: '07:00 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+  {
+    id: 'store-thudaumot',
+    name: 'Kho Evergreen Mart Thủ Dầu Một',
+    address: '230 Đại lộ Bình Dương, Phường Phú Hòa, TP. Thủ Dầu Một, Bình Dương',
+    province: 'Tỉnh Bình Dương',
+    district: 'TP. Thủ Dầu Một',
+    lat: 10.9805,
+    lng: 106.6745,
+    phone: '0274 382 1234',
+    openingHours: '07:00 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+
+  // Đồng Nai
+  {
+    id: 'store-bienhoa',
+    name: 'Kho Evergreen Mart Biên Hòa',
+    address: '104 Đồng Khởi, Phường Tân Hiệp, TP. Biên Hòa, Đồng Nai',
+    province: 'Tỉnh Đồng Nai',
+    district: 'TP. Biên Hòa',
+    lat: 10.9631,
+    lng: 106.8488,
+    phone: '0251 388 6677',
+    openingHours: '07:00 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+
+  // Hà Nội
+  {
+    id: 'store-dongda',
+    name: 'Kho Evergreen Mart Đống Đa - Hà Nội',
+    address: '12 Chùa Bộc, Phường Quang Trung, Quận Đống Đa, Hà Nội',
+    province: 'Thành phố Hà Nội',
+    district: 'Quận Đống Đa',
+    lat: 21.0074,
+    lng: 105.8285,
+    phone: '024 3852 4466',
+    openingHours: '07:00 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+  {
+    id: 'store-caugiay',
+    name: 'Kho Evergreen Mart Cầu Giấy - Hà Nội',
+    address: '165 Cầu Giấy, Phường Dịch Vọng, Quận Cầu Giấy, Hà Nội',
+    province: 'Thành phố Hà Nội',
+    district: 'Quận Cầu Giấy',
+    lat: 21.0336,
+    lng: 105.7946,
+    phone: '024 3767 1122',
+    openingHours: '07:00 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+
+  // Đà Nẵng
+  {
+    id: 'store-danang',
+    name: 'Kho Evergreen Mart Đà Nẵng',
+    address: '48 Điện Biên Phủ, Phường Chính Gián, Quận Thanh Khê, TP. Đà Nẵng',
+    province: 'Thành phố Đà Nẵng',
+    district: 'Quận Thanh Khê',
+    lat: 16.0678,
+    lng: 108.1963,
+    phone: '0236 374 8899',
+    openingHours: '07:00 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+
+  // Khánh Hòa (Nha Trang)
+  {
+    id: 'store-nhatrang',
+    name: 'Kho Evergreen Mart Nha Trang',
+    address: 'Số 82 Lê Hồng Phong, Phường Phước Hải, TP. Nha Trang, Khánh Hòa',
+    province: 'Tỉnh Khánh Hòa',
+    district: 'TP. Nha Trang',
+    lat: 12.2355,
+    lng: 109.1865,
+    phone: '0258 387 9900',
+    openingHours: '07:00 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+
+  // Đắk Lắk (Buôn Ma Thuột)
+  {
+    id: 'store-daklak',
+    name: 'Kho Evergreen Mart Buôn Ma Thuột',
+    address: '35 Nguyễn Tất Thành, Phường Tân An, TP. Buôn Ma Thuột, Đắk Lắk',
+    province: 'Tỉnh Đắk Lắk',
+    district: 'TP. Buôn Ma Thuột',
+    lat: 12.6934,
+    lng: 108.0538,
+    phone: '0262 395 7788',
+    openingHours: '07:00 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+
+  // Cần Thơ
+  {
+    id: 'store-cantho',
+    name: 'Kho Evergreen Mart Cần Thơ',
+    address: '209 Đường 30 Tháng 4, Phường Xuân Khánh, Quận Ninh Kiều, Cần Thơ',
+    province: 'Thành phố Cần Thơ',
+    district: 'Quận Ninh Kiều',
+    lat: 10.0278,
+    lng: 105.7725,
+    phone: '0292 383 6677',
+    openingHours: '07:00 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+
+  // Bà Rịa - Vũng Tàu
+  {
+    id: 'store-vungtau',
+    name: 'Kho Evergreen Mart Vũng Tàu',
+    address: '155 Nguyễn Thái Học, Phường 7, TP. Vũng Tàu, Bà Rịa - Vũng Tàu',
+    province: 'Tỉnh Bà Rịa - Vũng Tàu',
+    district: 'TP. Vũng Tàu',
+    lat: 10.3542,
+    lng: 107.0863,
+    phone: '0254 357 8899',
+    openingHours: '07:00 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+
+  // Lâm Đồng (Đà Lạt)
+  {
+    id: 'store-dalat',
+    name: 'Kho Evergreen Mart Đà Lạt',
+    address: 'Số 10 Phan Chu Trinh, Phường 9, TP. Đà Lạt, Lâm Đồng',
+    province: 'Tỉnh Lâm Đồng',
+    district: 'TP. Đà Lạt',
+    lat: 11.9442,
+    lng: 108.4552,
+    phone: '0263 382 3344',
+    openingHours: '07:00 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+];
+
+/**
+ * Tự động tìm kho / cửa hàng gần nhất với tọa độ khách hàng
+ */
+function findNearestWarehouse(customerLat, customerLng, warehouses = DEFAULT_WAREHOUSES) {
+  const list = Array.isArray(warehouses) && warehouses.length > 0 ? warehouses : DEFAULT_WAREHOUSES;
+  let nearest = list[0];
+  let minDistance = Infinity;
+
+  for (const wh of list) {
+    if (typeof wh.lat !== 'number' || typeof wh.lng !== 'number') continue;
+    const dist = calculateHaversineDistance(customerLat, customerLng, wh.lat, wh.lng);
+    if (dist < minDistance) {
+      minDistance = dist;
+      nearest = wh;
+    }
+  }
+  return nearest;
+}
+
 /**
  * Tính khoảng cách đường chim bay Haversine (km)
  */
@@ -104,11 +362,12 @@ async function getOrCreateShippingConfig() {
  */
 async function calculateShipping(customerLat, customerLng, subtotal = 0, customConfig = null) {
   const config = customConfig || (await getOrCreateShippingConfig());
-  const warehouse = config.warehouse || {
-    lat: 10.8703,
-    lng: 106.7782,
-    address: 'Khu phố 6, Phường Linh Trung, TP. Thủ Đức, TP. Hồ Chí Minh',
-  };
+  const allWarehouses = (Array.isArray(config.warehouses) && config.warehouses.length > 0)
+    ? config.warehouses
+    : DEFAULT_WAREHOUSES;
+
+  // Tự động tìm kho / cửa hàng gần nhất với địa chỉ của khách hàng
+  const warehouse = findNearestWarehouse(customerLat, customerLng, allWarehouses);
 
   const routeRes = await getOSRMRoute(warehouse.lat, warehouse.lng, customerLat, customerLng);
   const distanceKm = routeRes.distanceKm;
@@ -210,6 +469,8 @@ async function calculateShipping(customerLat, customerLng, subtotal = 0, customC
 }
 
 module.exports = {
+  DEFAULT_WAREHOUSES,
+  findNearestWarehouse,
   calculateHaversineDistance,
   getOSRMRoute,
   getOrCreateShippingConfig,

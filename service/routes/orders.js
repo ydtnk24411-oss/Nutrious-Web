@@ -549,7 +549,7 @@ router.post(
       let finalShippingFee = 0;
       let shippingDiscount = 0;
       let distanceKm = 0;
-      let estimatedDeliveryTime = '30 phút (lấy tại kho)';
+      let estimatedDeliveryTime = orderData.estimatedDeliveryTime || '30 phút (lấy tại kho)';
 
       if (orderData.shippingMethod === 'delivery') {
         const coords = orderData.shippingCoordinates;
@@ -564,7 +564,7 @@ router.post(
           finalShippingFee = shipRes.finalFee;
           shippingDiscount = shipRes.discount;
           distanceKm = shipRes.distanceKm;
-          estimatedDeliveryTime = shipRes.estimatedDeliveryTime;
+          estimatedDeliveryTime = orderData.deliveryTimeSlot || orderData.estimatedDeliveryTime || shipRes.estimatedDeliveryTime;
           orderData.shippingDetails = {
             baseFee: shipRes.baseFee,
             discount: shipRes.discount,
@@ -576,8 +576,18 @@ router.post(
           };
         } else {
           finalShippingFee = Number(orderData.shippingFee) || 20000;
-          estimatedDeliveryTime = 'Trong ngày (xe bảo quản lạnh)';
+          estimatedDeliveryTime = orderData.deliveryTimeSlot || orderData.estimatedDeliveryTime || 'Trong ngày (xe bảo quản lạnh)';
         }
+
+        // Nếu khách chọn Giao hàng tiết kiệm (trong 24h) hoặc Khung giờ nhận hàng -> Áp dụng Freeship
+        if (orderData.deliveryType === 'standard' || orderData.deliveryType === 'timeslot') {
+          shippingDiscount = finalShippingFee > 0 ? finalShippingFee : 20000;
+          finalShippingFee = 0;
+        }
+      } else if (orderData.shippingMethod === 'pickup') {
+        finalShippingFee = 0;
+        shippingDiscount = 0;
+        estimatedDeliveryTime = orderData.estimatedDeliveryTime || (orderData.pickupStore?.name ? `Nhận tại: ${orderData.pickupStore.name}` : '30 phút (lấy tại cửa hàng)');
       }
 
       orderData.subtotal = serverSubtotal;
@@ -585,6 +595,9 @@ router.post(
       orderData.shippingDiscount = shippingDiscount;
       orderData.shippingDistanceKm = distanceKm;
       orderData.estimatedDeliveryTime = estimatedDeliveryTime;
+      orderData.pickupStore = orderData.pickupStore || null;
+      orderData.deliveryTimeSlot = orderData.deliveryTimeSlot || '';
+      orderData.deliveryType = orderData.deliveryType || '';
       const payableGoods = serverSubtotal;
       orderData.estimatedPoints = Math.floor(payableGoods / 1000);
 
