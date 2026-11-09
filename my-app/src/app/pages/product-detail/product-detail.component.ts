@@ -1,11 +1,11 @@
-import { Component, signal, computed, inject, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, ViewChild, ElementRef, effect } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { CartService, formatPrice, calcAddOnUnitDiscount } from '../../shared/services/cart.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
-import { ReviewService } from '../../shared/services/review.service';
+import { ReviewService, ReviewEligibility } from '../../shared/services/review.service';
 import { XanhLaProduct } from '../../shared/models/xanh-la.models';
 
 export interface AddOnCardView {
@@ -20,10 +20,13 @@ export interface AddOnCardView {
   addonFinalPrice: number;
   mainFinalPrice: number;
   discountLabel: string;
-  targetBadge: string;
 }
 
 function toCartProduct(p: ApiProduct): XanhLaProduct {
+  const retailTotal = typeof p.retailTotal === 'number' && p.retailTotal > 0
+    ? p.retailTotal
+    : p.originalPriceNumber;
+  const effStock = typeof p.availableStock === 'number' ? p.availableStock : p.stock;
   return {
     id: p._id, name: p.name, slug: p.slug, price: p.price,
     priceNumber: p.priceNumber, image: p.image,
@@ -35,8 +38,10 @@ function toCartProduct(p: ApiProduct): XanhLaProduct {
     quantity: p.quantity, ripeness: p.ripeness, sizeGroup: p.sizeGroup,
     thickness: p.thickness, type: p.type, weight: p.weight,
     options: p.options,
+    stock: effStock,
     isCombo: p.isCombo,
-    originalPriceNumber: p.originalPriceNumber,
+    comboStatus: p.comboStatus,
+    originalPriceNumber: retailTotal,
     comboItems: p.comboItems,
     addOnDeals: p.addOnDeals as any,
   };
@@ -94,19 +99,17 @@ export class ProductDetailComponent implements OnInit {
       if (typeof ap.stock === 'number' && ap.stock <= 0) continue;
 
       const addonPrice = Number(ap.priceNumber) || 0;
-      const discountTarget: 'addon' | 'main' = addonPrice <= mainPrice ? 'addon' : 'main';
-      const unitSaving = discountTarget === 'addon'
-        ? calcAddOnUnitDiscount(addonPrice, d.discountType, d.discountValue)
-        : calcAddOnUnitDiscount(mainPrice, d.discountType, d.discountValue);
+      // Quy tắc bắt buộc: Giá bán mua kèm phải THẤP HƠN giá sản phẩm chính
+      if (addonPrice <= 0 || mainPrice <= 0 || addonPrice >= mainPrice) {
+        continue;
+      }
+      const discountTarget: 'addon' | 'main' = 'addon';
+      const unitSaving = calcAddOnUnitDiscount(addonPrice, d.discountType, d.discountValue);
       if (unitSaving <= 0) continue;
 
       const discountLabel = d.discountType === 'fixed'
         ? `Giảm ${formatPrice(d.discountValue)}`
         : `Giảm ${d.discountValue}%`;
-
-      const targetBadge = discountTarget === 'addon'
-        ? `Ưu đãi tính trên "${ap.name}" (có giá thấp hơn)`
-        : `Ưu đãi tính trên "${p.name}" (SP chính có giá thấp hơn)`;
 
       views.push({
         addonId: ap._id,
@@ -117,10 +120,9 @@ export class ProductDetailComponent implements OnInit {
         addonUnitPrice: addonPrice,
         discountTarget,
         unitSaving,
-        addonFinalPrice: discountTarget === 'addon' ? addonPrice - unitSaving : addonPrice,
-        mainFinalPrice: discountTarget === 'main' ? mainPrice - unitSaving : mainPrice,
+        addonFinalPrice: addonPrice - unitSaving,
+        mainFinalPrice: mainPrice,
         discountLabel,
-        targetBadge,
       });
     }
     return views;
@@ -180,7 +182,7 @@ export class ProductDetailComponent implements OnInit {
           const saving = c.unitSaving * pairedQty;
           totalSaving += saving;
           discountedDescriptions.push(
-            `${p.name} (x${pairedQty}, khi mua kèm ${c.addonProd.name}): -${formatPrice(saving)}`
+            `Ưu đãi khi mua kèm ${c.addonProd.name} (x${pairedQty}): -${formatPrice(saving)}`
           );
         }
       }
@@ -213,6 +215,92 @@ export class ProductDetailComponent implements OnInit {
   previewImageUrl = signal<string | null>(null);
   reviewFilter = signal<'all' | '5' | '4' | '3' | '2' | '1' | 'latest' | 'withImages'>('all');
   submittingReview = signal(false);
+  reviewEligibility = signal<ReviewEligibility | null>(null);
+  checkingEligibility = signal(false);
+  reviewNotice = signal('');
+
+  constructor() {
+    effect(() => {
+      const u = this.cart.currentUser();
+      const p = this.product();
+      if (u && p?._id) {
+        this.checkReviewEligibility(p._id);
+      } else {
+        this.reviewEligibility.set(null);
+        this.reviewNotice.set('');
+      }
+    });
+  }
+
+  checkReviewEligibility(productId: string): void {
+    if (!this.cart.currentUser() || !productId) {
+      this.reviewEligibility.set(null);
+      return;
+    }
+    this.checkingEligibility.set(true);
+    this.reviewService.checkEligibility(productId).subscribe({
+      next: (res) => {
+        this.checkingEligibility.set(false);
+        if (res.success) {
+          this.reviewEligibility.set(res);
+        }
+      },
+      error: () => {
+        this.checkingEligibility.set(false);
+      }
+    });
+  }
+
+  onWriteReviewClick(): void {
+    if (!this.cart.currentUser()) {
+      this.cart.openAuthModal('login');
+      return;
+    }
+
+    const elig = this.reviewEligibility();
+    if (!elig) {
+      const p = this.product();
+      if (p?._id) {
+        this.checkingEligibility.set(true);
+        this.reviewService.checkEligibility(p._id).subscribe({
+          next: (res) => {
+            this.checkingEligibility.set(false);
+            this.reviewEligibility.set(res);
+            if (res.canReview) {
+              this.showReviewForm.set(!this.showReviewForm());
+              this.reviewNotice.set('');
+            } else {
+              this.reviewNotice.set(res.message);
+            }
+          },
+          error: (err) => {
+            this.checkingEligibility.set(false);
+            alert(err?.error?.message || 'Không thể kiểm tra điều kiện đánh giá.');
+          }
+        });
+      }
+      return;
+    }
+
+    if (elig.hasReviewed) {
+      this.reviewNotice.set('Bạn đã đánh giá sản phẩm này rồi. Mỗi tài khoản chỉ có thể đánh giá một lần.');
+      return;
+    }
+
+    if (!elig.hasDeliveredOrder) {
+      if (elig.hasPendingOrder) {
+        this.reviewNotice.set('Đơn hàng của bạn đang được xử lý hoặc giao hàng. Bạn chỉ có thể đánh giá sau khi đã nhận được hàng thành công.');
+      } else {
+        this.reviewNotice.set('Bắt buộc phải mua và nhận hàng thành công mới được đánh giá sản phẩm này.');
+      }
+      return;
+    }
+
+    if (elig.canReview) {
+      this.showReviewForm.set(!this.showReviewForm());
+      this.reviewNotice.set('');
+    }
+  }
 
   ngOnInit(): void {
     if (this.route.paramMap) {
@@ -352,12 +440,40 @@ export class ProductDetailComponent implements OnInit {
     });
   }
 
+  comboRetail(combo: ApiProduct): number {
+    if (typeof combo.retailTotal === 'number' && combo.retailTotal > 0) {
+      return combo.retailTotal;
+    }
+    if (typeof combo.originalPriceNumber === 'number' && combo.originalPriceNumber > 0) {
+      return combo.originalPriceNumber;
+    }
+    if (Array.isArray(combo.comboItems) && combo.comboItems.length > 0) {
+      return combo.comboItems.reduce((sum, it) => {
+        const unitPrice = Number(it?.product?.priceNumber) || 0;
+        const qty = Math.max(1, Number(it?.quantity) || 1);
+        return sum + unitPrice * qty;
+      }, 0);
+    }
+    return Number(combo.priceNumber) || 0;
+  }
+
+  comboStock(combo: ApiProduct): number {
+    if (typeof combo.availableStock === 'number') return Math.max(0, combo.availableStock);
+    if (typeof combo.stock === 'number') return Math.max(0, combo.stock);
+    return 0;
+  }
+
+  isComboUnavailable(combo: ApiProduct): boolean {
+    if (combo.comboStatus === 'paused' || combo.comboStatus === 'hidden') return true;
+    return this.comboStock(combo) <= 0;
+  }
+
   comboSaving(combo: ApiProduct): number {
-    return Math.max(0, (combo.originalPriceNumber || 0) - (combo.priceNumber || 0));
+    return Math.max(0, this.comboRetail(combo) - (combo.priceNumber || 0));
   }
 
   comboSavingPercent(combo: ApiProduct): number {
-    const original = combo.originalPriceNumber || 0;
+    const original = this.comboRetail(combo);
     return original > 0 ? Math.round((this.comboSaving(combo) / original) * 100) : 0;
   }
 
@@ -366,6 +482,7 @@ export class ProductDetailComponent implements OnInit {
   }
 
   addCombo(combo: ApiProduct): void {
+    if (this.isComboUnavailable(combo)) return;
     this.cart.addItem(toCartProduct(combo), 1);
     this.addedComboId.set(combo._id);
     setTimeout(() => {
@@ -538,7 +655,15 @@ export class ProductDetailComponent implements OnInit {
   }
 
   dec(): void { this.quantity.update(q => Math.max(1, q - 1)); }
-  inc(): void { this.quantity.update(q => q + 1); }
+  inc(): void {
+    const p = this.product();
+    if (p?.isCombo) {
+      const maxStock = Math.max(1, this.comboStock(p));
+      this.quantity.update(q => Math.min(maxStock, q + 1));
+      return;
+    }
+    this.quantity.update(q => q + 1);
+  }
 
   toggleAccordion(k: 'info' | 'refund' | 'shipping'): void {
     this.openAccordions.update(o => ({ ...o, [k]: !o[k] }));
@@ -547,6 +672,11 @@ export class ProductDetailComponent implements OnInit {
   addToCart(): void {
     const p = this.product();
     if (!p) return;
+    if (p.isCombo) {
+      if (this.isComboUnavailable(p)) return;
+      this.cart.addItem(toCartProduct(p), this.quantity());
+      return;
+    }
     const entries = this.buildSelectedAddOnEntries();
     if (entries.length > 0) {
       this.addSelectedBundleToCart();
@@ -558,13 +688,14 @@ export class ProductDetailComponent implements OnInit {
   buyNow(): void {
     const p = this.product();
     if (!p) return;
+    if (p.isCombo && this.isComboUnavailable(p)) return;
     const entries = this.buildSelectedAddOnEntries();
     if (entries.length > 0) {
       this.buySelectedBundleNow();
       return;
     }
     const cartProd = toCartProduct(p);
-    const ripeness = this.selectedRipeness();
+    const ripeness = p.isCombo ? undefined : this.selectedRipeness();
     if (!this.cart.currentUser()) {
       this.cart.openAuthModal('login');
       return;
@@ -665,10 +796,20 @@ export class ProductDetailComponent implements OnInit {
         this.reviewTitle.set('');
         this.reviewContent.set('');
         this.reviewImages.set([]);
+        this.reviewEligibility.set({
+          canReview: false,
+          hasReviewed: true,
+          hasDeliveredOrder: true,
+          hasPendingOrder: false,
+          message: 'Bạn đã đánh giá sản phẩm này rồi.',
+        });
+        this.reviewNotice.set('Cảm ơn bạn đã đánh giá! Nhận xét của bạn đã được ghi nhận.');
       },
       error: (err) => {
         this.submittingReview.set(false);
-        alert(err?.error?.message || 'Không gửi được đánh giá, vui lòng thử lại.');
+        const errMsg = err?.error?.message || 'Không gửi được đánh giá, vui lòng thử lại.';
+        this.reviewNotice.set(errMsg);
+        alert(errMsg);
       },
     });
   }

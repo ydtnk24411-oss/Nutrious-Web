@@ -22,6 +22,13 @@ export class AuthModalComponent implements OnDestroy {
   protected password = signal('');
   protected confirmPassword = signal('');
 
+  // Forgot password flow signals
+  protected forgotPhone = signal('');
+  protected forgotStep = signal<1 | 2 | 3>(1); // 1: Phone, 2: OTP, 3: New Password
+  protected resetToken = signal('');
+  protected newPassword = signal('');
+  protected confirmNewPassword = signal('');
+
   // OTP flow state
   protected otpStep = signal(false); // false: nhập thông tin, true: nhập mã OTP
   protected otpDigits = signal<string[]>(['', '', '', '', '', '']);
@@ -53,13 +60,17 @@ export class AuthModalComponent implements OnDestroy {
     return /^(0)(3|5|7|8|9)[0-9]{8}$/.test(normalized);
   }
 
-  // Chuyển tab Đăng nhập / Đăng ký
+  // Chuyển tab Đăng nhập / Đăng ký / Quên mật khẩu
   setTab(tab: AuthTab): void {
     this.errorMessage.set('');
     this.infoMessage.set('');
     this.password.set('');
     this.confirmPassword.set('');
+    this.newPassword.set('');
+    this.confirmNewPassword.set('');
     this.otpStep.set(false);
+    this.forgotStep.set(1);
+    this.otpDigits.set(['', '', '', '', '', '']);
     this.clearCountdown();
     this.cart.setAuthTab(tab);
   }
@@ -68,6 +79,7 @@ export class AuthModalComponent implements OnDestroy {
   close(): void {
     this.clearCountdown();
     this.otpStep.set(false);
+    this.forgotStep.set(1);
     this.errorMessage.set('');
     this.infoMessage.set('');
     this.cart.closeAuthModal();
@@ -124,6 +136,7 @@ export class AuthModalComponent implements OnDestroy {
           },
           (errMsg) => {
             this.googleLoading.set(false);
+            // Hiển thị thông báo chính xác theo yêu cầu
             this.errorMessage.set(errMsg);
           }
         );
@@ -162,8 +175,9 @@ export class AuthModalComponent implements OnDestroy {
       this.errorMessage.set('Số điện thoại không đúng định dạng di động Việt Nam (10 số, bắt đầu bằng 03, 05, 07, 08, 09).');
       return;
     }
-    if (password.length < 6) {
-      this.errorMessage.set('Mật khẩu phải có tối thiểu 6 ký tự.');
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      this.errorMessage.set('Mật khẩu phải có tối thiểu 8 ký tự, bao gồm ít nhất 1 chữ hoa, 1 chữ thường và 1 chữ số.');
       return;
     }
     if (password !== confirm) {
@@ -270,8 +284,13 @@ export class AuthModalComponent implements OnDestroy {
       if (index < 5) {
         this.focusOtpInput(index + 1);
       } else {
+        // Tự động kiểm tra khi nhập đủ 6 số
         if (current.join('').length === 6) {
-          this.handleVerifyOtp();
+          if (this.cart.authTab() === 'forgot') {
+            this.handleVerifyForgotOtp();
+          } else {
+            this.handleVerifyOtp();
+          }
         }
       }
     } else {
@@ -311,7 +330,11 @@ export class AuthModalComponent implements OnDestroy {
       this.otpDigits.set(current);
       if (digits.length === 6) {
         this.focusOtpInput(5);
-        this.handleVerifyOtp();
+        if (this.cart.authTab() === 'forgot') {
+          this.handleVerifyForgotOtp();
+        } else {
+          this.handleVerifyOtp();
+        }
       } else {
         this.focusOtpInput(digits.length);
       }
@@ -356,7 +379,12 @@ export class AuthModalComponent implements OnDestroy {
     this.loginIdentifier.set('');
     this.password.set('');
     this.confirmPassword.set('');
+    this.forgotPhone.set('');
+    this.newPassword.set('');
+    this.confirmNewPassword.set('');
+    this.resetToken.set('');
     this.otpStep.set(false);
+    this.forgotStep.set(1);
     this.otpDigits.set(['', '', '', '', '', '']);
     this.errorMessage.set('');
     this.infoMessage.set('');
@@ -364,6 +392,143 @@ export class AuthModalComponent implements OnDestroy {
   }
 
   handleForgotPassword(): void {
-    alert('Tính năng khôi phục mật khẩu qua SMS OTP đang được hoàn thiện. Vui lòng liên hệ hotline 1900 633 888 để được hỗ trợ.');
+    if (this.cart.currentUser()?.phone) {
+      this.forgotPhone.set(this.cart.currentUser()!.phone || '');
+    } else if (this.loginIdentifier() && this.isValidPhone(this.loginIdentifier())) {
+      this.forgotPhone.set(this.loginIdentifier());
+    }
+    this.setTab('forgot');
+  }
+
+  // =========================================================================
+  // LUỒNG QUÊN MẬT KHẨU (Forgot Password - BR-ACC-10 Mock OTP 123456)
+  // =========================================================================
+
+  handleRequestForgotOtp(e: Event): void {
+    e.preventDefault();
+    this.errorMessage.set('');
+    this.infoMessage.set('');
+
+    const phone = this.forgotPhone().trim();
+    if (!phone) {
+      this.errorMessage.set('Vui lòng nhập số điện thoại đã đăng ký.');
+      return;
+    }
+    if (!this.isValidPhone(phone)) {
+      this.errorMessage.set('Số điện thoại không đúng định dạng di động Việt Nam (10 số, bắt đầu bằng 03, 05, 07, 08, 09).');
+      return;
+    }
+
+    this.loading.set(true);
+    this.cart.requestForgotPasswordOtp(
+      phone,
+      (res) => {
+        this.loading.set(false);
+        this.verifiedPhone.set(res.phone || phone);
+        if (res.demoOtp) {
+          this.demoOtp.set(res.demoOtp);
+        }
+        this.forgotStep.set(2);
+        this.otpDigits.set(['', '', '', '', '', '']);
+        this.infoMessage.set(`Mã xác thực OTP đã được gửi đến số điện thoại ${res.phone || phone}.`);
+        this.startCountdown();
+        setTimeout(() => this.focusOtpInput(0), 100);
+      },
+      (errMsg) => {
+        this.loading.set(false);
+        this.errorMessage.set(errMsg);
+      }
+    );
+  }
+
+  handleVerifyForgotOtp(e?: Event): void {
+    if (e) e.preventDefault();
+    this.errorMessage.set('');
+    this.infoMessage.set('');
+
+    const otp = this.otpDigits().join('');
+    if (otp.length !== 6) {
+      this.errorMessage.set('Vui lòng nhập đủ 6 chữ số mã OTP.');
+      return;
+    }
+
+    this.otpLoading.set(true);
+    this.cart.verifyForgotPasswordOtp(
+      this.verifiedPhone(),
+      otp,
+      (res) => {
+        this.otpLoading.set(false);
+        this.resetToken.set(res.resetToken);
+        this.clearCountdown();
+        this.forgotStep.set(3);
+        this.infoMessage.set(res.message || 'Xác thực OTP thành công! Vui lòng thiết lập mật khẩu mới.');
+      },
+      (errMsg) => {
+        this.otpLoading.set(false);
+        this.errorMessage.set(errMsg);
+      }
+    );
+  }
+
+  handleResendForgotOtp(): void {
+    if (!this.canResend()) return;
+    this.errorMessage.set('');
+    this.infoMessage.set('');
+
+    this.cart.resendForgotPasswordOtp(
+      this.verifiedPhone(),
+      (res) => {
+        if (res.demoOtp) {
+          this.demoOtp.set(res.demoOtp);
+        }
+        this.infoMessage.set(`Đã gửi lại mã OTP mới đến số điện thoại ${this.verifiedPhone()}.`);
+        this.startCountdown();
+        this.otpDigits.set(['', '', '', '', '', '']);
+        setTimeout(() => this.focusOtpInput(0), 100);
+      },
+      (errMsg) => {
+        this.errorMessage.set(errMsg);
+      }
+    );
+  }
+
+  handleResetPassword(e: Event): void {
+    e.preventDefault();
+    this.errorMessage.set('');
+    this.infoMessage.set('');
+
+    const newPwd = this.newPassword();
+    const confirmPwd = this.confirmNewPassword();
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(newPwd)) {
+      this.errorMessage.set('Mật khẩu mới phải có tối thiểu 8 ký tự, bao gồm ít nhất 1 chữ hoa, 1 chữ thường và 1 chữ số.');
+      return;
+    }
+
+    if (newPwd !== confirmPwd) {
+      this.errorMessage.set('Mật khẩu xác nhận không khớp.');
+      return;
+    }
+
+    this.loading.set(true);
+    this.cart.resetPasswordWithToken(
+      this.verifiedPhone(),
+      this.resetToken(),
+      newPwd,
+      confirmPwd,
+      (msg) => {
+        this.loading.set(false);
+        const successPhone = this.verifiedPhone();
+        this.resetForm();
+        this.loginIdentifier.set(successPhone);
+        this.setTab('login');
+        this.infoMessage.set(msg || 'Đặt lại mật khẩu thành công! Bạn có thể đăng nhập bằng mật khẩu mới.');
+      },
+      (errMsg) => {
+        this.loading.set(false);
+        this.errorMessage.set(errMsg);
+      }
+    );
   }
 }

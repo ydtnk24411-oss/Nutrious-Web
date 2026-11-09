@@ -4,6 +4,14 @@ import { tap } from 'rxjs/operators';
 import { ProductReview, ReviewStats } from '../models/xanh-la.models';
 import { ApiService } from './api.service';
 
+export interface ReviewEligibility {
+  canReview: boolean;
+  hasReviewed: boolean;
+  hasDeliveredOrder: boolean;
+  hasPendingOrder: boolean;
+  message: string;
+}
+
 const EMPTY_STATS: ReviewStats = {
   averageRating: 0,
   totalReviews: 0,
@@ -52,6 +60,25 @@ export class ReviewService {
   // Add a new review (server gắn tài khoản từ token)
   addReview(review: { productId: string; productName: string; productImage?: string; rating: number; title?: string; content: string; images?: string[] }): Observable<unknown> {
     return this.api.post('/reviews', review).pipe(tap(() => this.load(review.productId)));
+  }
+
+  // Kiểm tra điều kiện đánh giá của khách hàng (bắt buộc mua & nhận hàng thành công)
+  checkEligibility(productId: string): Observable<{
+    success: boolean;
+    canReview: boolean;
+    hasReviewed: boolean;
+    hasDeliveredOrder: boolean;
+    hasPendingOrder: boolean;
+    message: string;
+  }> {
+    return this.api.get<{
+      success: boolean;
+      canReview: boolean;
+      hasReviewed: boolean;
+      hasDeliveredOrder: boolean;
+      hasPendingOrder: boolean;
+      message: string;
+    }>(`/reviews/product/${productId}/can-review`);
   }
 
   // Mark review as helpful (mỗi tài khoản 1 lần)

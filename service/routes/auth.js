@@ -1,4 +1,6 @@
 const router = require('express').Router();
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const { body } = require('express-validator');
 const User = require('../models/User');
 const OtpVerification = require('../models/OtpVerification');
@@ -79,7 +81,11 @@ router.post(
   [
     body('name').trim().notEmpty().withMessage('Họ và tên không được để trống.'),
     body('phone').trim().notEmpty().withMessage('Số điện thoại không được để trống.'),
-    body('password').isLength({ min: 6 }).withMessage('Mật khẩu phải có tối thiểu 6 ký tự.'),
+    body('password')
+      .isLength({ min: 8 })
+      .withMessage('Mật khẩu phải có tối thiểu 8 ký tự.')
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+      .withMessage('Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 chữ số.'),
     body('confirmPassword').custom((value, { req }) => {
       if (value !== req.body.password) {
         throw new Error('Mật khẩu xác nhận không khớp.');
@@ -109,6 +115,9 @@ router.post(
         });
       }
 
+      // BĂM MẬT KHẨU BẰNG BCRYPT TRƯỚC KHI LƯU TRỮ (kể cả trong dữ liệu tạm thời chờ xác thực OTP)
+      const hashedPassword = await bcrypt.hash(password, 12);
+
       // Tạo mã OTP (123456 trong dev/demo hoặc mã ngẫu nhiên 6 số)
       const otpCode = generateOtpCode();
       const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 phút hiệu lực
@@ -123,7 +132,7 @@ router.post(
         type: 'register',
         registrationData: {
           name: name.trim(),
-          password,
+          password: hashedPassword,
         },
         attempts: 0,
         maxAttempts: 5,
@@ -737,6 +746,269 @@ router.post(
         success: true,
         message: 'Đổi số điện thoại thành công! Số điện thoại mới đã được cập nhật.',
         user: publicUser(currentUser),
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// ============================================================================
+// 5. LUỒNG QUÊN MẬT KHẨU (Forgot Password - BR-ACC-10 Mock OTP 123456)
+// ============================================================================
+
+// POST /api/auth/forgot-password/request-otp
+// Bước 1: Yêu cầu đặt lại mật khẩu bằng Số điện thoại đã đăng ký
+router.post(
+  '/forgot-password/request-otp',
+  [body('phone').trim().notEmpty().withMessage('Số điện thoại không được để trống.')],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { phone } = req.body;
+      const normalizedPhone = normalizeVietnamesePhone(phone);
+
+      if (!isValidVietnamesePhone(normalizedPhone)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Số điện thoại không đúng định dạng di động Việt Nam (10 chữ số, ví dụ: 0987654321).',
+        });
+      }
+
+      // Kiểm tra tài khoản người dùng có tồn tại với số điện thoại này không
+      const user = await User.findOne({ phone: normalizedPhone });
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'Số điện thoại này chưa được đăng ký tài khoản tại EvergreenMart.',
+        });
+      }
+
+      if (!user.isActive) {
+        return res.status(403).json({
+          success: false,
+          message: 'Tài khoản liên kết với số điện thoại này đã bị khóa. Vui lòng liên hệ bộ phận hỗ trợ.',
+        });
+      }
+
+      // Tạo mã OTP (Mock OTP cố định là 123456 khi demo/dev)
+      const otpCode = generateOtpCode();
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 phút
+
+      // Xóa các OTP quên mật khẩu cũ của số này
+      await OtpVerification.deleteMany({ phone: normalizedPhone, type: 'forgot_password' });
+
+      // Lưu bản ghi OTP mới
+      await OtpVerification.create({
+        phone: normalizedPhone,
+        code: otpCode,
+        type: 'forgot_password',
+        registrationData: {
+          userId: String(user._id),
+        },
+        attempts: 0,
+        maxAttempts: 5,
+        expiresAt,
+        isUsed: false,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: 'Mã xác minh OTP đã được gửi đến số điện thoại của bạn.',
+        phone: normalizedPhone,
+        expiresInSeconds: 300,
+        demoOtp: isDemoOtpAllowed() ? '123456' : undefined,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// POST /api/auth/forgot-password/verify-otp
+// Bước 2: Xác minh mã OTP (Mock OTP 123456)
+router.post(
+  '/forgot-password/verify-otp',
+  [
+    body('phone').trim().notEmpty().withMessage('Số điện thoại không được để trống.'),
+    body('otp').trim().isLength({ min: 6, max: 6 }).withMessage('Mã OTP gồm 6 chữ số.'),
+  ],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { phone, otp } = req.body;
+      const normalizedPhone = normalizeVietnamesePhone(phone);
+
+      const otpRecord = await OtpVerification.findOne({
+        phone: normalizedPhone,
+        type: 'forgot_password',
+        isUsed: false,
+      }).sort({ createdAt: -1 });
+
+      if (!otpRecord) {
+        return res.status(400).json({
+          success: false,
+          message: 'Mã OTP không tồn tại hoặc đã hết hiệu lực. Vui lòng nhấn "Gửi lại mã".',
+        });
+      }
+
+      if (new Date() > new Date(otpRecord.expiresAt)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Mã OTP đã hết thời hạn 5 phút. Vui lòng nhấn "Gửi lại mã".',
+        });
+      }
+
+      if (otpRecord.attempts >= otpRecord.maxAttempts) {
+        return res.status(429).json({
+          success: false,
+          message: 'Bạn đã nhập sai mã OTP quá 5 lần. Vui lòng yêu cầu mã xác minh mới.',
+        });
+      }
+
+      if (otpRecord.code !== otp.trim()) {
+        otpRecord.attempts += 1;
+        await otpRecord.save();
+        const remaining = otpRecord.maxAttempts - otpRecord.attempts;
+        return res.status(400).json({
+          success: false,
+          message: `Mã OTP không chính xác. Bạn còn ${remaining} lần thử lại.`,
+        });
+      }
+
+      // OTP HỢP LỆ
+      otpRecord.isUsed = true;
+      await otpRecord.save();
+
+      // Cấp token tạm thời cho phép đặt lại mật khẩu (hiệu lực 15 phút)
+      const resetToken = jwt.sign(
+        {
+          userId: otpRecord.registrationData.userId,
+          phone: normalizedPhone,
+          purpose: 'forgot_password_reset',
+        },
+        process.env.JWT_SECRET || 'xanhla_secret',
+        { expiresIn: '15m' }
+      );
+
+      return res.json({
+        success: true,
+        message: 'Xác thực OTP thành công! Vui lòng thiết lập mật khẩu mới.',
+        resetToken,
+        phone: normalizedPhone,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// POST /api/auth/forgot-password/resend-otp
+// Gửi lại mã OTP quên mật khẩu
+router.post(
+  '/forgot-password/resend-otp',
+  [body('phone').trim().notEmpty().withMessage('Số điện thoại không được để trống.')],
+  validate,
+  async (req, res, next) => {
+    try {
+      const normalizedPhone = normalizeVietnamesePhone(req.body.phone);
+
+      const user = await User.findOne({ phone: normalizedPhone });
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'Số điện thoại này chưa được đăng ký tài khoản tại EvergreenMart.',
+        });
+      }
+
+      const otpCode = generateOtpCode();
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+      await OtpVerification.deleteMany({ phone: normalizedPhone, type: 'forgot_password' });
+      await OtpVerification.create({
+        phone: normalizedPhone,
+        code: otpCode,
+        type: 'forgot_password',
+        registrationData: {
+          userId: String(user._id),
+        },
+        attempts: 0,
+        maxAttempts: 5,
+        expiresAt,
+        isUsed: false,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: 'Đã gửi lại mã OTP mới.',
+        phone: normalizedPhone,
+        expiresInSeconds: 300,
+        demoOtp: isDemoOtpAllowed() ? '123456' : undefined,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// POST /api/auth/forgot-password/reset
+// Bước 3: Đặt lại mật khẩu mới
+router.post(
+  '/forgot-password/reset',
+  [
+    body('phone').trim().notEmpty().withMessage('Số điện thoại không được để trống.'),
+    body('resetToken').trim().notEmpty().withMessage('Mã xác thực phiên đặt lại mật khẩu không hợp lệ.'),
+    body('password')
+      .isLength({ min: 8 })
+      .withMessage('Mật khẩu phải có tối thiểu 8 ký tự.')
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+      .withMessage('Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 chữ số.'),
+    body('confirmPassword').custom((value, { req }) => {
+      if (value !== req.body.password) {
+        throw new Error('Mật khẩu xác nhận không khớp.');
+      }
+      return true;
+    }),
+  ],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { phone, resetToken, password } = req.body;
+      const normalizedPhone = normalizeVietnamesePhone(phone);
+
+      // Giải mã và kiểm tra resetToken
+      let payload;
+      try {
+        payload = jwt.verify(resetToken, process.env.JWT_SECRET || 'xanhla_secret');
+      } catch (tokenErr) {
+        return res.status(401).json({
+          success: false,
+          message: 'Phiên đặt lại mật khẩu đã hết hạn hoặc không hợp lệ. Vui lòng thao tác lại từ đầu.',
+        });
+      }
+
+      if (payload.purpose !== 'forgot_password_reset' || payload.phone !== normalizedPhone) {
+        return res.status(403).json({
+          success: false,
+          message: 'Phiên xác thực không khớp với số điện thoại cần đặt lại mật khẩu.',
+        });
+      }
+
+      const user = await User.findById(payload.userId).select('+password');
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy tài khoản người dùng.',
+        });
+      }
+
+      // Cập nhật mật khẩu mới (User pre('save') sẽ băm bằng bcrypt trước khi lưu vào MongoDB)
+      user.password = password;
+      await user.save();
+
+      return res.status(200).json({
+        success: true,
+        message: 'Đặt lại mật khẩu thành công! Bạn có thể đăng nhập bằng mật khẩu mới ngay bây giờ.',
       });
     } catch (err) {
       next(err);

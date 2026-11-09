@@ -67,6 +67,11 @@ export class AdminLayoutComponent {
             { id: 'products-list', label: 'Danh sách sản phẩm', path: '/admin/products' },
             { id: 'products-categories', label: 'Danh mục sản phẩm', path: '/admin/products', queryParam: { tab: 'categories' } }
           ]
+        },
+        {
+          id: 'combos',
+          label: 'Quản lý Combo tiết kiệm',
+          path: '/admin/combos',
         }
       ]
     },

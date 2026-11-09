@@ -196,12 +196,12 @@
 
     <!-- Account -->
     @if (cart.currentUser()) {
-    <div style="position:relative">
-      <button class="xl-icon-btn xl-user-avatar-btn" type="button" (click)="toggleUserMenu()" title="{{ cart.currentUser()!.name }}">
+    <div style="position:relative; display:flex; align-items:center;">
+      <button class="xl-icon-btn xl-user-avatar-btn" type="button" (click)="toggleUserMenu()" title="{{ cart.currentUser()!.name }}" style="width:36px; height:36px; min-width:36px; min-height:36px; max-width:36px; max-height:36px; border-radius:50% !important; overflow:hidden !important; padding:0; display:inline-flex; align-items:center; justify-content:center; border:1.5px solid #d4e0ca;">
         @if (cart.currentUser()!.avatar) {
-        <img [src]="cart.currentUser()!.avatar" class="xanhla-member-avatar-img" alt="Avatar" />
+        <img [src]="cart.currentUser()!.avatar" class="xanhla-member-avatar-img" alt="Avatar" style="width:100%; height:100%; min-width:100%; min-height:100%; max-width:100%; max-height:100%; border-radius:50% !important; object-fit:cover !important; display:block;" />
         } @else {
-        <div class="xanhla-member-avatar">{{ cart.currentUser()!.name.charAt(0).toUpperCase() }}</div>
+        <div class="xanhla-member-avatar" style="width:100%; height:100%; border-radius:50% !important; display:flex; align-items:center; justify-content:center;">{{ cart.currentUser()!.name.charAt(0).toUpperCase() }}</div>
         }
       </button>
       @if (userMenuOpen()) {
@@ -210,11 +210,11 @@
           @if (cart.currentUser()!.avatar) {
           <img [src]="cart.currentUser()!.avatar" class="xanhla-user-menu-avatar" alt="Avatar" />
           } @else {
-          <div class="xanhla-user-menu-avatar-placeholder">{{ cart.currentUser()!.name.charAt(0).toUpperCase() }}</div>
+          <div class="xanhla-user-menu-avatar xanhla-user-menu-avatar-placeholder">{{ cart.currentUser()!.name.charAt(0).toUpperCase() }}</div>
           }
           <div class="xanhla-user-menu-info">
             <strong>{{ cart.currentUser()!.name }}</strong>
-            <span>{{ cart.currentUser()!.email }}</span>
+            <span>{{ cart.currentUser()!.email || cart.currentUser()!.phone }}</span>
           </div>
         </div>
         <a routerLink="/account" (click)="closeUserMenu()">

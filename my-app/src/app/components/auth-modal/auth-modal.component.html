@@ -17,6 +17,16 @@
     </div>
 
     <!-- Tab bar -->
+    @if (cart.authTab() === 'forgot') {
+    <div class="xanhla-auth-tabs">
+      <button class="xanhla-auth-tab is-active" type="button">
+        Khôi phục mật khẩu
+      </button>
+      <button class="xanhla-auth-tab" type="button" (click)="setTab('login')">
+        Đăng nhập
+      </button>
+    </div>
+    } @else {
     <div class="xanhla-auth-tabs">
       <button class="xanhla-auth-tab" [class.is-active]="cart.authTab() === 'login'" type="button"
         (click)="setTab('login')">
@@ -27,6 +37,7 @@
         Đăng ký
       </button>
     </div>
+    }
 
     <div class="xanhla-auth-body">
       <!-- Thông báo lỗi (Alert Error) -->
@@ -142,8 +153,9 @@
 
         <div class="xanhla-auth-field">
           <label for="reg-password">Mật khẩu</label>
-          <input id="reg-password" type="password" placeholder="Tối thiểu 6 ký tự" [value]="password()"
+          <input id="reg-password" type="password" placeholder="Tối thiểu 8 ký tự (hoa, thường, số)" [value]="password()"
             (input)="password.set($any($event.target).value)" autocomplete="new-password" required />
+          <span class="field-hint">Tối thiểu 8 ký tự, gồm ít nhất 1 chữ hoa, 1 chữ thường và 1 chữ số.</span>
         </div>
 
         <div class="xanhla-auth-field">
@@ -220,6 +232,135 @@
         <button type="button" class="back-link-btn" (click)="backToRegisterForm()">
           ← Quay lại bước trước
         </button>
+      </div>
+      }
+
+      }
+
+      <!-- ============================================================= -->
+      <!-- TAB 3: QUÊN MẬT KHẨU (Forgot Password - Mock OTP 123456)      -->
+      <!-- ============================================================= -->
+      @if (cart.authTab() === 'forgot') {
+
+      <!-- BƯỚC 1: NHẬP SỐ ĐIỆN THOẠI ĐÃ ĐĂNG KÝ -->
+      @if (forgotStep() === 1) {
+      <form class="xanhla-auth-form" (submit)="handleRequestForgotOtp($event)">
+        <p class="auth-section-desc" style="font-size: 13.5px; color: var(--muted); margin-bottom: 14px; line-height: 1.5;">
+          Nhập số điện thoại đã đăng ký tài khoản EvergreenMart để nhận mã OTP thiết lập lại mật khẩu mới.
+        </p>
+
+        <div class="xanhla-auth-field">
+          <label for="forgot-phone">Số điện thoại đã đăng ký *</label>
+          <input id="forgot-phone" type="tel" placeholder="Ví dụ: 0987 654 321" [value]="forgotPhone()"
+            (input)="forgotPhone.set($any($event.target).value)" autocomplete="tel" required />
+          <span class="field-hint">Số di động 10 chữ số (bắt đầu bằng 03, 05, 07, 08, 09).</span>
+        </div>
+
+        <button class="xanhla-btn-primary auth-submit-btn" type="submit" [disabled]="loading()">
+          @if (loading()) {
+          <span class="auth-spinner"></span>
+          <span>Đang gửi mã OTP...</span>
+          } @else {
+          <span>Gửi mã OTP</span>
+          }
+        </button>
+      </form>
+
+      <div class="auth-switch-note">
+        Bạn nhớ lại mật khẩu?
+        <a href="javascript:void(0)" (click)="setTab('login')">Quay lại đăng nhập</a>
+      </div>
+      }
+
+      <!-- BƯỚC 2: MÀN HÌNH XÁC THỰC MÃ OTP (MOCK 123456) -->
+      @if (forgotStep() === 2) {
+      <div class="otp-view-container">
+        <div class="otp-header-info">
+          <div class="otp-phone-display">
+            <span>Mã OTP đã gửi đến số:</span>
+            <strong>{{ verifiedPhone() }}</strong>
+            <button type="button" class="change-phone-link" (click)="forgotStep.set(1)">Đổi số</button>
+          </div>
+          <p class="otp-instruction">Vui lòng nhập 6 chữ số mã OTP để xác thực:</p>
+        </div>
+
+        <!-- 6 ô nhập mã OTP -->
+        <div class="otp-boxes-grid" (paste)="onOtpPaste($event)">
+          @for (digit of otpDigits(); track $index) {
+          <input [id]="'otp-input-' + $index" class="otp-digit-box" type="text" inputmode="numeric" maxlength="1"
+            pattern="[0-9]*" autocomplete="one-time-code" [value]="digit" (input)="onOtpInput($index, $event)"
+            (keydown)="onOtpKeyDown($index, $event)" />
+          }
+        </div>
+
+        <!-- Demo mode badge -->
+        <div class="otp-demo-badge">
+          <span class="badge-icon">⚡</span>
+          <span>Môi trường thử nghiệm: Mã OTP là <strong>{{ demoOtp() }}</strong></span>
+        </div>
+
+        <!-- Nút xác nhận OTP -->
+        <button class="xanhla-btn-primary auth-submit-btn" type="button" [disabled]="otpLoading()"
+          (click)="handleVerifyForgotOtp()">
+          @if (otpLoading()) {
+          <span class="auth-spinner"></span>
+          <span>Đang xác thực...</span>
+          } @else {
+          <span>Xác nhận OTP</span>
+          }
+        </button>
+
+        <!-- Đếm ngược & Gửi lại mã -->
+        <div class="otp-resend-row">
+          @if (!canResend()) {
+          <span class="resend-timer">Gửi lại mã sau <strong>{{ countdown() }}s</strong></span>
+          } @else {
+          <button type="button" class="resend-action-btn" (click)="handleResendForgotOtp()">
+            Gửi lại mã OTP
+          </button>
+          }
+        </div>
+
+        <button type="button" class="back-link-btn" (click)="forgotStep.set(1)">
+          ← Quay lại bước trước
+        </button>
+      </div>
+      }
+
+      <!-- BƯỚC 3: ĐẶT LẠI MẬT KHẨU MỚI -->
+      @if (forgotStep() === 3) {
+      <form class="xanhla-auth-form" (submit)="handleResetPassword($event)">
+        <p class="auth-section-desc" style="font-size: 13.5px; color: var(--muted); margin-bottom: 14px; line-height: 1.5;">
+          Xác thực OTP thành công! Vui lòng thiết lập mật khẩu mới cho tài khoản <strong>{{ verifiedPhone() }}</strong>:
+        </p>
+
+        <div class="xanhla-auth-field">
+          <label for="forgot-new-pwd">Mật khẩu mới *</label>
+          <input id="forgot-new-pwd" type="password" placeholder="Tối thiểu 8 ký tự (hoa, thường, số)"
+            [value]="newPassword()" (input)="newPassword.set($any($event.target).value)"
+            autocomplete="new-password" required />
+          <span class="field-hint">Tối thiểu 8 ký tự, gồm ít nhất 1 chữ hoa, 1 chữ thường và 1 chữ số.</span>
+        </div>
+
+        <div class="xanhla-auth-field">
+          <label for="forgot-confirm-pwd">Xác nhận mật khẩu mới *</label>
+          <input id="forgot-confirm-pwd" type="password" placeholder="Nhập lại mật khẩu mới"
+            [value]="confirmNewPassword()" (input)="confirmNewPassword.set($any($event.target).value)"
+            autocomplete="new-password" required />
+        </div>
+
+        <button class="xanhla-btn-primary auth-submit-btn" type="submit" [disabled]="loading()">
+          @if (loading()) {
+          <span class="auth-spinner"></span>
+          <span>Đang lưu mật khẩu mới...</span>
+          } @else {
+          <span>Đặt lại mật khẩu</span>
+          }
+        </button>
+      </form>
+
+      <div class="auth-switch-note">
+        <a href="javascript:void(0)" (click)="setTab('login')">← Hủy và quay lại đăng nhập</a>
       </div>
       }
 

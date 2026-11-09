@@ -22,6 +22,45 @@ function calcDealUnitDiscount(targetUnitPrice, deal) {
   return Math.max(0, Math.min(targetUnitPrice, rawDisc));
 }
 
+// Nhận diện sản phẩm tươi sống thuộc 4 danh mục: Rau củ, Trái cây, Thịt, Cá & Hải sản
+function isFreshPerishableProduct(prod) {
+  if (!prod) return { isFresh: false, categoryName: '' };
+  const cat = (prod.category || '').toLowerCase();
+  const catVi = (prod.categoryVi || '').toLowerCase();
+  const name = (prod.name || '').toLowerCase();
+  const combined = `${cat} ${catVi} ${name}`;
+
+  // Loại trừ đồ uống đóng chai, bánh kẹo, gia vị & đồ khô, sữa
+  const excluded = [
+    'beverages', 'thức uống', 'nước ép',
+    'bakery', 'bánh mỳ', 'bánh ngọt',
+    'pantry', 'gia vị', 'đồ khô', 'hạt & ngũ cốc',
+    'dairy'
+  ];
+  if (excluded.some(ex => cat.includes(ex) || catVi.includes(ex))) {
+    return { isFresh: false, categoryName: '' };
+  }
+
+  // 1. Rau củ
+  if (/rau\s*củ|rau\s*ăn|rau\s*gia\s*vị|nấm\s*tươi|củ\s*quả|vegetable/i.test(combined)) {
+    return { isFresh: true, categoryName: 'Rau củ tươi' };
+  }
+  // 2. Trái cây
+  if (/trái\s*cây|hoa\s*quả|fruit/i.test(combined)) {
+    return { isFresh: true, categoryName: 'Trái cây tươi' };
+  }
+  // 3. Thịt
+  if (/thịt|meat|thịt\s*bò|thịt\s*heo|thịt\s*gà|gia\s*cầm/i.test(combined)) {
+    return { isFresh: true, categoryName: 'Thịt tươi sống' };
+  }
+  // 4. Cá & hải sản
+  if (/cá\s*&?\s*hải\s*sản|hải\s*sản|seafood|thủy\s*hải\s*sản/i.test(combined)) {
+    return { isFresh: true, categoryName: 'Cá & hải sản tươi' };
+  }
+
+  return { isFresh: false, categoryName: '' };
+}
+
 async function handleFlashSaleOrderConfirmed(order) {
   if (!order || !Array.isArray(order.items)) return;
   for (const item of order.items) {
@@ -107,6 +146,7 @@ router.post(
       const finalItems = [];
       const regularEntries = [];
       const addonEntries = [];
+      const detectedNonRefundableItems = [];
 
       for (const item of orderData.items) {
         const qty = Number(item.quantity);
@@ -130,7 +170,7 @@ router.post(
           prod = await Product.findOne({ name: item.productName });
         }
 
-        if (!prod || prod.isActive === false) {
+        if (!prod || prod.isActive === false || (prod.isCombo && (prod.comboStatus === 'paused' || prod.comboStatus === 'hidden'))) {
           return res.status(400).json({
             success: false,
             message: `Sản phẩm "${item.productName || item.product || 'trong đơn hàng'}" không tồn tại hoặc đã ngừng kinh doanh.`
@@ -141,33 +181,72 @@ router.post(
         const priceNum = typeof prod.priceNumber === 'number' ? prod.priceNumber : Number(prod.priceNumber || 0);
 
         if (prod.isCombo) {
-          const popProd = await Product.findById(prod._id).populate('comboItems.product', 'name price priceNumber image weight unit slug');
+          const popProd = await Product.findById(prod._id).populate(
+            'comboItems.product',
+            'name price priceNumber image weight unit slug stock isActive'
+          );
+          if (!popProd || !Array.isArray(popProd.comboItems) || popProd.comboItems.length === 0) {
+            return res.status(400).json({
+              success: false,
+              message: `Combo "${prod.name}" chưa có danh sách sản phẩm thành phần hợp lệ.`,
+            });
+          }
+
           const comboSubItems = [];
           let comboItemsSum = 0;
-          if (popProd && Array.isArray(popProd.comboItems) && popProd.comboItems.length > 0) {
-            for (const ci of popProd.comboItems) {
-              if (!ci.product) continue;
-              const ciPrice = typeof ci.product.priceNumber === 'number' ? ci.product.priceNumber : Number(ci.product.priceNumber || 0);
-              const singleQty = ci.quantity || 1;
-              comboItemsSum += ciPrice * singleQty;
-              comboSubItems.push({
-                product: ci.product._id ? String(ci.product._id) : '',
-                name: ci.product.name,
-                image: ci.product.image || '',
-                price: ci.product.price || '',
-                priceNumber: ciPrice,
-                quantity: singleQty,
-                unit: ci.product.unit || '',
-                weight: ci.product.weight || '',
+          for (const ci of popProd.comboItems) {
+            if (!ci.product || ci.product.isActive === false) {
+              return res.status(400).json({
+                success: false,
+                message: `Sản phẩm thành phần trong Combo "${prod.name}" đã ngừng kinh doanh.`,
               });
             }
+            const ciPrice = typeof ci.product.priceNumber === 'number' ? ci.product.priceNumber : Number(ci.product.priceNumber || 0);
+            const singleQty = Math.max(1, Number(ci.quantity) || 1);
+            const lineTotal = ciPrice * singleQty;
+            comboItemsSum += lineTotal;
+            comboSubItems.push({
+              product: ci.product._id ? String(ci.product._id) : '',
+              slug: ci.product.slug || '',
+              name: ci.product.name,
+              image: ci.product.image || '',
+              price: ci.product.price || `${ciPrice.toLocaleString('vi-VN')}đ`,
+              priceNumber: ciPrice,
+              quantity: singleQty,
+              lineTotal,
+              unit: ci.product.unit || '',
+              weight: ci.product.weight || '',
+            });
           }
-          const comboRetail = prod.originalPriceNumber && prod.originalPriceNumber > priceNum
-            ? prod.originalPriceNumber
-            : (comboItemsSum > priceNum ? comboItemsSum : priceNum);
+
+          const comboRetail = comboItemsSum > 0
+            ? comboItemsSum
+            : (prod.originalPriceNumber && prod.originalPriceNumber > priceNum ? prod.originalPriceNumber : priceNum);
           const saving = Math.max(0, (comboRetail - priceNum) * qty);
           totalComboSaving += saving;
           serverSubtotal += priceNum * qty;
+
+          // Kiểm tra thành phần tươi sống trong Combo
+          const comboFreshCheck = isFreshPerishableProduct(prod);
+          let comboIsFresh = comboFreshCheck.isFresh;
+          const matchedComponents = [];
+          for (const ci of popProd.comboItems) {
+            const ciFresh = isFreshPerishableProduct(ci.product);
+            if (ciFresh.isFresh) {
+              comboIsFresh = true;
+              matchedComponents.push(ci.product.name);
+            }
+          }
+          if (comboIsFresh) {
+            const comboLabel = matchedComponents.length > 0
+              ? `${prod.name} (thành phần: ${matchedComponents.join(', ')})`
+              : prod.name;
+            detectedNonRefundableItems.push({
+              name: comboLabel,
+              categoryName: comboFreshCheck.categoryName || 'Combo thực phẩm tươi sống',
+              isCombo: true
+            });
+          }
 
           finalItems.push({
             product: prod._id.toString(),
@@ -184,6 +263,16 @@ router.post(
             comboSaving: saving,
           });
           continue;
+        }
+
+        // Kiểm tra sản phẩm đơn lẻ / mua kèm tươi sống
+        const freshCheck = isFreshPerishableProduct(prod);
+        if (freshCheck.isFresh) {
+          detectedNonRefundableItems.push({
+            name: prod.name,
+            categoryName: freshCheck.categoryName,
+            isCombo: false
+          });
         }
 
         const requestedType = item.itemType === 'addon' && item.linkedMainProduct ? 'addon' : 'regular';
@@ -228,6 +317,10 @@ router.post(
         }
         const mainProdId = mainProd._id.toString();
         const mainPriceNum = typeof mainProd.priceNumber === 'number' ? mainProd.priceNumber : Number(mainProd.priceNumber || 0);
+        // Quy tắc bắt buộc: Giá mua kèm phải THẤP HƠN giá sản phẩm chính
+        if (ae.priceNum >= mainPriceNum || ae.priceNum <= 0 || mainPriceNum <= 0) {
+          return { ...ae, valid: false };
+        }
         const deal = (mainProd.addOnDeals || []).find(
           (d) =>
             d &&
@@ -238,10 +331,8 @@ router.post(
         if (!deal || mainProdId === ae.prodId) {
           return { ...ae, valid: false };
         }
-        const discountTarget = ae.priceNum <= mainPriceNum ? 'addon' : 'main';
-        const potentialUnitDisc = discountTarget === 'addon'
-          ? calcDealUnitDiscount(ae.priceNum, deal)
-          : calcDealUnitDiscount(mainPriceNum, deal);
+        const discountTarget = 'addon';
+        const potentialUnitDisc = calcDealUnitDiscount(ae.priceNum, deal);
         return {
           ...ae,
           valid: potentialUnitDisc > 0,
@@ -311,7 +402,7 @@ router.post(
               addonDiscountValue: ae.deal.discountValue,
               addonSaving: saving,
               discountedByAddon: true,
-              promoNote: `Mua kèm cùng "${ae.mainProd.name}" (áp dụng giảm giá cho SP giá thấp hơn)`,
+              promoNote: `Ưu đãi mua kèm cùng "${ae.mainProd.name}"`,
             });
           }
           const excessQty = ae.qty - pairedQty;
@@ -365,7 +456,7 @@ router.post(
               addonDiscountValue: ae.deal.discountValue,
               addonSaving: 0,
               discountedByAddon: false,
-              promoNote: `Mua kèm cùng "${ae.mainProd.name}" (ưu đãi áp dụng cho "${ae.mainProd.name}" do có giá thấp hơn)`,
+              promoNote: `Ưu đãi mua kèm cùng "${ae.mainProd.name}"`,
             });
           }
           const excessQty = ae.qty - pairedQty;
@@ -413,7 +504,7 @@ router.post(
             addonDiscountValue: alloc.discountValue,
             addonSaving: saving,
             discountedByAddon: true,
-            promoNote: `Được giảm giá Mua kèm khi mua cùng "${alloc.addonProdName}" (SP có giá thấp hơn)`,
+            promoNote: `Ưu đãi mua kèm cùng "${alloc.addonProdName}"`,
           });
           serverSubtotal += finalUnitPrice * take;
           totalAddonSaving += saving;
@@ -509,61 +600,109 @@ router.post(
       orderData.voucherCode = applied ? applied.voucher.code : '';
       orderData.discount    = applied ? applied.discount : 0;
 
-      // 5. Server tự tính lại total: total = subtotal - comboDiscount - discount + finalShippingFee
+      // 5. Server tự tính lại total: total = subtotal - discount + finalShippingFee
       orderData.total = Math.max(0, payableGoods - orderData.discount + finalShippingFee);
+      orderData.inventoryDeducted = true;
+      orderData.inventoryRestored = false;
+      orderData.hasNonRefundableItems = detectedNonRefundableItems.length > 0;
+      orderData.nonRefundableAccepted = Boolean(orderData.nonRefundableAccepted || req.body.nonRefundableAccepted);
+      orderData.nonRefundableItems = detectedNonRefundableItems;
 
-      const order = await Order.create(orderData);
-      if (applied) await consumeVoucher(applied, req.user?._id, order._id);
-
-      // Khấu trừ số lượng tồn kho tự động
-      for (const item of order.items) {
-        if (item.product) {
-          const prod = await Product.findById(item.product);
-          if (prod) {
-            const oldStock = prod.stock ?? 0;
-            const newStock = Math.max(0, oldStock - item.quantity);
-            prod.stock = newStock;
-            await prod.save();
-
-            await InventoryLog.create({
-              product: prod._id,
-              productName: prod.name,
-              type: 'order_confirmed',
-              delta: -item.quantity,
-              oldStock,
-              newStock,
-              reason: `Đơn hàng ${order.orderCode}`,
-              note: 'Trừ kho khi tạo đơn hàng',
-              updatedBy: req.user?._id || null,
-            });
-
-            // Nếu là combo, đồng thời trừ kho cho các sản phẩm thành phần
-            if (item.isCombo && Array.isArray(item.comboItems)) {
-              for (const ci of item.comboItems) {
-                if (ci.product) {
-                  const subProd = await Product.findById(ci.product);
-                  if (subProd) {
-                    const subQty = (ci.quantity || 1) * item.quantity;
-                    const oldSubStock = subProd.stock ?? 0;
-                    subProd.stock = Math.max(0, oldSubStock - subQty);
-                    await subProd.save();
-                    await InventoryLog.create({
-                      product: subProd._id,
-                      productName: subProd.name,
-                      type: 'order_confirmed',
-                      delta: -subQty,
-                      oldStock: oldSubStock,
-                      newStock: subProd.stock,
-                      reason: `Đơn hàng ${order.orderCode} (trong combo ${item.productName})`,
-                      note: 'Trừ kho thành phần combo',
-                      updatedBy: req.user?._id || null,
-                    });
-                  }
-                }
-              }
-            }
+      // 6. Kiểm tra & khấu trừ tồn kho nguyên tử (atomic) trên các sản phẩm vật lý để chống bán vượt khi nhiều khách đặt cùng lúc
+      // Gom tổng số lượng cần dùng theo từng Product ID (bao gồm cả sản phẩm lẻ/mua kèm và thành phần của mọi Combo trong giỏ)
+      const requiredStockMap = new Map(); // prodId -> { totalQty, productName, reasons: string[] }
+      for (const item of orderData.items) {
+        if (item.isCombo && Array.isArray(item.comboItems)) {
+          for (const ci of item.comboItems) {
+            if (!ci.product || !mongoose.Types.ObjectId.isValid(ci.product)) continue;
+            const pid = String(ci.product);
+            const need = Math.max(1, Number(ci.quantity) || 1) * item.quantity;
+            const prev = requiredStockMap.get(pid) || { totalQty: 0, productName: ci.name, reasons: [] };
+            prev.totalQty += need;
+            prev.reasons.push(`Combo "${item.productName}" x${item.quantity}`);
+            requiredStockMap.set(pid, prev);
           }
+        } else if (item.product && mongoose.Types.ObjectId.isValid(item.product)) {
+          const pid = String(item.product);
+          const prev = requiredStockMap.get(pid) || { totalQty: 0, productName: item.productName, reasons: [] };
+          prev.totalQty += item.quantity;
+          prev.reasons.push(item.itemType === 'addon' ? 'SP mua kèm' : 'SP mua lẻ');
+          requiredStockMap.set(pid, prev);
         }
+      }
+
+      const sortedRequiredEntries = Array.from(requiredStockMap.entries()).sort((a, b) =>
+        a[0].localeCompare(b[0])
+      );
+      const deductedReservations = []; // Array<{ pid, qty, oldStock, newStock, productName, reasons }>
+
+      for (const [pid, reqInfo] of sortedRequiredEntries) {
+        const prevDoc = await Product.findOneAndUpdate(
+          {
+            _id: new mongoose.Types.ObjectId(pid),
+            isCombo: { $ne: true },
+            isActive: { $ne: false },
+            stock: { $gte: reqInfo.totalQty },
+          },
+          { $inc: { stock: -reqInfo.totalQty } },
+          { new: false }
+        );
+
+        if (!prevDoc) {
+          // Hoàn lại ngay các sản phẩm đã tạm trừ trong cùng request nếu có 1 thành phần thiếu hàng
+          for (const r of deductedReservations) {
+            await Product.findByIdAndUpdate(r.pid, { $inc: { stock: r.qty } });
+          }
+          const curProd = await Product.findById(pid).select('name stock isActive').lean();
+          const avail = Math.max(0, Number(curProd?.stock ?? 0));
+          const prodLabel = curProd?.name || reqInfo.productName || 'Sản phẩm';
+          const viaCombo = reqInfo.reasons.some((rs) => rs.startsWith('Combo '));
+          return res.status(400).json({
+            success: false,
+            message: viaCombo
+              ? `Sản phẩm thành phần "${prodLabel}" (${reqInfo.reasons.join(', ')}) không đủ tồn kho (cần ${reqInfo.totalQty}, hiện còn ${avail}).`
+              : `Sản phẩm "${prodLabel}" không đủ tồn kho (cần ${reqInfo.totalQty}, hiện còn ${avail}).`,
+          });
+        }
+
+        const oldStock = Math.max(0, Number(prevDoc.stock ?? 0));
+        deductedReservations.push({
+          pid,
+          qty: reqInfo.totalQty,
+          oldStock,
+          newStock: Math.max(0, oldStock - reqInfo.totalQty),
+          productName: prevDoc.name || reqInfo.productName,
+          reasons: reqInfo.reasons,
+        });
+      }
+
+      let order = null;
+      try {
+        order = await Order.create(orderData);
+        if (applied) await consumeVoucher(applied, req.user?._id, order._id);
+      } catch (createErr) {
+        for (const r of deductedReservations) {
+          await Product.findByIdAndUpdate(r.pid, { $inc: { stock: r.qty } });
+        }
+        throw createErr;
+      }
+
+      // Ghi nhận lịch sử trừ kho cho từng sản phẩm vật lý đã xuất
+      for (const r of deductedReservations) {
+        const viaCombo = r.reasons.some((rs) => rs.startsWith('Combo '));
+        await InventoryLog.create({
+          product: new mongoose.Types.ObjectId(r.pid),
+          productName: r.productName,
+          type: 'order_confirmed',
+          delta: -r.qty,
+          oldStock: r.oldStock,
+          newStock: r.newStock,
+          reason: viaCombo
+            ? `Đơn hàng ${order.orderCode} (${r.reasons.join('; ')})`
+            : `Đơn hàng ${order.orderCode}`,
+          note: viaCombo ? 'Trừ kho thành phần Combo khi đặt hàng' : 'Trừ kho khi tạo đơn hàng',
+          updatedBy: req.user?._id || null,
+        });
       }
 
       // 5. Tạo link VietQR nếu phương thức là bank_transfer
@@ -608,10 +747,30 @@ async function attachComboDetailsToOrders(orders) {
 
   for (const o of list) {
     if (!o || !Array.isArray(o.items)) continue;
-    let addedComboSaving = 0;
 
     for (const it of o.items) {
       if (!it) continue;
+
+      // Ưu tiên giữ nguyên snapshot comboItems đã lưu tại thời điểm đặt hàng (Admin sửa Combo sau đó không làm đổi đơn hàng cũ)
+      if (Array.isArray(it.comboItems) && it.comboItems.length > 0) {
+        it.isCombo = true;
+        const basePrice = typeof it.priceNumber === 'number' ? it.priceNumber : Number(it.priceNumber || 0);
+        const subSum = it.comboItems.reduce(
+          (sum, ci) => sum + (Number(ci.priceNumber) || 0) * Math.max(1, Number(ci.quantity) || 1),
+          0
+        );
+        if (!it.originalPriceNumber && subSum > basePrice) {
+          it.originalPriceNumber = subSum;
+        }
+        if (!it.comboSaving && it.originalPriceNumber > basePrice) {
+          it.comboSaving = Math.max(0, (it.originalPriceNumber - basePrice) * (it.quantity || 1));
+        }
+        continue;
+      }
+
+      // Chỉ fallback truy vấn Product đối với các đơn hàng cũ trước khi có snapshot comboItems
+      if (!it.isCombo) continue;
+
       let prod = null;
       if (it.product && mongoose.Types.ObjectId.isValid(it.product)) {
         prod = await Product.findById(it.product)
@@ -624,21 +783,16 @@ async function attachComboDetailsToOrders(orders) {
           .lean();
       }
 
-      if (it.isCombo || (prod && prod.isCombo)) {
-        it.isCombo = true;
+      if (prod && prod.isCombo && Array.isArray(prod.comboItems) && prod.comboItems.length > 0) {
         const comboSubItems = [];
         let subSum = 0;
-        const sourceComboItems = (prod && Array.isArray(prod.comboItems) && prod.comboItems.length > 0)
-          ? prod.comboItems
-          : (Array.isArray(it.comboItems) ? it.comboItems : []);
-
-        for (const ci of sourceComboItems) {
+        for (const ci of prod.comboItems) {
           const subP = ci.product || ci;
           const priceNum = typeof subP.priceNumber === 'number' ? subP.priceNumber : Number(subP.priceNumber || 0);
           const singleQty = ci.quantity || 1;
           subSum += priceNum * singleQty;
           comboSubItems.push({
-            product: subP._id ? String(subP._id) : (subP.product ? String(subP.product) : ''),
+            product: subP._id ? String(subP._id) : '',
             name: subP.name || 'Sản phẩm thành phần',
             image: subP.image || '',
             price: subP.price || '',
@@ -648,25 +802,73 @@ async function attachComboDetailsToOrders(orders) {
             weight: subP.weight || '',
           });
         }
-
-        if (comboSubItems.length > 0) {
-          it.comboItems = comboSubItems;
-        }
-
+        it.comboItems = comboSubItems;
         const basePrice = typeof it.priceNumber === 'number' ? it.priceNumber : Number(it.priceNumber || 0);
-        const retail = (prod && prod.originalPriceNumber && prod.originalPriceNumber > basePrice)
-          ? prod.originalPriceNumber
-          : (subSum > basePrice ? subSum : basePrice);
-        const saving = Math.max(0, (retail - basePrice) * (it.quantity || 1));
-
-        if (!it.comboSaving) it.comboSaving = saving;
+        const retail = subSum > basePrice ? subSum : basePrice;
         if (!it.originalPriceNumber) it.originalPriceNumber = retail;
-        addedComboSaving += saving;
+        if (!it.comboSaving) it.comboSaving = Math.max(0, (retail - basePrice) * (it.quantity || 1));
       }
     }
   }
 
   return orders;
+}
+
+async function restoreOrderInventoryOnce(orderId, updatedBy = null) {
+  if (!orderId) return false;
+  // Khóa nguyên tử cờ inventoryRestored để đảm bảo chỉ hoàn kho đúng 1 lần duy nhất
+  const lockedOrder = await Order.findOneAndUpdate(
+    { _id: orderId, inventoryRestored: { $ne: true } },
+    { $set: { inventoryRestored: true } },
+    { new: true }
+  );
+  if (!lockedOrder || !Array.isArray(lockedOrder.items)) return false;
+
+  const restoreMap = new Map(); // prodId -> { totalQty, productName, reasons: string[] }
+  for (const item of lockedOrder.items) {
+    if (item.isCombo && Array.isArray(item.comboItems) && item.comboItems.length > 0) {
+      for (const ci of item.comboItems) {
+        const pid = ci.product ? String(ci.product) : '';
+        if (!pid || !mongoose.Types.ObjectId.isValid(pid)) continue;
+        const addQty = Math.max(1, Number(ci.quantity) || 1) * item.quantity;
+        const prev = restoreMap.get(pid) || { totalQty: 0, productName: ci.name || 'SP thành phần', reasons: [] };
+        prev.totalQty += addQty;
+        prev.reasons.push(`Combo "${item.productName}" x${item.quantity}`);
+        restoreMap.set(pid, prev);
+      }
+    } else if (item.product && mongoose.Types.ObjectId.isValid(item.product)) {
+      const pid = String(item.product);
+      const prev = restoreMap.get(pid) || { totalQty: 0, productName: item.productName, reasons: [] };
+      prev.totalQty += item.quantity;
+      restoreMap.set(pid, prev);
+    }
+  }
+
+  for (const [pid, info] of restoreMap.entries()) {
+    const prevDoc = await Product.findOneAndUpdate(
+      { _id: new mongoose.Types.ObjectId(pid), isCombo: { $ne: true } },
+      { $inc: { stock: info.totalQty } },
+      { new: false }
+    );
+    if (!prevDoc) continue;
+    const oldStock = Math.max(0, Number(prevDoc.stock ?? 0));
+    const newStock = oldStock + info.totalQty;
+    await InventoryLog.create({
+      product: prevDoc._id,
+      productName: prevDoc.name || info.productName,
+      type: 'order_cancel',
+      delta: info.totalQty,
+      oldStock,
+      newStock,
+      reason: info.reasons.length > 0
+        ? `Hủy đơn ${lockedOrder.orderCode} (${info.reasons.join('; ')})`
+        : `Hủy đơn ${lockedOrder.orderCode}`,
+      note: 'Hoàn tồn tự động đúng 1 lần khi đơn hàng bị hủy',
+      updatedBy: updatedBy || null,
+    });
+  }
+
+  return true;
 }
 
 // GET /api/orders — admin & sales & support: all orders with filters
@@ -783,7 +985,6 @@ router.get('/:id', protect, adminOnly, async (req, res, next) => {
     if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng.' });
     await attachComboDetailsToOrders(order);
     res.json({ success: true, data: order });
-    res.json({ success: true, data: order });
   } catch (err) { next(err); }
 });
 
@@ -835,6 +1036,15 @@ const handleCancelOrder = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Đơn hàng này đã được hủy trước đó.' });
     }
 
+    // Kiểm tra quy chế hàng tươi sống: Không hỗ trợ hủy đơn đối với khách hàng (chỉ quản trị viên mới được thao tác khi cần)
+    const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'manager');
+    if (!isAdmin && order.hasNonRefundableItems) {
+      return res.status(400).json({
+        success: false,
+        message: 'Đơn hàng có chứa sản phẩm tươi sống (Rau củ, Trái cây, Thịt, Cá & Hải sản) không hỗ trợ hủy theo quy chế bảo đảm tươi mới của Evergreen Mart.'
+      });
+    }
+
     const cancellableStatuses = ['pending', 'confirmed'];
     if (!cancellableStatuses.includes(order.status)) {
       return res.status(400).json({
@@ -854,6 +1064,7 @@ const handleCancelOrder = async (req, res, next) => {
     if (oldStatus === 'confirmed') {
       await handleFlashSaleOrderCancelled(order);
     }
+    await restoreOrderInventoryOnce(order._id, req.user?._id || null);
 
     res.json({
       success: true,
@@ -894,31 +1105,9 @@ router.put('/:id/status', protect, adminOnly, async (req, res, next) => {
       await handleFlashSaleOrderCancelled(currentOrder);
     }
 
-    // If order was cancelled from active state, return items to inventory
+    // If order was cancelled from active state, return items (including Combo components) to inventory exactly once
     if (status === 'cancelled' && previousStatus !== 'cancelled') {
-      for (const item of currentOrder.items) {
-        if (item.product) {
-          const prod = await Product.findById(item.product);
-          if (prod) {
-            const oldStock = prod.stock ?? 0;
-            const newStock = oldStock + item.quantity;
-            prod.stock = newStock;
-            await prod.save();
-
-            await InventoryLog.create({
-              product: prod._id,
-              productName: prod.name,
-              type: 'order_cancel',
-              delta: item.quantity,
-              oldStock,
-              newStock,
-              reason: `Hủy đơn ${currentOrder.orderCode}`,
-              note: `Hoàn tồn tự động do đơn hàng bị hủy`,
-              updatedBy: req.user?._id || null,
-            });
-          }
-        }
-      }
+      await restoreOrderInventoryOnce(currentOrder._id, req.user?._id || null);
     }
 
     if (status === 'delivered') {

@@ -58,6 +58,11 @@ const productSchema = new mongoose.Schema(
     stock: { type: Number, default: 100, min: 0 },
     // Combo mua kèm tiết kiệm: combo là một sản phẩm riêng có giá ưu đãi
     isCombo: { type: Boolean, default: false },
+    comboStatus: {
+      type: String,
+      enum: ['active', 'paused', 'hidden'],
+      default: 'active',
+    },
     comboItems: [comboItemSchema],
     originalPriceNumber: { type: Number, default: 0, min: 0 }, // tổng giá mua lẻ
     // Mua kèm tiết kiệm hơn: danh sách sản phẩm đề xuất mua kèm độc lập với Combo

@@ -32,6 +32,11 @@ export const adminRoutes: Routes = [
           import('./products/products.component').then((m) => m.AdminProductsComponent),
       },
       {
+        path: 'combos',
+        loadComponent: () =>
+          import('./combos/combos.component').then((m) => m.AdminCombosComponent),
+      },
+      {
         path: 'inventory',
         loadComponent: () =>
           import('./inventory/inventory.component').then((m) => m.AdminInventoryComponent),

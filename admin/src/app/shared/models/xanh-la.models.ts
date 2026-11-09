@@ -63,7 +63,9 @@ export interface XanhLaProduct {
   options?: { name: string; values: string[] }[];
   averageRating?: number;
   reviewCount?: number;
+  stock?: number;
   isCombo?: boolean;
+  comboStatus?: 'active' | 'paused' | 'hidden';
   originalPriceNumber?: number;
   comboItems?: any[];
   addOnDeals?: AddOnDealInfo[];
@@ -303,6 +305,9 @@ export interface Order {
   total: number;
   status: OrderStatus;
   shippingAddress: XanhLaAddress;
+  hasNonRefundableItems?: boolean;
+  nonRefundableAccepted?: boolean;
+  nonRefundableItems?: Array<{ name: string; categoryName: string; isCombo?: boolean }>;
   createdAt: string;
   updatedAt: string;
 }
