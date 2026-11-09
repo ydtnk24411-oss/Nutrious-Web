@@ -1,5 +1,6 @@
-import { Component, signal, inject, HostListener, effect, computed } from '@angular/core';
-import { RouterLink, Router } from '@angular/router';
+import { Component, signal, inject, HostListener, effect, computed, OnDestroy } from '@angular/core';
+import { RouterLink, Router, NavigationEnd } from '@angular/router';
+import { filter, Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { CartService } from '../../shared/services/cart.service';
 import { OrderApiService } from '../../shared/services/order-api.service';
@@ -37,7 +38,8 @@ export interface HeaderNotification {
   templateUrl: './header.component.html',
   styleUrl: './header.component.css',
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnDestroy {
+  private navSub?: Subscription;
   protected cart = inject(CartService);
   protected router = inject(Router);
   private categoryApi = inject(CategoryApiService, { optional: true });
@@ -98,6 +100,35 @@ export class HeaderComponent {
     effect(() => {
       const user = this.cart.currentUser();
       this.loadNotifications(user);
+    });
+
+    // Đồng bộ từ khóa tìm kiếm trên thanh search với URL hiện tại
+    const syncQueryFromUrl = () => {
+      try {
+        const urlTree = this.router.parseUrl(this.router.url);
+        const q = urlTree.queryParams['q'];
+        if (q) {
+          this.searchQuery.set(q);
+        } else if (!this.router.url.startsWith('/online-ordering')) {
+          this.searchQuery.set('');
+        }
+      } catch {}
+    };
+
+    syncQueryFromUrl();
+
+    this.navSub = this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd)
+    ).subscribe((e) => {
+      try {
+        const urlTree = this.router.parseUrl(e.urlAfterRedirects);
+        const q = urlTree.queryParams['q'];
+        if (q) {
+          this.searchQuery.set(q);
+        } else if (!e.urlAfterRedirects.startsWith('/online-ordering')) {
+          this.searchQuery.set('');
+        }
+      } catch {}
     });
 
     // Khởi tạo tải sản phẩm để gợi ý tìm kiếm tức thì
@@ -220,7 +251,14 @@ export class HeaderComponent {
     }
   }
 
+  ngOnDestroy(): void {
+    this.navSub?.unsubscribe();
+  }
+
   clearSearch(): void {
+    if (this.router.url.startsWith('/online-ordering')) {
+      this.router.navigate(['/online-ordering']);
+    }
     this.searchQuery.set('');
     this.selectedSuggestionIndex.set(-1);
   }

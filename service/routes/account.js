@@ -32,7 +32,7 @@ router.put('/me', protect, async (req, res, next) => {
     }
 
     // Only update fields that were actually sent in the request body
-    const allowedFields = ['name', 'avatar', 'firstName', 'lastName', 'title'];
+    const allowedFields = ['name', 'avatar', 'firstName', 'lastName', 'title', 'addresses'];
     const updateData = {};
     for (const field of allowedFields) {
       if (req.body[field] !== undefined) {

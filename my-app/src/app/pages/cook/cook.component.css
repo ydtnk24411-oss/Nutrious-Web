@@ -336,7 +336,7 @@
   justify-content: center;
   margin-top: 6px;
 }
-.coop-btn-sample {
+/* .coop-btn-sample removed */
   background: #fff;
   border: 1px solid #a8c4a9;
   color: var(--green);

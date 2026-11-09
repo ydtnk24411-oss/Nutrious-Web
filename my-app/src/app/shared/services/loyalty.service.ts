@@ -5,24 +5,24 @@ import { LoyaltyTier, LoyaltyTierConfig, PointTransaction, LoyaltyReward } from 
 import { ApiService } from './api.service';
 import { CartService } from './cart.service';
 
-/**
- * Điểm thưởng & lịch sử điểm lấy từ server theo TÀI KHOẢN đang đăng nhập
- * (không còn lưu ở localStorage). Đổi tài khoản → dữ liệu tự tải lại / xóa sạch.
- */
 @Injectable({ providedIn: 'root' })
 export class LoyaltyService {
   private api  = inject(ApiService);
   private cart = inject(CartService);
 
-  private _balance      = signal(0);
-  private _totalSpent   = signal(0);
-  private _transactions = signal<PointTransaction[]>([]);
+  private _balance          = signal(0);
+  private _totalSpent       = signal(0);
+  private _transactions     = signal<PointTransaction[]>([]);
+  private _rewards          = signal<LoyaltyReward[]>([]);
 
-  readonly balance      = this._balance.asReadonly();
-  readonly totalSpent   = this._totalSpent.asReadonly();
-  readonly transactions = this._transactions.asReadonly();
+  readonly balance          = this._balance.asReadonly();
+  readonly totalSpent       = this._totalSpent.asReadonly();
+  readonly transactions     = this._transactions.asReadonly();
+  readonly rewards          = this._rewards.asReadonly();
+  readonly isLoading        = signal(false);
+  readonly isLoadingRewards = signal(false);
 
-  // Loyalty tier configuration (SAMPLE POLICY - ghi rõ là chính sách giả lập)
+  // Loyalty tier configuration
   readonly tierConfigs: LoyaltyTierConfig[] = [
     {
       tier: 'Bronze',
@@ -58,56 +58,9 @@ export class LoyaltyService {
     },
   ];
 
-  // Danh sách quà hiển thị (số điểm thực tế do server quyết định khi đổi)
-  readonly rewards: LoyaltyReward[] = [
-    {
-      id: 'r1',
-      name: 'Voucher 50.000đ',
-      description: 'Giảm 50.000đ cho đơn hàng từ 200.000đ',
-      image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=200',
-      pointsRequired: 500,
-      type: 'voucher',
-      value: 50000,
-      voucherId: 'v50k',
-      available: true,
-      stock: 100,
-    },
-    {
-      id: 'r2',
-      name: 'Miễn phí giao hàng',
-      description: 'Miễn phí giao hàng cho đơn hàng bất kỳ',
-      image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=200',
-      pointsRequired: 300,
-      type: 'shipping',
-      value: 25000,
-      available: true,
-      stock: 500,
-    },
-    {
-      id: 'r3',
-      name: 'Voucher 100.000đ',
-      description: 'Giảm 100.000đ cho đơn hàng từ 400.000đ',
-      image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=200',
-      pointsRequired: 1000,
-      type: 'voucher',
-      value: 100000,
-      voucherId: 'v100k',
-      available: true,
-      stock: 50,
-    },
-    {
-      id: 'r4',
-      name: 'Giỏ quà sinh nhật',
-      description: 'Giỏ quà đặc biệt gồm các sản phẩm Evergreen Mart',
-      image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=200',
-      pointsRequired: 2000,
-      type: 'gift',
-      available: true,
-      stock: 20,
-    },
-  ];
-
   constructor() {
+    this.loadRewards();
+
     // Theo dõi theo _id tài khoản: đăng nhập/đổi tài khoản → tải lại, đăng xuất → xóa sạch
     const userId = computed(() => this.cart.currentUser()?._id ?? null);
     effect(() => {
@@ -116,19 +69,41 @@ export class LoyaltyService {
     });
   }
 
+  loadRewards(): void {
+    this.isLoadingRewards.set(true);
+    this.api.get<{ success: boolean; data: LoyaltyReward[] }>('/loyalty/rewards').subscribe({
+      next: (res) => {
+        this.isLoadingRewards.set(false);
+        if (res.success && Array.isArray(res.data)) {
+          this._rewards.set(res.data);
+        } else {
+          this._rewards.set([]);
+        }
+      },
+      error: () => {
+        this.isLoadingRewards.set(false);
+        this._rewards.set([]);
+      }
+    });
+  }
+
   /** Tải điểm + lịch sử của tài khoản hiện tại từ server. */
   refresh(): void {
     if (!this.cart.currentUser()) { this._clear(); return; }
+    this.isLoading.set(true);
     this.api.get<{ success: boolean; data: { points: number; totalSpent: number; transactions: PointTransaction[] } }>(
       '/loyalty/my'
     ).subscribe({
       next: (res) => {
-        if (!res.success) return;
-        this._balance.set(res.data.points);
-        this._totalSpent.set(res.data.totalSpent);
-        this._transactions.set(res.data.transactions);
+        this.isLoading.set(false);
+        if (!res.success || !res.data) return;
+        this._balance.set(res.data.points || 0);
+        this._totalSpent.set(res.data.totalSpent || 0);
+        this._transactions.set(Array.isArray(res.data.transactions) ? res.data.transactions : []);
       },
-      error: () => { /* 401 do interceptor xử lý */ },
+      error: () => {
+        this.isLoading.set(false);
+      },
     });
   }
 
@@ -143,19 +118,17 @@ export class LoyaltyService {
     return this.tierConfigs[0]; // Default to Bronze
   }
 
-  // Calculate points earned from order (SAMPLE POLICY)
+  // Calculate points earned from order
   calculatePointsEarned(orderTotal: number, userTier: LoyaltyTier): number {
     const tier = this.tierConfigs.find(t => t.tier === userTier) || this.tierConfigs[0];
     const pointsPer10k = tier.tier === 'Bronze' ? 1 : tier.tier === 'Silver' ? 1.2 : tier.tier === 'Gold' ? 1.5 : 2;
     return Math.floor((orderTotal / 10000) * pointsPer10k);
   }
 
-  // Số dư điểm của tài khoản đang đăng nhập (tham số giữ lại cho tương thích)
   getUserBalance(_userId?: string): number {
     return this._balance();
   }
 
-  // Lịch sử điểm của tài khoản đang đăng nhập
   getUserTransactions(_userId?: string): PointTransaction[] {
     return this._transactions();
   }
@@ -176,9 +149,8 @@ export class LoyaltyService {
     );
   }
 
-  // Get available rewards
   getAvailableRewards(): LoyaltyReward[] {
-    return this.rewards.filter(r => r.available && (r.stock === undefined || r.stock > 0));
+    return this._rewards().filter(r => r.available && (r.stock === undefined || r.stock > 0));
   }
 
   private _clear(): void {

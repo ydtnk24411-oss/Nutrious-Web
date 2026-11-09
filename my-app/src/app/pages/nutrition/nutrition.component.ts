@@ -136,6 +136,28 @@ export interface MealSlotView {
   slotTime: string;
   slotIcon: string;
   recipe: RecipeResult | null;
+  portionMultiplier?: number;
+  scaledCalories?: number;
+  scaledProtein?: number;
+  scaledFiber?: number;
+  scaledCarbs?: number;
+  scaledFat?: number;
+}
+
+export interface PlanIngredientBreakdown {
+  product: ApiProduct;
+  unitPrice: number;
+  neededPacks: number;
+  inCartPacks: number;
+  missingPacks: number;
+  totalPrice: number;
+  inCartValue: number;
+  missingDealPrice: number;
+  owned: boolean;
+  totalPortionMultiplier: number;
+  usedInSlots: string[];
+  estimatedGramsNeeded: number;
+  formulaExplanation: string;
 }
 
 export interface DayPlanComputedView {
@@ -153,6 +175,13 @@ export interface DayPlanComputedView {
   dealPrice: number;
   savedPrice: number;
   matchedProducts: ApiProduct[];
+  alreadyInCartCount: number;
+  alreadyInCartVal: number;
+  missingCount: number;
+  missingOriginalPrice: number;
+  missingDealPrice: number;
+  allInCart: boolean;
+  ingredientBreakdown: PlanIngredientBreakdown[];
 }
 
 export const GOAL_ICONS: Record<string, string> = {
@@ -174,10 +203,11 @@ function formatProductSlug(slug?: string, id?: string): string {
 
 function toCartProduct(p: ApiProduct, customPrice?: number): XanhLaProduct {
   const finalPrice = customPrice ?? (p.priceNumber || 0);
+  const cleanSlug = (p.slug || '').replace(/^\/product-page\//, '').replace(/^\//, '').trim() || p._id || 'sp';
   return {
-    id: p._id || p.slug,
+    id: p._id || p.slug || cleanSlug,
     name: p.name,
-    slug: formatProductSlug(p.slug, p._id),
+    slug: cleanSlug,
     price: customPrice !== undefined ? formatPrice(customPrice) : p.price,
     priceNumber: finalPrice,
     image: p.image || FALLBACK_FOOD_IMG,
@@ -213,10 +243,125 @@ function lowerKeepDiacritics(s: string): string {
   return (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
-const EXACT_INGREDIENT_META: Record<
-  string,
-  { slug: string; name: string; priceNumber: number; weight: string; categoryVi: string; image: string }
-> = {
+export function parseGramWeight(weightStr?: string): number {
+  if (!weightStr) return 0;
+  const str = weightStr.toLowerCase().trim();
+  const kgMatch = str.match(/([0-9]+(?:[.,][0-9]+)?)\s*kg/);
+  if (kgMatch) {
+    const val = parseFloat(kgMatch[1].replace(',', '.'));
+    if (!isNaN(val) && val > 0) return Math.round(val * 1000);
+  }
+  const gMatch = str.match(/([0-9]+)\s*(?:g|gram)/);
+  if (gMatch) {
+    const val = parseInt(gMatch[1], 10);
+    if (!isNaN(val) && val > 0) return val;
+  }
+  return 0;
+}
+
+export interface IngredientMetaDef {
+  slug: string;
+  name: string;
+  priceNumber: number;
+  weight: string;
+  categoryVi: string;
+  image: string;
+}
+
+const EXACT_INGREDIENT_META: Record<string, IngredientMetaDef> = {
+  // Gà ta / Thịt gà
+  'gà ta thả vườn nguyên con': {
+    slug: 'ga-ta-tha-vuon-nguyen-con',
+    name: 'Gà Ta Thả Vườn Nguyên Con',
+    priceNumber: 95000,
+    weight: 'Khay 500g',
+    categoryVi: 'Thịt tươi sạch',
+    image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80',
+  },
+  'gà ta thả vườn': {
+    slug: 'ga-ta-tha-vuon-nguyen-con',
+    name: 'Gà Ta Thả Vườn Nguyên Con',
+    priceNumber: 95000,
+    weight: 'Khay 500g',
+    categoryVi: 'Thịt tươi sạch',
+    image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80',
+  },
+  'thịt gà thả vườn': {
+    slug: 'ga-ta-tha-vuon-nguyen-con',
+    name: 'Gà Ta Thả Vườn Nguyên Con',
+    priceNumber: 95000,
+    weight: 'Khay 500g',
+    categoryVi: 'Thịt tươi sạch',
+    image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80',
+  },
+  'thịt gà': {
+    slug: 'ga-ta-tha-vuon-nguyen-con',
+    name: 'Gà Ta Thả Vườn Nguyên Con',
+    priceNumber: 95000,
+    weight: 'Khay 500g',
+    categoryVi: 'Thịt tươi sạch',
+    image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80',
+  },
+  'ức gà': {
+    slug: 'ga-ta-tha-vuon-nguyen-con',
+    name: 'Gà Ta Thả Vườn Nguyên Con',
+    priceNumber: 95000,
+    weight: 'Khay 500g',
+    categoryVi: 'Thịt tươi sạch',
+    image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80',
+  },
+  'gà ta': {
+    slug: 'ga-ta-tha-vuon-nguyen-con',
+    name: 'Gà Ta Thả Vườn Nguyên Con',
+    priceNumber: 95000,
+    weight: 'Khay 500g',
+    categoryVi: 'Thịt tươi sạch',
+    image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80',
+  },
+
+  // Ớt chuông
+  'ớt chuông 3 màu': {
+    slug: 'ot-chuong-3-mau-da-lat',
+    name: 'Ớt Chuông 3 Màu Đà Lạt',
+    priceNumber: 35000,
+    weight: 'Túi 400g',
+    categoryVi: 'Rau củ Đà Lạt',
+    image: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=600&q=80',
+  },
+  'ớt chuông đà lạt': {
+    slug: 'ot-chuong-3-mau-da-lat',
+    name: 'Ớt Chuông 3 Màu Đà Lạt',
+    priceNumber: 35000,
+    weight: 'Túi 400g',
+    categoryVi: 'Rau củ Đà Lạt',
+    image: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=600&q=80',
+  },
+  'ớt chuông': {
+    slug: 'ot-chuong-3-mau-da-lat',
+    name: 'Ớt Chuông 3 Màu Đà Lạt',
+    priceNumber: 35000,
+    weight: 'Túi 400g',
+    categoryVi: 'Rau củ Đà Lạt',
+    image: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=600&q=80',
+  },
+  'ớt chuông 3 màu đà lạt': {
+    slug: 'ot-chuong-3-mau-da-lat',
+    name: 'Ớt Chuông 3 Màu Đà Lạt',
+    priceNumber: 35000,
+    weight: 'Túi 400g',
+    categoryVi: 'Rau củ Đà Lạt',
+    image: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=600&q=80',
+  },
+
+  // Cá hồi
+  'cá hồi na uy fillet tươi': {
+    slug: 'ca-hoi-na-uy-fillet-tuoi',
+    name: 'Cá Hồi Na Uy Fillet Tươi',
+    priceNumber: 165000,
+    weight: 'Khay 250g',
+    categoryVi: 'Hải sản tươi sống',
+    image: 'https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?w=600&q=80',
+  },
   'cá hồi phi lê': {
     slug: 'ca-hoi-na-uy-fillet-tuoi',
     name: 'Cá Hồi Na Uy Fillet Tươi',
@@ -233,233 +378,635 @@ const EXACT_INGREDIENT_META: Record<
     categoryVi: 'Hải sản tươi sống',
     image: 'https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?w=600&q=80',
   },
+  'cá hồi': {
+    slug: 'ca-hoi-na-uy-fillet-tuoi',
+    name: 'Cá Hồi Na Uy Fillet Tươi',
+    priceNumber: 165000,
+    weight: 'Khay 250g',
+    categoryVi: 'Hải sản tươi sống',
+    image: 'https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?w=600&q=80',
+  },
+
+  // Bông cải xanh
+  'bông cải xanh đà lạt': {
+    slug: 'bong-cai-xanh-da-lat',
+    name: 'Bông Cải Xanh Đà Lạt',
+    priceNumber: 28000,
+    weight: 'Búp 350g',
+    categoryVi: 'Rau củ Đà Lạt',
+    image: 'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?w=600&q=80',
+  },
   'bông cải xanh': {
     slug: 'bong-cai-xanh-da-lat',
     name: 'Bông Cải Xanh Đà Lạt',
     priceNumber: 28000,
-    weight: '300g',
+    weight: 'Búp 350g',
     categoryVi: 'Rau củ Đà Lạt',
     image: 'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?w=600&q=80',
+  },
+
+  // Cà rốt
+  'cà rốt baby đà lạt': {
+    slug: 'ca-rot-baby-da-lat',
+    name: 'Cà Rốt Baby Đà Lạt',
+    priceNumber: 22000,
+    weight: 'Túi 400g',
+    categoryVi: 'Rau củ Đà Lạt',
+    image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=600&q=80',
   },
   'cà rốt đà lạt': {
     slug: 'ca-rot-baby-da-lat',
     name: 'Cà Rốt Baby Đà Lạt',
-    priceNumber: 24000,
-    weight: '500g',
+    priceNumber: 22000,
+    weight: 'Túi 400g',
     categoryVi: 'Rau củ Đà Lạt',
     image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=600&q=80',
   },
   'cà rốt baby': {
     slug: 'ca-rot-baby-da-lat',
     name: 'Cà Rốt Baby Đà Lạt',
-    priceNumber: 24000,
-    weight: '500g',
+    priceNumber: 22000,
+    weight: 'Túi 400g',
     categoryVi: 'Rau củ Đà Lạt',
     image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=600&q=80',
   },
-  'thịt gà thả vườn': {
-    slug: 'ga-ta-tha-vuon-nguyen-con',
-    name: 'Gà Ta Thả Vườn Nguyên Con',
-    priceNumber: 95000,
-    weight: 'Khay 500g',
-    categoryVi: 'Thịt tươi sạch',
-    image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80',
+  'cà rốt': {
+    slug: 'ca-rot-baby-da-lat',
+    name: 'Cà Rốt Baby Đà Lạt',
+    priceNumber: 22000,
+    weight: 'Túi 400g',
+    categoryVi: 'Rau củ Đà Lạt',
+    image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=600&q=80',
   },
-  'gà ta thả vườn': {
-    slug: 'ga-ta-tha-vuon-nguyen-con',
-    name: 'Gà Ta Thả Vườn Nguyên Con',
-    priceNumber: 95000,
-    weight: 'Khay 500g',
-    categoryVi: 'Thịt tươi sạch',
-    image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80',
+
+  // Dưa leo
+  'dưa leo baby đà lạt': {
+    slug: 'dua-leo-baby-da-lat',
+    name: 'Dưa Leo Baby Đà Lạt',
+    priceNumber: 20000,
+    weight: 'Túi 400g',
+    categoryVi: 'Rau củ Đà Lạt',
+    image: 'https://images.unsplash.com/photo-1449300079323-02e209d9d3a6?w=600&q=80',
   },
   'dưa leo baby': {
     slug: 'dua-leo-baby-da-lat',
     name: 'Dưa Leo Baby Đà Lạt',
-    priceNumber: 22000,
-    weight: '500g',
+    priceNumber: 20000,
+    weight: 'Túi 400g',
     categoryVi: 'Rau củ Đà Lạt',
     image: 'https://images.unsplash.com/photo-1449300079323-02e209d9d3a6?w=600&q=80',
+  },
+  'dưa leo': {
+    slug: 'dua-leo-baby-da-lat',
+    name: 'Dưa Leo Baby Đà Lạt',
+    priceNumber: 20000,
+    weight: 'Túi 400g',
+    categoryVi: 'Rau củ Đà Lạt',
+    image: 'https://images.unsplash.com/photo-1449300079323-02e209d9d3a6?w=600&q=80',
+  },
+  'dưa leo tươi': {
+    slug: 'dua-leo-baby-da-lat',
+    name: 'Dưa Leo Baby Đà Lạt',
+    priceNumber: 20000,
+    weight: 'Túi 400g',
+    categoryVi: 'Rau củ Đà Lạt',
+    image: 'https://images.unsplash.com/photo-1449300079323-02e209d9d3a6?w=600&q=80',
+  },
+
+  // Cà chua
+  'cà chua bi đà lạt': {
+    slug: 'ca-chua-bi-da-lat',
+    name: 'Cà Chua Bi Đà Lạt',
+    priceNumber: 25000,
+    weight: 'Hộp 350g',
+    categoryVi: 'Rau củ Đà Lạt',
+    image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&q=80',
   },
   'cà chua bi': {
     slug: 'ca-chua-bi-da-lat',
     name: 'Cà Chua Bi Đà Lạt',
-    priceNumber: 29000,
-    weight: 'Hộp 500g',
+    priceNumber: 25000,
+    weight: 'Hộp 350g',
     categoryVi: 'Rau củ Đà Lạt',
     image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&q=80',
+  },
+  'cà chua': {
+    slug: 'ca-chua-bi-da-lat',
+    name: 'Cà Chua Bi Đà Lạt',
+    priceNumber: 25000,
+    weight: 'Hộp 350g',
+    categoryVi: 'Rau củ Đà Lạt',
+    image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&q=80',
+  },
+
+  // Thịt bò
+  'thịt bò bắp mỹ nhập khẩu': {
+    slug: 'thit-bo-bap-my-nhap-khau',
+    name: 'Thịt Bò Bắp Mỹ Nhập Khẩu',
+    priceNumber: 135000,
+    weight: 'Khay 300g',
+    categoryVi: 'Thịt bò nhập khẩu',
+    image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=600&q=80',
   },
   'thịt bò bắp mỹ': {
     slug: 'thit-bo-bap-my-nhap-khau',
     name: 'Thịt Bò Bắp Mỹ Nhập Khẩu',
-    priceNumber: 138000,
+    priceNumber: 135000,
     weight: 'Khay 300g',
     categoryVi: 'Thịt bò nhập khẩu',
-    image: 'https://images.unsplash.com/photo-1588168333986-5078d3ae3976?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=600&q=80',
   },
   'thịt bò mỹ': {
     slug: 'thit-bo-bap-my-nhap-khau',
     name: 'Thịt Bò Bắp Mỹ Nhập Khẩu',
-    priceNumber: 138000,
+    priceNumber: 135000,
     weight: 'Khay 300g',
     categoryVi: 'Thịt bò nhập khẩu',
-    image: 'https://images.unsplash.com/photo-1588168333986-5078d3ae3976?w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=600&q=80',
   },
+  'thịt bò': {
+    slug: 'thit-bo-bap-my-nhap-khau',
+    name: 'Thịt Bò Bắp Mỹ Nhập Khẩu',
+    priceNumber: 135000,
+    weight: 'Khay 300g',
+    categoryVi: 'Thịt bò nhập khẩu',
+    image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=600&q=80',
+  },
+  'bò bắp': {
+    slug: 'thit-bo-bap-my-nhap-khau',
+    name: 'Thịt Bò Bắp Mỹ Nhập Khẩu',
+    priceNumber: 135000,
+    weight: 'Khay 300g',
+    categoryVi: 'Thịt bò nhập khẩu',
+    image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=600&q=80',
+  },
+  'bò mỹ thăn': {
+    slug: 'thit-bo-bap-my-nhap-khau',
+    name: 'Thịt Bò Bắp Mỹ Nhập Khẩu',
+    priceNumber: 135000,
+    weight: 'Khay 300g',
+    categoryVi: 'Thịt bò nhập khẩu',
+    image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=600&q=80',
+  },
+
+  // Cải xanh
   'cải xanh đà lạt': {
     slug: 'cai-xanh-da-lat',
     name: 'Cải Xanh Đà Lạt',
-    priceNumber: 19000,
-    weight: '400g',
+    priceNumber: 18000,
+    weight: 'Bó 350g',
     categoryVi: 'Rau lá hữu cơ',
     image: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=600&q=80',
   },
+  'cải xanh': {
+    slug: 'cai-xanh-da-lat',
+    name: 'Cải Xanh Đà Lạt',
+    priceNumber: 18000,
+    weight: 'Bó 350g',
+    categoryVi: 'Rau lá hữu cơ',
+    image: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=600&q=80',
+  },
+
+  // Sữa chua Hy Lạp
+  'sữa chua hy lạp hữu cơ không đường': {
+    slug: 'sua-chua-hy-lap-huu-co',
+    name: 'Sữa Chua Hy Lạp Hữu Cơ Không Đường',
+    priceNumber: 45000,
+    weight: 'Hộp 250g',
+    categoryVi: 'Sữa chua & Chế phẩm sữa',
+    image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=600&q=80',
+  },
   'sữa chua hy lạp hữu cơ': {
     slug: 'sua-chua-hy-lap-huu-co',
-    name: 'Sữa Chua Hy Lạp Hữu Cơ',
-    priceNumber: 42000,
+    name: 'Sữa Chua Hy Lạp Hữu Cơ Không Đường',
+    priceNumber: 45000,
     weight: 'Hộp 250g',
-    categoryVi: 'Sữa chua & Thực phẩm lành mạnh',
+    categoryVi: 'Sữa chua & Chế phẩm sữa',
     image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=600&q=80',
+  },
+  'sữa chua hy lạp': {
+    slug: 'sua-chua-hy-lap-huu-co',
+    name: 'Sữa Chua Hy Lạp Hữu Cơ Không Đường',
+    priceNumber: 45000,
+    weight: 'Hộp 250g',
+    categoryVi: 'Sữa chua & Chế phẩm sữa',
+    image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=600&q=80',
+  },
+
+  // Sữa chua men sống
+  'sữa chua men sống đà lạt ít đường': {
+    slug: 'sua-chua-men-song-da-lat',
+    name: 'Sữa Chua Men Sống Đà Lạt Ít Đường',
+    priceNumber: 32000,
+    weight: 'Lốc 4 hộp',
+    categoryVi: 'Sữa chua & Chế phẩm sữa',
+    image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=600&q=80',
   },
   'sữa chua men sống đà lạt': {
     slug: 'sua-chua-men-song-da-lat',
-    name: 'Sữa Chua Men Sống Đà Lạt',
-    priceNumber: 35000,
+    name: 'Sữa Chua Men Sống Đà Lạt Ít Đường',
+    priceNumber: 32000,
     weight: 'Lốc 4 hộp',
-    categoryVi: 'Sữa chua & Thực phẩm lành mạnh',
+    categoryVi: 'Sữa chua & Chế phẩm sữa',
     image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=600&q=80',
   },
+  'sữa chua men sống': {
+    slug: 'sua-chua-men-song-da-lat',
+    name: 'Sữa Chua Men Sống Đà Lạt Ít Đường',
+    priceNumber: 32000,
+    weight: 'Lốc 4 hộp',
+    categoryVi: 'Sữa chua & Chế phẩm sữa',
+    image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=600&q=80',
+  },
+
+  // Dâu tây
   'dâu tây đà lạt': {
     slug: 'dau-tay-da-lat',
     name: 'Dâu Tây Đà Lạt',
-    priceNumber: 75000,
+    priceNumber: 85000,
     weight: 'Hộp 250g',
     categoryVi: 'Trái cây Đà Lạt',
     image: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=600&q=80',
   },
+  'dâu tây': {
+    slug: 'dau-tay-da-lat',
+    name: 'Dâu Tây Đà Lạt',
+    priceNumber: 85000,
+    weight: 'Hộp 250g',
+    categoryVi: 'Trái cây Đà Lạt',
+    image: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=600&q=80',
+  },
+
+  // Xoài cát
   'xoài cát hòa lộc': {
     slug: 'xoai-cat-hoa-loc',
     name: 'Xoài Cát Hòa Lộc',
     priceNumber: 55000,
-    weight: '500g',
+    weight: 'Trái 500g',
     categoryVi: 'Trái cây miền Tây',
     image: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=600&q=80',
   },
-  'nấm đông cô tươi': {
+  'xoài cát': {
+    slug: 'xoai-cat-hoa-loc',
+    name: 'Xoài Cát Hòa Lộc',
+    priceNumber: 55000,
+    weight: 'Trái 500g',
+    categoryVi: 'Trái cây miền Tây',
+    image: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=600&q=80',
+  },
+
+  // Nấm đông cô
+  'nấm đông cô đà lạt': {
     slug: 'nam-dong-co-da-lat',
     name: 'Nấm Đông Cô Đà Lạt',
-    priceNumber: 38000,
+    priceNumber: 42000,
     weight: 'Khay 250g',
     categoryVi: 'Nấm tươi hữu cơ',
     image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80',
   },
+  'nấm đông cô tươi': {
+    slug: 'nam-dong-co-da-lat',
+    name: 'Nấm Đông Cô Đà Lạt',
+    priceNumber: 42000,
+    weight: 'Khay 250g',
+    categoryVi: 'Nấm tươi hữu cơ',
+    image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80',
+  },
+  'nấm đông cô': {
+    slug: 'nam-dong-co-da-lat',
+    name: 'Nấm Đông Cô Đà Lạt',
+    priceNumber: 42000,
+    weight: 'Khay 250g',
+    categoryVi: 'Nấm tươi hữu cơ',
+    image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80',
+  },
+
+  // Tôm sú
+  'tôm sú tươi sống cà mau': {
+    slug: 'tom-su-tuoi-song-ca-mau',
+    name: 'Tôm Sú Tươi Sống Cà Mau',
+    priceNumber: 125000,
+    weight: 'Khay 350g',
+    categoryVi: 'Hải sản tươi sống',
+    image: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=600&q=80',
+  },
   'tôm sú tươi sống': {
     slug: 'tom-su-tuoi-song-ca-mau',
     name: 'Tôm Sú Tươi Sống Cà Mau',
-    priceNumber: 135000,
-    weight: 'Khay 300g',
+    priceNumber: 125000,
+    weight: 'Khay 350g',
     categoryVi: 'Hải sản tươi sống',
     image: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=600&q=80',
+  },
+  'tôm sú': {
+    slug: 'tom-su-tuoi-song-ca-mau',
+    name: 'Tôm Sú Tươi Sống Cà Mau',
+    priceNumber: 125000,
+    weight: 'Khay 350g',
+    categoryVi: 'Hải sản tươi sống',
+    image: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=600&q=80',
+  },
+
+  // Cải ngọt
+  'rau cải ngọt': {
+    slug: 'rau-cai-ngot-huu-co',
+    name: 'Rau Cải Ngọt Hữu Cơ',
+    priceNumber: 18000,
+    weight: 'Bó 350g',
+    categoryVi: 'Rau ăn lá hữu cơ',
+    image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&q=80',
   },
   'cải ngọt hữu cơ': {
     slug: 'rau-cai-ngot-huu-co',
     name: 'Rau Cải Ngọt Hữu Cơ',
-    priceNumber: 20000,
-    weight: '400g',
-    categoryVi: 'Rau lá hữu cơ',
+    priceNumber: 18000,
+    weight: 'Bó 350g',
+    categoryVi: 'Rau ăn lá hữu cơ',
     image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&q=80',
+  },
+  'cải ngọt': {
+    slug: 'rau-cai-ngot-huu-co',
+    name: 'Rau Cải Ngọt Hữu Cơ',
+    priceNumber: 18000,
+    weight: 'Bó 350g',
+    categoryVi: 'Rau ăn lá hữu cơ',
+    image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&q=80',
+  },
+  'rau cải': {
+    slug: 'cai-thia-baby-da-lat',
+    name: 'Cải Thìa Baby Đà Lạt',
+    priceNumber: 20000,
+    weight: 'Túi 350g',
+    categoryVi: 'Rau ăn lá hữu cơ',
+    image: 'https://images.unsplash.com/photo-1518843875459-f738682238a6?w=600&q=80',
+  },
+
+  // Sả tươi
+  'sả tươi bến tre': {
+    slug: 'sa-tuoi-ben-tre',
+    name: 'Sả Tươi Bến Tre',
+    priceNumber: 12000,
+    weight: 'Bó 200g',
+    categoryVi: 'Rau gia vị',
+    image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=600&q=80',
   },
   'sả tươi': {
     slug: 'sa-tuoi-ben-tre',
     name: 'Sả Tươi Bến Tre',
     priceNumber: 12000,
     weight: 'Bó 200g',
-    categoryVi: 'Gia vị tươi',
-    image: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=600&q=80',
+    categoryVi: 'Rau gia vị',
+    image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=600&q=80',
+  },
+
+  // Quả bơ
+  'bơ sáp đắk lắk': {
+    slug: 'bo-sap-dak-lak',
+    name: 'Bơ Sáp Đắk Lắk',
+    priceNumber: 48000,
+    weight: 'Túi 500g',
+    categoryVi: 'Trái cây Tây Nguyên',
+    image: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=600&q=80',
   },
   'quả bơ sáp': {
     slug: 'bo-sap-dak-lak',
     name: 'Bơ Sáp Đắk Lắk',
-    priceNumber: 45000,
-    weight: '500g',
+    priceNumber: 48000,
+    weight: 'Túi 500g',
     categoryVi: 'Trái cây Tây Nguyên',
     image: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=600&q=80',
   },
   'bơ hass đắk lắk': {
     slug: 'bo-sap-dak-lak',
     name: 'Bơ Sáp Đắk Lắk',
-    priceNumber: 45000,
-    weight: '500g',
+    priceNumber: 48000,
+    weight: 'Túi 500g',
     categoryVi: 'Trái cây Tây Nguyên',
     image: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=600&q=80',
   },
-  'bí đỏ hồ lô': {
+  'bơ sáp': {
+    slug: 'bo-sap-dak-lak',
+    name: 'Bơ Sáp Đắk Lắk',
+    priceNumber: 48000,
+    weight: 'Túi 500g',
+    categoryVi: 'Trái cây Tây Nguyên',
+    image: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=600&q=80',
+  },
+
+  // Bí đỏ
+  'bí đỏ hồ lô đà lạt': {
     slug: 'bi-do-ho-lo-da-lat',
     name: 'Bí Đỏ Hồ Lô Đà Lạt',
-    priceNumber: 26000,
+    priceNumber: 24000,
     weight: 'Trái 600g',
     categoryVi: 'Rau củ Đà Lạt',
     image: 'https://images.unsplash.com/photo-1570586437263-ab629fccc818?w=600&q=80',
   },
+  'bí đỏ hồ lô': {
+    slug: 'bi-do-ho-lo-da-lat',
+    name: 'Bí Đỏ Hồ Lô Đà Lạt',
+    priceNumber: 24000,
+    weight: 'Trái 600g',
+    categoryVi: 'Rau củ Đà Lạt',
+    image: 'https://images.unsplash.com/photo-1570586437263-ab629fccc818?w=600&q=80',
+  },
+
+  // Thịt heo
+  'thịt ba rọi heo thảo mộc': {
+    slug: 'thit-ba-roi-heo-thao-moc',
+    name: 'Thịt Ba Rọi Heo Thảo Mộc',
+    priceNumber: 88000,
+    weight: 'Khay 350g',
+    categoryVi: 'Thịt heo thảo mộc',
+    image: 'https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?w=600&q=80',
+  },
   'thịt heo thảo mộc': {
     slug: 'thit-ba-roi-heo-thao-moc',
     name: 'Thịt Ba Rọi Heo Thảo Mộc',
-    priceNumber: 92000,
+    priceNumber: 88000,
     weight: 'Khay 350g',
-    categoryVi: 'Thịt tươi sạch',
+    categoryVi: 'Thịt heo thảo mộc',
     image: 'https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?w=600&q=80',
+  },
+  'thịt ba rọi': {
+    slug: 'thit-ba-roi-heo-thao-moc',
+    name: 'Thịt Ba Rọi Heo Thảo Mộc',
+    priceNumber: 88000,
+    weight: 'Khay 350g',
+    categoryVi: 'Thịt heo thảo mộc',
+    image: 'https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?w=600&q=80',
+  },
+
+  // Cải thìa
+  'cải thìa baby đà lạt': {
+    slug: 'cai-thia-baby-da-lat',
+    name: 'Cải Thìa Baby Đà Lạt',
+    priceNumber: 20000,
+    weight: 'Túi 350g',
+    categoryVi: 'Rau ăn lá hữu cơ',
+    image: 'https://images.unsplash.com/photo-1518843875459-f738682238a6?w=600&q=80',
+  },
+  'cải thìa baby': {
+    slug: 'cai-thia-baby-da-lat',
+    name: 'Cải Thìa Baby Đà Lạt',
+    priceNumber: 20000,
+    weight: 'Túi 350g',
+    categoryVi: 'Rau ăn lá hữu cơ',
+    image: 'https://images.unsplash.com/photo-1518843875459-f738682238a6?w=600&q=80',
   },
   'cải thìa đà lạt': {
     slug: 'cai-thia-baby-da-lat',
     name: 'Cải Thìa Baby Đà Lạt',
-    priceNumber: 21000,
-    weight: '350g',
-    categoryVi: 'Rau lá hữu cơ',
+    priceNumber: 20000,
+    weight: 'Túi 350g',
+    categoryVi: 'Rau ăn lá hữu cơ',
     image: 'https://images.unsplash.com/photo-1518843875459-f738682238a6?w=600&q=80',
   },
-  'ớt chuông đà lạt': {
-    slug: 'ot-chuong-3-mau-da-lat',
-    name: 'Ớt Chuông 3 Màu',
-    priceNumber: 35000,
-    weight: '400g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=600&q=80',
+  'cải thìa': {
+    slug: 'cai-thia-baby-da-lat',
+    name: 'Cải Thìa Baby Đà Lạt',
+    priceNumber: 20000,
+    weight: 'Túi 350g',
+    categoryVi: 'Rau ăn lá hữu cơ',
+    image: 'https://images.unsplash.com/photo-1518843875459-f738682238a6?w=600&q=80',
+  },
+
+  // Cam sành
+  'cam sành vĩnh long': {
+    slug: 'cam-sanh-vinh-long',
+    name: 'Cam Sành Vĩnh Long',
+    priceNumber: 36000,
+    weight: 'Túi 1kg',
+    categoryVi: 'Trái cây miền Tây',
+    image: 'https://images.unsplash.com/photo-1547514701-42782101795e?w=600&q=80',
   },
   'cam sành tươi': {
     slug: 'cam-sanh-vinh-long',
     name: 'Cam Sành Vĩnh Long',
     priceNumber: 36000,
-    weight: '1kg',
+    weight: 'Túi 1kg',
+    categoryVi: 'Trái cây miền Tây',
+    image: 'https://images.unsplash.com/photo-1547514701-42782101795e?w=600&q=80',
+  },
+  'cam sành': {
+    slug: 'cam-sanh-vinh-long',
+    name: 'Cam Sành Vĩnh Long',
+    priceNumber: 36000,
+    weight: 'Túi 1kg',
     categoryVi: 'Trái cây miền Tây',
     image: 'https://images.unsplash.com/photo-1547514701-42782101795e?w=600&q=80',
   },
 };
+
+function resolveIngredientMeta(rawKey: string): IngredientMetaDef | null {
+  if (EXACT_INGREDIENT_META[rawKey]) return EXACT_INGREDIENT_META[rawKey];
+  for (const [k, meta] of Object.entries(EXACT_INGREDIENT_META)) {
+    if (rawKey.includes(k) || k.includes(rawKey)) {
+      return meta;
+    }
+  }
+  if (rawKey.includes('gà')) return EXACT_INGREDIENT_META['gà ta thả vườn nguyên con'];
+  if (rawKey.includes('ớt chuông')) return EXACT_INGREDIENT_META['ớt chuông 3 màu'];
+  if (rawKey.includes('cá hồi')) return EXACT_INGREDIENT_META['cá hồi na uy fillet tươi'];
+  if (rawKey.includes('thịt bò') || rawKey.includes('bò')) return EXACT_INGREDIENT_META['thịt bò bắp mỹ nhập khẩu'];
+  if (rawKey.includes('bông cải')) return EXACT_INGREDIENT_META['bông cải xanh đà lạt'];
+  if (rawKey.includes('cà rốt')) return EXACT_INGREDIENT_META['cà rốt baby đà lạt'];
+  if (rawKey.includes('cà chua')) return EXACT_INGREDIENT_META['cà chua bi đà lạt'];
+  if (rawKey.includes('dưa leo') || rawKey.includes('dưa chuột')) return EXACT_INGREDIENT_META['dưa leo baby đà lạt'];
+  if (rawKey.includes('sữa chua men sống')) return EXACT_INGREDIENT_META['sữa chua men sống đà lạt ít đường'];
+  if (rawKey.includes('sữa chua')) return EXACT_INGREDIENT_META['sữa chua hy lạp hữu cơ không đường'];
+  if (rawKey.includes('dâu tây')) return EXACT_INGREDIENT_META['dâu tây đà lạt'];
+  if (rawKey.includes('xoài')) return EXACT_INGREDIENT_META['xoài cát hòa lộc'];
+  if (rawKey.includes('nấm')) return EXACT_INGREDIENT_META['nấm đông cô đà lạt'];
+  if (rawKey.includes('tôm')) return EXACT_INGREDIENT_META['tôm sú tươi sống cà mau'];
+  if (rawKey.includes('cải thìa')) return EXACT_INGREDIENT_META['cải thìa baby'];
+  if (rawKey.includes('cải xanh')) return EXACT_INGREDIENT_META['cải xanh đà lạt'];
+  if (rawKey.includes('cải ngọt') || rawKey.includes('rau cải')) return EXACT_INGREDIENT_META['rau cải ngọt'];
+  if (rawKey.includes('sả')) return EXACT_INGREDIENT_META['sả tươi bến tre'];
+  if (rawKey.includes('bơ')) return EXACT_INGREDIENT_META['bơ sáp đắk lắk'];
+  if (rawKey.includes('bí đỏ')) return EXACT_INGREDIENT_META['bí đỏ hồ lô đà lạt'];
+  if (rawKey.includes('heo') || rawKey.includes('ba rọi')) return EXACT_INGREDIENT_META['thịt ba rọi heo thảo mộc'];
+  if (rawKey.includes('cam')) return EXACT_INGREDIENT_META['cam sành vĩnh long'];
+  return null;
+}
+
+function isCompatibleProduct(ingredientRaw: string, product: ApiProduct): boolean {
+  if (!product || !product.name) return false;
+  const pName = lowerKeepDiacritics(product.name);
+  const pSlug = product.slug || '';
+  const ing = lowerKeepDiacritics(ingredientRaw);
+
+  // If ingredient is cải xanh (not bông cải), product must NOT be bông cải
+  if (ing.includes('cải xanh') && !ing.includes('bông cải')) {
+    if (pName.includes('bông cải') || pSlug.includes('bong-cai')) return false;
+  }
+  // If ingredient is nấm, product must have nấm
+  if (ing.includes('nấm') && !pName.includes('nấm') && !pSlug.includes('nam')) {
+    return false;
+  }
+  // If ingredient is cà rốt, product must have cà rốt
+  if (ing.includes('cà rốt') && !pName.includes('cà rốt') && !pSlug.includes('ca-rot')) {
+    return false;
+  }
+  // If ingredient is ớt chuông, product must have ớt chuông
+  if (ing.includes('ớt chuông') && !pName.includes('ớt chuông') && !pSlug.includes('ot-chuong')) {
+    return false;
+  }
+  // If ingredient is gà, product must have gà
+  if (ing.includes('gà') && !pName.includes('gà') && !pSlug.includes('ga')) {
+    return false;
+  }
+  // If ingredient is sả, product must be real sả, and NOT cá thu, cá hồi, thịt, or false match from 'đặc sản'
+  if (/(?:^|[\s,;.-])sả(?:$|[\s,;.-])/i.test(ing) || ing.includes('sả')) {
+    const isRealSa = /(?:^|[\s,;.-])sả(?:$|[\s,;.-])|củ\s*sả|sả\s*tươi/i.test(pName);
+    const hasFalseMatch = /đặc\s*sản|nông\s*sản|thủy\s*sản|hải\s*sản|khoáng\s*sản/i.test(pName);
+    const isMeatOrFish = /cá\s*thu|cá\s*hồi|thịt|heo|bò|gà|tôm/i.test(pName);
+    if (!isRealSa || hasFalseMatch || isMeatOrFish || pName.includes('rau ngót') || pSlug.includes('rau-ngot')) {
+      return false;
+    }
+  }
+  // If ingredient is bơ, product must NOT be thịt bò
+  if (ing.includes('bơ') && (pName.includes('thịt bò') || pSlug.includes('thit-bo') || pName.includes('bò bắp'))) {
+    return false;
+  }
+  // If ingredient is thịt bò, product must have bò and NOT bơ
+  if (ing.includes('bò') && !ing.includes('bơ') && (!pName.includes('bò') || pName.includes('bơ sáp'))) {
+    return false;
+  }
+  return true;
+}
 
 function matchCatalogueProduct(
   ingredientName: string,
   catalogue: ApiProduct[],
   preMatched?: ApiProduct | null
 ): ApiProduct | null {
-  // 0. If the backend /api/nutrition already matched the exact MongoDB product, use it directly
-  if (preMatched && preMatched.name && preMatched.image) {
-    return preMatched;
+  const rawKey = lowerKeepDiacritics(ingredientName);
+  const exactMeta = resolveIngredientMeta(rawKey);
+
+  // 0. If the backend already matched the product AND it is actually compatible with the ingredient name, use it
+  if (preMatched && preMatched.name && (preMatched.image || preMatched.priceNumber)) {
+    if (isCompatibleProduct(rawKey, preMatched)) {
+      return preMatched;
+    }
   }
 
-  const rawKey = lowerKeepDiacritics(ingredientName);
-  const exactMeta = EXACT_INGREDIENT_META[rawKey];
-
-  // 1. Match by exact slug or exact Vietnamese name (preserving diacritics so 'bơ' and 'bò' never collide)
+  // 1. Strict match in catalogue (MongoDB products)
   if (catalogue && catalogue.length > 0) {
     if (exactMeta) {
-      const bySlug = catalogue.find((p) => p.slug === exactMeta.slug);
-      if (bySlug) {
+      const bySlug = catalogue.find(
+        (p) => p.slug === exactMeta.slug || normalizeStr(p.slug) === normalizeStr(exactMeta.slug)
+      );
+      if (bySlug && isCompatibleProduct(rawKey, bySlug)) {
         return {
           ...bySlug,
           image: exactMeta.image || bySlug.image,
         };
       }
-      const byExactName = catalogue.find((p) => lowerKeepDiacritics(p.name) === lowerKeepDiacritics(exactMeta.name));
-      if (byExactName) {
+      const byExactName = catalogue.find(
+        (p) => lowerKeepDiacritics(p.name) === lowerKeepDiacritics(exactMeta.name)
+      );
+      if (byExactName && isCompatibleProduct(rawKey, byExactName)) {
         return {
           ...byExactName,
           image: exactMeta.image || byExactName.image,
@@ -467,15 +1014,53 @@ function matchCatalogueProduct(
       }
     }
 
-    // 2. Diacritic-preserving substring check
-    const byDiacriticContains = catalogue.find((p) => {
-      const pLower = lowerKeepDiacritics(p.name);
-      return pLower === rawKey || pLower.includes(rawKey) || rawKey.includes(pLower);
-    });
-    if (byDiacriticContains) return byDiacriticContains;
+    // 2. Strict core agricultural noun-phrase matching with explicit exclusions
+    const CORE_SEARCH_PHRASES: { pattern: RegExp; exclude?: RegExp }[] = [
+      { pattern: /nấm\s+đông\s+cô|nấm/i },
+      { pattern: /cà\s+rốt/i },
+      { pattern: /bông\s+cải\s+xanh|súp\s+lơ/i },
+      { pattern: /cải\s+xanh/i, exclude: /bông\s+cải/i },
+      { pattern: /cải\s+thìa/i },
+      { pattern: /cải\s+ngọt/i, exclude: /bông\s+cải/i },
+      { pattern: /ớt\s+chuông/i },
+      { pattern: /cà\s+chua/i },
+      { pattern: /dưa\s+leo|dưa\s+chuột/i },
+      { pattern: /cá\s+hồi/i },
+      { pattern: /thịt\s+bò|thăn\s+bò|bắp\s+bò/i },
+      { pattern: /thịt\s+gà|gà\s+ta|ức\s+gà/i },
+      { pattern: /thịt\s+heo|ba\s+rọi|thịt\s+lợn/i },
+      { pattern: /tôm\s+sú|tôm/i },
+      { pattern: /sữa\s+chua\s+men\s+sống/i },
+      { pattern: /sữa\s+chua\s+hy\s+lạp|sữa\s+chua/i },
+      { pattern: /dâu\s+tây/i },
+      { pattern: /xoài/i },
+      { pattern: /sả\s+tươi|củ\s+sả|(?:^|\s)sả(?:\s|$)/i, exclude: /đặc\s*sản|nông\s*sản|thủy\s*sản|hải\s*sản|cá\s*thu|cá\s*hồi|thịt/i },
+      { pattern: /bơ\s+sáp|quả\s+bơ/i, exclude: /thịt\s+bò|thăn\s+bò/i },
+      { pattern: /bí\s+đỏ/i },
+      { pattern: /cam\s+sành/i },
+    ];
+
+    for (const rule of CORE_SEARCH_PHRASES) {
+      if (rule.pattern.test(rawKey)) {
+        const found = catalogue.find((p) => {
+          const pName = p.name || '';
+          if (rule.exclude && rule.exclude.test(pName)) return false;
+          return rule.pattern.test(pName);
+        });
+        if (found && isCompatibleProduct(rawKey, found)) {
+          return {
+            ...found,
+            image: exactMeta?.image || found.image,
+          };
+        }
+        // If this core ingredient is recognized but not present in catalogue, STOP here immediately!
+        // Never fall through to loose single-word / stopword matching!
+        break;
+      }
+    }
   }
 
-  // 3. Fallback to the exact ingredient meta so the photo & price are 100% accurate even before catalogue finishes loading
+  // 3. Fallback to the exact ingredient meta so the photo, price & weight are 100% accurate
   if (exactMeta) {
     return {
       _id: exactMeta.slug,
@@ -512,7 +1097,7 @@ export class NutritionComponent implements OnInit {
   protected formatPrice = formatPrice;
 
   heroConfig = signal<NutritionHeroConfig>({
-    kicker: ' Trợ Lý Thực Đơn Khoa Học · Dữ Liệu Trực Tuyến',
+    kicker: '🥗 Trợ Lý Thực Đơn Khoa Học · Dữ Liệu Trực Tuyến',
     title: 'Dinh dưỡng thông minh & Thực đơn chuẩn vị',
     subtitle:
       'Khám phá các gói thực đơn dinh dưỡng tiết kiệm, xem chi tiết công thức chế biến từng bước, bảng thành phần vi chất và thêm trọn bộ nguyên liệu tươi sạch vào giỏ hàng chỉ với một chạm.',
@@ -545,13 +1130,13 @@ export class NutritionComponent implements OnInit {
   recentOrderedItemNames = signal<string[]>([]);
 
   readonly quickSearchTags = [
-    { label: ' Sữa chua', query: 'sữa chua' },
-    { label: ' Cá hồi', query: 'cá hồi' },
-    { label: ' Quả bơ', query: 'bơ' },
-    { label: ' Thịt gà', query: 'gà' },
-    { label: ' Dâu tây', query: 'dâu tây' },
-    { label: ' Thịt bò', query: 'thịt bò' },
-    { label: ' Nấm đông cô', query: 'nấm' },
+    { label: '🍶 Sữa chua', query: 'sữa chua' },
+    { label: '🐟 Cá hồi', query: 'cá hồi' },
+    { label: '🥑 Quả bơ', query: 'bơ' },
+    { label: '🍗 Thịt gà', query: 'gà' },
+    { label: '🍓 Dâu tây', query: 'dâu tây' },
+    { label: '🥩 Thịt bò', query: 'thịt bò' },
+    { label: '🍄 Nấm đông cô', query: 'nấm' },
   ];
 
   // ===== DAILY & WEEKLY MEAL PLANNER STATE =====
@@ -566,16 +1151,17 @@ export class NutritionComponent implements OnInit {
   ];
 
   readonly MEAL_SLOTS_META: { key: MealSlotKey; label: string; time: string; icon: string }[] = [
-    { key: 'breakfast', label: 'Bữa Sáng Năng Lượng', time: '07:00 – 08:30', icon: '' },
-    { key: 'lunch', label: 'Bữa Trưa Đủ Chất', time: '11:30 – 13:00', icon: '' },
-    { key: 'snack', label: 'Bữa Phụ & Sữa Chua', time: '15:30 – 16:30', icon: '' },
-    { key: 'dinner', label: 'Bữa Tối Thanh Đạm', time: '18:30 – 20:00', icon: '' },
+    { key: 'breakfast', label: 'Bữa Sáng Năng Lượng', time: '07:00 – 08:30', icon: '☀️' },
+    { key: 'lunch', label: 'Bữa Trưa Đủ Chất', time: '11:30 – 13:00', icon: '🍲' },
+    { key: 'snack', label: 'Bữa Phụ & Sữa Chua', time: '15:30 – 16:30', icon: '🥣' },
+    { key: 'dinner', label: 'Bữa Tối Thanh Đạm', time: '18:30 – 20:00', icon: '🥗' },
   ];
 
   plannerMode = signal<'day' | 'week'>('day');
   selectedWeekDay = signal<string>('mon');
   weeklyOverviewMode = signal<boolean>(false);
   plannerPreset = signal<'eatclean' | 'protein' | 'family' | 'yogurt_detox'>('protein');
+  currentStep = signal<1 | 2 | 3>(1);
   mealsPerDay = signal<2 | 3 | 4>(3);
   targetDailyKcal = signal<number>(1650);
   targetProtein = signal<number>(125);
@@ -585,16 +1171,18 @@ export class NutritionComponent implements OnInit {
   priorityNutrients = signal<string[]>(['protein', 'fiber', 'probiotic']);
   showAdvancedConfig = signal<boolean>(false);
   expandedIngredientIds = signal<Record<string, boolean>>({});
+  showDayPlanBreakdown = signal<boolean>(false);
+  plannerOwnedIngredientIds = signal<Record<string, boolean>>({});
   private planRefreshTimer: ReturnType<typeof setTimeout> | undefined;
   private macroInputTimer: ReturnType<typeof setTimeout> | undefined;
 
   readonly NUTRIENT_BOOST_OPTIONS = [
-    { id: 'protein', label: ' Tăng Đạm (Protein Xây Cơ)', desc: 'Thịt bò, ức gà, cá hồi, tôm sú' },
-    { id: 'fiber', label: ' Giàu Chất Xơ (No Lâu)', desc: 'Bông cải xanh, cải ngọt, bí đỏ' },
-    { id: 'probiotic', label: ' Lợi Khuẩn Sữa Chua', desc: 'Sữa chua Hy Lạp, men sống tiêu hóa' },
-    { id: 'omega3', label: ' Omega-3 & Tim Mạch', desc: 'Cá hồi Na Uy, quả bơ sáp' },
-    { id: 'vitamin', label: ' Vitamin Đẹp Da & Đề Kháng', desc: 'Dâu tây, cam sành, ớt chuông' },
-    { id: 'lowcarb', label: ' Low-Carb (Giảm Tinh Bột)', desc: 'Ưu tiên rau xanh & đạm nạc' },
+    { id: 'protein', label: '🥩 Tăng Đạm (Protein Xây Cơ)', desc: 'Thịt bò, ức gà, cá hồi, tôm sú' },
+    { id: 'fiber', label: '🥦 Giàu Chất Xơ (No Lâu)', desc: 'Bông cải xanh, cải ngọt, bí đỏ' },
+    { id: 'probiotic', label: '🍶 Lợi Khuẩn Sữa Chua', desc: 'Sữa chua Hy Lạp, men sống tiêu hóa' },
+    { id: 'omega3', label: '🐟 Omega-3 & Tim Mạch', desc: 'Cá hồi Na Uy, quả bơ sáp' },
+    { id: 'vitamin', label: '🍊 Vitamin Đẹp Da & Đề Kháng', desc: 'Dâu tây, cam sành, ớt chuông' },
+    { id: 'lowcarb', label: '🥑 Low-Carb (Giảm Tinh Bột)', desc: 'Ưu tiên rau xanh & đạm nạc' },
   ];
 
   readonly DAY_THEMES: Record<'eatclean' | 'protein' | 'family' | 'yogurt_detox', string> = {
@@ -611,7 +1199,7 @@ export class NutritionComponent implements OnInit {
       wed: 'Thứ 4: Phục Hồi Cơ Chuyên Sâu Cùng Omega-3 Cá Hồi',
       thu: 'Thứ 5: Siết Cơ Nạc Với Ức Gà & Sữa Chua Hy Lạp',
       fri: 'Thứ 6: Bổ Sung Kẽm & Đạm Hải Sản Tôm Sú Cà Mau',
-      sat: 'Th̆ 7: Năng Lượng Đỉnh Cao Cho Buổi Tập Cuối Tuần',
+      sat: 'Thứ 7: Năng Lượng Đỉnh Cao Cho Buổi Tập Cuối Tuần',
       sun: 'Chủ Nhật: Giãn Cơ, Bù Khoáng & Tiêu Hóa Nhẹ Nhàng',
     },
     eatclean: {
@@ -669,6 +1257,7 @@ export class NutritionComponent implements OnInit {
   loading = signal<boolean>(false);
   results = signal<RecipeResult[]>([]);
   addedToCart = signal<string | null>(null);
+  lastAddedRecipe = signal<RecipeResult | null>(null);
   hasSearched = signal<boolean>(false);
 
   // Dynamic Macro Caloric Distribution Ratio (WHO / National Nutrition Institute standards)
@@ -731,21 +1320,21 @@ export class NutritionComponent implements OnInit {
 
   getCalorieStatusText(total: number, target: number): string {
     const diff = total - target;
-    if (Math.abs(diff) <= 80) return ' Chuẩn Calo';
-    if (diff > 80) return `Thực đơn vượt mục tiêu ${diff} kcal`;
-    return `Mục tiêu cao hơn thực đơn ${Math.abs(diff)} kcal`;
+    if (Math.abs(diff) <= 80) return '✓ Đạt chuẩn';
+    if (diff > 80) return `Vượt ${diff} kcal`;
+    return `Thiếu ${Math.abs(diff)} kcal`;
   }
 
   getProteinStatusText(total: number, target: number): string {
-    if (total > target) return `Thực đơn vượt mục tiêu ${total - target}g`;
-    if (total === target) return ' Đạt mục tiêu đạm';
-    return `Mục tiêu cao hơn thực đơn ${target - total}g`;
+    if (total > target) return `Vượt ${total - target}g`;
+    if (total === target) return '✓ Đạt';
+    return `Thiếu ${target - total}g`;
   }
 
   getNutrientStatusText(actual: number, target: number): string {
-    if (actual > target) return `Thực đơn vượt mục tiêu ${actual - target}g`;
-    if (actual === target) return 'Đạt mục tiêu';
-    return `Mục tiêu cao hơn thực đơn ${target - actual}g`;
+    if (actual > target) return `Vượt ${actual - target}g`;
+    if (actual === target) return '✓ Đạt';
+    return `Thiếu ${target - actual}g`;
   }
 
   readonly selectedDetailRecipe = computed<RecipeResult | null>(() => {
@@ -889,49 +1478,199 @@ export class NutritionComponent implements OnInit {
     return this.MEAL_SLOTS_META;
   }
 
+  private getMealSlotWeights(activeMetas: { key: MealSlotKey }[]): Record<MealSlotKey, number> {
+    const count = activeMetas.length;
+    if (count === 2) {
+      return { breakfast: 0, lunch: 0.5, dinner: 0.5, snack: 0 };
+    }
+    if (count === 3) {
+      return { breakfast: 0.3, lunch: 0.4, dinner: 0.3, snack: 0 };
+    }
+    return { breakfast: 0.25, lunch: 0.35, snack: 0.15, dinner: 0.25 };
+  }
+
   private buildDayPlanView(dayKey: string, dayLabel: string): DayPlanComputedView {
-    const sched = this.weeklySchedule()[dayKey] || this.weeklySchedule()['mon'];
+    const isSingle = dayKey === 'day';
+    const sched = isSingle ? this.singleDaySchedule() : (this.weeklySchedule()[dayKey] || this.weeklySchedule()['mon']);
     const all = this.results();
     const activeMetas = this.getActiveSlotMetas();
-    const slots: MealSlotView[] = activeMetas.map((meta) => ({
-      slotKey: meta.key,
-      slotLabel: meta.label,
-      slotTime: meta.time,
-      slotIcon: meta.icon,
-      recipe: all.find((r) => r.id === sched[meta.key]) || all[0] || null,
-    }));
+    const weights = this.getMealSlotWeights(activeMetas);
+    const targetKcal = Math.max(1000, this.targetDailyKcal());
+    const count = activeMetas.length;
+
+    const slots: MealSlotView[] = activeMetas.map((meta) => {
+      const rec = all.find((r) => r.id === sched[meta.key]) || all[0] || null;
+      if (!rec) {
+        return {
+          slotKey: meta.key,
+          slotLabel: meta.label,
+          slotTime: meta.time,
+          slotIcon: meta.icon,
+          recipe: null,
+        };
+      }
+      const mealWeight = weights[meta.key] || (1 / Math.max(1, count));
+      const slotTargetKcal = targetKcal * mealWeight;
+      const baseKcal = Math.max(1, rec.calories || 420);
+      const portionMultiplier = Math.round((slotTargetKcal / baseKcal) * 10) / 10;
+      const scaledCalories = Math.round(baseKcal * portionMultiplier);
+      const scaledProtein = Math.round(this.parseMacroNum(rec.macros.protein) * portionMultiplier);
+      const scaledCarbs = Math.round(this.parseMacroNum(rec.macros.carbs) * portionMultiplier);
+      const scaledFat = Math.round(this.parseMacroNum(rec.macros.fat) * portionMultiplier);
+      const scaledFiber = Math.round(this.parseMacroNum(rec.macros.fiber) * portionMultiplier);
+
+      return {
+        slotKey: meta.key,
+        slotLabel: meta.label,
+        slotTime: meta.time,
+        slotIcon: meta.icon,
+        recipe: rec,
+        portionMultiplier,
+        scaledCalories,
+        scaledProtein,
+        scaledCarbs,
+        scaledFat,
+        scaledFiber,
+      };
+    });
 
     let totalCalories = 0;
     let totalProtein = 0;
     let totalCarbs = 0;
     let totalFat = 0;
     let totalFiber = 0;
-    const prodMap = new Map<string, ApiProduct>();
+
+    interface ProductUsageAgg {
+      product: ApiProduct;
+      totalPortion: number;
+      usedSlots: { slotLabel: string; portion: number }[];
+      totalGrams: number;
+    }
+    const prodUsageMap = new Map<string, ProductUsageAgg>();
 
     for (const s of slots) {
       if (s.recipe) {
-        totalCalories += s.recipe.calories || 0;
-        totalProtein += this.parseMacroNum(s.recipe.macros.protein);
-        totalCarbs += this.parseMacroNum(s.recipe.macros.carbs);
-        totalFat += this.parseMacroNum(s.recipe.macros.fat);
-        totalFiber += this.parseMacroNum(s.recipe.macros.fiber);
+        totalCalories += s.scaledCalories || s.recipe.calories || 0;
+        totalProtein += s.scaledProtein || this.parseMacroNum(s.recipe.macros.protein);
+        totalCarbs += s.scaledCarbs || this.parseMacroNum(s.recipe.macros.carbs);
+        totalFat += s.scaledFat || this.parseMacroNum(s.recipe.macros.fat);
+        totalFiber += s.scaledFiber || this.parseMacroNum(s.recipe.macros.fiber);
+
+        const slotPortion = s.portionMultiplier || 1.0;
+        const currentServings = Math.max(1, this.servings());
+
         for (const ing of s.recipe.ingredients) {
           if (ing.product) {
-            prodMap.set(ing.product._id || ing.product.slug, ing.product);
+            const pKey = ing.product._id || ing.product.slug;
+            const existing = prodUsageMap.get(pKey);
+
+            let fallbackGrams = 100;
+            const pName = (ing.product.name || ing.name).toLowerCase();
+            if (/thịt|bò|gà|cá|tôm|heo|fillet/i.test(pName)) {
+              fallbackGrams = 150;
+            } else if (/cải|rau|xà lách|nấm|cà chua|cà rốt|ớt chuông|dưa leo|bí đỏ/i.test(pName)) {
+              fallbackGrams = 100;
+            } else if (/sả|tỏi|hành|gừng|ớt/i.test(pName)) {
+              fallbackGrams = 25;
+            } else if (/sữa chua|bơ|dâu|xoài|trái cây/i.test(pName)) {
+              fallbackGrams = 120;
+            }
+
+            // Important: ing.amount in RecipeResult is already scaled by s.recipe.servings.
+            // We must divide by s.recipe.servings to get the base single-serving gram weight!
+            const rawGrams = parseGramWeight(ing.amount + (ing.unit || ''));
+            const recipeServingsCount = Math.max(1, s.recipe.servings || currentServings);
+            const baseGramsPerPerson = rawGrams > 0 ? (rawGrams / recipeServingsCount) : fallbackGrams;
+
+            // Total grams needed for this slot = base grams per person * portion multiplier * number of people
+            const slotGrams = Math.round(baseGramsPerPerson * slotPortion * currentServings);
+            // Portion multiplier reflects the sum of slot portions (e.g. 1.2x + 1.6x + 1.2x = 4.0x)
+            const portionMultiple = Math.round(slotPortion * 10) / 10;
+
+            if (existing) {
+              existing.totalPortion = Math.round((existing.totalPortion + portionMultiple) * 10) / 10;
+              existing.totalGrams += slotGrams;
+              existing.usedSlots.push({ slotLabel: s.slotLabel, portion: slotPortion });
+            } else {
+              prodUsageMap.set(pKey, {
+                product: ing.product,
+                totalPortion: portionMultiple,
+                totalGrams: slotGrams,
+                usedSlots: [{ slotLabel: s.slotLabel, portion: slotPortion }],
+              });
+            }
           }
         }
       }
     }
 
-    const matchedProducts = Array.from(prodMap.values());
-    const servingMultiplier = Math.max(1, Math.round(this.servings() / 2));
-    const originalPrice = matchedProducts.reduce((sum, p) => sum + (p.priceNumber || 0), 0) * servingMultiplier;
+    const matchedProducts = Array.from(prodUsageMap.values()).map(a => a.product);
+    const ownedMap = this.plannerOwnedIngredientIds();
+    let originalPrice = 0;
+    let alreadyInCartVal = 0;
+    let missingOriginalPrice = 0;
+    let alreadyInCartCount = 0;
+    let missingCount = 0;
+
+    const ingredientBreakdown: PlanIngredientBreakdown[] = Array.from(prodUsageMap.values()).map((agg) => {
+      const p = agg.product;
+      const pid = p._id || p.slug;
+      const isOwned = !!ownedMap[pid];
+      const unitPrice = p.priceNumber || 0;
+
+      const packGramSize = parseGramWeight(p.weight) || 350;
+      let neededPacks = 1;
+      if (isOwned) {
+        neededPacks = 0;
+      } else if (packGramSize > 0 && agg.totalGrams > 0) {
+        neededPacks = Math.max(1, Math.ceil(agg.totalGrams / packGramSize));
+      } else {
+        neededPacks = Math.max(1, Math.ceil(agg.totalPortion / 2.0));
+      }
+
+      const inCartPacks = this.getCartQty(p);
+      const effectiveInCart = Math.min(neededPacks, inCartPacks);
+      const missingPacks = Math.max(0, neededPacks - effectiveInCart);
+      const totalPrice = unitPrice * neededPacks;
+      const inCartValue = unitPrice * effectiveInCart;
+      const missingOriginal = unitPrice * missingPacks;
+      const missingDeal = Math.round((missingOriginal * 0.88) / 1000) * 1000;
+
+      originalPrice += totalPrice;
+      alreadyInCartVal += inCartValue;
+      missingOriginalPrice += missingOriginal;
+      if (effectiveInCart > 0) alreadyInCartCount++;
+      if (missingPacks > 0) missingCount++;
+
+      const usedInSlots = agg.usedSlots.map((u) => `${u.slotLabel} (${u.portion}x)`);
+      const formulaExplanation = `Dùng cho ${usedInSlots.join(' + ')} · Tổng ${agg.totalPortion}x khẩu phần (${this.servings()} người ăn) → Cần ~${agg.totalGrams}g. Quy cách gói ${p.weight || packGramSize + 'g'} → Cần mua ${neededPacks} ${this.getProductPackUnit(p)}.`;
+
+      return {
+        product: p,
+        unitPrice,
+        neededPacks,
+        inCartPacks,
+        missingPacks,
+        totalPrice,
+        inCartValue,
+        missingDealPrice: missingDeal,
+        owned: isOwned,
+        totalPortionMultiplier: agg.totalPortion,
+        usedInSlots,
+        estimatedGramsNeeded: agg.totalGrams,
+        formulaExplanation,
+      };
+    });
+
     const dealPrice = Math.round((originalPrice * 0.88) / 1000) * 1000;
+    const missingDealPrice = Math.round((missingOriginalPrice * 0.88) / 1000) * 1000;
     const savedPrice = Math.max(0, originalPrice - dealPrice);
+    const allInCart = matchedProducts.length > 0 && missingCount === 0;
+
     const preset = this.plannerPreset();
-    const dayTheme =
-      this.WEEK_DAY_THEMES[preset]?.[dayKey] ||
-      'Thực đơn cân bằng dinh dưỡng & nông sản tươi sạch thu hoạch trong ngày';
+    const dayTheme = isSingle
+      ? (this.DAY_THEMES[preset] || 'Thực đơn cân bằng dinh dưỡng chuẩn khoa học')
+      : (this.WEEK_DAY_THEMES[preset]?.[dayKey] || 'Thực đơn cân bằng dinh dưỡng & nông sản tươi sạch thu hoạch trong ngày');
 
     return {
       dayKey,
@@ -948,68 +1687,20 @@ export class NutritionComponent implements OnInit {
       dealPrice,
       savedPrice,
       matchedProducts,
+      alreadyInCartCount,
+      alreadyInCartVal,
+      missingCount,
+      missingOriginalPrice,
+      missingDealPrice,
+      allInCart,
+      ingredientBreakdown,
     };
   }
 
   readonly activeDayPlan = computed<DayPlanComputedView>(() => {
     if (this.plannerMode() === 'day') {
       const activeMetas = this.getActiveSlotMetas();
-      const sched = this.singleDaySchedule();
-      const all = this.results();
-      const slots: MealSlotView[] = activeMetas.map((meta) => ({
-        slotKey: meta.key,
-        slotLabel: meta.label,
-        slotTime: meta.time,
-        slotIcon: meta.icon,
-        recipe: all.find((r) => r.id === sched[meta.key]) || all[0] || null,
-      }));
-
-      let totalCalories = 0;
-      let totalProtein = 0;
-      let totalCarbs = 0;
-      let totalFat = 0;
-      let totalFiber = 0;
-      const prodMap = new Map<string, ApiProduct>();
-
-      for (const s of slots) {
-        if (s.recipe) {
-          totalCalories += s.recipe.calories || 0;
-          totalProtein += this.parseMacroNum(s.recipe.macros.protein);
-          totalCarbs += this.parseMacroNum(s.recipe.macros.carbs);
-          totalFat += this.parseMacroNum(s.recipe.macros.fat);
-          totalFiber += this.parseMacroNum(s.recipe.macros.fiber);
-          for (const ing of s.recipe.ingredients) {
-            if (ing.product) {
-              prodMap.set(ing.product._id || ing.product.slug, ing.product);
-            }
-          }
-        }
-      }
-
-      const matchedProducts = Array.from(prodMap.values());
-      const servingMultiplier = Math.max(1, Math.round(this.servings() / 2));
-      const originalPrice = matchedProducts.reduce((sum, p) => sum + (p.priceNumber || 0), 0) * servingMultiplier;
-      const dealPrice = Math.round((originalPrice * 0.88) / 1000) * 1000;
-      const savedPrice = Math.max(0, originalPrice - dealPrice);
-      const preset = this.plannerPreset();
-      const dayTheme = this.DAY_THEMES[preset] || 'Thực đơn cân bằng dinh dưỡng chuẩn khoa học';
-
-      return {
-        dayKey: 'day',
-        dayLabel: `Thực đơn Trong Ngày (${activeMetas.length} bữa)`,
-        dayTheme,
-        mealsPerDayCount: activeMetas.length,
-        slots,
-        totalCalories,
-        totalProtein: Math.round(totalProtein),
-        totalCarbs: Math.round(totalCarbs),
-        totalFat: Math.round(totalFat),
-        totalFiber: Math.round(totalFiber),
-        originalPrice,
-        dealPrice,
-        savedPrice,
-        matchedProducts,
-      };
+      return this.buildDayPlanView('day', `Thực đơn Trong Ngày (${activeMetas.length} bữa)`);
     }
 
     const dKey = this.selectedWeekDay();
@@ -1036,9 +1727,54 @@ export class NutritionComponent implements OnInit {
       }
     }
     const matchedProducts = Array.from(prodMap.values());
-    const originalPrice = Math.round((matchedProducts.reduce((s, p) => s + (p.priceNumber || 0), 0) * 2.2) / 1000) * 1000;
+    const ownedMap = this.plannerOwnedIngredientIds();
+    let originalPrice = 0;
+    let alreadyInCartVal = 0;
+    let missingOriginalPrice = 0;
+    let alreadyInCartCount = 0;
+    let missingCount = 0;
+
+    const ingredientBreakdown: PlanIngredientBreakdown[] = matchedProducts.map((p) => {
+      const pid = p._id || p.slug;
+      const isOwned = !!ownedMap[pid];
+      const unitPrice = p.priceNumber || 0;
+      const neededPacks = isOwned ? 0 : 2;
+      const inCartPacks = this.getCartQty(p);
+      const effectiveInCart = Math.min(neededPacks, inCartPacks);
+      const missingPacks = Math.max(0, neededPacks - effectiveInCart);
+      const totalPrice = unitPrice * neededPacks;
+      const inCartValue = unitPrice * effectiveInCart;
+      const missingOriginal = unitPrice * missingPacks;
+      const missingDeal = Math.round((missingOriginal * 0.8) / 1000) * 1000;
+
+      originalPrice += totalPrice;
+      alreadyInCartVal += inCartValue;
+      missingOriginalPrice += missingOriginal;
+      if (effectiveInCart > 0) alreadyInCartCount++;
+      if (missingPacks > 0) missingCount++;
+
+      return {
+        product: p,
+        unitPrice,
+        neededPacks,
+        inCartPacks,
+        missingPacks,
+        totalPrice,
+        inCartValue,
+        missingDealPrice: missingDeal,
+        owned: isOwned,
+        totalPortionMultiplier: 7 * (this.servings() || 1),
+        usedInSlots: ['Thực đơn 7 ngày cả tuần'],
+        estimatedGramsNeeded: 700,
+        formulaExplanation: `Định lượng cho cả tuần 7 ngày (${this.mealsPerDay() * 7} bữa) → Cần ${neededPacks} ${this.getProductPackUnit(p)}.`,
+      };
+    });
+
     const dealPrice = Math.round((originalPrice * 0.8) / 1000) * 1000;
+    const missingDealPrice = Math.round((missingOriginalPrice * 0.8) / 1000) * 1000;
     const savedPrice = Math.max(0, originalPrice - dealPrice);
+    const allInCart = matchedProducts.length > 0 && missingCount === 0;
+
     return {
       avgCaloriesPerDay: Math.round(totalCalories / 7),
       avgProteinPerDay: Math.round(totalProtein / 7),
@@ -1048,6 +1784,13 @@ export class NutritionComponent implements OnInit {
       originalPrice,
       dealPrice,
       savedPrice,
+      alreadyInCartCount,
+      alreadyInCartVal,
+      missingCount,
+      missingOriginalPrice,
+      missingDealPrice,
+      allInCart,
+      ingredientBreakdown,
     };
   });
 
@@ -1078,6 +1821,19 @@ export class NutritionComponent implements OnInit {
   getMacroPercent(actual: number, target: number): number {
     if (!target || target <= 0) return 100;
     return Math.min(100, Math.round((actual / target) * 100));
+  }
+
+  setStep(step: 1 | 2 | 3): void {
+    this.currentStep.set(step);
+  }
+
+  getPresetLabel(preset?: string): string {
+    const p = preset || this.plannerPreset();
+    if (p === 'protein') return 'Tập Gym & Tăng Cơ';
+    if (p === 'eatclean') return 'Giảm Cân Eat Clean';
+    if (p === 'family') return 'Cơm Nhà Cân Bằng';
+    if (p === 'yogurt_detox') return 'Thanh Lọc Tiêu Hóa';
+    return 'Cân Bằng Dinh Dưỡng';
   }
 
   applyPlannerPreset(preset: 'eatclean' | 'protein' | 'family' | 'yogurt_detox'): void {
@@ -1197,7 +1953,7 @@ export class NutritionComponent implements OnInit {
     this.weeklySchedule.set(newSchedule);
     const modeLabel = this.plannerMode() === 'day' ? `Thực đơn Ngày (${this.mealsPerDay()} bữa)` : `Thực đơn Cả Tuần 7 Ngày (${this.mealsPerDay()} bữa/ngày)`;
     this.addedToCart.set(
-      ` Đã thiết lập ${modeLabel} theo mục tiêu: ${this.targetDailyKcal()} kcal/ngày · Đạm ${this.targetProtein()}g · Chất xơ ${this.targetFiber()}g!`
+      `✓ Đã thiết lập ${modeLabel} theo mục tiêu: ${this.targetDailyKcal()} kcal/ngày · Đạm ${this.targetProtein()}g · Chất xơ ${this.targetFiber()}g!`
     );
     setTimeout(() => this.addedToCart.set(null), 3500);
   }
@@ -1243,7 +1999,7 @@ export class NutritionComponent implements OnInit {
           (priorities.includes('omega3') && (text.includes('ca hoi') || text.includes('bo')) ? 0.001 : 0) +
           (priorities.includes('vitamin') && (text.includes('dau tay') || text.includes('cam') || text.includes('ca rot')) ? 0.001 : 0);
       }, 0);
-      const score = -error - repeats * 0.01 - reusePenalty + priorityBonus;
+      const score = -error - repeats * 4.0 - reusePenalty + priorityBonus;
       if (score > bestScore) {
         bestScore = score;
         best = [...recipes];
@@ -1347,33 +2103,101 @@ export class NutritionComponent implements OnInit {
     }
   }
 
+  togglePlannerIngredientOwned(productId: string): void {
+    this.plannerOwnedIngredientIds.update((prev) => ({
+      ...prev,
+      [productId]: !prev[productId],
+    }));
+  }
+
+  toggleDayPlanBreakdown(): void {
+    this.showDayPlanBreakdown.update((v) => !v);
+  }
+
+  isPlannerIngredientOwned(productId: string): boolean {
+    return !!this.plannerOwnedIngredientIds()[productId];
+  }
+
   buyDayPlanIngredients(dayPlan: DayPlanComputedView): void {
     if (dayPlan.matchedProducts.length === 0) return;
-    for (const p of dayPlan.matchedProducts) {
-      const discounted = Math.round(((p.priceNumber || 0) * 0.88) / 500) * 500;
-      this.cart.addItem(toCartProduct(p, discounted), 1);
+    const neededToAdd: { product: ApiProduct; qty: number }[] = [];
+    const alreadyInCart: ApiProduct[] = [];
+
+    for (const item of dayPlan.ingredientBreakdown) {
+      if (item.owned) continue;
+      if (item.missingPacks > 0) {
+        neededToAdd.push({ product: item.product, qty: item.missingPacks });
+      } else {
+        alreadyInCart.push(item.product);
+      }
     }
+
+    if (neededToAdd.length === 0) {
+      this.addedToCart.set(`Tất cả nguyên liệu cho ${dayPlan.dayLabel} đã có sẵn trong giỏ hàng (hoặc đã có tại nhà)!`);
+      setTimeout(() => this.addedToCart.set(null), 3500);
+      return;
+    }
+
+    for (const { product: p, qty } of neededToAdd) {
+      const discounted = Math.round(((p.priceNumber || 0) * 0.88) / 500) * 500;
+      this.cart.addItem(toCartProduct(p, discounted), qty);
+    }
+    // Đảm bảo tất cả nguyên liệu của thực đơn (cả món mới thêm và món đã có từ trước) đều được tick chọn trong giỏ hàng
+    this.cart.ensureItemsSelected(dayPlan.matchedProducts.map((p) => p.name || p.slug));
     for (const s of dayPlan.slots) {
-      if (s.recipe) this.recordRecentMeal(s.recipe.id, ' Đã lên thực đơn & mua gần đây');
+      if (s.recipe) this.recordRecentMeal(s.recipe.id, '✓ Đã lên thực đơn & mua gần đây');
     }
     this.voucher.copyCode('NUTRITION10');
-    this.addedToCart.set(
-      `Đã thêm trọn bộ ${dayPlan.matchedProducts.length} nguyên liệu cho ${dayPlan.dayLabel} (${formatPrice(dayPlan.dealPrice)}) vào giỏ hàng & sao chép mã NUTRITION10!`
-    );
+
+    if (alreadyInCart.length > 0) {
+      this.addedToCart.set(
+        `Đã thêm ${neededToAdd.length} món còn thiếu (${formatPrice(dayPlan.missingDealPrice)}) vào giỏ (${alreadyInCart.length} món đã có sẵn được giữ nguyên) & sao chép mã NUTRITION10!`
+      );
+    } else {
+      this.addedToCart.set(
+        `Đã thêm trọn bộ ${dayPlan.matchedProducts.length} nguyên liệu cho ${dayPlan.dayLabel} (${formatPrice(dayPlan.missingDealPrice)}) vào giỏ hàng & sao chép mã NUTRITION10!`
+      );
+    }
     setTimeout(() => this.addedToCart.set(null), 4000);
   }
 
   buyFullWeekIngredients(): void {
     const summary = this.weeklyPlanSummary();
     if (summary.matchedProducts.length === 0) return;
-    for (const p of summary.matchedProducts) {
-      const discounted = Math.round(((p.priceNumber || 0) * 0.8) / 500) * 500;
-      this.cart.addItem(toCartProduct(p, discounted), 2);
+    const neededToAdd: { product: ApiProduct; qty: number }[] = [];
+    const alreadyInCart: ApiProduct[] = [];
+
+    for (const item of summary.ingredientBreakdown) {
+      if (item.owned) continue;
+      if (item.missingPacks > 0) {
+        neededToAdd.push({ product: item.product, qty: item.missingPacks });
+      } else {
+        alreadyInCart.push(item.product);
+      }
     }
+
+    if (neededToAdd.length === 0) {
+      this.addedToCart.set('Toàn bộ nguyên liệu cho thực đơn Cả Tuần 7 Ngày đã có sẵn trong giỏ hàng (hoặc đã có tại nhà)!');
+      setTimeout(() => this.addedToCart.set(null), 3500);
+      return;
+    }
+
+    for (const { product: p, qty } of neededToAdd) {
+      const discounted = Math.round(((p.priceNumber || 0) * 0.8) / 500) * 500;
+      this.cart.addItem(toCartProduct(p, discounted), qty);
+    }
+    // Đảm bảo tất cả nguyên liệu cả tuần đều được tick chọn trong giỏ hàng
+    this.cart.ensureItemsSelected(summary.matchedProducts.map((p) => p.name || p.slug));
     this.voucher.copyCode('COMBO30');
-    this.addedToCart.set(
-      `Đã thêm trọn gói Đi Chợ Cả Tuần 7 Ngày (${summary.matchedProducts.length} loại nông sản tươi sạch, ưu đãi -20%) vào giỏ & sao chép mã COMBO30!`
-    );
+    if (alreadyInCart.length > 0) {
+      this.addedToCart.set(
+        `Đã thêm ${neededToAdd.length} món còn thiếu (${formatPrice(summary.missingDealPrice)}) cho Cả Tuần 7 Ngày (${alreadyInCart.length} món đã có trong giỏ được giữ nguyên) & sao chép mã COMBO30!`
+      );
+    } else {
+      this.addedToCart.set(
+        `Đã thêm trọn gói Đi Chợ Cả Tuần 7 Ngày (${summary.matchedProducts.length} loại nông sản tươi sạch, ưu đãi -20%) vào giỏ & sao chép mã COMBO30!`
+      );
+    }
     setTimeout(() => this.addedToCart.set(null), 4500);
   }
 
@@ -1468,8 +2292,8 @@ export class NutritionComponent implements OnInit {
       const prodId = ing.product?._id || ing.product?.slug || '';
       return cartItems.some((ci) => ci.product.id === prodId);
     });
-    if (inCart) return ' Đang có nguyên liệu trong giỏ';
-    if (this.getRecentScore(recipe) > 0) return ' Đã mua nguyên liệu gần đây';
+    if (inCart) return '🛒 Đang có nguyên liệu trong giỏ';
+    if (this.getRecentScore(recipe) > 0) return '🛍️ Đã mua nguyên liệu gần đây';
     return '';
   }
 
@@ -1486,15 +2310,15 @@ export class NutritionComponent implements OnInit {
     const defaultRecent: Record<string, { timestamp: number; label: string }> = {
       'sua-chua-hy-lap-trai-cay': {
         timestamp: Date.now() - 3600 * 1000 * 5,
-        label: ' Đã ăn / Mua gần đây',
+        label: '🥣 Đã ăn / Mua gần đây',
       },
       'ca-hoi-ap-chao': {
         timestamp: Date.now() - 3600 * 1000 * 18,
-        label: ' Đã mua nguyên liệu tuần này',
+        label: '🐟 Đã mua nguyên liệu tuần này',
       },
       'salad-ga-nuong': {
         timestamp: Date.now() - 3600 * 1000 * 36,
-        label: ' Đã mua nguyên liệu gần đây',
+        label: '🥗 Đã mua nguyên liệu gần đây',
       },
     };
 
@@ -1533,7 +2357,7 @@ export class NutritionComponent implements OnInit {
     }
   }
 
-  private recordRecentMeal(recipeId: string, label = ' Vừa chọn / Đã mua gần đây'): void {
+  private recordRecentMeal(recipeId: string, label = '✓ Vừa chọn / Đã mua gần đây'): void {
     const updated = {
       ...this.recentMealsMap(),
       [recipeId]: {
@@ -1629,7 +2453,7 @@ export class NutritionComponent implements OnInit {
     }
     const found = this.results().find(r => r.id === recipeId);
     if (found) {
-      this.recordRecentMeal(recipeId, ' Vừa xem / Đã chọn gần đây');
+      this.recordRecentMeal(recipeId, '👁️ Vừa xem / Đã chọn gần đây');
       this.selectedPlanDetailId.set(null);
       this.selectedRecipeId.set(recipeId);
       this.activeGalleryImage.set(found.image);
@@ -1686,7 +2510,7 @@ export class NutritionComponent implements OnInit {
       this.cart.addItem(toCartProduct(p, discounted), 1);
     }
     for (const rId of plan.recipeIds) {
-      this.recordRecentMeal(rId, ' Vừa mua trong gói Combo');
+      this.recordRecentMeal(rId, '🛍️ Vừa mua trong gói Combo');
     }
     this.voucher.copyCode(plan.voucherCode);
     this.addedToCart.set(
@@ -1696,7 +2520,7 @@ export class NutritionComponent implements OnInit {
   }
 
   updateServings(newVal: number): void {
-    const clamped = Math.max(1, Math.min(10, Number(newVal) || 1));
+    const clamped = Math.max(1, Math.min(20, Number(newVal) || 1));
     this.servings.set(clamped);
     this.computeRecipes();
   }
@@ -1756,14 +2580,22 @@ export class NutritionComponent implements OnInit {
       list.map((recipe) => {
         if (recipe.id !== recipeId) return recipe;
 
-        const newServings = Math.max(1, Math.min(10, recipe.servings + delta));
-        const originalRecipe = recipesDb.find((r) => r.id === recipeId);
+        const newServings = Math.max(1, Math.min(20, recipe.servings + delta));
+        const originalRecipe = recipesDb.find((r) => r.id === recipeId || (r as any).recipeId === recipeId);
 
         const updatedIngredients = recipe.ingredients.map((ing) => {
-          if (!originalRecipe) return ing;
-          const originalIng = originalRecipe.ingredients.find((i) => i.name === ing.name);
-          if (!originalIng) return ing;
-          const scaledAmount = originalIng.amountPer1Serving * newServings * recipe.meals;
+          let amountPer1 = 0;
+          if (originalRecipe) {
+            const originalIng = originalRecipe.ingredients.find((i) => i.name === ing.name);
+            if (originalIng && originalIng.amountPer1Serving) {
+              amountPer1 = originalIng.amountPer1Serving;
+            }
+          }
+          if (!amountPer1) {
+            const currNum = parseFloat(ing.amount) || 100;
+            amountPer1 = Math.round(currNum / Math.max(1, recipe.servings));
+          }
+          const scaledAmount = amountPer1 * newServings * Math.max(1, recipe.meals);
           return {
             ...ing,
             amount: `${scaledAmount}`,
@@ -1944,11 +2776,61 @@ export class NutritionComponent implements OnInit {
     );
   }
 
+  getIngredientNeededPacks(item: IngredientItem, servings?: number, meals?: number): number {
+    if (!item || !item.product) return 1;
+    const weightStr = item.product.weight || (item.product as any).packSize || item.product.name;
+    const packGrams = parseGramWeight(weightStr);
+    const neededGrams = parseFloat(item.amount) || 0;
+
+    if (packGrams > 0 && neededGrams > 0) {
+      const multiplier = (item.unit && item.unit.toLowerCase().includes('kg')) ? 1000 : 1;
+      const totalNeededGrams = neededGrams * multiplier;
+      return Math.max(1, Math.ceil(totalNeededGrams / packGrams));
+    }
+
+    const currentServings = servings || 2;
+    return Math.max(1, Math.ceil(currentServings / 4));
+  }
+
+  getProductUnit(item: IngredientItem): string {
+    if (!item) return 'gói';
+    const name = ((item.product?.name || item.name) + ' ' + (item.unit || '')).toLowerCase();
+    if (name.includes('nguyên con') || (name.includes('gà') && name.includes('con')) || item.name.toLowerCase().includes('con')) {
+      return 'con';
+    }
+    if (name.includes('hộp') || name.includes('lốc')) return 'hộp';
+    if (name.includes('khay')) return 'khay';
+    if (name.includes('túi')) return 'túi';
+    if (name.includes('búp') || name.includes('bắp')) return 'bắp';
+    if (name.includes('chai') || name.includes('lọ')) return 'chai';
+    return 'gói';
+  }
+
+  getProductPackUnit(p?: ApiProduct | null): string {
+    if (!p) return 'gói';
+    const name = (p.name || '').toLowerCase() + ' ' + (p.weight || '').toLowerCase();
+    if (name.includes('nguyên con') || name.includes('con')) return 'con';
+    if (name.includes('hộp') || name.includes('lốc')) return 'hộp';
+    if (name.includes('khay')) return 'khay';
+    if (name.includes('túi')) return 'túi';
+    if (name.includes('bó')) return 'bó';
+    if (name.includes('búp') || name.includes('bắp')) return 'bắp';
+    if (name.includes('chai') || name.includes('lọ')) return 'chai';
+    return 'gói/khay';
+  }
+
+  getServingMultiplier(servings: number): number {
+    return Math.max(1, Math.ceil((servings || 2) / 4));
+  }
+
   totalCost(recipe: RecipeResult): number {
     const baseCost = recipe.ingredients
       .filter((i) => i.selected && !i.owned && i.product)
-      .reduce((sum, i) => sum + (i.product?.priceNumber || 0), 0);
-    return baseCost * Math.max(1, recipe.meals);
+      .reduce((sum, i) => {
+        const packs = this.getIngredientNeededPacks(i, recipe.servings, recipe.meals);
+        return sum + (i.product?.priceNumber || 0) * packs;
+      }, 0);
+    return baseCost;
   }
 
   dealCost(recipe: RecipeResult): number {
@@ -1959,32 +2841,182 @@ export class NutritionComponent implements OnInit {
     return formatProductSlug(product.slug, product._id);
   }
 
+  getCartQty(product: ApiProduct | null | undefined): number {
+    if (!product) return 0;
+    const items = this.cart.items();
+    const prodSlug = (product.slug || '').toLowerCase();
+    const prodId = (product._id || '').toLowerCase();
+    const prodName = (product.name || '').toLowerCase();
+
+    let totalQty = 0;
+    for (const it of items) {
+      const itSlug = (it.product.slug || '').toLowerCase();
+      const itId = (it.product.id || '').toLowerCase();
+      const itName = (it.product.name || '').toLowerCase();
+
+      if ((prodSlug && itSlug === prodSlug) || (prodId && itId === prodId) || (prodName && itName === prodName)) {
+        totalQty += it.quantity;
+      }
+    }
+    return totalQty;
+  }
+
+  getIngredientMissingQty(item: IngredientItem, servings: number, meals: number = 1): number {
+    if (!item || !item.product || item.owned || !item.selected) return 0;
+    const neededPacks = this.getIngredientNeededPacks(item, servings, meals);
+    const inCart = this.getCartQty(item.product);
+    return Math.max(0, neededPacks - inCart);
+  }
+
+  isIngredientFullyInCart(item: IngredientItem, servings: number, meals: number = 1): boolean {
+    if (!item || !item.product) return false;
+    const neededPacks = this.getIngredientNeededPacks(item, servings, meals);
+    const inCart = this.getCartQty(item.product);
+    return inCart >= neededPacks;
+  }
+
+  getAlreadyInCartCount(recipe: RecipeResult): number {
+    if (!recipe) return 0;
+    return recipe.ingredients.filter(
+      (i) => i.selected && !i.owned && i.product && this.getCartQty(i.product) > 0
+    ).length;
+  }
+
+  getMissingIngredientsCount(recipe: RecipeResult): number {
+    if (!recipe) return 0;
+    return recipe.ingredients.filter(
+      (i) => i.selected && !i.owned && i.product && this.getIngredientMissingQty(i, recipe.servings, recipe.meals) > 0
+    ).length;
+  }
+
+  getRemainingOrigCost(recipe: RecipeResult): number {
+    if (!recipe) return 0;
+    return recipe.ingredients
+      .filter((i) => i.selected && !i.owned && i.product)
+      .reduce((sum, i) => {
+        const missing = this.getIngredientMissingQty(i, recipe.servings, recipe.meals);
+        return sum + (i.product?.priceNumber || 0) * missing;
+      }, 0);
+  }
+
+  getRemainingToPayCost(recipe: RecipeResult): number {
+    const baseCost = this.getRemainingOrigCost(recipe);
+    return Math.round((baseCost * 0.9) / 1000) * 1000;
+  }
+
+  getAlreadyInCartValue(recipe: RecipeResult): number {
+    if (!recipe) return 0;
+    return recipe.ingredients
+      .filter((i) => i.selected && !i.owned && i.product)
+      .reduce((sum, i) => {
+        const needed = this.getIngredientNeededPacks(i, recipe.servings, recipe.meals);
+        const inCart = Math.min(needed, this.getCartQty(i.product));
+        return sum + (i.product?.priceNumber || 0) * inCart;
+      }, 0);
+  }
+
+  getIngredientRemainingPrice(item: IngredientItem, servings: number, meals: number = 1): number {
+    const missing = this.getIngredientMissingQty(item, servings, meals);
+    return (item.product?.priceNumber || 0) * missing;
+  }
+
   addAllToCart(recipe: RecipeResult): void {
-    const toAdd = recipe.ingredients.filter((i) => i.selected && !i.owned && i.product);
-    if (toAdd.length === 0) {
+    const eligible = recipe.ingredients.filter((i) => i.selected && !i.owned && i.product);
+    if (eligible.length === 0) {
       this.addedToCart.set('Chưa có nguyên liệu nào khả dụng để thêm vào giỏ.');
       setTimeout(() => this.addedToCart.set(null), 3000);
       return;
     }
 
-    const qty = Math.max(1, recipe.meals);
-    for (const item of toAdd) {
-      if (item.product) {
-        this.cart.addItem(toCartProduct(item.product), qty);
+    const itemsToAdd: { item: IngredientItem; qtyToAdd: number }[] = [];
+    const alreadyEnough: string[] = [];
+
+    for (const item of eligible) {
+      const missing = this.getIngredientMissingQty(item, recipe.servings, recipe.meals);
+      if (missing > 0) {
+        itemsToAdd.push({ item, qtyToAdd: missing });
+      } else {
+        alreadyEnough.push(item.product?.name || item.name);
       }
     }
 
-    this.recordRecentMeal(recipe.id, ' Vừa mua nguyên liệu món này');
+    if (itemsToAdd.length === 0) {
+      this.lastAddedRecipe.set(recipe);
+      this.addedToCart.set(
+        `Toàn bộ nguyên liệu cho khẩu phần ${recipe.servings} người đã có đủ số lượng trong giỏ hàng! Không cần mua thêm.`
+      );
+      setTimeout(() => this.addedToCart.set(null), 5000);
+      return;
+    }
+
+    for (const { item, qtyToAdd } of itemsToAdd) {
+      if (item.product) {
+        this.cart.addItem(toCartProduct(item.product), qtyToAdd);
+      }
+    }
+
+    // Tự động chỉ tick chọn các nguyên liệu thuộc món này (tạm bỏ tick các món khác trong giỏ)
+    this.cart.selectOnlyRecipeItems(recipe.ingredients.filter(i => i.selected && !i.owned));
+
+    this.lastAddedRecipe.set(recipe);
+    this.recordRecentMeal(recipe.id, '✓ Vừa mua nguyên liệu món này');
     this.voucher.copyCode('NUTRITION10');
-    this.addedToCart.set(
-      `Đã thêm ${toAdd.length} nguyên liệu cho món "${recipe.name}" vào giỏ hàng và sao chép mã ưu đãi NUTRITION10 (-10%)!`
-    );
-    setTimeout(() => this.addedToCart.set(null), 3500);
+
+    if (alreadyEnough.length > 0) {
+      const addedDesc = itemsToAdd
+        .map(t => `${t.item.product?.name || t.item.name} (+${t.qtyToAdd} gói)`)
+        .join(', ');
+      this.addedToCart.set(
+        `Đã thêm bổ sung phần nguyên liệu còn thiếu cho ${recipe.servings} người ăn: ${addedDesc}! (${alreadyEnough.join(', ')} đã có đủ). Đã sao chép mã NUTRITION10!`
+      );
+    } else {
+      this.addedToCart.set(
+        `Đã thêm trọn bộ ${itemsToAdd.length} nguyên liệu cho ${recipe.servings} người ăn vào giỏ hàng & sao chép mã NUTRITION10 (-10%)!`
+      );
+    }
+    setTimeout(() => this.addedToCart.set(null), 7000);
+  }
+
+  checkoutOnlyRecipe(recipe: RecipeResult): void {
+    const eligible = recipe.ingredients.filter((i) => i.selected && !i.owned && i.product);
+    if (eligible.length === 0) return;
+
+    // 1. Thêm bất kỳ phần nguyên liệu còn thiếu nào vào giỏ hàng
+    for (const item of eligible) {
+      const missing = this.getIngredientMissingQty(item, recipe.servings, recipe.meals);
+      if (missing > 0 && item.product) {
+        this.cart.addItem(toCartProduct(item.product), missing);
+      }
+    }
+
+    // 2. Chỉ tick chọn các nguyên liệu thuộc món ăn này (tất cả các món cũ khác như bột giặt, dầu ăn... tự động bị bỏ tick)
+    this.cart.selectOnlyRecipeItems(recipe.ingredients.filter(i => i.selected && !i.owned));
+
+    // 3. Áp mã ưu đãi combo dinh dưỡng
+    this.voucher.copyCode('NUTRITION10');
+    this.recordRecentMeal(recipe.id, '✓ Đang thanh toán nguyên liệu món này');
+
+    // 4. Chuyển thẳng sang trang Checkout
+    this.router.navigate(['/checkout'], { queryParams: { voucher: 'NUTRITION10' } });
+  }
+
+  addMissingPacksToCart(item: IngredientItem, servings: number, meals: number = 1): void {
+    if (!item.product) return;
+    const missing = this.getIngredientMissingQty(item, servings, meals);
+    const qty = missing > 0 ? missing : 1;
+    this.cart.addItem(toCartProduct(item.product), qty);
+    this.addedToCart.set(`Đã thêm ${qty} gói "${item.product.name}" vào giỏ hàng!`);
+    setTimeout(() => this.addedToCart.set(null), 2500);
   }
 
   addSingleToCart(product: ApiProduct): void {
+    const prevQty = this.getCartQty(product);
     this.cart.addItem(toCartProduct(product), 1);
-    this.addedToCart.set(`Đã thêm "${product.name}" vào giỏ hàng!`);
+    if (prevQty > 0) {
+      this.addedToCart.set(`Đã tăng số lượng "${product.name}" lên ${prevQty + 1} trong giỏ hàng!`);
+    } else {
+      this.addedToCart.set(`Đã thêm "${product.name}" vào giỏ hàng!`);
+    }
     setTimeout(() => this.addedToCart.set(null), 2500);
   }
 }

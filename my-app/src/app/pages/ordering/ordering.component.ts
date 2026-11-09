@@ -1073,7 +1073,14 @@ export class OrderingComponent implements OnInit {
     return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
-  addOne(prod: ApiProduct): void {
+  openBuyNow(prod: ApiProduct): void {
+    this.cart.openBuyNowModal(toCartProduct(prod));
+  }
+
+  addOne(prod: ApiProduct, event?: Event): void {
+    if (event) {
+      this.cart.animateFlyToCart(event, prod.image);
+    }
     this.cart.addItem(toCartProduct(prod), 1);
   }
 
@@ -1088,7 +1095,7 @@ export class OrderingComponent implements OnInit {
   }
 
   goToCart(): void {
-    this.router.navigate(['/checkout']);
+    this.router.navigate(['/cart']);
   }
 
   getComboItemName(it: any): string {

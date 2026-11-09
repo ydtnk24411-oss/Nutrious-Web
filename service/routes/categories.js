@@ -16,7 +16,7 @@ router.get('/', async (req, res, next) => {
 // GET /api/categories/with-counts — for admin product & category management
 router.get('/with-counts', protect, staffOnly, async (req, res, next) => {
   try {
-    const cats = await Category.find({}).sort({ order: 1, createdAt: 1 });
+    const cats = await Category.find({ isActive: { $ne: false } }).sort({ order: 1, createdAt: 1 });
     const catsWithCounts = await Promise.all(
       cats.map(async (c) => {
         const shortSlug = c.slug ? c.slug.replace(/^\/category\//, '') : '';
@@ -88,7 +88,7 @@ router.delete('/:id', protect, adminOnly, async (req, res, next) => {
       });
     }
 
-    await Category.findByIdAndUpdate(req.params.id, { isActive: false });
+    await Category.findByIdAndDelete(req.params.id);
     res.json({ success: true, message: 'Đã xóa danh mục.' });
   } catch (err) { next(err); }
 });

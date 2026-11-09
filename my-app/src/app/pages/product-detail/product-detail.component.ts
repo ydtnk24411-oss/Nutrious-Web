@@ -60,7 +60,7 @@ export class ProductDetailComponent implements OnInit {
   protected loading       = signal(true);
   protected error         = signal('');
   protected quantity      = signal(1);
-  protected selectedRipeness = signal('Ready to Eat');
+  protected selectedRipeness = signal('');
   protected openAccordions   = signal({ info: true, refund: false, shipping: false });
 
   // Related products (WinMart style)
@@ -249,6 +249,7 @@ export class ProductDetailComponent implements OnInit {
     this.productApi.getBySlug(slug).subscribe({
       next: (res) => {
         this.product.set(res.data);
+        this.selectedRipeness.set(res.data?.options?.[0]?.values?.[0] ?? '');
         this.loading.set(false);
         if (res.data && !res.data.isCombo) {
           this.cart.recordViewedProduct(res.data);
@@ -264,6 +265,7 @@ export class ProductDetailComponent implements OnInit {
         this.productApi.getBySlug(prefixed).subscribe({
           next: (r) => {
             this.product.set(r.data);
+            this.selectedRipeness.set(r.data?.options?.[0]?.values?.[0] ?? '');
             this.loading.set(false);
             if (r.data && !r.data.isCombo) {
               this.cart.recordViewedProduct(r.data);
@@ -449,7 +451,7 @@ export class ProductDetailComponent implements OnInit {
     const ok = this.cart.addMainWithAddOns(
       toCartProduct(p),
       this.quantity(),
-      this.selectedRipeness(),
+      (p.options && p.options.length > 0) ? this.selectedRipeness() : undefined,
       entries,
       { openDrawer: true }
     );
@@ -470,7 +472,7 @@ export class ProductDetailComponent implements OnInit {
     const ok = this.cart.addMainWithAddOns(
       toCartProduct(p),
       this.quantity(),
-      this.selectedRipeness(),
+      (p.options && p.options.length > 0) ? this.selectedRipeness() : undefined,
       entries,
       { openDrawer: false, selectOnlyBundle: true }
     );
@@ -498,7 +500,10 @@ export class ProductDetailComponent implements OnInit {
   addOne(prod: ApiProduct, event?: Event): void {
     event?.stopPropagation();
     event?.preventDefault();
-    this.cart.addItem(toCartProduct(prod), 1, prod.ripeness || 'Fresh');
+    if (event) {
+      this.cart.animateFlyToCart(event, prod.image);
+    }
+    this.cart.addItem(toCartProduct(prod), 1);
   }
 
   removeOne(prod: ApiProduct, event?: Event): void {
@@ -544,7 +549,11 @@ export class ProductDetailComponent implements OnInit {
     this.openAccordions.update(o => ({ ...o, [k]: !o[k] }));
   }
 
-  addToCart(): void {
+  addToCart(event?: Event): void {
+    const prod = this.product();
+    if (event && prod) {
+      this.cart.animateFlyToCart(event, prod.image);
+    }
     const p = this.product();
     if (!p) return;
     const entries = this.buildSelectedAddOnEntries();
@@ -552,10 +561,19 @@ export class ProductDetailComponent implements OnInit {
       this.addSelectedBundleToCart();
       return;
     }
-    this.cart.addItem(toCartProduct(p), this.quantity(), this.selectedRipeness());
+    const opt = (p.options && p.options.length > 0) ? this.selectedRipeness() : undefined;
+    this.cart.addItem(toCartProduct(p), this.quantity(), opt);
   }
 
   buyNow(): void {
+    const p = this.product();
+    if (!p) return;
+    const opt = (p.options && p.options.length > 0) ? this.selectedRipeness() : undefined;
+    this.cart.openBuyNowModal(toCartProduct(p), this.quantity(), opt);
+    return;
+  }
+
+  buyNowOld(): void {
     const p = this.product();
     if (!p) return;
     const entries = this.buildSelectedAddOnEntries();

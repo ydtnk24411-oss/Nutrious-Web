@@ -43,16 +43,12 @@ function toVoucher(v: ApiVoucher): Voucher {
     startDate: v.startDate,
     endDate: new Date(v.endDate).toLocaleDateString('vi-VN'),
     usageLimit: v.usageLimit || undefined,
-    usedCount: v.usedCount,
+    usedCount: v.usedCount || 0,
     description: v.description ?? '',
     isPublic: true,
   };
 }
 
-/**
- * Voucher lấy từ server. Voucher "của tôi" gắn với TÀI KHOẢN đang đăng nhập
- * (không còn lưu ở localStorage). Việc kiểm tra mã/tính tiền giảm do server làm.
- */
 @Injectable({ providedIn: 'root' })
 export class VoucherService {
   private api  = inject(ApiService);
@@ -63,6 +59,7 @@ export class VoucherService {
 
   readonly publicVouchers = this._publicVouchers.asReadonly();
   readonly userVouchers   = this._userVouchers.asReadonly();
+  readonly isLoading      = signal<boolean>(false);
 
   /** Danh sách các mã đã sao chép (hiển thị cố định không bị ẩn khi sao chép mã khác). */
   readonly copiedCodes = signal<Set<string>>(new Set());
@@ -88,19 +85,32 @@ export class VoucherService {
   }
 
   loadPublic(): void {
+    this.isLoading.set(true);
     this.api.get<{ success: boolean; data: ApiVoucher[] }>('/vouchers').subscribe({
-      next: (res) => { if (res.success) this._publicVouchers.set(res.data.map(toVoucher)); },
-      error: () => { /* giữ danh sách cũ */ },
+      next: (res) => {
+        this.isLoading.set(false);
+        if (res.success && Array.isArray(res.data)) {
+          this._publicVouchers.set(res.data.map(toVoucher));
+        } else {
+          this._publicVouchers.set([]);
+        }
+      },
+      error: () => {
+        this.isLoading.set(false);
+      },
     });
   }
 
-  /** Tải voucher của tài khoản hiện tại. */
+  /** Tải voucher của tài khoản hiện tại từ database. */
   refreshMine(): void {
-    if (!this.cart.currentUser()) { this._userVouchers.set([]); return; }
+    if (!this.cart.currentUser()) {
+      this._userVouchers.set([]);
+      return;
+    }
     this.api.get<{ success: boolean; data: ApiUserVoucher[] }>('/vouchers/my').subscribe({
       next: (res) => {
-        if (!res.success) return;
-        this._userVouchers.set(res.data.map(uv => ({
+        if (!res.success || !Array.isArray(res.data)) return;
+        this._userVouchers.set(res.data.filter(uv => uv && uv.voucher).map(uv => ({
           voucherId: uv.voucher._id,
           voucher: toVoucher(uv.voucher),
           status: uv.status,
@@ -108,7 +118,9 @@ export class VoucherService {
           orderId: uv.orderId,
         })));
       },
-      error: () => { /* 401 do interceptor xử lý */ },
+      error: () => {
+        // Lỗi 401 do interceptor xử lý
+      },
     });
   }
 
@@ -146,7 +158,14 @@ export class VoucherService {
   isSaved(voucherIdOrCode: string): boolean {
     const key = voucherIdOrCode.trim().toUpperCase();
     return this._userVouchers().some(
-      uv => uv.voucherId === voucherIdOrCode || uv.voucher.code.toUpperCase() === key
+      uv => uv.voucherId === voucherIdOrCode || (uv.voucher?.code && uv.voucher.code.toUpperCase() === key)
+    );
+  }
+
+  getUserVoucher(voucherIdOrCode: string): UserVoucher | undefined {
+    const key = voucherIdOrCode.trim().toUpperCase();
+    return this._userVouchers().find(
+      uv => uv.voucherId === voucherIdOrCode || (uv.voucher?.code && uv.voucher.code.toUpperCase() === key)
     );
   }
 
@@ -186,7 +205,6 @@ export class VoucherService {
     );
   }
 
-  // Get all public vouchers
   getPublicVouchers(): Voucher[] {
     return this._publicVouchers();
   }

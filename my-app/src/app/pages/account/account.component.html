@@ -62,39 +62,42 @@
             </div>
             <div class="acc-profile-info">
               <h2 class="acc-profile-name">{{ user.name }}</h2>
-              <p class="acc-profile-email">{{ user.email }}</p>
+              <p class="acc-profile-email">{{ user.email || 'Chưa cập nhật email' }}</p>
               @if (user.phone) {
                 <p class="acc-profile-phone">{{ user.phone }}</p>
               }
               <p class="acc-profile-tier">Hạng: {{ userTier().name }}</p>
             </div>
-            <button class="acc-btn-outline" (click)="activeTab.set('settings')">Chỉnh sửa hồ sơ</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="acc-btn-outline" (click)="activeTab.set('settings')">Chỉnh sửa hồ sơ</button>
+              <button class="acc-btn-outline" style="color:#b91c1c;border-color:#fca5a5" (click)="logout()">Đăng xuất</button>
+            </div>
           </div>
 
           <!-- Stats Grid -->
           <div class="acc-stats-grid">
-            <div class="acc-stat-card">
+            <div class="acc-stat-card" style="cursor:pointer" (click)="activeTab.set('orders')">
               <div class="acc-stat-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
               </div>
               <div class="acc-stat-value">{{ orders().length }}</div>
-              <div class="acc-stat-label">Đơn hàng</div>
+              <div class="acc-stat-label">Đơn hàng của bạn</div>
             </div>
-            <div class="acc-stat-card" style="cursor:pointer" (click)="router.navigate(['/promotions'])">
+            <div class="acc-stat-card" style="cursor:pointer" (click)="router.navigate(['/vouchers'])">
               <div class="acc-stat-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.91 8.84C20.88 8.3 20.37 8 19.81 8H15c-.23 0-.42-.16-.48-.38l-.47-1.56C13.86 5.4 13.34 5 12.74 5h-1.48c-.6 0-1.12.4-1.31.96l-.47 1.56C9.42 7.84 9.23 8 9 8H4.19c-.56 0-1.07.3-1.1.84C2.82 10.05 2.5 12.12 2.5 14c0 1.88.32 3.95.59 5.16.03.54.54.84 1.1.84H15c.23 0 .42.16.48.38l.47 1.56c.19.56.71.96 1.31.96h1.48c.6 0 1.12-.4 1.31-.96l.47-1.56c.06-.22.25-.38.48-.38h4.81c.56 0 1.07-.3 1.1-.84.27-1.21.59-3.28.59-5.16 0-1.88-.32-3.95-.59-5.16z"/></svg>
               </div>
               <div class="acc-stat-value">{{ userVouchers().length }}</div>
               <div class="acc-stat-label">Voucher khả dụng</div>
             </div>
-            <div class="acc-stat-card" style="cursor:pointer" (click)="router.navigate(['/promotions'])">
+            <div class="acc-stat-card" style="cursor:pointer" (click)="router.navigate(['/loyalty'])">
               <div class="acc-stat-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
               </div>
-              <div class="acc-stat-value">{{ userPoints() }}</div>
+              <div class="acc-stat-value">{{ userPoints().toLocaleString('vi-VN') }}</div>
               <div class="acc-stat-label">Điểm tích lũy</div>
             </div>
-            <div class="acc-stat-card">
+            <div class="acc-stat-card" style="cursor:pointer" (click)="router.navigate(['/loyalty'])">
               <div class="acc-stat-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
               </div>
@@ -366,6 +369,13 @@
                 <span class="acc-toggle-slider"></span>
               </label>
             </div>
+          </div>
+
+          <!-- Nút Đăng xuất tiện lợi ở cuối Cài đặt -->
+          <div style="margin-top:32px;padding-top:20px;border-top:1px solid var(--xanh-line,#e5e7eb);display:flex;justify-content:flex-end">
+            <button type="button" class="acc-btn-outline" style="color:#b91c1c;border-color:#fca5a5" (click)="logout()">
+              Đăng xuất tài khoản
+            </button>
           </div>
         </div>
       }

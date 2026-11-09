@@ -1,0 +1,108 @@
+@if (isOpen() && product(); as p) {
+  <div class="bn-backdrop" (click)="close()">
+    <div class="bn-dialog" (click)="$event.stopPropagation()">
+      <!-- Header -->
+      <div class="bn-header">
+        <div class="bn-title-wrap">
+          <i class="bi bi-lightning-charge-fill bn-icon" style="color:#eab308;font-size:20px"></i>
+          <h3 class="bn-title">Mua ngay sản phẩm</h3>
+        </div>
+        <button type="button" class="bn-close-btn" (click)="close()" aria-label="Đóng popup">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="bn-body">
+        <!-- Thông tin sản phẩm -->
+        <div class="bn-product-card">
+          <img
+            [src]="p.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=200&q=80'"
+            [alt]="p.name"
+            class="bn-product-img"
+          />
+          <div class="bn-product-info">
+            <h4 class="bn-product-name">{{ p.name }}</h4>
+            @if (p.weight || p.packaging) {
+              <div class="bn-product-spec">Quy cách: {{ p.weight || p.packaging }}</div>
+            }
+            <div class="bn-product-price-row">
+              <span class="bn-product-price">{{ formatPrice(unitPrice()) }}</span>
+              @if (p.originalPriceNumber && p.originalPriceNumber > unitPrice()) {
+                <del class="bn-product-orig-price">{{ formatPrice(p.originalPriceNumber) }}</del>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Tùy chọn (ripeness / option) nếu có -->
+        @if (p.options && p.options.length > 0) {
+          <div class="bn-section">
+            <label class="bn-label">{{ p.options[0].name || 'Tùy chọn' }}:</label>
+            <div class="bn-options-grid">
+              @for (opt of p.options[0].values; track opt) {
+                <button
+                  type="button"
+                  class="bn-option-btn"
+                  [class.is-selected]="selectedOption() === opt"
+                  (click)="selectOption(opt)"
+                >
+                  {{ opt }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Chọn số lượng -->
+        <div class="bn-section">
+          <div class="bn-qty-header">
+            <label class="bn-label" style="margin:0">Chọn số lượng:</label>
+            <div class="bn-qty-picker">
+              <button
+                type="button"
+                class="bn-qty-btn"
+                (click)="decrease()"
+                [disabled]="quantity() <= 1"
+                aria-label="Giảm"
+              >
+                <i class="bi bi-dash"></i>
+              </button>
+              <input
+                type="number"
+                class="bn-qty-input"
+                [value]="quantity()"
+                (change)="onQtyInput($event)"
+                min="1"
+                max="999"
+              />
+              <button
+                type="button"
+                class="bn-qty-btn"
+                (click)="increase()"
+                aria-label="Tăng"
+              >
+                <i class="bi bi-plus"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tổng tiền tạm tính -->
+        <div class="bn-total-box">
+          <div class="bn-total-label">Tạm tính thanh toán:</div>
+          <div class="bn-total-amount">{{ formatPrice(lineTotal()) }}</div>
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="bn-footer">
+        <button type="button" class="bn-btn-cancel" (click)="close()">Hủy bỏ</button>
+        <button type="button" class="bn-btn-confirm" (click)="confirm()">
+          <span>Xác nhận &amp; Thanh toán ngay</span>
+          <i class="bi bi-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+}

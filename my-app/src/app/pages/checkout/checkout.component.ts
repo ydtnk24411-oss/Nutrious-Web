@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ShellComponent } from '../../components/shell/shell.component';
-import { CartService, formatPrice, getCartItemKey } from '../../shared/services/cart.service';
+import { CartService, formatPrice, getCartItemKey, evaluateItemsPricingMap } from '../../shared/services/cart.service';
 import { OrderApiService } from '../../shared/services/order-api.service';
 import { VoucherService } from '../../shared/services/voucher.service';
 import { Voucher, XanhLaCartItem, EvaluatedCartItemPricing } from '../../shared/models/xanh-la.models';
@@ -53,31 +53,92 @@ export class CheckoutComponent implements OnInit {
   protected showVoucherPicker = signal(false);
   private pendingQueryVoucher = signal('');
 
-  // Chỉ thanh toán các món được chọn trong giỏ hàng
+  // ── Chế độ Mua ngay & Điều chỉnh số lượng cục bộ tại Checkout ──
+  // Cho phép người dùng chỉnh số lượng ngay tại đây để tính toán đơn hàng.
+  // Nếu người dùng không tiếp tục thanh toán, giỏ hàng chính vẫn giữ nguyên số lượng cũ!
+  protected isBuyNowMode = signal(false);
+  protected checkoutItemsLocal = signal<XanhLaCartItem[]>([]);
+
   readonly checkoutItems = computed(() => {
-    return this.cart.selectedItems();
-  });
-
-  readonly checkoutSubtotal = computed(() => {
-    return this.cart.selectedSubtotal();
-  });
-
-  readonly originalSubtotal = computed(() => {
-    return this.cart.selectedOriginalSubtotal();
-  });
-
-  readonly comboDiscount = computed(() => {
-    return this.cart.selectedComboDiscount();
-  });
-
-  readonly addonDiscount = computed(() => {
-    return this.cart.selectedAddonDiscount();
+    return this.checkoutItemsLocal();
   });
 
   protected itemKey = getCartItemKey;
 
+  readonly localPricingMap = computed(() => {
+    return evaluateItemsPricingMap(this.checkoutItemsLocal());
+  });
+
   itemPricing(item: XanhLaCartItem): EvaluatedCartItemPricing {
+    const key = this.itemKey(item);
+    const found = this.localPricingMap().get(key);
+    if (found) return found;
     return this.cart.getItemPricing(item, 'selected');
+  }
+
+  readonly checkoutSubtotal = computed(() => {
+    let sum = 0;
+    for (const p of this.localPricingMap().values()) {
+      sum += p.linePayableTotal;
+    }
+    return sum;
+  });
+
+  readonly originalSubtotal = computed(() => {
+    let sum = 0;
+    for (const p of this.localPricingMap().values()) {
+      sum += p.lineOriginalTotal;
+    }
+    return sum;
+  });
+
+  readonly comboDiscount = computed(() => {
+    let sum = 0;
+    for (const p of this.localPricingMap().values()) {
+      sum += p.comboSaving;
+    }
+    return sum;
+  });
+
+  readonly addonDiscount = computed(() => {
+    let sum = 0;
+    for (const p of this.localPricingMap().values()) {
+      sum += p.addonSaving;
+    }
+    return sum;
+  });
+
+  increaseQty(index: number): void {
+    this.checkoutItemsLocal.update((items) =>
+      items.map((it, i) => i === index ? { ...it, quantity: it.quantity + 1 } : it)
+    );
+    this.revalidateVoucher();
+  }
+
+  decreaseQty(index: number): void {
+    this.checkoutItemsLocal.update((items) => {
+      const cur = items[index];
+      if (!cur || cur.quantity <= 1) return items;
+      return items.map((it, i) => i === index ? { ...it, quantity: it.quantity - 1 } : it);
+    });
+    this.revalidateVoucher();
+  }
+
+  updateQty(index: number, event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const val = parseInt(target.value, 10);
+    const q = isNaN(val) || val < 1 ? 1 : val;
+    this.checkoutItemsLocal.update((items) =>
+      items.map((it, i) => i === index ? { ...it, quantity: q } : it)
+    );
+    this.revalidateVoucher();
+  }
+
+  private revalidateVoucher(): void {
+    const code = this.selectedVoucher()?.code;
+    if (code) {
+      setTimeout(() => this.applyVoucher(), 50);
+    }
   }
 
   /** Danh sách ưu đãi để chọn trực tiếp khi thanh toán (gồm Ví voucher + ưu đãi công khai từ MongoDB). */
@@ -186,11 +247,40 @@ export class CheckoutComponent implements OnInit {
   ngOnInit(): void {
     this.voucher.loadPublic();
     this.voucher.refreshMine();
-    const qCode = this.route.snapshot.queryParamMap.get('voucher');
-    if (qCode) {
-      const code = qCode.trim().toUpperCase();
-      this.voucherCode.set(code);
-      this.pendingQueryVoucher.set(code);
+
+    // Khởi tạo sản phẩm thanh toán cục bộ
+    this.route.queryParamMap.subscribe((params) => {
+      const mode = params.get('mode');
+      if (mode === 'buynow') {
+        const bn = this.cart.buyNowItem() || this._readBuyNowFromStorage();
+        if (bn) {
+          this.isBuyNowMode.set(true);
+          this.checkoutItemsLocal.set([JSON.parse(JSON.stringify(bn))]);
+        } else {
+          this.isBuyNowMode.set(false);
+          this.checkoutItemsLocal.set([]);
+        }
+      } else {
+        this.isBuyNowMode.set(false);
+        const sel = this.cart.selectedItems();
+        this.checkoutItemsLocal.set(JSON.parse(JSON.stringify(sel)));
+      }
+
+      const qCode = params.get('voucher');
+      if (qCode) {
+        const code = qCode.trim().toUpperCase();
+        this.voucherCode.set(code);
+        this.pendingQueryVoucher.set(code);
+      }
+    });
+  }
+
+  private _readBuyNowFromStorage(): XanhLaCartItem | null {
+    try {
+      const raw = sessionStorage.getItem('xanhla_buy_now');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
     }
   }
 
@@ -259,7 +349,7 @@ export class CheckoutComponent implements OnInit {
   handleSubmit(e: Event): void {
     e.preventDefault();
 
-    const currentItems = this.checkoutItems();
+    const currentItems = this.checkoutItemsLocal();
     if (currentItems.length === 0) {
       this.errorMsg.set('Không có sản phẩm nào được chọn để thanh toán.'); return;
     }
@@ -281,11 +371,9 @@ export class CheckoutComponent implements OnInit {
     this.submitting.set(true);
     this.errorMsg.set('');
 
-    // Build order payload — product field là MongoDB _id nếu có (từ API),
-    // hoặc bỏ qua nếu là static data (slug string)
-    const items = currentItems.map(i => {
+    // Build order payload
+    const items = currentItems.map((i: XanhLaCartItem) => {
       const prod = i.product as any;
-      // id có dạng 24-char hex (MongoDB ObjectId)
       const isObjectId = /^[a-f\d]{24}$/i.test(prod.id ?? '');
       const itemType = i.product.isCombo
         ? 'combo'
@@ -305,7 +393,6 @@ export class CheckoutComponent implements OnInit {
       };
     });
 
-    // Không gửi `user`: server lấy chủ đơn hàng từ token đăng nhập.
     const payload = {
       guestName:           this.guestName(),
       guestEmail:          this.guestEmail(),
@@ -351,7 +438,11 @@ export class CheckoutComponent implements OnInit {
         // Voucher đã dùng được server đánh dấu → tải lại; điểm được cộng khi đơn giao thành công
         this.voucher.refreshMine();
 
-        this.cart.removeSelectedItems();
+        if (this.isBuyNowMode()) {
+          this.cart.clearBuyNowItem();
+        } else {
+          this.cart.removeSelectedItems();
+        }
       },
       error: (err) => {
         this.submitting.set(false);
@@ -360,7 +451,6 @@ export class CheckoutComponent implements OnInit {
     });
   }
 
-  /** Sao chép thông tin (STK hoặc Nội dung CK) vào clipboard kèm thông báo */
   copyToClipboard(text: string, fieldName: string): void {
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {

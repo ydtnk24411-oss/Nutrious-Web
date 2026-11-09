@@ -180,11 +180,19 @@ export class HomeComponent implements OnInit, OnDestroy {
     return `${discount}${minimum}.`;
   }
   productSlug(p: ApiProduct): string { return p.slug?.startsWith('/') ? p.slug : `/product-page/${p.slug}`; }
-  addToCart(p: ApiProduct): void { this.cart.addItem(this.toCartProduct(p), 1); }
+  addToCart(p: ApiProduct, event?: Event): void {
+    if (event) {
+      this.cart.animateFlyToCart(event, p.image);
+    }
+    this.cart.addItem(this.toCartProduct(p), 1);
+  }
   getCategoryName(categoryId: string): string {
     return this.categories.find(c => c._id === categoryId)?.name ?? 'Chưa phân loại';
   }
-  addDealToCart(deal: FlashSaleItem): void {
+  addDealToCart(deal: FlashSaleItem, event?: Event): void {
+    if (event) {
+      this.cart.animateFlyToCart(event, deal.image);
+    }
     if (deal.isSoldOut) return;
     const priceText = (deal.flashSalePrice || 0).toLocaleString('vi-VN') + 'đ';
     const product = {
@@ -199,6 +207,26 @@ export class HomeComponent implements OnInit, OnDestroy {
       description: deal.description,
     } as XanhLaProduct;
     this.cart.addItem(product, 1);
+  }
+
+  openBuyNow(product: ApiProduct): void {
+    this.cart.openBuyNowModal(this.toCartProduct(product));
+  }
+
+  openBuyNowDeal(deal: FlashSaleItem): void {
+    const priceText = `${(deal.flashSalePrice || 0).toLocaleString('vi-VN')}đ`;
+    const product = {
+      id: deal.productId || deal._id,
+      name: deal.name,
+      slug: deal.slug || deal._id,
+      price: priceText,
+      priceNumber: deal.flashSalePrice,
+      image: deal.image,
+      category: 'Vegetables',
+      categoryVi: deal.category,
+      description: deal.description,
+    } as XanhLaProduct;
+    this.cart.openBuyNowModal(product);
   }
 
   formatPrice(val: number): string {

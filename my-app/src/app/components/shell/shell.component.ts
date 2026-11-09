@@ -4,6 +4,7 @@ import { FooterComponent } from '../footer/footer.component';
 import { CartDrawerComponent } from '../cart-drawer/cart-drawer.component';
 import { AuthModalComponent } from '../auth-modal/auth-modal.component';
 import { ChatbotComponent } from '../chatbot/chatbot.component';
+import { BuyNowModalComponent } from '../buy-now-modal/buy-now-modal.component';
 
 @Component({
   selector: 'app-shell',
@@ -14,6 +15,7 @@ import { ChatbotComponent } from '../chatbot/chatbot.component';
     CartDrawerComponent,
     AuthModalComponent,
     ChatbotComponent,
+    BuyNowModalComponent,
   ],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.css',

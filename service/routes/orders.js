@@ -783,7 +783,6 @@ router.get('/:id', protect, adminOnly, async (req, res, next) => {
     if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng.' });
     await attachComboDetailsToOrders(order);
     res.json({ success: true, data: order });
-    res.json({ success: true, data: order });
   } catch (err) { next(err); }
 });
 
@@ -851,8 +850,31 @@ const handleCancelOrder = async (req, res, next) => {
     }
     await order.save();
 
-    if (oldStatus === 'confirmed') {
+    if (oldStatus !== 'cancelled') {
       await handleFlashSaleOrderCancelled(order);
+      for (const item of order.items) {
+        if (item.product) {
+          const prod = await Product.findById(item.product);
+          if (prod) {
+            const oldStock = prod.stock ?? 0;
+            const newStock = oldStock + (item.quantity || 1);
+            prod.stock = newStock;
+            await prod.save();
+
+            await InventoryLog.create({
+              product: prod._id,
+              productName: prod.name,
+              type: 'order_cancelled',
+              delta: item.quantity || 1,
+              oldStock,
+              newStock,
+              reason: `Hủy đơn hàng ${order.orderCode}`,
+              note: reason ? `Khôi phục tồn kho do hủy đơn (${reason})` : 'Khôi phục tồn kho do hủy đơn',
+              updatedBy: req.user?._id || null,
+            });
+          }
+        }
+      }
     }
 
     res.json({

@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { VoucherService } from '../../shared/services/voucher.service';
 import { CartService } from '../../shared/services/cart.service';
-import { Voucher } from '../../shared/models/xanh-la.models';
+import { Voucher, UserVoucher } from '../../shared/models/xanh-la.models';
 
 @Component({
   selector: 'app-vouchers',
@@ -19,9 +19,13 @@ export class VouchersComponent implements OnInit {
 
   activeTab = signal<'all' | 'available' | 'collected'>('all');
   toastMessage = signal<string>('');
+  toastType = signal<'success' | 'error' | 'info'>('success');
+  private toastTimer: any = null;
 
   readonly publicVouchers = this.voucher.publicVouchers;
   readonly collectedVouchers = this.voucher.userVouchers;
+  readonly isLoading = this.voucher.isLoading;
+
   readonly uncollectedCount = computed(() =>
     this.publicVouchers().filter(v => !this.voucher.isSaved(v.id)).length
   );
@@ -48,12 +52,18 @@ export class VouchersComponent implements OnInit {
     return this.voucher.isSaved(voucherId);
   }
 
-  walletStatus(voucherId: string): string | null {
-    const saved = this.collectedVouchers().find(uv => uv.voucherId === voucherId);
-    if (!saved) return null;
-    if (saved.status === 'used') return 'Đã sử dụng';
-    if (saved.status === 'expired') return 'Đã hết hạn';
-    return 'Đã lưu trong ví';
+  getVoucherStatus(voucherId: string): { label: string; type: 'available' | 'used' | 'expired' | 'uncollected' } {
+    const saved = this.voucher.getUserVoucher(voucherId);
+    if (!saved) {
+      return { label: 'Chưa lưu vào ví', type: 'uncollected' };
+    }
+    if (saved.status === 'used') {
+      return { label: 'Đã sử dụng', type: 'used' };
+    }
+    if (saved.status === 'expired') {
+      return { label: 'Đã hết hạn', type: 'expired' };
+    }
+    return { label: 'Đã lưu trong ví (Khả dụng)', type: 'available' };
   }
 
   isCopied(code: string): boolean {
@@ -63,17 +73,31 @@ export class VouchersComponent implements OnInit {
   copyCode(code: string, event?: Event): void {
     event?.stopPropagation();
     this.voucher.copyCode(code);
-    this.toastMessage.set(`Đã sao chép mã ${code}! Mã luôn hiển thị trên thẻ và có thể chọn trực tiếp khi thanh toán.`);
+    this.showToast(`Đã sao chép mã "${code}" thành công! Bạn có thể dán vào ô voucher khi thanh toán.`, 'success');
   }
 
   collectVoucher(voucherId: string, event?: Event): void {
     event?.stopPropagation();
     this.voucher.collectVoucher(voucherId).subscribe((res) => {
       if (res.success) {
-        this.toastMessage.set('Đã lưu voucher vào Ví Voucher của bạn! Bạn có thể chọn trực tiếp ở trang Thanh toán.');
+        this.showToast('✓ Đã lưu voucher vào Ví của bạn! Mã sẵn sàng dùng khi thanh toán.', 'success');
       } else {
-        this.toastMessage.set(res.message || 'Không thể thu thập voucher.');
+        this.showToast(res.message || 'Không thể thu thập voucher.', 'error');
       }
     });
+  }
+
+  showToast(message: string, type: 'success' | 'error' | 'info' = 'success'): void {
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.toastMessage.set(message);
+    this.toastType.set(type);
+    this.toastTimer = setTimeout(() => {
+      this.toastMessage.set('');
+    }, 4500);
+  }
+
+  closeToast(): void {
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.toastMessage.set('');
   }
 }

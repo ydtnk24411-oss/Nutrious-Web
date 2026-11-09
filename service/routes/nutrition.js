@@ -26,38 +26,59 @@ function findExactProductForIngredient(ingName, products) {
     ['cá hồi', 'ca-hoi-na-uy-fillet-tuoi'],
     ['bông cải xanh', 'bong-cai-xanh-da-lat'],
     ['cà rốt', 'ca-rot-baby-da-lat'],
+    ['gà ta thả vườn nguyên con', 'ga-ta-tha-vuon-nguyen-con'],
     ['gà ta', 'ga-ta-tha-vuon-nguyen-con'],
     ['thịt gà', 'ga-ta-tha-vuon-nguyen-con'],
     ['ức gà', 'ga-ta-tha-vuon-nguyen-con'],
+    ['gà', 'ga-ta-tha-vuon-nguyen-con'],
     ['dưa leo', 'dua-leo-baby-da-lat'],
     ['cà chua bi', 'ca-chua-bi-da-lat'],
+    ['cà chua', 'ca-chua-bi-da-lat'],
+    ['thịt bò bắp mỹ nhập khẩu', 'thit-bo-bap-my-nhap-khau'],
     ['thịt bò', 'thit-bo-bap-my-nhap-khau'],
     ['bò bắp', 'thit-bo-bap-my-nhap-khau'],
-    ['cải xanh', 'cai-xanh-da-lat'],
+    ['bò', 'thit-bo-bap-my-nhap-khau'],
+    ['cải xanh', 'cai-xanh-da-lat', 'bông cải'],
     ['sữa chua hy lạp', 'sua-chua-hy-lap-huu-co'],
     ['sữa chua men sống', 'sua-chua-men-song-da-lat'],
     ['sữa chua', 'sua-chua-hy-lap-huu-co'],
     ['dâu tây', 'dau-tay-da-lat'],
     ['xoài cát', 'xoai-cat-hoa-loc'],
+    ['xoài', 'xoai-cat-hoa-loc'],
     ['nấm đông cô', 'nam-dong-co-da-lat'],
     ['tôm sú', 'tom-su-tuoi-song-ca-mau'],
-    ['rau cải ngọt', 'rau-cai-ngot-huu-co'],
-    ['cải ngọt', 'rau-cai-ngot-huu-co'],
+    ['tôm', 'tom-su-tuoi-song-ca-mau'],
+    ['rau cải ngọt', 'rau-cai-ngot-huu-co', 'bông cải'],
+    ['cải ngọt', 'rau-cai-ngot-huu-co', 'bông cải'],
     ['sả tươi', 'sa-tuoi-ben-tre'],
-    ['bơ sáp', 'bo-sap-dak-lak'],
-    ['quả bơ', 'bo-sap-dak-lak'],
+    ['sả', 'sa-tuoi-ben-tre'],
+    ['bơ sáp', 'bo-sap-dak-lak', 'bò'],
+    ['quả bơ', 'bo-sap-dak-lak', 'bò'],
+    ['bơ', 'bo-sap-dak-lak', 'bò'],
     ['bí đỏ', 'bi-do-ho-lo-da-lat'],
     ['ba rọi heo', 'thit-ba-roi-heo-thao-moc'],
     ['heo thảo mộc', 'thit-ba-roi-heo-thao-moc'],
+    ['thịt heo', 'thit-ba-roi-heo-thao-moc'],
     ['cải thìa', 'cai-thia-baby-da-lat'],
+    ['ớt chuông 3 màu', 'ot-chuong-3-mau-da-lat'],
     ['ớt chuông', 'ot-chuong-3-mau-da-lat'],
     ['cam sành', 'cam-sanh-vinh-long'],
+    ['cam', 'cam-sanh-vinh-long'],
   ];
 
-  for (const [vnKw, slug] of exactSlugMap) {
+  for (const [vnKw, slug, excludeKw] of exactSlugMap) {
     if (rawLower.includes(vnKw)) {
       found = products.find((p) => p.slug === slug);
       if (found) return found;
+      const targetNorm = normalizeVi(vnKw);
+      const wordRegex = new RegExp(`(^|\\s)${targetNorm}(\\s|$)`, 'i');
+      const foundByName = products.find((p) => {
+        const pNorm = normalizeVi(p.name);
+        if (excludeKw && pNorm.includes(normalizeVi(excludeKw))) return false;
+        // Require whole-word match so short words like "sa" don't match "san" in "la san"
+        return targetNorm.length <= 3 ? wordRegex.test(pNorm) : pNorm.includes(targetNorm);
+      });
+      if (foundByName) return foundByName;
     }
   }
 

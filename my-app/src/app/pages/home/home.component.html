@@ -74,9 +74,9 @@
       </div>
     </section>
 
-    <section class="coop-section coop-tinted coop-section-categories" aria-labelledby="category-title">
-      <div class="coop-container">
-        <div class="coop-section-heading"><div><span class="coop-eyebrow">DỄ DÀNG LỰA CHỌN</span><h2 id="category-title">Danh mục mua sắm</h2><p>Mọi thứ cần cho gia đình, gói gọn trong một lần ghé.</p></div><a routerLink="/online-ordering" class="coop-text-link">Xem tất cả</a></div>
+    <section class="coop-section coop-container coop-section-department" aria-labelledby="dept-title">
+      <div class="coop-section-heading"><div><span class="coop-eyebrow">ĐI CHỢ DỄ DÀNG</span><h2 id="dept-title">Chọn theo nhóm hàng</h2><p>Tất cả những gì bạn cần cho bữa ăn gia đình.</p></div><a routerLink="/online-ordering" class="coop-text-link">Tất cả sản phẩm</a></div>
+      <div class="coop-department-wrapper">
         <div class="coop-department-grid">
           <a *ngFor="let cat of visualCategories" routerLink="/online-ordering" [queryParams]="{ category: cat.name }" class="coop-department-card">
             <div class="coop-department-image"><img [src]="cat.image" [alt]="cat.name" loading="lazy"></div>
@@ -147,14 +147,26 @@
                 </div>
               </div>
 
-              <button
-                type="button"
-                class="coop-add-btn"
-                [disabled]="deal.isSoldOut"
-                (click)="addDealToCart(deal)"
-              >
-                {{ deal.isSoldOut ? 'Hết suất' : 'Thêm vào giỏ' }}
-              </button>
+              <div style="display:flex;gap:6px;margin-top:8px">
+                <button
+                  type="button"
+                  class="coop-add-btn"
+                  style="flex:1"
+                  [disabled]="deal.isSoldOut"
+                  (click)="addDealToCart(deal, $event)"
+                >
+                  <i class="bi bi-cart-plus" *ngIf="!deal.isSoldOut" style="margin-right:4px"></i><span>{{ deal.isSoldOut ? 'Hết suất' : 'Thêm giỏ' }}</span>
+                </button>
+                <button
+                  type="button"
+                  class="coop-buynow-btn"
+                  style="flex:1;background:#15803d;color:#fff;border:none;border-radius:6px;font-weight:700;font-size:12px;padding:8px;cursor:pointer"
+                  [disabled]="deal.isSoldOut"
+                  (click)="openBuyNowDeal(deal)"
+                >
+                  <i class="bi bi-lightning-charge-fill" style="margin-right:4px"></i><span>Mua ngay</span>
+                </button>
+              </div>
             </div>
           </article>
         </div>
@@ -168,7 +180,7 @@
       <div class="coop-product-grid coop-api-grid" *ngIf="!loadingProducts && apiProducts.length">
         <article *ngFor="let product of visibleProducts" class="coop-product-card">
           <a class="coop-product-photo" [routerLink]="productSlug(product)"><img [src]="product.image || fallbackProductImage" [alt]="product.name" loading="lazy"><span class="coop-product-tag">{{ getCategoryName(product.categoryId) }}</span></a>
-          <div class="coop-product-info"><small>{{ getCategoryName(product.categoryId) }}</small><h3><a [routerLink]="productSlug(product)">{{ product.name }}</a></h3><p>{{ product.description || 'Lựa chọn tiện lợi cho gia đình bạn.' }}</p><div class="coop-price-row"><strong>{{ product.price }}</strong></div><button type="button" class="coop-add-btn" (click)="addToCart(product)">Thêm vào giỏ</button></div>
+          <div class="coop-product-info"><small>{{ getCategoryName(product.categoryId) }}</small><h3><a [routerLink]="productSlug(product)">{{ product.name }}</a></h3><p>{{ product.description || 'Lựa chọn tiện lợi cho gia đình bạn.' }}</p><div class="coop-price-row"><strong>{{ product.price }}</strong></div><div style="display:flex;gap:6px;margin-top:8px"><button type="button" class="coop-add-btn" style="flex:1" (click)="addToCart(product, $event)">Thêm giỏ</button><button type="button" class="coop-buynow-btn" style="flex:1;background:#15803d;color:#fff;border:none;border-radius:6px;font-weight:700;font-size:12px;padding:8px;cursor:pointer" (click)="openBuyNow(product)">Mua ngay</button></div></div>
         </article>
       </div>
     </section>

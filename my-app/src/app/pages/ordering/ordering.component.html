@@ -64,9 +64,7 @@
 
         <!-- Search -->
         <div class="ord-filter-search">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
+          <i class="bi bi-search" style="font-size:14px;color:var(--xl-forest)"></i>
           <input type="text" placeholder="Tìm sản phẩm..."
                  [value]="search()" (input)="search.set($any($event.target).value)" />
         </div>
@@ -428,7 +426,7 @@
 
         @if (filteredProducts().length === 0) {
           <div class="ord-empty">
-            <div style="font-size:40px;margin-bottom:12px">🔍</div>
+            <div style="font-size:36px;margin-bottom:12px;color:#94a3b8"><i class="bi bi-search"></i></div>
             <p>Không tìm thấy sản phẩm phù hợp.</p>
             <button class="xanhla-btn-outline" type="button" (click)="clearAllFilters()"
                     style="margin-top:12px">Xóa bộ lọc</button>
@@ -470,37 +468,27 @@
                 @if (prod.weight) {
                   <span class="xanhla-prod-card-unit">/ {{ prod.weight }}</span>
                 }
-
-                @if (itemQty(prod.slug) > 0) {
-                  <span class="ord-item-qty-badge ord-qty-inline">
-                    {{ itemQty(prod.slug) }}
-                  </span>
-                }
               </div>
 
-              @if (itemQty(prod.slug) > 0) {
-                <div class="ord-qty-picker ord-qty-picker--full">
-                  <button type="button" class="ord-qty-btn" (click)="removeOne(prod)">−</button>
-                  <span class="ord-qty-num">{{ itemQty(prod.slug) }}</span>
-                  <button type="button" class="ord-qty-btn" (click)="addOne(prod)">+</button>
-                </div>
-              } @else {
+              <div class="ord-card-btn-row">
                 <button
                   type="button"
                   class="xanhla-prod-card-add"
-                  (click)="addOne(prod)"
-                  [attr.aria-label]="'Thêm ' + prod.name">
-
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                       stroke="currentColor" stroke-width="2.2">
-                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                    <line x1="3" y1="6" x2="21" y2="6"/>
-                    <path d="M16 10a4 4 0 0 1-8 0"/>
-                  </svg>
-
-                  Thêm vào giỏ
+                  (click)="addOne(prod, $event)"
+                  [attr.aria-label]="'Thêm ' + prod.name + ' vào giỏ'">
+                  <i class="bi bi-cart-plus" style="font-size:14px"></i>
+                  <span>Thêm giỏ</span>
                 </button>
-              }
+
+                <button
+                  type="button"
+                  class="xanhla-prod-card-buynow"
+                  (click)="openBuyNow(prod)"
+                  [attr.aria-label]="'Mua ngay ' + prod.name">
+                  <i class="bi bi-lightning-charge-fill" style="font-size:13px"></i>
+                  <span>Mua ngay</span>
+                </button>
+              </div>
             </div>
           </div>
         }

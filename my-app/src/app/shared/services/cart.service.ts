@@ -8,6 +8,7 @@ import {
   EvaluatedCartItemPricing,
 } from '../models/xanh-la.models';
 import { ApiService } from './api.service';
+import { animateFlyToCart } from '../utils/fly-to-cart.util';
 
 const USER_KEY         = 'xanhla_user_session';
 const TOKEN_KEY        = 'xanhla_auth_token';
@@ -70,7 +71,7 @@ export function formatPrice(value: number): string {
   return value.toLocaleString('vi-VN') + 'đ';
 }
 
-function evaluateItemsPricingMap(items: XanhLaCartItem[]): Map<string, EvaluatedCartItemPricing> {
+export function evaluateItemsPricingMap(items: XanhLaCartItem[]): Map<string, EvaluatedCartItemPricing> {
   const map = new Map<string, EvaluatedCartItemPricing>();
   const regularItems: XanhLaCartItem[] = [];
   const addonItems: XanhLaCartItem[] = [];
@@ -386,6 +387,17 @@ function persistSelectedKeys(keys: Set<string>): void {
   } catch {}
 }
 
+function cleanCartStr(s?: string): string {
+  return (s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/[^a-z0-9]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 @Injectable({ providedIn: 'root' })
 export class CartService {
   private api = inject(ApiService);
@@ -412,22 +424,132 @@ export class CartService {
   private _viewedProducts = signal<ViewedProductItem[]>([]);
   readonly viewedProducts = this._viewedProducts.asReadonly();
 
+  // ── Buy Now Modal & State ──────────────────────────────
+  private _buyNowModalOpen = signal(false);
+  readonly buyNowModalOpen = this._buyNowModalOpen.asReadonly();
+
+  private _buyNowProduct = signal<XanhLaProduct | null>(null);
+  readonly buyNowProduct = this._buyNowProduct.asReadonly();
+
+  private _buyNowQuantity = signal(1);
+  readonly buyNowQuantity = this._buyNowQuantity.asReadonly();
+
+  private _buyNowOption = signal<string>('');
+  readonly buyNowOption = this._buyNowOption.asReadonly();
+
+  private _buyNowItem = signal<XanhLaCartItem | null>(this._loadBuyNowItem());
+  readonly buyNowItem = this._buyNowItem.asReadonly();
+
+  openBuyNowModal(product: XanhLaProduct, initialQty = 1, option?: string): void {
+    this._buyNowProduct.set(product);
+    this._buyNowQuantity.set(Math.max(1, initialQty));
+    const defaultOpt = option || (product.options?.[0]?.values?.[0] ?? '');
+    this._buyNowOption.set(defaultOpt);
+    this._buyNowModalOpen.set(true);
+  }
+
+  closeBuyNowModal(): void {
+    this._buyNowModalOpen.set(false);
+  }
+
+  setBuyNowQuantity(qty: number): void {
+    this._buyNowQuantity.set(Math.max(1, Math.floor(qty) || 1));
+  }
+
+  setBuyNowOption(opt: string): void {
+    this._buyNowOption.set(opt);
+  }
+
+  setBuyNowItem(item: XanhLaCartItem | null): void {
+    this._buyNowItem.set(item);
+    try {
+      if (item) {
+        sessionStorage.setItem('xanhla_buy_now', JSON.stringify(item));
+      } else {
+        sessionStorage.removeItem('xanhla_buy_now');
+      }
+    } catch {}
+  }
+
+  clearBuyNowItem(): void {
+    this.setBuyNowItem(null);
+  }
+
+  startBuyNow(product: XanhLaProduct, quantity: number, selectedOption?: string): void {
+    const item: XanhLaCartItem = {
+      product,
+      quantity: Math.max(1, quantity),
+      selectedOption: selectedOption || undefined,
+      itemType: product.isCombo ? 'combo' : 'regular',
+      isCombo: !!product.isCombo,
+      originalPriceNumber: product.originalPriceNumber,
+    };
+    this.setBuyNowItem(item);
+    this.closeBuyNowModal();
+  }
+
+  private _loadBuyNowItem(): XanhLaCartItem | null {
+    try {
+      const raw = sessionStorage.getItem('xanhla_buy_now');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private _sanitizeAndMergeItems(items: XanhLaCartItem[]): XanhLaCartItem[] {
+    const merged: XanhLaCartItem[] = [];
+    for (const item of items) {
+      const hasOptions = Array.isArray(item.product?.options) && item.product.options.length > 0;
+      const opt = hasOptions ? (item.selectedOption?.trim() || undefined) : undefined;
+      const itName = cleanCartStr(item.product.name);
+      const itSlug = cleanCartStr((item.product.slug || '').replace(/^\/product-page\//, '').replace(/^\//, ''));
+      const itId = cleanCartStr(item.product.id || (item.product as any)._id);
+
+      const existing = merged.find((m) => {
+        if (m.itemType !== item.itemType) return false;
+        if (hasOptions && (m.selectedOption ?? '') !== (opt ?? '')) return false;
+        if ((m.linkedMainProductId ?? '') !== (item.linkedMainProductId ?? '')) return false;
+
+        const mSlug = cleanCartStr((m.product.slug || '').replace(/^\/product-page\//, '').replace(/^\//, ''));
+        const mId = cleanCartStr(m.product.id || (m.product as any)._id);
+        const mName = cleanCartStr(m.product.name);
+
+        return (
+          (mSlug && itSlug && mSlug === itSlug) ||
+          (mId && itId && mId === itId) ||
+          (mName && itName && mName === itName)
+        );
+      });
+      if (existing) {
+        existing.quantity += item.quantity;
+      } else {
+        merged.push({ ...item, selectedOption: opt });
+      }
+    }
+    return merged;
+  }
+
   constructor() {
     const user = this._currentUser();
+    const ident = user ? (user.phone || user.email || user._id || 'guest') : 'guest';
+    const loaded = this._loadCartForUser(ident, user?.email);
+    const sanitized = this._sanitizeAndMergeItems(loaded);
+    this._items.set(sanitized);
+    if (sanitized.length !== loaded.length) {
+      this._saveCartForCurrentUser(sanitized);
+    }
+
+    const saved = loadSavedSelectedKeys();
+    const allItemKeys = new Set(sanitized.map(i => getCartItemKey(i)));
+    if (saved && saved.size > 0) {
+      const validKeys = new Set([...saved].filter(k => allItemKeys.has(k)));
+      this._selectedKeys.set(validKeys.size > 0 ? validKeys : allItemKeys);
+    } else {
+      this._selectedKeys.set(allItemKeys);
+    }
+
     if (user) {
-      const ident = user.phone || user.email || user._id || 'guest';
-      const loaded = this._loadCartForUser(ident, user.email);
-      this._items.set(loaded);
-
-      const saved = loadSavedSelectedKeys();
-      const allItemKeys = new Set(loaded.map(i => getCartItemKey(i)));
-      if (saved && saved.size > 0) {
-        const validKeys = new Set([...saved].filter(k => allItemKeys.has(k)));
-        this._selectedKeys.set(validKeys.size > 0 ? validKeys : allItemKeys);
-      } else {
-        this._selectedKeys.set(allItemKeys);
-      }
-
       this.loadUserData();
       this.loadViewedProducts();
     } else {
@@ -447,7 +569,8 @@ export class CartService {
     const key = cartItemKey(slug, selectedOption);
     this._selectedKeys.update(set => {
       const next = new Set(set);
-      next.has(key) ? next.delete(key) : next.add(key);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       persistSelectedKeys(next);
       return next;
     });
@@ -457,155 +580,228 @@ export class CartService {
     const key = getCartItemKey(item);
     this._selectedKeys.update(set => {
       const next = new Set(set);
-      next.has(key) ? next.delete(key) : next.add(key);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       persistSelectedKeys(next);
       return next;
     });
   }
 
+  selectAll(): void {
+    const all = new Set(this._items().map(i => getCartItemKey(i)));
+    this._selectedKeys.set(all);
+    persistSelectedKeys(all);
+  }
+
+  unselectAll(): void {
+    const empty = new Set<string>();
+    this._selectedKeys.set(empty);
+    persistSelectedKeys(empty);
+  }
+
   toggleAll(): void {
-    if (this.allSelected()) {
-      const empty = new Set<string>();
-      this._selectedKeys.set(empty);
-      persistSelectedKeys(empty);
+    if (this.isAllSelected()) {
+      this.unselectAll();
     } else {
-      const allKeys = this._items().map(i => getCartItemKey(i));
-      const next = new Set(allKeys);
-      this._selectedKeys.set(next);
-      persistSelectedKeys(next);
+      this.selectAll();
     }
   }
 
-  readonly allSelected = computed(() => {
+  selectOnly(slug: string, selectedOption?: string): void {
+    const key = cartItemKey(slug, selectedOption);
+    const next = new Set<string>([key]);
+    this._selectedKeys.set(next);
+    persistSelectedKeys(next);
+  }
+
+  selectOnlyKeys(keys: string[] | Set<string>): void {
+    const next = new Set<string>(keys);
+    this._selectedKeys.set(next);
+    persistSelectedKeys(next);
+  }
+
+  selectOnlyRecipeItems(ingredients: { name: string; product?: any }[]): Set<string> {
+    const matchingKeys = new Set<string>();
+    const cartItems = this._items();
+
+    for (const it of cartItems) {
+      const itSlug = cleanCartStr((it.product.slug || '').replace(/^\/product-page\//, '').replace(/^\//, ''));
+      const itId = cleanCartStr(it.product.id || (it.product as any)._id);
+      const itName = cleanCartStr(it.product.name);
+
+      let isRecipeItem = false;
+      for (const ing of ingredients) {
+        const ingName = cleanCartStr(ing.name);
+        const prod = ing.product;
+        const prodSlug = prod?.slug
+          ? cleanCartStr((prod.slug || '').replace(/^\/product-page\//, '').replace(/^\//, ''))
+          : '';
+        const prodId = prod?._id || prod?.id ? cleanCartStr(String(prod._id || prod.id)) : '';
+        const prodName = prod?.name ? cleanCartStr(prod.name) : '';
+
+        if (
+          (prodSlug && itSlug && (itSlug === prodSlug || itSlug.includes(prodSlug) || prodSlug.includes(itSlug))) ||
+          (prodId && itId && itId === prodId) ||
+          (prodName && itName && (itName.includes(prodName) || prodName.includes(itName))) ||
+          (ingName && itName && (itName.includes(ingName) || ingName.includes(itName)))
+        ) {
+          isRecipeItem = true;
+          break;
+        }
+      }
+
+      if (isRecipeItem) {
+        matchingKeys.add(getCartItemKey(it));
+      }
+    }
+
+    this._selectedKeys.set(matchingKeys);
+    persistSelectedKeys(matchingKeys);
+    return matchingKeys;
+  }
+
+  selectOnlyMatchingProducts(productSlugsOrIds: string[]): void {
+    const targetSet = new Set(productSlugsOrIds.map(s => cleanCartStr(s)));
+    const matchingKeys = new Set<string>();
+    for (const it of this._items()) {
+      const slug = cleanCartStr((it.product.slug || '').replace(/^\/product-page\//, '').replace(/^\//, ''));
+      const id = cleanCartStr(it.product.id || (it.product as any)._id);
+      const name = cleanCartStr(it.product.name);
+      if (targetSet.has(slug) || targetSet.has(id) || targetSet.has(name)) {
+        matchingKeys.add(getCartItemKey(it));
+      }
+    }
+    this._selectedKeys.set(matchingKeys);
+    persistSelectedKeys(matchingKeys);
+  }
+
+  removeSelectedItems(): void {
+    const set = this._selectedKeys();
+    this._items.update(current => {
+      const updated = current.filter(i => !set.has(getCartItemKey(i)));
+      this._saveCartForCurrentUser(updated);
+      return updated;
+    });
+    this._selectedKeys.set(new Set());
+    persistSelectedKeys(new Set());
+  }
+
+  readonly isAllSelected = computed(() => {
     const items = this._items();
     if (items.length === 0) return false;
-    return items.every(i => this._selectedKeys().has(getCartItemKey(i)));
+    const set = this._selectedKeys();
+    return items.every(i => set.has(getCartItemKey(i)));
   });
 
-  // Chỉ lấy các sản phẩm ĐƯỢC CHỌN để thanh toán
-  readonly selectedItems = computed(() => {
-    return this._items().filter(i =>
-      this._selectedKeys().has(getCartItemKey(i))
-    );
+  readonly allSelected = this.isAllSelected;
+
+  readonly selectedItems = computed<XanhLaCartItem[]>(() => {
+    const set = this._selectedKeys();
+    return this._items().filter(i => set.has(getCartItemKey(i)));
   });
 
-  readonly selectedCount = computed(() =>
-    this.selectedItems().length
-  );
+  // ── Selected items count ────────────────────────────────
+  readonly selectedCount = computed(() => {
+    const set = this._selectedKeys();
+    return this._items()
+      .filter(i => set.has(getCartItemKey(i)))
+      .reduce((sum, i) => sum + i.quantity, 0);
+  });
 
-  /** Bảng tính giá cho các sản phẩm đang được tick chọn thanh toán */
-  readonly selectedPricingMap = computed(() =>
-    evaluateItemsPricingMap(this.selectedItems())
-  );
+  // ── Pricing Maps ────────────────────────────────────────
 
-  /** Bảng tính giá toàn giỏ hàng (dùng cho Cart Drawer và preview) */
-  readonly allPricingMap = computed(() =>
-    evaluateItemsPricingMap(this._items())
-  );
+  readonly allPricingMap = computed<Map<string, EvaluatedCartItemPricing>>(() => {
+    return evaluateItemsPricingMap(this._items());
+  });
 
-  /** Lấy thông tin giá, loại SP (mua lẻ / combo / mua kèm) và mức giảm cho 1 dòng giỏ hàng */
-  getItemPricing(item: XanhLaCartItem, mode: 'selected' | 'all' = 'selected'): EvaluatedCartItemPricing {
+  readonly selectedPricingMap = computed<Map<string, EvaluatedCartItemPricing>>(() => {
+    const set = this._selectedKeys();
+    const selItems = this._items().filter(i => set.has(getCartItemKey(i)));
+    return evaluateItemsPricingMap(selItems);
+  });
+
+  getPricingForItem(item: XanhLaCartItem): EvaluatedCartItemPricing | undefined {
+    return this.allPricingMap().get(getCartItemKey(item));
+  }
+
+  getSelectedPricingForItem(item: XanhLaCartItem): EvaluatedCartItemPricing | undefined {
+    return this.selectedPricingMap().get(getCartItemKey(item));
+  }
+
+  getItemPricing(item: XanhLaCartItem, scope: 'all' | 'selected' = 'all'): EvaluatedCartItemPricing {
+    const found = scope === 'selected'
+      ? this.selectedPricingMap().get(getCartItemKey(item))
+      : this.allPricingMap().get(getCartItemKey(item));
+    if (found) return found;
+
     const key = getCartItemKey(item);
-    if (mode === 'all') {
-      const found = this.allPricingMap().get(key);
-      if (found) return found;
-    } else if (this._selectedKeys().has(key)) {
-      const found = this.selectedPricingMap().get(key);
-      if (found) return found;
-    }
-    const base = unitPriceOf(item.product);
-    const isCombo = !!(item.product.isCombo || item.isCombo || item.itemType === 'combo');
-    const origUnit = isCombo && item.product.originalPriceNumber && item.product.originalPriceNumber > base
-      ? item.product.originalPriceNumber
-      : base;
-    const comboSav = isCombo ? Math.max(0, (origUnit - base) * item.quantity) : 0;
-    const type: 'regular' | 'combo' | 'addon' = isCombo
-      ? 'combo'
-      : (item.itemType === 'addon' ? 'addon' : 'regular');
+    const basePrice = unitPriceOf(item.product);
+    const lineTotal = basePrice * (item.quantity || 1);
     return {
       key,
-      itemType: type,
-      originalUnitPrice: origUnit,
-      effectiveUnitPrice: base,
-      lineOriginalTotal: origUnit * item.quantity,
-      linePayableTotal: base * item.quantity,
-      lineSaving: comboSav,
-      comboSaving: comboSav,
+      itemType: item.itemType || 'regular',
+      originalUnitPrice: basePrice,
+      effectiveUnitPrice: basePrice,
+      lineOriginalTotal: lineTotal,
+      linePayableTotal: lineTotal,
+      lineSaving: 0,
+      comboSaving: 0,
       addonSaving: 0,
       discountedByAddon: false,
       discountedQty: 0,
       isAddonActive: false,
-      missingMainWarning: type === 'addon' ? 'Tick chọn sản phẩm này cùng sản phẩm chính để tính ưu đãi mua kèm' : '',
-      promoBadge: isCombo ? 'Combo tiết kiệm' : (type === 'addon' ? 'Mua kèm' : 'Sản phẩm mua lẻ'),
-      relationLabel: item.linkedMainProductName ? `Mua kèm cùng: ${item.linkedMainProductName}` : '',
+      missingMainWarning: '',
+      promoBadge: '',
+      relationLabel: '',
     };
   }
 
-  /** Tổng giá thực tế phải trả của các sản phẩm được chọn (sau giảm Combo & Mua kèm) */
-  readonly selectedSubtotal = computed(() => {
-    let sum = 0;
-    for (const p of this.selectedPricingMap().values()) {
-      sum += p.linePayableTotal;
-    }
-    return sum;
-  });
+  readonly count = computed(() =>
+    this._items().reduce((sum, i) => sum + i.quantity, 0)
+  );
+  readonly itemCount = this.count;
 
-  /** Tổng giá gốc của các sản phẩm được chọn (trước khi giảm Combo & Mua kèm) */
-  readonly selectedOriginalSubtotal = computed(() => {
+  readonly originalTotal = computed(() => {
     let sum = 0;
     for (const p of this.selectedPricingMap().values()) {
       sum += p.lineOriginalTotal;
     }
     return sum;
   });
+  readonly selectedOriginalSubtotal = this.originalTotal;
 
-  /** Tổng tiền tiết kiệm được từ Combo */
-  readonly selectedComboDiscount = computed(() => {
+  readonly total = computed(() => {
+    let sum = 0;
+    for (const p of this.selectedPricingMap().values()) {
+      sum += p.linePayableTotal;
+    }
+    return sum;
+  });
+  readonly selectedSubtotal = this.total;
+
+  readonly comboDiscountTotal = computed(() => {
     let sum = 0;
     for (const p of this.selectedPricingMap().values()) {
       sum += p.comboSaving;
     }
     return sum;
   });
+  readonly selectedComboDiscount = this.comboDiscountTotal;
 
-  /** Tổng tiền tiết kiệm được từ chương trình Mua kèm tiết kiệm hơn */
-  readonly selectedAddonDiscount = computed(() => {
+  readonly addOnDiscountTotal = computed(() => {
     let sum = 0;
     for (const p of this.selectedPricingMap().values()) {
       sum += p.addonSaving;
     }
     return sum;
   });
+  readonly selectedAddonDiscount = this.addOnDiscountTotal;
 
-  /** Khi mua ngay 1 sản phẩm: chỉ chọn duy nhất sản phẩm đó */
-  selectOnly(slug: string, selectedOption?: string): void {
-    const next = new Set([cartItemKey(slug, selectedOption)]);
-    this._selectedKeys.set(next);
-    persistSelectedKeys(next);
-  }
-
-  /** Xóa chỉ những sản phẩm ĐÃ MUA khỏi giỏ hàng, giữ lại những sản phẩm chưa chọn */
-  removeSelectedItems(): void {
-    const selected = this._selectedKeys();
-    this._items.update((current) => {
-      const remaining = current.filter(
-        i => !selected.has(getCartItemKey(i))
-      );
-      this._saveCartForCurrentUser(remaining);
-      return remaining;
-    });
-    // Reset selection về tất cả các món còn lại
-    const remainingKeys = this._items().map(i => getCartItemKey(i));
-    const next = new Set(remainingKeys);
-    this._selectedKeys.set(next);
-    persistSelectedKeys(next);
-  }
-
-  readonly itemCount = computed(() =>
-    this._items().reduce((t, i) => t + i.quantity, 0)
+  readonly cartTotalSavings = computed(() =>
+    this.comboDiscountTotal() + this.addOnDiscountTotal()
   );
 
-  readonly subtotal = computed(() => {
+  readonly allItemsTotal = computed(() => {
     let sum = 0;
     for (const p of this.allPricingMap().values()) {
       sum += p.linePayableTotal;
@@ -619,36 +815,98 @@ export class CartService {
 
   // ── Cart methods ────────────────────────────────────────
 
-  addItem(product: XanhLaProduct, quantity = 1, selectedOption?: string): void {
-    if (!this._currentUser()) {
-      this.openAuthModal('login');
-      return;
+  animateFlyToCart(source?: Event | HTMLElement, imageUrl?: string): void {
+    animateFlyToCart(source, imageUrl);
+  }
+
+  addItem(
+    product: XanhLaProduct,
+    quantity = 1,
+    selectedOption?: string,
+    opts?: { openDrawer?: boolean; event?: Event | HTMLElement }
+  ): void {
+    if (opts?.event) {
+      animateFlyToCart(opts.event, product.image);
     }
+    const hasOptions = Array.isArray(product.options) && product.options.length > 0;
+    const cleanOption = hasOptions ? (selectedOption?.trim() || undefined) : undefined;
     const itemType: 'regular' | 'combo' = product.isCombo ? 'combo' : 'regular';
-    const key = cartItemKey(product.slug, selectedOption, itemType);
+    const key = cartItemKey(product.slug, cleanOption, itemType);
+
+    const prodName = cleanCartStr(product.name);
+    const prodSlug = cleanCartStr((product.slug || '').replace(/^\/product-page\//, '').replace(/^\//, ''));
+    const prodId = cleanCartStr(product.id || (product as any)._id);
+
+    let matchedItemKey = key;
+
     this._items.update((current) => {
-      const idx = current.findIndex(
-        (i) =>
-          i.product.slug === product.slug &&
-          (i.selectedOption ?? '') === (selectedOption ?? '') &&
-          i.itemType !== 'addon'
-      );
-      const updated = idx >= 0
-        ? current.map((i, index) =>
-            index === idx ? { ...i, product, itemType, quantity: i.quantity + quantity } : i
-          )
-        : [...current, { product, quantity, selectedOption, itemType, isCombo: !!product.isCombo }];
-      this._saveCartForCurrentUser(updated);
-      return updated;
+      const idx = current.findIndex((i) => {
+        if (i.itemType === 'addon') return false;
+        if (hasOptions && (i.selectedOption ?? '') !== (cleanOption ?? '')) return false;
+
+        const itSlug = cleanCartStr((i.product.slug || '').replace(/^\/product-page\//, '').replace(/^\//, ''));
+        const itId = cleanCartStr(i.product.id || (i.product as any)._id);
+        const itName = cleanCartStr(i.product.name);
+
+        return (
+          (itSlug && prodSlug && itSlug === prodSlug) ||
+          (itId && prodId && itId === prodId) ||
+          (itName && prodName && (itName === prodName || itName.includes(prodName) || prodName.includes(itName)))
+        );
+      });
+
+      if (idx >= 0) {
+        matchedItemKey = getCartItemKey(current[idx]);
+        const updated = current.map((i, index) =>
+          index === idx
+            ? {
+                ...i,
+                // Keep the better or custom discounted price if provided
+                product: product.priceNumber && product.priceNumber < (i.product.priceNumber || 0) ? product : i.product,
+                itemType,
+                quantity: i.quantity + quantity,
+                selectedOption: hasOptions ? (i.selectedOption || cleanOption) : undefined,
+              }
+            : i
+        );
+        this._saveCartForCurrentUser(updated);
+        return updated;
+      } else {
+        const updated = [...current, { product, quantity, selectedOption: cleanOption, itemType, isCombo: !!product.isCombo }];
+        this._saveCartForCurrentUser(updated);
+        return updated;
+      }
     });
-    // Tự động tick chọn sản phẩm vừa thêm
-    this._selectedKeys.update(set => {
+
+    // Tự động tick chọn sản phẩm vừa thêm (và tick luôn dòng sản phẩm đã tồn tại được gộp số lượng)
+    this._selectedKeys.update((set) => {
       const next = new Set(set);
       next.add(key);
+      if (matchedItemKey) next.add(matchedItemKey);
       persistSelectedKeys(next);
       return next;
     });
-    this._cartDrawerOpen.set(true);
+
+    if (opts?.openDrawer) {
+      this._cartDrawerOpen.set(true);
+    }
+  }
+
+  ensureItemsSelected(namesOrSlugs: string[]): void {
+    const targetSet = new Set(namesOrSlugs.map((s) => cleanCartStr(s)));
+    this._selectedKeys.update((set) => {
+      const next = new Set(set);
+      for (const it of this._items()) {
+        const slug = cleanCartStr((it.product.slug || '').replace(/^\/product-page\//, '').replace(/^\//, ''));
+        const id = cleanCartStr(it.product.id || (it.product as any)._id);
+        const name = cleanCartStr(it.product.name);
+        if (targetSet.has(slug) || targetSet.has(id) || targetSet.has(name)) {
+          next.add(getCartItemKey(it));
+        }
+      }
+      persistSelectedKeys(next);
+      return next;
+    });
   }
 
   /**
@@ -666,10 +924,6 @@ export class CartService {
     }[],
     opts?: { openDrawer?: boolean; selectOnlyBundle?: boolean }
   ): boolean {
-    if (!this._currentUser()) {
-      this.openAuthModal('login');
-      return false;
-    }
     const safeMainQty = Math.max(1, Math.round(mainQuantity || 1));
     const mainId = mainProduct.id || mainProduct.slug;
     const mainKey = cartItemKey(mainProduct.slug, mainOption, 'regular');
@@ -748,7 +1002,7 @@ export class CartService {
       });
     }
 
-    if (opts?.openDrawer !== false) {
+    if (opts?.openDrawer === true) {
       this._cartDrawerOpen.set(true);
     }
     return true;
@@ -1258,11 +1512,27 @@ export class CartService {
     localStorage.setItem(USER_KEY, JSON.stringify(user));
     localStorage.setItem(TOKEN_KEY, token);
 
-    // Khôi phục giỏ hàng cho user
+    // Khôi phục giỏ hàng cho user và tự động gộp hàng khách vãng lai đã chọn trước đó
     const ident = user.phone || user.email || user._id || 'guest';
-    const loaded = this._loadCartForUser(ident, user.email);
-    this._items.set(loaded);
-    const allKeys = new Set(loaded.map(i => getCartItemKey(i)));
+    const userCart = this._loadCartForUser(ident, user.email);
+    const guestCart = this._loadCartForUser('guest');
+
+    let merged = [...userCart];
+    if (guestCart.length > 0) {
+      for (const gItem of guestCart) {
+        const idx = merged.findIndex(i => getCartItemKey(i) === getCartItemKey(gItem));
+        if (idx >= 0) {
+          merged[idx].quantity += gItem.quantity;
+        } else {
+          merged.push(gItem);
+        }
+      }
+      try { localStorage.removeItem(cartKey('guest')); } catch {}
+    }
+
+    this._items.set(merged);
+    this._saveCartForCurrentUser(merged);
+    const allKeys = new Set(merged.map(i => getCartItemKey(i)));
     this._selectedKeys.set(allKeys);
     persistSelectedKeys(allKeys);
 
@@ -1358,8 +1628,7 @@ export class CartService {
 
   private _saveCartForCurrentUser(items: XanhLaCartItem[]): void {
     const u = this._currentUser();
-    if (!u) return;
-    const ident = u.phone || u.email || u._id || 'guest';
+    const ident = u ? (u.phone || u.email || u._id || 'guest') : 'guest';
     try { localStorage.setItem(cartKey(ident), JSON.stringify(items)); } catch { /**/ }
   }
 

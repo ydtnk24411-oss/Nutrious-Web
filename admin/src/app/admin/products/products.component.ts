@@ -18,6 +18,23 @@ export interface AdminAddOnDealRow {
   isActive: boolean;
 }
 
+/** Chuyển đổi chuỗi tiếng Việt có dấu sang slug URL chuẩn SEO */
+export function slugifyVietnamese(text: string): string {
+  if (!text) return '';
+  let str = text.toLowerCase().trim();
+  str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a');
+  str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e');
+  str = str.replace(/ì|í|ị|ỉ|ĩ/g, 'i');
+  str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, 'o');
+  str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u');
+  str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y');
+  str = str.replace(/đ/g, 'd');
+  str = str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  str = str.replace(/[^a-z0-9\s-]/g, '');
+  str = str.replace(/[\s-]+/g, '-');
+  return str.replace(/^-+|-+$/g, '');
+}
+
 const EMPTY_FORM = (): Partial<ApiProduct> => ({
   name: '',
   slug: '',
@@ -77,6 +94,8 @@ export class AdminProductsComponent implements OnInit {
   catFormImage = signal('');
   catFormOrder = signal(0);
   catSubmitting = signal(false);
+  customCatSlug = signal(false);
+  catImageMode = signal<'file' | 'url'>('file');
 
   // Filters
   search = signal('');
@@ -93,11 +112,14 @@ export class AdminProductsComponent implements OnInit {
   modalMode = signal<ModalMode>('create');
   editId = signal('');
   form = signal<Partial<ApiProduct>>(EMPTY_FORM());
+  customProductSlug = signal(false);
+  productImageMode = signal<'file' | 'url'>('file');
 
   // Cấu hình "Mua kèm tiết kiệm hơn" trong Modal sản phẩm
   allCandidateProducts = signal<ApiProduct[]>([]);
   addonSearch = signal('');
   formAddOnDeals = signal<AdminAddOnDealRow[]>([]);
+
   protected formatPrice = formatPrice;
 
   filteredAddOnCandidates = computed(() => {
@@ -221,7 +243,7 @@ export class AdminProductsComponent implements OnInit {
     this.load();
   }
 
-  onCategory(val: string): void {
+  onCategoryChange(val: string): void {
     this.category.set(val);
     this.page.set(1);
     this.load();
@@ -268,6 +290,8 @@ export class AdminProductsComponent implements OnInit {
     this.form.set({ ...EMPTY_FORM(), categoryId: defaultCat });
     this.formAddOnDeals.set([]);
     this.addonSearch.set('');
+    this.customProductSlug.set(false);
+    this.productImageMode.set('file');
     this.ensureCandidateProductsLoaded();
     this.modalMode.set('create');
     this.editId.set('');
@@ -281,6 +305,8 @@ export class AdminProductsComponent implements OnInit {
       : (p.categoryId ? p.categoryId.toString() : '');
     this.form.set({ ...p, categoryId: catId });
     this.addonSearch.set('');
+    this.customProductSlug.set(true);
+    this.productImageMode.set(p.image?.startsWith('data:') ? 'file' : 'url');
     this.ensureCandidateProductsLoaded();
 
     const mappedDeals: AdminAddOnDealRow[] = (p.addOnDeals ?? [])
@@ -371,23 +397,85 @@ export class AdminProductsComponent implements OnInit {
     return p.addOnDeals.filter((d) => d && d.isActive !== false && Number(d.discountValue) > 0).length;
   }
 
+  // ── Xử lý Slug & Tên sản phẩm ──────────────────────
   onNameChange(val: string): void {
+    const autoSlug = slugifyVietnamese(val);
+    const slug = this.customProductSlug()
+      ? (this.form().slug || autoSlug)
+      : autoSlug;
     this.form.update(f => ({
       ...f,
       name: val,
-      slug: val
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, ''),
+      slug,
     }));
+  }
+
+  onProductSlugChange(val: string): void {
+    this.customProductSlug.set(true);
+    const clean = val.toLowerCase().replace(/[\s]+/g, '-').replace(/[^a-z0-9-]/g, '');
+    this.form.update(f => ({ ...f, slug: clean }));
+  }
+
+  resetProductSlug(): void {
+    this.customProductSlug.set(false);
+    this.form.update(f => ({
+      ...f,
+      slug: slugifyVietnamese(f.name || ''),
+    }));
+  }
+
+  // ── Xử lý Hình ảnh sản phẩm (Upload file & URL) ─────
+  onProductImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) {
+      this.processProductImageFile(file);
+      input.value = '';
+    }
+  }
+
+  onProductImageDrop(event: DragEvent): void {
+    event.preventDefault();
+    const file = event.dataTransfer?.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      this.processProductImageFile(file);
+    }
+  }
+
+  processProductImageFile(file: File): void {
+    if (!file.type.startsWith('image/')) {
+      alert('Vui lòng chọn tệp hình ảnh hợp lệ (JPG, PNG, WEBP).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Kích thước ảnh tối đa là 5MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.setField('image', reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removeProductImage(): void {
+    this.setField('image', '');
+  }
+
+  onImageLoadError(event: Event): void {
+    (event.target as HTMLElement).style.display = 'none';
   }
 
   save(): void {
     const f = this.form();
 
-    if (!f.name || !f.slug || !f.priceNumber || !f.categoryId) {
-      this.error.set('Vui lòng điền đầy đủ thông tin bắt buộc.');
+    if (!f.name || !f.priceNumber || !f.categoryId) {
+      this.error.set('Vui lòng điền đầy đủ thông tin bắt buộc (Tên, Giá bán, Danh mục).');
       return;
+    }
+
+    if (!f.slug) {
+      f.slug = slugifyVietnamese(f.name);
     }
 
     if (!f.price) {
@@ -420,8 +508,8 @@ export class AdminProductsComponent implements OnInit {
 
         this.success.set(
           this.modalMode() === 'create'
-            ? 'Đã thêm sản phẩm!'
-            : 'Đã cập nhật!'
+            ? 'Đã thêm sản phẩm mới!'
+            : 'Đã cập nhật sản phẩm thành công!'
         );
 
         setTimeout(() => this.success.set(''), 3000);
@@ -451,12 +539,14 @@ export class AdminProductsComponent implements OnInit {
     });
   }
 
-  // Category Modal Handlers
+  // ── Category Modal Handlers ────────────────────────
   openCreateCategory(): void {
     this.editingCat.set(null);
     this.catFormName.set('');
     this.catFormSlug.set('');
     this.catFormImage.set('');
+    this.customCatSlug.set(false);
+    this.catImageMode.set('file');
     this.catFormOrder.set(this.categoriesWithCounts().length + 1);
     this.catModalOpen.set(true);
   }
@@ -464,7 +554,10 @@ export class AdminProductsComponent implements OnInit {
   openEditCategory(cat: ApiCategory): void {
     this.editingCat.set(cat);
     this.catFormName.set(cat.name);
-    this.catFormSlug.set(cat.slug);
+    const cleanSlug = (cat.slug || '').replace(/^\/category\//, '');
+    this.catFormSlug.set(cleanSlug);
+    this.customCatSlug.set(true);
+    this.catImageMode.set(cat.image?.startsWith('data:') ? 'file' : 'url');
     this.catFormImage.set(cat.image || '');
     this.catFormOrder.set(cat.order || 0);
     this.catModalOpen.set(true);
@@ -475,16 +568,70 @@ export class AdminProductsComponent implements OnInit {
     this.editingCat.set(null);
   }
 
+  onCatNameChange(val: string): void {
+    this.catFormName.set(val);
+    if (!this.customCatSlug()) {
+      this.catFormSlug.set(slugifyVietnamese(val));
+    }
+  }
+
+  onCatSlugChange(val: string): void {
+    this.customCatSlug.set(true);
+    const clean = val.toLowerCase().replace(/[\s]+/g, '-').replace(/[^a-z0-9-]/g, '');
+    this.catFormSlug.set(clean);
+  }
+
+  resetCatSlug(): void {
+    this.customCatSlug.set(false);
+    this.catFormSlug.set(slugifyVietnamese(this.catFormName()));
+  }
+
+  onCatImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) {
+      this.processCatImageFile(file);
+      input.value = '';
+    }
+  }
+
+  onCatImageDrop(event: DragEvent): void {
+    event.preventDefault();
+    const file = event.dataTransfer?.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      this.processCatImageFile(file);
+    }
+  }
+
+  processCatImageFile(file: File): void {
+    if (!file.type.startsWith('image/')) {
+      alert('Vui lòng chọn tệp hình ảnh hợp lệ (JPG, PNG, WEBP).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Kích thước ảnh tối đa 5MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.catFormImage.set(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removeCatImage(): void {
+    this.catFormImage.set('');
+  }
+
   saveCategory(): void {
     const name = this.catFormName().trim();
-    let slug = this.catFormSlug().trim();
+    let rawSlug = this.catFormSlug().trim() || slugifyVietnamese(name);
     if (!name) {
       alert('Vui lòng nhập tên danh mục');
       return;
     }
-    if (!slug) {
-      slug = '/category/' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    }
+    const cleanSlug = rawSlug.replace(/^\/category\//, '').replace(/^\/+/, '');
+    const slug = '/category/' + cleanSlug;
 
     this.catSubmitting.set(true);
     const payload = {
@@ -525,11 +672,13 @@ export class AdminProductsComponent implements OnInit {
     if (!confirm(`Bạn có chắc muốn xóa danh mục "${cat.name}"?`)) return;
 
     this.categoryApi.remove(cat._id).subscribe({
-      next: (res) => {
-        if (res.success) {
-          this.loadCategoryCounts();
-          this.loadCategories();
-        }
+      next: () => {
+        this.categoriesWithCounts.update(list => list.filter(c => c._id !== cat._id));
+        this.categories.update(list => list.filter(c => c._id !== cat._id));
+        this.success.set(`Đã xóa danh mục "${cat.name}" thành công!`);
+        setTimeout(() => this.success.set(''), 3000);
+        this.loadCategoryCounts();
+        this.loadCategories();
       },
       error: (err) => alert(err.error?.message || 'Lỗi khi xóa danh mục.'),
     });

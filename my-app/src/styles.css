@@ -3,6 +3,7 @@
    ========================================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
 @import 'leaflet/dist/leaflet.css';
+@import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css');
 
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
@@ -136,7 +137,7 @@ img { display: block; max-width: 100%; }
 .xanhla-header {
   position: sticky;
   top: 36px;
-  z-index: 40;
+  z-index: 900;
   display: flex;
   height: 68px;
   align-items: center;
@@ -1146,7 +1147,7 @@ img { display: block; max-width: 100%; }
    ========================================================================== */
 .xanhla-drawer-backdrop, .xanhla-modal-backdrop {
   position: fixed; inset: 0; background: rgba(0,0,0,.48);
-  z-index: 100; display: flex; justify-content: flex-end;
+  z-index: 9999; display: flex; justify-content: flex-end;
 }
 .xanhla-modal-backdrop { justify-content: center; align-items: center; }
 
@@ -1897,4 +1898,28 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
     animation-iteration-count: 1 !important;
     transition-duration: .01ms !important;
   }
+}
+
+
+/* ── Hiệu ứng nảy (bounce) khi thêm sản phẩm vào giỏ hàng ── */
+@keyframes cartBtnBounce {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.3) rotate(-9deg); }
+  50% { transform: scale(1.15) rotate(7deg); }
+  75% { transform: scale(1.05) rotate(-2deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.cart-bounce {
+  animation: cartBtnBounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+@keyframes cartBadgePop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.55); background: #16a34a !important; }
+  100% { transform: scale(1); }
+}
+
+.cart-badge-pop {
+  animation: cartBadgePop 0.45s ease-out !important;
 }

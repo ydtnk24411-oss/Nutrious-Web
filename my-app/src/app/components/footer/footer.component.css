@@ -1,329 +1,519 @@
-/* Footer Xanh Lá — supermarket style */
-:host { display: block; }
+/* ==========================================================================
+   EVERGREEN MART — SIGNATURE DEEP FOREST GREEN SUPERMARKET FOOTER
+   ========================================================================== */
 
-/* ── Trust banner ── */
-.xanhla-footer-trust-banner {
-  padding: 22px 0;
-  background: #f4f7ed;
-  border-top: 1px solid #dde6d0;
-  border-bottom: 1px solid #dde6d0;
+:host {
+  display: block;
 }
 
-.xanhla-trust-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px 24px;
-}
-
-.xanhla-trust-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.xanhla-trust-icon {
-  display: flex;
-  width: 40px; height: 40px;
-  flex: 0 0 auto;
-  align-items: center; justify-content: center;
-  border: 1.5px solid #c8d9bc;
-  border-radius: 10px;
-  color: var(--green-700, #2d6a4f);
-  background: #fff;
-}
-
-.xanhla-trust-item h5 {
-  margin: 0 0 2px;
-  color: #213a27;
-  font-size: 12.5px;
-  font-weight: 700;
-  line-height: 1.3;
-}
-.xanhla-trust-item p {
-  margin: 0;
-  color: #5f7056;
-  font-size: 11.5px;
-  line-height: 1.4;
-}
-
-/* ── Main footer ── */
 .xanhla-footer {
-  padding-top: 56px;
-  background: #182f1e;
+  padding-top: 36px;
+  background: #142e1a;
+  color: #ffffff;
+  border-top: 2px solid #234f2d;
+  font-family: inherit;
 }
 
-.xanhla-footer-main {
+/* Container standard — perfectly aligned across all zoom levels */
+.xanhla-container {
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: clamp(16px, 3.5vw, 36px);
+  box-sizing: border-box;
+}
+
+/* ==========================================================================
+   1. NEWSLETTER SUBSCRIPTION CARD (EMBEDDED TOP CARD)
+   ========================================================================== */
+.xanhla-footer-newsletter {
+  padding-bottom: 28px;
+}
+
+.xanhla-newsletter-card {
   display: grid;
-  grid-template-columns: minmax(190px, 1.35fr) repeat(3, minmax(140px, 1fr)) minmax(190px, 1.2fr);
-  gap: clamp(20px, 3vw, 40px);
-  padding-bottom: 44px;
-}
-
-/* Logo */
-.xanhla-footer-logo {
-  display: inline-flex;
-  height: 44px;
+  width: 100%;
+  min-height: 116px;
+  grid-template-columns: minmax(210px, 1.15fr) minmax(260px, 1.45fr) minmax(280px, 1.5fr) auto;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-  text-decoration: none;
-}
-.evergreen-footer-logo {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-  border-radius: 50%;
-  background: #ffffff;
-  padding: 2px;
-  flex-shrink: 0;
-}
-.xanhla-footer-logo .xanhla-brand-mark {
-  width: 30px; height: 30px;
-  background: rgba(240,200,80,.14);
-  color: #f0c850;
-}
-.xanhla-footer-logo .xanhla-brand-word {
-  color: #f6f1e4;
-  font-size: 17px;
-  font-weight: 700;
+  gap: 20px 28px;
+  padding: 22px 30px;
+  border: 1px solid #c9e0c8;
+  border-radius: 14px;
+  background: #f4faf4;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+  box-sizing: border-box;
 }
 
-.xanhla-brand-desc,
-.xanhla-newsletter-desc {
-  max-width: 320px;
-  font-size: 13px;
-  line-height: 1.65;
-  color: rgba(255,255,255,.52);
-}
-
-/* Contact info */
-.xanhla-contact-info {
-  margin-top: 14px;
+.xanhla-nl-title-col {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 5px;
 }
 
-.xanhla-contact-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 12.5px;
-  color: rgba(255,255,255,.5);
-}
-
-.xanhla-contact-row svg {
-  flex-shrink: 0;
-  margin-top: 1px;
-  color: rgba(255,255,255,.4);
-}
-
-.xanhla-contact-link {
-  color: rgba(255,255,255,.65);
-  text-decoration: none;
-  transition: color .15s;
-}
-.xanhla-contact-link:hover { color: #f0c850; }
-.xanhla-contact-text { color: rgba(255,255,255,.5); line-height: 1.5; }
-
-/* Column headings */
-.xanhla-footer .xanhla-footer-col h4,
-.xanhla-footer-heading {
-  margin: 4px 0 16px;
-  color: #e8c870;
-  font-family: var(--xanh-font-text);
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: .09em;
+.xanhla-nl-heading {
+  margin: 0;
+  color: #c77f00;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
   text-transform: uppercase;
 }
-.xanhla-footer .xanhla-footer-col .xanhla-footer-about-heading { margin-top: 24px; }
 
-/* Links */
-.xanhla-footer-links {
-  margin: 0; padding: 0; list-style: none;
+.xanhla-nl-sub-badge {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 2px 8px;
+  background: #fef3c7;
+  color: #b45309;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.xanhla-newsletter-desc {
+  margin: 0;
+  color: #475569;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.xanhla-nl-form-col {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 6px;
+  width: 100%;
 }
-.xanhla-footer .xanhla-footer-links a {
-  display: block;
-  padding: 4px 0;
-  font-size: 13px;
-  color: rgba(255,255,255,.58);
-  line-height: 1.6;
-  text-decoration: none;
-  transition: color .15s;
-}
-.xanhla-footer .xanhla-footer-links a:hover { color: #fff; }
 
-/* Policy links with icon */
-.xanhla-footer-links--policies a.policy-link {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-.xanhla-footer-links--policies a.policy-link svg {
-  flex-shrink: 0;
-  color: rgba(255,255,255,.35);
-}
-.xanhla-footer-links--policies a.policy-link:hover svg { color: rgba(255,255,255,.7); }
-
-/* Newsletter */
 .xanhla-newsletter-form {
-  margin-top: 12px;
   display: flex;
-  gap: 0;
+  width: 100%;
+  margin: 0;
 }
+
 .xanhla-newsletter-form input {
   flex: 1;
   min-width: 0;
-  min-height: 40px;
-  padding: 0 12px;
-  border: 1px solid rgba(255,255,255,.2);
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1.5px solid #cbd5e1;
   border-right: none;
   border-radius: 8px 0 0 8px;
-  background: rgba(255,255,255,.07);
-  color: #fff;
+  background: #ffffff;
+  color: #1e293b;
   font-size: 13px;
   outline: none;
-  transition: border-color .15s;
+  transition: border-color 0.15s;
 }
-.xanhla-newsletter-form input::placeholder { color: rgba(255,255,255,.35); }
-.xanhla-newsletter-form input:focus { border-color: var(--amber-500, #e8a800); }
+
+.xanhla-newsletter-form input::placeholder {
+  color: #94a3b8;
+}
+
+.xanhla-newsletter-form input:focus {
+  border-color: #e8a020;
+}
+
 .xanhla-newsletter-form button {
-  display: flex;
-  min-width: 42px;
-  align-items: center; justify-content: center;
-  background: var(--amber-500, #e8a800);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 18px;
+  background: #e8a020;
   border: none;
   border-radius: 0 8px 8px 0;
-  color: #1a3d22;
+  color: #142e1a;
+  font-size: 13px;
+  font-weight: 800;
   cursor: pointer;
-  transition: background .15s;
+  white-space: nowrap;
+  transition: background 0.15s, transform 0.15s;
 }
-.xanhla-newsletter-form button:hover { background: var(--amber-700, #b87d00); }
+
+.xanhla-newsletter-form button:hover {
+  background: #ffc947;
+}
 
 .xanhla-subscribe-error {
-  margin-top: 8px;
-  font-size: 12px;
-  color: #fca5a5;
+  font-size: 11.5px;
+  color: #dc2626;
+  font-weight: 600;
 }
 
 .xanhla-subscribe-success {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 10px;
-  font-size: 12.5px;
-  color: #86efac;
-}
-
-/* Social */
-.xanhla-social-wrap { margin-top: 18px; }
-.xanhla-social-title {
-  display: block;
-  margin-bottom: 10px;
-  color: rgba(255,255,255,.48);
-  font-size: 11px;
-  letter-spacing: .04em;
-}
-.xanhla-social-icons { display: flex; gap: 8px; }
-.xanhla-social-icons a {
-  display: flex;
-  width: 34px; height: 34px;
-  align-items: center; justify-content: center;
-  border: 1px solid rgba(255,255,255,.18);
-  border-radius: 8px;
-  color: rgba(255,255,255,.65);
-  text-decoration: none;
-  transition: color .18s, background .18s, transform .18s;
-}
-.xanhla-social-icons a:hover {
-  transform: translateY(-2px);
-  color: #182f1e;
-  background: #e8c870;
-  border-color: #e8c870;
-}
-
-/* ── Footer bottom bar ── */
-.xanhla-footer-bottom {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  padding: 18px 0;
-  border-top: 1px solid rgba(255,255,255,.1);
-  color: rgba(255,255,255,.45);
+  gap: 5px;
   font-size: 12px;
+  color: #15803d;
+  font-weight: 700;
 }
 
-.xanhla-footer-bottom-left {
+.xanhla-social-wrap {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.xanhla-footer-bottom-links {
+.xanhla-social-title {
+  color: #166534;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.xanhla-social-icons {
+  display: flex;
+  gap: 8px;
+}
+
+.xanhla-social-icons a {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #b8d4b8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1b4d24;
+  text-decoration: none;
+  transition: all 0.18s ease;
+}
+
+.xanhla-social-icons a:hover {
+  background: #e8a020;
+  border-color: #e8a020;
+  color: #142e1a;
+  transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   2. MAIN 4 COLUMNS FOOTER
+   ========================================================================== */
+.xanhla-footer-main {
+  display: grid;
+  grid-template-columns: minmax(290px, 1.4fr) repeat(3, minmax(170px, 1fr));
+  gap: 32px clamp(20px, 2.8vw, 42px);
+  padding-top: 10px;
+  padding-bottom: 26px;
+}
+
+.xanhla-footer-main > .xanhla-footer-col {
+  min-width: 0;
+}
+
+/* Col 1: Brand */
+.xanhla-footer-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  text-decoration: none;
+}
+
+.evergreen-footer-logo {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: #ffffff;
+  padding: 3px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.xanhla-brand-name-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.xanhla-brand-word {
+  color: #ffffff;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.xanhla-brand-tagline {
+  color: #86efac;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.xanhla-brand-desc {
+  max-width: 350px;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 12.5px;
+  line-height: 1.65;
+  margin: 0 0 18px;
+}
+
+.xanhla-contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 350px;
+}
+
+.xanhla-contact-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.5;
+}
+
+.xanhla-contact-row svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #86efac;
+}
+
+.xanhla-contact-link {
+  color: rgba(255, 255, 255, 0.88);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.xanhla-contact-link:hover {
+  color: #ffc947;
+  text-decoration: underline;
+}
+
+.xanhla-contact-text {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Col 2, 3, 4: Section Headers & Links */
+.xanhla-col-head {
+  margin-bottom: 14px;
+}
+
+.xanhla-footer-heading {
+  margin: 0;
+  color: #ffc947;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.xanhla-head-bar {
+  display: block;
+  width: 24px;
+  height: 2.5px;
+  background: #22c55e;
+  border-radius: 2px;
+  margin-top: 5px;
+}
+
+.xanhla-footer-links {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.xanhla-footer-links li a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 13px;
+  line-height: 1.55;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.xanhla-arrow {
+  color: #22c55e;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.xanhla-footer-links li a:hover {
+  color: #ffffff;
+  transform: translateX(4px);
+}
+
+.xanhla-footer-links li a:hover .xanhla-arrow {
+  color: #ffc947;
+  transform: translateX(2px);
+}
+
+.xanhla-highlight-link {
+  color: #86efac !important;
+  font-weight: 700;
+}
+
+.xanhla-mini-badge {
+  font-size: 9px;
+  font-weight: 800;
+  color: #ffffff;
+  background: #dc2626;
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+  margin-left: 4px;
+}
+
+/* ==========================================================================
+   3. TRUST & PAYMENT COMBINED ROW (SINGLE BALANCED STRIP)
+   ========================================================================== */
+.xanhla-footer-trust-banner {
+  padding: 16px 0;
+  background: #0f2213;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.xanhla-trust-pay-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 28px;
+  flex-wrap: wrap;
+}
+
+.xanhla-trust-list {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2vw, 24px);
+  flex-wrap: wrap;
+}
+
+.xanhla-trust-pill {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.xanhla-footer-bottom-links a {
-  color: rgba(255,255,255,.42);
-  text-decoration: none;
-  font-size: 11.5px;
-  transition: color .15s;
+.xanhla-trust-icon {
+  display: flex;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffc947;
 }
-.xanhla-footer-bottom-links a:hover { color: rgba(255,255,255,.8); }
-.xanhla-footer-bottom-links span { color: rgba(255,255,255,.22); }
 
-/* Payment badges */
-.xanhla-payment-methods { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.xanhla-payment-badge {
-  padding: 3px 9px;
-  border: 1px solid rgba(255,255,255,.14);
+.xanhla-trust-text {
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.xanhla-payment-methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.xanhla-payment-logo {
+  display: inline-flex;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
   border-radius: 5px;
-  color: rgba(255,255,255,.52);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: .03em;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* Focus ring */
-.xanhla-newsletter-form input:focus-visible,
-.xanhla-newsletter-form button:focus-visible,
-.xanhla-footer a:focus-visible,
-.xanhla-social-icons a:focus-visible {
-  outline: 3px solid #e8c870;
-  outline-offset: 3px;
+.xanhla-payment-logo:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.28);
 }
 
-/* ── Policy Modal ── */
+.xanhla-payment-logo svg {
+  display: block;
+  height: 26px;
+  width: auto;
+}
+
+.xanhla-payment-badge {
+  padding: 2px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  color: #142e1a;
+  font-size: 11px;
+  font-weight: 700;
+  background: #ffffff;
+}
+
+/* ==========================================================================
+   4. FOOTER BOTTOM (MINIMALIST SINGLE-LINE COPYRIGHT)
+   ========================================================================== */
+.xanhla-footer-bottom-wrap {
+  background: #0c1c10;
+  padding: 18px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.xanhla-footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.xanhla-copyright-text {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 12.5px;
+  line-height: 1.6;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+/* ==========================================================================
+   5. POLICY MODAL
+   ========================================================================== */
 .xanhla-policy-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.55);
-  z-index: 9999;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 99999;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(4px);
 }
 
 .xanhla-policy-modal {
-  background: #fff;
+  background: #ffffff;
   border-radius: 16px;
-  max-width: 560px;
+  max-width: 580px;
   width: 100%;
-  max-height: 82vh;
+  max-height: 84vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 24px 60px rgba(0,0,0,.25);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
   overflow: hidden;
+  border: 1.5px solid #d4e8d4;
 }
 
 .xanhla-policy-modal-header {
@@ -331,32 +521,33 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding: 22px 22px 14px;
+  padding: 20px 24px 14px;
   border-bottom: 1px solid #e8f0e2;
+  background: #f8faf8;
 }
 
 .xanhla-policy-modal-header h3 {
-  font-size: 17px;
-  font-weight: 700;
-  color: #1a3d22;
+  font-size: 18px;
+  font-weight: 800;
+  color: #112816;
   margin: 6px 0 4px;
 }
 
 .xanhla-policy-modal-header p {
   font-size: 13px;
-  color: #5a7060;
+  color: #4b6352;
   margin: 0;
 }
 
 .xanhla-policy-tag {
   display: inline-block;
   padding: 3px 10px;
-  background: #e8f5e0;
-  color: #2d6a4f;
+  background: #e8f5e8;
+  color: #15803d;
   border-radius: 20px;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .05em;
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
 
 .xanhla-policy-close-btn {
@@ -366,37 +557,44 @@
   width: 36px;
   height: 36px;
   flex-shrink: 0;
-  background: #f4f7f0;
+  background: #eef3ec;
   border: none;
   border-radius: 8px;
-  color: #666;
+  color: #374151;
   cursor: pointer;
-  transition: background .15s, color .15s;
+  transition: background 0.15s, color 0.15s;
 }
-.xanhla-policy-close-btn:hover { background: #ffe0e0; color: #c00; }
+
+.xanhla-policy-close-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
 
 .xanhla-policy-modal-body {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 22px;
+  padding: 20px 24px;
+  color: #1e293b;
 }
 
 .xanhla-policy-updated {
   font-size: 11.5px;
-  color: #999;
+  color: #64748b;
   margin: 0 0 16px;
   font-style: italic;
 }
 
 .xanhla-policy-sec {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
+
 .xanhla-policy-sec h4 {
-  font-size: 14px;
-  font-weight: 700;
-  color: #1a3d22;
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #15803d;
   margin: 0 0 8px;
 }
+
 .xanhla-policy-sec ul {
   margin: 0;
   padding-left: 18px;
@@ -404,10 +602,11 @@
   flex-direction: column;
   gap: 6px;
 }
+
 .xanhla-policy-sec ul li {
   font-size: 13.5px;
-  color: #444;
-  line-height: 1.65;
+  color: #334155;
+  line-height: 1.6;
 }
 
 .xanhla-policy-modal-footer {
@@ -415,166 +614,85 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 22px;
+  padding: 14px 24px;
   border-top: 1px solid #e8f0e2;
   font-size: 12px;
-  color: #888;
-  background: #fafcf8;
+  color: #64748b;
+  background: #f8faf8;
 }
 
 .xanhla-btn-primary {
-  background: var(--green-700, #2d6a4f);
+  background: #15803d;
   color: #fff;
   border: none;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: background .15s;
-}
-.xanhla-btn-primary:hover { background: #1e4226; }
-
-/* ── Responsive ── */
-@media (max-width: 1200px) {
-  .xanhla-footer-main { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px 24px; }
-  .xanhla-footer-col--brand { grid-column: span 2; }
-  .xanhla-footer-col--brand .xanhla-brand-desc { max-width: 460px; }
-  .xanhla-contact-info { gap: 10px; }
+  transition: background 0.15s;
 }
 
-@media (max-width: 1024px) {
-  .xanhla-trust-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-  .xanhla-footer-main { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .xanhla-footer-col--brand { grid-column: 1 / -1; }
-  .xanhla-contact-info { flex-direction: row; flex-wrap: wrap; gap: 10px 24px; }
+.xanhla-btn-primary:hover {
+  background: #166534;
 }
 
-@media (max-width: 600px) {
-  .xanhla-footer-trust-banner { padding: 18px 0; }
-  .xanhla-trust-grid { grid-template-columns: 1fr 1fr; gap: 14px 10px; }
-  .xanhla-trust-item { align-items: flex-start; gap: 9px; }
-  .xanhla-trust-icon { width: 36px; height: 36px; border-radius: 8px; }
-  .xanhla-trust-icon svg { width: 18px; height: 18px; }
-  .xanhla-footer { padding-top: 36px; }
-  .xanhla-footer-main { grid-template-columns: 1fr 1fr; gap: 28px 18px; padding-bottom: 32px; }
-  .xanhla-footer-col--brand { grid-column: 1 / -1; }
-  .xanhla-footer-bottom {
-    align-items: flex-start;
-    flex-direction: column;
-    padding: 16px 0;
+/* ==========================================================================
+   6. RESPONSIVE BREAKPOINTS
+   ========================================================================== */
+@media (max-width: 1100px) {
+  .xanhla-newsletter-card {
+    grid-template-columns: minmax(160px, 1fr) minmax(220px, 1.4fr) minmax(230px, 1.5fr) auto;
+    gap: 16px;
+    padding: 18px 22px;
   }
-  .xanhla-policy-modal { border-radius: 12px; max-height: 90vh; }
+  .xanhla-footer-main {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px 22px;
+  }
+  .xanhla-footer-col--brand {
+    grid-column: 1 / -1;
+  }
 }
 
-@media (max-width: 390px) {
-  .xanhla-footer-main { grid-template-columns: 1fr; }
+@media (max-width: 860px) {
+  .xanhla-trust-pay-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    text-align: center;
+  }
+  .xanhla-trust-list {
+    justify-content: center;
+  }
+  .xanhla-payment-methods {
+    justify-content: center;
+  }
 }
 
-
-/* Shared storefront palette and final footer layout. */
-.xanhla-footer {
-  padding-top: 34px;
-  background: var(--green-900, #1b3d1b);
-  color: #fff;
-}
-.xanhla-footer-newsletter { padding: 0 24px 28px; }
-.xanhla-footer-newsletter .xanhla-container { width: 100%; max-width: 1480px; margin-inline: auto; padding: 0; }
-.xanhla-footer-newsletter .xanhla-footer-col {
-  display: grid;
-  width: 100%; min-height: 126px;
-  grid-template-columns: minmax(210px, 1.15fr) minmax(280px, 1.6fr) minmax(280px, 1.6fr) minmax(160px, .9fr);
-  grid-template-rows: auto; align-items: center; gap: 20px 28px;
-  padding: 24px 30px; border: 1px solid var(--border, #d4e8d4); border-radius: 8px;
-  background: var(--green-50, #f2faf2); box-shadow: 0 8px 24px rgba(8, 32, 12, .12);
-}
-.xanhla-footer-newsletter .xanhla-footer-col > h4 {
-  grid-column: 1; grid-row: 1; align-self: center; justify-self: start;
-  width: 100%; max-width: 250px; margin: 0; color: var(--amber-700, #c77f00);
-  font-family: var(--font-display, Georgia, serif); font-size: 21px; font-weight: 700;
-  line-height: 1.25; letter-spacing: .02em; text-align: left; text-transform: uppercase; text-wrap: balance;
-}
-.xanhla-footer-newsletter .xanhla-footer-col > .xanhla-newsletter-desc {
-  grid-column: 2; grid-row: 1; align-self: center; max-width: 420px; margin: 0;
-  color: var(--muted, #5a7a5a); font-size: 12px; line-height: 1.6;
-  text-align: left; white-space: normal; text-wrap: pretty;
-}
-.xanhla-footer-newsletter .xanhla-footer-col > .xanhla-newsletter-form { grid-column: 3; grid-row: 1; width: 100%; margin: 0; }
-.xanhla-footer-newsletter .xanhla-footer-col > .xanhla-social-wrap { grid-column: 4; grid-row: 1; justify-self: start; margin: 0; text-align: left; }
-.xanhla-footer-newsletter .xanhla-footer-col > .xanhla-social-wrap .xanhla-social-title { color: var(--green-700, #2d6a2d); text-align: left; font-size: 11px; }
-.xanhla-footer-newsletter .xanhla-footer-col > .xanhla-subscribe-error,
-.xanhla-footer-newsletter .xanhla-footer-col > .xanhla-subscribe-success { grid-column: 3; grid-row: 2; margin: 0; }
-.xanhla-footer-newsletter .xanhla-newsletter-form input { border-color: #b8d4b8; background: #fff; color: var(--ink, #1c3a1c); }
-.xanhla-footer-newsletter .xanhla-newsletter-form input::placeholder { color: #819181; }
-.xanhla-footer-newsletter .xanhla-newsletter-form input:focus { border-color: var(--amber-500, #e8a020); }
-.xanhla-footer-newsletter .xanhla-newsletter-form button { background: var(--amber-500, #e8a020); color: var(--green-900, #1b3d1b); }
-.xanhla-footer-newsletter .xanhla-newsletter-form button:hover { background: var(--amber-300, #ffc947); }
-.xanhla-footer-newsletter .xanhla-social-icons a { border-color: #b8d4b8; color: var(--green-700, #2d6a2d); }
-.xanhla-footer-newsletter .xanhla-social-icons a:hover { background: var(--amber-500, #e8a020); border-color: var(--amber-500, #e8a020); color: var(--green-900, #1b3d1b); }
-
-.xanhla-footer-main {
-  grid-template-columns: minmax(190px, 1.2fr) repeat(3, minmax(150px, 1fr));
-  gap: 30px clamp(20px, 2.4vw, 34px); padding-top: 10px; padding-bottom: 30px;
-}
-.xanhla-footer-main > .xanhla-footer-col { min-width: 0; }
-.xanhla-footer .xanhla-footer-col h4,
-.xanhla-footer-heading { margin-bottom: 12px; color: var(--amber-300, #ffc947); font-size: 10.5px; letter-spacing: .08em; }
-.xanhla-footer .xanhla-footer-links { gap: 1px; }
-.xanhla-footer .xanhla-footer-links a { padding: 3px 0; color: rgba(255,255,255,.78); font-size: 12.5px; line-height: 1.55; }
-.xanhla-footer .xanhla-footer-links a:hover { color: var(--amber-300, #ffc947); }
-.xanhla-footer-logo .xanhla-brand-word { color: #fff; }
-.xanhla-brand-desc { max-width: 290px; color: rgba(255,255,255,.68); font-size: 12px; }
-.xanhla-contact-row, .xanhla-contact-text { color: rgba(255,255,255,.68); }
-.xanhla-contact-row { font-size: 11.5px; }
-.xanhla-contact-row svg { color: rgba(255,255,255,.56); }
-.xanhla-contact-link { color: rgba(255,255,255,.78); }
-.xanhla-contact-link:hover { color: var(--amber-300, #ffc947); }
-.xanhla-trust-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px 28px; }
-.xanhla-footer-trust-banner { padding: 14px 0; background: #142f17; border-color: rgba(255,255,255,.14); }
-.xanhla-trust-item { gap: 10px; }
-.xanhla-trust-icon { width: 34px; height: 34px; border: 0; border-radius: 50%; background: rgba(255,255,255,.1); color: var(--amber-300, #ffc947); }
-.xanhla-trust-item h5 { color: #fff; font-size: 11px; }
-.xanhla-trust-item p { color: rgba(255,255,255,.72); font-size: 10px; }
-.xanhla-footer-bottom { border-top-color: rgba(255,255,255,.16); color: rgba(255,255,255,.62); }
-.xanhla-footer-bottom-links a { color: rgba(255,255,255,.64); }
-.xanhla-footer-bottom-links a:hover { color: var(--amber-300, #ffc947); }
-.xanhla-footer-bottom-links span { color: rgba(255,255,255,.3); }
-.xanhla-payment-methods { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
-.xanhla-payment-logo { display: inline-flex; min-height: 34px; align-items: center; justify-content: center; }
-.xanhla-payment-logo svg { display: block; width: auto; height: 32px; }
-.xanhla-footer a:focus-visible, .xanhla-newsletter-form input:focus-visible,
-.xanhla-newsletter-form button:focus-visible, .xanhla-social-icons a:focus-visible { outline-color: var(--amber-300, #ffc947); }
-
-@media (max-width: 1100px) and (min-width: 901px) {
-  .xanhla-footer-newsletter .xanhla-footer-col { grid-template-columns: minmax(160px, 1fr) minmax(220px, 1.4fr) minmax(230px, 1.5fr) minmax(130px, .8fr); gap: 16px; padding: 20px; }
-  .xanhla-footer-newsletter .xanhla-footer-col > h4 { font-size: 18px; }
-  .xanhla-footer-newsletter .xanhla-footer-col > .xanhla-newsletter-desc { font-size: 11px; }
-}
-@media (max-width: 900px) {
-  .xanhla-footer-newsletter .xanhla-footer-col { grid-template-columns: minmax(145px, 1fr) minmax(190px, 1.3fr) minmax(200px, 1.4fr) minmax(120px, .8fr); gap: 12px; padding: 18px; }
-  .xanhla-footer-newsletter .xanhla-footer-col > h4 { font-size: 16px; }
-  .xanhla-footer-newsletter .xanhla-footer-col > .xanhla-newsletter-desc { font-size: 10px; }
-  .xanhla-footer-main { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 26px 22px; }
-  .xanhla-footer-col--brand { grid-column: 1 / -1; }
-  .xanhla-trust-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (max-width: 700px) {
-  .xanhla-footer-newsletter { padding: 0 16px 22px; }
-  .xanhla-footer-newsletter .xanhla-footer-col { grid-template-columns: 1fr; grid-template-rows: auto; gap: 10px; padding: 18px; }
-  .xanhla-footer-newsletter .xanhla-footer-col > h4,
-  .xanhla-footer-newsletter .xanhla-footer-col > .xanhla-newsletter-desc,
-  .xanhla-footer-newsletter .xanhla-footer-col > .xanhla-newsletter-form,
-  .xanhla-footer-newsletter .xanhla-footer-col > .xanhla-social-wrap,
-  .xanhla-footer-newsletter .xanhla-footer-col > .xanhla-subscribe-error,
-  .xanhla-footer-newsletter .xanhla-footer-col > .xanhla-subscribe-success { grid-column: 1; grid-row: auto; }
-  .xanhla-footer-newsletter .xanhla-footer-col > h4 { max-width: 300px; font-size: 18px; }
-  .xanhla-footer-newsletter .xanhla-footer-col > .xanhla-newsletter-desc { max-width: none; font-size: 12px; }
-  .xanhla-footer-newsletter .xanhla-footer-col > .xanhla-social-wrap { justify-self: start; }
-  .xanhla-footer-main { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 18px; }
-  .xanhla-footer-col--brand { grid-column: 1 / -1; }
-  .xanhla-footer-bottom { align-items: flex-start; flex-direction: column; gap: 12px; }
-  .xanhla-footer-bottom-links { flex-wrap: wrap; }
-  .xanhla-trust-grid { gap: 12px 16px; }
-}
-@media (max-width: 420px) {
-  .xanhla-footer-main, .xanhla-trust-grid { grid-template-columns: 1fr; }
-  .xanhla-footer-col--brand { grid-column: 1; }
+@media (max-width: 720px) {
+  .xanhla-newsletter-card {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 18px;
+  }
+  .xanhla-footer-main {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .xanhla-trust-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    width: 100%;
+  }
+  .xanhla-trust-pill {
+    justify-content: flex-start;
+  }
+  .xanhla-payment-methods {
+    justify-content: center;
+    width: 100%;
+  }
+  .xanhla-footer-bottom {
+    text-align: center;
+    justify-content: center;
+  }
 }

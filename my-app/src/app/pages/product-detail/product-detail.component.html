@@ -33,15 +33,15 @@
           <div style="margin-bottom:24px">
             <span class="xanhla-option-label">Số lượng</span>
             <div class="xanhla-quantity-picker">
-              <button type="button" (click)="dec()">−</button>
+              <button type="button" (click)="dec()" aria-label="Giảm"><i class="bi bi-dash"></i></button>
               <span>{{ quantity() }}</span>
-              <button type="button" (click)="inc()">+</button>
+              <button type="button" (click)="inc()" aria-label="Tăng"><i class="bi bi-plus"></i></button>
             </div>
           </div>
 
           <div class="xanhla-product-cta-row">
-            <button class="xanhla-btn-primary" type="button" style="flex:1" (click)="addToCart()">Thêm vào giỏ hàng</button>
-            <button class="xanhla-btn-secondary" type="button" style="flex:1" (click)="buyNow()">Mua ngay</button>
+            <button class="xanhla-btn-primary" type="button" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px" (click)="addToCart($event)"><i class="bi bi-cart-plus" style="font-size:16px"></i> <span>Thêm vào giỏ hàng</span></button>
+            <button class="xanhla-btn-secondary" type="button" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px" (click)="buyNow()"><i class="bi bi-lightning-charge-fill" style="font-size:15px"></i> <span>Mua ngay</span></button>
           </div>
 
           <div class="xanhla-product-accordions">
@@ -219,9 +219,9 @@
 
                     <div class="pd-addon-target-note"
                          [class.is-main-target]="card.discountTarget === 'main'">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
+                      <i class="bi bi-check2"></i>
+
+
                       <span>{{ card.targetBadge }}</span>
                     </div>
 
@@ -441,9 +441,9 @@
 
                   @if (itemQty(prod.slug) > 0) {
                     <div class="ord-qty-picker ord-qty-picker--full">
-                      <button type="button" class="ord-qty-btn" (click)="removeOne(prod, $event)">−</button>
+                      <button type="button" class="ord-qty-btn" (click)="removeOne(prod, $event)"><i class="bi bi-dash"></i></button>
                       <span class="ord-qty-num">{{ itemQty(prod.slug) }}</span>
-                      <button type="button" class="ord-qty-btn" (click)="addOne(prod, $event)">+</button>
+                      <button type="button" class="ord-qty-btn" (click)="addOne(prod, $event)"><i class="bi bi-plus"></i></button>
                     </div>
                   } @else {
                     <button
@@ -451,13 +451,13 @@
                       class="xanhla-prod-card-add"
                       (click)="addOne(prod, $event)"
                       [attr.aria-label]="'Thêm ' + prod.name">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                           stroke="currentColor" stroke-width="2.2">
-                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-                        <line x1="3" y1="6" x2="21" y2="6"/>
-                        <path d="M16 10a4 4 0 0 1-8 0"/>
-                      </svg>
-                      Thêm vào giỏ
+                      <i class="bi bi-cart-plus" style="font-size:14px;margin-right:4px"></i> <span>Thêm giỏ</span>
+
+
+
+
+
+
                     </button>
                   }
                 </div>

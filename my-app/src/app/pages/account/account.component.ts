@@ -186,12 +186,12 @@ export class AccountComponent implements OnInit, OnDestroy {
     e.preventDefault();
     this.saving.set(true);
     // Build full display name từ firstName + lastName nếu có
-    const fullName = [this.firstName(), this.lastName()].filter(Boolean).join(' ') || this.displayName();
+    const fullName = this.displayName().trim() || [this.firstName(), this.lastName()].filter(Boolean).join(' ').trim();
     const updateData = {
       name:      fullName,
       firstName: this.firstName(),
       lastName:  this.lastName(),
-      phone:     this.phone(),
+
       title:     this.title(),
       avatar:    this.cart.currentUser()?.avatar ?? '',
     };

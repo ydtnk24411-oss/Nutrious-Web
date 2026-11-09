@@ -480,13 +480,11 @@ export class CookComponent implements OnInit {
     }
   }
 
-  loadSampleFridge(): void {
-    // High quality sample fridge photo for fast demonstration
-    const sampleUrl = 'https://images.unsplash.com/photo-1588854337236-6889d631faa8?w=800&q=80';
-    this.selectedImageBase64.set(sampleUrl);
-    this.selectedImageName.set('tu-lanh-mau-xanh-la.jpg');
-    this.analyzeImage(sampleUrl);
-  }
+
+
+
+
+
 
   clearPhoto(): void {
     this.selectedImageBase64.set(null);

@@ -3,18 +3,32 @@
     <div class="loyalty-page xanhla-container">
       <div class="loyalty-header">
         <h1 class="loyalty-title">Chương trình khách hàng thân thiết</h1>
-        <p class="loyalty-subtitle">Tích điểm đổi quà và nhận ưu đãi đặc biệt</p>
+        <p class="loyalty-subtitle">Tích điểm đổi quà và nhận ưu đãi đặc biệt trên mỗi đơn hàng</p>
       </div>
+
+      <!-- Feedback Alerts -->
+      @if (redeemMessage()) {
+        <div style="background:#ecfdf5;border:1.5px solid #34d399;color:#065f46;padding:12px 18px;border-radius:10px;font-weight:600;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
+          <span>✓ {{ redeemMessage() }}</span>
+          <button type="button" (click)="redeemMessage.set('')" style="background:none;border:none;cursor:pointer;font-size:16px;color:inherit">✕</button>
+        </div>
+      }
+      @if (redeemError()) {
+        <div style="background:#fef2f2;border:1.5px solid #f87171;color:#991b1b;padding:12px 18px;border-radius:10px;font-weight:600;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
+          <span>⚠️ {{ redeemError() }}</span>
+          <button type="button" (click)="redeemError.set('')" style="background:none;border:none;cursor:pointer;font-size:16px;color:inherit">✕</button>
+        </div>
+      }
 
       <!-- Points Balance Card -->
       <div class="loyalty-balance-card">
         <div class="loyalty-balance-info">
           <h2 class="loyalty-balance-title">Điểm tích lũy của bạn</h2>
-          <p class="loyalty-balance-desc">Sử dụng điểm để đổi voucher và quà tặng</p>
+          <p class="loyalty-balance-desc">Tích lũy 1 điểm cho mỗi 10.000đ khi mua sắm tại Evergreen Mart</p>
         </div>
         <div class="loyalty-balance-amount">
-          <div class="loyalty-points-value">{{ userPoints() }}</div>
-          <div class="loyalty-points-label">điểm</div>
+          <div class="loyalty-points-value">{{ userPoints().toLocaleString('vi-VN') }}</div>
+          <div class="loyalty-points-label">điểm khả dụng</div>
         </div>
       </div>
 
@@ -25,9 +39,9 @@
           <div class="loyalty-tier-icon">{{ userTier().icon }}</div>
           <div class="loyalty-tier-details">
             <h3 class="loyalty-tier-name">{{ userTier().name }}</h3>
-            <p class="loyalty-tier-requirement">Yêu cầu: {{ formatPrice(userTier().minSpent) }} chi tiêu</p>
+            <p class="loyalty-tier-requirement">Yêu cầu chi tiêu: {{ formatPrice(userTier().minSpent) }} (Đã tích lũy: {{ formatPrice(loyalty.totalSpent()) }})</p>
             <div class="loyalty-tier-benefits">
-              <h4>Quyền lợi:</h4>
+              <h4>Quyền lợi hạng {{ userTier().name }}:</h4>
               <ul>
                 @for (benefit of userTier().benefits; track benefit) {
                   <li>{{ benefit }}</li>
@@ -40,7 +54,7 @@
 
       <!-- Tier Progress -->
       <div class="loyalty-progress-section">
-        <h2 class="loyalty-section-title">Tiến độ nâng hạng</h2>
+        <h2 class="loyalty-section-title">Hệ thống cấp bậc thành viên</h2>
         <div class="loyalty-tiers-grid">
           @for (tier of tierConfigs; track tier.name) {
             <div class="loyalty-tier-item" [class.current]="tier.name === userTier().name" [class.completed]="tier.minSpent < userTier().minSpent">
@@ -54,61 +68,97 @@
 
       <!-- Rewards -->
       <div class="loyalty-rewards-section">
-        <h2 class="loyalty-section-title">Đổi quà tặng</h2>
-        <div class="loyalty-rewards-grid">
-          @for (reward of availableRewards(); track reward.id) {
-            <div class="loyalty-reward-card">
-              <img [src]="reward.image" [alt]="reward.name" class="loyalty-reward-image" />
-              <div class="loyalty-reward-content">
-                <h3 class="loyalty-reward-name">{{ reward.name }}</h3>
-                <p class="loyalty-reward-desc">{{ reward.description }}</p>
-                <div class="loyalty-reward-points">{{ reward.pointsRequired }} điểm</div>
-                <button class="xanhla-btn-primary" (click)="redeemReward(reward.id)" [disabled]="userPoints() < reward.pointsRequired">
-                  @if (userPoints() < reward.pointsRequired) {
-                    Chưa đủ điểm
-                  } @else {
-                    Đổi ngay
-                  }
-                </button>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-
-      <!-- Transaction History -->
-      <div class="loyalty-history-section">
-        <h2 class="loyalty-section-title">Lịch sử giao dịch điểm</h2>
-        @if (userTransactions().length > 0) {
-          <div class="loyalty-transaction-list">
-            @for (tx of userTransactions(); track tx.id) {
-              <div class="loyalty-transaction-item">
-                <div class="loyalty-transaction-icon">{{ tx.type === 'earned' ? '➕' : tx.type === 'redeemed' ? '➖' : '🔄' }}</div>
-                <div class="loyalty-transaction-info">
-                  <div class="loyalty-transaction-desc">{{ tx.description }}</div>
-                  <div class="loyalty-transaction-date">{{ tx.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
-                </div>
-                <div class="loyalty-transaction-amount {{ tx.type === 'earned' ? 'positive' : 'negative' }}">
-                  {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount }}
+        <h2 class="loyalty-section-title">Đổi quà &amp; Voucher ưu đãi</h2>
+        @if (isLoadingRewards()) {
+          <div style="text-align:center;padding:40px 20px;color:var(--xanh-muted)">
+            <div style="font-size:28px;margin-bottom:8px;animation:spin 1s linear infinite;display:inline-block">⏳</div>
+            <p>Đang tải danh sách quà tặng...</p>
+          </div>
+        } @else if (availableRewards().length > 0) {
+          <div class="loyalty-rewards-grid">
+            @for (reward of availableRewards(); track reward.id) {
+              <div class="loyalty-reward-card">
+                @if (reward.image) {
+                  <img [src]="reward.image" [alt]="reward.name" class="loyalty-reward-image" />
+                } @else {
+                  <div style="height:140px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:36px">
+                    🎁
+                  </div>
+                }
+                <div class="loyalty-reward-content">
+                  <h3 class="loyalty-reward-name">{{ reward.name }}</h3>
+                  <p class="loyalty-reward-desc">{{ reward.description || 'Ưu đãi đổi điểm hấp dẫn từ Evergreen Mart.' }}</p>
+                  <div class="loyalty-reward-points">{{ reward.pointsRequired.toLocaleString('vi-VN') }} điểm</div>
+                  <button
+                    class="xanhla-btn-primary"
+                    type="button"
+                    (click)="redeemReward(reward.id)"
+                    [disabled]="userPoints() < reward.pointsRequired || redeemingId() === reward.id"
+                  >
+                    @if (redeemingId() === reward.id) {
+                      Đang đổi...
+                    } @else if (userPoints() < reward.pointsRequired) {
+                      Chưa đủ điểm (cần thêm {{ (reward.pointsRequired - userPoints()).toLocaleString('vi-VN') }})
+                    } @else {
+                      Đổi ngay
+                    }
+                  </button>
                 </div>
               </div>
             }
           </div>
         } @else {
-          <div class="loyalty-empty">Chưa có giao dịch điểm nào</div>
+          <div class="loyalty-empty" style="text-align:center;padding:40px;background:#f9fafb;border-radius:12px;border:1px dashed #d1d5db;color:#6b7280">
+            <div style="font-size:32px;margin-bottom:8px">🎁</div>
+            <p style="margin:0;font-size:14.5px">Hiện tại chưa có phần quà đổi điểm khả dụng từ hệ thống.</p>
+          </div>
+        }
+      </div>
+
+      <!-- Transaction History -->
+      <div class="loyalty-history-section">
+        <h2 class="loyalty-section-title">Lịch sử giao dịch điểm</h2>
+        @if (isLoading()) {
+          <div style="text-align:center;padding:30px 20px;color:var(--xanh-muted)">
+            <p>Đang tải lịch sử giao dịch...</p>
+          </div>
+        } @else if (userTransactions().length > 0) {
+          <div class="loyalty-transaction-list">
+            @for (tx of userTransactions(); track tx.id || $index) {
+              <div class="loyalty-transaction-item">
+                <div class="loyalty-transaction-icon">
+                  {{ tx.type === 'earned' ? '➕' : tx.type === 'redeemed' ? '➖' : '🔄' }}
+                </div>
+                <div class="loyalty-transaction-info">
+                  <div class="loyalty-transaction-desc">{{ tx.description }}</div>
+                  <div class="loyalty-transaction-date">{{ tx.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
+                </div>
+                <div class="loyalty-transaction-amount" [class.positive]="tx.amount > 0" [class.negative]="tx.amount < 0">
+                  {{ tx.amount > 0 ? '+' : '' }}{{ tx.amount }} điểm
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="loyalty-empty" style="text-align:center;padding:40px;background:#f9fafb;border-radius:12px;border:1px dashed #d1d5db;color:#6b7280">
+            <div style="font-size:32px;margin-bottom:8px">📊</div>
+            <p style="margin:0;font-size:14.5px">Bạn chưa có lịch sử tích lũy hoặc đổi điểm nào.</p>
+            <p style="margin:6px 0 0;font-size:13px;color:#9ca3af">Điểm sẽ được tự động cộng khi đơn hàng của bạn hoàn thành giao hàng.</p>
+          </div>
         }
       </div>
     </div>
   } @else {
+    <!-- Chưa đăng nhập -->
     <div style="text-align:center;padding:80px 24px">
       <div style="font-size:48px;margin-bottom:16px">🔒</div>
       <h2 style="font-family:var(--xanh-font-display);font-size:24px;margin-bottom:12px">
         Bạn chưa đăng nhập
       </h2>
       <p style="color:var(--xanh-muted);margin-bottom:24px">
-        Vui lòng đăng nhập để xem chương trình khách hàng thân thiết.
+        Vui lòng đăng nhập để xem điểm tích lũy và chương trình khách hàng thân thiết.
       </p>
-      <button class="xanhla-btn-primary" (click)="cart.openAuthModal('login')">Đăng nhập</button>
+      <button class="xanhla-btn-primary" (click)="cart.openAuthModal('login')">Đăng nhập ngay</button>
     </div>
   }
 </app-shell>

@@ -100,7 +100,7 @@
     </div>
 
     <!-- Category Filter -->
-    <select class="admin-select" [value]="category()" (change)="onCategory($any($event.target).value)">
+    <select class="admin-select" [value]="category()" (change)="onCategoryChange($any($event.target).value)">
       <option value="">Tất cả danh mục</option>
       @for (c of categories(); track c._id) {
         <option [value]="c._id">{{ c.name }}</option>
@@ -409,8 +409,8 @@
         </h3>
         <button class="admin-btn-icon" (click)="closeModal()" aria-label="Đóng">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="18" x2="18" y2="6"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+
           </svg>
         </button>
       </div>
@@ -429,6 +429,35 @@
             <label>Tên sản phẩm *</label>
             <input type="text" placeholder="VD: Cải ngọt búp hữu cơ Evergreen Mart"
                    [value]="form().name" (input)="onNameChange($any($event.target).value)" />
+          </div>
+
+          <!-- Product Slug / SEO URL (Auto-generated with manual override) -->
+          <div class="admin-field" style="grid-column:1/-1;margin-top:-4px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+              <label style="font-size:12px;color:#5c6e5e;display:flex;align-items:center;gap:6px">
+                <span>Đường dẫn sản phẩm (Slug URL)</span>
+                @if (customProductSlug()) {
+                  <span class="badge-slug-custom">Tùy chỉnh thủ công</span>
+                } @else {
+                  <span class="badge-slug-auto">Tự động tạo theo tên</span>
+                }
+              </label>
+              @if (customProductSlug()) {
+                <button type="button" class="btn-slug-reset" (click)="resetProductSlug()">
+                  ↻ Đặt lại theo tên
+                </button>
+              }
+            </div>
+            <div class="slug-input-wrapper">
+              <span class="slug-prefix">evergreenmart.vn/product-page/</span>
+              <input
+                type="text"
+                class="slug-inline-input"
+                placeholder="cai-ngot-bup-huu-co"
+                [value]="form().slug || ''"
+                (input)="onProductSlugChange($any($event.target).value)"
+              />
+            </div>
           </div>
 
           <!-- Price -->
@@ -461,19 +490,11 @@
                    (input)="setField('stock', +$any($event.target).value)" />
           </div>
 
-          <!-- Image URL -->
+          <!-- Weight -->
           <div class="admin-field">
-            <label>URL hình ảnh</label>
-            <input type="text" placeholder="https://..."
-                   [value]="form().image" (input)="setField('image', $any($event.target).value)" />
-          </div>
-
-          <!-- Description -->
-          <div class="admin-field" style="grid-column:1/-1">
-            <label>Mô tả chi tiết</label>
-            <textarea placeholder="Mô tả công dụng, xuất xứ sản phẩm..."
-                      [value]="form().description ?? ''"
-                      (input)="setField('description', $any($event.target).value)"></textarea>
+            <label>Khối lượng / Đóng gói</label>
+            <input type="text" placeholder="500g"
+                   [value]="form().weight" (input)="setField('weight', $any($event.target).value)" />
           </div>
 
           <!-- Preparation -->
@@ -492,19 +513,113 @@
             </select>
           </div>
 
-          <!-- Weight -->
-          <div class="admin-field">
-            <label>Khối lượng / Đóng gói</label>
-            <input type="text" placeholder="500g"
-                   [value]="form().weight" (input)="setField('weight', $any($event.target).value)" />
+          <!-- Image: Dual-mode Upload / URL -->
+          <div class="admin-field" style="grid-column:1/-1">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+              <label>Hình ảnh sản phẩm</label>
+              <div class="image-mode-toggle">
+                <button
+                  type="button"
+                  class="mode-btn"
+                  [class.active]="productImageMode() === 'file'"
+                  (click)="productImageMode.set('file')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Tải ảnh từ máy
+                </button>
+                <button
+                  type="button"
+                  class="mode-btn"
+                  [class.active]="productImageMode() === 'url'"
+                  (click)="productImageMode.set('url')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                  Nhập link URL
+                </button>
+              </div>
+            </div>
+
+            @if (productImageMode() === 'file') {
+              <div
+                class="admin-upload-zone"
+                [class.has-image]="!!form().image"
+                (dragover)="$event.preventDefault()"
+                (drop)="onProductImageDrop($event)"
+              >
+                <input
+                  #prodFileInput
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  style="display:none"
+                  (change)="onProductImageSelected($event)"
+                />
+                @if (form().image) {
+                  <div class="image-preview-card">
+                    <img [src]="form().image" alt="Preview" class="preview-img" />
+                    <div class="preview-info">
+                      <div class="preview-title">Ảnh sản phẩm đã sẵn sàng</div>
+                      <div class="preview-sub">Đã tải lên • Xem trước trực tiếp</div>
+                      <div class="preview-actions">
+                        <button type="button" class="btn-preview-change" (click)="prodFileInput.click()">
+                          Đổi ảnh khác
+                        </button>
+                        <button type="button" class="btn-preview-remove" (click)="removeProductImage()">
+                          Xóa ảnh
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="upload-dropzone-inner" (click)="prodFileInput.click()">
+                    <div class="upload-icon-circle">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    </div>
+                    <div class="upload-text-main">Kéo thả ảnh vào đây hoặc <span>Chọn ảnh từ máy</span></div>
+                    <div class="upload-text-sub">Hỗ trợ định dạng PNG, JPG, WEBP (Tối đa 5MB)</div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="url-input-block">
+                <div class="url-input-row">
+                  <input
+                    type="text"
+                    placeholder="Dán link hình ảnh (VD: https://images.unsplash.com/...)"
+                    [value]="form().image || ''"
+                    (input)="setField('image', $any($event.target).value)"
+                  />
+                  @if (form().image) {
+                    <button type="button" class="btn-clear-url" (click)="removeProductImage()" title="Xóa link">✕</button>
+                  }
+                </div>
+                @if (form().image) {
+                  <div class="url-preview-box">
+                    <img [src]="form().image" alt="URL Preview" (error)="onImageLoadError($event)" />
+                    <span>Xem trước hình ảnh từ liên kết URL</span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Description -->
+          <div class="admin-field" style="grid-column:1/-1">
+            <label>Mô tả chi tiết</label>
+            <textarea placeholder="Mô tả công dụng, xuất xứ sản phẩm..."
+                      [value]="form().description ?? ''"
+                      (input)="setField('description', $any($event.target).value)"></textarea>
           </div>
 
           <!-- isActive -->
-          <div class="admin-field" style="justify-content:flex-end;flex-direction:row;align-items:center;gap:10px">
-            <label style="margin:0;font-weight:600;font-size:13.5px;color:#2c4230">Hiển thị bán</label>
-            <input type="checkbox" [checked]="form().isActive !== false"
-                   (change)="setField('isActive', $any($event.target).checked)"
-                   style="width:18px;height:18px;accent-color:#176b3a;cursor:pointer" />
+          <div class="admin-field" style="grid-column:1/-1;flex-direction:row;align-items:center;justify-content:space-between;padding:12px 14px;background:#f8faf6;border:1px solid #e1ecdc;border-radius:10px">
+            <div>
+              <div style="font-weight:700;font-size:13.5px;color:#1c2920">Trạng thái kinh doanh</div>
+              <div style="font-size:12px;color:#64748b">Cho phép sản phẩm hiển thị trên trang cửa hàng để khách đặt mua</div>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0">
+              <input type="checkbox" [checked]="form().isActive !== false"
+                     (change)="setField('isActive', $any($event.target).checked)"
+                     style="width:20px;height:20px;accent-color:#176b3a;cursor:pointer" />
+              <span style="font-weight:700;font-size:13px;color:#176b3a">{{ form().isActive !== false ? 'Hiển thị bán' : 'Tạm ẩn' }}</span>
+            </label>
           </div>
 
           <!-- Thiết lập Mua kèm tiết kiệm hơn (chỉ áp dụng cho sản phẩm đơn lẻ, độc lập với Combo) -->
@@ -646,49 +761,147 @@
 <!-- Category Modal -->
 @if (catModalOpen()) {
   <div class="admin-modal-backdrop" (click)="closeCatModal()">
-    <div class="admin-modal" (click)="$event.stopPropagation()" style="max-width:500px">
+    <div class="admin-modal" (click)="$event.stopPropagation()" style="max-width:520px">
       <div class="admin-modal-header">
         <h3 class="admin-modal-title">{{ editingCat() ? 'Chỉnh sửa Danh mục' : 'Thêm Danh mục mới' }}</h3>
         <button class="admin-btn-icon" (click)="closeCatModal()" aria-label="Đóng">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="18" x2="18" y2="6"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+
           </svg>
         </button>
       </div>
 
       <div class="admin-modal-body">
-        <div style="display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <!-- Category Name -->
           <div class="admin-field">
             <label>Tên danh mục *</label>
             <input
               type="text"
               placeholder="VD: Rau củ quả hữu cơ"
               [ngModel]="catFormName()"
-              (ngModelChange)="catFormName.set($event)"
+              (ngModelChange)="onCatNameChange($event)"
             />
           </div>
 
+          <!-- Category Slug / SEO URL with Auto-generation & Preview -->
           <div class="admin-field">
-            <label>Đường dẫn Slug (URL)</label>
-            <input
-              type="text"
-              placeholder="/category/rau-cu"
-              [ngModel]="catFormSlug()"
-              (ngModelChange)="catFormSlug.set($event)"
-            />
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+              <label style="font-size:12px;color:#5c6e5e;display:flex;align-items:center;gap:6px">
+                <span>Đường dẫn danh mục (Slug URL)</span>
+                @if (customCatSlug()) {
+                  <span class="badge-slug-custom">Tùy chỉnh thủ công</span>
+                } @else {
+                  <span class="badge-slug-auto">Tự động tạo theo tên</span>
+                }
+              </label>
+              @if (customCatSlug()) {
+                <button type="button" class="btn-slug-reset" (click)="resetCatSlug()">
+                  ↻ Đặt lại theo tên
+                </button>
+              }
+            </div>
+            <div class="slug-input-wrapper">
+              <span class="slug-prefix">evergreenmart.vn/category/</span>
+              <input
+                type="text"
+                class="slug-inline-input"
+                placeholder="rau-cu-qua-huu-co"
+                [ngModel]="catFormSlug()"
+                (ngModelChange)="onCatSlugChange($event)"
+              />
+            </div>
           </div>
 
+          <!-- Category Image: Dual Mode -->
           <div class="admin-field">
-            <label>URL Hình ảnh</label>
-            <input
-              type="text"
-              placeholder="https://..."
-              [ngModel]="catFormImage()"
-              (ngModelChange)="catFormImage.set($event)"
-            />
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+              <label>Hình ảnh danh mục</label>
+              <div class="image-mode-toggle">
+                <button
+                  type="button"
+                  class="mode-btn"
+                  [class.active]="catImageMode() === 'file'"
+                  (click)="catImageMode.set('file')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Tải ảnh từ máy
+                </button>
+                <button
+                  type="button"
+                  class="mode-btn"
+                  [class.active]="catImageMode() === 'url'"
+                  (click)="catImageMode.set('url')">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                  Nhập link URL
+                </button>
+              </div>
+            </div>
+
+            @if (catImageMode() === 'file') {
+              <div
+                class="admin-upload-zone"
+                [class.has-image]="!!catFormImage()"
+                (dragover)="$event.preventDefault()"
+                (drop)="onCatImageDrop($event)"
+              >
+                <input
+                  #catFileInput
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  style="display:none"
+                  (change)="onCatImageSelected($event)"
+                />
+                @if (catFormImage()) {
+                  <div class="image-preview-card">
+                    <img [src]="catFormImage()" alt="Preview" class="preview-img" />
+                    <div class="preview-info">
+                      <div class="preview-title">Ảnh danh mục đã sẵn sàng</div>
+                      <div class="preview-sub">Đã tải lên • Xem trước trực tiếp</div>
+                      <div class="preview-actions">
+                        <button type="button" class="btn-preview-change" (click)="catFileInput.click()">
+                          Đổi ảnh khác
+                        </button>
+                        <button type="button" class="btn-preview-remove" (click)="removeCatImage()">
+                          Xóa
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="upload-dropzone-inner" (click)="catFileInput.click()">
+                    <div class="upload-icon-circle">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    </div>
+                    <div class="upload-text-main">Kéo thả ảnh hoặc <span>Chọn ảnh từ máy</span></div>
+                    <div class="upload-text-sub">Hỗ trợ PNG, JPG, WEBP</div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="url-input-block">
+                <div class="url-input-row">
+                  <input
+                    type="text"
+                    placeholder="https://..."
+                    [ngModel]="catFormImage()"
+                    (ngModelChange)="catFormImage.set($event)"
+                  />
+                  @if (catFormImage()) {
+                    <button type="button" class="btn-clear-url" (click)="removeCatImage()">✕</button>
+                  }
+                </div>
+                @if (catFormImage()) {
+                  <div class="url-preview-box">
+                    <img [src]="catFormImage()" alt="Category Preview" (error)="onImageLoadError($event)" />
+                    <span>Xem trước ảnh danh mục</span>
+                  </div>
+                }
+              </div>
+            }
           </div>
 
+          <!-- Order -->
           <div class="admin-field">
             <label>Thứ tự hiển thị</label>
             <input

@@ -11,7 +11,7 @@ function toCartProduct(p: ApiProduct): XanhLaProduct {
     id: p._id, name: p.name, slug: p.slug, price: p.price,
     priceNumber: p.priceNumber, image: p.image,
     category: p.category as 'Vegetables' | 'Fruits' | 'Meat',
-    categoryVi: p.categoryVi, description: p.description,
+    categoryVi: p.categoryVi ?? p.category ?? '', description: p.description,
     container: p.container, cutType: p.cutType, cutting: p.cutting,
     packSize: p.packSize, packaging: p.packaging, preparation: p.preparation,
     quantity: p.quantity, ripeness: p.ripeness, sizeGroup: p.sizeGroup,
@@ -40,7 +40,7 @@ export class MenusComponent implements OnInit {
     const all = this.allProducts();
     const groups: Record<string, ApiProduct[]> = {};
     for (const p of all) {
-      const key = p.categoryVi || p.category;
+      const key = p.categoryVi ?? p.category ?? 'Khác';
       if (!groups[key]) groups[key] = [];
       groups[key].push(p);
     }

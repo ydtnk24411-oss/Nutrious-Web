@@ -1,5 +1,8 @@
 const errorHandler = (err, _req, res, _next) => {
-  console.error(err.stack);
+  // Do not spam console with expected auth token verification errors (401)
+  if (err.name !== 'JsonWebTokenError' && err.name !== 'TokenExpiredError') {
+    console.error(err.stack);
+  }
 
   // Mongoose validation error
   if (err.name === 'ValidationError') {
@@ -15,7 +18,7 @@ const errorHandler = (err, _req, res, _next) => {
 
   // JWT errors
   if (err.name === 'JsonWebTokenError') {
-    return res.status(401).json({ success: false, message: 'Token không hợp lệ.' });
+    return res.status(401).json({ success: false, message: 'Token không hợp lệ hoặc đã hết hạn.' });
   }
   if (err.name === 'TokenExpiredError') {
     return res.status(401).json({ success: false, message: 'Token đã hết hạn.' });
