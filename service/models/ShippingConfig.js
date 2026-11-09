@@ -1,5 +1,20 @@
 const mongoose = require('mongoose');
 
+const warehouseLocationSchema = new mongoose.Schema(
+  {
+    id:       { type: String },
+    name:     { type: String, required: true },
+    address:  { type: String, required: true },
+    province: { type: String, default: '' },
+    district: { type: String, default: '' },
+    lat:      { type: Number, required: true },
+    lng:      { type: Number, required: true },
+    phone:    { type: String, default: '' },
+    isHeadquarter: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
+
 const distanceTierSchema = new mongoose.Schema(
   {
     minKm: { type: Number, required: true, min: 0 },
@@ -31,6 +46,10 @@ const shippingConfigSchema = new mongoose.Schema(
       address: { type: String, default: 'Khu phố 6, Phường Linh Trung, TP. Thủ Đức, TP. Hồ Chí Minh' },
       lat:     { type: Number, default: 10.8703 }, // Tọa độ thực tế tại Việt Nam
       lng:     { type: Number, default: 106.7782 }, // Tọa độ thực tế tại Việt Nam
+    },
+    warehouses: {
+      type: [warehouseLocationSchema],
+      default: [],
     },
     distanceTiers: {
       type: [distanceTierSchema],

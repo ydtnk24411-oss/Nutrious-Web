@@ -7,6 +7,15 @@ const addressSchema = new mongoose.Schema({
   phone: { type: String, required: true },
   address: { type: String, required: true },
   city: { type: String, required: true },
+  // Địa chỉ có cấu trúc theo đơn vị hành chính 2 cấp (Tỉnh/Thành → Phường/Xã)
+  province: { type: String, default: '' },
+  provinceCode: { type: Number, default: null },
+  ward: { type: String, default: '' },
+  wardCode: { type: Number, default: null },
+  street: { type: String, default: '' },
+  // Tọa độ ghim giao hàng do khách hàng xác nhận trên bản đồ
+  lat: { type: Number, default: null },
+  lng: { type: Number, default: null },
   isDefault: { type: Boolean, default: false },
 }, { _id: true });
 

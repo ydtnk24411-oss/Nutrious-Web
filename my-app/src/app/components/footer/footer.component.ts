@@ -91,17 +91,32 @@ export class FooterComponent implements OnInit {
       next: res => {
         const cfg = res?.data;
         if (!cfg) return;
-        if (cfg.brandName) this.brandName.set(cfg.brandName);
+        if (cfg.brandName) {
+          const bName = cfg.brandName === 'Xanh Lá' ? 'Evergreen Mart' : cfg.brandName;
+          this.brandName.set(bName);
+        }
         if (cfg.brandDesc) this.brandDesc.set(cfg.brandDesc);
-        if (cfg.newsletterTitle) this.newsletterTitle.set(cfg.newsletterTitle);
+        if (cfg.newsletterTitle) this.newsletterTitle.set(cfg.newsletterTitle.replace(/Xanh Lá/g, 'Evergreen Mart'));
         if (cfg.newsletterDesc) this.newsletterDesc.set(cfg.newsletterDesc);
-        if (cfg.copyrightText) this.copyrightText.set(cfg.copyrightText);
+        if (cfg.copyrightText) this.copyrightText.set(cfg.copyrightText.replace(/Xanh Lá/g, 'Evergreen Mart'));
         if (cfg.contactInfo) this.contactInfo.set(cfg.contactInfo);
         if (cfg.trustItems?.length) this.trustItems.set(cfg.trustItems);
-        if (cfg.utilityLinks?.length) this.utilityLinks.set(cfg.utilityLinks);
-        if (cfg.aboutLinks?.length) this.aboutLinks.set(cfg.aboutLinks);
+        if (cfg.utilityLinks?.length) {
+          this.utilityLinks.set(
+            cfg.utilityLinks.map(l => ({ ...l, label: (l.label || '').replace(/Xanh Lá/g, 'Evergreen Mart') }))
+          );
+        }
+        if (cfg.aboutLinks?.length) {
+          this.aboutLinks.set(
+            cfg.aboutLinks.map(l => ({ ...l, label: (l.label || '').replace(/Xanh Lá/g, 'Evergreen Mart') }))
+          );
+        }
         if (cfg.policyLinks?.length) this.policyLinks.set(cfg.policyLinks);
-        if (cfg.socialLinks?.length) this.socialLinks.set(cfg.socialLinks);
+        if (cfg.socialLinks?.length) {
+          this.socialLinks.set(
+            cfg.socialLinks.map(s => ({ ...s, label: (s.label || '').replace(/Xanh Lá/g, 'Evergreen Mart') }))
+          );
+        }
         if (cfg.paymentMethods?.length) this.paymentMethods.set(cfg.paymentMethods);
         if (cfg.policies?.length) {
           const map: Record<string, PolicyContent> = {};
@@ -133,7 +148,10 @@ export class FooterComponent implements OnInit {
   }
 
   cleanLabel(label: string): string {
-    return label.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27FF}\u{2300}-\u{23FF}\u{2B00}-\u{2BFF}\uFE0E\uFE0F\u200D]/gu, '').trim();
+    return (label || '')
+      .replace(/Xanh Lá/g, 'Evergreen Mart')
+      .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27FF}\u{2300}-\u{23FF}\u{2B00}-\u{2BFF}\uFE0E\uFE0F\u200D]/gu, '')
+      .trim();
   }
 
   isFooterLinkVisible(link: FooterNavLink): boolean {

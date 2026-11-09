@@ -84,12 +84,20 @@ export interface XanhLaNutritionGoal {
 
 export interface XanhLaAddress {
   id: string;
+  _id?: string;
   label: string;       // "Nhà riêng", "Văn phòng"...
   fullName: string;
   phone: string;
   address: string;
   city: string;
   isDefault: boolean;
+  province?: string;
+  provinceCode?: number;
+  ward?: string;
+  wardCode?: number;
+  street?: string;
+  lat?: number;
+  lng?: number;
 }
 
 export interface XanhLaUser {

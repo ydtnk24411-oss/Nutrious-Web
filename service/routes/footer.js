@@ -20,6 +20,7 @@ router.get('/', async (req, res, next) => {
   try {
     const doc = await FooterConfig.findOne({ key: 'main' }).lean();
     if (doc) {
+      doc.brandName = 'Evergreen Mart';
       doc.serviceLinks = filterRemovedNavLinks(doc.serviceLinks);
       doc.utilityLinks = filterRemovedNavLinks(doc.utilityLinks);
       doc.aboutLinks = filterRemovedNavLinks(doc.aboutLinks);
@@ -47,7 +48,7 @@ router.post('/newsletter', async (req, res, next) => {
     if (existing) {
       return res.json({
         success: true,
-        message: 'Email này đã được đăng ký nhận bản tin Xanh Lá!',
+        message: 'Email này đã được đăng ký nhận bản tin Evergreen Mart!',
         data: existing,
       });
     }

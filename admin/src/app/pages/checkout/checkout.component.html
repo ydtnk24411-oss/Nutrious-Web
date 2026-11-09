@@ -187,32 +187,277 @@
         <!-- 2. Hình thức nhận hàng -->
         <div style="background:#fff;padding:28px;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line)">
           <h3 style="margin:0 0 20px 0;font-size:18px">2. Hình thức nhận hàng</h3>
-          <div style="display:flex;gap:16px;margin-bottom:20px">
-            <label
-              [style.border]="shippingMethod()==='pickup' ? '2px solid var(--xanh-moss)' : '1px solid var(--xanh-line)'"
-              style="flex:1;padding:16px;border-radius:var(--xanh-radius-sm);cursor:pointer">
-              <input type="radio" name="method" value="pickup" [checked]="shippingMethod()==='pickup'"
-                (change)="shippingMethod.set('pickup')" style="margin-right:8px" />
-              <strong>Đến lấy trực tiếp</strong>
-              <p style="margin:4px 0 0 0;font-size:13px;color:var(--xanh-muted)">Khu phố 6, Phường Linh Trung, TP. Thủ Đức, TP.HCM (Tối đa 30p)</p>
-            </label>
-            <label
-              [style.border]="shippingMethod()==='delivery' ? '2px solid var(--xanh-moss)' : '1px solid var(--xanh-line)'"
-              style="flex:1;padding:16px;border-radius:var(--xanh-radius-sm);cursor:pointer">
-              <input type="radio" name="method" value="delivery" [checked]="shippingMethod()==='delivery'"
-                (change)="shippingMethod.set('delivery')" style="margin-right:8px" />
-              <strong>Giao hàng tận nơi</strong>
-              <p style="margin:4px 0 0 0;font-size:13px;color:var(--xanh-muted)">Giao nhanh trong ngày bằng xe lạnh (Tối đa 10 km)</p>
-            </label>
+          
+          <!-- Thanh chuyển đổi Giao tận nơi / Nhận tại cửa hàng (Style Bách Hoá XANH) -->
+          <div class="delivery-tabs-header">
+            <button
+              type="button"
+              class="delivery-tab-btn"
+              [class.is-active]="shippingMethod() === 'delivery'"
+              (click)="shippingMethod.set('delivery')"
+            >
+              Giao tận nơi
+            </button>
+            <button
+              type="button"
+              class="delivery-tab-btn"
+              [class.is-active]="shippingMethod() === 'pickup'"
+              (click)="shippingMethod.set('pickup')"
+            >
+              <span>Nhận tại cửa hàng</span>
+              <span class="tab-badge-freeship">Không phí SHIP</span>
+            </button>
           </div>
+
+          <!-- Danh sách cửa hàng khi chọn Đến lấy trực tiếp -->
+          @if (shippingMethod() === 'pickup') {
+            <div class="checkout-store-branches-wrap">
+              <div class="store-branches-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                <span>Chọn cửa hàng Evergreen Mart đến nhận hàng:</span>
+              </div>
+              <div class="store-branches-grid">
+                @for (store of storeBranches; track store.id) {
+                  <div
+                    class="store-branch-card"
+                    [class.is-selected]="selectedPickupStoreId() === store.id"
+                    (click)="selectPickupStore(store)"
+                  >
+                    <div class="store-branch-radio">
+                      <input
+                        type="radio"
+                        name="pickupStoreChoice"
+                        [value]="store.id"
+                        [checked]="selectedPickupStoreId() === store.id"
+                        (change)="selectPickupStore(store)"
+                      />
+                    </div>
+                    <div class="store-branch-details">
+                      <div class="store-branch-head">
+                        <strong class="store-branch-name">{{ store.name }}</strong>
+                        @if (store.isHeadquarter) {
+                          <span class="store-hq-badge">Trụ sở chính</span>
+                        }
+                      </div>
+                      <div class="store-branch-addr">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                          <circle cx="12" cy="10" r="3"/>
+                        </svg>
+                        <span>{{ store.address }}</span>
+                      </div>
+                      <div class="store-branch-meta">
+                        <span class="store-meta-item">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                          </svg>
+                          {{ store.openingHours }}
+                        </span>
+                        <span class="store-meta-sep">•</span>
+                        <span class="store-meta-item">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                          </svg>
+                          {{ store.phone }}
+                        </span>
+                        <span class="store-meta-sep">•</span>
+                        <span class="store-ready-pill">{{ store.readyTime }}</span>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Giao hàng tận nơi: Thẻ địa chỉ nhận hàng + Chọn thời gian giao hàng -->
           @if (shippingMethod() === 'delivery') {
           <div style="display:flex;flex-direction:column;gap:16px">
-            <app-shipping-map-picker
-              [initialAddress]="shippingAddr()"
-              [subtotal]="checkoutSubtotal()"
-              (locationChanged)="onLocationChanged($event)"
-              (outOfRange)="onOutOfRange($event)">
-            </app-shipping-map-picker>
+
+            <!-- Thẻ địa chỉ nhận hàng Bách Hoá XANH style -->
+            <div class="bhx-address-summary-card">
+              @if (shippingAddr()) {
+                <div class="bhx-address-row" (click)="openAddressModal()">
+                  <div class="bhx-address-text-group">
+                    <div class="bhx-addr-line">
+                      <span class="bhx-addr-lbl">Địa chỉ:</span>
+                      <strong class="bhx-addr-val">{{ shippingAddr() }}</strong>
+                    </div>
+                    <div class="bhx-receiver-line">
+                      {{ receiverSummary() }}
+                    </div>
+                  </div>
+                  <svg class="bhx-arrow-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </div>
+
+                <div class="bhx-dispatch-row" (click)="openAddressModal()">
+                  <div class="bhx-dispatch-content">
+                    <span class="bhx-dispatch-lbl">Giao từ:</span>
+                    <span class="bhx-dispatch-val">{{ nearestWarehouseDisplay() }}</span>
+                  </div>
+                  <svg class="bhx-arrow-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </div>
+              } @else {
+                <div class="bhx-empty-address-box" (click)="openAddressModal()">
+                  <div class="bhx-empty-left">
+                    <div class="bhx-empty-pin-circle">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                        <circle cx="12" cy="10" r="3"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <strong class="bhx-empty-title">Chưa có thông tin nhận hàng</strong>
+                      <p class="bhx-empty-desc">Nhấn để thêm địa chỉ giao tận nơi và tính phí giao hàng chính xác</p>
+                    </div>
+                  </div>
+                  <button type="button" class="bhx-btn-add-addr" (click)="openAddressModal()">+ Thêm thông tin nhận hàng</button>
+                </div>
+              }
+            </div>
+
+            <!-- Cảnh báo nếu địa chỉ vượt quá bán kính 10km -->
+            @if (isOutOfRange()) {
+              <div class="bhx-out-of-range-alert">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span>{{ outOfRangeMessage() || 'Khu vực giao hàng vượt quá bán kính 10km cho phép đối với nông sản & thực phẩm mát. Vui lòng chọn điểm nhận hàng gần hơn hoặc chọn "Nhận tại cửa hàng".' }}</span>
+              </div>
+            }
+
+            <!-- Khối Chọn thời gian giao hàng (Giao tận nơi) -->
+            <div class="delivery-time-widget">
+              <button
+                type="button"
+                class="delivery-time-widget-head"
+                (click)="toggleDeliveryTime()"
+              >
+                <span class="dt-head-title">Chọn thời gian giao hàng</span>
+                <svg
+                  class="dt-chevron"
+                  [class.is-collapsed]="!deliveryTimeExpanded()"
+                  width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                >
+                  <polyline points="18 15 12 9 6 15"/>
+                </svg>
+              </button>
+
+              @if (deliveryTimeExpanded()) {
+                <div class="delivery-time-widget-body">
+                  <!-- Option 1: Giao ngay 🛵 -->
+                  <label
+                    class="dt-choice-card"
+                    [class.is-active]="selectedDeliveryType() === 'instant'"
+                    (click)="setDeliveryType('instant')"
+                  >
+                    <div class="dt-choice-left">
+                      <input
+                        type="radio"
+                        name="deliveryTypeChoice"
+                        value="instant"
+                        [checked]="selectedDeliveryType() === 'instant'"
+                        (change)="setDeliveryType('instant')"
+                      />
+                      <span class="dt-choice-title dt-orange">
+                        Giao ngay <span class="dt-bike-icon">🛵</span>
+                      </span>
+                    </div>
+                    <div class="dt-choice-right">
+                      <strong class="dt-price">20.000đ</strong>
+                    </div>
+                  </label>
+
+                  <!-- Option 2: Giao hàng tiết kiệm (trong 24h) -->
+                  <label
+                    class="dt-choice-card"
+                    [class.is-active]="selectedDeliveryType() === 'standard'"
+                    (click)="setDeliveryType('standard')"
+                  >
+                    <div class="dt-choice-left">
+                      <input
+                        type="radio"
+                        name="deliveryTypeChoice"
+                        value="standard"
+                        [checked]="selectedDeliveryType() === 'standard'"
+                        (change)="setDeliveryType('standard')"
+                      />
+                      <span class="dt-choice-title">
+                        Giao hàng tiết kiệm (trong 24h)
+                      </span>
+                    </div>
+                    <div class="dt-choice-right">
+                      <del class="dt-old-price">10.000đ</del>
+                      <strong class="dt-freeship-badge">Freeship</strong>
+                    </div>
+                  </label>
+
+                  <!-- Option 3: Tuỳ chọn khung giờ nhận hàng -->
+                  <div
+                    class="dt-timeslot-box"
+                    [class.is-active]="selectedDeliveryType() === 'timeslot'"
+                  >
+                    <div class="dt-timeslot-box-title">Tuỳ chọn khung giờ nhận hàng</div>
+
+                    <!-- 2 tab: Hôm nay (DD/MM) / Ngày mai (DD/MM) -->
+                    <div class="dt-day-tabs">
+                      <button
+                        type="button"
+                        class="dt-day-tab"
+                        [class.is-active]="selectedDeliveryDay() === 'today'"
+                        (click)="setDeliveryDay('today')"
+                      >
+                        Hôm nay ({{ deliveryDates().todayStr }})
+                      </button>
+                      <button
+                        type="button"
+                        class="dt-day-tab"
+                        [class.is-active]="selectedDeliveryDay() === 'tomorrow'"
+                        (click)="setDeliveryDay('tomorrow')"
+                      >
+                        Ngày mai ({{ deliveryDates().tomorrowStr }})
+                      </button>
+                    </div>
+
+                    <!-- Danh sách khung giờ có cuộn dọc -->
+                    <div class="dt-timeslot-list-scroll">
+                      @for (slot of deliveryTimeSlots; track slot.label) {
+                        <label
+                          class="dt-timeslot-row"
+                          [class.is-selected]="selectedDeliveryType() === 'timeslot' && selectedTimeSlot() === slot.label"
+                          (click)="setTimeSlot(slot.label)"
+                        >
+                          <div class="dt-slot-left">
+                            <input
+                              type="radio"
+                              name="slotChoice"
+                              [value]="slot.label"
+                              [checked]="selectedDeliveryType() === 'timeslot' && selectedTimeSlot() === slot.label"
+                              (change)="setTimeSlot(slot.label)"
+                            />
+                            <strong class="dt-slot-label">{{ slot.label }}</strong>
+                          </div>
+                          <div class="dt-slot-right">
+                            <del class="dt-old-price">{{ slot.originalPrice | number }}đ</del>
+                            <strong class="dt-freeship-badge">Freeship</strong>
+                          </div>
+                        </label>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
           </div>
           }
         </div>
@@ -467,12 +712,16 @@
           <div style="display:flex;justify-content:space-between;align-items:center;font-size:14px">
             <div>
               <span>Phí giao hàng</span>
-              @if (shippingMethod() === 'delivery' && shippingDistanceKm() > 0) {
-              <div style="font-size:12px;color:var(--xanh-muted)">
-                {{ shippingDistanceKm() }} km
-                @if (estimatedDeliveryTime()) {
-                <span> • {{ estimatedDeliveryTime() }}</span>
+              @if (shippingMethod() === 'delivery') {
+              <div style="font-size:12px;color:var(--xanh-muted);margin-top:2px">
+                @if (shippingDistanceKm() > 0) {
+                  <span>{{ shippingDistanceKm() }} km • </span>
                 }
+                <span style="color:#166534;font-weight:600">{{ estimatedDeliveryTime() }}</span>
+              </div>
+              } @else {
+              <div style="font-size:12px;color:var(--xanh-muted);margin-top:2px">
+                <span>{{ selectedPickupStore().name }}</span>
               </div>
               }
             </div>
@@ -520,55 +769,6 @@
           }
         </div>
 
-        <!-- Cảnh báo Quy chế Hàng tươi sống không hỗ trợ Hủy / Đổi / Trả (Rau củ, Trái cây, Thịt, Cá & Hải sản) -->
-        @if (nonRefundablePolicy().hasNonRefundableItems) {
-          <div class="checkout-fresh-policy-box">
-            <div class="fresh-policy-header">
-              <div class="fresh-policy-icon-wrap">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.2">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                  <line x1="12" y1="8" x2="12" y2="12"/>
-                  <line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-              </div>
-              <div class="fresh-policy-header-text">
-                <strong class="fresh-policy-title">Lưu ý quy chế đơn hàng tươi sống</strong>
-                <span class="fresh-policy-tag">Không hỗ trợ Hủy / Đổi / Trả</span>
-              </div>
-            </div>
-
-            <p class="fresh-policy-desc">
-              Đơn hàng có chứa <strong>{{ nonRefundablePolicy().items.length }}</strong> mặt hàng tươi sống 
-              (<strong>Rau củ, Trái cây, Thịt, Cá & Hải sản</strong>). Để đảm bảo an toàn thực phẩm và chất lượng tươi ngon được thu hoạch / sơ chế trong ngày,
-              các mặt hàng này <strong>không hỗ trợ hủy đơn, đổi trả hoặc hoàn tiền</strong> sau khi hoàn tất đặt hàng.
-            </p>
-
-            <div class="fresh-policy-item-list">
-              <span class="fresh-items-label">Sản phẩm áp dụng quy chế trong đơn:</span>
-              <div class="fresh-items-badges">
-                @for (fi of nonRefundablePolicy().items; track fi.name) {
-                  <span class="fresh-item-pill">
-                    <span class="fresh-cat-badge">{{ fi.categoryName }}</span>
-                    <span class="fresh-item-name">{{ fi.name }}</span>
-                  </span>
-                }
-              </div>
-            </div>
-
-            <label class="fresh-policy-checkbox-label">
-              <input
-                type="checkbox"
-                [checked]="nonRefundableConfirmed()"
-                (change)="nonRefundableConfirmed.set($any($event.target).checked)"
-                class="fresh-policy-checkbox"
-              />
-              <span class="fresh-policy-checkbox-text">
-                Tôi đã đọc, hiểu rõ và đồng ý với quy chế <strong>không hỗ trợ hủy / đổi / trả</strong> cho các sản phẩm tươi sống nêu trên.
-              </span>
-            </label>
-          </div>
-        }
-
         <button class="xanhla-btn-primary" type="submit" style="width:100%;position:relative;margin-top:24px"
           [disabled]="submitting() || checkoutItems().length === 0">
           @if (submitting()) {
@@ -589,7 +789,7 @@
     }
   </div>
 
-  <!-- Modal Popup Xác nhận Quy chế Hàng tươi sống khi nhấn Đặt hàng mà chưa xác nhận -->
+  <!-- Modal Popup Xác nhận Quy chế Hàng tươi sống khi nhấn Đặt hàng -->
   @if (showNonRefundableModal()) {
     <div class="fresh-modal-backdrop" (click)="closeNonRefundableModal()">
       <div class="fresh-modal-container" (click)="$event.stopPropagation()">
@@ -603,36 +803,78 @@
           </svg>
         </div>
 
-        <h3 class="fresh-modal-title">Xác nhận Quy chế Hàng tươi sống</h3>
-        
-        <p class="fresh-modal-lead">
-          Đơn hàng của Quý khách có sản phẩm thuộc nhóm tươi sống: 
-          <strong>Rau củ, Trái cây, Thịt, Cá và hải sản</strong>.
-        </p>
-
-        <div class="fresh-modal-alert">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.2" style="flex-shrink:0;margin-top:2px">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          <div>
-            <strong>Quy định hủy / đổi / trả:</strong>
-            <div>Vì đặc thù thực phẩm tươi sống thu hoạch và sơ chế đóng gói bảo quản giao ngay trong ngày, các mặt hàng này <strong>KHÔNG ĐƯỢC HỖ TRỢ HỦY ĐƠN, ĐỔI HOẶC TRẢ HÀNG</strong> sau khi đặt.</div>
-          </div>
-        </div>
-
-        <div class="fresh-modal-items-section">
-          <div class="fresh-modal-items-title">Sản phẩm áp dụng quy chế trong đơn ({{ nonRefundablePolicy().items.length }}):</div>
-          <div class="fresh-modal-items-scroll">
-            @for (fi of nonRefundablePolicy().items; track fi.name) {
-              <div class="fresh-modal-item-row">
-                <span class="fresh-modal-cat-tag">{{ fi.categoryName }}</span>
-                <span class="fresh-modal-prod-name">{{ fi.name }}</span>
+        @if (shippingMethod() === 'delivery') {
+          <!-- 1. Giao hàng tận nơi -->
+          <h3 class="fresh-modal-title">Lưu ý kiểm tra hàng khi nhận</h3>
+          <span class="fresh-policy-tag" style="display:inline-block;margin-bottom:14px">Đồng kiểm cùng Shipper</span>
+          
+          <div class="fresh-modal-alert">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.2" style="flex-shrink:0;margin-top:2px">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <div style="text-align:left">
+              <div style="margin-bottom:6px">
+                Quý khách vui lòng <strong>kiểm tra hàng khi shipper giao đến</strong> và có thể <strong>từ chối nhận hàng hoặc yêu cầu shipper đổi ngay</strong> nếu thấy hàng có hư hỏng, dập nát hoặc có lỗi.
               </div>
-            }
+              <div style="color:#b45309;font-weight:700">
+                ⚠ Tiệm không chấp nhận đổi trả sau khi Quý khách đã nhận hàng.
+              </div>
+            </div>
           </div>
-        </div>
+        } @else {
+          <!-- 2. Lấy hàng tận nơi (Nhận tại cửa hàng) -->
+          <h3 class="fresh-modal-title">Lưu ý kiểm tra hàng tại cửa hàng</h3>
+          <span class="fresh-policy-tag" style="display:inline-block;margin-bottom:14px">Kiểm tra trước khi rời cửa hàng</span>
+          
+          <div class="fresh-modal-alert">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.2" style="flex-shrink:0;margin-top:2px">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <div style="text-align:left">
+              <div style="margin-bottom:6px">
+                Quý khách vui lòng <strong>kiểm tra hàng khi tới nơi lấy</strong> và có thể <strong>từ chối nhận hàng hoặc yêu cầu nhân viên đổi ngay</strong> nếu thấy hàng có hư hỏng hoặc lỗi.
+              </div>
+              <div style="color:#b45309;font-weight:700">
+                ⚠ Tiệm không chấp nhận đổi trả sau khi Quý khách đã nhận hàng thành công đem về nhà.
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (nonRefundablePolicy().items.length > 0) {
+          <div class="fresh-modal-items-section">
+            <div class="fresh-modal-items-title">Sản phẩm áp dụng quy chế trong đơn ({{ nonRefundablePolicy().items.length }}):</div>
+            <div class="fresh-modal-items-scroll">
+              @for (fi of nonRefundablePolicy().items; track fi.name) {
+                <div class="fresh-modal-item-row">
+                  <span class="fresh-modal-cat-tag">{{ fi.categoryName }}</span>
+                  <span class="fresh-modal-prod-name">{{ fi.name }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Checkbox bắt buộc người dùng tick chọn -->
+        <label class="fresh-modal-checkbox-row">
+          <input
+            type="checkbox"
+            class="fresh-modal-checkbox-input"
+            [checked]="modalPolicyChecked()"
+            (change)="modalPolicyChecked.set($any($event.target).checked)"
+          />
+          <span class="fresh-modal-checkbox-text">
+            @if (shippingMethod() === 'delivery') {
+              Tôi đã đọc, hiểu rõ và đồng ý <strong>kiểm tra hàng khi shipper giao</strong>. Tiệm <strong>không chấp nhận đổi trả sau khi đã nhận hàng</strong>.
+            } @else {
+              Tôi đã đọc, hiểu rõ và đồng ý <strong>kiểm tra hàng khi tới nơi lấy</strong>. Tiệm <strong>không chấp nhận đổi trả sau khi đã nhận hàng thành công đem về nhà</strong>.
+            }
+          </span>
+        </label>
 
         <div class="fresh-modal-actions">
           <button
@@ -640,19 +882,443 @@
             class="fresh-modal-btn-cancel"
             (click)="closeNonRefundableModal()"
           >
-            Xem lại giỏ hàng
+            Xem lại đơn hàng
           </button>
           <button
             type="button"
             class="fresh-modal-btn-confirm"
+            [disabled]="!modalPolicyChecked() || submitting()"
             (click)="confirmNonRefundableAndPlaceOrder()"
           >
-            Tôi đã hiểu & Xác nhận đặt đơn
+            @if (submitting()) {
+              Đang xử lý...
+            } @else if (paymentMethod() === 'bank_transfer') {
+              Xác nhận & Chuyển sang thanh toán
+            } @else {
+              Xác nhận & Đặt hàng ngay
+            }
           </button>
         </div>
       </div>
     </div>
   }
+
+  <!-- ── Modal Thông tin địa chỉ nhận hàng (Bách Hoá XANH) ───────────────────── -->
+  @if (showAddressModal()) {
+      <div class="bhx-modal-backdrop" (click)="closeAddressModal()">
+        <div class="bhx-modal-card" (click)="$event.stopPropagation()">
+
+          <!-- VIEW 1: Form Địa chỉ nhận hàng (Image 3) -->
+          @if (addressModalView() === 'form') {
+            <div class="bhx-modal-header">
+              <h3 class="bhx-modal-title">Địa chỉ nhận hàng</h3>
+              <button type="button" class="bhx-modal-close" (click)="closeAddressModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="bhx-modal-subtitle">
+              Thông tin vị trí giúp Evergreen Mart giao hàng đúng giờ và tính phí giao chính xác hơn.
+            </div>
+
+            <!-- Nút Lấy vị trí hiện tại -->
+            <button
+              type="button"
+              class="btn-current-location"
+              (click)="getCurrentLocation()"
+              [disabled]="isLocating()"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="3"/>
+                <line x1="12" y1="2" x2="12" y2="5"/>
+                <line x1="12" y1="19" x2="12" y2="22"/>
+                <line x1="2" y1="12" x2="5" y2="12"/>
+                <line x1="19" y1="12" x2="22" y2="12"/>
+              </svg>
+              <span>{{ isLocating() ? 'Đang xác định vị trí...' : 'Lấy vị trí hiện tại' }}</span>
+            </button>
+
+            @if (locationError()) {
+              <div class="location-err-alert">
+                ⚠ {{ locationError() }}
+              </div>
+            }
+
+            <div class="bhx-form-group">
+              <!-- Trường Tỉnh/Thành phố -->
+              <div class="bhx-select-field" (click)="openProvincePicker()">
+                <span class="bhx-select-lbl">Tỉnh/Thành phố</span>
+                <div class="bhx-select-val-row">
+                  <span class="bhx-select-val" [class.placeholder]="!selectedProvince()">
+                    {{ selectedProvince()?.name || 'Chọn Tỉnh/Thành phố' }}
+                  </span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Trường Phường/Xã -->
+              <div
+                class="bhx-select-field"
+                [class.is-disabled]="!selectedProvince()"
+                (click)="openWardPicker()"
+              >
+                <span class="bhx-select-lbl">Phường/Xã</span>
+                <div class="bhx-select-val-row">
+                  <span class="bhx-select-val" [class.placeholder]="!selectedWard()">
+                    {{ selectedWard()?.name || (selectedProvince() ? 'Chọn Phường/Xã' : 'Vui lòng chọn Tỉnh/Thành trước') }}
+                  </span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Số nhà, tên đường kèm Gợi ý địa chỉ tự động -->
+              <div class="bhx-street-input-wrap">
+                <div class="bhx-street-input-box">
+                  <input
+                    type="text"
+                    class="bhx-street-input"
+                    placeholder="Số nhà, tên đường (vd: 12 Võ Văn Ngân, KTX Khu B...)"
+                    [value]="streetInput()"
+                    (input)="onStreetInput($any($event.target).value)"
+                    (focus)="onStreetFocus()"
+                    (keydown.enter)="onStreetEnter($event)"
+                  />
+                  @if (isSearchingSuggestions()) {
+                    <div class="bhx-street-spinner" title="Đang tìm gợi ý...">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5">
+                        <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+                      </svg>
+                    </div>
+                  } @else if (streetInput()) {
+                    <button type="button" class="bhx-street-clear" (click)="clearStreetInput()">✕</button>
+                  }
+                </div>
+
+                <!-- Dropdown danh sách gợi ý địa chỉ tự động (Không bắt buộc) -->
+                @if (showSuggestionsDropdown() && streetSuggestions().length > 0) {
+                  <div class="bhx-suggestions-dropdown">
+                    <div class="bhx-suggestions-header">
+                      <span class="bhx-suggestions-title-text">Gợi ý tham khảo (không bắt buộc):</span>
+                      <button type="button" class="bhx-btn-dismiss-suggestions" (click)="dismissSuggestions()" title="Đóng gợi ý">
+                        Bỏ qua ✕
+                      </button>
+                    </div>
+
+                    <!-- Tùy chọn 1: Sử dụng đúng địa chỉ người dùng vừa gõ -->
+                    <div class="bhx-suggestion-item bhx-suggestion-use-current" (click)="dismissSuggestions()">
+                      <div class="bhx-suggestion-icon use-current-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#007840" stroke-width="2.5">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </div>
+                      <div class="bhx-suggestion-texts">
+                        <strong class="bhx-suggestion-name text-green">Dùng địa chỉ đã nhập: "{{ streetInput() }}"</strong>
+                        <span class="bhx-suggestion-sub">Không dùng gợi ý bản đồ, tiếp tục với số nhà của bạn</span>
+                      </div>
+                    </div>
+
+                    <!-- Danh sách các gợi ý từ bản đồ -->
+                    @for (item of streetSuggestions(); track item.place_id) {
+                      <div class="bhx-suggestion-item" (click)="selectStreetSuggestion(item)">
+                        <div class="bhx-suggestion-icon">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                            <circle cx="12" cy="10" r="3"/>
+                          </svg>
+                        </div>
+                        <div class="bhx-suggestion-texts">
+                          <strong class="bhx-suggestion-name">{{ item.title || item.display_name }}</strong>
+                          @if (item.subtitle) {
+                            <span class="bhx-suggestion-sub">{{ item.subtitle }}</span>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Thông tin người nhận -->
+              <div class="bhx-receiver-box">
+                <div class="bhx-receiver-label">
+                  Người nhận: <strong>{{ currentReceiverName() }} - {{ currentReceiverPhone() }}</strong>
+                </div>
+                <label class="bhx-other-receiver-row">
+                  <input
+                    type="checkbox"
+                    [checked]="otherReceiverChecked()"
+                    (change)="otherReceiverChecked.set($any($event.target).checked)"
+                  />
+                  <span>Gọi người khác nhận hàng (nếu có)</span>
+                </label>
+                @if (otherReceiverChecked()) {
+                  <div class="bhx-other-receiver-inputs">
+                    <input
+                      type="text"
+                      class="bhx-street-input"
+                      placeholder="Họ tên người nhận"
+                      [value]="otherReceiverName()"
+                      (input)="otherReceiverName.set($any($event.target).value)"
+                    />
+                    <input
+                      type="tel"
+                      class="bhx-street-input"
+                      placeholder="Số điện thoại người nhận"
+                      [value]="otherReceiverPhone()"
+                      (input)="otherReceiverPhone.set($any($event.target).value)"
+                    />
+                  </div>
+                }
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="btn-modal-continue"
+              [disabled]="!canProceedToMap() || isGeocoding()"
+              (click)="proceedToMapConfirmation()"
+            >
+              {{ isGeocoding() ? 'Đang định vị địa chỉ...' : 'Tiếp tục' }}
+            </button>
+          }
+
+          <!-- VIEW 2: Chọn Tỉnh/Thành phố (Image 2) -->
+          @if (addressModalView() === 'province') {
+            <div class="bhx-modal-header">
+              <button type="button" class="bhx-modal-back-btn" (click)="backToForm()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="15 18 9 12 15 6"/>
+                </svg>
+              </button>
+              <h3 class="bhx-modal-title">Chọn Tỉnh/Thành phố</h3>
+              <button type="button" class="bhx-modal-close" (click)="closeAddressModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="bhx-modal-subtitle">
+              Thông tin vị trí giúp Evergreen Mart giao hàng đúng giờ và tính phí giao chính xác hơn.
+            </div>
+
+            <!-- Nút Lấy vị trí hiện tại -->
+            <button
+              type="button"
+              class="btn-current-location"
+              (click)="getCurrentLocation()"
+              [disabled]="isLocating()"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="3"/>
+                <line x1="12" y1="2" x2="12" y2="5"/>
+                <line x1="12" y1="19" x2="12" y2="22"/>
+                <line x1="2" y1="12" x2="5" y2="12"/>
+                <line x1="19" y1="12" x2="22" y2="12"/>
+              </svg>
+              <span>{{ isLocating() ? 'Đang xác định vị trí...' : 'Lấy vị trí hiện tại' }}</span>
+            </button>
+
+            <!-- Bật/tắt Hiển thị tên Tỉnh/Thành cũ (Image 2) -->
+            <div class="bhx-toggle-row">
+              <span class="bhx-toggle-label">Hiển thị tên Tỉnh/Thành cũ</span>
+              <label class="bhx-switch">
+                <input
+                  type="checkbox"
+                  [checked]="showOldProvinceNames()"
+                  (change)="showOldProvinceNames.set($any($event.target).checked)"
+                />
+                <span class="bhx-slider round"></span>
+              </label>
+            </div>
+
+            <!-- Search box Tỉnh/Thành phố -->
+            <div class="bhx-picker-search-wrap">
+              <div class="bhx-picker-search-bar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Tìm nhanh Tỉnh/Thành"
+                  [value]="provinceSearch()"
+                  (input)="provinceSearch.set($any($event.target).value)"
+                />
+              </div>
+            </div>
+
+            <!-- Danh sách Tỉnh/Thành phố cuộn dọc -->
+            <div class="bhx-picker-list-scroll">
+              @for (prov of filteredProvinces(); track prov.code) {
+                <div class="bhx-picker-row" (click)="selectProvince(prov)">
+                  <span>{{ prov.name }}</span>
+                  @if (selectedProvince()?.code === prov.code) {
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  }
+                </div>
+              }
+              @if (filteredProvinces().length === 0) {
+                <div class="bhx-picker-empty">Không tìm thấy Tỉnh/Thành phố phù hợp</div>
+              }
+            </div>
+          }
+
+          <!-- VIEW 3: Chọn Phường/Xã -->
+          @if (addressModalView() === 'ward') {
+            <div class="bhx-modal-header">
+              <button type="button" class="bhx-modal-back-btn" (click)="backToForm()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="15 18 9 12 15 6"/>
+                </svg>
+              </button>
+              <h3 class="bhx-modal-title">Chọn Phường/Xã</h3>
+              <button type="button" class="bhx-modal-close" (click)="closeAddressModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Search box Phường/Xã -->
+            <div class="bhx-picker-search-wrap">
+              <div class="bhx-picker-search-bar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Tìm nhanh Phường/Xã"
+                  [value]="wardSearch()"
+                  (input)="wardSearch.set($any($event.target).value)"
+                />
+              </div>
+            </div>
+
+            <!-- Danh sách Phường/Xã cuộn dọc -->
+            <div class="bhx-picker-list-scroll">
+              @for (w of filteredWards(); track w.code) {
+                <div class="bhx-picker-row" (click)="selectWard(w)">
+                  <span>{{ w.name }}</span>
+                  @if (selectedWard()?.code === w.code) {
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  }
+                </div>
+              }
+              @if (filteredWards().length === 0) {
+                <div class="bhx-picker-empty">Không tìm thấy Phường/Xã phù hợp</div>
+              }
+            </div>
+          }
+
+          <!-- VIEW 4: Xác nhận địa chỉ nhận hàng (Bản đồ ghim - Image 4) -->
+          @if (addressModalView() === 'map') {
+            <div class="bhx-modal-header">
+              <button type="button" class="bhx-modal-back-btn" (click)="backToForm()" title="Quay lại">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="15 18 9 12 15 6"/>
+                </svg>
+              </button>
+              <h3 class="bhx-modal-title">Xác nhận địa chỉ nhận hàng</h3>
+              <button type="button" class="bhx-modal-close" (click)="closeAddressModal()" title="Đóng">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Thanh trạng thái định vị thông minh -->
+            <div class="bhx-map-status" [ngClass]="'status-' + matchQuality()">
+              @switch (matchQuality()) {
+                @case ('exact') {
+                  <span class="status-icon">✅</span>
+                  <span>Đã định vị chính xác vị trí nhận hàng trên bản đồ.</span>
+                }
+                @case ('street_match') {
+                  <span class="status-icon">📍</span>
+                  <span>Đã định vị theo tên đường. Bạn có thể di chuyển ghim để chọn đúng số nhà.</span>
+                }
+                @case ('approximate') {
+                  <span class="status-icon">⚠️</span>
+                  <span>Vị trí gần đúng (trung tâm Phường/Xã). Chạm vào bản đồ hoặc kéo ghim màu đỏ để ghim đúng địa chỉ của bạn.</span>
+                }
+                @case ('manual') {
+                  <span class="status-icon">📌</span>
+                  <span>Vị trí do bạn tự ghim trên bản đồ. Có thể tiếp tục kéo ghim nếu cần.</span>
+                }
+                @case ('gps') {
+                  <span class="status-icon">🛰️</span>
+                  <span>Vị trí xác định từ GPS hiện tại của thiết bị.</span>
+                }
+              }
+            </div>
+
+            <!-- Khung bản đồ Leaflet -->
+            <div class="bhx-map-container">
+              <div id="bhxConfirmMap" class="bhx-map-canvas"></div>
+            </div>
+
+            <!-- Hộp hiển thị địa chỉ: Phân biệt rõ Địa chỉ nhập vs Địa chỉ đối chiếu từ bản đồ -->
+            <div class="bhx-map-address-box">
+              <div class="bhx-addr-main-box">
+                <div class="bhx-addr-main-label">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                  </svg>
+                  <span>Địa chỉ giao hàng (chính thức):</span>
+                </div>
+                <div class="bhx-addr-main-text">{{ userEnteredAddress() }}</div>
+              </div>
+
+              @if (referenceAddress() && referenceAddress() !== userEnteredAddress()) {
+                <div class="bhx-addr-ref-box">
+                  <div class="bhx-addr-ref-label">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="12" y1="16" x2="12" y2="12"/>
+                      <line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                    <span>Vị trí ghim trên bản đồ (đối chiếu tham khảo):</span>
+                  </div>
+                  <div class="bhx-addr-ref-text">
+                    {{ isMapResolving() ? 'Đang xác định địa chỉ đối chiếu...' : referenceAddress() }}
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Hai nút hành động: Sửa vị trí & Hoàn tất (Image 4) -->
+            <div class="bhx-map-actions">
+              <button type="button" class="btn-map-edit" (click)="backToForm()">
+                Sửa vị trí
+              </button>
+              <button type="button" class="btn-map-complete" (click)="confirmAddressComplete()">
+                Hoàn tất
+              </button>
+            </div>
+          }
+
+        </div>
+      </div>
+    }
 </app-shell>
 
 <style>

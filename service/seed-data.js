@@ -750,11 +750,11 @@ const recipesData = [
 
 const footerConfigData = {
   key: 'main',
-  brandName: 'Xanh Lá',
+  brandName: 'Evergreen Mart',
   brandDesc: 'Tự hào mang nông sản Việt đạt chuẩn VietGAP, GlobalGAP và Organic từ các nông trại xanh đến tận bàn ăn gia đình bạn mỗi ngày.',
-  newsletterTitle: 'Bản tin dinh dưỡng & Ưu đãi xanh',
+  newsletterTitle: 'Bản tin dinh dưỡng & Ưu đãi Evergreen Mart',
   newsletterDesc: 'Đăng ký email để nhận ngay mã giảm giá 20%, gợi ý thực đơn dinh dưỡng mỗi tuần và thông báo Flash Sale nông sản mới thu hoạch.',
-  copyrightText: '© 2026 Xanh Lá — Nông Nghiệp Hữu Cơ & Dinh Dưỡng Thông Minh. Bảo lưu mọi quyền.',
+  copyrightText: '© 2026 Evergreen Mart — Nông Nghiệp Hữu Cơ & Dinh Dưỡng Thông Minh. Bảo lưu mọi quyền.',
   contactInfo: {
     hotline: '1900 6789 (07:00 – 21:00)',
     email: 'chamsoc@xanhla.vn',
@@ -778,11 +778,11 @@ const footerConfigData = {
     { label: '🍳 Nấu gì với đồ sẵn có?', route: '/cook-with-what-you-have' },
     { label: '📦 Theo dõi đơn hàng', route: '/tracker-page' },
     { label: '👤 Tài khoản của tôi', route: '/account' },
-    { label: '⭐ Tích điểm Xanh Lá Club', route: '/loyalty' },
+    { label: '⭐ Tích điểm Evergreen Mart Club', route: '/loyalty' },
     { label: '🎟️ Ví Voucher của tôi', route: '/vouchers' },
   ],
   aboutLinks: [
-    { label: 'Giới thiệu về Xanh Lá (About)', policyKey: 'about' },
+    { label: 'Giới thiệu về Evergreen Mart (About)', policyKey: 'about' },
     { label: 'Cẩm nang sống xanh', route: '/cam-nang' },
     { label: 'Câu hỏi thường gặp (FAQ)', policyKey: 'faq' },
     { label: 'Trung tâm hỗ trợ (Help)', policyKey: 'help' },
@@ -797,10 +797,10 @@ const footerConfigData = {
     { label: 'Hướng dẫn đặt hàng & Thanh toán', policyKey: 'help', icon: 'info' },
   ],
   socialLinks: [
-    { platform: 'facebook', label: 'Facebook Xanh Lá', url: 'https://facebook.com' },
-    { platform: 'instagram', label: 'Instagram Xanh Lá', url: 'https://instagram.com' },
-    { platform: 'youtube', label: 'YouTube Xanh Lá', url: 'https://youtube.com' },
-    { platform: 'zalo', label: 'Zalo OA Xanh Lá', url: 'https://zalo.me' },
+    { platform: 'facebook', label: 'Facebook Evergreen Mart', url: 'https://facebook.com' },
+    { platform: 'instagram', label: 'Instagram Evergreen Mart', url: 'https://instagram.com' },
+    { platform: 'youtube', label: 'YouTube Evergreen Mart', url: 'https://youtube.com' },
+    { platform: 'zalo', label: 'Zalo OA Evergreen Mart', url: 'https://zalo.me' },
   ],
   paymentMethods: ['COD', 'VietQR', 'MoMo', 'VNPay', 'ZaloPay', 'Visa/Master'],
   policies: [

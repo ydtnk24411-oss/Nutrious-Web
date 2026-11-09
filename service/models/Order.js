@@ -47,6 +47,9 @@ const orderSchema = new mongoose.Schema(
     },
     estimatedDeliveryTime: { type: String, default: '' },
     shippingDetails: { type: Object },
+    pickupStore: { type: Object, default: null },
+    deliveryTimeSlot: { type: String, default: '' },
+    deliveryType: { type: String, default: '' },
     total:       { type: Number, required: true, min: 0 },
     shippingMethod: {
       type: String, enum: ['pickup', 'delivery'], default: 'pickup',
