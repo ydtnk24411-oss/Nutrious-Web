@@ -246,12 +246,12 @@ img { display: block; max-width: 100%; }
   position: absolute; top: 68px; right: max(20px, 4vw);
   background: #fff; border: 1px solid var(--border);
   border-radius: var(--r-md); box-shadow: var(--shadow-lg);
-  width: 210px; padding: 6px 0; z-index: 60;
+  width: 260px; min-width: 250px; max-width: 290px; padding: 6px 0; z-index: 60;
   border-top: 3px solid var(--green-700);
 }
-.xanhla-user-menu-header { padding: 10px 16px; border-bottom: 1px solid var(--border); }
-.xanhla-user-menu-header strong { display: block; font-size: 14px; color: var(--ink); }
-.xanhla-user-menu-header span  { display: block; font-size: 12px; color: var(--muted); }
+.xanhla-user-menu-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; overflow: hidden; }
+.xanhla-user-menu-header strong { display: block; font-size: 14px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.xanhla-user-menu-header span  { display: block; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .xanhla-user-menu a, .xanhla-user-menu button {
   display: block; width: 100%; text-align: left; padding: 8px 16px;
   font-size: 13.5px; color: var(--ink); background: transparent; border: none; cursor: pointer;

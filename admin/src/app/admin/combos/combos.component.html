@@ -1,0 +1,920 @@
+<!-- Header -->
+<div class="admin-page-header">
+  <div>
+    <h2 class="admin-page-title">Quản lý Combo Tiết Kiệm</h2>
+    <span class="admin-stat-label">
+      Gói sản phẩm thiết lập cố định · Tồn kho &amp; giá mua lẻ đồng bộ trực tiếp từ sản phẩm thành phần
+    </span>
+  </div>
+
+  <div class="combo-header-actions">
+    <a routerLink="/admin/products" class="admin-btn-secondary combo-link-btn">
+      <span>Quản lý Sản phẩm lẻ</span>
+    </a>
+
+    <div class="prod-view-toggle">
+      <button
+        type="button"
+        class="prod-view-btn"
+        [class.active]="viewMode() === 'table'"
+        (click)="viewMode.set('table')"
+        title="Dạng bảng"
+        aria-label="Dạng bảng"
+      >
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="8" y1="6" x2="21" y2="6"></line>
+          <line x1="8" y1="12" x2="21" y2="12"></line>
+          <line x1="8" y1="18" x2="21" y2="18"></line>
+          <line x1="3" y1="6" x2="3.01" y2="6"></line>
+          <line x1="3" y1="12" x2="3.01" y2="12"></line>
+          <line x1="3" y1="18" x2="3.01" y2="18"></line>
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="prod-view-btn"
+        [class.active]="viewMode() === 'grid'"
+        (click)="viewMode.set('grid')"
+        title="Dạng thẻ"
+        aria-label="Dạng thẻ"
+      >
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+      </button>
+    </div>
+
+    <button type="button" class="admin-btn-primary" (click)="openCreate()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      <span>Thêm Combo mới</span>
+    </button>
+  </div>
+</div>
+
+<!-- Summary KPI Bar -->
+<div class="combo-kpi-grid">
+  <div class="combo-kpi-card">
+    <span class="combo-kpi-label">Tổng số Combo</span>
+    <strong class="combo-kpi-val">{{ summary().totalCombos }}</strong>
+  </div>
+  <div class="combo-kpi-card combo-kpi-active">
+    <span class="combo-kpi-label">Đang kinh doanh</span>
+    <strong class="combo-kpi-val">{{ summary().activeCount }}</strong>
+  </div>
+  <div class="combo-kpi-card combo-kpi-paused">
+    <span class="combo-kpi-label">Tạm ngừng / Ẩn</span>
+    <strong class="combo-kpi-val">{{ summary().pausedCount + summary().hiddenCount }}</strong>
+  </div>
+  <div class="combo-kpi-card combo-kpi-danger">
+    <span class="combo-kpi-label">Hết hàng thành phần</span>
+    <strong class="combo-kpi-val">{{ summary().outOfStockCount }}</strong>
+  </div>
+</div>
+
+@if (success()) {
+  <div class="admin-alert admin-alert-success">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <span>{{ success() }}</span>
+  </div>
+}
+@if (error()) {
+  <div class="admin-alert admin-alert-error">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+    <span>{{ error() }}</span>
+  </div>
+}
+
+<!-- Toolbar -->
+<div class="admin-toolbar">
+  <div class="admin-search-wrap">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    <input
+      type="text"
+      class="admin-search-input"
+      placeholder="Tìm theo tên Combo hoặc tên sản phẩm thành phần..."
+      [value]="search()"
+      (input)="onSearch($any($event.target).value)"
+    />
+  </div>
+
+  <select class="admin-select" [value]="statusFilter()" (change)="onStatusFilter($any($event.target).value)">
+    <option value="all">Tất cả trạng thái</option>
+    <option value="active">Đang kinh doanh</option>
+    <option value="paused">Tạm ngừng</option>
+    <option value="hidden">Ẩn</option>
+    <option value="out_of_stock">Hết hàng (tồn = 0)</option>
+  </select>
+
+  <select class="admin-select" [value]="sort()" (change)="onSort($any($event.target).value)">
+    <option value="createdAt">Mới nhất</option>
+    <option value="saving-desc">Tiết kiệm nhiều nhất</option>
+    <option value="price-asc">Giá Combo tăng dần</option>
+    <option value="price-desc">Giá Combo giảm dần</option>
+    <option value="stock-asc">Combo có thể bán (thấp trước)</option>
+    <option value="name-asc">Tên Combo (A-Z)</option>
+  </select>
+</div>
+
+<!-- Loading / Empty -->
+@if (loading()) {
+  <div class="admin-loading">
+    <span class="admin-spinner"></span>
+    <span>Đang tải danh sách Combo tiết kiệm...</span>
+  </div>
+} @else if (combos().length === 0) {
+  <div class="admin-card admin-empty">
+    <div class="admin-empty-icon">🎁</div>
+    <h3>Chưa tìm thấy gói Combo phù hợp</h3>
+    <p>Thử thay đổi bộ lọc hoặc tạo gói Combo tiết kiệm mới từ kho sản phẩm.</p>
+  </div>
+} @else if (viewMode() === 'table') {
+  <!-- Table View -->
+  <div class="admin-card" style="padding:0;overflow:hidden">
+    <div class="admin-table-wrap">
+      <table class="admin-table combo-main-table">
+        <thead>
+          <tr>
+            <th style="width:64px">Ảnh</th>
+            <th>Tên Combo &amp; Sản phẩm thành phần</th>
+            <th style="text-align:right">Tổng mua lẻ</th>
+            <th style="text-align:right">Giá bán Combo</th>
+            <th style="text-align:right">Tiết kiệm</th>
+            <th style="text-align:center">Combo có thể bán</th>
+            <th>Trạng thái</th>
+            <th style="width:210px;text-align:right">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of combos(); track c._id) {
+            @let st = comboStatusOf(c);
+            @let retail = comboRetailOf(c);
+            @let saving = comboSavingOf(c);
+            @let savePct = comboSavingPercentOf(c);
+            @let avail = comboAvailableOf(c);
+            <tr>
+              <td>
+                <img
+                  [src]="c.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&q=80'"
+                  [alt]="c.name"
+                  class="combo-thumb"
+                />
+              </td>
+              <td>
+                <div class="combo-name-row">
+                  <button type="button" class="combo-title-btn" (click)="openDetail(c)">
+                    {{ c.name }}
+                  </button>
+                  <span class="combo-count-pill">{{ (c.comboItems || []).length }} SP</span>
+                </div>
+                @if (c.description) {
+                  <div class="combo-sub-desc">{{ c.description }}</div>
+                }
+                <div class="combo-mini-items">
+                  @for (ci of (c.comboItems || []); track $index) {
+                    <span class="combo-mini-chip">
+                      {{ (ci.product && ci.product.name) || 'Sản phẩm' }} <strong>×{{ ci.quantity }}</strong>
+                    </span>
+                  }
+                </div>
+              </td>
+              <td style="text-align:right">
+                <span class="combo-retail-val">{{ formatPrice(retail) }}</span>
+              </td>
+              <td style="text-align:right">
+                <strong class="combo-sale-val">{{ formatPrice(c.priceNumber) }}</strong>
+              </td>
+              <td style="text-align:right">
+                @if (saving > 0) {
+                  <div class="combo-save-badge">
+                    -{{ formatPrice(saving) }} ({{ savePct }}%)
+                  </div>
+                } @else {
+                  <span style="color:#94a3b8;font-size:12px">0đ</span>
+                }
+              </td>
+              <td style="text-align:center">
+                <div class="combo-stock-cell">
+                  <span
+                    class="combo-avail-pill"
+                    [class.is-zero]="avail <= 0"
+                    [class.is-low]="avail > 0 && avail < 10"
+                  >
+                    {{ avail }} gói
+                  </span>
+                  @if (c.limitingItem) {
+                    <small class="combo-limit-hint" [title]="'Giới hạn bởi: ' + c.limitingItem.name">
+                      Giới hạn: {{ c.limitingItem.name }} (tồn {{ c.limitingItem.productStock }})
+                    </small>
+                  }
+                </div>
+              </td>
+              <td>
+                <select
+                  class="combo-status-select"
+                  [class.st-active]="st === 'active'"
+                  [class.st-paused]="st === 'paused'"
+                  [class.st-hidden]="st === 'hidden'"
+                  [value]="st"
+                  (change)="changeComboStatusQuick(c, $any($event.target).value)"
+                >
+                  <option value="active">Đang kinh doanh</option>
+                  <option value="paused">Tạm ngừng</option>
+                  <option value="hidden">Ẩn</option>
+                </select>
+              </td>
+              <td style="text-align:right">
+                <div class="combo-row-actions">
+                  <button
+                    type="button"
+                    class="combo-act-btn view"
+                    (click)="openDetail(c)"
+                    title="Xem chi tiết thành phần Combo"
+                  >
+                    Chi tiết
+                  </button>
+                  <button
+                    type="button"
+                    class="combo-act-btn edit"
+                    (click)="openEdit(c)"
+                    title="Chỉnh sửa Combo"
+                  >
+                    Sửa
+                  </button>
+                  @if (st !== 'hidden') {
+                    <button
+                      type="button"
+                      class="combo-act-btn hide"
+                      (click)="changeComboStatusQuick(c, 'hidden')"
+                      title="Ẩn Combo"
+                    >
+                      Ẩn
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="combo-act-btn activate"
+                      (click)="changeComboStatusQuick(c, 'active')"
+                      title="Mở kinh doanh lại"
+                    >
+                      Mở bán
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+} @else {
+  <!-- Grid View -->
+  <div class="combo-grid">
+    @for (c of combos(); track c._id) {
+      @let st = comboStatusOf(c);
+      @let retail = comboRetailOf(c);
+      @let saving = comboSavingOf(c);
+      @let savePct = comboSavingPercentOf(c);
+      @let avail = comboAvailableOf(c);
+      <div class="xanhla-prod-card">
+        <div class="xanhla-prod-card-img" (click)="openDetail(c)" style="cursor:pointer">
+          <img
+            [src]="c.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=500&q=80'"
+            [alt]="c.name"
+            loading="lazy"
+          />
+        </div>
+        <div class="xanhla-prod-card-body">
+          <div class="xanhla-prod-card-meta-row">
+            <span class="xanhla-prod-card-cat">{{ (c.comboItems || []).length }} sản phẩm</span>
+            <span
+              class="combo-status-badge"
+              [class.st-active]="st === 'active'"
+              [class.st-paused]="st === 'paused'"
+              [class.st-hidden]="st === 'hidden'"
+            >
+              {{ statusLabels[st] }}
+            </span>
+          </div>
+
+          <h4 class="xanhla-prod-card-name" [title]="c.name">{{ c.name }}</h4>
+
+          <div class="combo-card-sublist">
+            @for (ci of (c.comboItems || []); track $index) {
+              <div class="combo-card-subrow">
+                <span class="combo-card-subname">• {{ (ci.product && ci.product.name) || 'Sản phẩm' }}</span>
+                <span class="combo-card-subqty">×{{ ci.quantity }}</span>
+              </div>
+            }
+          </div>
+
+          <div class="combo-card-pricing">
+            <div class="combo-card-price-line">
+              <span class="xanhla-prod-card-price">{{ formatPrice(c.priceNumber) }}</span>
+              <del class="combo-card-retail">{{ formatPrice(retail) }}</del>
+            </div>
+            <div class="combo-card-meta-bottom">
+              @if (saving > 0) {
+                <span class="combo-save-badge">-{{ formatPrice(saving) }} ({{ savePct }}%)</span>
+              }
+              <span
+                class="combo-avail-pill"
+                [class.is-zero]="avail <= 0"
+                [class.is-low]="avail > 0 && avail < 10"
+              >
+                Bán được: {{ avail }}
+              </span>
+            </div>
+          </div>
+
+          <div class="combo-card-actions">
+            <button type="button" class="combo-act-btn view" (click)="openDetail(c)">Chi tiết</button>
+            <button type="button" class="xanhla-prod-card-btn-edit" (click)="openEdit(c)">Chỉnh sửa</button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}
+
+<!-- Pagination -->
+@if (!loading() && combos().length > 0) {
+  <div class="admin-pagination">
+    <span>Hiển thị {{ combos().length }} / {{ total() }} gói Combo</span>
+    <div class="admin-pagination-btns">
+      <button
+        type="button"
+        class="admin-btn-secondary"
+        style="padding:7px 14px;font-size:13px"
+        [disabled]="page() === 1"
+        (click)="prevPage()"
+      >
+        ‹ Trước
+      </button>
+      <span style="padding:6px 12px;font-size:13px;font-weight:700;color:#10321c">
+        {{ page() }} / {{ totalPages() }}
+      </span>
+      <button
+        type="button"
+        class="admin-btn-secondary"
+        style="padding:7px 14px;font-size:13px"
+        [disabled]="page() >= totalPages()"
+        (click)="nextPage()"
+      >
+        Sau ›
+      </button>
+    </div>
+  </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL 1: XEM CHI TIẾT ĐẦY ĐỦ COMBO & CÁC SẢN PHẨM THÀNH PHẦN               -->
+<!-- ========================================================================= -->
+@if (detailCombo(); as dc) {
+  @let dcSt = comboStatusOf(dc);
+  @let dcRetail = comboRetailOf(dc);
+  @let dcSaving = comboSavingOf(dc);
+  @let dcPct = comboSavingPercentOf(dc);
+  @let dcAvail = comboAvailableOf(dc);
+  <div class="admin-modal-backdrop" (click)="closeDetail()">
+    <div class="admin-modal combo-modal-lg" (click)="$event.stopPropagation()">
+      <div class="admin-modal-header">
+        <div>
+          <h3 class="admin-modal-title">Chi tiết gói Combo tiết kiệm</h3>
+          <span style="font-size:12px;color:#64748b">Mã đường dẫn: /product-page/{{ dc.slug }}</span>
+        </div>
+        <button type="button" class="admin-btn-icon" (click)="closeDetail()" aria-label="Đóng">
+          ✕
+        </button>
+      </div>
+
+      <div class="admin-modal-body">
+        <div class="combo-detail-hero">
+          <img
+            [src]="dc.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300&q=80'"
+            [alt]="dc.name"
+            class="combo-detail-img"
+          />
+          <div class="combo-detail-info">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+              <span
+                class="combo-status-badge"
+                [class.st-active]="dcSt === 'active'"
+                [class.st-paused]="dcSt === 'paused'"
+                [class.st-hidden]="dcSt === 'hidden'"
+              >
+                {{ statusLabels[dcSt] }}
+              </span>
+              <span
+                class="combo-avail-pill"
+                [class.is-zero]="dcAvail <= 0"
+                [class.is-low]="dcAvail > 0 && dcAvail < 10"
+              >
+                Có thể bán: {{ dcAvail }} Combo
+              </span>
+            </div>
+            <h4 class="combo-detail-name">{{ dc.name }}</h4>
+            @if (dc.description) {
+              <p class="combo-detail-desc">{{ dc.description }}</p>
+            } @else {
+              <p class="combo-detail-desc" style="font-style:italic;color:#94a3b8">Chưa có mô tả riêng cho gói Combo.</p>
+            }
+          </div>
+        </div>
+
+        <h4 class="combo-section-heading">
+          Danh sách sản phẩm thành phần ({{ (dc.comboItems || []).length }} sản phẩm)
+        </h4>
+
+        <div class="combo-items-table-wrap">
+          <table class="combo-items-table">
+            <thead>
+              <tr>
+                <th>Sản phẩm</th>
+                <th style="text-align:right">Giá bán lẻ</th>
+                <th style="text-align:center">Tồn kho SP</th>
+                <th style="text-align:center">Số lượng</th>
+                <th style="text-align:right">Thành tiền</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (ci of (dc.comboItems || []); track $index) {
+                @let unitP = (ci.product && ci.product.priceNumber) || 0;
+                @let qty = ci.quantity || 1;
+                @let cpStock = ci.product ? ci.product.stock : 0;
+                <tr>
+                  <td>
+                    <div class="combo-prod-cell">
+                      <img
+                        [src]="(ci.product && ci.product.image) || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=80&q=80'"
+                        alt=""
+                      />
+                      <div>
+                        <div class="combo-prod-title">{{ (ci.product && ci.product.name) || 'Sản phẩm không còn tồn tại' }}</div>
+                        @if (ci.product && (ci.product.weight || ci.product.unit)) {
+                          <div class="combo-prod-sub">{{ ci.product.weight || ci.product.unit }}</div>
+                        }
+                      </div>
+                    </div>
+                  </td>
+                  <td style="text-align:right;font-weight:600">{{ formatPrice(unitP) }}</td>
+                  <td style="text-align:center">
+                    <span class="combo-sub-stock" [class.is-zero]="cpStock <= 0">
+                      {{ cpStock }} (đủ {{ itemMaxCombos(ci) }} gói)
+                    </span>
+                  </td>
+                  <td style="text-align:center;font-weight:700">{{ qty }}</td>
+                  <td style="text-align:right;font-weight:700;color:#10321c">{{ formatPrice(unitP * qty) }}</td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4" style="font-weight:800;color:#10321c">Tổng mua lẻ</td>
+                <td style="text-align:right;font-weight:800;color:#10321c">{{ formatPrice(dcRetail) }}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="combo-summary-panel">
+          <div class="combo-sum-row">
+            <span>Tổng giá mua lẻ các sản phẩm:</span>
+            <strong>{{ formatPrice(dcRetail) }}</strong>
+          </div>
+          <div class="combo-sum-row combo-sum-highlight">
+            <span>Giá bán Combo:</span>
+            <strong style="color:#d63f3f;font-size:18px">{{ formatPrice(dc.priceNumber) }}</strong>
+          </div>
+          <div class="combo-sum-row">
+            <span>Khách hàng tiết kiệm:</span>
+            <strong style="color:#15803d">{{ formatPrice(dcSaving) }} ({{ dcPct }}%)</strong>
+          </div>
+          <div class="combo-sum-row">
+            <span>Khả năng cung ứng hiện tại:</span>
+            <strong>
+              {{ dcAvail }} gói Combo
+              @if (dc.limitingItem) {
+                <span style="font-weight:500;color:#64748b;font-size:12px">
+                  (giới hạn bởi "{{ dc.limitingItem.name }}" còn tồn {{ dc.limitingItem.productStock }})
+                </span>
+              }
+            </strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-modal-footer">
+        <button type="button" class="admin-btn-secondary" (click)="closeDetail()">Đóng</button>
+        <button type="button" class="admin-btn-primary" (click)="editFromDetail()">
+          Chỉnh sửa Combo này
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL 2: FORM THÊM MỚI / CHỈNH SỬA COMBO RIÊNG BIỆT                        -->
+<!-- ========================================================================= -->
+@if (formOpen()) {
+  @let calc = formInventoryCalc();
+  <div class="admin-modal-backdrop" (click)="closeForm()">
+    <div class="admin-modal combo-modal-xl" (click)="$event.stopPropagation()">
+      <div class="admin-modal-header">
+        <div>
+          <h3 class="admin-modal-title">
+            {{ formMode() === 'create' ? 'Thiết lập Combo Tiết Kiệm mới' : 'Chỉnh sửa Combo Tiết Kiệm' }}
+          </h3>
+          <span style="font-size:12px;color:#64748b">
+            Chọn các sản phẩm có sẵn trong MongoDB · Tự động tính tổng mua lẻ, mức tiết kiệm và số Combo khả dụng
+          </span>
+        </div>
+        <button type="button" class="admin-btn-icon" (click)="closeForm()" aria-label="Đóng">
+          ✕
+        </button>
+      </div>
+
+      @if (formError()) {
+        <div class="admin-alert admin-alert-error" style="margin:16px 24px 0">
+          <span>{{ formError() }}</span>
+        </div>
+      }
+
+      <div class="admin-modal-body combo-form-body">
+        <!-- PHẦN 1: THÔNG TIN CHUNG CỦA COMBO -->
+        <div class="combo-form-section">
+          <div class="combo-section-title-row">
+            <span class="combo-step-badge">1</span>
+            <h4>Thông tin chung của Combo</h4>
+          </div>
+
+          <div class="admin-form-grid">
+            <div class="admin-field" style="grid-column: 1 / -1">
+              <label>Tên Combo *</label>
+              <input
+                type="text"
+                placeholder="VD: Combo Thịt tiết kiệm 16"
+                [value]="formName()"
+                (input)="formName.set($any($event.target).value)"
+              />
+            </div>
+
+            <div class="admin-field">
+              <label>Giá bán Combo (VND) *</label>
+              <input
+                type="number"
+                min="0"
+                step="1000"
+                placeholder="VD: 270000"
+                [value]="formPriceNumber()"
+                (input)="formPriceNumber.set(+$any($event.target).value)"
+              />
+              @if (formRetailTotal() > 0) {
+                <div class="combo-quick-discounts">
+                  <span>Đặt nhanh theo tổng lẻ:</span>
+                  <button type="button" (click)="applySuggestedDiscount(10)">-10%</button>
+                  <button type="button" (click)="applySuggestedDiscount(15)">-15%</button>
+                  <button type="button" (click)="applySuggestedDiscount(20)">-20%</button>
+                </div>
+              }
+            </div>
+
+            <div class="admin-field">
+              <label>Trạng thái kinh doanh *</label>
+              <select
+                [value]="formStatus()"
+                (change)="formStatus.set($any($event.target).value)"
+              >
+                <option value="active">Đang kinh doanh</option>
+                <option value="paused">Tạm ngừng</option>
+                <option value="hidden">Ẩn</option>
+              </select>
+            </div>
+
+            <div class="admin-field" style="grid-column: 1 / -1">
+              <label>Hình ảnh đại diện Combo</label>
+              <div class="combo-img-input-row">
+                <input
+                  type="text"
+                  placeholder="https://... (để trống sẽ tự lấy ảnh của sản phẩm đầu tiên trong Combo)"
+                  [value]="formImage()"
+                  (input)="formImage.set($any($event.target).value)"
+                />
+                @if (formImage()) {
+                  <img [src]="formImage()" alt="Preview" class="combo-img-preview" />
+                }
+              </div>
+              @if (formItems().length > 0) {
+                <div class="combo-img-picks">
+                  <span>Chọn ảnh từ SP thành phần:</span>
+                  @for (row of formItems(); track row.productId) {
+                    @if (row.image) {
+                      <button
+                        type="button"
+                        class="combo-img-pick-btn"
+                        [class.is-active]="formImage() === row.image"
+                        (click)="useComponentImage(row.image)"
+                        [title]="'Dùng ảnh của ' + row.name"
+                      >
+                        <img [src]="row.image" alt="" />
+                      </button>
+                    }
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="admin-field" style="grid-column: 1 / -1">
+              <label>Mô tả Combo</label>
+              <textarea
+                rows="2"
+                placeholder="Mô tả gợi ý bữa ăn hoặc điểm nổi bật của gói Combo (không cần nhập liệt kê sản phẩm thành phần)..."
+                [value]="formDescription()"
+                (input)="formDescription.set($any($event.target).value)"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- PHẦN 2: DANH SÁCH SẢN PHẨM TRONG COMBO -->
+        <div class="combo-form-section">
+          <div class="combo-section-title-row">
+            <span class="combo-step-badge">2</span>
+            <div>
+              <h4>Danh sách sản phẩm trong Combo *</h4>
+              <span style="font-size:12px;color:#64748b">
+                Tìm kiếm sản phẩm hiện có trong MongoDB để thêm, điều chỉnh số lượng hoặc thay thế thành phần
+              </span>
+            </div>
+          </div>
+
+          <!-- Ô tìm kiếm sản phẩm đưa vào Combo -->
+          <div class="combo-picker-box">
+            <div class="combo-picker-input-wrap">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                type="text"
+                placeholder="Nhập tên sản phẩm để tìm và thêm vào Combo (VD: Cánh gà, Thịt bò, Rau muống...)"
+                [value]="productSearch()"
+                (input)="productSearch.set($any($event.target).value)"
+              />
+            </div>
+
+            @if (productSearch().trim()) {
+              <div class="combo-picker-results">
+                @if (filteredCatalogForAdd().length === 0) {
+                  <div class="combo-picker-empty">Không tìm thấy sản phẩm phù hợp hoặc sản phẩm đã nằm trong Combo.</div>
+                } @else {
+                  @for (cand of filteredCatalogForAdd(); track cand._id) {
+                    <div class="combo-picker-item">
+                      <div class="combo-picker-item-left">
+                        <img
+                          [src]="cand.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=80&q=80'"
+                          alt=""
+                        />
+                        <div style="min-width:0">
+                          <div class="combo-picker-item-name">{{ cand.name }}</div>
+                          <div class="combo-picker-item-meta">
+                            Giá bán lẻ: <strong>{{ formatPrice(cand.priceNumber) }}</strong>
+                            · Tồn kho: <strong>{{ cand.stock }}</strong>
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        class="combo-picker-add-btn"
+                        (click)="addProductToCombo(cand)"
+                      >
+                        + Thêm vào Combo
+                      </button>
+                    </div>
+                  }
+                }
+              </div>
+            } @else if (formItems().length === 0 && filteredCatalogForAdd().length > 0) {
+              <div class="combo-picker-suggestions">
+                <span>Gợi ý chọn nhanh:</span>
+                @for (cand of filteredCatalogForAdd().slice(0, 5); track cand._id) {
+                  <button type="button" (click)="addProductToCombo(cand)">
+                    + {{ cand.name }} ({{ formatPrice(cand.priceNumber) }})
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Bảng sản phẩm cấu thành Combo -->
+          @if (formItems().length === 0) {
+            <div class="combo-items-empty">
+              Chưa có sản phẩm nào trong Combo. Hãy tìm và chọn sản phẩm ở ô tìm kiếm phía trên.
+            </div>
+          } @else {
+            <div class="combo-items-table-wrap">
+              <table class="combo-items-table">
+                <thead>
+                  <tr>
+                    <th>Sản phẩm</th>
+                    <th style="text-align:right;width:120px">Giá bán lẻ</th>
+                    <th style="text-align:center;width:140px">Số lượng</th>
+                    <th style="text-align:right;width:130px">Thành tiền</th>
+                    <th style="text-align:right;width:150px">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of formItems(); track row.productId; let idx = $index) {
+                    <tr>
+                      <td>
+                        <div class="combo-prod-cell">
+                          <img
+                            [src]="row.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=80&q=80'"
+                            alt=""
+                          />
+                          <div style="min-width:0">
+                            <div class="combo-prod-title">{{ row.name }}</div>
+                            <div class="combo-prod-sub">
+                              Tồn kho hiện tại:
+                              <strong [style.color]="row.stock < row.quantity ? '#dc2626' : '#15803d'">
+                                {{ row.stock }}
+                              </strong>
+                              @if (row.weight || row.unit) {
+                                · {{ row.weight || row.unit }}
+                              }
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td style="text-align:right;font-weight:600">
+                        {{ formatPrice(row.priceNumber) }}
+                      </td>
+                      <td style="text-align:center">
+                        <div class="combo-qty-stepper">
+                          <button type="button" (click)="changeItemQty(idx, -1)">−</button>
+                          <input
+                            type="number"
+                            min="1"
+                            [value]="row.quantity"
+                            (input)="setItemQty(idx, +$any($event.target).value)"
+                          />
+                          <button type="button" (click)="changeItemQty(idx, 1)">+</button>
+                        </div>
+                      </td>
+                      <td style="text-align:right;font-weight:800;color:#10321c">
+                        {{ formatPrice(row.priceNumber * row.quantity) }}
+                      </td>
+                      <td style="text-align:right">
+                        <div class="combo-item-row-btns">
+                          <button
+                            type="button"
+                            class="combo-row-replace-btn"
+                            [class.is-open]="replacingRowIndex() === idx"
+                            (click)="startReplaceRow(idx)"
+                          >
+                            {{ replacingRowIndex() === idx ? 'Đóng' : 'Thay thế' }}
+                          </button>
+                          <button
+                            type="button"
+                            class="combo-row-del-btn"
+                            (click)="removeItemRow(idx)"
+                          >
+                            Xóa
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+
+                    <!-- Khung chọn sản phẩm thay thế ngay dưới dòng đang chọn -->
+                    @if (replacingRowIndex() === idx) {
+                      <tr class="combo-replace-row">
+                        <td colspan="5">
+                          <div class="combo-replace-box">
+                            <div class="combo-replace-head">
+                              <strong>Thay thế "{{ row.name }}" bằng sản phẩm khác:</strong>
+                              <button type="button" (click)="cancelReplaceRow()">Hủy</button>
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="Nhập tên sản phẩm muốn đổi sang..."
+                              [value]="replaceSearch()"
+                              (input)="replaceSearch.set($any($event.target).value)"
+                            />
+                            <div class="combo-replace-list">
+                              @for (rep of filteredCatalogForReplace(); track rep._id) {
+                                <div class="combo-picker-item">
+                                  <div class="combo-picker-item-left">
+                                    <img
+                                      [src]="rep.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=80&q=80'"
+                                      alt=""
+                                    />
+                                    <div>
+                                      <div class="combo-picker-item-name">{{ rep.name }}</div>
+                                      <div class="combo-picker-item-meta">
+                                        Giá lẻ: {{ formatPrice(rep.priceNumber) }} · Tồn kho: {{ rep.stock }}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="combo-picker-add-btn"
+                                    (click)="confirmReplaceRow(idx, rep)"
+                                  >
+                                    Chọn thay thế
+                                  </button>
+                                </div>
+                              }
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  }
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="3" style="font-weight:800;color:#10321c">Tổng mua lẻ</td>
+                    <td style="text-align:right;font-weight:900;color:#10321c;font-size:15px">
+                      {{ formatPrice(formRetailTotal()) }}
+                    </td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          }
+
+          <!-- Khung tổng hợp Giá Combo, Tiết kiệm & Tồn kho khả dụng -->
+          <div class="combo-live-calc" [class.has-error]="formPriceExceedsRetail()">
+            <div class="combo-live-col">
+              <span class="combo-live-lbl">Tổng giá mua lẻ</span>
+              <strong class="combo-live-num">{{ formatPrice(formRetailTotal()) }}</strong>
+            </div>
+            <div class="combo-live-col">
+              <span class="combo-live-lbl">Giá Combo</span>
+              <strong class="combo-live-num" style="color:#d63f3f">
+                {{ formatPrice(formPriceNumber() || 0) }}
+              </strong>
+            </div>
+            <div class="combo-live-col">
+              <span class="combo-live-lbl">Số tiền tiết kiệm</span>
+              @if (formPriceExceedsRetail()) {
+                <strong class="combo-live-num" style="color:#dc2626">
+                  Vượt giá mua lẻ (+{{ formatPrice(-formSavingAmount()) }})
+                </strong>
+              } @else {
+                <strong class="combo-live-num" style="color:#15803d">
+                  {{ formatPrice(formSavingAmount() > 0 ? formSavingAmount() : 0) }}
+                  ({{ formSavingPercent() }}%)
+                </strong>
+              }
+            </div>
+            <div class="combo-live-col">
+              <span class="combo-live-lbl">Số Combo có thể bán</span>
+              <strong class="combo-live-num" [style.color]="calc.availableCombos <= 0 ? '#dc2626' : '#10321c'">
+                {{ calc.availableCombos }} gói
+              </strong>
+              @if (calc.limitingName) {
+                <small class="combo-live-note">
+                  Giới hạn theo "{{ calc.limitingName }}" (tồn {{ calc.limitingStock }} / cần {{ calc.limitingNeed }})
+                </small>
+              }
+            </div>
+          </div>
+
+          @if (formPriceExceedsRetail()) {
+            <div class="combo-price-warn">
+              Giá bán Combo đang lớn hơn tổng giá mua lẻ các sản phẩm thành phần. Vui lòng điều chỉnh giá Combo nhỏ hơn hoặc bằng {{ formatPrice(formRetailTotal()) }}.
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="admin-modal-footer">
+        <button type="button" class="admin-btn-secondary" (click)="closeForm()">Hủy bỏ</button>
+        <button
+          type="button"
+          class="admin-btn-primary"
+          [disabled]="saving() || formPriceExceedsRetail() || formItems().length === 0"
+          (click)="saveCombo()"
+        >
+          @if (saving()) {
+            <span>Đang lưu Combo...</span>
+          } @else {
+            <span>{{ formMode() === 'create' ? 'Tạo gói Combo' : 'Lưu cập nhật Combo' }}</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

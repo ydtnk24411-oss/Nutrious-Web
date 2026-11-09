@@ -10,6 +10,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 
 const productRoutes = require('./routes/products');
+const comboRoutes = require('./routes/combos');
 const orderRoutes = require('./routes/orders');
 const userRoutes = require('./routes/users');
 const authRoutes = require('./routes/auth');
@@ -69,6 +70,7 @@ app.use('/api', (req, res, next) => {
 // ── Routes ────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/combos', comboRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/dashboard', dashboardRoutes);

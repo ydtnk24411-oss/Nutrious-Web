@@ -40,7 +40,7 @@ export function getCartItemKey(item: XanhLaCartItem): string {
   );
 }
 
-export type AuthTab = 'login' | 'signup';
+export type AuthTab = 'login' | 'signup' | 'forgot';
 
 function priceValue(price: string): number {
   return Number((price || '').replace(/[^\d]/g, ''));
@@ -148,7 +148,7 @@ function evaluateItemsPricingMap(items: XanhLaCartItem[]): Map<string, Evaluated
         key,
         addonPrice,
         valid: false,
-        missingReason: `Chọn mua cùng "${it.linkedMainProductName || 'sản phẩm chính'}" để được áp dụng giá Mua kèm`,
+        missingReason: `Chọn mua kèm cùng "${it.linkedMainProductName || 'sản phẩm đã chọn'}" để nhận ưu đãi`,
       };
     }
 
@@ -182,10 +182,17 @@ function evaluateItemsPricingMap(items: XanhLaCartItem[]): Map<string, Evaluated
     }
 
     const mainPrice = unitPriceOf(mainProd);
-    const discountTarget: 'addon' | 'main' = addonPrice <= mainPrice ? 'addon' : 'main';
-    const potentialUnitDisc = discountTarget === 'addon'
-      ? calcAddOnUnitDiscount(addonPrice, discountType, discountValue)
-      : calcAddOnUnitDiscount(mainPrice, discountType, discountValue);
+    if (addonPrice <= 0 || mainPrice <= 0 || addonPrice >= mainPrice) {
+      return {
+        item: it,
+        key,
+        addonPrice,
+        valid: false,
+        missingReason: 'Sản phẩm mua kèm phải có đơn giá thấp hơn sản phẩm đang mua cùng',
+      };
+    }
+    const discountTarget: 'addon' | 'main' = 'addon';
+    const potentialUnitDisc = calcAddOnUnitDiscount(addonPrice, discountType, discountValue);
 
     if (potentialUnitDisc <= 0) {
       return { item: it, key, addonPrice, valid: false, missingReason: '' };
@@ -267,7 +274,7 @@ function evaluateItemsPricingMap(items: XanhLaCartItem[]): Map<string, Evaluated
         isAddonActive: pairedQty > 0,
         missingMainWarning:
           it.quantity > pairedQty
-            ? `${pairedQty} SP hưởng ưu đãi mua kèm, ${it.quantity - pairedQty} SP vượt số lượng SP chính tính giá lẻ`
+            ? `${pairedQty} sản phẩm hưởng giá mua kèm, ${it.quantity - pairedQty} sản phẩm tính giá thường`
             : '',
         promoBadge: 'Mua kèm tiết kiệm',
         relationLabel: `Mua kèm cùng: ${ra.mainProd.name}`,
@@ -306,12 +313,12 @@ function evaluateItemsPricingMap(items: XanhLaCartItem[]): Map<string, Evaluated
         isAddonActive: pairedQty > 0,
         missingMainWarning:
           pairedQty === 0
-            ? 'Đã dùng hết lượt giảm trên sản phẩm chính, SP mua kèm tính giá lẻ'
+            ? 'Đã áp dụng đủ lượt ưu đãi mua kèm, các sản phẩm tiếp theo tính giá thường'
             : '',
         promoBadge: 'Mua kèm tiết kiệm',
         relationLabel:
           pairedQty > 0
-            ? `Mua kèm cùng: ${ra.mainProd.name} (ưu đãi giảm trên "${ra.mainProd.name}" vì có giá thấp hơn)`
+            ? `Mua kèm cùng: ${ra.mainProd.name} (ưu đãi giảm trực tiếp theo gói mua kèm)`
             : `Mua kèm cùng: ${ra.mainProd.name}`,
       });
     }
@@ -358,10 +365,10 @@ function evaluateItemsPricingMap(items: XanhLaCartItem[]): Map<string, Evaluated
       discountedQty,
       isAddonActive: totalSaving > 0,
       missingMainWarning: '',
-      promoBadge: totalSaving > 0 ? 'Giảm nhờ Mua kèm' : 'Sản phẩm mua lẻ',
+      promoBadge: totalSaving > 0 ? 'Ưu đãi Mua kèm' : 'Sản phẩm mua lẻ',
       relationLabel:
         totalSaving > 0
-          ? `Áp dụng ưu đãi Mua kèm (SP giá thấp hơn khi mua cùng ${addonNames.join(', ')})`
+          ? `Đã áp dụng ưu đãi khi mua kèm ${addonNames.join(', ')}`
           : '',
     });
   }
@@ -535,7 +542,7 @@ export class CartService {
       discountedByAddon: false,
       discountedQty: 0,
       isAddonActive: false,
-      missingMainWarning: type === 'addon' ? 'Tick chọn sản phẩm này cùng sản phẩm chính để tính ưu đãi mua kèm' : '',
+      missingMainWarning: type === 'addon' ? 'Chọn mua kèm cùng sản phẩm tương ứng để nhận ưu đãi' : '',
       promoBadge: isCombo ? 'Combo tiết kiệm' : (type === 'addon' ? 'Mua kèm' : 'Sản phẩm mua lẻ'),
       relationLabel: item.linkedMainProductName ? `Mua kèm cùng: ${item.linkedMainProductName}` : '',
     };
@@ -633,11 +640,24 @@ export class CartService {
           (i.selectedOption ?? '') === (selectedOption ?? '') &&
           i.itemType !== 'addon'
       );
+      const maxComboStock = product.isCombo && typeof product.stock === 'number' && product.stock > 0
+        ? product.stock
+        : null;
       const updated = idx >= 0
-        ? current.map((i, index) =>
-            index === idx ? { ...i, product, itemType, quantity: i.quantity + quantity } : i
-          )
-        : [...current, { product, quantity, selectedOption, itemType, isCombo: !!product.isCombo }];
+        ? current.map((i, index) => {
+            if (index !== idx) return i;
+            const nextQty = maxComboStock !== null
+              ? Math.min(maxComboStock, i.quantity + quantity)
+              : i.quantity + quantity;
+            return { ...i, product, itemType, quantity: nextQty };
+          })
+        : [...current, {
+            product,
+            quantity: maxComboStock !== null ? Math.min(maxComboStock, quantity) : quantity,
+            selectedOption,
+            itemType,
+            isCombo: !!product.isCombo,
+          }];
       this._saveCartForCurrentUser(updated);
       return updated;
     });
@@ -773,14 +793,18 @@ export class CartService {
 
   updateItemQuantity(item: XanhLaCartItem, quantity: number): void {
     const targetKey = getCartItemKey(item);
+    const maxComboStock = item.product.isCombo && typeof item.product.stock === 'number' && item.product.stock > 0
+      ? item.product.stock
+      : null;
+    const clampedQty = maxComboStock !== null && quantity > maxComboStock ? maxComboStock : quantity;
     this._items.update((current) => {
-      const updated = quantity <= 0
+      const updated = clampedQty <= 0
         ? current.filter((i) => getCartItemKey(i) !== targetKey)
-        : current.map((i) => getCartItemKey(i) === targetKey ? { ...i, quantity } : i);
+        : current.map((i) => getCartItemKey(i) === targetKey ? { ...i, quantity: clampedQty } : i);
       this._saveCartForCurrentUser(updated);
       return updated;
     });
-    if (quantity <= 0) {
+    if (clampedQty <= 0) {
       this._selectedKeys.update(set => {
         const next = new Set(set);
         next.delete(targetKey);
@@ -930,6 +954,119 @@ export class CartService {
       },
       error: (err) => {
         onError(err.error?.message || 'Không thể gửi lại mã OTP.');
+      }
+    });
+  }
+
+  // ── Forgot Password (BR-ACC-10) ───────────────────────────
+
+  requestForgotPasswordOtp(
+    phone: string,
+    onSuccess: (data: { phone: string; expiresInSeconds?: number; demoOtp?: string }) => void,
+    onError: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      message: string;
+      phone: string;
+      expiresInSeconds?: number;
+      demoOtp?: string;
+    }>('/auth/forgot-password/request-otp', {
+      phone: phone.trim(),
+    }).subscribe({
+      next: (res) => {
+        if (res.success) {
+          onSuccess(res);
+        } else {
+          onError(res.message || 'Yêu cầu đặt lại mật khẩu thất bại.');
+        }
+      },
+      error: (err) => {
+        onError(err.error?.message || 'Không thể gửi mã xác minh OTP. Vui lòng kiểm tra lại số điện thoại.');
+      }
+    });
+  }
+
+  verifyForgotPasswordOtp(
+    phone: string,
+    otp: string,
+    onSuccess: (data: { resetToken: string; phone: string; message: string }) => void,
+    onError: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      resetToken: string;
+      phone: string;
+      message: string;
+    }>('/auth/forgot-password/verify-otp', {
+      phone: phone.trim(),
+      otp: otp.trim(),
+    }).subscribe({
+      next: (res) => {
+        if (res.success && res.resetToken) {
+          onSuccess(res);
+        } else {
+          onError(res.message || 'Mã xác minh OTP không hợp lệ.');
+        }
+      },
+      error: (err) => {
+        onError(err.error?.message || 'Mã OTP không chính xác hoặc đã hết hạn.');
+      }
+    });
+  }
+
+  resendForgotPasswordOtp(
+    phone: string,
+    onSuccess: (data: { phone: string; demoOtp?: string }) => void,
+    onError: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      message: string;
+      phone: string;
+      demoOtp?: string;
+    }>('/auth/forgot-password/resend-otp', {
+      phone: phone.trim(),
+    }).subscribe({
+      next: (res) => {
+        if (res.success) {
+          onSuccess(res);
+        } else {
+          onError(res.message || 'Gửi lại mã OTP thất bại.');
+        }
+      },
+      error: (err) => {
+        onError(err.error?.message || 'Không thể gửi lại mã OTP.');
+      }
+    });
+  }
+
+  resetPasswordWithToken(
+    phone: string,
+    resetToken: string,
+    password: string,
+    confirmPassword: string,
+    onSuccess: (msg: string) => void,
+    onError: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      message: string;
+    }>('/auth/forgot-password/reset', {
+      phone: phone.trim(),
+      resetToken: resetToken.trim(),
+      password,
+      confirmPassword,
+    }).subscribe({
+      next: (res) => {
+        if (res.success) {
+          onSuccess(res.message || 'Đặt lại mật khẩu thành công!');
+        } else {
+          onError(res.message || 'Đặt lại mật khẩu không thành công.');
+        }
+      },
+      error: (err) => {
+        onError(err.error?.message || 'Không thể đặt lại mật khẩu. Vui lòng thử lại.');
       }
     });
   }

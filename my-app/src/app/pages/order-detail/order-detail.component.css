@@ -281,6 +281,22 @@
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.order-nonrefundable-notice {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: var(--xanh-radius-sm);
+  color: #92400e;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .btn-cancel {

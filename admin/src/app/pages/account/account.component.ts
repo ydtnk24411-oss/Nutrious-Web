@@ -406,6 +406,10 @@ export class AccountComponent implements OnInit, OnDestroy {
 
   maskPassword(): string { return '•••••••'; }
 
+  openForgotPasswordModal(): void {
+    this.cart.openAuthModal('forgot');
+  }
+
   formatPrice(value: number): string {
     return value.toLocaleString('vi-VN') + 'đ';
   }

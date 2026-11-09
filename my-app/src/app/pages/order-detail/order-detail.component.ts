@@ -48,6 +48,9 @@ interface Order {
   shippingAddress?: string;
   paymentMethod: 'cod' | 'bank_transfer';
   status: 'pending' | 'confirmed' | 'preparing' | 'shipping' | 'delivered' | 'cancelled';
+  hasNonRefundableItems?: boolean;
+  nonRefundableAccepted?: boolean;
+  nonRefundableItems?: Array<{ name: string; categoryName: string; isCombo?: boolean }>;
   estimatedPoints?: number;
   createdAt: string;
   updatedAt: string;
@@ -219,6 +222,10 @@ export class OrderDetailComponent implements OnInit {
 
   getComboItemName(sub: any): string {
     return sub?.name || sub?.product?.name || 'Sản phẩm thành phần';
+  }
+
+  getComboItemQty(sub: any): number {
+    return Math.max(1, Number(sub?.quantity) || 1);
   }
 
   getComboItemPrice(sub: any): string {

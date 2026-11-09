@@ -17,6 +17,51 @@ export interface CheckoutVoucherOption {
   estimatedDiscount: number;
 }
 
+export interface NonRefundableItemSummary {
+  name: string;
+  categoryName: string;
+  isCombo?: boolean;
+}
+
+// Nhận diện sản phẩm tươi sống thuộc 4 nhóm: Rau củ, Trái cây, Thịt, Cá & Hải sản
+export function isFreshPerishableProduct(p: any): { isFresh: boolean; categoryName: string } {
+  if (!p) return { isFresh: false, categoryName: '' };
+  const cat = (p.category || '').toLowerCase();
+  const catVi = (p.categoryVi || '').toLowerCase();
+  const name = (p.name || '').toLowerCase();
+  const combined = `${cat} ${catVi} ${name}`;
+
+  // Loại trừ nhóm đồ uống, bánh kẹo, gia vị & đồ khô, sữa
+  const excluded = [
+    'beverages', 'thức uống', 'nước ép',
+    'bakery', 'bánh mỳ', 'bánh ngọt',
+    'pantry', 'gia vị', 'đồ khô', 'hạt & ngũ cốc',
+    'dairy'
+  ];
+  if (excluded.some(ex => cat.includes(ex) || catVi.includes(ex))) {
+    return { isFresh: false, categoryName: '' };
+  }
+
+  // 1. Rau củ
+  if (/rau\s*củ|rau\s*ăn|rau\s*gia\s*vị|nấm\s*tươi|củ\s*quả|vegetable/i.test(combined)) {
+    return { isFresh: true, categoryName: 'Rau củ tươi' };
+  }
+  // 2. Trái cây
+  if (/trái\s*cây|hoa\s*quả|fruit/i.test(combined)) {
+    return { isFresh: true, categoryName: 'Trái cây tươi' };
+  }
+  // 3. Thịt
+  if (/thịt|meat|thịt\s*bò|thịt\s*heo|thịt\s*gà|gia\s*cầm/i.test(combined)) {
+    return { isFresh: true, categoryName: 'Thịt tươi sống' };
+  }
+  // 4. Cá & hải sản
+  if (/cá\s*&?\s*hải\s*sản|hải\s*sản|seafood|thủy\s*hải\s*sản/i.test(combined)) {
+    return { isFresh: true, categoryName: 'Cá & hải sản tươi' };
+  }
+
+  return { isFresh: false, categoryName: '' };
+}
+
 @Component({
   selector: 'app-checkout',
   standalone: true,
@@ -72,6 +117,60 @@ export class CheckoutComponent implements OnInit {
 
   readonly addonDiscount = computed(() => {
     return this.cart.selectedAddonDiscount();
+  });
+
+  // Quy chế Hàng tươi sống không hỗ trợ Hủy / Đổi / Trả (Rau củ, Trái cây, Thịt, Cá & Hải sản)
+  protected nonRefundableConfirmed = signal(false);
+  protected showNonRefundableModal = signal(false);
+
+  readonly nonRefundablePolicy = computed<{
+    hasNonRefundableItems: boolean;
+    items: NonRefundableItemSummary[];
+  }>(() => {
+    const items = this.checkoutItems();
+    const freshList: NonRefundableItemSummary[] = [];
+
+    for (const it of items) {
+      const prod = it.product as any;
+      if (!prod) continue;
+
+      const isCombo = Boolean(prod.isCombo || it.isCombo || it.itemType === 'combo');
+
+      if (isCombo && Array.isArray(prod.comboItems) && prod.comboItems.length > 0) {
+        const comboCheck = isFreshPerishableProduct(prod);
+        let comboIsFresh = comboCheck.isFresh;
+        const subNames: string[] = [];
+        for (const ci of prod.comboItems) {
+          const subP = ci.product || ci;
+          const subCheck = isFreshPerishableProduct(subP);
+          if (subCheck.isFresh) {
+            comboIsFresh = true;
+            subNames.push(subP.name || ci.name || 'Thành phần tươi sống');
+          }
+        }
+        if (comboIsFresh) {
+          freshList.push({
+            name: subNames.length > 0 ? `${prod.name} (thành phần: ${subNames.join(', ')})` : prod.name,
+            categoryName: comboCheck.categoryName || 'Combo thực phẩm tươi sống',
+            isCombo: true,
+          });
+        }
+      } else {
+        const check = isFreshPerishableProduct(prod);
+        if (check.isFresh) {
+          freshList.push({
+            name: prod.name,
+            categoryName: check.categoryName,
+            isCombo: isCombo,
+          });
+        }
+      }
+    }
+
+    return {
+      hasNonRefundableItems: freshList.length > 0,
+      items: freshList,
+    };
   });
 
   protected itemKey = getCartItemKey;
@@ -278,6 +377,32 @@ export class CheckoutComponent implements OnInit {
       return;
     }
 
+    // Nếu đơn hàng có sản phẩm tươi sống (Rau củ, Trái cây, Thịt, Cá & Hải sản) và người dùng chưa xác nhận quy chế
+    // -> Bật modal popup cảnh báo để người dùng xác nhận trước khi đặt hàng
+    if (this.nonRefundablePolicy().hasNonRefundableItems && !this.nonRefundableConfirmed()) {
+      this.showNonRefundableModal.set(true);
+      return;
+    }
+
+    this.executeOrderPlacement();
+  }
+
+  confirmNonRefundableAndPlaceOrder(): void {
+    this.nonRefundableConfirmed.set(true);
+    this.showNonRefundableModal.set(false);
+    this.executeOrderPlacement();
+  }
+
+  closeNonRefundableModal(): void {
+    this.showNonRefundableModal.set(false);
+  }
+
+  executeOrderPlacement(): void {
+    const currentItems = this.checkoutItems();
+    if (currentItems.length === 0) {
+      this.errorMsg.set('Không có sản phẩm nào được chọn để thanh toán.'); return;
+    }
+
     this.submitting.set(true);
     this.errorMsg.set('');
 
@@ -325,6 +450,9 @@ export class CheckoutComponent implements OnInit {
       shippingAddress:     this.shippingAddr(),
       paymentMethod:       this.paymentMethod(),
       estimatedPoints:     this.estimatedPoints(),
+      hasNonRefundableItems: this.nonRefundablePolicy().hasNonRefundableItems,
+      nonRefundableAccepted: this.nonRefundableConfirmed(),
+      nonRefundableItems:    this.nonRefundablePolicy().items,
     };
 
     this.orderApi.create(payload as any).subscribe({

@@ -312,10 +312,12 @@
             <!-- Thẻ đổi mật khẩu -->
             <div class="acc-security-card">
               <div class="acc-security-info">
-                <h3 class="acc-security-title">Đổi mật khẩu</h3>
-                <p class="acc-security-desc">Thay đổi mật khẩu định kỳ để bảo vệ tài khoản EvergreenMart</p>
+                <h3 class="acc-security-title">Đổi mật khẩu & Khôi phục</h3>
+                <p class="acc-security-desc">Thay đổi mật khẩu định kỳ hoặc khôi phục mật khẩu tài khoản EvergreenMart</p>
               </div>
-              <button class="acc-btn-outline">Đổi mật khẩu</button>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button type="button" class="acc-btn-outline" (click)="openForgotPasswordModal()">Quên mật khẩu?</button>
+              </div>
             </div>
 
             <div class="acc-security-info">

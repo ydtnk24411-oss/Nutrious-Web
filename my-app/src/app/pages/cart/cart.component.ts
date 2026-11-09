@@ -69,4 +69,24 @@ export class CartComponent {
     if (this.selectedCount === 0) return;
     this.router.navigate(['/checkout']);
   }
+
+  getComboSubName(sub: any): string {
+    return sub?.product?.name || sub?.name || 'Sản phẩm thành phần';
+  }
+
+  getComboSubImage(sub: any): string {
+    return sub?.product?.image || sub?.image || '';
+  }
+
+  getComboSubQty(sub: any): number {
+    return Math.max(1, Number(sub?.quantity) || 1);
+  }
+
+  getComboSubPrice(sub: any): string {
+    if (sub?.product?.price) return String(sub.product.price);
+    if (sub?.price) return String(sub.price);
+    if (sub?.product?.priceNumber) return formatPrice(sub.product.priceNumber);
+    if (sub?.priceNumber) return formatPrice(sub.priceNumber);
+    return '';
+  }
 }

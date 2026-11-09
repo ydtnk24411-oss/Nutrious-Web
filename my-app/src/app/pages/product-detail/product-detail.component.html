@@ -15,33 +15,123 @@
         </div>
 
         <div class="xanhla-product-info-panel">
-          <h1>{{ p.name }}</h1>
-          <div class="xanhla-product-info-price">Giá {{ p.price }}</div>
-
-          @if (p.options && p.options.length > 0) {
-            <div class="xanhla-option-group">
-              <span class="xanhla-option-label">{{ p.options[0].name }}</span>
-              <div class="xanhla-option-buttons">
-                @for (v of p.options[0].values; track v) {
-                  <button type="button" class="xanhla-option-btn" [class.is-active]="selectedRipeness() === v"
-                          (click)="selectedRipeness.set(v)">{{ v }}</button>
-                }
-              </div>
+          @if (p.isCombo) {
+            <div class="pd-combo-top-badges">
+              <span class="pd-combo-fixed-badge">Combo tiết kiệm thiết lập sẵn</span>
+              @if (p.comboStatus === 'paused') {
+                <span class="pd-combo-stock-pill is-paused">Tạm ngừng kinh doanh</span>
+              } @else if (comboStock(p) <= 0) {
+                <span class="pd-combo-stock-pill is-out">Tạm hết hàng</span>
+              } @else {
+                <span class="pd-combo-stock-pill is-in">Còn {{ comboStock(p) }} gói Combo</span>
+              }
             </div>
           }
 
+          <h1>{{ p.name }}</h1>
+
+          @if (p.isCombo) {
+            <div class="pd-combo-hero-pricing">
+              <span class="pd-combo-hero-price">{{ p.price }}</span>
+              @if (comboSaving(p) > 0) {
+                <span class="pd-combo-hero-orig">{{ money(comboRetail(p)) }}</span>
+                <span class="pd-combo-hero-save">
+                  Tiết kiệm {{ money(comboSaving(p)) }} ({{ comboSavingPercent(p) }}%)
+                </span>
+              }
+            </div>
+
+            @if (p.description) {
+              <p class="pd-combo-hero-desc">{{ p.description }}</p>
+            }
+
+            @if (p.comboItems && p.comboItems.length > 0) {
+              <div class="pd-combo-detail-box">
+                <div class="pd-combo-detail-head">
+                  <span>Danh sách {{ p.comboItems.length }} sản phẩm cố định trong Combo</span>
+                  <span class="pd-combo-detail-lock">Thành phần cố định theo gói</span>
+                </div>
+                <div class="pd-combo-detail-list">
+                  @for (ci of p.comboItems; track ci.product._id) {
+                    <a class="pd-combo-detail-row" [routerLink]="'/product-page/' + ci.product.slug">
+                      <img
+                        class="pd-combo-detail-thumb"
+                        [src]="ci.product.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=160&q=80'"
+                        [alt]="ci.product.name"
+                        loading="lazy"
+                      />
+                      <div class="pd-combo-detail-meta">
+                        <div class="pd-combo-detail-name">{{ ci.product.name }}</div>
+                        <div class="pd-combo-detail-sub">
+                          Giá tham khảo: {{ ci.product.price || money(ci.product.priceNumber) }}
+                          @if (ci.product.weight || ci.product.unit) {
+                            <span>· {{ ci.product.weight || ci.product.unit }}</span>
+                          }
+                        </div>
+                      </div>
+                      <span class="pd-combo-detail-qty">×{{ ci.quantity }}</span>
+                      <div class="pd-combo-detail-line">
+                        {{ money((ci.product.priceNumber || 0) * ci.quantity) }}
+                      </div>
+                    </a>
+                  }
+                </div>
+                <div class="pd-combo-detail-foot">
+                  <span>Tổng giá mua lẻ các thành phần:</span>
+                  <strong>{{ money(comboRetail(p)) }}</strong>
+                </div>
+              </div>
+            }
+          } @else {
+            <div class="xanhla-product-info-price">Giá {{ p.price }}</div>
+
+            @if (p.options && p.options.length > 0) {
+              <div class="xanhla-option-group">
+                <span class="xanhla-option-label">{{ p.options[0].name }}</span>
+                <div class="xanhla-option-buttons">
+                  @for (v of p.options[0].values; track v) {
+                    <button type="button" class="xanhla-option-btn" [class.is-active]="selectedRipeness() === v"
+                            (click)="selectedRipeness.set(v)">{{ v }}</button>
+                  }
+                </div>
+              </div>
+            }
+          }
+
           <div style="margin-bottom:24px">
-            <span class="xanhla-option-label">Số lượng</span>
+            <span class="xanhla-option-label">{{ p.isCombo ? 'Số lượng gói Combo' : 'Số lượng' }}</span>
             <div class="xanhla-quantity-picker">
-              <button type="button" (click)="dec()">−</button>
+              <button type="button" [disabled]="p.isCombo && isComboUnavailable(p)" (click)="dec()">−</button>
               <span>{{ quantity() }}</span>
-              <button type="button" (click)="inc()">+</button>
+              <button type="button" [disabled]="p.isCombo && (isComboUnavailable(p) || quantity() >= comboStock(p))" (click)="inc()">+</button>
             </div>
           </div>
 
           <div class="xanhla-product-cta-row">
-            <button class="xanhla-btn-primary" type="button" style="flex:1" (click)="addToCart()">Thêm vào giỏ hàng</button>
-            <button class="xanhla-btn-secondary" type="button" style="flex:1" (click)="buyNow()">Mua ngay</button>
+            <button
+              class="xanhla-btn-primary"
+              type="button"
+              style="flex:1"
+              [disabled]="p.isCombo && isComboUnavailable(p)"
+              (click)="addToCart()"
+            >
+              @if (p.isCombo && p.comboStatus === 'paused') {
+                Tạm ngừng kinh doanh
+              } @else if (p.isCombo && comboStock(p) <= 0) {
+                Tạm hết Combo
+              } @else {
+                Thêm vào giỏ hàng
+              }
+            </button>
+            <button
+              class="xanhla-btn-secondary"
+              type="button"
+              style="flex:1"
+              [disabled]="p.isCombo && isComboUnavailable(p)"
+              (click)="buyNow()"
+            >
+              Mua ngay
+            </button>
           </div>
 
           <div class="xanhla-product-accordions">
@@ -76,60 +166,91 @@
       <!-- ── Thông tin & Mô tả sản phẩm ── -->
       <section class="pd-info">
         <div class="pd-info-block">
-          <h3 class="pd-info-title">Thông tin sản phẩm</h3>
+          <h3 class="pd-info-title">{{ p.isCombo ? 'Thông tin gói Combo' : 'Thông tin sản phẩm' }}</h3>
           <table class="pd-spec-table">
             <tbody>
               <tr>
                 <th>Thương hiệu</th>
                 <td><strong>{{ p.brand || 'Evergreen Mart' }}</strong></td>
               </tr>
-              @if (p.manufacturer) {
+              @if (p.isCombo) {
                 <tr>
-                  <th>Nhà sản xuất</th>
-                  <td>{{ p.manufacturer }}</td>
+                  <th>Hình thức bán</th>
+                  <td>Combo tiết kiệm thiết lập sẵn (thành phần cố định)</td>
                 </tr>
-              }
-              <tr>
-                <th>Xuất xứ</th>
-                <td>{{ p.origin || 'Việt Nam' }}</td>
-              </tr>
-              @if (p.unit || p.weight) {
                 <tr>
-                  <th>Quy cách / Khối lượng</th>
-                  <td>{{ p.unit || p.weight }}</td>
+                  <th>Số sản phẩm thành phần</th>
+                  <td>{{ p.comboItems?.length || 0 }} mặt hàng</td>
                 </tr>
-              }
-              <tr>
-                <th>Hạn sử dụng</th>
-                <td>{{ getExpiry(p.specifications) }}</td>
-              </tr>
-              @for (k of getSpecKeys(p.specifications); track k) {
                 <tr>
-                  <th>{{ k }}</th>
-                  <td>{{ getSpecValue(p.specifications, k) }}</td>
+                  <th>Tổng giá mua lẻ</th>
+                  <td>{{ money(comboRetail(p)) }}</td>
                 </tr>
-              }
-              @if (p.storageInstructions) {
                 <tr>
-                  <th>Bảo quản</th>
-                  <td>{{ p.storageInstructions }}</td>
+                  <th>Giá bán Combo</th>
+                  <td><strong style="color:#e94d3b">{{ p.price }}</strong></td>
                 </tr>
-              }
-              @if (p.usageInstructions) {
+                @if (comboSaving(p) > 0) {
+                  <tr>
+                    <th>Mức tiết kiệm</th>
+                    <td><strong style="color:#15803d">{{ money(comboSaving(p)) }} ({{ comboSavingPercent(p) }}%)</strong></td>
+                  </tr>
+                }
                 <tr>
-                  <th>Hướng dẫn sử dụng</th>
-                  <td>{{ p.usageInstructions }}</td>
+                  <th>Khả năng cung ứng hiện tại</th>
+                  <td>{{ comboStock(p) > 0 ? 'Có thể đặt tối đa ' + comboStock(p) + ' gói Combo' : 'Tạm hết hàng thành phần' }}</td>
                 </tr>
+              } @else {
+                @if (p.manufacturer) {
+                  <tr>
+                    <th>Nhà sản xuất</th>
+                    <td>{{ p.manufacturer }}</td>
+                  </tr>
+                }
+                <tr>
+                  <th>Xuất xứ</th>
+                  <td>{{ p.origin || 'Việt Nam' }}</td>
+                </tr>
+                @if (p.unit || p.weight) {
+                  <tr>
+                    <th>Quy cách / Khối lượng</th>
+                    <td>{{ p.unit || p.weight }}</td>
+                  </tr>
+                }
+                <tr>
+                  <th>Hạn sử dụng</th>
+                  <td>{{ getExpiry(p.specifications) }}</td>
+                </tr>
+                @for (k of getSpecKeys(p.specifications); track k) {
+                  <tr>
+                    <th>{{ k }}</th>
+                    <td>{{ getSpecValue(p.specifications, k) }}</td>
+                  </tr>
+                }
+                @if (p.storageInstructions) {
+                  <tr>
+                    <th>Bảo quản</th>
+                    <td>{{ p.storageInstructions }}</td>
+                  </tr>
+                }
+                @if (p.usageInstructions) {
+                  <tr>
+                    <th>Hướng dẫn sử dụng</th>
+                    <td>{{ p.usageInstructions }}</td>
+                  </tr>
+                }
               }
             </tbody>
           </table>
         </div>
 
         <div class="pd-info-block">
-          <h3 class="pd-info-title">Mô tả sản phẩm</h3>
+          <h3 class="pd-info-title">{{ p.isCombo ? 'Mô tả gói Combo' : 'Mô tả sản phẩm' }}</h3>
           <div class="pd-desc">
             @if (p.description) {
               <p class="pd-desc-main">{{ p.description }}</p>
+            } @else if (p.isCombo) {
+              <p class="pd-desc-main">Combo tiết kiệm được Evergreen Mart tuyển chọn sẵn với định lượng cố định, giúp bạn mua trọn bộ nguyên liệu tươi ngon với mức giá ưu đãi hơn so với mua lẻ từng món.</p>
             }
           </div>
         </div>
@@ -143,9 +264,8 @@
               <div class="pd-addon-eyebrow">Ưu đãi chọn thêm linh hoạt</div>
               <h2 class="pd-addon-title">Mua kèm tiết kiệm hơn</h2>
               <p class="pd-addon-sub">
-                Chọn thêm một hoặc nhiều sản phẩm gợi ý bên dưới khi mua cùng
-                <strong>{{ p.name }}</strong>. Hệ thống tự động áp dụng mức giảm cho
-                <strong>sản phẩm có đơn giá thấp hơn</strong>.
+                Chọn thêm sản phẩm gợi ý bên dưới khi mua cùng
+                <strong>{{ p.name }}</strong> để nhận ngay mức giá ưu đãi đặc biệt.
               </p>
             </div>
             <button type="button" class="pd-addon-select-all" (click)="selectAllAddOns()">
@@ -157,9 +277,9 @@
             </button>
           </div>
 
-          <!-- Sản phẩm chính đang xem -->
+          <!-- Sản phẩm đang xem -->
           <div class="pd-addon-main-bar">
-            <div class="pd-addon-main-tag">Sản phẩm chính</div>
+            <div class="pd-addon-main-tag">Đang xem</div>
             <img class="pd-addon-main-img" [src]="p.image" [alt]="p.name" />
             <div class="pd-addon-main-info">
               <div class="pd-addon-main-name">{{ p.name }}</div>
@@ -200,34 +320,19 @@
                       {{ card.addonProd.name }}
                     </a>
 
-                    @if (card.discountTarget === 'addon') {
-                      <div class="pd-addon-prices">
-                        <span class="pd-addon-price-final">{{ money(card.addonFinalPrice) }}</span>
-                        <span class="pd-addon-price-orig">{{ money(card.addonUnitPrice) }}</span>
-                      </div>
-                      <div class="pd-addon-save-line">
-                        Tiết kiệm {{ money(card.unitSaving) }}/SP
-                      </div>
-                    } @else {
-                      <div class="pd-addon-prices">
-                        <span class="pd-addon-price-final">{{ money(card.addonUnitPrice) }}</span>
-                      </div>
-                      <div class="pd-addon-save-line pd-addon-save-line--main">
-                        Giảm {{ money(card.unitSaving) }} trên SP chính ({{ money(card.mainUnitPrice) }} → {{ money(card.mainFinalPrice) }})
-                      </div>
-                    }
-
-                    <div class="pd-addon-target-note"
-                         [class.is-main-target]="card.discountTarget === 'main'">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
-                        <polyline points="20 6 9 17 4 12"/>
-                      </svg>
-                      <span>{{ card.targetBadge }}</span>
+                    <div class="pd-addon-prices">
+                      <span class="pd-addon-price-final">{{ money(card.addonFinalPrice) }}</span>
+                      <span class="pd-addon-price-orig">{{ money(card.addonUnitPrice) }}</span>
                     </div>
+                    <div class="pd-addon-save-line">
+                      Tiết kiệm {{ money(card.unitSaving) }}/SP
+                    </div>
+
+                    
 
                     @if (isAddOnSelected(card.addonId)) {
                       <div class="pd-addon-qty-row" (click)="$event.stopPropagation()">
-                        <span class="pd-addon-qty-label">Số lượng mua kèm:</span>
+                        <span class="pd-addon-qty-label">Số lượng:</span>
                         <div class="pd-addon-qty-ctrl">
                           <button type="button" (click)="changeAddOnQty(card.addonId, -1, $event)">−</button>
                           <span>{{ getAddOnQty(card.addonId) }}</span>
@@ -246,17 +351,8 @@
             <div class="pd-addon-summary-left">
               @if (liveAddOnSummary().selectedCount > 0) {
                 <div class="pd-addon-summary-title">
-                  Đã chọn <strong>1 sản phẩm chính</strong> (×{{ quantity() }}) +
-                  <strong>{{ liveAddOnSummary().selectedCount }} sản phẩm mua kèm</strong>
+                  Đã chọn <strong>{{ 1 + liveAddOnSummary().selectedCount }}</strong> sản phẩm
                 </div>
-                @if (liveAddOnSummary().discountedDescriptions.length > 0) {
-                  <div class="pd-addon-summary-targets">
-                    <span>Sản phẩm được giảm giá:</span>
-                    @for (desc of liveAddOnSummary().discountedDescriptions; track desc) {
-                      <span class="pd-addon-target-chip">{{ desc }}</span>
-                    }
-                  </div>
-                }
               } @else {
                 <div class="pd-addon-summary-empty">
                   Tick chọn sản phẩm mua kèm bên trên để hệ thống tự động tính giá sau ưu đãi.
@@ -286,18 +382,16 @@
                         [disabled]="liveAddOnSummary().selectedCount === 0"
                         (click)="addSelectedBundleToCart()">
                   @if (addedBundleNotice()) {
-                    Đã thêm gói mua kèm!
-                  } @else if (liveAddOnSummary().selectedCount > 0) {
-                    Thêm cùng {{ liveAddOnSummary().selectedCount }} SP mua kèm
+                    Đã thêm vào giỏ hàng!
                   } @else {
-                    Chọn SP mua kèm để thêm
+                    Thêm vào giỏ hàng
                   }
                 </button>
                 @if (liveAddOnSummary().selectedCount > 0) {
                   <button type="button"
                           class="pd-addon-btn-buy"
                           (click)="buySelectedBundleNow()">
-                    Mua ngay gói này
+                    Mua ngay
                   </button>
                 }
               </div>
@@ -311,7 +405,7 @@
         <section class="pd-combo">
           <div class="pd-combo-header">
             <h2 class="pd-combo-title">Combo mua kèm tiết kiệm</h2>
-            <p class="pd-combo-sub">Mua theo combo để được giá tốt hơn so với mua lẻ từng sản phẩm.</p>
+            <p class="pd-combo-sub">Gói sản phẩm cố định được thiết lập sẵn với giá ưu đãi hơn so với mua lẻ từng món.</p>
           </div>
 
           <div class="pd-combo-list">
@@ -329,11 +423,11 @@
                         @if (it.product._id === p._id) {
                           <span class="pd-combo-item-tag">Đang xem</span>
                         }
+                        <span class="pd-combo-item-qty-badge">×{{ it.quantity }}</span>
                       </div>
                       <div class="pd-combo-item-name">{{ it.product.name }}</div>
                       <div class="pd-combo-item-price">
-                        {{ it.product.price }}
-                        @if (it.quantity > 1) { <span>x{{ it.quantity }}</span> }
+                        {{ it.product.price || money(it.product.priceNumber) }} · SL: {{ it.quantity }}
                       </div>
                     </a>
                     @if (!last) {
@@ -343,11 +437,19 @@
                 </div>
 
                 <div class="pd-combo-summary">
-                  <div class="pd-combo-name">{{ combo.name }}</div>
+                  <a class="pd-combo-summary-head" [routerLink]="'/product-page/' + combo.slug">
+                    @if (combo.image) {
+                      <img class="pd-combo-summary-thumb" [src]="combo.image" [alt]="combo.name" loading="lazy" />
+                    }
+                    <div class="pd-combo-name">{{ combo.name }}</div>
+                  </a>
+                  @if (combo.description) {
+                    <div class="pd-combo-desc">{{ combo.description }}</div>
+                  }
                   <div class="pd-combo-prices">
                     <span class="pd-combo-price">{{ combo.price }}</span>
                     @if (comboSaving(combo) > 0) {
-                      <span class="pd-combo-original">{{ money(combo.originalPriceNumber || 0) }}</span>
+                      <span class="pd-combo-original">{{ money(comboRetail(combo)) }}</span>
                     }
                   </div>
                   @if (comboSaving(combo) > 0) {
@@ -355,10 +457,17 @@
                       Tiết kiệm {{ money(comboSaving(combo)) }} ({{ comboSavingPercent(combo) }}%)
                     </div>
                   }
+                  <div class="pd-combo-stock-hint">
+                    @if (comboStock(combo) > 0) {
+                      Còn {{ comboStock(combo) }} gói Combo
+                    } @else {
+                      Tạm hết hàng thành phần
+                    }
+                  </div>
                   <button type="button" class="pd-combo-btn"
-                          [disabled]="combo.stock <= 0"
+                          [disabled]="isComboUnavailable(combo)"
                           (click)="addCombo(combo)">
-                    @if (combo.stock <= 0) {
+                    @if (isComboUnavailable(combo)) {
                       Tạm hết combo
                     } @else if (addedComboId() === combo._id) {
                       Đã thêm vào giỏ
@@ -506,7 +615,15 @@
 
       <!-- ── Review Section ─────────────────────────────── -->
       <div class="xanhla-reviews-section">
-        <h2>Đánh giá sản phẩm</h2>
+        <div class="xanhla-reviews-header-row">
+          <h2>Đánh giá sản phẩm</h2>
+          <span class="xanhla-review-policy-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Bắt buộc mua và nhận hàng mới được đánh giá
+          </span>
+        </div>
 
         <!-- Review Summary -->
         <div class="xanhla-review-summary">
@@ -534,11 +651,6 @@
             }
           </div>
         </div>
-
-        <!-- Write Review Button -->
-        <button class="xanhla-btn-primary" type="button" (click)="showReviewForm.set(!showReviewForm())">
-          Viết đánh giá
-        </button>
 
         <!-- Review Form -->
         @if (showReviewForm()) {
@@ -604,14 +716,53 @@
           </div>
         }
 
-        <!-- Review Filters -->
-        <div class="xanhla-review-filters">
-          <button class="xanhla-filter-btn" [class.active]="reviewFilter() === 'all'" (click)="setReviewFilter('all')">Tất cả</button>
-          <button class="xanhla-filter-btn" [class.active]="reviewFilter() === '5'" (click)="setReviewFilter('5')">5 sao</button>
-          <button class="xanhla-filter-btn" [class.active]="reviewFilter() === '4'" (click)="setReviewFilter('4')">4 sao</button>
-          <button class="xanhla-filter-btn" [class.active]="reviewFilter() === '3'" (click)="setReviewFilter('3')">3 sao</button>
-          <button class="xanhla-filter-btn" [class.active]="reviewFilter() === 'latest'" (click)="setReviewFilter('latest')">Mới nhất</button>
-          <button class="xanhla-filter-btn" [class.active]="reviewFilter() === 'withImages'" (click)="setReviewFilter('withImages')">Có hình ảnh</button>
+        <!-- Thông báo điều kiện đánh giá (Notice / Alert) -->
+        @if (reviewNotice()) {
+          <div class="xanhla-review-eligibility-alert"
+               [class.alert-success]="reviewEligibility()?.hasReviewed"
+               [class.alert-warning]="!reviewEligibility()?.hasReviewed">
+            <svg class="alert-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              @if (reviewEligibility()?.hasReviewed) {
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              } @else {
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              }
+            </svg>
+            <span class="alert-msg">{{ reviewNotice() }}</span>
+            <button type="button" class="alert-close-btn" (click)="reviewNotice.set('')" title="Đóng">✕</button>
+          </div>
+        }
+
+        <!-- Review Toolbar: Filters on left, Write Review button on right -->
+        <div class="xanhla-review-toolbar">
+          <div class="xanhla-review-filters">
+            <button class="xanhla-filter-btn" [class.active]="reviewFilter() === 'all'" (click)="setReviewFilter('all')">Tất cả</button>
+            <button class="xanhla-filter-btn" [class.active]="reviewFilter() === '5'" (click)="setReviewFilter('5')">5 sao</button>
+            <button class="xanhla-filter-btn" [class.active]="reviewFilter() === '4'" (click)="setReviewFilter('4')">4 sao</button>
+            <button class="xanhla-filter-btn" [class.active]="reviewFilter() === '3'" (click)="setReviewFilter('3')">3 sao</button>
+            <button class="xanhla-filter-btn" [class.active]="reviewFilter() === 'latest'" (click)="setReviewFilter('latest')">Mới nhất</button>
+            <button class="xanhla-filter-btn" [class.active]="reviewFilter() === 'withImages'" (click)="setReviewFilter('withImages')">Có hình ảnh</button>
+          </div>
+
+          @if (reviewEligibility()?.hasReviewed) {
+            <button class="xanhla-btn-primary xanhla-write-review-btn is-reviewed" type="button" disabled title="Bạn đã đánh giá sản phẩm này">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M20 6L9 17l-5-5"/>
+              </svg>
+              <span>Đã đánh giá</span>
+            </button>
+          } @else {
+            <button class="xanhla-btn-primary xanhla-write-review-btn" type="button" (click)="onWriteReviewClick()" [disabled]="checkingEligibility()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              <span>{{ checkingEligibility() ? 'Đang kiểm tra...' : (showReviewForm() ? 'Đóng form' : 'Viết đánh giá') }}</span>
+            </button>
+          }
         </div>
 
         <!-- Review List -->

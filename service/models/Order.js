@@ -62,6 +62,12 @@ const orderSchema = new mongoose.Schema(
     },
     estimatedPoints: { type: Number, default: 0 },
     pointsAwarded:   { type: Boolean, default: false }, // đã cộng điểm cho chủ đơn chưa
+    inventoryDeducted: { type: Boolean, default: true },
+    inventoryRestored: { type: Boolean, default: false }, // đảm bảo hoàn kho đúng 1 lần khi hủy
+    // Quy chế không hủy/đổi/trả cho hàng tươi sống (rau củ, trái cây, thịt, cá & hải sản)
+    hasNonRefundableItems: { type: Boolean, default: false },
+    nonRefundableAccepted: { type: Boolean, default: false },
+    nonRefundableItems:    { type: Array, default: [] },
     note: { type: String, default: '' },
   },
   { timestamps: true }

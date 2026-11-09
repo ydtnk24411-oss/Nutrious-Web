@@ -14,7 +14,7 @@ const otpVerificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['register', 'change_phone'],
+      enum: ['register', 'change_phone', 'forgot_password'],
       required: true,
     },
     // Dữ liệu đăng ký tạm thời khi chưa hoàn tất OTP

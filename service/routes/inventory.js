@@ -22,8 +22,11 @@ router.get('/', protect, staffOnly, async (req, res, next) => {
       ];
     }
 
-    // Load all active products to calculate accurate summary from MongoDB
-    const allProducts = await Product.find({ isActive: { $ne: false } }).select(
+    // Load all active non-combo products to calculate accurate summary from MongoDB (Combo tồn kho phụ thuộc SP thành phần)
+    const allProducts = await Product.find({
+      isActive: { $ne: false },
+      isCombo: { $ne: true },
+    }).select(
       '_id name slug price priceNumber image category categoryVi stock minStock unit isActive updatedAt'
     );
 
@@ -134,6 +137,12 @@ router.post('/adjust', protect, hasRole('warehouse', 'admin'), async (req, res, 
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm' });
+    }
+    if (product.isCombo) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tồn kho Combo được tính tự động từ tồn kho các sản phẩm thành phần, không chỉnh sửa độc lập.',
+      });
     }
 
     const oldStock = product.stock ?? 0;
