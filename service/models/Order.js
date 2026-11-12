@@ -38,6 +38,8 @@ const orderSchema = new mongoose.Schema(
     comboDiscount: { type: Number, default: 0 },
     addonDiscount: { type: Number, default: 0 },
     voucherCode: { type: String, default: '' },
+    shippingVoucherCode: { type: String, default: '' },
+    shippingVoucherDiscount: { type: Number, default: 0 },
     shippingFee: { type: Number, default: 0 },
     shippingDiscount: { type: Number, default: 0 },
     shippingDistanceKm: { type: Number, default: 0 },
@@ -47,6 +49,9 @@ const orderSchema = new mongoose.Schema(
     },
     estimatedDeliveryTime: { type: String, default: '' },
     shippingDetails: { type: Object },
+    pickupStore: { type: Object, default: null },
+    deliveryTimeSlot: { type: String, default: '' },
+    deliveryType: { type: String, default: '' },
     total:       { type: Number, required: true, min: 0 },
     shippingMethod: {
       type: String, enum: ['pickup', 'delivery'], default: 'pickup',
@@ -55,6 +60,14 @@ const orderSchema = new mongoose.Schema(
     paymentMethod: {
       type: String, enum: ['cod', 'bank_transfer'], default: 'cod',
     },
+    paymentStatus: {
+      type: String,
+      enum: ['unpaid', 'paid', 'expired'],
+      default: 'unpaid',
+    },
+    paymentExpiresAt: { type: Date, default: null },
+    paidAt:           { type: Date, default: null },
+    paymentReference: { type: String, default: '' },
     status: {
       type: String,
       enum: ['pending', 'confirmed', 'preparing', 'shipping', 'delivered', 'cancelled'],
@@ -62,6 +75,12 @@ const orderSchema = new mongoose.Schema(
     },
     estimatedPoints: { type: Number, default: 0 },
     pointsAwarded:   { type: Boolean, default: false }, // đã cộng điểm cho chủ đơn chưa
+    inventoryDeducted: { type: Boolean, default: true },
+    inventoryRestored: { type: Boolean, default: false }, // đảm bảo hoàn kho đúng 1 lần khi hủy
+    // Quy chế không hủy/đổi/trả cho hàng tươi sống (rau củ, trái cây, thịt, cá & hải sản)
+    hasNonRefundableItems: { type: Boolean, default: false },
+    nonRefundableAccepted: { type: Boolean, default: false },
+    nonRefundableItems:    { type: Array, default: [] },
     note: { type: String, default: '' },
   },
   { timestamps: true }

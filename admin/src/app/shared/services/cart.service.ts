@@ -40,7 +40,7 @@ export function getCartItemKey(item: XanhLaCartItem): string {
   );
 }
 
-export type AuthTab = 'login' | 'signup';
+export type AuthTab = 'login' | 'signup' | 'forgot';
 
 function priceValue(price: string): number {
   return Number((price || '').replace(/[^\d]/g, ''));
@@ -935,6 +935,121 @@ export class CartService {
   }
 
   // ── Phone-First Login ─────────────────────────────────────
+
+  // ── Forgot Password (BR-ACC-10) ──────────────────────────────────────────
+
+  requestForgotPasswordOtp(
+    phone: string,
+    onSuccess: (data: { phone: string; expiresInSeconds?: number; demoOtp?: string }) => void,
+    onError: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      message: string;
+      phone: string;
+      expiresInSeconds?: number;
+      demoOtp?: string;
+    }>('/auth/forgot-password/request-otp', {
+      phone: phone.trim(),
+    }).subscribe({
+      next: (res) => {
+        if (res.success) {
+          onSuccess(res);
+        } else {
+          onError(res.message || 'Yêu cầu đặt lại mật khẩu thất bại.');
+        }
+      },
+      error: (err) => {
+        onError(err.error?.message || 'Không thể gửi mã xác minh OTP. Vui lòng kiểm tra lại số điện thoại.');
+      }
+    });
+  }
+
+  verifyForgotPasswordOtp(
+    phone: string,
+    otp: string,
+    onSuccess: (data: { resetToken: string; phone: string; message: string }) => void,
+    onError: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      resetToken: string;
+      phone: string;
+      message: string;
+    }>('/auth/forgot-password/verify-otp', {
+      phone: phone.trim(),
+      otp: otp.trim(),
+    }).subscribe({
+      next: (res) => {
+        if (res.success && res.resetToken) {
+          onSuccess(res);
+        } else {
+          onError(res.message || 'Mã xác minh OTP không hợp lệ.');
+        }
+      },
+      error: (err) => {
+        onError(err.error?.message || 'Mã OTP không chính xác hoặc đã hết hạn.');
+      }
+    });
+  }
+
+  resendForgotPasswordOtp(
+    phone: string,
+    onSuccess: (data: { phone: string; demoOtp?: string }) => void,
+    onError: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      message: string;
+      phone: string;
+      demoOtp?: string;
+    }>('/auth/forgot-password/resend-otp', {
+      phone: phone.trim(),
+    }).subscribe({
+      next: (res) => {
+        if (res.success) {
+          onSuccess(res);
+        } else {
+          onError(res.message || 'Gửi lại mã OTP thất bại.');
+        }
+      },
+      error: (err) => {
+        onError(err.error?.message || 'Không thể gửi lại mã OTP.');
+      }
+    });
+  }
+
+  resetPasswordWithToken(
+    phone: string,
+    resetToken: string,
+    password: string,
+    confirmPassword: string,
+    onSuccess: (msg: string) => void,
+    onError: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      message: string;
+    }>('/auth/forgot-password/reset', {
+      phone: phone.trim(),
+      resetToken: resetToken.trim(),
+      password,
+      confirmPassword,
+    }).subscribe({
+      next: (res) => {
+        if (res.success) {
+          onSuccess(res.message || 'Đặt lại mật khẩu thành công!');
+        } else {
+          onError(res.message || 'Đặt lại mật khẩu không thành công.');
+        }
+      },
+      error: (err) => {
+        onError(err.error?.message || 'Không thể đặt lại mật khẩu. Vui lòng thử lại.');
+      }
+    });
+  }
+
+
 
   login(
     identifier: string,

@@ -9,8 +9,8 @@ export class ApiService {
   private http = inject(HttpClient);
 
   private headers(): HttpHeaders {
-    // Admin app prioritizes admin token for management APIs
-    const token = localStorage.getItem('xanhla_admin_token') || localStorage.getItem('xanhla_auth_token');
+    // User auth token takes priority over admin token to avoid cross-account updates
+    const token = localStorage.getItem('xanhla_auth_token') || localStorage.getItem('xanhla_admin_token');
     return token
       ? new HttpHeaders({ Authorization: `Bearer ${token}` })
       : new HttpHeaders();
@@ -28,6 +28,10 @@ export class ApiService {
 
   put<T>(path: string, body: unknown): Observable<T> {
     return this.http.put<T>(`${API_BASE}${path}`, body, { headers: this.headers() });
+  }
+
+  patch<T>(path: string, body: unknown): Observable<T> {
+    return this.http.patch<T>(`${API_BASE}${path}`, body, { headers: this.headers() });
   }
 
   delete<T>(path: string): Observable<T> {

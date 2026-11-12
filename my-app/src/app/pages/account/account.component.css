@@ -9,7 +9,7 @@
 
 /* ── Title ─────────────────────────────────────────── */
 .acc-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: var(--font-display);
   font-size: 32px;
   font-weight: 400;
   letter-spacing: -0.01em;
@@ -75,7 +75,7 @@
 }
 
 .acc-section-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: var(--font-display);
   font-size: 26px;
   font-weight: 400;
   color: var(--xanh-ink);
@@ -146,7 +146,7 @@
 }
 
 .acc-block-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: var(--font-display);
   font-size: 22px;
   font-weight: 400;
   color: var(--xanh-moss);
@@ -160,10 +160,17 @@
 }
 
 /* ── Form rows ──────────────────────────────────────── */
-.acc-form-row {
+.acc-settings-form {
   display: flex;
-  gap: 48px;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.acc-form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  width: 100%;
 }
 
 .acc-form-left {
@@ -184,6 +191,8 @@
   flex-direction: column;
   gap: 6px;
   position: relative;
+  min-width: 0;
+  width: 100%;
 }
 
 .acc-field label {
@@ -194,6 +203,8 @@
 
 .acc-field input,
 .acc-field select {
+  width: 100%;
+  box-sizing: border-box;
   padding: 10px 14px;
   border: 1px solid var(--xanh-line);
   border-radius: var(--xanh-radius-sm);
@@ -397,6 +408,16 @@
   font-weight: 600;
 }
 
+.acc-badge-pin {
+  font-size: 11px;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-weight: 600;
+}
+
 .acc-address-name {
   font-size: 15px;
   font-weight: 600;
@@ -464,8 +485,9 @@
 /* ── Responsive ─────────────────────────────────────── */
 @media (max-width: 640px) {
   .acc-title { font-size: 24px; }
-  .acc-form-row { flex-direction: column; }
+  .acc-form-row { grid-template-columns: 1fr; }
   .acc-grid-2  { grid-template-columns: 1fr; }
+  .acc-avatar-upload { flex-direction: column; align-items: flex-start; }
   .acc-section-header { flex-direction: column; }
   .acc-header-actions { width: 100%; justify-content: flex-end; }
   .acc-tabs { gap: 20px; }
@@ -1030,6 +1052,12 @@
   padding: 24px;
 }
 
+.acc-settings-section .acc-section-header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
 .acc-section-desc {
   font-size: 14px;
   color: var(--xanh-muted);
@@ -1137,21 +1165,30 @@
 /* Avatar Upload Section */
 .acc-avatar-section {
   margin-bottom: 24px;
+  padding: 16px 18px;
+  background: #f8faf8;
+  border: 1px solid var(--xanh-line);
+  border-radius: var(--xanh-radius-sm);
 }
 
 .acc-avatar-label {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--xanh-ink);
-  margin-bottom: 12px;
+  margin-bottom: 4px;
   display: block;
 }
 
 .acc-avatar-upload {
   display: flex;
   gap: 20px;
-  align-items: flex-start;
-  margin-bottom: 8px;
+  align-items: center;
+}
+
+.acc-avatar-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .acc-avatar-preview-wrapper {
@@ -1358,7 +1395,8 @@
   min-width: 250px;
 }
 
-.acc-search-box svg {
+.acc-search-box svg,
+.acc-search-box i.bi {
   color: var(--xanh-muted);
   flex-shrink: 0;
 }

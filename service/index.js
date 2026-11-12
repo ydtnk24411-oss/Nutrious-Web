@@ -10,6 +10,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 
 const productRoutes = require('./routes/products');
+const comboRoutes = require('./routes/combos');
 const orderRoutes = require('./routes/orders');
 const userRoutes = require('./routes/users');
 const authRoutes = require('./routes/auth');
@@ -27,6 +28,7 @@ const nutritionRoutes = require('./routes/nutrition');
 const footerRoutes = require('./routes/footer');
 const flashSaleRoutes = require('./routes/flashSales');
 const shippingRoutes = require('./routes/shipping');
+const locationRoutes = require('./routes/locations');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -69,6 +71,7 @@ app.use('/api', (req, res, next) => {
 // ── Routes ────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/combos', comboRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/dashboard', dashboardRoutes);
@@ -85,7 +88,9 @@ app.use('/api/nutrition', nutritionRoutes);
 app.use('/api/footer', footerRoutes);
 app.use('/api/flash-sales', flashSaleRoutes);
 app.use('/api/shipping', shippingRoutes);
+app.use('/api/locations', locationRoutes);
 
+// ── Health check ──────────────────────────────────────────
 app.get('/api/health', (_req, res) => {
   const connected = mongoose.connection.readyState === 1;
   res.status(connected ? 200 : 503).json({
@@ -97,28 +102,6 @@ app.get('/api/health', (_req, res) => {
 
 // ── Error handler ─────────────────────────────────────────
 app.use(errorHandler);
-
-// Helper to ensure default admin user exists
-async function ensureAdminUser() {
-  try {
-    const User = require('./models/User');
-    const adminEmail = 'admin@xanhla.farm';
-    let admin = await User.findOne({ email: adminEmail });
-    if (!admin) {
-      admin = await User.create({
-        name: 'Admin Evergreen Mart',
-        email: adminEmail,
-        phone: '0987654321',
-        password: 'admin123',
-        role: 'admin',
-        isActive: true,
-      });
-      console.log('👤 Đã khởi tạo tài khoản Admin mặc định: admin@xanhla.farm / admin123');
-    }
-  } catch (e) {
-    console.error('Lỗi khi kiểm tra tài khoản Admin mặc định:', e.message);
-  }
-}
 
 // ── Database + Start ──────────────────────────────────────
 async function startServer() {
@@ -135,7 +118,6 @@ async function startServer() {
       serverSelectionTimeoutMS: 12000,
     });
     console.log('✅ MongoDB connected');
-    await ensureAdminUser();
   } catch (err) {
     console.error('❌ MongoDB connection error:', err.message);
     console.error(`   Environment file loaded from: ${envPath}`);

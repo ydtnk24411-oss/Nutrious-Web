@@ -5,14 +5,26 @@ const Product  = require('../models/Product');
 const Category = require('../models/Category');
 const { protect, adminOnly } = require('../middleware/auth');
 const { validate }           = require('../middleware/validate');
+const {
+  COMBO_ITEM_POPULATE_FIELDS,
+  enrichComboDocument,
+  enrichProductOrComboList,
+} = require('../utils/comboHelper');
+const {
+  filterProductAddOnDeals,
+  isValidAddOnDeal,
+  isAddonPriceValid,
+  isAddonRelevant,
+} = require('../utils/addonRelevance');
 
 const ADDON_POPULATE_FIELDS = 'name slug image price priceNumber unit weight stock isActive isCombo categoryVi category';
 
-function sanitizeAddOnDeals(rawDeals, selfId) {
-  if (!Array.isArray(rawDeals)) return [];
+async function sanitizeAddOnDeals(rawDeals, selfId, mainDoc) {
+  if (!Array.isArray(rawDeals) || rawDeals.length === 0) return [];
   const seen = new Set();
   const selfStr = selfId ? String(selfId) : '';
   const result = [];
+  const mainPrice = mainDoc ? Number(mainDoc.priceNumber) || 0 : 0;
 
   for (const d of rawDeals) {
     if (!d) continue;
@@ -25,11 +37,22 @@ function sanitizeAddOnDeals(rawDeals, selfId) {
     if (seen.has(prodId)) continue;
     seen.add(prodId);
 
+    const cand = await Product.findById(prodId).select('name slug price priceNumber category categoryVi stock isActive isCombo').lean();
+    if (!cand || cand.isActive === false || cand.isCombo) continue;
+
+    // Bắt buộc: Giá sản phẩm mua kèm phải THẤP HƠN sản phẩm chính
+    if (mainPrice > 0) {
+      if (!isAddonPriceValid(mainDoc, cand) || !isAddonRelevant(mainDoc, cand)) {
+        continue;
+      }
+    }
+
     const discountType = d.discountType === 'fixed' ? 'fixed' : 'percent';
     const rawVal = Math.max(0, Number(d.discountValue) || 0);
     const discountValue = discountType === 'percent'
       ? Math.min(99, Math.round(rawVal))
       : Math.round(rawVal);
+    if (discountValue <= 0) continue;
 
     result.push({
       product: new mongoose.Types.ObjectId(prodId),
@@ -105,7 +128,7 @@ router.get('/', async (req, res, next) => {
     const pageNum  = Math.max(1, Number(page) || 1);
     let query = Product.find(filter)
       .sort(sortObj)
-      .populate('comboItems.product', 'name slug image price priceNumber unit weight stock')
+      .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
       .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     if (limitNum > 0) {
       const skip = (pageNum - 1) * limitNum;
@@ -115,7 +138,12 @@ router.get('/', async (req, res, next) => {
       query,
       Product.countDocuments(filter),
     ]);
-    res.json({ success: true, total, page: pageNum, data: products });
+    res.json({
+      success: true,
+      total,
+      page: pageNum,
+      data: enrichProductOrComboList(products),
+    });
   } catch (err) { next(err); }
 });
 
@@ -177,15 +205,21 @@ router.get('/:slug/combos', async (req, res, next) => {
     const combos = await Product.find({
       isCombo: true,
       isActive: { $ne: false },
+      comboStatus: { $nin: ['paused', 'hidden'] },
       'comboItems.product': product._id,
     })
-      .populate('comboItems.product', 'name slug image price priceNumber unit weight stock isActive')
+      .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
       .limit(limitNum);
 
-    // Bỏ combo có thành phần đã ngừng kinh doanh
-    const valid = combos.filter((c) =>
-      c.comboItems.every((it) => it.product && it.product.isActive !== false)
-    );
+    // Bỏ combo rỗng hoặc có thành phần đã ngừng kinh doanh, đồng thời tính động giá mua lẻ & tồn kho khả dụng
+    const valid = combos
+      .filter(
+        (c) =>
+          Array.isArray(c.comboItems) &&
+          c.comboItems.length > 0 &&
+          c.comboItems.every((it) => it.product && it.product.isActive !== false)
+      )
+      .map((c) => enrichComboDocument(c));
 
     res.json({ success: true, data: valid });
   } catch (err) { next(err); }
@@ -194,16 +228,24 @@ router.get('/:slug/combos', async (req, res, next) => {
 // GET /api/products/:slug — public
 router.get('/:slug', async (req, res, next) => {
   try {
-    let product = await Product.findOne({ slug: req.params.slug, isActive: { $ne: false } })
-      .populate('comboItems.product', 'name slug image price priceNumber unit weight stock')
+    const publicFilter = {
+      $or: [
+        { isCombo: { $ne: true }, isActive: { $ne: false } },
+        { isCombo: true, comboStatus: 'paused' },
+        { isCombo: true, comboStatus: { $nin: ['hidden', 'paused'] }, isActive: { $ne: false } },
+      ],
+    };
+    let product = await Product.findOne({ slug: req.params.slug, ...publicFilter })
+      .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
       .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     if (!product && mongoose.Types.ObjectId.isValid(req.params.slug)) {
-      product = await Product.findOne({ _id: req.params.slug, isActive: { $ne: false } })
-        .populate('comboItems.product', 'name slug image price priceNumber unit weight stock')
+      product = await Product.findOne({ _id: req.params.slug, ...publicFilter })
+        .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
         .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     }
     if (!product) return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
-    res.json({ success: true, data: product });
+    const responseData = product.isCombo ? enrichComboDocument(product) : product;
+    res.json({ success: true, data: responseData });
   } catch (err) { next(err); }
 });
 

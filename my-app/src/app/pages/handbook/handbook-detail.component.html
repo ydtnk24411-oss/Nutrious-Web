@@ -5,7 +5,7 @@
       <nav class="hb-breadcrumb coop-container" aria-label="Đường dẫn">
         <a routerLink="/">Trang chủ</a>
         <span class="hb-sep">/</span>
-        <a routerLink="/cam-nang">Cẩm nang &amp; Cảm hứng</a>
+        <a routerLink="/cam-nang">Cẩm nang</a>
         <span class="hb-sep">/</span>
         <span class="hb-current">{{ article.title }}</span>
       </nav>
@@ -18,11 +18,11 @@
         </div>
         <h1 class="hb-title">{{ article.title }}</h1>
         <div class="hb-meta">
-          <span>🕒 {{ article.readTime }}</span>
+          <span><i class="bi bi-clock"></i> {{ article.readTime }}</span>
           <span>•</span>
-          <span>📅 {{ article.date }}</span>
+          <span><i class="bi bi-calendar3"></i> {{ article.date }}</span>
           <span>•</span>
-          <span>✍️ Ban Biên Tập Evergreen Mart</span>
+          <span><i class="bi bi-pen"></i> Ban Biên Tập Evergreen Mart</span>
         </div>
       </header>
 
@@ -46,7 +46,7 @@
 
             @if (sec.tips && sec.tips.length > 0) {
               <div class="hb-tips-box">
-                <div class="hb-tips-title">💡 Mẹo hay cho bạn:</div>
+                <div class="hb-tips-title"><i class="bi bi-lightbulb"></i> Mẹo hay cho bạn:</div>
                 <ul class="hb-tips-list">
                   @for (tip of sec.tips; track tip) {
                     <li>{{ tip }}</li>

@@ -11,10 +11,7 @@
           <span class="tooltip-message">Chào bạn, cần tư vấn nông sản sạch hoặc phân tích món ăn hôm nay?</span>
         </div>
         <button class="xanh-tooltip-close" (click)="$event.stopPropagation(); chat.hasUnread.set(false)" aria-label="Đóng gợi ý">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-
-          </svg>
+          <i class="bi bi-dash-lg" style="font-size:14px" aria-hidden="true"></i>
         </button>
       </div>
     }
@@ -36,10 +33,7 @@
         </div>
       } @else {
         <div class="launcher-close-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-
-          </svg>
+          <i class="bi bi-dash-lg" style="font-size:20px" aria-hidden="true"></i>
         </div>
       }
     </button>
@@ -59,10 +53,7 @@
           <div class="xanh-chat-avatar-wrapper">
             @if (chat.isStaffMode()) {
               <div class="header-staff-circle">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="12" cy="7" r="4"></circle>
-                </svg>
+                <i class="bi bi-person" style="font-size:18px" aria-hidden="true"></i>
               </div>
             } @else {
               <div class="header-bot-circle">
@@ -90,34 +81,19 @@
         <div class="xanh-chat-header-actions">
           @if (chat.isStaffMode()) {
             <button class="header-action-pill-return" (click)="chat.returnToAi()" title="Trở về hỏi Trợ lý AI" aria-label="Trở về hỏi AI">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="10" rx="2"></rect>
-                <circle cx="12" cy="5" r="2"></circle>
-                <path d="M12 7v4"></path>
-              </svg>
+              <i class="bi bi-robot" style="font-size:13px" aria-hidden="true"></i>
               <span>Về AI</span>
             </button>
           } @else {
             <button class="header-icon-btn" (click)="chat.requestHumanSupport()" title="Gặp nhân viên tư vấn hỗ trợ" aria-label="Gặp nhân viên">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
+              <i class="bi bi-person" style="font-size:16px" aria-hidden="true"></i>
             </button>
           }
           <button class="header-icon-btn" (click)="chat.clearHistory()" title="Làm mới đoạn hội thoại" aria-label="Xóa lịch sử chat">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
-              <path d="M21 3v5h-5"></path>
-              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
-              <path d="M8 16H3v5"></path>
-            </svg>
+            <i class="bi bi-arrow-repeat" style="font-size:15px" aria-hidden="true"></i>
           </button>
           <button class="header-icon-btn close-btn" (click)="chat.close()" title="Thu nhỏ cửa sổ" aria-label="Đóng cửa sổ chat">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-  
-            </svg>
+            <i class="bi bi-dash-lg" style="font-size:16px" aria-hidden="true"></i>
           </button>
         </div>
       </header>
@@ -134,15 +110,9 @@
             </div>
             <p class="banner-desc">Mọi câu hỏi của bạn sẽ được nhân viên phản hồi trực tiếp tại đây.</p>
             <button type="button" class="banner-switch-ai-btn" (click)="chat.returnToAi()" title="Chuyển về hỏi Trợ lý AI NutriBot">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="10" rx="2"></rect>
-                <circle cx="12" cy="5" r="2"></circle>
-                <path d="M12 7v4"></path>
-              </svg>
+              <i class="bi bi-robot" style="font-size:13px" aria-hidden="true"></i>
               <span>Trở về hỏi Trợ lý AI</span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
+              <i class="bi bi-chevron-right" style="font-size:12px" aria-hidden="true"></i>
             </button>
           </div>
         } @else {
@@ -164,10 +134,7 @@
                 @if (msg.senderAvatar) {
                   <img [src]="msg.senderAvatar" [alt]="msg.senderName || 'Admin'" class="staff-photo-avatar" />
                 } @else {
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                  </svg>
+                  <i class="bi bi-person" style="font-size:14px" aria-hidden="true"></i>
                 }
               </div>
             } @else if (msg.sender === 'bot') {
@@ -179,9 +146,7 @@
             <div class="xanh-msg-content-wrap">
               @if (msg.sender === 'admin') {
                 <div class="xanh-admin-sender-badge">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                  </svg>
+                  <i class="bi bi-check-circle-fill" style="font-size:12px" aria-hidden="true"></i>
                   <span>{{ msg.senderName || 'Chuyên viên hỗ trợ Evergreen Mart' }}</span>
                 </div>
               }
@@ -208,12 +173,9 @@
                   [title]="copiedId() === msg.id ? 'Đã sao chép!' : 'Sao chép văn bản'"
                 >
                   @if (copiedId() === msg.id) {
-                    <span class="copy-check">✓ Đã chép</span>
+                    <span class="copy-check"><i class="bi bi-check-lg" aria-hidden="true"></i> Đã chép</span>
                   } @else {
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                    </svg>
+                    <i class="bi bi-clipboard" style="font-size:12px" aria-hidden="true"></i>
                   }
                 </button>
               </div>
@@ -222,11 +184,7 @@
               @if (msg.isHandedOver) {
                 <div class="xanh-handover-action-row">
                   <button type="button" class="xanh-btn-return-ai" (click)="chat.returnToAi()" title="Quay lại hỏi AI các câu hỏi về thực phẩm, dinh dưỡng, nấu ăn">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="3" y="11" width="18" height="10" rx="2"></rect>
-                      <circle cx="12" cy="5" r="2"></circle>
-                      <path d="M12 7v4"></path>
-                    </svg>
+                    <i class="bi bi-robot" style="font-size:13px" aria-hidden="true"></i>
                     <span>Tiếp tục hỏi Trợ lý AI</span>
                   </button>
                 </div>
@@ -252,11 +210,7 @@
                             (click)="addChatProductToCart(prod)"
                             title="Thêm vào giỏ"
                           >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
-                              <circle cx="9" cy="21" r="1"></circle>
-                              <circle cx="20" cy="21" r="1"></circle>
-                              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                            </svg>
+                            <i class="bi bi-cart3" style="font-size:13px" aria-hidden="true"></i>
                             <span>Thêm giỏ</span>
                           </button>
                           <a [routerLink]="['/product-page', prod.slug]" (click)="chat.close()" class="xanh-chat-view-btn">
@@ -305,9 +259,7 @@
                   (click)="selectSuggestion(s)"
                 >
                   <span class="chip-text">{{ s }}</span>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" class="chip-arrow">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                  </svg>
+                  <i class="bi bi-chevron-right chip-arrow" style="font-size:11px" aria-hidden="true"></i>
                 </button>
               }
             </div>
@@ -338,10 +290,7 @@
           >
             <div class="strip-left">
               <span class="strip-icon-circle">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                  <circle cx="12" cy="13" r="4"></circle>
-                </svg>
+                <i class="bi bi-camera" style="font-size:14px" aria-hidden="true"></i>
               </span>
               <span class="xanh-strip-text">Tải ảnh nhận diện nguyên liệu & món ăn</span>
             </div>
@@ -361,8 +310,8 @@
               <span class="xanh-image-title">{{ selectedImageName() || 'Hình ảnh tải lên' }}</span>
               <span class="xanh-image-sub">Sẵn sàng phân tích dinh dưỡng cùng AI</span>
             </div>
-            <button type="button" class="xanh-image-remove-btn" (click)="removeSelectedImage()" title="Hủy ảnh">
-              ✕
+            <button type="button" class="xanh-image-remove-btn" (click)="removeSelectedImage()" title="Hủy ảnh" aria-label="Hủy ảnh">
+              <i class="bi bi-x-lg" style="font-size:12px" aria-hidden="true"></i>
             </button>
           </div>
         }
@@ -377,10 +326,7 @@
             title="Tải ảnh đồ ăn hoặc nguyên liệu để Gemini nhận diện"
             aria-label="Tải ảnh món ăn"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-              <circle cx="12" cy="13" r="4"></circle>
-            </svg>
+            <i class="bi bi-camera" style="font-size:16px" aria-hidden="true"></i>
           </button>
 
           <textarea
@@ -400,10 +346,7 @@
             [disabled]="(!inputText().trim() && !selectedImageBase64()) || chat.loading()"
             aria-label="Gửi tin nhắn"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"></line>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-            </svg>
+            <i class="bi bi-send-fill" style="font-size:14px" aria-hidden="true"></i>
           </button>
         </form>
 

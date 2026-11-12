@@ -61,33 +61,31 @@
   } @else {
     <div class="admin-card" style="padding:0;overflow:hidden">
       <div class="admin-table-wrap">
-        <table class="admin-table">
+        <table class="admin-table orders-table">
           <thead>
             <tr>
               <th>Mã đơn</th>
               <th>Khách hàng</th>
               <th>Sản phẩm</th>
-              <th style="text-align:center">Số món</th>
-              <th>Tổng tiền</th>
+              <th class="col-qty">SL</th>
+              <th class="col-total">Tổng tiền</th>
               <th>Hình thức</th>
               <th>Trạng thái</th>
               <th>Ngày đặt</th>
-              <th style="text-align:right">Thao tác</th>
+              <th class="col-actions">Thao tác</th>
             </tr>
           </thead>
           <tbody>
             @for (o of orders(); track o._id) {
               <tr>
-                <td>
-                  <code class="order-code-badge">
-                    #{{ o.orderCode }}
-                  </code>
+                <td class="col-code">
+                  <code class="order-code-badge">#{{ o.orderCode }}</code>
                 </td>
-                <td>
-                  <div style="font-weight:700;font-size:14px;color:#10321c">{{ o.guestName || o.user?.name || '—' }}</div>
-                  <div style="font-size:12px;color:#627566">{{ o.guestEmail || o.user?.email }}</div>
+                <td class="col-customer">
+                  <div class="order-cust-name" [title]="o.guestName || o.user?.name || ''">{{ o.guestName || o.user?.name || '—' }}</div>
+                  <div class="order-cust-email" [title]="o.guestEmail || o.user?.email || ''">{{ o.guestEmail || o.user?.email || '—' }}</div>
                 </td>
-                <td>
+                <td class="col-product">
                   <div class="order-prod-preview">
                     @if (o.items && o.items.length > 0) {
                       <img
@@ -107,24 +105,53 @@
                     }
                   </div>
                 </td>
-                <td style="text-align:center">
+                <td class="col-qty">
                   <span class="order-qty-pill">{{ o.items.length }}</span>
                 </td>
-                <td><strong style="color:#d63f3f;font-size:15px;font-weight:900">{{ formatPrice(o.total) }}</strong></td>
-                <td style="font-size:13px;color:#4a634e">{{ shippingLabel[o.shippingMethod] }}</td>
-                <td>
-                  <span class="admin-badge" [class]="'badge-' + o.status">
-                    {{ statusLabel[o.status] }}
-                  </span>
+                <td class="col-total">
+                  <strong class="order-total-amount">{{ formatPrice(o.total) }}</strong>
                 </td>
-                <td style="font-size:12.5px;color:#627566">{{ o.createdAt | date:'dd/MM/yy HH:mm' }}</td>
-                <td style="text-align:right">
-                  <button class="admin-btn-icon" title="Xem chi tiết" (click)="openDetail(o)" aria-label="Xem chi tiết">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                  </button>
+                <td class="col-shipping">
+                  <span class="order-shipping-text">{{ shippingLabel[o.shippingMethod] }}</span>
+                </td>
+                <td class="col-status">
+                  <div class="order-status-stack">
+                    <span class="admin-badge" [class]="'badge-' + o.status">
+                      {{ statusLabel[o.status] }}
+                    </span>
+                    @if (o.paymentMethod === 'bank_transfer') {
+                      @if (o.paymentStatus === 'paid') {
+                        <span class="order-pay-badge is-paid">Đã TT VietQR</span>
+                      } @else if (o.paymentStatus === 'expired' || o.status === 'cancelled') {
+                        <span class="order-pay-badge is-expired">Hết hạn QR</span>
+                      } @else {
+                        <span class="order-pay-badge is-pending">Chờ TT VietQR</span>
+                      }
+                    }
+                  </div>
+                </td>
+                <td class="col-date">
+                  <div class="order-date-day">{{ o.createdAt | date:'dd/MM/yy' }}</div>
+                  <div class="order-date-time">{{ o.createdAt | date:'HH:mm' }}</div>
+                </td>
+                <td class="col-actions">
+                  <div class="order-actions-group">
+                    @if (canConfirmQrPayment(o)) {
+                      <button
+                        class="admin-btn-primary order-confirm-qr-btn"
+                        [disabled]="confirmingPayment()"
+                        (click)="confirmPayment(o)"
+                        title="Xác nhận đã nhận chuyển khoản VietQR">
+                        Xác nhận TT
+                      </button>
+                    }
+                    <button class="admin-btn-icon" title="Xem chi tiết" (click)="openDetail(o)" aria-label="Xem chi tiết">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                    </button>
+                  </div>
                 </td>
               </tr>
             }
@@ -189,7 +216,21 @@
             <div class="order-info-card"><span class="order-label">Khách hàng</span><strong>{{ o.guestName || o.user?.name || '—' }}</strong></div>
             <div class="order-info-card"><span class="order-label">Email liên hệ</span><span>{{ o.guestEmail || o.user?.email || '—' }}</span></div>
             <div class="order-info-card"><span class="order-label">Số điện thoại</span><span>{{ o.guestPhone || '—' }}</span></div>
-            <div class="order-info-card"><span class="order-label">Phương thức thanh toán</span><span>{{ paymentLabel[o.paymentMethod] }}</span></div>
+            <div class="order-info-card">
+              <span class="order-label">Phương thức thanh toán</span>
+              <span>
+                {{ paymentLabel[o.paymentMethod] }}
+                @if (o.paymentMethod === 'bank_transfer') {
+                  @if (o.paymentStatus === 'paid') {
+                    <span style="margin-left:6px;font-size:11.5px;font-weight:700;color:#15803d;background:#dcfce7;padding:2px 8px;border-radius:999px">Đã thanh toán</span>
+                  } @else if (o.paymentStatus === 'expired' || o.status === 'cancelled') {
+                    <span style="margin-left:6px;font-size:11.5px;font-weight:700;color:#b91c1c;background:#fee2e2;padding:2px 8px;border-radius:999px">Hết hạn QR</span>
+                  } @else {
+                    <span style="margin-left:6px;font-size:11.5px;font-weight:700;color:#b45309;background:#fef3c7;padding:2px 8px;border-radius:999px">Chờ thanh toán</span>
+                  }
+                }
+              </span>
+            </div>
             <div class="order-info-card"><span class="order-label">Hình thức nhận hàng</span><span>{{ shippingLabel[o.shippingMethod] }}</span></div>
             <div class="order-info-card"><span class="order-label">Trạng thái hiện tại</span><span><span class="admin-badge" [class]="'badge-' + o.status">{{ statusLabel[o.status] }}</span></span></div>
             @if (o.shippingAddress) {
@@ -391,6 +432,26 @@
             </div>
           </div>
         </div>
+
+        @if (canConfirmQrPayment(o)) {
+          <div class="order-section" style="padding:14px 16px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <div>
+                <div style="font-weight:700;color:#92400e;font-size:14px">Đơn hàng đang chờ xác nhận chuyển khoản VietQR</div>
+                <div style="font-size:12.5px;color:#78350f;margin-top:2px">
+                  Nội dung CK: <strong>{{ o.orderCode }}</strong> — Số tiền: <strong>{{ formatPrice(o.total) }}</strong>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="admin-btn-primary"
+                [disabled]="confirmingPayment()"
+                (click)="confirmPayment(o)">
+                {{ confirmingPayment() ? 'Đang xác nhận...' : 'Xác nhận đã thanh toán' }}
+              </button>
+            </div>
+          </div>
+        }
 
         <!-- Update status -->
         <div class="order-section">

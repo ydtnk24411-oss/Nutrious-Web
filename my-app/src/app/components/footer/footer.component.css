@@ -273,7 +273,8 @@
   line-height: 1.5;
 }
 
-.xanhla-contact-row svg {
+.xanhla-contact-row svg,
+.xanhla-contact-row i.bi {
   flex-shrink: 0;
   margin-top: 2px;
   color: #86efac;
@@ -374,91 +375,131 @@
 }
 
 /* ==========================================================================
-   3. TRUST & PAYMENT COMBINED ROW (SINGLE BALANCED STRIP)
+   3. TRUST & PAYMENT COMBINED ROW (BEAUTIFUL CENTERED CLUSTER)
    ========================================================================== */
 .xanhla-footer-trust-banner {
   padding: 16px 0;
-  background: #0f2213;
+  background: #0d2012;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .xanhla-trust-pay-row {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px 28px;
-  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(16px, 2.2vw, 32px);
+  margin: 0 auto;
+  width: 100%;
 }
 
+/* 4 Cam kết to rõ, nằm ngang hàng bên trái */
 .xanhla-trust-list {
   display: flex;
   align-items: center;
-  gap: clamp(12px, 2vw, 24px);
-  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(10px, 1.6vw, 22px);
+  flex-wrap: nowrap;
 }
 
 .xanhla-trust-pill {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.xanhla-trust-pill:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 201, 71, 0.35);
+  transform: translateY(-1px);
 }
 
 .xanhla-trust-icon {
   display: flex;
-  width: 30px;
-  height: 30px;
-  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 201, 71, 0.15);
   color: #ffc947;
+  border: 1.5px solid rgba(255, 201, 71, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .xanhla-trust-text {
   color: #ffffff;
-  font-size: 12px;
+  font-size: 13.5px;
   font-weight: 700;
+  letter-spacing: -0.01em;
   white-space: nowrap;
 }
 
-.xanhla-payment-methods {
+/* Vạch phân cách dọc tinh tế */
+.xanhla-trust-pay-divider {
+  width: 1px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+}
+
+/* 6 Phương thức thanh toán nằm bên phải: 2 dòng x 3 logo */
+.xanhla-payment-wrapper {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.xanhla-payment-methods-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 72px);
+  gap: 6px 8px;
+  justify-content: center;
   align-items: center;
 }
 
 .xanhla-payment-logo {
   display: inline-flex;
-  height: 26px;
+  height: 25px;
+  width: 100%;
   align-items: center;
   justify-content: center;
-  border-radius: 5px;
+  border-radius: 4px;
   overflow: hidden;
   background: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
 }
 
 .xanhla-payment-logo:hover {
   transform: translateY(-2px);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
 }
 
 .xanhla-payment-logo svg {
   display: block;
-  height: 26px;
-  width: auto;
+  height: 25px;
+  width: 100%;
+  object-fit: contain;
 }
 
 .xanhla-payment-badge {
-  padding: 2px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 5px;
-  color: #142e1a;
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 10px;
   font-weight: 700;
   background: #ffffff;
 }

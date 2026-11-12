@@ -4,6 +4,14 @@ import { tap } from 'rxjs/operators';
 import { ProductReview, ReviewStats } from '../models/xanh-la.models';
 import { ApiService } from './api.service';
 
+export interface ReviewEligibility {
+  canReview: boolean;
+  hasReviewed: boolean;
+  hasDeliveredOrder: boolean;
+  hasPendingOrder: boolean;
+  message: string;
+}
+
 const EMPTY_STATS: ReviewStats = {
   averageRating: 0,
   totalReviews: 0,
@@ -54,9 +62,28 @@ export class ReviewService {
     return this.api.post('/reviews', review).pipe(tap(() => this.load(review.productId)));
   }
 
-  // Mark review as helpful (mỗi tài khoản 1 lần)
-  markHelpful(reviewId: string, productId: string): Observable<unknown> {
-    return this.api.post(`/reviews/${reviewId}/helpful`, {}).pipe(tap(() => this.load(productId)));
+  // Kiểm tra điều kiện đánh giá của khách hàng (bắt buộc mua & nhận hàng thành công)
+  checkEligibility(productId: string): Observable<{
+    success: boolean;
+    canReview: boolean;
+    hasReviewed: boolean;
+    hasDeliveredOrder: boolean;
+    hasPendingOrder: boolean;
+    message: string;
+  }> {
+    return this.api.get<{
+      success: boolean;
+      canReview: boolean;
+      hasReviewed: boolean;
+      hasDeliveredOrder: boolean;
+      hasPendingOrder: boolean;
+      message: string;
+    }>(`/reviews/product/${productId}/can-review`);
+  }
+
+  // Mark review as helpful (mỗi tài khoản 1 lần hoặc lưu lượt thích của khách vãng lai)
+  markHelpful(reviewId: string, productId: string, action?: 'like' | 'unlike'): Observable<unknown> {
+    return this.api.post(`/reviews/${reviewId}/helpful`, { action }).pipe(tap(() => this.load(productId)));
   }
 
   // Filter reviews

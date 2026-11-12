@@ -17,6 +17,11 @@ function toCartProduct(p: ApiProduct): XanhLaProduct {
     quantity: p.quantity, ripeness: p.ripeness, sizeGroup: p.sizeGroup,
     thickness: p.thickness, type: p.type, weight: p.weight,
     options: p.options,
+    stock: typeof p.availableStock === 'number' ? p.availableStock : p.stock,
+    availableStock: p.availableStock,
+    comboStatus: p.comboStatus,
+    isCombo: Boolean(p.isCombo || (Array.isArray(p.comboItems) && p.comboItems.length > 0)),
+    comboItems: p.comboItems,
   };
 }
 
@@ -54,7 +59,15 @@ export class MenusComponent implements OnInit {
     });
   }
 
+  isOutOfStock(prod: ApiProduct): boolean {
+    if (prod.isActive === false) return true;
+    const stock = prod.isCombo && typeof prod.availableStock === 'number' ? prod.availableStock : prod.stock;
+    if (prod.isCombo && (prod.comboStatus === 'paused' || prod.comboStatus === 'hidden')) return true;
+    return typeof stock === 'number' && stock <= 0;
+  }
+
   addToCart(prod: ApiProduct): void {
+    if (this.isOutOfStock(prod)) return;
     this.cart.addItem(toCartProduct(prod), 1);
   }
 }

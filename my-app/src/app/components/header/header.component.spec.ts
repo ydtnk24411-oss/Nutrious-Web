@@ -74,4 +74,13 @@ describe('HeaderComponent', () => {
     expect(comp.searchQuery()).toBe('');
     expect(comp.suggestedProducts().length).toBe(0);
   });
+
+  it('should expose register button to open signup modal for guests', () => {
+    const fixture = TestBed.createComponent(HeaderComponent);
+    fixture.detectChanges();
+
+    const registerBtn = fixture.nativeElement.querySelector('.xl-register-pill-btn') as HTMLButtonElement | null;
+    expect(registerBtn).toBeTruthy();
+    expect(registerBtn?.textContent).toContain('Đăng ký');
+  });
 });

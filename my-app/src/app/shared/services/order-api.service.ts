@@ -49,6 +49,11 @@ export interface ApiOrder {
   shippingMethod: 'pickup' | 'delivery';
   shippingAddress: string;
   paymentMethod: 'cod' | 'bank_transfer';
+  paymentStatus?: 'unpaid' | 'paid' | 'expired';
+  paymentExpiresAt?: string | null;
+  paidAt?: string | null;
+  qrUrl?: string | null;
+  bankInfo?: { bankId: string; accountNo: string; accountName: string } | null;
   status: 'pending' | 'confirmed' | 'preparing' | 'shipping' | 'delivered' | 'cancelled';
   note: string;
   createdAt: string;
@@ -89,5 +94,39 @@ export class OrderApiService {
 
   updateStatus(id: string, status: ApiOrder['status']) {
     return this.api.put<{ success: boolean; data: ApiOrder }>(`/orders/${id}/status`, { status });
+  }
+
+  getPaymentStatus(code: string) {
+    return this.api.get<{
+      success: boolean;
+      data: {
+        _id: string;
+        orderCode: string;
+        status: ApiOrder['status'];
+        paymentMethod: ApiOrder['paymentMethod'];
+        paymentStatus: 'unpaid' | 'paid' | 'expired';
+        paymentExpiresAt: string | null;
+        paidAt: string | null;
+        total: number;
+        qrUrl: string | null;
+        bankInfo: { bankId: string; accountNo: string; accountName: string } | null;
+      };
+    }>(`/orders/${encodeURIComponent(code)}/payment-status`);
+  }
+
+  confirmQrPayment(code: string, reference?: string) {
+    return this.api.post<{
+      success: boolean;
+      message: string;
+      data: {
+        _id: string;
+        orderCode: string;
+        status: ApiOrder['status'];
+        paymentMethod: ApiOrder['paymentMethod'];
+        paymentStatus: 'unpaid' | 'paid' | 'expired';
+        paidAt: string | null;
+        total: number;
+      };
+    }>(`/orders/${encodeURIComponent(code)}/confirm-payment`, { reference });
   }
 }

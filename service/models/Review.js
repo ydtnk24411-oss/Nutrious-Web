@@ -13,6 +13,7 @@ const reviewSchema = new mongoose.Schema(
     content:          { type: String, required: true, trim: true },
     images:           [{ type: String }],
     helpfulBy:        [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    guestHelpfulCount:{ type: Number, default: 0, min: 0 },
     verifiedPurchase: { type: Boolean, default: false },
     adminReply:       { type: String, default: '' },
     adminReplyAt:     { type: Date, default: null },

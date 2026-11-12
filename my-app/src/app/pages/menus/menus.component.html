@@ -49,8 +49,12 @@
                       <span class="xanhla-prod-card-unit">/ {{ prod.weight }}</span>
                     }
                   </div>
-                  <button class="xanhla-prod-card-add" type="button" (click)="addToCart(prod)">
-                    Thêm vào giỏ
+                  <button class="xanhla-prod-card-add" type="button"
+                          [disabled]="isOutOfStock(prod)"
+                          [style.opacity]="isOutOfStock(prod) ? '0.5' : '1'"
+                          [style.cursor]="isOutOfStock(prod) ? 'not-allowed' : 'pointer'"
+                          (click)="addToCart(prod)">
+                    {{ isOutOfStock(prod) ? 'Tạm hết hàng' : 'Thêm vào giỏ' }}
                   </button>
                 </div>
               </div>

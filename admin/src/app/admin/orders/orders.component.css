@@ -1,8 +1,145 @@
+.orders-table th,
+.orders-table td {
+  padding: 12px 10px;
+  vertical-align: middle;
+}
+
+.orders-table th:first-child,
+.orders-table td:first-child {
+  padding-left: 16px;
+}
+
+.orders-table th:last-child,
+.orders-table td:last-child {
+  padding-right: 16px;
+}
+
+.orders-table .col-code,
+.orders-table .col-qty,
+.orders-table .col-total,
+.orders-table .col-shipping,
+.orders-table .col-status,
+.orders-table .col-date,
+.orders-table .col-actions {
+  white-space: nowrap;
+}
+
+.orders-table .col-qty {
+  text-align: center;
+}
+
+.orders-table .col-total {
+  text-align: right;
+}
+
+.orders-table .col-actions {
+  text-align: right;
+}
+
+.orders-table .col-customer {
+  max-width: 195px;
+}
+
+.order-cust-name {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: #10321c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.order-cust-email {
+  font-size: 11.5px;
+  color: #627566;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.order-total-amount {
+  color: #d63f3f;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.order-shipping-text {
+  display: inline-block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #3f5844;
+  white-space: nowrap;
+}
+
+.order-status-stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.order-status-stack .admin-badge {
+  white-space: nowrap;
+}
+
+.order-pay-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.order-pay-badge.is-paid {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.order-pay-badge.is-expired {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.order-pay-badge.is-pending {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.order-date-day {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #10321c;
+  line-height: 1.25;
+}
+
+.order-date-time {
+  font-size: 11.5px;
+  color: #627566;
+  line-height: 1.25;
+}
+
+.order-actions-group {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.order-confirm-qr-btn {
+  padding: 5px 10px;
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
 .order-prod-preview {
   display: flex;
   align-items: center;
-  gap: 10px;
-  max-width: 220px;
+  gap: 9px;
+  max-width: 190px;
 }
 
 .order-prod-thumb {
@@ -60,14 +197,15 @@
   display: inline-flex;
   align-items: center;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 700;
   color: #10321c;
   background: #f0f7ec;
   border: 1px solid #d1e4c9;
-  padding: 3px 9px;
+  padding: 3px 8px;
   border-radius: 6px;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 

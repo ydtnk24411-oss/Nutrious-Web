@@ -313,7 +313,8 @@
   object-fit: cover;
 }
 
-.header-staff-circle svg {
+.header-staff-circle svg,
+.header-staff-circle i.bi {
   color: #86efac;
 }
 

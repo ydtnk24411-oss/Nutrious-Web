@@ -49,6 +49,9 @@ export interface ApiOrder {
   shippingMethod: 'pickup' | 'delivery';
   shippingAddress: string;
   paymentMethod: 'cod' | 'bank_transfer';
+  paymentStatus?: 'unpaid' | 'paid' | 'expired';
+  paymentExpiresAt?: string | null;
+  paidAt?: string | null;
   status: 'pending' | 'confirmed' | 'preparing' | 'shipping' | 'delivered' | 'cancelled';
   note: string;
   createdAt: string;
@@ -89,5 +92,12 @@ export class OrderApiService {
 
   updateStatus(id: string, status: ApiOrder['status']) {
     return this.api.put<{ success: boolean; data: ApiOrder }>(`/orders/${id}/status`, { status });
+  }
+
+  confirmPayment(codeOrId: string, reference?: string) {
+    return this.api.post<{ success: boolean; message: string; data: ApiOrder }>(
+      `/orders/${encodeURIComponent(codeOrId)}/confirm-payment`,
+      { reference }
+    );
   }
 }

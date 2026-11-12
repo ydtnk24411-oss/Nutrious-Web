@@ -1,0 +1,378 @@
+@if (open) {
+  <div class="bhx-modal-backdrop" (click)="close()">
+    <div class="bhx-modal-card" (click)="$event.stopPropagation()">
+
+      <!-- VIEW 1: Form Địa chỉ -->
+      @if (view() === 'form') {
+        <div class="bhx-modal-header">
+          <h3 class="bhx-modal-title">{{ modalTitle() }}</h3>
+          <button type="button" class="bhx-modal-close" (click)="close()" title="Đóng">
+            <i class="bi bi-x-lg" style="font-size:18px" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div class="bhx-modal-subtitle">
+          {{ modalSubtitle() }}
+        </div>
+
+        <button
+          type="button"
+          class="btn-current-location"
+          (click)="getCurrentLocation()"
+          [disabled]="isLocating()"
+        >
+          <i class="bi bi-crosshair" style="font-size:18px" aria-hidden="true"></i>
+          <span>{{ isLocating() ? 'Đang xác định vị trí...' : 'Lấy vị trí hiện tại' }}</span>
+        </button>
+
+        @if (locationError()) {
+          <div class="location-err-alert">
+            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> {{ locationError() }}
+          </div>
+        }
+
+        <div class="bhx-form-group">
+          @if (mode === 'addressBook') {
+            <div class="bhx-label-pills-row">
+              <span class="bhx-mini-lbl">Loại địa chỉ:</span>
+              <div class="bhx-label-pills">
+                @for (lbl of ['Nhà riêng', 'Văn phòng', 'Khác']; track lbl) {
+                  <button
+                    type="button"
+                    class="bhx-label-pill"
+                    [class.is-active]="addrLabel() === lbl"
+                    (click)="addrLabel.set(lbl)"
+                  >
+                    {{ lbl }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Tỉnh/Thành phố -->
+          <div class="bhx-select-field" (click)="openProvincePicker()">
+            <span class="bhx-select-lbl">Tỉnh/Thành phố</span>
+            <div class="bhx-select-val-row">
+              <span class="bhx-select-val" [class.placeholder]="!selectedProvince()">
+                {{ selectedProvince()?.name || 'Chọn Tỉnh/Thành phố' }}
+              </span>
+              <i class="bi bi-chevron-down" style="font-size:16px" aria-hidden="true"></i>
+            </div>
+          </div>
+
+          @if (mode === 'checkout' && selectedProvince() && !isSelectedProvinceServed()) {
+            <div class="bhx-unserved-note">
+              <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> <strong>{{ selectedProvince()?.name }}</strong> hiện chưa có cửa hàng Evergreen Mart. Hệ thống chỉ giao được nếu điểm nhận cách cửa hàng gần nhất <strong>≤ 20 km</strong> (giao xa có phụ thu; mạng lưới 18 cửa hàng tại: {{ servedProvincesSummary() }}).
+            </div>
+          }
+
+          <!-- Phường/Xã -->
+          <div
+            class="bhx-select-field"
+            [class.is-disabled]="!selectedProvince()"
+            (click)="openWardPicker()"
+          >
+            <span class="bhx-select-lbl">Phường/Xã</span>
+            <div class="bhx-select-val-row">
+              <span class="bhx-select-val" [class.placeholder]="!selectedWard()">
+                {{ selectedWard()?.name || (selectedProvince() ? 'Chọn Phường/Xã' : 'Vui lòng chọn Tỉnh/Thành trước') }}
+              </span>
+              <i class="bi bi-chevron-down" style="font-size:16px" aria-hidden="true"></i>
+            </div>
+          </div>
+
+          <!-- Số nhà, tên đường + gợi ý bản đồ -->
+          <div class="bhx-street-input-wrap">
+            <div class="bhx-street-input-box">
+              <input
+                type="text"
+                class="bhx-street-input"
+                placeholder="Số nhà, tên đường (vd: 12 Võ Văn Ngân, KTX Khu B...)"
+                [value]="streetInput()"
+                (input)="onStreetInput($any($event.target).value)"
+                (focus)="onStreetFocus()"
+                (keydown.enter)="onStreetEnter($event)"
+              />
+              @if (isSearchingSuggestions()) {
+                <div class="bhx-street-spinner" title="Đang tìm gợi ý...">
+                  <i class="bi bi-arrow-repeat" style="color:#16a34a;font-size:16px" aria-hidden="true"></i>
+                </div>
+              } @else if (streetInput()) {
+                <button type="button" class="bhx-street-clear" (click)="clearStreetInput()" aria-label="Xóa">
+                  <i class="bi bi-x-lg" style="font-size:13px" aria-hidden="true"></i>
+                </button>
+              }
+            </div>
+
+            @if (showSuggestionsDropdown() && streetSuggestions().length > 0) {
+              <div class="bhx-suggestions-dropdown">
+                <div class="bhx-suggestions-header">
+                  <span class="bhx-suggestions-title-text">Gợi ý tham khảo (không bắt buộc):</span>
+                  <button type="button" class="bhx-btn-dismiss-suggestions" (click)="dismissSuggestions()" title="Đóng gợi ý">
+                    Bỏ qua <i class="bi bi-x-lg" style="font-size:11px" aria-hidden="true"></i>
+                  </button>
+                </div>
+
+                <div class="bhx-suggestion-item bhx-suggestion-use-current" (click)="dismissSuggestions()">
+                  <div class="bhx-suggestion-icon use-current-icon">
+                    <i class="bi bi-check-lg" style="color:#007840;font-size:16px" aria-hidden="true"></i>
+                  </div>
+                  <div class="bhx-suggestion-texts">
+                    <strong class="bhx-suggestion-name text-green">Dùng địa chỉ đã nhập: "{{ streetInput() }}"</strong>
+                    <span class="bhx-suggestion-sub">Không dùng gợi ý bản đồ, tiếp tục với số nhà của bạn</span>
+                  </div>
+                </div>
+
+                @for (item of streetSuggestions(); track item.place_id) {
+                  <div class="bhx-suggestion-item" (click)="selectStreetSuggestion(item)">
+                    <div class="bhx-suggestion-icon">
+                      <i class="bi bi-geo-alt" style="color:#16a34a;font-size:15px" aria-hidden="true"></i>
+                    </div>
+                    <div class="bhx-suggestion-texts">
+                      <strong class="bhx-suggestion-name">{{ item.title || item.display_name }}</strong>
+                      @if (item.subtitle) {
+                        <span class="bhx-suggestion-sub">{{ item.subtitle }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Thông tin người nhận / mặc định -->
+          <div class="bhx-receiver-box">
+            @if (mode === 'addressBook') {
+              <label class="bhx-other-receiver-row" style="margin-top:0">
+                <input
+                  type="checkbox"
+                  [checked]="addrIsDefault()"
+                  (change)="addrIsDefault.set($any($event.target).checked)"
+                />
+                <span>Đặt làm địa chỉ mặc định</span>
+              </label>
+            } @else {
+              <div class="bhx-receiver-label">
+                Người nhận: <strong>{{ currentReceiverName() }} - {{ currentReceiverPhone() }}</strong>
+              </div>
+              <label class="bhx-other-receiver-row">
+                <input
+                  type="checkbox"
+                  [checked]="otherReceiverChecked()"
+                  (change)="otherReceiverChecked.set($any($event.target).checked)"
+                />
+                <span>Gọi người khác nhận hàng (nếu có)</span>
+              </label>
+              @if (otherReceiverChecked()) {
+                <div class="bhx-other-receiver-inputs">
+                  <input
+                    type="text"
+                    class="bhx-street-input"
+                    placeholder="Họ tên người nhận"
+                    [value]="otherReceiverName()"
+                    (input)="otherReceiverName.set($any($event.target).value)"
+                  />
+                  <input
+                    type="tel"
+                    class="bhx-street-input"
+                    placeholder="Số điện thoại người nhận"
+                    [value]="otherReceiverPhone()"
+                    (input)="otherReceiverPhone.set($any($event.target).value)"
+                  />
+                </div>
+              }
+            }
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn-modal-continue"
+          [disabled]="!canProceedToMap() || isGeocoding()"
+          (click)="proceedToMapConfirmation()"
+        >
+          {{ isGeocoding() ? 'Đang định vị địa chỉ...' : 'Tiếp tục' }}
+        </button>
+      }
+
+      <!-- VIEW 2: Chọn Tỉnh/Thành phố -->
+      @if (view() === 'province') {
+        <div class="bhx-modal-header">
+          <button type="button" class="bhx-modal-back-btn" (click)="backToForm()">
+            <i class="bi bi-chevron-left" style="font-size:18px" aria-hidden="true"></i>
+          </button>
+          <h3 class="bhx-modal-title">Chọn Tỉnh/Thành phố</h3>
+          <button type="button" class="bhx-modal-close" (click)="close()">
+            <i class="bi bi-x-lg" style="font-size:18px" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div class="bhx-modal-subtitle">
+          {{ modalSubtitle() }}
+        </div>
+
+        <button
+          type="button"
+          class="btn-current-location"
+          (click)="getCurrentLocation()"
+          [disabled]="isLocating()"
+        >
+          <i class="bi bi-crosshair" style="font-size:18px" aria-hidden="true"></i>
+          <span>{{ isLocating() ? 'Đang xác định vị trí...' : 'Lấy vị trí hiện tại' }}</span>
+        </button>
+
+        <div class="bhx-toggle-row">
+          <span class="bhx-toggle-label">Hiển thị tên Tỉnh/Thành cũ</span>
+          <label class="bhx-switch">
+            <input
+              type="checkbox"
+              [checked]="showOldProvinceNames()"
+              (change)="showOldProvinceNames.set($any($event.target).checked)"
+            />
+            <span class="bhx-slider round"></span>
+          </label>
+        </div>
+
+        <div class="bhx-picker-search-wrap">
+          <div class="bhx-picker-search-bar">
+            <i class="bi bi-search" style="color:#9ca3af;font-size:16px" aria-hidden="true"></i>
+            <input
+              type="text"
+              placeholder="Tìm nhanh Tỉnh/Thành"
+              [value]="provinceSearch()"
+              (input)="provinceSearch.set($any($event.target).value)"
+            />
+          </div>
+        </div>
+
+        <div class="bhx-picker-list-scroll">
+          @for (prov of filteredProvinces(); track prov.code) {
+            <div class="bhx-picker-row" (click)="selectProvince(prov)">
+              <span>{{ prov.name }}</span>
+              @if (selectedProvince()?.code === prov.code) {
+                <i class="bi bi-check-lg" style="color:#16a34a;font-size:17px" aria-hidden="true"></i>
+              }
+            </div>
+          }
+          @if (filteredProvinces().length === 0) {
+            <div class="bhx-picker-empty">Không tìm thấy Tỉnh/Thành phố phù hợp</div>
+          }
+        </div>
+      }
+
+      <!-- VIEW 3: Chọn Phường/Xã -->
+      @if (view() === 'ward') {
+        <div class="bhx-modal-header">
+          <button type="button" class="bhx-modal-back-btn" (click)="backToForm()">
+            <i class="bi bi-chevron-left" style="font-size:18px" aria-hidden="true"></i>
+          </button>
+          <h3 class="bhx-modal-title">Chọn Phường/Xã</h3>
+          <button type="button" class="bhx-modal-close" (click)="close()">
+            <i class="bi bi-x-lg" style="font-size:18px" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div class="bhx-picker-search-wrap">
+          <div class="bhx-picker-search-bar">
+            <i class="bi bi-search" style="color:#9ca3af;font-size:16px" aria-hidden="true"></i>
+            <input
+              type="text"
+              placeholder="Tìm nhanh Phường/Xã"
+              [value]="wardSearch()"
+              (input)="wardSearch.set($any($event.target).value)"
+            />
+          </div>
+        </div>
+
+        <div class="bhx-picker-list-scroll">
+          @for (w of filteredWards(); track w.code) {
+            <div class="bhx-picker-row" (click)="selectWard(w)">
+              <span>{{ w.name }}</span>
+              @if (selectedWard()?.code === w.code) {
+                <i class="bi bi-check-lg" style="color:#16a34a;font-size:17px" aria-hidden="true"></i>
+              }
+            </div>
+          }
+          @if (filteredWards().length === 0) {
+            <div class="bhx-picker-empty">Không tìm thấy Phường/Xã phù hợp</div>
+          }
+        </div>
+      }
+
+      <!-- VIEW 4: Xác nhận trên bản đồ -->
+      @if (view() === 'map') {
+        <div class="bhx-modal-header">
+          <button type="button" class="bhx-modal-back-btn" (click)="backToForm()" title="Quay lại">
+            <i class="bi bi-chevron-left" style="font-size:18px" aria-hidden="true"></i>
+          </button>
+          <h3 class="bhx-modal-title">Xác nhận địa chỉ nhận hàng</h3>
+          <button type="button" class="bhx-modal-close" (click)="close()" title="Đóng">
+            <i class="bi bi-x-lg" style="font-size:18px" aria-hidden="true"></i>
+          </button>
+        </div>
+
+        <div class="bhx-map-status" [ngClass]="'status-' + matchQuality()">
+          @switch (matchQuality()) {
+            @case ('exact') {
+              <i class="bi bi-check-circle-fill status-icon" style="color:#16a34a" aria-hidden="true"></i>
+              <span>Đã định vị chính xác vị trí nhận hàng trên bản đồ.</span>
+            }
+            @case ('street_match') {
+              <i class="bi bi-geo-alt-fill status-icon" style="color:#2563eb" aria-hidden="true"></i>
+              <span>Đã định vị theo tên đường. Bạn có thể di chuyển ghim để chọn đúng số nhà.</span>
+            }
+            @case ('approximate') {
+              <i class="bi bi-exclamation-triangle-fill status-icon" style="color:#d97706" aria-hidden="true"></i>
+              <span>Vị trí gần đúng (trung tâm Phường/Xã). Chạm vào bản đồ hoặc kéo ghim màu đỏ để ghim đúng địa chỉ của bạn.</span>
+            }
+            @case ('manual') {
+              <i class="bi bi-pin-angle-fill status-icon" style="color:#dc2626" aria-hidden="true"></i>
+              <span>Vị trí do bạn tự ghim trên bản đồ. Có thể tiếp tục kéo ghim nếu cần.</span>
+            }
+            @case ('gps') {
+              <i class="bi bi-crosshair2 status-icon" style="color:#0284c7" aria-hidden="true"></i>
+              <span>Vị trí xác định từ GPS hiện tại của thiết bị.</span>
+            }
+          }
+        </div>
+
+        <div class="bhx-map-container">
+          <div id="bhxConfirmMap" class="bhx-map-canvas"></div>
+        </div>
+
+        <div class="bhx-map-address-box">
+          <div class="bhx-addr-main-box">
+            <div class="bhx-addr-main-label">
+              <i class="bi bi-geo-alt" style="color:#16a34a;font-size:15px" aria-hidden="true"></i>
+              <span>Địa chỉ giao hàng (chính thức):</span>
+            </div>
+            <div class="bhx-addr-main-text">{{ userEnteredAddress() }}</div>
+          </div>
+
+          @if (referenceAddress() && referenceAddress() !== userEnteredAddress()) {
+            <div class="bhx-addr-ref-box">
+              <div class="bhx-addr-ref-label">
+                <i class="bi bi-info-circle" style="color:#64748b;font-size:13px" aria-hidden="true"></i>
+                <span>Vị trí ghim trên bản đồ (đối chiếu tham khảo):</span>
+              </div>
+              <div class="bhx-addr-ref-text">
+                {{ isMapResolving() ? 'Đang xác định địa chỉ đối chiếu...' : referenceAddress() }}
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="bhx-map-actions">
+          <button type="button" class="btn-map-edit" (click)="backToForm()">
+            Sửa vị trí
+          </button>
+          <button type="button" class="btn-map-complete" (click)="confirmComplete()">
+            {{ mode === 'addressBook' ? 'Lưu địa chỉ' : 'Hoàn tất' }}
+          </button>
+        </div>
+      }
+
+    </div>
+  </div>
+}

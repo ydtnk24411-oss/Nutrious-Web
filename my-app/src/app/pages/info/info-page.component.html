@@ -1,0 +1,680 @@
+<app-shell>
+  <main class="info-page">
+    <!-- Hero Banner -->
+    <section class="info-hero">
+      <div class="info-container">
+        <nav class="info-breadcrumb" aria-label="Đường dẫn">
+          <a routerLink="/">Trang chủ</a>
+          <i class="bi bi-chevron-right info-bc-sep" aria-hidden="true"></i>
+          <span>{{ headerMeta().title }}</span>
+        </nav>
+
+        <div class="info-hero-content">
+          <span class="info-hero-badge">{{ headerMeta().badge }}</span>
+          <h1 class="info-hero-title">{{ headerMeta().title }}</h1>
+          <p class="info-hero-subtitle">{{ headerMeta().subtitle }}</p>
+          <div class="info-hero-meta">
+            <span><i class="bi bi-patch-check-fill" aria-hidden="true"></i> {{ headerMeta().updatedAt }}</span>
+            <span class="info-meta-dot" aria-hidden="true">&bull;</span>
+            <span><i class="bi bi-telephone-fill" aria-hidden="true"></i> Hotline: 1800 6999 (07:00 – 21:00)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main 2-column Shell -->
+    <section class="info-shell">
+      <div class="info-container info-layout">
+        <!-- Sticky Left Sidebar -->
+        <aside class="info-sidebar" aria-label="Điều hướng thông tin">
+          @for (group of navGroups; track group.title) {
+            <div class="info-nav-group">
+              <h2 class="info-nav-heading">{{ group.title }}</h2>
+              <nav class="info-nav-list">
+                @for (item of group.items; track item.route) {
+                  <a
+                    [routerLink]="item.route"
+                    class="info-nav-link"
+                    [class.is-active]="activeKey() === item.key"
+                  >
+                    <span>{{ item.label }}</span>
+                    <i class="bi bi-chevron-right info-nav-chevron" aria-hidden="true"></i>
+                  </a>
+                }
+              </nav>
+            </div>
+          }
+
+          <div class="info-sidebar-cta">
+            <div class="info-sidebar-cta-title">Cần hỗ trợ nhanh về đơn hàng?</div>
+            <p class="info-sidebar-cta-desc">
+              Gửi phản ánh kèm hình ảnh hoặc gọi tổng đài để được kiểm tra và xử lý kịp thời.
+            </p>
+            <a routerLink="/complaint" class="info-sidebar-btn">
+              <i class="bi bi-chat-square-text" aria-hidden="true"></i>
+              Gửi khiếu nại &amp; Phản ánh
+            </a>
+            <a href="tel:18006999" class="info-sidebar-phone">
+              <i class="bi bi-telephone" aria-hidden="true"></i>
+              Gọi miễn phí: 1800 6999
+            </a>
+          </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="info-main">
+
+          <!-- ══════════════════════════════════════════════════
+               1. GIỚI THIỆU VỀ EVERGREEN MART (/gioi-thieu)
+          ══════════════════════════════════════════════════ -->
+          @if (activeKey() === 'about') {
+            <div class="info-section-stack">
+              <div class="info-stats-grid">
+                <div class="info-stat-card">
+                  <div class="info-stat-num">100%</div>
+                  <div class="info-stat-lbl">Chuẩn VietGAP &amp; Organic</div>
+                </div>
+                <div class="info-stat-card">
+                  <div class="info-stat-num">18</div>
+                  <div class="info-stat-lbl">Chi nhánh tại 10 tỉnh thành</div>
+                </div>
+                <div class="info-stat-card">
+                  <div class="info-stat-num">30–45p</div>
+                  <div class="info-stat-lbl">Giao ngay quanh chi nhánh</div>
+                </div>
+                <div class="info-stat-card">
+                  <div class="info-stat-num">20 km</div>
+                  <div class="info-stat-lbl">Bán kính giao tận nơi</div>
+                </div>
+              </div>
+
+              <div class="info-card">
+                <h2 class="info-card-title">Sứ mệnh từ nông trại xanh đến bàn ăn gia đình</h2>
+                <p class="info-prose">
+                  <strong>Evergreen Mart</strong> kết nối trực tiếp nguồn nông sản sạch từ các hợp tác xã đạt chuẩn VietGAP, GlobalGAP và Organic tại Đà Lạt, Miền Tây và Tây Nguyên về <strong>18 cửa hàng &amp; kho lạnh tại 10 tỉnh thành</strong>. Hàng tươi sống được bảo quản lạnh 0°C – 4°C, chuẩn bị trong 15–30 phút và điều phối tự động từ chi nhánh gần địa chỉ nhận nhất.
+                </p>
+                <p class="info-prose">
+                  Bên cạnh siêu thị nông sản trực tuyến, website tích hợp các công cụ <strong>Dinh dưỡng thông minh</strong>, <strong>Nấu gì với đồ sẵn có</strong> và <strong>Khách hàng thân thiết</strong> (tích 1 điểm mỗi 10.000đ chi tiêu), giúp việc lên thực đơn, mua đúng nguyên liệu và tối ưu chi phí trở nên dễ dàng hơn.
+                </p>
+              </div>
+
+              <div class="info-card">
+                <h2 class="info-card-title">Cam kết chất lượng &ldquo;3 Không&rdquo;</h2>
+                <div class="info-feature-grid info-feature-grid--3">
+                  <div class="info-feature-box">
+                    <div class="info-feature-icon"><i class="bi bi-patch-check" aria-hidden="true"></i></div>
+                    <h3>Không dư lượng vượt chuẩn</h3>
+                    <p>Nông sản được kiểm soát nguồn gốc rõ ràng theo tiêu chuẩn VietGAP, GlobalGAP và canh tác hữu cơ minh bạch.</p>
+                  </div>
+                  <div class="info-feature-box">
+                    <div class="info-feature-icon"><i class="bi bi-snow2" aria-hidden="true"></i></div>
+                    <h3>Không lưu kho kém chất lượng</h3>
+                    <p>Bảo quản xuyên suốt trong nhiệt độ 0°C – 4°C tại 18 kho lạnh địa phương để giữ trọn độ giòn ngọt và vi chất.</p>
+                  </div>
+                  <div class="info-feature-box">
+                    <div class="info-feature-icon"><i class="bi bi-shield-check" aria-hidden="true"></i></div>
+                    <h3>Không mập mờ khi giao nhận</h3>
+                    <p>Khách hàng được đồng kiểm trực tiếp thực phẩm tươi sống lúc nhận hàng và từ chối nhận ngay nếu không đạt yêu cầu.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="info-card">
+                <h2 class="info-card-title">Hệ sinh thái tiện ích trên Evergreen Mart</h2>
+                <div class="info-feature-grid info-feature-grid--3">
+                  <a routerLink="/online-ordering" class="info-action-tile">
+                    <div class="info-tile-head">
+                      <i class="bi bi-basket2" aria-hidden="true"></i>
+                      <strong>Đặt hàng trực tuyến</strong>
+                    </div>
+                    <span>Rau củ, trái cây, thịt cá tươi sống và thực phẩm thiết yếu chuẩn sạch.</span>
+                    <span class="info-tile-link">Khám phá ngay <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+                  </a>
+                  <a routerLink="/nutrition" class="info-action-tile">
+                    <div class="info-tile-head">
+                      <i class="bi bi-heart-pulse" aria-hidden="true"></i>
+                      <strong>Dinh dưỡng thông minh</strong>
+                    </div>
+                    <span>Gợi ý thực đơn theo mục tiêu vi chất, số khẩu phần và ngân sách bữa ăn.</span>
+                    <span class="info-tile-link">Trải nghiệm <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+                  </a>
+                  <a routerLink="/cook-with-what-you-have" class="info-action-tile">
+                    <div class="info-tile-head">
+                      <i class="bi bi-egg-fried" aria-hidden="true"></i>
+                      <strong>Nấu gì với đồ sẵn có?</strong>
+                    </div>
+                    <span>Nhập hoặc tải ảnh nguyên liệu tủ lạnh để nhận công thức và đặt phần còn thiếu.</span>
+                    <span class="info-tile-link">Thử ngay <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- ══════════════════════════════════════════════════
+               2. CÂU HỎI THƯỜNG GẶP (/hoi-dap)
+          ══════════════════════════════════════════════════ -->
+          @if (activeKey() === 'faq') {
+            <div class="info-section-stack">
+              <div class="info-card">
+                <div class="info-faq-toolbar">
+                  <div class="info-search-box">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input
+                      type="text"
+                      placeholder="Tìm câu hỏi (ví dụ: freeship, đồng kiểm, voucher, khung giờ...)"
+                      [value]="faqQuery()"
+                      (input)="faqQuery.set($any($event.target).value)"
+                    />
+                  </div>
+                  <div class="info-filter-pills">
+                    <button type="button" [class.is-active]="faqCategory() === 'all'" (click)="faqCategory.set('all')">Tất cả</button>
+                    <button type="button" [class.is-active]="faqCategory() === 'order'" (click)="faqCategory.set('order')">Đặt hàng &amp; Giao nhận</button>
+                    <button type="button" [class.is-active]="faqCategory() === 'payment'" (click)="faqCategory.set('payment')">Thanh toán &amp; Ưu đãi</button>
+                    <button type="button" [class.is-active]="faqCategory() === 'quality'" (click)="faqCategory.set('quality')">Chất lượng &amp; Kiểm hàng</button>
+                    <button type="button" [class.is-active]="faqCategory() === 'feature'" (click)="faqCategory.set('feature')">Tài khoản &amp; Tiện ích</button>
+                  </div>
+                </div>
+
+                <div class="info-faq-list">
+                  @for (item of filteredFaqs(); track item.id) {
+                    <div class="info-faq-item" [class.is-open]="isFaqOpen(item.id)">
+                      <button type="button" class="info-faq-trigger" (click)="toggleFaq(item.id)">
+                        <div class="info-faq-q-wrap">
+                          <span class="info-faq-cat">{{ item.categoryLabel }}</span>
+                          <span class="info-faq-q">{{ item.question }}</span>
+                        </div>
+                        <span class="info-faq-plus" aria-hidden="true">
+                          <i class="bi" [class.bi-dash]="isFaqOpen(item.id)" [class.bi-plus]="!isFaqOpen(item.id)"></i>
+                        </span>
+                      </button>
+                      @if (isFaqOpen(item.id)) {
+                        <div class="info-faq-answer">{{ item.answer }}</div>
+                      }
+                    </div>
+                  }
+                  @if (filteredFaqs().length === 0) {
+                    <div class="info-empty-box">
+                      Không tìm thấy câu hỏi phù hợp với từ khóa &ldquo;{{ faqQuery() }}&rdquo;. Bạn có thể
+                      <a routerLink="/lien-he">liên hệ trực tiếp</a> để được giải đáp ngay.
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- ══════════════════════════════════════════════════
+               3. TRUNG TÂM HỖ TRỢ (/ho-tro)
+          ══════════════════════════════════════════════════ -->
+          @if (activeKey() === 'help') {
+            <div class="info-section-stack">
+              <div class="info-card">
+                <h2 class="info-card-title">Lối tắt tự phục vụ nhanh chóng</h2>
+                <div class="info-feature-grid info-feature-grid--2">
+                  <a routerLink="/tracker-page" class="info-action-tile">
+                    <div class="info-tile-head">
+                      <i class="bi bi-box-seam" aria-hidden="true"></i>
+                      <strong>Tra cứu &amp; Theo dõi đơn hàng</strong>
+                    </div>
+                    <span>Kiểm tra tiến trình xử lý, chi nhánh xuất hàng và thời gian dự kiến giao.</span>
+                    <span class="info-tile-link">Tra cứu đơn <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+                  </a>
+                  <a routerLink="/complaint" class="info-action-tile">
+                    <div class="info-tile-head">
+                      <i class="bi bi-chat-square-text" aria-hidden="true"></i>
+                      <strong>Gửi khiếu nại &amp; Phản ánh</strong>
+                    </div>
+                    <span>Đính kèm mã đơn và hình ảnh sự cố giao thiếu, sai món hoặc hàng đóng gói lỗi.</span>
+                    <span class="info-tile-link">Gửi yêu cầu <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+                  </a>
+                  <a routerLink="/vouchers" class="info-action-tile">
+                    <div class="info-tile-head">
+                      <i class="bi bi-ticket-perforated" aria-hidden="true"></i>
+                      <strong>Kho &amp; Ví Voucher ưu đãi</strong>
+                    </div>
+                    <span>Lưu mã giảm giá đơn hàng và mã Freeship để áp dụng kép khi thanh toán.</span>
+                    <span class="info-tile-link">Mở Ví Voucher <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+                  </a>
+                  <a routerLink="/account" class="info-action-tile">
+                    <div class="info-tile-head">
+                      <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                      <strong>Sổ địa chỉ &amp; Tài khoản</strong>
+                    </div>
+                    <span>Cập nhật địa chỉ ghim bản đồ chuẩn xác, đổi số điện thoại OTP và xem điểm tích lũy.</span>
+                    <span class="info-tile-link">Quản lý tài khoản <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+                  </a>
+                </div>
+              </div>
+
+              <div class="info-card">
+                <h2 class="info-card-title">Xử lý các tình huống thường gặp</h2>
+                <div class="info-guide-list">
+                  <div class="info-guide-row">
+                    <div class="info-step-badge">01</div>
+                    <div>
+                      <h4>Muốn thay đổi giờ giao hoặc địa chỉ sau khi đặt?</h4>
+                      <p>Hãy gọi ngay Hotline <strong>1800 6999</strong> (07:00 – 21:00) trước khi đơn chuyển sang trạng thái đang giao để nhân viên điều phối cập nhật kịp thời.</p>
+                    </div>
+                  </div>
+                  <div class="info-guide-row">
+                    <div class="info-step-badge">02</div>
+                    <div>
+                      <h4>Đã chuyển khoản VietQR nhưng trạng thái chưa cập nhật?</h4>
+                      <p>Hệ thống tự động đối soát trạng thái thanh toán theo thời gian thực ngay tại trang mã QR. Bạn vui lòng kiểm tra lại ở mục <strong>Đơn hàng của tôi</strong> hoặc cung cấp mã đơn qua Hotline 1800 6999.</p>
+                    </div>
+                  </div>
+                  <div class="info-guide-row">
+                    <div class="info-step-badge">03</div>
+                    <div>
+                      <h4>Địa chỉ giao hàng vượt quá bán kính 20 km?</h4>
+                      <p>Để giữ trọn độ tươi của rau củ và hàng lạnh, dịch vụ giao tận nơi phục vụ tối đa 20 km quanh chi nhánh gần nhất. Bạn có thể chọn hình thức <strong>Nhận tại cửa hàng (Miễn phí)</strong> tại trang Thanh toán.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- ══════════════════════════════════════════════════
+               4. HƯỚNG DẪN ĐẶT HÀNG & THANH TOÁN (/chinh-sach/huong-dan)
+          ══════════════════════════════════════════════════ -->
+          @if (activeKey() === 'guide') {
+            <div class="info-section-stack">
+              <div class="info-card">
+                <h2 class="info-card-title">Quy trình đặt hàng trong 4 bước đơn giản</h2>
+                <div class="info-guide-list">
+                  <div class="info-guide-row">
+                    <div class="info-step-badge">Bước 1</div>
+                    <div>
+                      <h4>Chọn nông sản hoặc thực đơn dinh dưỡng</h4>
+                      <p>Tìm sản phẩm tại <a routerLink="/online-ordering">Đặt hàng trực tuyến</a> hoặc thêm nhanh nguyên liệu từ <a routerLink="/nutrition">Dinh dưỡng thông minh</a> và <a routerLink="/cook-with-what-you-have">Nấu gì với đồ sẵn có</a>.</p>
+                    </div>
+                  </div>
+                  <div class="info-guide-row">
+                    <div class="info-step-badge">Bước 2</div>
+                    <div>
+                      <h4>Chọn giao tận nơi (ghim bản đồ) hoặc nhận tại cửa hàng</h4>
+                      <p>Hệ thống cho phép định vị GPS hoặc chọn Tỉnh/Thành, Phường/Xã và ghim tọa độ trực tiếp trên bản đồ để chọn đúng 1 trong 18 chi nhánh gần nhất (phục vụ giao trong 20 km).</p>
+                    </div>
+                  </div>
+                  <div class="info-guide-row">
+                    <div class="info-step-badge">Bước 3</div>
+                    <div>
+                      <h4>Chọn hình thức giao &amp; Áp dụng kép 2 Voucher</h4>
+                      <p>Chọn <strong>Giao ngay (30–45 phút)</strong>, <strong>Hẹn khung giờ (07h30–22h00)</strong>, <strong>Giao tiết kiệm 24h</strong> hoặc <strong>Nhận tại cửa hàng (0đ)</strong>. Hệ thống tự động giảm phí ship từ đơn 150.000đ và cho phép ghép <strong>1 Voucher Đơn hàng + 1 Voucher Freeship</strong>.</p>
+                    </div>
+                  </div>
+                  <div class="info-guide-row">
+                    <div class="info-step-badge">Bước 4</div>
+                    <div>
+                      <h4>Thanh toán COD hoặc VietQR &amp; Đồng kiểm khi nhận</h4>
+                      <p>Xác nhận chính sách đồng kiểm đối với thực phẩm tươi sống, chọn thanh toán <strong>COD</strong> hoặc <strong>Chuyển khoản VietQR</strong> và theo dõi đơn hàng trực tiếp tại trang <a routerLink="/tracker-page">Theo dõi đơn hàng</a>.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="info-card">
+                <h2 class="info-card-title">Phương thức thanh toán đang hỗ trợ</h2>
+                <div class="info-feature-grid info-feature-grid--2">
+                  <div class="info-feature-box">
+                    <div class="info-feature-icon"><i class="bi bi-cash-coin" aria-hidden="true"></i></div>
+                    <h3>Thanh toán tiền mặt (COD)</h3>
+                    <p>Thanh toán trực tiếp bằng tiền mặt cho nhân viên giao hàng sau khi đã đồng kiểm đủ số lượng và độ tươi của sản phẩm.</p>
+                  </div>
+                  <div class="info-feature-box">
+                    <div class="info-feature-icon"><i class="bi bi-qr-code-scan" aria-hidden="true"></i></div>
+                    <h3>Chuyển khoản VietQR</h3>
+                    <p>Quét mã VietQR động được tạo riêng cho từng đơn hàng với đúng số tiền và nội dung chuyển khoản; hệ thống tự động đối soát trạng thái thanh toán.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- ══════════════════════════════════════════════════
+               5. LIÊN HỆ VỚI CHÚNG TÔI (/lien-he)
+          ══════════════════════════════════════════════════ -->
+          @if (activeKey() === 'contact') {
+            <div class="info-section-stack">
+              <div class="info-feature-grid info-feature-grid--3">
+                <div class="info-card info-contact-card">
+                  <div class="info-feature-icon"><i class="bi bi-telephone" aria-hidden="true"></i></div>
+                  <h3>Tổng đài CSKH</h3>
+                  <p class="info-contact-highlight">1800 6999</p>
+                  <span>Miễn cước &bull; 07:00 – 21:00 hằng ngày (kể cả Thứ 7, CN)</span>
+                </div>
+                <div class="info-card info-contact-card">
+                  <div class="info-feature-icon"><i class="bi bi-envelope" aria-hidden="true"></i></div>
+                  <h3>Email hỗ trợ</h3>
+                  <p class="info-contact-highlight">chamsoc&#64;evergreenmart.vn</p>
+                  <span>Tiếp nhận góp ý &amp; hợp tác nhà cung cấp</span>
+                </div>
+                <div class="info-card info-contact-card">
+                  <div class="info-feature-icon"><i class="bi bi-building" aria-hidden="true"></i></div>
+                  <h3>Trụ sở &amp; Hệ thống kho</h3>
+                  <p class="info-contact-highlight">18 chi nhánh / 10 tỉnh thành</p>
+                  <span>Tổng kho Thủ Đức (TP.HCM) • Mở cửa 07:00 – 21:30</span>
+                </div>
+              </div>
+
+              <div class="info-card">
+                <h2 class="info-card-title">Mạng lưới phục vụ 10 tỉnh thành</h2>
+                <p class="info-prose">
+                  Hiện hệ thống 18 cửa hàng &amp; kho lạnh Evergreen Mart đang vận hành tại: <strong>TP. Hồ Chí Minh (7 chi nhánh)</strong>, <strong>Bình Dương (2)</strong>, <strong>Hà Nội (2)</strong>, <strong>Đồng Nai</strong>, <strong>Đà Nẵng</strong>, <strong>Khánh Hòa (Nha Trang)</strong>, <strong>Đắk Lắk (Buôn Ma Thuột)</strong>, <strong>Cần Thơ</strong>, <strong>Bà Rịa – Vũng Tàu</strong> và <strong>Lâm Đồng (Đà Lạt)</strong>.
+                </p>
+              </div>
+
+              <div class="info-card">
+                <h2 class="info-card-title">Gửi tin nhắn cho Evergreen Mart</h2>
+                <p class="info-prose">
+                  Bạn cần tư vấn sản phẩm, hợp tác nông trại cung ứng hoặc đóng góp ý kiến? Hãy để lại thông tin bên dưới. Trường hợp cần phản ánh sự cố đơn hàng cụ thể, vui lòng gửi tại <a routerLink="/complaint">Gửi khiếu nại &amp; Phản ánh</a>.
+                </p>
+
+                @if (contactSubmitted()) {
+                  <div class="info-alert-success">
+                    <strong><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Đã ghi nhận thông tin liên hệ!</strong>
+                    Cảm ơn {{ contactName() }}, bộ phận CSKH Evergreen Mart sẽ phản hồi qua {{ contactPhoneOrEmail() }} trong thời gian sớm nhất.
+                    <button type="button" class="info-link-btn" (click)="resetContactForm()">Gửi tin nhắn khác</button>
+                  </div>
+                } @else {
+                  @if (contactError()) {
+                    <div class="info-alert-error">{{ contactError() }}</div>
+                  }
+                  <form class="info-contact-form" (submit)="submitContact($event)">
+                    <div class="info-form-grid">
+                      <div class="info-field">
+                        <label>Họ và tên *</label>
+                        <input
+                          type="text"
+                          placeholder="Nguyễn Văn A"
+                          [value]="contactName()"
+                          (input)="contactName.set($any($event.target).value)"
+                        />
+                      </div>
+                      <div class="info-field">
+                        <label>Số điện thoại hoặc Email *</label>
+                        <input
+                          type="text"
+                          placeholder="0912 345 678 hoặc email&#64;example.com"
+                          [value]="contactPhoneOrEmail()"
+                          (input)="contactPhoneOrEmail.set($any($event.target).value)"
+                        />
+                      </div>
+                    </div>
+                    <div class="info-field">
+                      <label>Chủ đề liên hệ</label>
+                      <select [value]="contactTopic()" (change)="contactTopic.set($any($event.target).value)">
+                        <option value="Tư vấn đơn hàng & Sản phẩm">Tư vấn đơn hàng &amp; Sản phẩm</option>
+                        <option value="Hợp tác nông trại & Nhà cung cấp">Hợp tác nông trại &amp; Nhà cung cấp</option>
+                        <option value="Đặt hàng doanh nghiệp / Bếp ăn">Đặt hàng doanh nghiệp / Bếp ăn</option>
+                        <option value="Góp ý dịch vụ & Tính năng">Góp ý dịch vụ &amp; Tính năng</option>
+                      </select>
+                    </div>
+                    <div class="info-field">
+                      <label>Nội dung chi tiết *</label>
+                      <textarea
+                        rows="4"
+                        placeholder="Nhập nội dung bạn muốn trao đổi với Evergreen Mart..."
+                        [value]="contactMessage()"
+                        (input)="contactMessage.set($any($event.target).value)"
+                      ></textarea>
+                    </div>
+                    <div class="info-form-actions">
+                      <button type="submit" class="info-btn-primary">Gửi thông tin liên hệ</button>
+                    </div>
+                  </form>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- ══════════════════════════════════════════════════
+               6. CHÍNH SÁCH GIAO HÀNG & ĐỒNG KIỂM (/chinh-sach/giao-hang)
+          ══════════════════════════════════════════════════ -->
+          @if (activeKey() === 'shipping') {
+            <div class="info-section-stack">
+              <div class="info-card">
+                <h2 class="info-card-title">1. Hình thức và Thời gian giao nhận</h2>
+                <div class="info-feature-grid info-feature-grid--3">
+                  <div class="info-feature-box">
+                    <div class="info-feature-icon"><i class="bi bi-lightning-charge" aria-hidden="true"></i></div>
+                    <h3>Giao ngay (30–45 phút)</h3>
+                    <p>Khả dụng từ 07:00 – 21:15 hằng ngày quanh chi nhánh gần nhất. Phí = phí nền khoảng cách + 10.000đ.</p>
+                  </div>
+                  <div class="info-feature-box">
+                    <div class="info-feature-icon"><i class="bi bi-clock" aria-hidden="true"></i></div>
+                    <h3>8 khung giờ hôm nay / ngày mai</h3>
+                    <p>Từ 07h30 – 22h00 (chia ca 1,5–2 giờ). Hoặc chọn Giao tiết kiệm trong 24h với phí gốc từ 15.000đ.</p>
+                  </div>
+                  <div class="info-feature-box">
+                    <div class="info-feature-icon"><i class="bi bi-shop" aria-hidden="true"></i></div>
+                    <h3>Nhận tại 18 cửa hàng (0đ)</h3>
+                    <p>Đặt trước online và nhận trực tiếp tại chi nhánh gần bạn (mở cửa 07:00 – 21:30), miễn phí vận chuyển 0đ.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="info-card">
+                <h2 class="info-card-title">2. Biểu phí nền theo khoảng cách &amp; Ưu đãi hỗ trợ ship tự động</h2>
+                <div class="info-table-wrap">
+                  <table class="info-table">
+                    <thead>
+                      <tr>
+                        <th>Khoảng cách từ chi nhánh gần nhất</th>
+                        <th>Phí giao theo khung giờ</th>
+                        <th>Phí giao ngay (30–45 phút)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>Dưới hoặc bằng 2 km</td>
+                        <td>15.000đ</td>
+                        <td>25.000đ</td>
+                      </tr>
+                      <tr>
+                        <td>Từ 2 km – 5 km</td>
+                        <td>20.000đ</td>
+                        <td>30.000đ</td>
+                      </tr>
+                      <tr>
+                        <td>Từ 5 km – 8 km</td>
+                        <td>25.000đ</td>
+                        <td>35.000đ</td>
+                      </tr>
+                      <tr>
+                        <td>Từ 8 km – 10 km</td>
+                        <td>30.000đ</td>
+                        <td>40.000đ</td>
+                      </tr>
+                      <tr>
+                        <td>Giao xa: 10 km – 20 km (tối đa)</td>
+                        <td>30.000đ + 5.000đ/km vượt 10 km</td>
+                        <td>Phí nền giao xa + 10.000đ</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="info-table-wrap info-mt-16">
+                  <table class="info-table">
+                    <thead>
+                      <tr>
+                        <th>Giá trị tạm tính đơn hàng</th>
+                        <th>Hỗ trợ phí vận chuyển tự động</th>
+                        <th>Kết hợp thêm Voucher</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>Dưới 150.000đ</td>
+                        <td>Chưa áp dụng hỗ trợ tự động</td>
+                        <td>Dùng được 1 Voucher Freeship + 1 Voucher Đơn</td>
+                      </tr>
+                      <tr>
+                        <td>Từ 150.000đ – 299.000đ</td>
+                        <td><strong class="info-text-green">Tự động giảm 10.000đ phí ship</strong></td>
+                        <td>Kết hợp thêm Voucher Freeship nếu còn phí dư</td>
+                      </tr>
+                      <tr>
+                        <td>Từ 300.000đ trở lên</td>
+                        <td><strong class="info-text-green">Hỗ trợ tự động tối đa 25.000đ phí ship</strong></td>
+                        <td>Kết hợp thêm Voucher Freeship nếu còn phí dư</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <p class="info-note">
+                  * Hệ thống phục vụ giao tận nơi trong bán kính tối đa 20 km quanh chi nhánh gần nhất. Các khung giờ nhận hàng gồm: 07h30–09h00, 09h00–11h00, 11h00–13h00, 13h00–15h00, 15h00–17h00, 17h00–19h00, 19h00–20h30 và 20h30–22h00.
+                </p>
+              </div>
+
+              <div class="info-card">
+                <h2 class="info-card-title">3. Chuẩn Cold-Chain và Quyền đồng kiểm</h2>
+                <ul class="info-checklist">
+                  <li><strong>Đóng gói giữ nhiệt 0°C – 4°C:</strong> Rau ăn lá và trái cây nhạy cảm có đệm chống dập; thịt cá tươi sống được tách biệt đảm bảo vệ sinh an toàn thực phẩm.</li>
+                  <li><strong>Quyền đồng kiểm khi nhận hàng:</strong> Quý khách được kiểm tra đủ số lượng, đúng chủng loại và tình trạng tươi mới ngay trước khi thanh toán COD hoặc xác nhận nhận hàng.</li>
+                  <li><strong>Từ chối ngay tại chỗ:</strong> Nếu phát hiện sản phẩm dập nát, hư hỏng hoặc sai món trong lúc đồng kiểm, quý khách có quyền từ chối nhận ngay mà không mất phí phát sinh.</li>
+                </ul>
+              </div>
+            </div>
+          }
+
+          <!-- ══════════════════════════════════════════════════
+               7. CHÍNH SÁCH KIỂM HÀNG & ĐỔI TRẢ (/chinh-sach/doi-tra)
+          ══════════════════════════════════════════════════ -->
+          @if (activeKey() === 'returns') {
+            <div class="info-section-stack">
+              <div class="info-highlight-banner">
+                <div class="info-highlight-icon"><i class="bi bi-shield-check" aria-hidden="true"></i></div>
+                <div>
+                  <h3>Đồng kiểm trực tiếp thực phẩm tươi sống khi nhận hàng</h3>
+                  <p>Áp dụng tại chỗ cho nhóm Rau củ, Trái cây, Thịt tươi sống và Cá &amp; Hải sản để đảm bảo quyền lợi chất lượng ngay lúc giao nhận.</p>
+                </div>
+              </div>
+
+              <div class="info-feature-grid info-feature-grid--2">
+                <div class="info-card">
+                  <h2 class="info-card-title">Quy định với thực phẩm tươi sống</h2>
+                  <ul class="info-checklist">
+                    <li>Áp dụng cho 4 nhóm: <strong>Rau củ</strong>, <strong>Trái cây</strong>, <strong>Thịt tươi sống</strong>, <strong>Cá &amp; Hải sản</strong>.</li>
+                    <li>Quý khách vui lòng <strong>đồng kiểm trực tiếp</strong> cùng nhân viên giao nhận (hoặc tại quầy cửa hàng) trước khi xác nhận nhận hàng.</li>
+                    <li>Có quyền từ chối nhận hoặc yêu cầu đổi ngay tại thời điểm giao nếu sản phẩm dập nát, mất lạnh hay không đúng mô tả.</li>
+                    <li><strong>Lưu ý:</strong> Sau khi đã xác nhận nhận hàng, Evergreen Mart <strong>không áp dụng đổi trả</strong> đối với thực phẩm tươi sống.</li>
+                  </ul>
+                </div>
+
+                <div class="info-card">
+                  <h2 class="info-card-title">Hỗ trợ hàng đóng gói &amp; Sự cố đơn hàng</h2>
+                  <ul class="info-checklist">
+                    <li>Sản phẩm <strong>đồ khô, đóng gói, gia vị, đồ uống</strong> bị rách bao bì, lỗi nhà sản xuất hoặc cận/hết hạn khi giao.</li>
+                    <li>Đơn hàng phát sinh <strong>giao thiếu món, sai loại</strong> hoặc sai khối lượng so với hóa đơn đặt hàng.</li>
+                    <li>Quý khách vui lòng chụp ảnh/quay video kèm mã đơn và gửi tại <a routerLink="/complaint">Gửi khiếu nại &amp; Phản ánh</a>.</li>
+                    <li><strong>Phương án xử lý:</strong> Xác nhận giao bù sản phẩm hoặc hoàn tiền 100% giá trị phần lỗi trong 1–3 ngày làm việc.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="info-card">
+                <h2 class="info-card-title">Quy trình tiếp nhận &amp; xử lý khiếu nại 3 bước</h2>
+                <div class="info-guide-list">
+                  <div class="info-guide-row">
+                    <div class="info-step-badge">01</div>
+                    <div>
+                      <h4>Kiểm tra ngay khi nhận hàng hoặc ghi nhận bằng chứng</h4>
+                      <p>Nếu phát hiện lỗi lúc giao, báo ngay cho nhân viên giao nhận; với hàng đóng gói hoặc thiếu món, chụp ảnh sản phẩm cùng mã đơn hàng.</p>
+                    </div>
+                  </div>
+                  <div class="info-guide-row">
+                    <div class="info-step-badge">02</div>
+                    <div>
+                      <h4>Gửi yêu cầu trực tuyến hoặc gọi tổng đài</h4>
+                      <p>Gửi biểu mẫu tại <a routerLink="/complaint">Gửi khiếu nại &amp; Phản ánh</a> hoặc liên hệ Hotline <strong>1800 6999</strong> (07:00 – 21:00 hằng ngày).</p>
+                    </div>
+                  </div>
+                  <div class="info-guide-row">
+                    <div class="info-step-badge">03</div>
+                    <div>
+                      <h4>Xác minh và giao bù / hoàn tiền</h4>
+                      <p>Bộ phận CSKH kiểm tra đối chiếu với chi nhánh xuất kho và xử lý giao bù hoặc hoàn tiền minh bạch qua tài khoản ngân hàng.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- ══════════════════════════════════════════════════
+               8. CHÍNH SÁCH BẢO MẬT (/chinh-sach/bao-mat)
+          ══════════════════════════════════════════════════ -->
+          @if (activeKey() === 'privacy') {
+            <div class="info-section-stack">
+              <div class="info-card">
+                <h2 class="info-card-title">1. Thông tin thu thập và Mục đích sử dụng</h2>
+                <p class="info-prose">
+                  Khi bạn đăng ký tài khoản hoặc đặt hàng tại Evergreen Mart, hệ thống chỉ thu thập các thông tin cần thiết để xác thực và giao nhận gồm: họ tên hiển thị, số điện thoại định danh, email (nếu cập nhật), địa chỉ giao hàng (bao gồm tọa độ bản đồ nếu bạn lưu) và lịch sử đơn hàng.
+                </p>
+                <ul class="info-checklist">
+                  <li>Xác định chi nhánh gần nhất (trong 18 kho), tính phí vận chuyển theo khoảng cách và thông báo trạng thái đơn hàng.</li>
+                  <li>Lưu sổ địa chỉ nhận hàng, quản lý Ví Voucher và điểm tích lũy Khách hàng thân thiết.</li>
+                  <li>Hỗ trợ tra cứu hóa đơn, tiếp nhận khiếu nại và giải đáp qua tổng đài 1800 6999.</li>
+                </ul>
+              </div>
+
+              <div class="info-card">
+                <h2 class="info-card-title">2. Cam kết bảo mật &amp; Kiểm soát truy cập</h2>
+                <ul class="info-checklist">
+                  <li><strong>Không thương mại hóa dữ liệu:</strong> Evergreen Mart cam kết không bán, cho thuê hoặc chia sẻ dữ liệu cá nhân của khách hàng cho bên thứ ba phục vụ quảng cáo ngoài phạm vi xử lý đơn hàng.</li>
+                  <li><strong>Xác thực thay đổi nhạy cảm bằng OTP:</strong> Các thao tác như đổi số điện thoại định danh hay khôi phục mật khẩu đều được xác thực qua mã OTP bảo mật.</li>
+                  <li><strong>Giới hạn thông tin giao vận:</strong> Chỉ bộ phận điều phối tại chi nhánh xử lý đơn và nhân viên giao hàng được tiếp cận địa chỉ, số điện thoại nhận hàng ở mức tối thiểu cần thiết.</li>
+                </ul>
+              </div>
+
+              <div class="info-card">
+                <h2 class="info-card-title">3. Quyền của khách hàng đối với dữ liệu cá nhân</h2>
+                <p class="info-prose">
+                  Bạn có toàn quyền xem lại, chỉnh sửa họ tên, email, ảnh đại diện và sổ địa chỉ tại trang <a routerLink="/account">Tài khoản của tôi</a>, hoặc gửi yêu cầu hỗ trợ về quyền riêng tư qua email <strong>chamsoc&#64;evergreenmart.vn</strong> và tổng đài <strong>1800 6999</strong>.
+                </p>
+              </div>
+            </div>
+          }
+
+          <!-- ══════════════════════════════════════════════════
+               9. ĐIỀU KHOẢN SỬ DỤNG (/chinh-sach/dieu-khoan)
+          ══════════════════════════════════════════════════ -->
+          @if (activeKey() === 'terms') {
+            <div class="info-section-stack">
+              <div class="info-card">
+                <h2 class="info-card-title">1. Phạm vi áp dụng &amp; Chấp thuận điều khoản</h2>
+                <p class="info-prose">
+                  Khi truy cập website, tạo tài khoản thành viên hoặc đặt mua hàng trên <strong>Evergreen Mart</strong>, bạn đồng ý tuân thủ các điều khoản sử dụng dưới đây. Mọi điều chỉnh quan trọng về chính sách giao nhận, kiểm hàng hay ưu đãi sẽ được cập nhật công khai trực tiếp tại trung tâm thông tin này.
+                </p>
+              </div>
+
+              <div class="info-card">
+                <h2 class="info-card-title">2. Tài khoản thành viên &amp; Thông tin đặt hàng</h2>
+                <ul class="info-checklist">
+                  <li>Khách hàng cung cấp số điện thoại định danh và địa chỉ nhận hàng chính xác để đảm bảo điều phối đúng chi nhánh trong bán kính 20 km.</li>
+                  <li>Bạn có trách nhiệm bảo mật mật khẩu đăng nhập và mã OTP; không tạo tài khoản ảo nhằm trục lợi voucher hoặc điểm tích lũy hệ thống.</li>
+                  <li>Với thực phẩm tươi sống (rau củ, trái cây, thịt tươi, cá &amp; hải sản), khách hàng có trách nhiệm đồng kiểm ngay tại lúc nhận hàng theo xác nhận trước khi đặt.</li>
+                </ul>
+              </div>
+
+              <div class="info-card">
+                <h2 class="info-card-title">3. Giá bán, Voucher kép &amp; Điểm thành viên</h2>
+                <ul class="info-checklist">
+                  <li>Giá sản phẩm niêm yết kèm đơn vị tính và khối lượng rõ ràng; phí giao hàng và mức hỗ trợ phí ship tự động được hiển thị minh bạch trước khi xác nhận đặt đơn.</li>
+                  <li>Hệ thống hỗ trợ áp dụng tối đa 1 Voucher Đơn hàng + 1 Voucher Freeship theo đúng điều kiện đơn tối thiểu và thời hạn ghi trên thẻ voucher.</li>
+                  <li>Điểm Khách hàng thân thiết (1 điểm cho mỗi 10.000đ chi tiêu) được cộng sau khi đơn hàng giao thành công; nội dung, công thức dinh dưỡng và hình ảnh trên website thuộc quyền sở hữu của Evergreen Mart.</li>
+                </ul>
+              </div>
+            </div>
+          }
+
+        </div>
+      </div>
+    </section>
+  </main>
+</app-shell>

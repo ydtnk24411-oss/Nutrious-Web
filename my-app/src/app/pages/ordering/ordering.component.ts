@@ -1,5 +1,5 @@
 
-import { Component, signal, inject, OnInit, computed } from '@angular/core';
+import { Component, signal, inject, OnInit, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
@@ -40,7 +40,10 @@ function toCartProduct(p: ApiProduct): XanhLaProduct {
     type: p.type,
     weight: p.weight,
     options: p.options,
-    isCombo: p.isCombo,
+    stock: typeof p.availableStock === 'number' ? p.availableStock : p.stock,
+    availableStock: p.availableStock,
+    comboStatus: p.comboStatus,
+    isCombo: Boolean(p.isCombo || (Array.isArray(p.comboItems) && p.comboItems.length > 0)),
     originalPriceNumber: p.originalPriceNumber,
     comboItems: p.comboItems,
     addOnDeals: p.addOnDeals as any,
@@ -559,6 +562,19 @@ export class OrderingComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
+  constructor() {
+    effect(() => {
+      // Tự động đặt lại hiển thị 20 sản phẩm đầu khi đổi danh mục, tìm kiếm, bộ lọc hoặc sắp xếp
+      this.activeCategory();
+      this.search();
+      this.sortBy();
+      this.maxPrice();
+      this.selectedFilters();
+      this.nutritionSliders();
+      this.visibleCount.set(this.pageSize);
+    });
+  }
+
   // Dữ liệu MongoDB
   protected allCategories = signal<ApiCategory[]>([]);
   protected allProducts = signal<ApiProduct[]>([]);
@@ -805,6 +821,8 @@ export class OrderingComponent implements OnInit {
   });
 
   // Gom sản phẩm theo đúng Category trong MongoDB
+  protected readonly pageSize = 20;
+  protected visibleCount = signal(20);
   protected activeCategory = signal('all');
   protected categoryProducts = computed(() => {
     const products = this.filteredProducts();
@@ -821,12 +839,57 @@ export class OrderingComponent implements OnInit {
     return products.filter(p => p.categoryId === categoryId);
   });
 
+  protected activeCategoryTitle = computed(() => {
+    const selectedCats = this.selectedFilters()['category'];
+    if (selectedCats.length === 1) {
+      return this.getCategoryName(selectedCats[0]) || 'Fresh Ingredients';
+    }
+    if (selectedCats.length > 1) {
+      return 'Danh mục đã chọn';
+    }
+
+    const catId = this.activeCategory();
+    if (catId === 'all') {
+      return 'Tất cả sản phẩm';
+    }
+
+    return this.getCategoryName(catId) || 'Sản phẩm';
+  });
+
+  protected visibleProducts = computed(() =>
+    this.categoryProducts().slice(0, this.visibleCount())
+  );
+
+  protected remainingCount = computed(() =>
+    Math.max(0, this.categoryProducts().length - this.visibleProducts().length)
+  );
+
   protected selectCategory(categoryId: string): void {
     this.activeCategory.set(categoryId);
     if (this.selectedFilters()['category'].length > 0) {
       this.selectedFilters.update(f => ({ ...f, category: [] }));
     }
+    this.visibleCount.set(this.pageSize);
+
+    const listEl = document.getElementById('ord-product-list');
+    if (listEl && listEl.getBoundingClientRect().top < 110) {
+      this.scrollToElement(listEl);
+    }
   }
+
+  protected showMoreProducts(): void {
+    this.visibleCount.update(count => count + this.pageSize);
+  }
+
+  private scrollToElement(el: HTMLElement): void {
+    const yOffset = -180;
+    const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+    window.scrollTo({
+      top: Math.max(0, y),
+      behavior: 'smooth',
+    });
+  }
+
   protected sections = computed(() => {
     const products = this.categoryProducts();
 
@@ -1073,11 +1136,27 @@ export class OrderingComponent implements OnInit {
     return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
+  getProdStock(prod: ApiProduct): number {
+    if (prod.isCombo) {
+      if (prod.comboStatus === 'paused' || prod.comboStatus === 'hidden') return 0;
+      if (typeof prod.availableStock === 'number') return Math.max(0, Math.floor(prod.availableStock));
+    }
+    return typeof prod.stock === 'number' ? Math.max(0, Math.floor(prod.stock)) : 0;
+  }
+
+  isProdUnavailable(prod: ApiProduct): boolean {
+    return prod.isActive === false || this.getProdStock(prod) <= 0;
+  }
+
   openBuyNow(prod: ApiProduct): void {
+    if (this.isProdUnavailable(prod)) return;
     this.cart.openBuyNowModal(toCartProduct(prod));
   }
 
   addOne(prod: ApiProduct, event?: Event): void {
+    if (this.isProdUnavailable(prod)) return;
+    const maxStock = this.getProdStock(prod);
+    if (this.itemQty(prod.slug) >= maxStock) return;
     if (event) {
       this.cart.animateFlyToCart(event, prod.image);
     }

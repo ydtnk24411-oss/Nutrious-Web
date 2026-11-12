@@ -29,6 +29,7 @@ export class AdminOrdersComponent implements OnInit {
   selected    = signal<ApiOrder | null>(null);
   detailOpen  = signal(false);
   updatingStatus = signal(false);
+  confirmingPayment = signal(false);
   newStatus   = signal('');
 
   totalPages = computed(() => Math.ceil(this.total() / this.limit));
@@ -109,6 +110,37 @@ export class AdminOrdersComponent implements OnInit {
       error: (err) => {
         this.updatingStatus.set(false);
         this.error.set(err.error?.message || 'Cập nhật thất bại.');
+      },
+    });
+  }
+
+  canConfirmQrPayment(o: ApiOrder): boolean {
+    return (
+      o.paymentMethod === 'bank_transfer' &&
+      o.paymentStatus !== 'paid' &&
+      o.paymentStatus !== 'expired' &&
+      o.status !== 'cancelled'
+    );
+  }
+
+  confirmPayment(o: ApiOrder): void {
+    if (!o || !this.canConfirmQrPayment(o) || this.confirmingPayment()) return;
+    this.confirmingPayment.set(true);
+    this.error.set('');
+    this.orderApi.confirmPayment(o._id, 'ADMIN_CONFIRMED').subscribe({
+      next: (res) => {
+        this.confirmingPayment.set(false);
+        if (this.selected()?._id === o._id && res.data) {
+          this.selected.set(res.data);
+          this.newStatus.set(res.data.status);
+        }
+        this.success.set(`Đã xác nhận thanh toán VietQR cho đơn ${o.orderCode}!`);
+        setTimeout(() => this.success.set(''), 3500);
+        this.load();
+      },
+      error: (err) => {
+        this.confirmingPayment.set(false);
+        this.error.set(err.error?.message || 'Xác nhận thanh toán thất bại.');
       },
     });
   }

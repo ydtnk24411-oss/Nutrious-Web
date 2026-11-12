@@ -22,7 +22,7 @@
             />
             <button type="submit" aria-label="Đăng ký nhận bản tin">
               <span>Đăng ký</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              <i class="bi bi-arrow-right" style="font-size:15px" aria-hidden="true"></i>
             </button>
           </form>
           @if (emailError()) {
@@ -32,7 +32,7 @@
           }
           @if (subscribed()) {
             <div class="xanhla-subscribe-success">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <i class="bi bi-check-lg" style="font-size:14px" aria-hidden="true"></i>
               {{ subscribeMessage() }}
             </div>
           }
@@ -43,13 +43,13 @@
             @for (soc of socialLinks(); track soc.platform) {
               <a [href]="soc.url" target="_blank" rel="noopener noreferrer" [attr.aria-label]="soc.label" [title]="soc.label">
                 @if (soc.platform === 'facebook') {
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                  <i class="bi bi-facebook" style="font-size:15px" aria-hidden="true"></i>
                 } @else if (soc.platform === 'instagram') {
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/></svg>
+                  <i class="bi bi-instagram" style="font-size:15px" aria-hidden="true"></i>
                 } @else if (soc.platform === 'youtube') {
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33zM9.75 15.02V8.53l5.9 3.25-5.9 3.24z"/></svg>
+                  <i class="bi bi-youtube" style="font-size:15px" aria-hidden="true"></i>
                 } @else {
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><text x="3" y="18" font-size="14" font-weight="bold" font-family="Arial">Z</text></svg>
+                  <span style="font-size:13px;font-weight:800;line-height:1" aria-hidden="true">Z</span>
                 }
               </a>
             }
@@ -78,15 +78,15 @@
 
         <div class="xanhla-contact-info">
           <div class="xanhla-contact-row">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.71 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.58 2.81.71A2 2 0 0 1 22 16.92z"/></svg>
+            <i class="bi bi-telephone" style="font-size:14px" aria-hidden="true"></i>
             <span class="xanhla-contact-text">Hotline: <a [href]="hotlineHref()" class="xanhla-contact-link">{{ contactInfo().hotline }}</a></span>
           </div>
           <div class="xanhla-contact-row">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <i class="bi bi-envelope" style="font-size:14px" aria-hidden="true"></i>
             <a [href]="'mailto:' + contactInfo().email" class="xanhla-contact-link">{{ contactInfo().email }}</a>
           </div>
           <div class="xanhla-contact-row">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <i class="bi bi-geo-alt" style="font-size:14px" aria-hidden="true"></i>
             <span class="xanhla-contact-text">{{ contactInfo().address }}</span>
           </div>
         </div>
@@ -102,13 +102,13 @@
           @for (link of aboutLinks(); track link.label) {
             @if (isFooterLinkVisible(link)) {
               <li>
-                @if (link.policyKey) {
-                  <a href="#" (click)="openPolicy(link.policyKey, $event)">
+                @if (resolveLinkRoute(link); as targetRoute) {
+                  <a [routerLink]="targetRoute" (click)="scrollToTop()">
                     <span class="xanhla-arrow">›</span>
                     <span>{{ cleanLabel(link.label) }}</span>
                   </a>
-                } @else if (link.route) {
-                  <a [routerLink]="link.route" (click)="scrollToTop()">
+                } @else if (link.policyKey) {
+                  <a href="#" (click)="openPolicy(link.policyKey, $event, link.label)">
                     <span class="xanhla-arrow">›</span>
                     <span>{{ cleanLabel(link.label) }}</span>
                   </a>
@@ -162,13 +162,13 @@
         <ul class="xanhla-footer-links xanhla-footer-links--policies">
           @for (link of policyLinks(); track link.label) {
             <li>
-              @if (link.policyKey) {
-                <a href="#" (click)="openPolicy(link.policyKey, $event)">
+              @if (resolveLinkRoute(link); as targetRoute) {
+                <a [routerLink]="targetRoute" (click)="scrollToTop()">
                   <span class="xanhla-arrow">›</span>
                   <span>{{ cleanLabel(link.label) }}</span>
                 </a>
-              } @else if (link.route) {
-                <a [routerLink]="link.route" (click)="scrollToTop()">
+              } @else if (link.policyKey) {
+                <a href="#" (click)="openPolicy(link.policyKey, $event, link.label)">
                   <span class="xanhla-arrow">›</span>
                   <span>{{ cleanLabel(link.label) }}</span>
                 </a>
@@ -181,24 +181,24 @@
     </div>
   </div>
 
-  <!-- ── 3. TRUST & PAYMENT COMBINED ROW ── -->
+  <!-- ── 3. TRUST & PAYMENT COMBINED ROW (SINGLE BALANCED LINE) ── -->
   <div class="xanhla-footer-trust-banner">
     <div class="xanhla-container">
       <div class="xanhla-trust-pay-row">
 
-        <!-- Left: Compact Trust Badges -->
+        <!-- 4 Cam kết to rõ, nằm ngang hàng bên trái -->
         <div class="xanhla-trust-list">
           @for (item of trustItems(); track item.title; let idx = $index) {
             <div class="xanhla-trust-pill">
               <div class="xanhla-trust-icon">
                 @if (idx === 0) {
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                  <i class="bi bi-patch-check" style="font-size:19px" aria-hidden="true"></i>
                 } @else if (idx === 1) {
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 6v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                  <i class="bi bi-truck" style="font-size:19px" aria-hidden="true"></i>
                 } @else if (idx === 2) {
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                  <i class="bi bi-shield-check" style="font-size:19px" aria-hidden="true"></i>
                 } @else {
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <i class="bi bi-clock" style="font-size:19px" aria-hidden="true"></i>
                 }
               </div>
               <span class="xanhla-trust-text">{{ item.title }}</span>
@@ -206,27 +206,32 @@
           }
         </div>
 
-        <!-- Right: Payment icons only (compact, no text) -->
-        <div class="xanhla-payment-methods">
-          @for (pm of paymentMethods(); track pm) {
-            <span class="xanhla-payment-logo" role="img" [attr.aria-label]="pm" [title]="pm">
-              @if (pm === 'COD') {
-                <svg viewBox="0 0 64 32" aria-hidden="true"><rect x="1" y="1" width="62" height="30" rx="5" fill="#fff"/><text x="32" y="21" text-anchor="middle" fill="#2d6a2d" font-size="13" font-weight="800" font-family="Arial,sans-serif">COD</text></svg>
-              } @else if (pm === 'VietQR') {
-                <svg viewBox="0 0 86 32" aria-hidden="true"><rect x="1" y="1" width="84" height="30" rx="5" fill="#fff"/><g fill="#d92732"><path d="M7 6h8v8H7zm2 2v4h4V8zm-2 9h8v8H7zm2 2v4h4v-4zm10-13h8v8h-8zm2 2v4h4V8zm-1 10h4v3h-4zm6 3h3v4h-3zm-6 2h4v3h-4z"/></g><text x="59" y="20" text-anchor="middle" fill="#263d75" font-size="12" font-weight="800" font-family="Arial,sans-serif">VietQR</text></svg>
-              } @else if (pm === 'MoMo') {
-                <svg viewBox="0 0 64 32" aria-hidden="true"><rect x="1" y="1" width="62" height="30" rx="5" fill="#ae2070"/><text x="32" y="21" text-anchor="middle" fill="#fff" font-size="13" font-weight="800" font-family="Arial,sans-serif">MoMo</text></svg>
-              } @else if (pm === 'VNPay') {
-                <svg viewBox="0 0 72 32" aria-hidden="true"><rect x="1" y="1" width="70" height="30" rx="5" fill="#fff"/><text x="36" y="21" text-anchor="middle" fill="#1769aa" font-size="12" font-weight="800" font-family="Arial,sans-serif">VNP<tspan fill="#e13b35">AY</tspan></text></svg>
-              } @else if (pm === 'ZaloPay') {
-                <svg viewBox="0 0 82 32" aria-hidden="true"><rect x="1" y="1" width="80" height="30" rx="5" fill="#fff"/><text x="41" y="21" text-anchor="middle" fill="#0878c9" font-size="12" font-weight="800" font-family="Arial,sans-serif">ZaloPay</text></svg>
-              } @else if (pm === 'Visa/Master') {
-                <svg viewBox="0 0 94 32" aria-hidden="true"><rect x="1" y="1" width="92" height="30" rx="5" fill="#fff"/><text x="31" y="21" text-anchor="middle" fill="#183b72" font-size="12" font-style="italic" font-weight="900" font-family="Arial,sans-serif">VISA</text><circle cx="61" cy="16" r="9" fill="#e3342f"/><circle cx="72" cy="16" r="9" fill="#ef9b22" fill-opacity=".9"/></svg>
-              } @else {
-                <span class="xanhla-payment-badge">{{ pm }}</span>
-              }
-            </span>
-          }
+        <!-- Vạch ngăn cách dọc tinh tế -->
+        <div class="xanhla-trust-pay-divider" aria-hidden="true"></div>
+
+        <!-- 6 Phương thức thanh toán nằm bên phải, chia thành 2 dòng (3 trên - 3 dưới) -->
+        <div class="xanhla-payment-wrapper">
+          <div class="xanhla-payment-methods-grid">
+            @for (pm of paymentMethods(); track pm) {
+              <span class="xanhla-payment-logo" role="img" [attr.aria-label]="pm" [title]="pm">
+                @if (pm === 'COD') {
+                  <svg viewBox="0 0 64 32" aria-hidden="true"><rect x="1" y="1" width="62" height="30" rx="5" fill="#fff"/><text x="32" y="21" text-anchor="middle" fill="#2d6a2d" font-size="13" font-weight="800" font-family="Arial,sans-serif">COD</text></svg>
+                } @else if (pm === 'VietQR') {
+                  <svg viewBox="0 0 86 32" aria-hidden="true"><rect x="1" y="1" width="84" height="30" rx="5" fill="#fff"/><g fill="#d92732"><path d="M7 6h8v8H7zm2 2v4h4V8zm-2 9h8v8H7zm2 2v4h4v-4zm10-13h8v8h-8zm2 2v4h4V8zm-1 10h4v3h-4zm6 3h3v4h-3zm-6 2h4v3h-4z"/></g><text x="59" y="20" text-anchor="middle" fill="#263d75" font-size="12" font-weight="800" font-family="Arial,sans-serif">VietQR</text></svg>
+                } @else if (pm === 'MoMo') {
+                  <svg viewBox="0 0 64 32" aria-hidden="true"><rect x="1" y="1" width="62" height="30" rx="5" fill="#ae2070"/><text x="32" y="21" text-anchor="middle" fill="#fff" font-size="13" font-weight="800" font-family="Arial,sans-serif">MoMo</text></svg>
+                } @else if (pm === 'VNPay') {
+                  <svg viewBox="0 0 72 32" aria-hidden="true"><rect x="1" y="1" width="70" height="30" rx="5" fill="#fff"/><text x="36" y="21" text-anchor="middle" fill="#1769aa" font-size="12" font-weight="800" font-family="Arial,sans-serif">VNP<tspan fill="#e13b35">AY</tspan></text></svg>
+                } @else if (pm === 'ZaloPay') {
+                  <svg viewBox="0 0 82 32" aria-hidden="true"><rect x="1" y="1" width="80" height="30" rx="5" fill="#fff"/><text x="41" y="21" text-anchor="middle" fill="#0878c9" font-size="12" font-weight="800" font-family="Arial,sans-serif">ZaloPay</text></svg>
+                } @else if (pm === 'Visa/Master') {
+                  <svg viewBox="0 0 94 32" aria-hidden="true"><rect x="1" y="1" width="92" height="30" rx="5" fill="#fff"/><text x="31" y="21" text-anchor="middle" fill="#183b72" font-size="12" font-style="italic" font-weight="900" font-family="Arial,sans-serif">VISA</text><circle cx="61" cy="16" r="9" fill="#e3342f"/><circle cx="72" cy="16" r="9" fill="#ef9b22" fill-opacity=".9"/></svg>
+                } @else {
+                  <span class="xanhla-payment-badge">{{ pm }}</span>
+                }
+              </span>
+            }
+          </div>
         </div>
 
       </div>
@@ -255,7 +260,7 @@
             <p>{{ policy.subtitle }}</p>
           </div>
           <button type="button" class="xanhla-policy-close-btn" (click)="closePolicy()" aria-label="Đóng">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <i class="bi bi-x-lg" style="font-size:18px" aria-hidden="true"></i>
           </button>
         </div>
         <div class="xanhla-policy-modal-body">

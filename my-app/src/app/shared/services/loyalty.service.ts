@@ -30,7 +30,7 @@ export class LoyaltyService {
       minPoints: 0,
       minSpent: 0,
       benefits: ['Tích 1 điểm cho mỗi 10.000đ', 'Miễn phí giao hàng đơn > 500.000đ'],
-      icon: '🥉',
+      icon: 'bi-award',
     },
     {
       tier: 'Silver',
@@ -38,7 +38,7 @@ export class LoyaltyService {
       minPoints: 1000,
       minSpent: 2000000,
       benefits: ['Tích 1.2 điểm cho mỗi 10.000đ', 'Miễn phí giao hàng đơn > 300.000đ', 'Ưu tiên hỗ trợ'],
-      icon: '🥈',
+      icon: 'bi-award-fill',
     },
     {
       tier: 'Gold',
@@ -46,7 +46,7 @@ export class LoyaltyService {
       minPoints: 5000,
       minSpent: 10000000,
       benefits: ['Tích 1.5 điểm cho mỗi 10.000đ', 'Miễn phí giao hàng mọi đơn hàng', 'Quà tặng sinh nhật', 'Ưu đãi thành viên Vàng độc quyền'],
-      icon: '🥇',
+      icon: 'bi-trophy-fill',
     },
     {
       tier: 'Platinum',
@@ -54,7 +54,7 @@ export class LoyaltyService {
       minPoints: 15000,
       minSpent: 30000000,
       benefits: ['Tích 2 điểm cho mỗi 10.000đ', 'Miễn phí giao hàng mọi đơn hàng', 'Quà tặng sinh nhật đặc biệt', 'Dịch vụ VIP', 'Quản lý tài khoản cá nhân'],
-      icon: '💎',
+      icon: 'bi-gem',
     },
   ];
 

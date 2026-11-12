@@ -30,30 +30,18 @@
                 }
               </div>
               <button class="acc-avatar-edit-btn" type="button" (click)="toggleAvatarMenu()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 19l7-7 3 3-7 7-3-3z"/>
-                  <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
-                  <path d="M2 2l7.586 7.586"/>
-                  <circle cx="11" cy="11" r="2"/>
-                </svg>
+                <i class="bi bi-pencil" style="font-size:15px" aria-hidden="true"></i>
               </button>
               @if (avatarMenuOpen()) {
                 <div class="acc-avatar-menu">
                   <label class="acc-avatar-menu-item" style="cursor:pointer">
                     <input type="file" id="avatarInputOverview" accept="image/*" (change)="onAvatarUpload($event)" style="display:none" />
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                      <polyline points="17 8 12 3 7 8"/>
-                      <line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
+                    <i class="bi bi-upload" style="font-size:15px" aria-hidden="true"></i>
                     Đổi ảnh đại diện
                   </label>
                   @if (cart.currentUser()?.avatar) {
                     <button type="button" class="acc-avatar-menu-item acc-avatar-menu-danger" (click)="removeAvatar()">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                      </svg>
+                      <i class="bi bi-trash3" style="font-size:15px" aria-hidden="true"></i>
                       Xóa ảnh đại diện
                     </button>
                   }
@@ -78,28 +66,28 @@
           <div class="acc-stats-grid">
             <div class="acc-stat-card" style="cursor:pointer" (click)="activeTab.set('orders')">
               <div class="acc-stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <i class="bi bi-bag" style="font-size:22px" aria-hidden="true"></i>
               </div>
               <div class="acc-stat-value">{{ orders().length }}</div>
               <div class="acc-stat-label">Đơn hàng của bạn</div>
             </div>
             <div class="acc-stat-card" style="cursor:pointer" (click)="router.navigate(['/vouchers'])">
               <div class="acc-stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.91 8.84C20.88 8.3 20.37 8 19.81 8H15c-.23 0-.42-.16-.48-.38l-.47-1.56C13.86 5.4 13.34 5 12.74 5h-1.48c-.6 0-1.12.4-1.31.96l-.47 1.56C9.42 7.84 9.23 8 9 8H4.19c-.56 0-1.07.3-1.1.84C2.82 10.05 2.5 12.12 2.5 14c0 1.88.32 3.95.59 5.16.03.54.54.84 1.1.84H15c.23 0 .42.16.48.38l.47 1.56c.19.56.71.96 1.31.96h1.48c.6 0 1.12-.4 1.31-.96l.47-1.56c.06-.22.25-.38.48-.38h4.81c.56 0 1.07-.3 1.1-.84.27-1.21.59-3.28.59-5.16 0-1.88-.32-3.95-.59-5.16z"/></svg>
+                <i class="bi bi-ticket-perforated" style="font-size:22px" aria-hidden="true"></i>
               </div>
               <div class="acc-stat-value">{{ userVouchers().length }}</div>
               <div class="acc-stat-label">Voucher khả dụng</div>
             </div>
             <div class="acc-stat-card" style="cursor:pointer" (click)="router.navigate(['/loyalty'])">
               <div class="acc-stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <i class="bi bi-star" style="font-size:22px" aria-hidden="true"></i>
               </div>
               <div class="acc-stat-value">{{ userPoints().toLocaleString('vi-VN') }}</div>
               <div class="acc-stat-label">Điểm tích lũy</div>
             </div>
             <div class="acc-stat-card" style="cursor:pointer" (click)="router.navigate(['/loyalty'])">
               <div class="acc-stat-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                <i class="bi bi-award" style="font-size:22px" aria-hidden="true"></i>
               </div>
               <div class="acc-stat-value">{{ userTier().name }}</div>
               <div class="acc-stat-label">Hạng thành viên</div>
@@ -148,12 +136,11 @@
             <div class="acc-divider"></div>
 
             @if (saved()) {
-              <div class="acc-alert-success">✓ Đã cập nhật thông tin thành công!</div>
+              <div class="acc-alert-success"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Đã cập nhật thông tin thành công!</div>
             }
 
             <!-- Avatar Upload Section -->
             <div class="acc-avatar-section">
-              <label class="acc-avatar-label">Ảnh đại diện</label>
               <div class="acc-avatar-upload">
                 <div class="acc-avatar-preview-wrapper">
                   <div class="acc-avatar-preview">
@@ -163,42 +150,33 @@
                       <div class="acc-avatar-placeholder-large">{{ avatarChar() }}</div>
                     }
                   </div>
-                  <button class="acc-avatar-edit-btn acc-avatar-edit-btn-large" type="button" (click)="toggleAvatarMenu()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M12 19l7-7 3 3-7 7-3-3z"/>
-                      <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
-                      <path d="M2 2l7.586 7.586"/>
-                      <circle cx="11" cy="11" r="2"/>
-                    </svg>
+                  <button class="acc-avatar-edit-btn acc-avatar-edit-btn-large" type="button" (click)="toggleAvatarMenu()" title="Thay đổi ảnh đại diện">
+                    <i class="bi bi-pencil" style="font-size:15px" aria-hidden="true"></i>
                   </button>
                   @if (avatarMenuOpen()) {
                     <div class="acc-avatar-menu acc-avatar-menu-large">
                       <label class="acc-avatar-menu-item" style="cursor:pointer">
                         <input type="file" id="avatarInputSettings" accept="image/*" (change)="onAvatarUpload($event)" style="display:none" />
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                          <polyline points="17 8 12 3 7 8"/>
-                          <line x1="12" y1="3" x2="12" y2="15"/>
-                        </svg>
+                        <i class="bi bi-upload" style="font-size:15px" aria-hidden="true"></i>
                         Đổi ảnh đại diện
                       </label>
                       @if (cart.currentUser()?.avatar) {
                         <button type="button" class="acc-avatar-menu-item acc-avatar-menu-danger" (click)="removeAvatar()">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="3 6 5 6 21 6"/>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                          </svg>
+                          <i class="bi bi-trash3" style="font-size:15px" aria-hidden="true"></i>
                           Xóa ảnh đại diện
                         </button>
                       }
                     </div>
                   }
                 </div>
+                <div class="acc-avatar-meta">
+                  <span class="acc-avatar-label">Ảnh đại diện</span>
+                  <p class="acc-avatar-hint">Kích thước tối đa: 2MB. Định dạng: JPG, PNG, GIF.</p>
+                </div>
               </div>
-              <p class="acc-avatar-hint">Kích thước tối đa: 2MB. Định dạng: JPG, PNG, GIF</p>
             </div>
 
-            <form (submit)="saveAccount($event)">
+            <form class="acc-settings-form" (submit)="saveAccount($event)">
               <div class="acc-form-row">
                 <div class="acc-field">
                   <label>Tên hiển thị *</label>
@@ -208,7 +186,9 @@
                 </div>
                 <div class="acc-field">
                   <label>Email</label>
-                  <input type="email" [value]="user.email" disabled style="background:#f9fafb" />
+                  <input type="email" [value]="user.email || ''" disabled
+                         placeholder="Chưa liên kết email"
+                         style="background:#f8fafc;color:#64748b" />
                 </div>
               </div>
 
@@ -231,19 +211,16 @@
                 <label>Số điện thoại (Định danh chính)</label>
                 <div class="phone-display-row">
                   <div class="phone-value-box">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                    </svg>
+                    <i class="bi bi-telephone" style="font-size:17px" aria-hidden="true"></i>
                     <span class="phone-text">{{ user.phone || 'Chưa cập nhật' }}</span>
                     @if (user.phone) {
-                      <span class="verified-tag">✓ Đã xác thực</span>
+                      <span class="verified-tag"><i class="bi bi-check-lg" aria-hidden="true"></i> Đã xác thực</span>
                     }
                   </div>
                   <button type="button" class="acc-btn-outline change-phone-btn" (click)="openChangePhoneModal()">
                     Đổi số điện thoại
                   </button>
                 </div>
-                <span class="acc-field-hint">Số điện thoại là định danh chính của bạn tại EvergreenMart.</span>
               </div>
 
               <div class="acc-form-actions">
@@ -284,7 +261,7 @@
                 <div class="google-header-line">
                   <h3 class="acc-security-title">Liên kết tài khoản Google</h3>
                   @if (user.isGoogleLinked) {
-                    <span class="status-badge badge-linked">✓ Đã liên kết</span>
+                    <span class="status-badge badge-linked"><i class="bi bi-check-lg" aria-hidden="true"></i> Đã liên kết</span>
                   } @else {
                     <span class="status-badge badge-unlinked">Chưa liên kết</span>
                   }
@@ -323,7 +300,7 @@
 
             <div class="acc-security-info">
               <p class="acc-security-note">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <i class="bi bi-info-circle" style="font-size:15px" aria-hidden="true"></i>
                 Lần cuối đổi mật khẩu: Chưa từng đổi
               </p>
             </div>
@@ -386,42 +363,44 @@
       @if (activeTab() === 'addresses') {
         <div class="acc-section-header">
           <h2 class="acc-section-title">Sổ địa chỉ</h2>
-          <button class="acc-btn-primary" (click)="showAddressForm.set(true)">+ Thêm địa chỉ mới</button>
+          <button class="acc-btn-primary" (click)="openAddAddressModal()">+ Thêm địa chỉ mới</button>
         </div>
         <div class="acc-divider"></div>
 
         @if (!cart.currentUser()?.addresses || cart.currentUser()!.addresses!.length === 0) {
-          @if (!showAddressForm()) {
-            <div class="acc-empty acc-empty-enhanced">
-              <div class="acc-empty-icon">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                  <circle cx="12" cy="10" r="3"/>
-                </svg>
-              </div>
-              <h3 class="acc-empty-title">Chưa có địa chỉ giao hàng</h3>
-              <p class="acc-empty-text">
-                Thêm địa chỉ giao hàng để việc đặt hàng nhanh chóng và thuận tiện hơn.
-              </p>
-              <button class="acc-btn-primary" (click)="showAddressForm.set(true)">
-                + Thêm địa chỉ đầu tiên
-              </button>
+          <div class="acc-empty acc-empty-enhanced">
+            <div class="acc-empty-icon">
+              <i class="bi bi-geo-alt" style="font-size:52px" aria-hidden="true"></i>
             </div>
-          }
+            <h3 class="acc-empty-title">Chưa có địa chỉ giao hàng</h3>
+            <p class="acc-empty-text">
+              Thêm địa chỉ giao hàng để việc đặt hàng nhanh chóng và thuận tiện hơn.
+            </p>
+            <button class="acc-btn-primary" (click)="openAddAddressModal()">
+              + Thêm địa chỉ đầu tiên
+            </button>
+          </div>
         } @else {
           <div class="acc-address-list">
             @for (addr of cart.currentUser()!.addresses!; track addr.id) {
               <div class="acc-address-card" [class.is-default]="addr.isDefault">
                 <div class="acc-address-top">
                   <span class="acc-address-label">{{ addr.label }}</span>
-                  @if (addr.isDefault) {
-                    <span class="acc-badge-default">Mặc định</span>
-                  }
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                    @if (addr.lat && addr.lng) {
+                      <span class="acc-badge-pin"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Đã ghim bản đồ</span>
+                    }
+                    @if (addr.isDefault) {
+                      <span class="acc-badge-default">Mặc định</span>
+                    }
+                  </div>
                 </div>
                 <div class="acc-address-name">{{ addr.fullName }}</div>
                 <div class="acc-address-detail">{{ addr.phone }}</div>
                 <div class="acc-address-detail">{{ addr.address }}</div>
-                <div class="acc-address-detail">{{ addr.city }}</div>
+                @if (addr.city && !isCityIncludedInAddress(addr)) {
+                  <div class="acc-address-detail">{{ addr.city }}</div>
+                }
                 <div class="acc-address-actions">
                   <button class="acc-link-btn" (click)="editAddress(addr.id)">Sửa</button>
                   @if (!addr.isDefault) {
@@ -434,54 +413,16 @@
           </div>
         }
 
-        <!-- Form thêm địa chỉ -->
-        @if (showAddressForm()) {
-          <form class="acc-address-form" (submit)="addAddress($event)">
-            <h3 class="acc-block-title" style="margin-bottom:20px">Thêm địa chỉ mới</h3>
-
-            <div class="acc-grid-2">
-              <div class="acc-field" style="grid-column:1/-1">
-                <label>Nhãn địa chỉ</label>
-                <select [value]="addrLabel()" (change)="addrLabel.set($any($event.target).value)">
-                  <option value="Nhà riêng">Nhà riêng</option>
-                  <option value="Văn phòng">Văn phòng</option>
-                  <option value="Khác">Khác</option>
-                </select>
-              </div>
-              <div class="acc-field">
-                <label>Họ và tên *</label>
-                <input type="text" required placeholder="Nguyễn Văn A"
-                       [value]="addrFullName()" (input)="addrFullName.set($any($event.target).value)" />
-              </div>
-              <div class="acc-field">
-                <label>Số điện thoại</label>
-                <input type="tel" placeholder="0987 654 321"
-                       [value]="addrPhone()" (input)="addrPhone.set($any($event.target).value)" />
-              </div>
-              <div class="acc-field" style="grid-column:1/-1">
-                <label>Địa chỉ *</label>
-                <input type="text" required placeholder="Số nhà, tên đường, phường/xã"
-                       [value]="addrAddress()" (input)="addrAddress.set($any($event.target).value)" />
-              </div>
-              <div class="acc-field">
-                <label>Thành phố / Tỉnh</label>
-                <input type="text" placeholder="TP. Hồ Chí Minh"
-                       [value]="addrCity()" (input)="addrCity.set($any($event.target).value)" />
-              </div>
-            </div>
-
-            <label class="acc-checkbox-row" style="margin-top:16px">
-              <input type="checkbox" [checked]="addrDefault()"
-                     (change)="addrDefault.set($any($event.target).checked)" />
-              <span>Đặt làm địa chỉ mặc định</span>
-            </label>
-
-            <div class="acc-form-actions" style="margin-top:20px">
-              <button type="button" class="acc-btn-outline" (click)="showAddressForm.set(false)">Hủy</button>
-              <button type="submit" class="acc-btn-primary">Lưu địa chỉ</button>
-            </div>
-          </form>
-        }
+        <app-address-picker-modal
+          [open]="showAddressModal()"
+          mode="addressBook"
+          [defaultReceiverName]="cart.currentUser()?.name || ''"
+          [defaultReceiverPhone]="cart.currentUser()?.phone || ''"
+          [initialAddress]="editingAddress()"
+          [forceDefaultOnNew]="(cart.currentUser()?.addresses?.length ?? 0) === 0"
+          (closed)="closeAddressModal()"
+          (confirmed)="onAddressPickerConfirmed($event)"
+        ></app-address-picker-modal>
       }
 
       <!-- ══════════════════════════════════════════════
@@ -540,9 +481,7 @@
             </button>
           </div>
           <div class="acc-search-box">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
+            <i class="bi bi-search" style="font-size:15px" aria-hidden="true"></i>
             <input
               type="text"
               [value]="orderSearchQuery()"
@@ -593,14 +532,17 @@
   } @else {
     <!-- Chưa đăng nhập -->
     <div style="text-align:center;padding:80px 24px">
-      <div style="font-size:48px;margin-bottom:16px">🔒</div>
+      <div style="font-size:46px;color:#1b4332;margin-bottom:16px"><i class="bi bi-lock" aria-hidden="true"></i></div>
       <h2 style="font-family:var(--xanh-font-display);font-size:24px;margin-bottom:12px">
         Bạn chưa đăng nhập
       </h2>
       <p style="color:var(--xanh-muted);margin-bottom:24px">
-        Vui lòng đăng nhập để xem thông tin tài khoản.
+        Vui lòng đăng nhập hoặc đăng ký tài khoản mới để quản lý đơn hàng và ưu đãi.
       </p>
-      <button class="xanhla-btn-primary" (click)="cart.openAuthModal('login')">Đăng nhập</button>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="xanhla-btn-primary" type="button" (click)="cart.openAuthModal('login')">Đăng nhập</button>
+        <button class="xanhla-btn-secondary" type="button" (click)="cart.openAuthModal('signup')">Đăng ký tài khoản</button>
+      </div>
     </div>
   }
 
@@ -612,7 +554,9 @@
       <div class="acc-dialog-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
         <div class="acc-dialog-header">
           <h3 class="acc-dialog-title">Đổi số điện thoại tài khoản</h3>
-          <button type="button" class="acc-dialog-close" (click)="closeChangePhoneModal()">✕</button>
+          <button type="button" class="acc-dialog-close" (click)="closeChangePhoneModal()" aria-label="Đóng">
+            <i class="bi bi-x-lg" style="font-size:15px" aria-hidden="true"></i>
+          </button>
         </div>
 
         <div class="acc-dialog-body">
@@ -679,7 +623,7 @@
               </div>
 
               <div class="otp-demo-badge">
-                <span>⚡ Môi trường thử nghiệm: Mã OTP là <strong>{{ changePhoneDemoOtp() }}</strong></span>
+                <span><i class="bi bi-lightning-charge-fill" style="color:#eab308" aria-hidden="true"></i> Môi trường thử nghiệm: Mã OTP là <strong>{{ changePhoneDemoOtp() }}</strong></span>
               </div>
 
               <div class="acc-dialog-actions" style="margin-top:16px">
@@ -713,7 +657,9 @@
       <div class="acc-dialog-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
         <div class="acc-dialog-header">
           <h3 class="acc-dialog-title">Hủy liên kết tài khoản Google</h3>
-          <button type="button" class="acc-dialog-close" (click)="closeUnlinkGoogleModal()">✕</button>
+          <button type="button" class="acc-dialog-close" (click)="closeUnlinkGoogleModal()" aria-label="Đóng">
+            <i class="bi bi-x-lg" style="font-size:15px" aria-hidden="true"></i>
+          </button>
         </div>
 
         <div class="acc-dialog-body">

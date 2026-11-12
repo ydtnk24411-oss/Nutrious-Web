@@ -41,7 +41,76 @@ export function getCartItemKey(item: XanhLaCartItem): string {
   );
 }
 
-export type AuthTab = 'login' | 'signup';
+export function resolveProductOption(
+  product: Pick<XanhLaProduct, 'options'> | undefined | null,
+  option?: string | null
+): string | undefined {
+  if (!product || !Array.isArray(product.options) || product.options.length === 0) {
+    return undefined;
+  }
+  const trimmed = option?.trim();
+  return trimmed || undefined;
+}
+
+export interface CartPricingTotals {
+  originalSubtotal: number;
+  subtotal: number;
+  comboDiscount: number;
+  addonDiscount: number;
+  totalSavings: number;
+}
+
+export function aggregatePricingTotals(pricingMap: Map<string, EvaluatedCartItemPricing>): CartPricingTotals {
+  let originalSubtotal = 0;
+  let subtotal = 0;
+  let comboDiscount = 0;
+  let addonDiscount = 0;
+  for (const p of pricingMap.values()) {
+    originalSubtotal += p.lineOriginalTotal;
+    subtotal += p.linePayableTotal;
+    comboDiscount += p.comboSaving;
+    addonDiscount += p.addonSaving;
+  }
+  return {
+    originalSubtotal,
+    subtotal,
+    comboDiscount,
+    addonDiscount,
+    totalSavings: comboDiscount + addonDiscount,
+  };
+}
+
+export function buildAddonCartItem(
+  ao: {
+    product: XanhLaProduct;
+    discountType: 'percent' | 'fixed';
+    discountValue: number;
+    quantity?: number;
+  },
+  mainProduct: XanhLaProduct,
+  fallbackQty = 1
+): XanhLaCartItem {
+  const mainId = mainProduct.id || mainProduct.slug;
+  const aoQty = Math.max(1, Math.round(ao.quantity ?? fallbackQty));
+  return {
+    product: ao.product,
+    quantity: aoQty,
+    selectedOption: '',
+    itemType: 'addon',
+    linkedMainProductId: mainId,
+    linkedMainProductSlug: mainProduct.slug,
+    linkedMainProductName: mainProduct.name,
+    addonDiscountType: ao.discountType,
+    addonDiscountValue: ao.discountValue,
+  };
+}
+
+export type AuthTab = 'login' | 'signup' | 'forgot';
+
+export interface AuthModalPrefill {
+  name?: string;
+  phone?: string;
+}
 
 function priceValue(price: string): number {
   return Number((price || '').replace(/[^\d]/g, ''));
@@ -71,6 +140,23 @@ export function formatPrice(value: number): string {
   return value.toLocaleString('vi-VN') + 'đ';
 }
 
+export function resolveProductMaxStock(
+  product?: Pick<XanhLaProduct, 'stock' | 'availableStock' | 'isCombo' | 'comboStatus'> | null
+): number | null {
+  if (!product) return null;
+  if (product.comboStatus === 'paused' || product.comboStatus === 'hidden') return 0;
+  const raw = typeof product.availableStock === 'number'
+    ? product.availableStock
+    : (typeof product.stock === 'number' ? product.stock : null);
+  return raw !== null && Number.isFinite(raw) ? Math.max(0, Math.floor(raw)) : null;
+}
+
+export function isComboProduct(
+  product?: Pick<XanhLaProduct, 'isCombo' | 'comboItems'> | null
+): boolean {
+  return Boolean(product && (product.isCombo || (Array.isArray(product.comboItems) && product.comboItems.length > 0)));
+}
+
 export function evaluateItemsPricingMap(items: XanhLaCartItem[]): Map<string, EvaluatedCartItemPricing> {
   const map = new Map<string, EvaluatedCartItemPricing>();
   const regularItems: XanhLaCartItem[] = [];
@@ -79,7 +165,7 @@ export function evaluateItemsPricingMap(items: XanhLaCartItem[]): Map<string, Ev
   for (const it of items) {
     const key = getCartItemKey(it);
     const basePrice = unitPriceOf(it.product);
-    if (it.product.isCombo || it.isCombo || it.itemType === 'combo') {
+    if (isComboProduct(it.product) || it.isCombo || it.itemType === 'combo') {
       const origUnit = it.product.originalPriceNumber && it.product.originalPriceNumber > basePrice
         ? it.product.originalPriceNumber
         : basePrice;
@@ -412,6 +498,9 @@ export class CartService {
   private _authTab = signal<AuthTab>('login');
   readonly authTab = this._authTab.asReadonly();
 
+  private _authPrefill = signal<AuthModalPrefill | null>(null);
+  readonly authPrefill = this._authPrefill.asReadonly();
+
   // ── Cart state ──────────────────────────────────────────
   private _items = signal<XanhLaCartItem[]>([]);
   readonly items = this._items.asReadonly();
@@ -424,7 +513,7 @@ export class CartService {
   private _viewedProducts = signal<ViewedProductItem[]>([]);
   readonly viewedProducts = this._viewedProducts.asReadonly();
 
-  // ── Buy Now Modal & State ──────────────────────────────
+  // ── Direct Buy Now Session & Modal (Hoàn toàn tách biệt khỏi Giỏ hàng) ──────
   private _buyNowModalOpen = signal(false);
   readonly buyNowModalOpen = this._buyNowModalOpen.asReadonly();
 
@@ -437,15 +526,51 @@ export class CartService {
   private _buyNowOption = signal<string>('');
   readonly buyNowOption = this._buyNowOption.asReadonly();
 
-  private _buyNowItem = signal<XanhLaCartItem | null>(this._loadBuyNowItem());
-  readonly buyNowItem = this._buyNowItem.asReadonly();
+  private _buyNowSession = signal<XanhLaCartItem[] | null>(this._loadBuyNowSession());
+  readonly buyNowSession = this._buyNowSession.asReadonly();
+
+  readonly buyNowItem = computed<XanhLaCartItem | null>(() => this._buyNowSession()?.[0] ?? null);
 
   openBuyNowModal(product: XanhLaProduct, initialQty = 1, option?: string): void {
+    const maxStock = resolveProductMaxStock(product);
+    if (maxStock === 0) return;
+    const clampedQty = maxStock !== null ? Math.min(maxStock, Math.max(1, initialQty)) : Math.max(1, initialQty);
     this._buyNowProduct.set(product);
-    this._buyNowQuantity.set(Math.max(1, initialQty));
+    this._buyNowQuantity.set(clampedQty);
     const defaultOpt = option || (product.options?.[0]?.values?.[0] ?? '');
     this._buyNowOption.set(defaultOpt);
     this._buyNowModalOpen.set(true);
+
+    // Đối chiếu lại tồn kho thực tế từ API để tránh sản phẩm hết hàng (như Flash Sale chưa đồng bộ) đi tiếp vào Checkout
+    const cleanSlug = String(product.slug || '').replace(/^\/product-page\//, '').replace(/^\//, '');
+    if (cleanSlug) {
+      this.api.get<{ success: boolean; data: any }>(`/products/${encodeURIComponent(cleanSlug)}`).subscribe({
+        next: (res) => {
+          const live = res?.data;
+          if (!live) return;
+          const current = this._buyNowProduct();
+          if (!current || (current.slug !== product.slug && current.id !== product.id)) return;
+          const liveStock = live.isActive === false || live.comboStatus === 'paused' || live.comboStatus === 'hidden'
+            ? 0
+            : (live.isCombo && typeof live.availableStock === 'number'
+                ? Math.max(0, Math.floor(live.availableStock))
+                : (typeof live.stock === 'number' ? Math.max(0, Math.floor(live.stock)) : current.stock));
+          const updated: XanhLaProduct = {
+            ...current,
+            stock: liveStock,
+            availableStock: typeof live.availableStock === 'number' ? Math.max(0, Math.floor(live.availableStock)) : current.availableStock,
+            comboStatus: live.comboStatus ?? current.comboStatus,
+            isCombo: live.isCombo ?? current.isCombo,
+          };
+          this._buyNowProduct.set(updated);
+          const refreshedMax = resolveProductMaxStock(updated);
+          if (refreshedMax !== null && refreshedMax > 0 && this._buyNowQuantity() > refreshedMax) {
+            this._buyNowQuantity.set(refreshedMax);
+          }
+        },
+        error: () => {},
+      });
+    }
   }
 
   closeBuyNowModal(): void {
@@ -453,45 +578,126 @@ export class CartService {
   }
 
   setBuyNowQuantity(qty: number): void {
-    this._buyNowQuantity.set(Math.max(1, Math.floor(qty) || 1));
+    const maxStock = resolveProductMaxStock(this._buyNowProduct());
+    const parsed = Math.max(1, Math.floor(qty) || 1);
+    const clamped = maxStock !== null && maxStock > 0 ? Math.min(maxStock, parsed) : parsed;
+    this._buyNowQuantity.set(clamped);
   }
 
   setBuyNowOption(opt: string): void {
     this._buyNowOption.set(opt);
   }
 
-  setBuyNowItem(item: XanhLaCartItem | null): void {
-    this._buyNowItem.set(item);
+  startDirectBuyNow(product: XanhLaProduct, quantity: number, selectedOption?: string): void {
+    const maxStock = resolveProductMaxStock(product);
+    if (maxStock === 0) return;
+    const cleanOption = resolveProductOption(product, selectedOption);
+    const combo = isComboProduct(product);
+    const safeQty = maxStock !== null ? Math.min(maxStock, Math.max(1, Math.floor(quantity) || 1)) : Math.max(1, Math.floor(quantity) || 1);
+    const item: XanhLaCartItem = {
+      product,
+      quantity: safeQty,
+      selectedOption: cleanOption,
+      itemType: combo ? 'combo' : 'regular',
+      isCombo: combo,
+      originalPriceNumber: product.originalPriceNumber,
+    };
+    this._saveBuyNowSession([item]);
+    this.closeBuyNowModal();
+  }
+
+  startDirectBundleBuyNow(
+    mainProduct: XanhLaProduct,
+    mainQuantity: number,
+    mainOption: string | undefined,
+    addOns: {
+      product: XanhLaProduct;
+      discountType: 'percent' | 'fixed';
+      discountValue: number;
+      quantity?: number;
+    }[]
+  ): void {
+    const mainMax = resolveProductMaxStock(mainProduct);
+    if (mainMax === 0) return;
+    const rawQty = Math.max(1, Math.round(mainQuantity || 1));
+    const safeMainQty = mainMax !== null ? Math.min(mainMax, rawQty) : rawQty;
+    const mainId = mainProduct.id || mainProduct.slug;
+    const cleanMainOption = resolveProductOption(mainProduct, mainOption);
+
+    const items: XanhLaCartItem[] = [
+      {
+        product: mainProduct,
+        quantity: safeMainQty,
+        selectedOption: cleanMainOption,
+        itemType: 'regular',
+      }
+    ];
+
+    for (const ao of addOns) {
+      if (!ao || !ao.product || ao.product.isCombo) continue;
+      if (resolveProductMaxStock(ao.product) === 0) continue;
+      const aoMax = resolveProductMaxStock(ao.product);
+      const rawAoQty = Math.max(1, Math.round(ao.quantity ?? safeMainQty));
+      const aoQty = aoMax !== null ? Math.min(aoMax, rawAoQty) : rawAoQty;
+      items.push({
+        product: ao.product,
+        quantity: aoQty,
+        selectedOption: '',
+        itemType: 'addon',
+        linkedMainProductId: mainId,
+        linkedMainProductSlug: mainProduct.slug,
+        linkedMainProductName: mainProduct.name,
+        addonDiscountType: ao.discountType,
+        addonDiscountValue: ao.discountValue,
+      });
+    }
+
+    this._saveBuyNowSession(items);
+    this.closeBuyNowModal();
+  }
+
+  clearBuyNowSession(): void {
+    this._saveBuyNowSession(null);
+  }
+
+  updateBuyNowItemQuantity(item: XanhLaCartItem, quantity: number): void {
+    const targetKey = getCartItemKey(item);
+    const current = this._buyNowSession();
+    if (!current || current.length === 0) return;
+    const existing = current.find((i) => getCartItemKey(i) === targetKey);
+    const maxStock = resolveProductMaxStock(existing?.product ?? item.product);
+    const requested = Math.max(1, Math.min(99, Math.floor(quantity) || 1));
+    if (maxStock === 0 && existing && requested > existing.quantity) return;
+    const upperBound = maxStock !== null && maxStock > 0 ? maxStock : 99;
+    const safeQty = Math.max(1, Math.min(upperBound, requested));
+    const updated = current.map((i) =>
+      getCartItemKey(i) === targetKey ? { ...i, quantity: safeQty } : i
+    );
+    this._saveBuyNowSession(updated);
+  }
+
+  private _saveBuyNowSession(items: XanhLaCartItem[] | null): void {
+    this._buyNowSession.set(items);
     try {
-      if (item) {
-        sessionStorage.setItem('xanhla_buy_now', JSON.stringify(item));
+      if (items && items.length > 0) {
+        sessionStorage.setItem('xanhla_buy_now_session', JSON.stringify(items));
       } else {
+        sessionStorage.removeItem('xanhla_buy_now_session');
         sessionStorage.removeItem('xanhla_buy_now');
       }
     } catch {}
   }
 
-  clearBuyNowItem(): void {
-    this.setBuyNowItem(null);
-  }
-
-  startBuyNow(product: XanhLaProduct, quantity: number, selectedOption?: string): void {
-    const item: XanhLaCartItem = {
-      product,
-      quantity: Math.max(1, quantity),
-      selectedOption: selectedOption || undefined,
-      itemType: product.isCombo ? 'combo' : 'regular',
-      isCombo: !!product.isCombo,
-      originalPriceNumber: product.originalPriceNumber,
-    };
-    this.setBuyNowItem(item);
-    this.closeBuyNowModal();
-  }
-
-  private _loadBuyNowItem(): XanhLaCartItem | null {
+  private _loadBuyNowSession(): XanhLaCartItem[] | null {
     try {
-      const raw = sessionStorage.getItem('xanhla_buy_now');
-      return raw ? JSON.parse(raw) : null;
+      const raw = sessionStorage.getItem('xanhla_buy_now_session');
+      if (raw) return JSON.parse(raw);
+      const legacyRaw = sessionStorage.getItem('xanhla_buy_now');
+      if (legacyRaw) {
+        const it = JSON.parse(legacyRaw);
+        return it ? [it] : null;
+      }
+      return null;
     } catch {
       return null;
     }
@@ -608,7 +814,25 @@ export class CartService {
   }
 
   selectOnly(slug: string, selectedOption?: string): void {
-    const key = cartItemKey(slug, selectedOption);
+    const cleanSlug = cleanCartStr((slug || '').replace(/^\/product-page\//, '').replace(/^\//, ''));
+    const currentItems = this._items();
+    let found = currentItems.find(i => {
+      const itSlug = cleanCartStr((i.product.slug || '').replace(/^\/product-page\//, '').replace(/^\//, ''));
+      if (itSlug !== cleanSlug) return false;
+      if (selectedOption && i.selectedOption) {
+        return cleanCartStr(i.selectedOption) === cleanCartStr(selectedOption);
+      }
+      return true;
+    });
+
+    if (!found) {
+      found = currentItems.find(i => {
+        const itName = cleanCartStr(i.product.name);
+        return itName.includes(cleanSlug) || cleanSlug.includes(itName);
+      });
+    }
+
+    const key = found ? getCartItemKey(found) : cartItemKey(slug, selectedOption);
     const next = new Set<string>([key]);
     this._selectedKeys.set(next);
     persistSelectedKeys(next);
@@ -728,13 +952,14 @@ export class CartService {
     return this.selectedPricingMap().get(getCartItemKey(item));
   }
 
-  getItemPricing(item: XanhLaCartItem, scope: 'all' | 'selected' = 'all'): EvaluatedCartItemPricing {
-    const found = scope === 'selected'
-      ? this.selectedPricingMap().get(getCartItemKey(item))
-      : this.allPricingMap().get(getCartItemKey(item));
+  getItemPricing(item: XanhLaCartItem, scope: 'all' | 'selected' | 'buynow' = 'all'): EvaluatedCartItemPricing {
+    const key = getCartItemKey(item);
+    const map = scope === 'buynow'
+      ? this.buyNowPricingMap()
+      : (scope === 'selected' ? this.selectedPricingMap() : this.allPricingMap());
+    const found = map.get(key);
     if (found) return found;
 
-    const key = getCartItemKey(item);
     const basePrice = unitPriceOf(item.product);
     const lineTotal = basePrice * (item.quantity || 1);
     return {
@@ -761,53 +986,35 @@ export class CartService {
   );
   readonly itemCount = this.count;
 
-  readonly originalTotal = computed(() => {
-    let sum = 0;
-    for (const p of this.selectedPricingMap().values()) {
-      sum += p.lineOriginalTotal;
-    }
-    return sum;
+  // ── Unified Pricing Totals (DRY: tính toán 1 lần duy nhất cho toàn bộ nhóm) ──
+  readonly allTotals = computed(() => aggregatePricingTotals(this.allPricingMap()));
+  readonly selectedTotals = computed(() => aggregatePricingTotals(this.selectedPricingMap()));
+  readonly buyNowPricingMap = computed<Map<string, EvaluatedCartItemPricing>>(() => {
+    const s = this._buyNowSession();
+    return s && s.length > 0 ? evaluateItemsPricingMap(s) : new Map();
   });
+  readonly buyNowTotals = computed(() => aggregatePricingTotals(this.buyNowPricingMap()));
+
+  readonly originalTotal = computed(() => this.selectedTotals().originalSubtotal);
   readonly selectedOriginalSubtotal = this.originalTotal;
 
-  readonly total = computed(() => {
-    let sum = 0;
-    for (const p of this.selectedPricingMap().values()) {
-      sum += p.linePayableTotal;
-    }
-    return sum;
-  });
+  readonly total = computed(() => this.selectedTotals().subtotal);
   readonly selectedSubtotal = this.total;
 
-  readonly comboDiscountTotal = computed(() => {
-    let sum = 0;
-    for (const p of this.selectedPricingMap().values()) {
-      sum += p.comboSaving;
-    }
-    return sum;
-  });
+  readonly comboDiscountTotal = computed(() => this.selectedTotals().comboDiscount);
   readonly selectedComboDiscount = this.comboDiscountTotal;
 
-  readonly addOnDiscountTotal = computed(() => {
-    let sum = 0;
-    for (const p of this.selectedPricingMap().values()) {
-      sum += p.addonSaving;
-    }
-    return sum;
-  });
+  readonly addOnDiscountTotal = computed(() => this.selectedTotals().addonDiscount);
   readonly selectedAddonDiscount = this.addOnDiscountTotal;
 
-  readonly cartTotalSavings = computed(() =>
-    this.comboDiscountTotal() + this.addOnDiscountTotal()
-  );
+  readonly cartTotalSavings = computed(() => this.selectedTotals().totalSavings);
+  readonly allItemsTotal = computed(() => this.allTotals().subtotal);
 
-  readonly allItemsTotal = computed(() => {
-    let sum = 0;
-    for (const p of this.allPricingMap().values()) {
-      sum += p.linePayableTotal;
-    }
-    return sum;
-  });
+  // Buy Now getters
+  readonly buyNowOriginalSubtotal = computed(() => this.buyNowTotals().originalSubtotal);
+  readonly buyNowSubtotal = computed(() => this.buyNowTotals().subtotal);
+  readonly buyNowComboDiscount = computed(() => this.buyNowTotals().comboDiscount);
+  readonly buyNowAddonDiscount = computed(() => this.buyNowTotals().addonDiscount);
 
   // ── Drawer ──────────────────────────────────────────────
   private _cartDrawerOpen = signal(false);
@@ -823,14 +1030,18 @@ export class CartService {
     product: XanhLaProduct,
     quantity = 1,
     selectedOption?: string,
-    opts?: { openDrawer?: boolean; event?: Event | HTMLElement }
+    opts?: { openDrawer?: boolean; event?: Event | HTMLElement; setExactQuantity?: boolean }
   ): void {
+    const maxStock = resolveProductMaxStock(product);
+    if (maxStock === 0) return;
+
     if (opts?.event) {
       animateFlyToCart(opts.event, product.image);
     }
-    const hasOptions = Array.isArray(product.options) && product.options.length > 0;
-    const cleanOption = hasOptions ? (selectedOption?.trim() || undefined) : undefined;
-    const itemType: 'regular' | 'combo' = product.isCombo ? 'combo' : 'regular';
+    const cleanOption = resolveProductOption(product, selectedOption);
+    const hasOptions = cleanOption !== undefined;
+    const combo = isComboProduct(product);
+    const itemType: 'regular' | 'combo' = combo ? 'combo' : 'regular';
     const key = cartItemKey(product.slug, cleanOption, itemType);
 
     const prodName = cleanCartStr(product.name);
@@ -857,22 +1068,32 @@ export class CartService {
 
       if (idx >= 0) {
         matchedItemKey = getCartItemKey(current[idx]);
-        const updated = current.map((i, index) =>
-          index === idx
-            ? {
-                ...i,
-                // Keep the better or custom discounted price if provided
-                product: product.priceNumber && product.priceNumber < (i.product.priceNumber || 0) ? product : i.product,
-                itemType,
-                quantity: i.quantity + quantity,
-                selectedOption: hasOptions ? (i.selectedOption || cleanOption) : undefined,
-              }
-            : i
-        );
+        const updated = current.map((i, index) => {
+          if (index !== idx) return i;
+          const baseProduct = product.priceNumber && product.priceNumber < (i.product.priceNumber || 0) ? product : i.product;
+          const syncedProduct: XanhLaProduct = {
+            ...baseProduct,
+            stock: product.stock ?? baseProduct.stock,
+            availableStock: product.availableStock ?? baseProduct.availableStock,
+            comboStatus: product.comboStatus ?? baseProduct.comboStatus,
+            isCombo: combo || baseProduct.isCombo,
+          };
+          const rawNext = opts?.setExactQuantity ? Math.max(1, quantity) : (i.quantity + quantity);
+          const cappedNext = maxStock !== null ? Math.min(maxStock, rawNext) : rawNext;
+          return {
+            ...i,
+            product: syncedProduct,
+            itemType,
+            isCombo: combo,
+            quantity: Math.max(1, cappedNext),
+            selectedOption: hasOptions ? (i.selectedOption || cleanOption) : undefined,
+          };
+        });
         this._saveCartForCurrentUser(updated);
         return updated;
       } else {
-        const updated = [...current, { product, quantity, selectedOption: cleanOption, itemType, isCombo: !!product.isCombo }];
+        const cappedInitial = maxStock !== null ? Math.min(maxStock, Math.max(1, quantity)) : Math.max(1, quantity);
+        const updated = [...current, { product, quantity: cappedInitial, selectedOption: cleanOption, itemType, isCombo: combo }];
         this._saveCartForCurrentUser(updated);
         return updated;
       }
@@ -922,11 +1143,13 @@ export class CartService {
       discountValue: number;
       quantity?: number;
     }[],
-    opts?: { openDrawer?: boolean; selectOnlyBundle?: boolean }
+    opts?: { openDrawer?: boolean; selectOnlyBundle?: boolean; setExactQuantity?: boolean }
   ): boolean {
     const safeMainQty = Math.max(1, Math.round(mainQuantity || 1));
     const mainId = mainProduct.id || mainProduct.slug;
-    const mainKey = cartItemKey(mainProduct.slug, mainOption, 'regular');
+    const hasOptions = Array.isArray(mainProduct.options) && mainProduct.options.length > 0;
+    const cleanMainOption = hasOptions ? (mainOption?.trim() || undefined) : undefined;
+    const mainKey = cartItemKey(mainProduct.slug, cleanMainOption, 'regular');
     const addedKeys: string[] = [mainKey];
 
     this._items.update((current) => {
@@ -934,7 +1157,7 @@ export class CartService {
       const mainIdx = updated.findIndex(
         (i) =>
           i.product.slug === mainProduct.slug &&
-          (i.selectedOption ?? '') === (mainOption ?? '') &&
+          (i.selectedOption ?? '') === (cleanMainOption ?? '') &&
           i.itemType !== 'addon'
       );
       if (mainIdx >= 0) {
@@ -942,28 +1165,29 @@ export class CartService {
           ...updated[mainIdx],
           product: mainProduct,
           itemType: 'regular',
-          quantity: updated[mainIdx].quantity + safeMainQty,
+          quantity: opts?.setExactQuantity ? safeMainQty : (updated[mainIdx].quantity + safeMainQty),
+          selectedOption: cleanMainOption,
         };
       } else {
         updated.push({
           product: mainProduct,
           quantity: safeMainQty,
-          selectedOption: mainOption,
+          selectedOption: cleanMainOption,
           itemType: 'regular',
         });
       }
 
       for (const ao of addOns) {
         if (!ao || !ao.product || ao.product.isCombo) continue;
-        const aoQty = Math.max(1, Math.round(ao.quantity ?? safeMainQty));
-        const aoKey = cartItemKey(ao.product.slug, '', 'addon', mainId);
+        const aoItem = buildAddonCartItem(ao, mainProduct, safeMainQty);
+        const aoKey = getCartItemKey(aoItem);
         addedKeys.push(aoKey);
         const aoIdx = updated.findIndex((i) => getCartItemKey(i) === aoKey);
         if (aoIdx >= 0) {
           updated[aoIdx] = {
             ...updated[aoIdx],
             product: ao.product,
-            quantity: updated[aoIdx].quantity + aoQty,
+            quantity: opts?.setExactQuantity ? aoItem.quantity : (updated[aoIdx].quantity + aoItem.quantity),
             addonDiscountType: ao.discountType,
             addonDiscountValue: ao.discountValue,
             linkedMainProductId: mainId,
@@ -971,17 +1195,7 @@ export class CartService {
             linkedMainProductName: mainProduct.name,
           };
         } else {
-          updated.push({
-            product: ao.product,
-            quantity: aoQty,
-            selectedOption: '',
-            itemType: 'addon',
-            linkedMainProductId: mainId,
-            linkedMainProductSlug: mainProduct.slug,
-            linkedMainProductName: mainProduct.name,
-            addonDiscountType: ao.discountType,
-            addonDiscountValue: ao.discountValue,
-          });
+          updated.push(aoItem);
         }
       }
 
@@ -1028,9 +1242,17 @@ export class CartService {
   updateItemQuantity(item: XanhLaCartItem, quantity: number): void {
     const targetKey = getCartItemKey(item);
     this._items.update((current) => {
-      const updated = quantity <= 0
+      const target = current.find((i) => getCartItemKey(i) === targetKey);
+      const maxStock = resolveProductMaxStock(target?.product ?? item.product);
+      if (quantity > 0 && target && maxStock === 0 && quantity > target.quantity) {
+        return current;
+      }
+      const nextQty = quantity <= 0
+        ? quantity
+        : (maxStock !== null && maxStock > 0 ? Math.min(maxStock, quantity) : quantity);
+      const updated = nextQty <= 0
         ? current.filter((i) => getCartItemKey(i) !== targetKey)
-        : current.map((i) => getCartItemKey(i) === targetKey ? { ...i, quantity } : i);
+        : current.map((i) => getCartItemKey(i) === targetKey ? { ...i, quantity: nextQty } : i);
       this._saveCartForCurrentUser(updated);
       return updated;
     });
@@ -1150,6 +1372,7 @@ export class CartService {
           const user: XanhLaUser = res.user;
           this.applyUserSession(user, res.token);
           this._authModalOpen.set(false);
+          this._authPrefill.set(null);
           this.loadUserData();
           onSuccess(user);
         } else {
@@ -1189,6 +1412,121 @@ export class CartService {
   }
 
   // ── Phone-First Login ─────────────────────────────────────
+
+  // ── Forgot Password (BR-ACC-10) ──────────────────────────────────────────
+
+  requestForgotPasswordOtp(
+    phone: string,
+    onSuccess: (data: { phone: string; expiresInSeconds?: number; demoOtp?: string }) => void,
+    onError: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      message: string;
+      phone: string;
+      expiresInSeconds?: number;
+      demoOtp?: string;
+    }>('/auth/forgot-password/request-otp', {
+      phone: phone.trim(),
+    }).subscribe({
+      next: (res) => {
+        if (res.success) {
+          onSuccess(res);
+        } else {
+          onError(res.message || 'Yêu cầu đặt lại mật khẩu thất bại.');
+        }
+      },
+      error: (err) => {
+        onError(err.error?.message || 'Không thể gửi mã xác minh OTP. Vui lòng kiểm tra lại số điện thoại.');
+      }
+    });
+  }
+
+  verifyForgotPasswordOtp(
+    phone: string,
+    otp: string,
+    onSuccess: (data: { resetToken: string; phone: string; message: string }) => void,
+    onError: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      resetToken: string;
+      phone: string;
+      message: string;
+    }>('/auth/forgot-password/verify-otp', {
+      phone: phone.trim(),
+      otp: otp.trim(),
+    }).subscribe({
+      next: (res) => {
+        if (res.success && res.resetToken) {
+          onSuccess(res);
+        } else {
+          onError(res.message || 'Mã xác minh OTP không hợp lệ.');
+        }
+      },
+      error: (err) => {
+        onError(err.error?.message || 'Mã OTP không chính xác hoặc đã hết hạn.');
+      }
+    });
+  }
+
+  resendForgotPasswordOtp(
+    phone: string,
+    onSuccess: (data: { phone: string; demoOtp?: string }) => void,
+    onError: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      message: string;
+      phone: string;
+      demoOtp?: string;
+    }>('/auth/forgot-password/resend-otp', {
+      phone: phone.trim(),
+    }).subscribe({
+      next: (res) => {
+        if (res.success) {
+          onSuccess(res);
+        } else {
+          onError(res.message || 'Gửi lại mã OTP thất bại.');
+        }
+      },
+      error: (err) => {
+        onError(err.error?.message || 'Không thể gửi lại mã OTP.');
+      }
+    });
+  }
+
+  resetPasswordWithToken(
+    phone: string,
+    resetToken: string,
+    password: string,
+    confirmPassword: string,
+    onSuccess: (msg: string) => void,
+    onError: (errMsg: string) => void
+  ): void {
+    this.api.post<{
+      success: boolean;
+      message: string;
+    }>('/auth/forgot-password/reset', {
+      phone: phone.trim(),
+      resetToken: resetToken.trim(),
+      password,
+      confirmPassword,
+    }).subscribe({
+      next: (res) => {
+        if (res.success) {
+          onSuccess(res.message || 'Đặt lại mật khẩu thành công!');
+        } else {
+          onError(res.message || 'Đặt lại mật khẩu không thành công.');
+        }
+      },
+      error: (err) => {
+        onError(err.error?.message || 'Không thể đặt lại mật khẩu. Vui lòng thử lại.');
+      }
+    });
+  }
+
+
 
   login(
     identifier: string,
@@ -1572,6 +1910,22 @@ export class CartService {
     this.updateUser({ addresses: newList });
   }
 
+  updateAddress(addr: XanhLaAddress): void {
+    const current = this._currentUser();
+    if (!current) return;
+    const addresses = current.addresses ?? [];
+    const exists = addresses.some(a => a.id === addr.id);
+    if (!exists) {
+      this.addAddress(addr);
+      return;
+    }
+    const newList = addresses.map(a => {
+      if (a.id === addr.id) return addr;
+      return addr.isDefault ? { ...a, isDefault: false } : a;
+    });
+    this.updateUser({ addresses: newList });
+  }
+
   removeAddress(id: string): void {
     const current = this._currentUser();
     if (!current) return;
@@ -1590,12 +1944,16 @@ export class CartService {
     persistSelectedKeys(new Set());
   }
 
-  openAuthModal(tab: AuthTab = 'login'): void {
+  openAuthModal(tab: AuthTab = 'login', prefill?: AuthModalPrefill): void {
+    this._authPrefill.set(prefill ?? null);
     this._authTab.set(tab);
     this._authModalOpen.set(true);
   }
 
-  closeAuthModal(): void { this._authModalOpen.set(false); }
+  closeAuthModal(): void {
+    this._authModalOpen.set(false);
+    this._authPrefill.set(null);
+  }
   setAuthTab(tab: AuthTab): void { this._authTab.set(tab); }
 
   // ── Private helpers ─────────────────────────────────────

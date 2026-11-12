@@ -12,6 +12,106 @@ const { evaluateVoucher, consumeVoucher } = require('../utils/voucher');
 const { creditOrderPoints }   = require('../utils/loyalty');
 const { calculateShipping }   = require('../utils/shippingCalculator');
 
+const QR_PAYMENT_TTL_MS = 15 * 60 * 1000; // 15 phút giữ đơn chờ chuyển khoản VietQR
+
+function buildVietQrPayload(order) {
+  const bankId = (process.env.BANK_ID || 'MB').trim();
+  const accountNo = (process.env.ACCOUNT_NO || '0962299122').trim();
+  const accountName = (process.env.ACCOUNT_NAME || 'VY TAM NHU').trim();
+  const encodedAccountName = encodeURIComponent(accountName);
+  const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${order.total}&addInfo=${encodeURIComponent(order.orderCode)}&accountName=${encodedAccountName}`;
+  return {
+    qrUrl,
+    bankInfo: { bankId, accountNo, accountName },
+  };
+}
+
+function buildOrderLookupQuery(rawCodeOrId) {
+  const raw = String(rawCodeOrId || '').trim();
+  if (mongoose.Types.ObjectId.isValid(raw)) {
+    return { _id: new mongoose.Types.ObjectId(raw) };
+  }
+  const normalizedCode = raw.replace(/^XL-?/i, 'XL-');
+  const noHyphenCode = raw.replace(/^XL-?/i, 'XL');
+  return {
+    $or: [
+      { orderCode: raw },
+      { orderCode: normalizedCode },
+      { orderCode: noHyphenCode },
+      { orderCode: raw.toUpperCase() },
+    ],
+  };
+}
+
+async function expireUnpaidQrOrderIfNeeded(order) {
+  if (!order) return order;
+  const isUnpaidQrPending =
+    order.paymentMethod === 'bank_transfer' &&
+    (order.paymentStatus || 'unpaid') === 'unpaid' &&
+    order.status === 'pending' &&
+    order.paymentExpiresAt &&
+    Date.now() > new Date(order.paymentExpiresAt).getTime();
+
+  if (!isUnpaidQrPending) return order;
+
+  const expiredNote = order.note
+    ? `${order.note} | Tự động hủy do quá thời gian thanh toán VietQR (15 phút)`
+    : 'Tự động hủy do quá thời gian thanh toán VietQR (15 phút)';
+
+  const updated = await Order.findOneAndUpdate(
+    { _id: order._id, paymentStatus: 'unpaid', status: 'pending' },
+    { $set: { paymentStatus: 'expired', status: 'cancelled', note: expiredNote } },
+    { new: true }
+  ).lean();
+
+  if (updated) {
+    await restoreOrderInventoryOnce(order._id, null);
+    order.paymentStatus = 'expired';
+    order.status = 'cancelled';
+    order.note = updated.note;
+  }
+  return order;
+}
+
+function attachPaymentQrMetadata(orderObj) {
+  if (!orderObj) return orderObj;
+  if (
+    orderObj.paymentMethod === 'bank_transfer' &&
+    (orderObj.paymentStatus || 'unpaid') === 'unpaid' &&
+    orderObj.status === 'pending'
+  ) {
+    const vietQr = buildVietQrPayload(orderObj);
+    orderObj.qrUrl = vietQr.qrUrl;
+    orderObj.bankInfo = vietQr.bankInfo;
+  }
+  return orderObj;
+}
+
+async function markQrOrderAsPaid(order, { reference = '', autoConfirm = true } = {}) {
+  if (!order) return null;
+  const setFields = {
+    paymentStatus: 'paid',
+    paidAt: order.paidAt || new Date(),
+  };
+  if (reference) setFields.paymentReference = String(reference);
+  if (autoConfirm && order.status === 'pending') {
+    setFields.status = 'confirmed';
+  }
+
+  const updated = await Order.findOneAndUpdate(
+    { _id: order._id, status: { $ne: 'cancelled' }, paymentStatus: { $ne: 'paid' } },
+    { $set: setFields },
+    { new: true }
+  );
+  if (!updated) {
+    return Order.findById(order._id);
+  }
+  if (order.status === 'pending' && updated.status === 'confirmed') {
+    await handleFlashSaleOrderConfirmed(updated);
+  }
+  return updated;
+}
+
 function calcDealUnitDiscount(targetUnitPrice, deal) {
   if (!deal || deal.isActive === false) return 0;
   const val = Number(deal.discountValue) || 0;
@@ -20,6 +120,45 @@ function calcDealUnitDiscount(targetUnitPrice, deal) {
     ? Math.round(val)
     : Math.round((targetUnitPrice * Math.min(99, val)) / 100);
   return Math.max(0, Math.min(targetUnitPrice, rawDisc));
+}
+
+// Nhận diện sản phẩm tươi sống thuộc 4 danh mục: Rau củ, Trái cây, Thịt, Cá & Hải sản
+function isFreshPerishableProduct(prod) {
+  if (!prod) return { isFresh: false, categoryName: '' };
+  const cat = (prod.category || '').toLowerCase();
+  const catVi = (prod.categoryVi || '').toLowerCase();
+  const name = (prod.name || '').toLowerCase();
+  const combined = `${cat} ${catVi} ${name}`;
+
+  // Loại trừ đồ uống đóng chai, bánh kẹo, gia vị & đồ khô, sữa
+  const excluded = [
+    'beverages', 'thức uống', 'nước ép',
+    'bakery', 'bánh mỳ', 'bánh ngọt',
+    'pantry', 'gia vị', 'đồ khô', 'hạt & ngũ cốc',
+    'dairy'
+  ];
+  if (excluded.some(ex => cat.includes(ex) || catVi.includes(ex))) {
+    return { isFresh: false, categoryName: '' };
+  }
+
+  // 1. Rau củ
+  if (/rau\s*củ|rau\s*ăn|rau\s*gia\s*vị|nấm\s*tươi|củ\s*quả|vegetable/i.test(combined)) {
+    return { isFresh: true, categoryName: 'Rau củ tươi' };
+  }
+  // 2. Trái cây
+  if (/trái\s*cây|hoa\s*quả|fruit/i.test(combined)) {
+    return { isFresh: true, categoryName: 'Trái cây tươi' };
+  }
+  // 3. Thịt
+  if (/thịt|meat|thịt\s*bò|thịt\s*heo|thịt\s*gà|gia\s*cầm/i.test(combined)) {
+    return { isFresh: true, categoryName: 'Thịt tươi sống' };
+  }
+  // 4. Cá & hải sản
+  if (/cá\s*&?\s*hải\s*sản|hải\s*sản|seafood|thủy\s*hải\s*sản/i.test(combined)) {
+    return { isFresh: true, categoryName: 'Cá & hải sản tươi' };
+  }
+
+  return { isFresh: false, categoryName: '' };
 }
 
 async function handleFlashSaleOrderConfirmed(order) {
@@ -94,6 +233,10 @@ router.post(
       delete orderData.user;
       delete orderData.status;
       delete orderData.orderCode;
+      delete orderData.paymentStatus;
+      delete orderData.paymentExpiresAt;
+      delete orderData.paidAt;
+      delete orderData.paymentReference;
 
       // 1. Validate giỏ hàng rỗng
       if (!Array.isArray(orderData.items) || orderData.items.length === 0) {
@@ -107,6 +250,7 @@ router.post(
       const finalItems = [];
       const regularEntries = [];
       const addonEntries = [];
+      const detectedNonRefundableItems = [];
 
       for (const item of orderData.items) {
         const qty = Number(item.quantity);
@@ -130,7 +274,7 @@ router.post(
           prod = await Product.findOne({ name: item.productName });
         }
 
-        if (!prod || prod.isActive === false) {
+        if (!prod || prod.isActive === false || (prod.isCombo && (prod.comboStatus === 'paused' || prod.comboStatus === 'hidden'))) {
           return res.status(400).json({
             success: false,
             message: `Sản phẩm "${item.productName || item.product || 'trong đơn hàng'}" không tồn tại hoặc đã ngừng kinh doanh.`
@@ -141,33 +285,72 @@ router.post(
         const priceNum = typeof prod.priceNumber === 'number' ? prod.priceNumber : Number(prod.priceNumber || 0);
 
         if (prod.isCombo) {
-          const popProd = await Product.findById(prod._id).populate('comboItems.product', 'name price priceNumber image weight unit slug');
+          const popProd = await Product.findById(prod._id).populate(
+            'comboItems.product',
+            'name price priceNumber image weight unit slug stock isActive'
+          );
+          if (!popProd || !Array.isArray(popProd.comboItems) || popProd.comboItems.length === 0) {
+            return res.status(400).json({
+              success: false,
+              message: `Combo "${prod.name}" chưa có danh sách sản phẩm thành phần hợp lệ.`,
+            });
+          }
+
           const comboSubItems = [];
           let comboItemsSum = 0;
-          if (popProd && Array.isArray(popProd.comboItems) && popProd.comboItems.length > 0) {
-            for (const ci of popProd.comboItems) {
-              if (!ci.product) continue;
-              const ciPrice = typeof ci.product.priceNumber === 'number' ? ci.product.priceNumber : Number(ci.product.priceNumber || 0);
-              const singleQty = ci.quantity || 1;
-              comboItemsSum += ciPrice * singleQty;
-              comboSubItems.push({
-                product: ci.product._id ? String(ci.product._id) : '',
-                name: ci.product.name,
-                image: ci.product.image || '',
-                price: ci.product.price || '',
-                priceNumber: ciPrice,
-                quantity: singleQty,
-                unit: ci.product.unit || '',
-                weight: ci.product.weight || '',
+          for (const ci of popProd.comboItems) {
+            if (!ci.product || ci.product.isActive === false) {
+              return res.status(400).json({
+                success: false,
+                message: `Sản phẩm thành phần trong Combo "${prod.name}" đã ngừng kinh doanh.`,
               });
             }
+            const ciPrice = typeof ci.product.priceNumber === 'number' ? ci.product.priceNumber : Number(ci.product.priceNumber || 0);
+            const singleQty = Math.max(1, Number(ci.quantity) || 1);
+            const lineTotal = ciPrice * singleQty;
+            comboItemsSum += lineTotal;
+            comboSubItems.push({
+              product: ci.product._id ? String(ci.product._id) : '',
+              slug: ci.product.slug || '',
+              name: ci.product.name,
+              image: ci.product.image || '',
+              price: ci.product.price || `${ciPrice.toLocaleString('vi-VN')}đ`,
+              priceNumber: ciPrice,
+              quantity: singleQty,
+              lineTotal,
+              unit: ci.product.unit || '',
+              weight: ci.product.weight || '',
+            });
           }
-          const comboRetail = prod.originalPriceNumber && prod.originalPriceNumber > priceNum
-            ? prod.originalPriceNumber
-            : (comboItemsSum > priceNum ? comboItemsSum : priceNum);
+
+          const comboRetail = comboItemsSum > 0
+            ? comboItemsSum
+            : (prod.originalPriceNumber && prod.originalPriceNumber > priceNum ? prod.originalPriceNumber : priceNum);
           const saving = Math.max(0, (comboRetail - priceNum) * qty);
           totalComboSaving += saving;
           serverSubtotal += priceNum * qty;
+
+          // Kiểm tra thành phần tươi sống trong Combo
+          const comboFreshCheck = isFreshPerishableProduct(prod);
+          let comboIsFresh = comboFreshCheck.isFresh;
+          const matchedComponents = [];
+          for (const ci of popProd.comboItems) {
+            const ciFresh = isFreshPerishableProduct(ci.product);
+            if (ciFresh.isFresh) {
+              comboIsFresh = true;
+              matchedComponents.push(ci.product.name);
+            }
+          }
+          if (comboIsFresh) {
+            const comboLabel = matchedComponents.length > 0
+              ? `${prod.name} (thành phần: ${matchedComponents.join(', ')})`
+              : prod.name;
+            detectedNonRefundableItems.push({
+              name: comboLabel,
+              categoryName: comboFreshCheck.categoryName || 'Combo thực phẩm tươi sống',
+              isCombo: true
+            });
+          }
 
           finalItems.push({
             product: prod._id.toString(),
@@ -184,6 +367,16 @@ router.post(
             comboSaving: saving,
           });
           continue;
+        }
+
+        // Kiểm tra sản phẩm đơn lẻ / mua kèm tươi sống
+        const freshCheck = isFreshPerishableProduct(prod);
+        if (freshCheck.isFresh) {
+          detectedNonRefundableItems.push({
+            name: prod.name,
+            categoryName: freshCheck.categoryName,
+            isCombo: false
+          });
         }
 
         const requestedType = item.itemType === 'addon' && item.linkedMainProduct ? 'addon' : 'regular';
@@ -228,6 +421,10 @@ router.post(
         }
         const mainProdId = mainProd._id.toString();
         const mainPriceNum = typeof mainProd.priceNumber === 'number' ? mainProd.priceNumber : Number(mainProd.priceNumber || 0);
+        // Quy tắc bắt buộc: Giá mua kèm phải THẤP HƠN giá sản phẩm chính
+        if (ae.priceNum >= mainPriceNum || ae.priceNum <= 0 || mainPriceNum <= 0) {
+          return { ...ae, valid: false };
+        }
         const deal = (mainProd.addOnDeals || []).find(
           (d) =>
             d &&
@@ -238,10 +435,8 @@ router.post(
         if (!deal || mainProdId === ae.prodId) {
           return { ...ae, valid: false };
         }
-        const discountTarget = ae.priceNum <= mainPriceNum ? 'addon' : 'main';
-        const potentialUnitDisc = discountTarget === 'addon'
-          ? calcDealUnitDiscount(ae.priceNum, deal)
-          : calcDealUnitDiscount(mainPriceNum, deal);
+        const discountTarget = 'addon';
+        const potentialUnitDisc = calcDealUnitDiscount(ae.priceNum, deal);
         return {
           ...ae,
           valid: potentialUnitDisc > 0,
@@ -311,7 +506,7 @@ router.post(
               addonDiscountValue: ae.deal.discountValue,
               addonSaving: saving,
               discountedByAddon: true,
-              promoNote: `Mua kèm cùng "${ae.mainProd.name}" (áp dụng giảm giá cho SP giá thấp hơn)`,
+              promoNote: `Ưu đãi mua kèm cùng "${ae.mainProd.name}"`,
             });
           }
           const excessQty = ae.qty - pairedQty;
@@ -365,7 +560,7 @@ router.post(
               addonDiscountValue: ae.deal.discountValue,
               addonSaving: 0,
               discountedByAddon: false,
-              promoNote: `Mua kèm cùng "${ae.mainProd.name}" (ưu đãi áp dụng cho "${ae.mainProd.name}" do có giá thấp hơn)`,
+              promoNote: `Ưu đãi mua kèm cùng "${ae.mainProd.name}"`,
             });
           }
           const excessQty = ae.qty - pairedQty;
@@ -413,7 +608,7 @@ router.post(
             addonDiscountValue: alloc.discountValue,
             addonSaving: saving,
             discountedByAddon: true,
-            promoNote: `Được giảm giá Mua kèm khi mua cùng "${alloc.addonProdName}" (SP có giá thấp hơn)`,
+            promoNote: `Ưu đãi mua kèm cùng "${alloc.addonProdName}"`,
           });
           serverSubtotal += finalUnitPrice * take;
           totalAddonSaving += saving;
@@ -454,11 +649,11 @@ router.post(
         orderData.guestPhone = orderData.guestPhone || req.user.phone || '';
       }
 
-      // 3. Tính toán và xác thực phí vận chuyển từ server (không tin tưởng giá trị gửi từ client)
+      // 3. Tính toán và xác thực phí vận chuyển từ server (theo nấc khoảng cách + giá trị đơn hàng thực tế)
       let finalShippingFee = 0;
       let shippingDiscount = 0;
       let distanceKm = 0;
-      let estimatedDeliveryTime = '30 phút (lấy tại kho)';
+      let estimatedDeliveryTime = orderData.estimatedDeliveryTime || '30 phút (lấy tại kho)';
 
       if (orderData.shippingMethod === 'delivery') {
         const coords = orderData.shippingCoordinates;
@@ -467,134 +662,236 @@ router.post(
           if (!shipRes.supported) {
             return res.status(400).json({
               success: false,
-              message: shipRes.message || 'Khu vực giao hàng vượt quá bán kính 10km cho phép đối với nông sản & thực phẩm tươi.',
+              message: shipRes.message || 'Khu vực giao hàng vượt quá bán kính 20km cho phép đối với nông sản & thực phẩm tươi.',
             });
           }
           finalShippingFee = shipRes.finalFee;
           shippingDiscount = shipRes.discount;
           distanceKm = shipRes.distanceKm;
-          estimatedDeliveryTime = shipRes.estimatedDeliveryTime;
+          estimatedDeliveryTime = orderData.deliveryTimeSlot || orderData.estimatedDeliveryTime || shipRes.estimatedDeliveryTime;
+
+          // Điều chỉnh theo loại hình giao hàng
+          if (orderData.deliveryType === 'instant') {
+            // Giao ngay 🛵: Phí cơ bản theo khoảng cách (đã gồm phụ thu giao xa nếu >10km) + 10.000đ hỏa tốc
+            finalShippingFee += 10000;
+          } else if (orderData.deliveryType === 'standard') {
+            // Giao tiết kiệm (trong 24h): Giá gốc 15.000đ (+ phụ thu giao xa nếu >10km), áp dụng hỗ trợ ship theo đơn hàng
+            const stdBase = 15000 + (shipRes.farSurcharge || 0);
+            const autoDisc = serverSubtotal >= 300000
+              ? Math.min(25000, stdBase)
+              : (serverSubtotal >= 150000 ? Math.min(10000, stdBase) : 0);
+            finalShippingFee = Math.max(0, stdBase - autoDisc);
+            shippingDiscount = autoDisc;
+          }
+
           orderData.shippingDetails = {
             baseFee: shipRes.baseFee,
-            discount: shipRes.discount,
-            finalFee: shipRes.finalFee,
+            farSurcharge: shipRes.farSurcharge || 0,
+            isFarDelivery: Boolean(shipRes.isFarDelivery),
+            discount: shippingDiscount,
+            finalFee: finalShippingFee,
             distanceKm: shipRes.distanceKm,
             durationMin: shipRes.durationMin,
             tierLabel: shipRes.tierLabel,
             discountReason: shipRes.discountReason,
           };
         } else {
-          finalShippingFee = Number(orderData.shippingFee) || 20000;
-          estimatedDeliveryTime = 'Trong ngày (xe bảo quản lạnh)';
+          // Fallback nếu không có tọa độ GPS: tính phí chuẩn 20.000đ và xét bậc thang
+          const baseFee = orderData.deliveryType === 'instant' ? 30000 : (orderData.deliveryType === 'standard' ? 15000 : 20000);
+          const autoDisc = serverSubtotal >= 300000 ? (baseFee <= 25000 ? baseFee : 25000) : (serverSubtotal >= 150000 ? 10000 : 0);
+          finalShippingFee = Math.max(0, baseFee - autoDisc);
+          shippingDiscount = autoDisc;
+          estimatedDeliveryTime = orderData.deliveryTimeSlot || orderData.estimatedDeliveryTime || 'Trong ngày (xe bảo quản lạnh)';
         }
+      } else if (orderData.shippingMethod === 'pickup') {
+        finalShippingFee = 0;
+        shippingDiscount = 0;
+        estimatedDeliveryTime = orderData.estimatedDeliveryTime || (orderData.pickupStore?.name ? `Nhận tại: ${orderData.pickupStore.name}` : '30 phút (lấy tại cửa hàng)');
       }
 
       orderData.subtotal = serverSubtotal;
-      orderData.shippingFee = finalShippingFee;
-      orderData.shippingDiscount = shippingDiscount;
       orderData.shippingDistanceKm = distanceKm;
       orderData.estimatedDeliveryTime = estimatedDeliveryTime;
+      orderData.pickupStore = orderData.pickupStore || null;
+      orderData.deliveryTimeSlot = orderData.deliveryTimeSlot || '';
+      orderData.deliveryType = orderData.deliveryType || '';
       const payableGoods = serverSubtotal;
       orderData.estimatedPoints = Math.floor(payableGoods / 1000);
 
-      // 4. Voucher (kiểm tra với giá trị hàng hóa sau khi đã áp dụng combo saving)
-      let applied = null;
-      const code = orderData.voucherCode ? String(orderData.voucherCode).trim() : '';
-      if (code) {
-        applied = await evaluateVoucher(code, payableGoods, req.user?._id);
-        if (!applied.valid) {
-          return res.status(400).json({ success: false, message: applied.message });
+      // 4. Khuyến mãi kép: Cho phép áp dụng song song 1 Voucher Đơn Hàng + 1 Voucher Miễn Phí Vận Chuyển
+      let appliedOrderVoucher = null;
+      let appliedShipVoucher = null;
+
+      // 4a. Mã giảm giá đơn hàng / sản phẩm
+      const orderVoucherInput = orderData.voucherCode ? String(orderData.voucherCode).trim() : '';
+      if (orderVoucherInput) {
+        appliedOrderVoucher = await evaluateVoucher(orderVoucherInput, payableGoods, req.user?._id);
+        if (!appliedOrderVoucher.valid) {
+          return res.status(400).json({ success: false, message: appliedOrderVoucher.message });
         }
       }
-      orderData.voucherCode = applied ? applied.voucher.code : '';
-      orderData.discount    = applied ? applied.discount : 0;
 
-      // 5. Server tự tính lại total: total = subtotal - comboDiscount - discount + finalShippingFee
-      orderData.total = Math.max(0, payableGoods - orderData.discount + finalShippingFee);
-
-      const order = await Order.create(orderData);
-      if (applied) await consumeVoucher(applied, req.user?._id, order._id);
-
-      // Khấu trừ số lượng tồn kho tự động
-      for (const item of order.items) {
-        if (item.product) {
-          const prod = await Product.findById(item.product);
-          if (prod) {
-            const oldStock = prod.stock ?? 0;
-            const newStock = Math.max(0, oldStock - item.quantity);
-            prod.stock = newStock;
-            await prod.save();
-
-            await InventoryLog.create({
-              product: prod._id,
-              productName: prod.name,
-              type: 'order_confirmed',
-              delta: -item.quantity,
-              oldStock,
-              newStock,
-              reason: `Đơn hàng ${order.orderCode}`,
-              note: 'Trừ kho khi tạo đơn hàng',
-              updatedBy: req.user?._id || null,
-            });
-
-            // Nếu là combo, đồng thời trừ kho cho các sản phẩm thành phần
-            if (item.isCombo && Array.isArray(item.comboItems)) {
-              for (const ci of item.comboItems) {
-                if (ci.product) {
-                  const subProd = await Product.findById(ci.product);
-                  if (subProd) {
-                    const subQty = (ci.quantity || 1) * item.quantity;
-                    const oldSubStock = subProd.stock ?? 0;
-                    subProd.stock = Math.max(0, oldSubStock - subQty);
-                    await subProd.save();
-                    await InventoryLog.create({
-                      product: subProd._id,
-                      productName: subProd.name,
-                      type: 'order_confirmed',
-                      delta: -subQty,
-                      oldStock: oldSubStock,
-                      newStock: subProd.stock,
-                      reason: `Đơn hàng ${order.orderCode} (trong combo ${item.productName})`,
-                      note: 'Trừ kho thành phần combo',
-                      updatedBy: req.user?._id || null,
-                    });
-                  }
-                }
-              }
-            }
-          }
+      // 4b. Mã miễn phí / hỗ trợ vận chuyển (Freeship)
+      const shipVoucherInput = orderData.shippingVoucherCode ? String(orderData.shippingVoucherCode).trim() : '';
+      let shippingVoucherDiscount = 0;
+      if (shipVoucherInput) {
+        appliedShipVoucher = await evaluateVoucher(shipVoucherInput, payableGoods, req.user?._id);
+        if (!appliedShipVoucher.valid) {
+          return res.status(400).json({ success: false, message: appliedShipVoucher.message });
         }
+        // Giảm trừ phí ship còn lại
+        const voucherMaxDeduct = appliedShipVoucher.voucher.discountType === 'percentage'
+          ? Math.floor((finalShippingFee * appliedShipVoucher.voucher.discountValue) / 100)
+          : appliedShipVoucher.voucher.discountValue;
+        shippingVoucherDiscount = Math.max(0, Math.min(voucherMaxDeduct, finalShippingFee));
+        finalShippingFee -= shippingVoucherDiscount;
+        shippingDiscount += shippingVoucherDiscount;
+      }
+
+      orderData.voucherCode = appliedOrderVoucher ? appliedOrderVoucher.voucher.code : '';
+      orderData.discount    = appliedOrderVoucher ? appliedOrderVoucher.discount : 0;
+      orderData.shippingVoucherCode = appliedShipVoucher ? appliedShipVoucher.voucher.code : '';
+      orderData.shippingVoucherDiscount = shippingVoucherDiscount;
+      orderData.shippingFee = finalShippingFee;
+      orderData.shippingDiscount = shippingDiscount;
+
+      // 5. Server tự tính lại total: total = subtotal - discount + finalShippingFee
+      orderData.total = Math.max(0, payableGoods - orderData.discount + finalShippingFee);
+      orderData.paymentStatus = 'unpaid';
+      orderData.paymentExpiresAt = orderData.paymentMethod === 'bank_transfer'
+        ? new Date(Date.now() + QR_PAYMENT_TTL_MS)
+        : null;
+      orderData.paidAt = null;
+      orderData.paymentReference = '';
+      orderData.inventoryDeducted = true;
+      orderData.inventoryRestored = false;
+      orderData.hasNonRefundableItems = detectedNonRefundableItems.length > 0;
+      orderData.nonRefundableAccepted = Boolean(orderData.nonRefundableAccepted || req.body.nonRefundableAccepted);
+      orderData.nonRefundableItems = detectedNonRefundableItems;
+
+      // 6. Kiểm tra & khấu trừ tồn kho nguyên tử (atomic) trên các sản phẩm vật lý để chống bán vượt khi nhiều khách đặt cùng lúc
+      // Gom tổng số lượng cần dùng theo từng Product ID (bao gồm cả sản phẩm lẻ/mua kèm và thành phần của mọi Combo trong giỏ)
+      const requiredStockMap = new Map(); // prodId -> { totalQty, productName, reasons: string[] }
+      for (const item of orderData.items) {
+        if (item.isCombo && Array.isArray(item.comboItems)) {
+          for (const ci of item.comboItems) {
+            if (!ci.product || !mongoose.Types.ObjectId.isValid(ci.product)) continue;
+            const pid = String(ci.product);
+            const need = Math.max(1, Number(ci.quantity) || 1) * item.quantity;
+            const prev = requiredStockMap.get(pid) || { totalQty: 0, productName: ci.name, reasons: [] };
+            prev.totalQty += need;
+            prev.reasons.push(`Combo "${item.productName}" x${item.quantity}`);
+            requiredStockMap.set(pid, prev);
+          }
+        } else if (item.product && mongoose.Types.ObjectId.isValid(item.product)) {
+          const pid = String(item.product);
+          const prev = requiredStockMap.get(pid) || { totalQty: 0, productName: item.productName, reasons: [] };
+          prev.totalQty += item.quantity;
+          prev.reasons.push(item.itemType === 'addon' ? 'SP mua kèm' : 'SP mua lẻ');
+          requiredStockMap.set(pid, prev);
+        }
+      }
+
+      const sortedRequiredEntries = Array.from(requiredStockMap.entries()).sort((a, b) =>
+        a[0].localeCompare(b[0])
+      );
+      const deductedReservations = []; // Array<{ pid, qty, oldStock, newStock, productName, reasons }>
+
+      for (const [pid, reqInfo] of sortedRequiredEntries) {
+        const prevDoc = await Product.findOneAndUpdate(
+          {
+            _id: new mongoose.Types.ObjectId(pid),
+            isCombo: { $ne: true },
+            isActive: { $ne: false },
+            stock: { $gte: reqInfo.totalQty },
+          },
+          { $inc: { stock: -reqInfo.totalQty } },
+          { new: false }
+        );
+
+        if (!prevDoc) {
+          // Hoàn lại ngay các sản phẩm đã tạm trừ trong cùng request nếu có 1 thành phần thiếu hàng
+          for (const r of deductedReservations) {
+            await Product.findByIdAndUpdate(r.pid, { $inc: { stock: r.qty } });
+          }
+          const curProd = await Product.findById(pid).select('name stock isActive').lean();
+          const avail = Math.max(0, Number(curProd?.stock ?? 0));
+          const prodLabel = curProd?.name || reqInfo.productName || 'Sản phẩm';
+          const viaCombo = reqInfo.reasons.some((rs) => rs.startsWith('Combo '));
+          return res.status(400).json({
+            success: false,
+            message: viaCombo
+              ? `Sản phẩm thành phần "${prodLabel}" (${reqInfo.reasons.join(', ')}) không đủ tồn kho (cần ${reqInfo.totalQty}, hiện còn ${avail}).`
+              : `Sản phẩm "${prodLabel}" không đủ tồn kho (cần ${reqInfo.totalQty}, hiện còn ${avail}).`,
+          });
+        }
+
+        const oldStock = Math.max(0, Number(prevDoc.stock ?? 0));
+        deductedReservations.push({
+          pid,
+          qty: reqInfo.totalQty,
+          oldStock,
+          newStock: Math.max(0, oldStock - reqInfo.totalQty),
+          productName: prevDoc.name || reqInfo.productName,
+          reasons: reqInfo.reasons,
+        });
+      }
+
+      let order = null;
+      try {
+        order = await Order.create(orderData);
+        if (appliedOrderVoucher) await consumeVoucher(appliedOrderVoucher, req.user?._id, order._id);
+        if (appliedShipVoucher) await consumeVoucher(appliedShipVoucher, req.user?._id, order._id);
+      } catch (createErr) {
+        for (const r of deductedReservations) {
+          await Product.findByIdAndUpdate(r.pid, { $inc: { stock: r.qty } });
+        }
+        throw createErr;
+      }
+
+      // Ghi nhận lịch sử trừ kho cho từng sản phẩm vật lý đã xuất
+      for (const r of deductedReservations) {
+        const viaCombo = r.reasons.some((rs) => rs.startsWith('Combo '));
+        await InventoryLog.create({
+          product: new mongoose.Types.ObjectId(r.pid),
+          productName: r.productName,
+          type: 'order_confirmed',
+          delta: -r.qty,
+          oldStock: r.oldStock,
+          newStock: r.newStock,
+          reason: viaCombo
+            ? `Đơn hàng ${order.orderCode} (${r.reasons.join('; ')})`
+            : `Đơn hàng ${order.orderCode}`,
+          note: viaCombo ? 'Trừ kho thành phần Combo khi đặt hàng' : 'Trừ kho khi tạo đơn hàng',
+          updatedBy: req.user?._id || null,
+        });
       }
 
       // 5. Tạo link VietQR nếu phương thức là bank_transfer
-      const bankId = (process.env.BANK_ID || 'MB').trim();
-      const accountNo = (process.env.ACCOUNT_NO || '0962299122').trim();
-      const accountName = (process.env.ACCOUNT_NAME || 'VY TAM NHU').trim();
-
-      let qrUrl = null;
-      if (order.paymentMethod === 'bank_transfer') {
-        const encodedAccountName = encodeURIComponent(accountName);
-        qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${order.total}&addInfo=${encodeURIComponent(order.orderCode)}&accountName=${encodedAccountName}`;
-      }
+      const vietQr = order.paymentMethod === 'bank_transfer'
+        ? buildVietQrPayload(order)
+        : { qrUrl: null, bankInfo: null };
 
       res.status(201).json({
         success: true,
         orderCode: order.orderCode,
         total: order.total,
-        qrUrl,
+        paymentStatus: order.paymentStatus,
+        paymentExpiresAt: order.paymentExpiresAt,
+        qrUrl: vietQr.qrUrl,
         data: {
           orderCode: order.orderCode,
           _id: order._id,
+          status: order.status,
+          paymentMethod: order.paymentMethod,
+          paymentStatus: order.paymentStatus,
+          paymentExpiresAt: order.paymentExpiresAt,
           discount: order.discount,
           comboDiscount: order.comboDiscount || 0,
           addonDiscount: order.addonDiscount || 0,
           total: order.total,
-          qrUrl,
-          bankInfo: order.paymentMethod === 'bank_transfer' ? {
-            bankId,
-            accountNo,
-            accountName,
-          } : null,
+          qrUrl: vietQr.qrUrl,
+          bankInfo: vietQr.bankInfo,
         },
       });
     } catch (err) { next(err); }
@@ -608,10 +905,30 @@ async function attachComboDetailsToOrders(orders) {
 
   for (const o of list) {
     if (!o || !Array.isArray(o.items)) continue;
-    let addedComboSaving = 0;
 
     for (const it of o.items) {
       if (!it) continue;
+
+      // Ưu tiên giữ nguyên snapshot comboItems đã lưu tại thời điểm đặt hàng (Admin sửa Combo sau đó không làm đổi đơn hàng cũ)
+      if (Array.isArray(it.comboItems) && it.comboItems.length > 0) {
+        it.isCombo = true;
+        const basePrice = typeof it.priceNumber === 'number' ? it.priceNumber : Number(it.priceNumber || 0);
+        const subSum = it.comboItems.reduce(
+          (sum, ci) => sum + (Number(ci.priceNumber) || 0) * Math.max(1, Number(ci.quantity) || 1),
+          0
+        );
+        if (!it.originalPriceNumber && subSum > basePrice) {
+          it.originalPriceNumber = subSum;
+        }
+        if (!it.comboSaving && it.originalPriceNumber > basePrice) {
+          it.comboSaving = Math.max(0, (it.originalPriceNumber - basePrice) * (it.quantity || 1));
+        }
+        continue;
+      }
+
+      // Chỉ fallback truy vấn Product đối với các đơn hàng cũ trước khi có snapshot comboItems
+      if (!it.isCombo) continue;
+
       let prod = null;
       if (it.product && mongoose.Types.ObjectId.isValid(it.product)) {
         prod = await Product.findById(it.product)
@@ -624,21 +941,16 @@ async function attachComboDetailsToOrders(orders) {
           .lean();
       }
 
-      if (it.isCombo || (prod && prod.isCombo)) {
-        it.isCombo = true;
+      if (prod && prod.isCombo && Array.isArray(prod.comboItems) && prod.comboItems.length > 0) {
         const comboSubItems = [];
         let subSum = 0;
-        const sourceComboItems = (prod && Array.isArray(prod.comboItems) && prod.comboItems.length > 0)
-          ? prod.comboItems
-          : (Array.isArray(it.comboItems) ? it.comboItems : []);
-
-        for (const ci of sourceComboItems) {
+        for (const ci of prod.comboItems) {
           const subP = ci.product || ci;
           const priceNum = typeof subP.priceNumber === 'number' ? subP.priceNumber : Number(subP.priceNumber || 0);
           const singleQty = ci.quantity || 1;
           subSum += priceNum * singleQty;
           comboSubItems.push({
-            product: subP._id ? String(subP._id) : (subP.product ? String(subP.product) : ''),
+            product: subP._id ? String(subP._id) : '',
             name: subP.name || 'Sản phẩm thành phần',
             image: subP.image || '',
             price: subP.price || '',
@@ -648,25 +960,73 @@ async function attachComboDetailsToOrders(orders) {
             weight: subP.weight || '',
           });
         }
-
-        if (comboSubItems.length > 0) {
-          it.comboItems = comboSubItems;
-        }
-
+        it.comboItems = comboSubItems;
         const basePrice = typeof it.priceNumber === 'number' ? it.priceNumber : Number(it.priceNumber || 0);
-        const retail = (prod && prod.originalPriceNumber && prod.originalPriceNumber > basePrice)
-          ? prod.originalPriceNumber
-          : (subSum > basePrice ? subSum : basePrice);
-        const saving = Math.max(0, (retail - basePrice) * (it.quantity || 1));
-
-        if (!it.comboSaving) it.comboSaving = saving;
+        const retail = subSum > basePrice ? subSum : basePrice;
         if (!it.originalPriceNumber) it.originalPriceNumber = retail;
-        addedComboSaving += saving;
+        if (!it.comboSaving) it.comboSaving = Math.max(0, (retail - basePrice) * (it.quantity || 1));
       }
     }
   }
 
   return orders;
+}
+
+async function restoreOrderInventoryOnce(orderId, updatedBy = null) {
+  if (!orderId) return false;
+  // Khóa nguyên tử cờ inventoryRestored để đảm bảo chỉ hoàn kho đúng 1 lần duy nhất
+  const lockedOrder = await Order.findOneAndUpdate(
+    { _id: orderId, inventoryRestored: { $ne: true } },
+    { $set: { inventoryRestored: true } },
+    { new: true }
+  );
+  if (!lockedOrder || !Array.isArray(lockedOrder.items)) return false;
+
+  const restoreMap = new Map(); // prodId -> { totalQty, productName, reasons: string[] }
+  for (const item of lockedOrder.items) {
+    if (item.isCombo && Array.isArray(item.comboItems) && item.comboItems.length > 0) {
+      for (const ci of item.comboItems) {
+        const pid = ci.product ? String(ci.product) : '';
+        if (!pid || !mongoose.Types.ObjectId.isValid(pid)) continue;
+        const addQty = Math.max(1, Number(ci.quantity) || 1) * item.quantity;
+        const prev = restoreMap.get(pid) || { totalQty: 0, productName: ci.name || 'SP thành phần', reasons: [] };
+        prev.totalQty += addQty;
+        prev.reasons.push(`Combo "${item.productName}" x${item.quantity}`);
+        restoreMap.set(pid, prev);
+      }
+    } else if (item.product && mongoose.Types.ObjectId.isValid(item.product)) {
+      const pid = String(item.product);
+      const prev = restoreMap.get(pid) || { totalQty: 0, productName: item.productName, reasons: [] };
+      prev.totalQty += item.quantity;
+      restoreMap.set(pid, prev);
+    }
+  }
+
+  for (const [pid, info] of restoreMap.entries()) {
+    const prevDoc = await Product.findOneAndUpdate(
+      { _id: new mongoose.Types.ObjectId(pid), isCombo: { $ne: true } },
+      { $inc: { stock: info.totalQty } },
+      { new: false }
+    );
+    if (!prevDoc) continue;
+    const oldStock = Math.max(0, Number(prevDoc.stock ?? 0));
+    const newStock = oldStock + info.totalQty;
+    await InventoryLog.create({
+      product: prevDoc._id,
+      productName: prevDoc.name || info.productName,
+      type: 'order_cancel',
+      delta: info.totalQty,
+      oldStock,
+      newStock,
+      reason: info.reasons.length > 0
+        ? `Hủy đơn ${lockedOrder.orderCode} (${info.reasons.join('; ')})`
+        : `Hủy đơn ${lockedOrder.orderCode}`,
+      note: 'Hoàn tồn tự động đúng 1 lần khi đơn hàng bị hủy',
+      updatedBy: updatedBy || null,
+    });
+  }
+
+  return true;
 }
 
 // GET /api/orders — admin & sales & support: all orders with filters
@@ -700,6 +1060,7 @@ router.get('/', protect, staffOnly, async (req, res, next) => {
         .populate('user', 'name email phone').lean(),
       Order.countDocuments(filter),
     ]);
+    await Promise.all(orders.map((o) => expireUnpaidQrOrderIfNeeded(o)));
     await attachComboDetailsToOrders(orders);
     res.json({ success: true, total, page: Number(page), data: orders });
   } catch (err) { next(err); }
@@ -708,20 +1069,117 @@ router.get('/', protect, staffOnly, async (req, res, next) => {
 // GET /api/orders/track/:code — public order tracking
 router.get('/track/:code', async (req, res, next) => {
   try {
-    const rawCode = String(req.params.code).trim();
-    const normalizedCode = rawCode.replace(/^XL-?/i, 'XL-');
-    const noHyphenCode = rawCode.replace(/^XL-?/i, 'XL');
-    const order = await Order.findOne({
-      $or: [
-        { orderCode: rawCode },
-        { orderCode: normalizedCode },
-        { orderCode: noHyphenCode },
-        { orderCode: rawCode.toUpperCase() }
-      ]
-    }).populate('items.product', 'name image').lean();
+    const order = await Order.findOne(buildOrderLookupQuery(req.params.code))
+      .populate('items.product', 'name image')
+      .lean();
     if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng.' });
+    await expireUnpaidQrOrderIfNeeded(order);
     await attachComboDetailsToOrders(order);
+    attachPaymentQrMetadata(order);
     res.json({ success: true, data: order });
+  } catch (err) { next(err); }
+});
+
+// GET /api/orders/:code/payment-status — kiểm tra trạng thái thanh toán VietQR (dùng cho polling màn hình QR)
+router.get('/:code/payment-status', async (req, res, next) => {
+  try {
+    const order = await Order.findOne(buildOrderLookupQuery(req.params.code)).lean();
+    if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng.' });
+
+    await expireUnpaidQrOrderIfNeeded(order);
+    const qrPayload =
+      order.paymentMethod === 'bank_transfer' &&
+      (order.paymentStatus || 'unpaid') === 'unpaid' &&
+      order.status === 'pending'
+        ? buildVietQrPayload(order)
+        : { qrUrl: null, bankInfo: null };
+
+    res.json({
+      success: true,
+      data: {
+        _id: order._id,
+        orderCode: order.orderCode,
+        status: order.status,
+        paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus || 'unpaid',
+        paymentExpiresAt: order.paymentExpiresAt || null,
+        paidAt: order.paidAt || null,
+        total: order.total,
+        qrUrl: qrPayload.qrUrl,
+        bankInfo: qrPayload.bankInfo,
+      },
+    });
+  } catch (err) { next(err); }
+});
+
+// POST /api/orders/webhook/vietqr — Webhook nhận biến động giao dịch từ SePay / Casso
+router.post('/webhook/vietqr', async (req, res, next) => {
+  try {
+    const webhookSecret = (process.env.VIETQR_WEBHOOK_SECRET || '').trim();
+    if (webhookSecret) {
+      const authHeader = String(req.headers.authorization || '');
+      const headerSecret = String(req.headers['x-webhook-secret'] || '');
+      const bearerToken = authHeader.replace(/^(Apikey|Bearer)\s+/i, '').trim();
+      if (headerSecret !== webhookSecret && bearerToken !== webhookSecret) {
+        return res.status(401).json({ success: false, message: 'Invalid webhook signature.' });
+      }
+    }
+
+    const bodyData = req.body || {};
+    const rawContent = String(bodyData.content || bodyData.description || bodyData.addInfo || '');
+    const transferAmount = Number(bodyData.transferAmount ?? bodyData.amount ?? 0);
+    const reference = String(bodyData.referenceCode || bodyData.id || bodyData.transactionId || '');
+
+    const codeMatch = rawContent.match(/XL-?\d{5,8}/i);
+    if (!codeMatch) {
+      return res.json({ success: false, message: 'Không tìm thấy mã đơn hàng trong nội dung chuyển khoản.' });
+    }
+
+    const order = await Order.findOne(buildOrderLookupQuery(codeMatch[0]));
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng khớp mã.' });
+    }
+
+    await expireUnpaidQrOrderIfNeeded(order);
+    if (order.status === 'cancelled' || order.paymentStatus === 'expired') {
+      return res.status(400).json({ success: false, message: 'Đơn hàng đã hết hạn hoặc bị hủy.' });
+    }
+    if (order.paymentStatus === 'paid') {
+      return res.json({ success: true, message: 'Đơn hàng đã được thanh toán trước đó.', data: order });
+    }
+    if (transferAmount < Number(order.total || 0)) {
+      return res.status(400).json({
+        success: false,
+        message: `Số tiền chuyển (${transferAmount}) nhỏ hơn tổng đơn hàng (${order.total}).`,
+      });
+    }
+
+    const updated = await markQrOrderAsPaid(order, { reference, autoConfirm: true });
+    res.json({ success: true, message: 'Xác nhận thanh toán tự động thành công.', data: updated });
+  } catch (err) { next(err); }
+});
+
+// POST /api/orders/:code/confirm-payment — Admin/nhân viên xác nhận đã nhận tiền chuyển khoản VietQR
+router.post('/:code/confirm-payment', protect, staffOnly, async (req, res, next) => {
+  try {
+    const order = await Order.findOne(buildOrderLookupQuery(req.params.code));
+    if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng.' });
+
+    await expireUnpaidQrOrderIfNeeded(order);
+    if (order.status === 'cancelled' || order.paymentStatus === 'expired') {
+      return res.status(400).json({ success: false, message: 'Đơn hàng đã hết hạn thanh toán hoặc đã bị hủy.' });
+    }
+
+    const updated = await markQrOrderAsPaid(order, {
+      reference: String(req.body?.reference || 'ADMIN_CONFIRMED'),
+      autoConfirm: true,
+    });
+
+    res.json({
+      success: true,
+      message: 'Xác nhận thanh toán thành công.',
+      data: updated,
+    });
   } catch (err) { next(err); }
 });
 
@@ -731,10 +1189,24 @@ router.get('/my', protect, async (req, res, next) => {
     const { status, page = 1, limit = 20, search } = req.query;
     const userId = req.user._id;
     const userEmail = req.user.email;
+    const rawPhone = String(req.user.phone || '').trim().replace(/[\s\-.()]/g, '');
+    const normPhone = rawPhone.startsWith('+84')
+      ? '0' + rawPhone.slice(3)
+      : rawPhone.startsWith('84') && rawPhone.length >= 11
+      ? '0' + rawPhone.slice(2)
+      : rawPhone;
+    const phoneVariants = normPhone && /^0\d{9}$/.test(normPhone)
+      ? Array.from(new Set([normPhone, '+84' + normPhone.slice(1), '84' + normPhone.slice(1)]))
+      : [];
+
     const filter = {
       $or: [
         { user: userId },
-        ...(userEmail ? [{ user: null, guestEmail: userEmail }, { user: { $exists: false }, guestEmail: userEmail }] : [])
+        ...(userEmail ? [{ user: null, guestEmail: userEmail }, { user: { $exists: false }, guestEmail: userEmail }] : []),
+        ...(phoneVariants.length > 0 ? [
+          { user: null, guestPhone: { $in: phoneVariants } },
+          { user: { $exists: false }, guestPhone: { $in: phoneVariants } },
+        ] : [])
       ]
     };
     if (status && status !== 'all') filter.status = status;
@@ -745,6 +1217,7 @@ router.get('/my', protect, async (req, res, next) => {
       Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)).lean(),
       Order.countDocuments(filter),
     ]);
+    await Promise.all(orders.map((o) => expireUnpaidQrOrderIfNeeded(o)));
     await attachComboDetailsToOrders(orders);
     res.json({ success: true, total, page: Number(page), data: orders });
   } catch (err) { next(err); }
@@ -753,19 +1226,11 @@ router.get('/my', protect, async (req, res, next) => {
 // GET /api/orders/:code — get order by code (authenticated)
 router.get('/:code', protect, async (req, res, next) => {
   try {
-    const rawCode = String(req.params.code).trim();
-    const normalizedCode = rawCode.replace(/^XL-?/i, 'XL-');
-    const noHyphenCode = rawCode.replace(/^XL-?/i, 'XL');
-    const order = await Order.findOne({
-      $or: [
-        { orderCode: rawCode },
-        { orderCode: normalizedCode },
-        { orderCode: noHyphenCode },
-        { orderCode: rawCode.toUpperCase() }
-      ]
-    }).populate('user', 'name email phone').lean();
+    const order = await Order.findOne(buildOrderLookupQuery(req.params.code)).populate('user', 'name email phone').lean();
     if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng.' });
+    await expireUnpaidQrOrderIfNeeded(order);
     await attachComboDetailsToOrders(order);
+    attachPaymentQrMetadata(order);
     
     const isOwner = (order.user && (order.user._id?.toString() === req.user.id || order.user.toString() === req.user.id)) ||
                     (!order.user && order.guestEmail === req.user.email);
@@ -834,6 +1299,20 @@ const handleCancelOrder = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Đơn hàng này đã được hủy trước đó.' });
     }
 
+    // Kiểm tra quy chế hàng tươi sống: Không hỗ trợ hủy đơn đối với khách hàng sau khi đặt COD / đã thanh toán,
+    // NHƯNG cho phép hủy đơn VietQR khi chưa thanh toán (paymentStatus === 'unpaid' && status === 'pending') để đổi phương thức hoặc quay lại
+    const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'manager');
+    const isUnpaidPendingQr =
+      order.paymentMethod === 'bank_transfer' &&
+      (order.paymentStatus || 'unpaid') === 'unpaid' &&
+      order.status === 'pending';
+    if (!isAdmin && order.hasNonRefundableItems && !isUnpaidPendingQr) {
+      return res.status(400).json({
+        success: false,
+        message: 'Đơn hàng có chứa sản phẩm tươi sống (Rau củ, Trái cây, Thịt, Cá & Hải sản) không hỗ trợ hủy theo quy chế bảo đảm tươi mới của Evergreen Mart.'
+      });
+    }
+
     const cancellableStatuses = ['pending', 'confirmed'];
     if (!cancellableStatuses.includes(order.status)) {
       return res.status(400).json({
@@ -845,37 +1324,18 @@ const handleCancelOrder = async (req, res, next) => {
     // Cập nhật trạng thái thành 'cancelled'
     const oldStatus = order.status;
     order.status = 'cancelled';
+    if (isUnpaidPendingQr) {
+      order.paymentStatus = 'expired';
+    }
     if (reason && typeof reason === 'string' && reason.trim()) {
       order.note = order.note ? `${order.note} | Lý do hủy: ${reason.trim()}` : `Lý do hủy: ${reason.trim()}`;
     }
     await order.save();
 
-    if (oldStatus !== 'cancelled') {
+    if (oldStatus === 'confirmed') {
       await handleFlashSaleOrderCancelled(order);
-      for (const item of order.items) {
-        if (item.product) {
-          const prod = await Product.findById(item.product);
-          if (prod) {
-            const oldStock = prod.stock ?? 0;
-            const newStock = oldStock + (item.quantity || 1);
-            prod.stock = newStock;
-            await prod.save();
-
-            await InventoryLog.create({
-              product: prod._id,
-              productName: prod.name,
-              type: 'order_cancelled',
-              delta: item.quantity || 1,
-              oldStock,
-              newStock,
-              reason: `Hủy đơn hàng ${order.orderCode}`,
-              note: reason ? `Khôi phục tồn kho do hủy đơn (${reason})` : 'Khôi phục tồn kho do hủy đơn',
-              updatedBy: req.user?._id || null,
-            });
-          }
-        }
-      }
     }
+    await restoreOrderInventoryOnce(order._id, req.user?._id || null);
 
     res.json({
       success: true,
@@ -906,6 +1366,17 @@ router.put('/:id/status', protect, adminOnly, async (req, res, next) => {
 
     const previousStatus = currentOrder.status;
     currentOrder.status = status;
+    if (
+      currentOrder.paymentMethod === 'bank_transfer' &&
+      ['confirmed', 'preparing', 'shipping', 'delivered'].includes(status) &&
+      currentOrder.paymentStatus !== 'paid'
+    ) {
+      currentOrder.paymentStatus = 'paid';
+      currentOrder.paidAt = currentOrder.paidAt || new Date();
+      currentOrder.paymentReference = currentOrder.paymentReference || 'ADMIN_STATUS_CONFIRMED';
+    } else if (status === 'cancelled' && currentOrder.paymentMethod === 'bank_transfer' && currentOrder.paymentStatus === 'unpaid') {
+      currentOrder.paymentStatus = 'expired';
+    }
     await currentOrder.save();
 
     // Flash sale soldQuantity updates
@@ -916,31 +1387,9 @@ router.put('/:id/status', protect, adminOnly, async (req, res, next) => {
       await handleFlashSaleOrderCancelled(currentOrder);
     }
 
-    // If order was cancelled from active state, return items to inventory
+    // If order was cancelled from active state, return items (including Combo components) to inventory exactly once
     if (status === 'cancelled' && previousStatus !== 'cancelled') {
-      for (const item of currentOrder.items) {
-        if (item.product) {
-          const prod = await Product.findById(item.product);
-          if (prod) {
-            const oldStock = prod.stock ?? 0;
-            const newStock = oldStock + item.quantity;
-            prod.stock = newStock;
-            await prod.save();
-
-            await InventoryLog.create({
-              product: prod._id,
-              productName: prod.name,
-              type: 'order_cancel',
-              delta: item.quantity,
-              oldStock,
-              newStock,
-              reason: `Hủy đơn ${currentOrder.orderCode}`,
-              note: `Hoàn tồn tự động do đơn hàng bị hủy`,
-              updatedBy: req.user?._id || null,
-            });
-          }
-        }
-      }
+      await restoreOrderInventoryOnce(currentOrder._id, req.user?._id || null);
     }
 
     if (status === 'delivered') {

@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const mongoose = require('mongoose');
 const { body } = require('express-validator');
 const Review = require('../models/Review');
 const Order = require('../models/Order');
@@ -22,7 +23,7 @@ const toDto = (r, viewerId) => {
     title: r.title || undefined,
     content: r.content,
     images: r.images || [],
-    helpfulCount: (r.helpfulBy || []).length,
+    helpfulCount: (r.helpfulBy || []).length + (r.guestHelpfulCount || 0),
     isHelpful: viewerId ? (r.helpfulBy || []).some((u) => String(u) === String(viewerId)) : false,
     adminReply: r.adminReply || '',
     adminReplyAt: r.adminReplyAt || null,
@@ -198,7 +199,95 @@ router.delete('/:id', protect, adminOnly, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// GET /api/reviews/product/:productId/can-review
+// Kiểm tra điều kiện đánh giá của khách hàng đối với sản phẩm (Bắt buộc mua và nhận hàng thành công)
+router.get('/product/:productId/can-review', protect, async (req, res, next) => {
+  try {
+    const rawProductId = String(req.params.productId);
+
+    let prod = null;
+    if (mongoose.Types.ObjectId.isValid(rawProductId)) {
+      prod = await Product.findById(rawProductId);
+    }
+    if (!prod) {
+      prod = await Product.findOne({ slug: rawProductId });
+    }
+
+    const targetId = prod ? String(prod._id) : rawProductId;
+    const targetSlug = prod?.slug || '';
+    const targetName = prod?.name || '';
+
+    // 1. Kiểm tra tài khoản đã đánh giá sản phẩm này chưa
+    const existingReview = await Review.findOne({
+      product: { $in: [targetId, ...(targetSlug ? [targetSlug] : [])] },
+      user: req.user._id,
+    });
+
+    // 2. Điều kiện xác định tài khoản người mua
+    const userConditions = [{ user: req.user._id }];
+    if (req.user.email) userConditions.push({ guestEmail: req.user.email.toLowerCase() });
+    if (req.user.phone) userConditions.push({ guestPhone: req.user.phone });
+
+    // 3. Điều kiện khớp sản phẩm trong đơn hàng (kể cả trong combo hoặc add-on)
+    const productMatchConditions = [
+      { 'items.product': targetId },
+      ...(targetSlug ? [{ 'items.product': targetSlug }] : []),
+      ...(targetName ? [{ 'items.productName': targetName }] : []),
+      { 'items.comboItems.product': targetId },
+      ...(targetSlug ? [{ 'items.comboItems.slug': targetSlug }] : []),
+      ...(targetName ? [{ 'items.comboItems.name': targetName }] : []),
+    ];
+
+    // 4. Tìm đơn hàng ĐÃ GIAO / ĐÃ NHẬN THÀNH CÔNG (status: 'delivered')
+    const deliveredOrder = await Order.findOne({
+      status: 'delivered',
+      $and: [
+        { $or: userConditions },
+        { $or: productMatchConditions },
+      ],
+    });
+
+    // 5. Tìm đơn hàng đang xử lý / đang giao
+    const pendingOrder = !deliveredOrder
+      ? await Order.findOne({
+          status: { $in: ['pending', 'confirmed', 'preparing', 'shipping'] },
+          $and: [
+            { $or: userConditions },
+            { $or: productMatchConditions },
+          ],
+        })
+      : null;
+
+    let canReview = false;
+    let message = '';
+
+    if (existingReview) {
+      canReview = false;
+      message = 'Bạn đã đánh giá sản phẩm này rồi. Mỗi tài khoản chỉ có thể đánh giá một lần.';
+    } else if (deliveredOrder) {
+      canReview = true;
+      message = 'Bạn đã mua và nhận hàng thành công. Bạn có thể viết đánh giá cho sản phẩm này.';
+    } else if (pendingOrder) {
+      canReview = false;
+      message = 'Đơn hàng chứa sản phẩm này đang được xử lý hoặc vận chuyển. Bạn chỉ có thể đánh giá sau khi đã nhận được hàng.';
+    } else {
+      canReview = false;
+      message = 'Bắt buộc phải mua và nhận hàng thành công mới được đánh giá sản phẩm này.';
+    }
+
+    res.json({
+      success: true,
+      canReview,
+      hasReviewed: !!existingReview,
+      hasDeliveredOrder: !!deliveredOrder,
+      hasPendingOrder: !!pendingOrder,
+      message,
+    });
+  } catch (err) { next(err); }
+});
+
 // POST /api/reviews - customer create review
+// BẮT BUỘC: Phải mua và nhận hàng thành công mới được đánh giá (status: 'delivered')
 router.post(
   '/',
   protect,
@@ -210,27 +299,75 @@ router.post(
   validate,
   async (req, res, next) => {
     try {
-      const productId = String(req.body.productId);
-      const exists = await Review.findOne({ product: productId, user: req.user._id });
+      const rawProductId = String(req.body.productId);
+
+      let prod = null;
+      if (mongoose.Types.ObjectId.isValid(rawProductId)) {
+        prod = await Product.findById(rawProductId);
+      }
+      if (!prod) {
+        prod = await Product.findOne({ slug: rawProductId });
+      }
+
+      const targetId = prod ? String(prod._id) : rawProductId;
+      const targetSlug = prod?.slug || '';
+      const targetName = prod?.name || req.body.productName || '';
+      const targetImage = prod?.image || req.body.productImage || '';
+
+      // 1. Kiểm tra tài khoản đã đánh giá sản phẩm này chưa
+      const exists = await Review.findOne({
+        product: { $in: [targetId, ...(targetSlug ? [targetSlug] : [])] },
+        user: req.user._id,
+      });
       if (exists) {
         return res.status(409).json({ success: false, message: 'Bạn đã đánh giá sản phẩm này rồi.' });
       }
-      const purchased = await Order.exists({
-        'items.product': productId,
-        status: { $ne: 'cancelled' },
-        $or: [{ user: req.user._id }, { user: null, guestEmail: req.user.email }],
+
+      // 2. BẮT BUỘC: Kiểm tra đơn hàng có trạng thái ĐÃ NHẬN HÀNG (status: 'delivered')
+      const userConditions = [{ user: req.user._id }];
+      if (req.user.email) userConditions.push({ guestEmail: req.user.email.toLowerCase() });
+      if (req.user.phone) userConditions.push({ guestPhone: req.user.phone });
+
+      const productMatchConditions = [
+        { 'items.product': targetId },
+        ...(targetSlug ? [{ 'items.product': targetSlug }] : []),
+        ...(targetName ? [{ 'items.productName': targetName }] : []),
+        { 'items.comboItems.product': targetId },
+        ...(targetSlug ? [{ 'items.comboItems.slug': targetSlug }] : []),
+        ...(targetName ? [{ 'items.comboItems.name': targetName }] : []),
+      ];
+
+      const deliveredOrder = await Order.findOne({
+        status: 'delivered',
+        $and: [
+          { $or: userConditions },
+          { $or: productMatchConditions },
+        ],
       });
 
-      let productName = req.body.productName || '';
-      let productImage = req.body.productImage || '';
-      if (!productName || !productImage) {
-        try {
-          const prod = await Product.findById(productId).select('name image');
-          if (prod) {
-            if (!productName) productName = prod.name;
-            if (!productImage) productImage = prod.image;
-          }
-        } catch (e) {}
+      if (!deliveredOrder) {
+        // Kiểm tra xem khách có đơn hàng chưa giao để phản hồi chính xác
+        const pendingOrder = await Order.findOne({
+          status: { $in: ['pending', 'confirmed', 'preparing', 'shipping'] },
+          $and: [
+            { $or: userConditions },
+            { $or: productMatchConditions },
+          ],
+        });
+
+        if (pendingOrder) {
+          return res.status(403).json({
+            success: false,
+            code: 'ORDER_NOT_DELIVERED',
+            message: 'Đơn hàng của bạn đang được xử lý hoặc đang giao. Bạn chỉ có thể đánh giá sau khi đã nhận được hàng.',
+          });
+        }
+
+        return res.status(403).json({
+          success: false,
+          code: 'PURCHASE_REQUIRED',
+          message: 'Bắt buộc phải mua và nhận hàng thành công mới được đánh giá sản phẩm này.',
+        });
       }
 
       const rawImages = Array.isArray(req.body.images)
@@ -240,9 +377,9 @@ router.post(
         : [];
 
       const review = await Review.create({
-        product: productId,
-        productName,
-        productImage,
+        product: targetId,
+        productName: targetName,
+        productImage: targetImage,
         user: req.user._id,
         userName: req.user.name,
         userAvatar: req.user.avatar || '',
@@ -250,23 +387,41 @@ router.post(
         title: req.body.title || '',
         content: req.body.content,
         images: rawImages,
-        verifiedPurchase: !!purchased,
+        verifiedPurchase: true,
       });
+
       res.status(201).json({ success: true, data: toDto(review, req.user._id) });
     } catch (err) { next(err); }
   }
 );
 
-// POST /api/reviews/:id/helpful
-router.post('/:id/helpful', protect, async (req, res, next) => {
+// POST /api/reviews/:id/helpful (Cho phép cả thành viên đã đăng nhập và khách vãng lai)
+router.post('/:id/helpful', optionalAuth, async (req, res, next) => {
   try {
-    const review = await Review.findByIdAndUpdate(
-      req.params.id,
-      { $addToSet: { helpfulBy: req.user._id } },
-      { new: true }
-    ).populate('user', 'name avatar email');
+    const review = await Review.findById(req.params.id);
     if (!review) return res.status(404).json({ success: false, message: 'Không tìm thấy đánh giá.' });
-    res.json({ success: true, data: toDto(review, req.user._id) });
+
+    if (req.user?._id) {
+      const uId = String(req.user._id);
+      const index = (review.helpfulBy || []).findIndex((id) => String(id) === uId);
+      if (index >= 0) {
+        review.helpfulBy.splice(index, 1);
+      } else {
+        review.helpfulBy.push(req.user._id);
+      }
+    } else {
+      // Khách vãng lai
+      const action = req.body?.action;
+      if (action === 'unlike') {
+        review.guestHelpfulCount = Math.max(0, (review.guestHelpfulCount || 0) - 1);
+      } else {
+        review.guestHelpfulCount = (review.guestHelpfulCount || 0) + 1;
+      }
+    }
+
+    await review.save();
+    await review.populate('user', 'name avatar email');
+    res.json({ success: true, data: toDto(review, req.user?._id) });
   } catch (err) { next(err); }
 });
 

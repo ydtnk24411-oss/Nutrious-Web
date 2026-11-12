@@ -1,399 +1,441 @@
 <!-- ── TOP INFO BAR ── -->
 <div class="xanhla-wix-bar">
-  <span>Nông sản, thực phẩm lành mạnh — giao hàng 2 giờ nội thành</span>
-  <span class="xl-topbar-sep">|</span>
-  <span style="display:inline-flex;align-items:center;gap:4px">
-    <i class="bi bi-telephone-fill" style="font-size:11px"></i>
-    <span>Hotline: <strong>1800 6999</strong></span>
-  </span>
-  <span class="xl-topbar-sep">|</span>
-  <a routerLink="/tracker-page" class="xl-topbar-link">Tra cứu đơn hàng</a>
+  <div class="xl-topbar-inner">
+    <div class="xl-topbar-left">
+      <i class="bi bi-shield-check" style="color:#a3e635;font-size:13px"></i>
+      <span>Nông sản &amp; thực phẩm lành mạnh — Giao nhanh 2 giờ nội thành</span>
+    </div>
+    <div class="xl-topbar-right">
+      <span class="xl-topbar-item">
+        <i class="bi bi-telephone-fill" style="font-size:11px;color:#a3e635"></i>
+        <span>Hotline tư vấn &amp; CSKH: <strong>1800 6999</strong> (Miễn phí)</span>
+      </span>
+    </div>
+  </div>
 </div>
 
-<!-- ── MAIN HEADER ── -->
+<!-- ── MAIN HEADER (ROW 1: PERFECT 3-COLUMN BALANCE) ── -->
 <header class="xanhla-header">
+  <div class="xl-header-container">
 
-  <!-- Logo -->
-  <a class="xanhla-logo" routerLink="/" aria-label="Evergreen Mart - Trang chủ">
-    <img src="/logo.png" alt="Evergreen Mart" class="evergreen-header-logo" />
-    <span class="xanhla-brand-word">Evergreen Mart</span>
-  </a>
+    <!-- Left: Logo -->
+    <a class="xanhla-logo" routerLink="/" aria-label="Evergreen Mart - Trang chủ">
+      <img src="/logo.png" alt="Evergreen Mart" class="evergreen-header-logo" />
+      <div class="xanhla-logo-text">
+        <span class="xanhla-brand-word">Evergreen Mart</span>
+        <small class="xanhla-brand-tagline">Nông sản sạch &amp; Dinh dưỡng</small>
+      </div>
+    </a>
 
-  <!-- Category Menu Button -->
-  <div class="xl-cat-menu-wrapper">
-    <button class="xl-cat-btn" type="button" (click)="toggleCatMenu()" [class.is-open]="catMenuOpen()">
-      <i class="bi bi-grid-fill" style="font-size:16px"></i>
-      <span>Danh mục sản phẩm</span>
-      <i class="bi bi-chevron-down xl-cat-chevron"></i>
-    </button>
-
-    @if (catMenuOpen()) {
-    <div class="xl-cat-dropdown">
-      @for (cat of categories; track cat.label) {
-      <a class="xl-cat-item" routerLink="/online-ordering" [queryParams]="{ category: cat.category }"
-        (click)="closeCatMenu()">
-        <span>{{ cat.label }}</span>
-        <i class="bi bi-chevron-right" style="margin-left:auto;opacity:.4;font-size:12px"></i>
-      </a>
-      }
-    </div>
-    }
-  </div>
-
-  <!-- Search Bar -->
-  <div class="xl-header-search-wrapper">
-    <form class="xl-header-search" role="search" (submit)="onSearch($event)">
-      <input
-        class="xl-search-input"
-        name="q"
-        type="text"
-        inputmode="search"
-        autocomplete="off"
-        placeholder="Bạn muốn mua gì hôm nay..."
-        aria-label="Tìm kiếm sản phẩm"
-        [value]="searchQuery()"
-        (input)="onSearchInput($event)"
-        (focus)="onSearchFocus()"
-        (keydown)="onSearchKeyDown($event)"
-      />
-      @if (searchQuery().trim()) {
-        <button
-          type="button"
-          class="xl-search-clear-btn"
-          aria-label="Xóa từ khóa tìm kiếm"
-          (click)="clearSearch()"
-        >
-          <i class="bi bi-x-lg" style="font-size:13px"></i>
-        </button>
-      }
-      <button class="xl-search-btn" type="submit" aria-label="Tìm kiếm">
-        <i class="bi bi-search" style="font-size:16px"></i>
-      </button>
-    </form>
-
-    <!-- Suggestions Dropdown -->
-    @if (showSuggestions()) {
-      <div class="xl-search-suggestions-dropdown" role="listbox">
+    <!-- Center: Search Bar -->
+    <div class="xl-header-search-wrapper">
+      <form class="xl-header-search" role="search" (submit)="onSearch($event)">
+        <input
+          class="xl-search-input"
+          name="q"
+          type="text"
+          inputmode="search"
+          autocomplete="off"
+          placeholder="Tìm thực phẩm tươi, rau củ quả, thịt cá, sữa..."
+          aria-label="Tìm kiếm sản phẩm"
+          [value]="searchQuery()"
+          (input)="onSearchInput($event)"
+          (focus)="onSearchFocus()"
+          (keydown)="onSearchKeyDown($event)"
+        />
         @if (searchQuery().trim()) {
-          <div class="xl-suggest-header">
-            <span class="xl-suggest-title">Gợi ý sản phẩm</span>
-            @if (suggestedProducts().length > 0) {
-              <span class="xl-suggest-badge">{{ suggestedProducts().length }} kết quả</span>
-            }
-          </div>
+          <button
+            type="button"
+            class="xl-search-clear-btn"
+            aria-label="Xóa từ khóa tìm kiếm"
+            (click)="clearSearch()"
+          >
+            <i class="bi bi-x-lg" style="font-size:12px"></i>
+          </button>
+        }
+        <button class="xl-search-btn" type="submit" aria-label="Tìm kiếm">
+          <i class="bi bi-search" style="font-size:16px"></i>
+        </button>
+      </form>
 
-          @if (suggestedProducts().length > 0) {
-            <div class="xl-suggest-list">
-              @for (p of suggestedProducts(); track p._id || p.slug; let i = $index) {
-                <div
-                  class="xl-suggest-item"
-                  role="option"
-                  [attr.aria-selected]="i === selectedSuggestionIndex()"
-                  [class.is-selected]="i === selectedSuggestionIndex()"
-                  (click)="selectProduct(p)"
-                  (mouseenter)="selectedSuggestionIndex.set(i)"
-                >
-                  <img
-                    class="xl-suggest-thumb"
-                    [src]="p.image || fallbackImage"
-                    [alt]="p.name"
-                    (error)="onThumbError($event)"
-                  />
-                  <div class="xl-suggest-info">
-                    <div class="xl-suggest-name" [innerHTML]="highlightMatch(p.name, searchQuery())"></div>
-                    <div class="xl-suggest-meta">
-                      @if (p.categoryVi || p.category) {
-                        <span class="xl-suggest-cat">{{ p.categoryVi || p.category }}</span>
-                      }
-                      @if (p.weight || p.quantity || p.packSize) {
-                        <span class="xl-suggest-pack">{{ p.weight || p.quantity || p.packSize }}</span>
-                      }
+      <!-- Suggestions Dropdown -->
+      @if (showSuggestions()) {
+        <div class="xl-search-suggestions-dropdown" role="listbox">
+          @if (searchQuery().trim()) {
+            <div class="xl-suggest-header">
+              <span class="xl-suggest-title">Gợi ý sản phẩm</span>
+              @if (suggestedProducts().length > 0) {
+                <span class="xl-suggest-badge">{{ suggestedProducts().length }} kết quả</span>
+              }
+            </div>
+
+            @if (suggestedProducts().length > 0) {
+              <div class="xl-suggest-list">
+                @for (p of suggestedProducts(); track p._id || p.slug; let i = $index) {
+                  <div
+                    class="xl-suggest-item"
+                    role="option"
+                    [attr.aria-selected]="i === selectedSuggestionIndex()"
+                    [class.is-selected]="i === selectedSuggestionIndex()"
+                    (click)="selectProduct(p)"
+                    (mouseenter)="selectedSuggestionIndex.set(i)"
+                  >
+                    <img
+                      class="xl-suggest-thumb"
+                      [src]="p.image || fallbackImage"
+                      [alt]="p.name"
+                      (error)="onThumbError($event)"
+                    />
+                    <div class="xl-suggest-info">
+                      <div class="xl-suggest-name" [innerHTML]="highlightMatch(p.name, searchQuery())"></div>
+                      <div class="xl-suggest-meta">
+                        @if (p.categoryVi || p.category) {
+                          <span class="xl-suggest-cat">{{ p.categoryVi || p.category }}</span>
+                        }
+                        @if (p.weight || p.quantity || p.packSize) {
+                          <span class="xl-suggest-pack">{{ p.weight || p.quantity || p.packSize }}</span>
+                        }
+                      </div>
+                    </div>
+                    <div class="xl-suggest-price-col">
+                      <span class="xl-suggest-price">{{ formatPrice(p) }}</span>
+                      <span class="xl-suggest-arrow">
+                        <i class="bi bi-chevron-right" style="font-size:12px"></i>
+                      </span>
                     </div>
                   </div>
-                  <div class="xl-suggest-price-col">
-                    <span class="xl-suggest-price">{{ formatPrice(p) }}</span>
-                    <span class="xl-suggest-arrow">
-                      <i class="bi bi-chevron-right" style="font-size:12px"></i>
-                    </span>
+                }
+              </div>
+
+              <button
+                type="button"
+                class="xl-suggest-footer"
+                (click)="viewAllResults()"
+              >
+                <span>Xem tất cả kết quả cho "<strong>{{ searchQuery() }}</strong>"</span>
+                <i class="bi bi-chevron-right" style="font-size:13px"></i>
+              </button>
+            } @else {
+              <div class="xl-suggest-empty">
+                <i class="bi bi-search" style="font-size:32px;color:#94a3b8"></i>
+                <div class="xl-empty-title">Không tìm thấy sản phẩm phù hợp</div>
+                <div class="xl-empty-desc">Không có sản phẩm nào cho từ khóa "<strong>{{ searchQuery() }}</strong>". Thử tìm <em>rau, trái cây, thịt, sữa...</em></div>
+              </div>
+            }
+          } @else {
+            <!-- Empty input: show popular keywords & category suggestions -->
+            <div class="xl-suggest-popular">
+              <div class="xl-popular-title">
+                <i class="bi bi-fire" style="color:#eab308;font-size:15px;margin-right:4px"></i>
+                <span>Từ khóa phổ biến</span>
+              </div>
+              <div class="xl-popular-chips">
+                @for (kw of popularKeywords; track kw) {
+                  <button
+                    type="button"
+                    class="xl-popular-chip"
+                    (click)="applyKeyword(kw)"
+                  >
+                    {{ kw }}
+                  </button>
+                }
+              </div>
+
+              <div class="xl-popular-title" style="margin-top:14px">
+                <i class="bi bi-grid-fill" style="color:#1e4226;font-size:14px;margin-right:4px"></i>
+                <span>Gợi ý theo danh mục</span>
+              </div>
+              <div class="xl-popular-cats">
+                @for (cat of categories.slice(0, 6); track cat.label) {
+                  <button
+                    type="button"
+                    class="xl-cat-chip"
+                    (click)="applyKeyword(cat.label)"
+                  >
+                    {{ cat.label }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Right: Balanced Actions (Notifications, Account, Cart) -->
+    <div class="xanhla-header-actions">
+
+      <!-- Notifications -->
+      <div class="xl-notif-wrapper">
+        <button class="xl-action-btn xl-notif-btn" type="button" (click)="toggleNotifMenu()" title="Thông báo" aria-label="Thông báo">
+          <span class="xl-action-icon-wrap">
+            <i class="bi bi-bell" style="font-size:19px"></i>
+            @if (unreadCount() > 0) {
+              <span class="xl-notif-dot">{{ unreadCount() }}</span>
+            }
+          </span>
+          <span class="xl-action-label">Thông báo</span>
+        </button>
+        @if (notifMenuOpen()) {
+          <div class="xl-notif-dropdown">
+            <div class="xl-notif-title" style="display:flex;justify-content:space-between;align-items:center">
+              <span>Thông báo</span>
+              @if (unreadCount() > 0) {
+                <button type="button" (click)="markAllAsRead()"
+                  style="background:none;border:none;font-size:12px;color:var(--xanh-moss);cursor:pointer;font-weight:600">Đã đọc</button>
+              }
+            </div>
+            @if (notifications().length === 0) {
+              <div style="padding:16px;text-align:center;font-size:13px;color:var(--xanh-muted)">Không có thông báo nào</div>
+            } @else {
+              @for (n of notifications(); track n.id) {
+                <a class="xl-notif-item" [class.is-unread]="n.unread" [routerLink]="n.path" (click)="closeNotifMenu()">
+                  <span>
+                    <strong>{{ n.title }}</strong>
+                    <small>{{ n.body }}</small>
+                  </span>
+                </a>
+              }
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Account -->
+      @if (cart.currentUser()) {
+        <div class="xl-account-wrapper" style="position:relative">
+          <button class="xl-action-btn xl-account-btn" type="button" (click)="toggleUserMenu()" title="{{ cart.currentUser()!.name }}">
+            <span class="xl-action-icon-wrap">
+              @if (cart.currentUser()!.avatar) {
+                <img [src]="cart.currentUser()!.avatar" class="xanhla-member-avatar-img" alt="Avatar" />
+              } @else {
+                <div class="xanhla-member-avatar">{{ cart.currentUser()!.name.charAt(0).toUpperCase() }}</div>
+              }
+            </span>
+            <div class="xl-account-text">
+              <small class="xl-account-sub">Tài khoản</small>
+              <span class="xl-account-name">{{ cart.currentUser()!.name }}</span>
+            </div>
+            <i class="bi bi-chevron-down xl-acc-chevron"></i>
+          </button>
+          @if (userMenuOpen()) {
+            <div class="xanhla-user-menu">
+              <div class="xanhla-user-menu-header">
+                @if (cart.currentUser()!.avatar) {
+                  <img [src]="cart.currentUser()!.avatar" class="xanhla-user-menu-avatar" alt="Avatar" />
+                } @else {
+                  <div class="xanhla-user-menu-avatar-placeholder">{{ cart.currentUser()!.name.charAt(0).toUpperCase() }}</div>
+                }
+                <div class="xanhla-user-menu-info">
+                  <strong>{{ cart.currentUser()!.name }}</strong>
+                  <span>{{ cart.currentUser()!.email || cart.currentUser()!.phone }}</span>
+                  <div style="margin-top:4px;font-size:11.5px;color:#16a34a;font-weight:700;display:flex;align-items:center;gap:4px">
+                    <i class="bi bi-trophy-fill" style="color:#eab308"></i>
+                    <span>Điểm: {{ (cart.currentUser()!.points || 0).toLocaleString('vi-VN') }}</span>
                   </div>
                 </div>
-              }
+              </div>
+              <a routerLink="/account" (click)="closeUserMenu()">
+                <i class="bi bi-person me-2" style="font-size:16px"></i>
+                Tài khoản của tôi
+              </a>
+              <a routerLink="/account" [queryParams]="{ tab: 'orders' }" (click)="closeUserMenu()">
+                <i class="bi bi-box-seam me-2" style="font-size:16px"></i>
+                Đơn hàng của tôi
+              </a>
+              <a routerLink="/vouchers" (click)="closeUserMenu()">
+                <i class="bi bi-ticket-perforated me-2" style="font-size:16px"></i>
+                Ví Voucher &amp; Ưu đãi
+              </a>
+              <a routerLink="/loyalty" (click)="closeUserMenu()">
+                <i class="bi bi-star me-2" style="font-size:16px"></i>
+                Điểm thưởng &amp; Hạng TV
+              </a>
+              <a routerLink="/account" [queryParams]="{ tab: 'addresses' }" (click)="closeUserMenu()">
+                <i class="bi bi-geo-alt me-2" style="font-size:16px"></i>
+                Sổ địa chỉ
+              </a>
+              <a routerLink="/account" [queryParams]="{ tab: 'settings' }" (click)="closeUserMenu()">
+                <i class="bi bi-gear me-2" style="font-size:16px"></i>
+                Thông tin và cài đặt
+              </a>
+              <button type="button" (click)="logout()">
+                <i class="bi bi-box-arrow-right me-2" style="font-size:16px"></i>
+                Đăng xuất
+              </button>
             </div>
-
-            <button
-              type="button"
-              class="xl-suggest-footer"
-              (click)="viewAllResults()"
-            >
-              <span>Xem tất cả kết quả cho "<strong>{{ searchQuery() }}</strong>"</span>
-              <i class="bi bi-chevron-right" style="font-size:13px"></i>
-            </button>
-          } @else {
-            <div class="xl-suggest-empty">
-              <i class="bi bi-search" style="font-size:32px;color:#94a3b8"></i>
-              <div class="xl-empty-title">Không tìm thấy sản phẩm phù hợp</div>
-              <div class="xl-empty-desc">Không có sản phẩm nào cho từ khóa "<strong>{{ searchQuery() }}</strong>". Thử tìm <em>rau, trái cây, thịt, sữa...</em></div>
-            </div>
-          }
-        } @else {
-          <!-- Empty input: show popular keywords & category suggestions -->
-          <div class="xl-suggest-popular">
-            <div class="xl-popular-title">
-              <i class="bi bi-fire" style="color:#eab308;font-size:15px;margin-right:4px"></i>
-              <span>Từ khóa phổ biến</span>
-            </div>
-            <div class="xl-popular-chips">
-              @for (kw of popularKeywords; track kw) {
-                <button
-                  type="button"
-                  class="xl-popular-chip"
-                  (click)="applyKeyword(kw)"
-                >
-                  {{ kw }}
-                </button>
-              }
-            </div>
-
-            <div class="xl-popular-title" style="margin-top:14px">
-              <i class="bi bi-grid-fill" style="color:#1e4226;font-size:14px;margin-right:4px"></i>
-              <span>Gợi ý theo danh mục</span>
-            </div>
-            <div class="xl-popular-cats">
-              @for (cat of categories.slice(0, 6); track cat.label) {
-                <button
-                  type="button"
-                  class="xl-cat-chip"
-                  (click)="applyKeyword(cat.label)"
-                >
-                  {{ cat.label }}
-                </button>
-              }
-            </div>
-          </div>
-        }
-      </div>
-    }
-  </div>
-
-  <!-- Right Actions -->
-  <div class="xanhla-header-actions">
-
-    <!-- Account -->
-    @if (cart.currentUser()) {
-    <div style="position:relative">
-      <button class="xl-icon-btn xl-user-avatar-btn" type="button" (click)="toggleUserMenu()" title="{{ cart.currentUser()!.name }}">
-        @if (cart.currentUser()!.avatar) {
-        <img [src]="cart.currentUser()!.avatar" class="xanhla-member-avatar-img" alt="Avatar" />
-        } @else {
-        <div class="xanhla-member-avatar">{{ cart.currentUser()!.name.charAt(0).toUpperCase() }}</div>
-        }
-      </button>
-      @if (userMenuOpen()) {
-      <div class="xanhla-user-menu">
-        <div class="xanhla-user-menu-header">
-          @if (cart.currentUser()!.avatar) {
-          <img [src]="cart.currentUser()!.avatar" class="xanhla-user-menu-avatar" alt="Avatar" />
-          } @else {
-          <div class="xanhla-user-menu-avatar-placeholder">{{ cart.currentUser()!.name.charAt(0).toUpperCase() }}</div>
-          }
-          <div class="xanhla-user-menu-info">
-            <strong>{{ cart.currentUser()!.name }}</strong>
-            <span>{{ cart.currentUser()!.email || cart.currentUser()!.phone }}</span>
-            <div style="margin-top:4px;font-size:11.5px;color:#16a34a;font-weight:700;display:flex;align-items:center;gap:4px">
-              <i class="bi bi-trophy-fill" style="color:#eab308"></i>
-              <span>Điểm: {{ (cart.currentUser()!.points || 0).toLocaleString('vi-VN') }}</span>
-            </div>
-          </div>
-        </div>
-        <a routerLink="/account" (click)="closeUserMenu()">
-          <i class="bi bi-person me-2" style="font-size:16px"></i>
-          Tài khoản của tôi
-        </a>
-        <a routerLink="/account" [queryParams]="{ tab: 'orders' }" (click)="closeUserMenu()">
-          <i class="bi bi-box-seam me-2" style="font-size:16px"></i>
-          Đơn hàng của tôi
-        </a>
-        <a routerLink="/vouchers" (click)="closeUserMenu()">
-          <i class="bi bi-ticket-perforated me-2" style="font-size:16px"></i>
-          Ví Voucher &amp; Ưu đãi
-        </a>
-        <a routerLink="/loyalty" (click)="closeUserMenu()">
-          <i class="bi bi-star me-2" style="font-size:16px"></i>
-          Điểm thưởng &amp; Hạng TV
-        </a>
-        <a routerLink="/account" [queryParams]="{ tab: 'addresses' }" (click)="closeUserMenu()">
-          <i class="bi bi-geo-alt me-2" style="font-size:16px"></i>
-          Sổ địa chỉ
-        </a>
-        <a routerLink="/account" [queryParams]="{ tab: 'settings' }" (click)="closeUserMenu()">
-          <i class="bi bi-gear me-2" style="font-size:16px"></i>
-          Thông tin và cài đặt
-        </a>
-        <button type="button" (click)="logout()">
-          <i class="bi bi-box-arrow-right me-2" style="font-size:16px"></i>
-          Đăng xuất
-        </button>
-      </div>
-      }
-    </div>
-    } @else {
-    <button class="xl-icon-btn" type="button" (click)="cart.openAuthModal('login')" title="Đăng nhập">
-      <i class="bi bi-person" style="font-size:22px"></i>
-    </button>
-    }
-
-    <!-- Notifications -->
-    <div class="xl-notif-wrapper">
-      <button class="xl-icon-btn" type="button" (click)="toggleNotifMenu()" title="Thông báo" aria-label="Thông báo">
-        <i class="bi bi-bell" style="font-size:20px"></i>
-        @if (unreadCount() > 0) {
-        <span class="xl-notif-dot">{{ unreadCount() }}</span>
-        }
-      </button>
-      @if (notifMenuOpen()) {
-      <div class="xl-notif-dropdown">
-        <div class="xl-notif-title" style="display:flex;justify-content:space-between;align-items:center">
-          <span>Thông báo</span>
-          @if (unreadCount() > 0) {
-          <button type="button" (click)="markAllAsRead()"
-            style="background:none;border:none;font-size:12px;color:var(--xanh-moss);cursor:pointer;font-weight:600">Đã
-            đọc</button>
           }
         </div>
-        @if (notifications().length === 0) {
-        <div style="padding:16px;text-align:center;font-size:13px;color:var(--xanh-muted)">Không có thông báo nào</div>
-        } @else {
-        @for (n of notifications(); track n.id) {
-        <a class="xl-notif-item" [class.is-unread]="n.unread" [routerLink]="n.path" (click)="closeNotifMenu()">
-          <span>
-            <strong>{{ n.title }}</strong>
-            <small>{{ n.body }}</small>
-          </span>
-        </a>
-        }
-        }
-      </div>
-      }
-    </div>
-
-    <!-- Cart -->
-    <button class="xanhla-cart-button xl-icon-btn" id="header-cart-btn" type="button" aria-label="Xem giỏ hàng"
-      (click)="cart.openCartDrawer()">
-      <i class="bi bi-bag" style="font-size:20px"></i>
-      @if (cart.itemCount() > 0) {
-      <span class="xanhla-cart-badge">{{ cart.itemCount() }}</span>
-      }
-    </button>
-
-    <!-- Area Selector -->
-    <div class="xl-area-wrapper">
-      <button class="xl-area-btn" type="button" (click)="toggleAreaMenu()">
-        <i class="bi bi-geo-alt" style="font-size:15px"></i>
-        <span class="xl-area-label">{{ selectedArea() }}</span>
-        <i class="bi bi-chevron-down" style="font-size:11px"></i>
-      </button>
-      @if (areaMenuOpen()) {
-      <div class="xl-area-dropdown">
-        <div class="xl-area-title">Chọn khu vực giao hàng</div>
-        @for (area of areas; track area) {
-        <button type="button" class="xl-area-item" [class.is-selected]="selectedArea() === area"
-          (click)="selectArea(area)">
-          <i class="bi bi-geo-alt" style="font-size:14px"></i>
-          {{ area }}
-          @if (selectedArea() === area) {
-          <i class="bi bi-check2" style="margin-left:auto;font-weight:700"></i>
-          }
-        </button>
-        }
-      </div>
-      }
-    </div>
-
-    <!-- Mobile Toggle -->
-    <button class="xanhla-mobile-toggle" type="button" aria-label="Mở menu" (click)="toggleMobileMenu()">
-      @if (mobileMenuOpen()) {
-      <i class="bi bi-x-lg" style="font-size:22px"></i>
       } @else {
-      <i class="bi bi-list" style="font-size:26px"></i>
+        <div class="xl-auth-guest-group">
+          <button class="xl-action-btn xl-account-btn" type="button" (click)="cart.openAuthModal('login')" title="Đăng nhập tài khoản">
+            <span class="xl-action-icon-wrap">
+              <i class="bi bi-person" style="font-size:21px"></i>
+            </span>
+            <div class="xl-account-text">
+              <small class="xl-account-sub">Tài khoản</small>
+              <span class="xl-account-name">Đăng nhập</span>
+            </div>
+          </button>
+          <button class="xl-register-pill-btn" type="button" (click)="cart.openAuthModal('signup')" title="Đăng ký tài khoản mới">
+            <i class="bi bi-person-plus" style="font-size:14px" aria-hidden="true"></i>
+            <span>Đăng ký</span>
+          </button>
+        </div>
       }
-    </button>
+
+      <!-- Cart Button: Premium Pill Highlight -->
+      <button class="xl-cart-pill-btn" id="header-cart-btn" type="button" aria-label="Xem giỏ hàng"
+        (click)="cart.openCartDrawer()">
+        <span class="xl-cart-icon-wrap">
+          <i class="bi bi-bag-fill" style="font-size:18px"></i>
+          @if (cart.itemCount() > 0) {
+            <span class="xl-cart-badge-count">{{ cart.itemCount() }}</span>
+          }
+        </span>
+        <span class="xl-cart-pill-label">Giỏ hàng</span>
+      </button>
+
+      <!-- Mobile Toggle -->
+      <button class="xanhla-mobile-toggle" type="button" aria-label="Mở menu" (click)="toggleMobileMenu()">
+        @if (mobileMenuOpen()) {
+          <i class="bi bi-x-lg" style="font-size:22px"></i>
+        } @else {
+          <i class="bi bi-list" style="font-size:26px"></i>
+        }
+      </button>
+
+    </div>
   </div>
 </header>
 
-<!-- ── SECONDARY NAV BAR ── -->
+<!-- ── SECONDARY NAV BAR (ROW 2: FULL WIDTH BALANCE) ── -->
 <nav class="xl-subnav" aria-label="Điều hướng nhanh">
-  <div class="xl-subnav-inner">
-    @for (item of navItems; track item.path) {
-    <a [routerLink]="item.path" [class.is-active]="isActive(item.path)" class="xl-subnav-link">
-      @switch (item.path) {
-      @case ('/') { Trang chủ }
-      @case ('/online-ordering') { Đặt hàng }
-      @case ('/nutrition') { Dinh dưỡng TM }
-      @case ('/cook-with-what-you-have') { Nấu gì? }
-      @default { {{ item.label }} }
+  <div class="xl-subnav-container">
+
+    <!-- Left: Category Menu Button (Moved from Header Row 1) -->
+    <div class="xl-cat-menu-wrapper">
+      <button class="xl-cat-btn" type="button" (click)="toggleCatMenu()" [class.is-open]="catMenuOpen()">
+        <i class="bi bi-grid-fill" style="font-size:15px"></i>
+        <span>Danh mục sản phẩm</span>
+        <i class="bi bi-chevron-down xl-cat-chevron"></i>
+      </button>
+
+      @if (catMenuOpen()) {
+        <div class="xl-cat-dropdown">
+          @for (cat of categories; track cat.label) {
+            <a class="xl-cat-item" routerLink="/online-ordering" [queryParams]="{ category: cat.category }"
+              (click)="closeCatMenu()">
+              <span>{{ cat.label }}</span>
+              <i class="bi bi-chevron-right" style="margin-left:auto;opacity:.4;font-size:12px"></i>
+            </a>
+          }
+        </div>
       }
-    </a>
-    }
+    </div>
+
+    <!-- Center: Main Navigation Links -->
+    <div class="xl-subnav-links">
+      @for (item of navItems; track item.path) {
+        <a [routerLink]="item.path" [class.is-active]="isActive(item.path)" class="xl-subnav-link">
+          @switch (item.path) {
+            @case ('/') { Trang chủ }
+            @case ('/online-ordering') { Đặt hàng }
+            @case ('/nutrition') { Dinh dưỡng thông minh }
+            @case ('/cook-with-what-you-have') { Gợi ý món ngon }
+            @default { {{ item.label }} }
+          }
+        </a>
+      }
+    </div>
+
+    <!-- Right: Quick Promotion Utilities (Fills the 70% void!) -->
+    <div class="xl-subnav-utilities">
+      <a routerLink="/promotions" class="xl-subnav-util-item">
+        <i class="bi bi-lightning-charge-fill" style="color:#eab308"></i>
+        <span>Flash Sale</span>
+      </a>
+      <a routerLink="/vouchers" class="xl-subnav-util-item">
+        <i class="bi bi-ticket-perforated-fill" style="color:#16a34a"></i>
+        <span>Mã giảm giá</span>
+      </a>
+      <a routerLink="/tracker-page" class="xl-subnav-util-badge xl-subnav-track-btn" title="Tra cứu trạng thái đơn hàng">
+        <i class="bi bi-geo-alt-fill" style="color:#16a34a"></i>
+        <span>Tra cứu đơn hàng</span>
+      </a>
+    </div>
+
   </div>
 </nav>
 
 <!-- ── MOBILE DRAWER ── -->
 @if (mobileMenuOpen()) {
-<div class="xanhla-drawer-backdrop" (click)="closeMobileMenu()">
-  <div class="xanhla-cart-drawer" style="width:300px" (click)="$event.stopPropagation()">
-    <div class="xanhla-drawer-header">
-      <h3>Menu</h3>
-      <button class="xanhla-drawer-close" type="button" (click)="closeMobileMenu()" aria-label="Đóng menu">
-        <i class="bi bi-x-lg" style="font-size:20px"></i>
-      </button>
-    </div>
-    <div class="xanhla-drawer-body">
-      <div class="xl-drawer-section-label">Điều hướng</div>
-      <a routerLink="/" style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)"
-        (click)="closeMobileMenu()">Trang chủ</a>
-      <a routerLink="/online-ordering"
-        style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)"
-        (click)="closeMobileMenu()">Đặt hàng trực tuyến</a>
-      <a routerLink="/vouchers"
-        style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)"
-        (click)="closeMobileMenu()">Ví Voucher &amp; Mã giảm giá</a>
-      <a routerLink="/loyalty"
-        style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)"
-        (click)="closeMobileMenu()">Điểm thưởng &amp; Hạng TV</a>
-      <a routerLink="/promotions"
-        style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)"
-        (click)="closeMobileMenu()">Chương trình khuyến mãi</a>
-      @if (cart.currentUser()) {
-      <a routerLink="/account" [queryParams]="{ tab: 'orders' }"
-        style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)"
-        (click)="closeMobileMenu()">Đơn hàng của tôi</a>
-      <a routerLink="/account" [queryParams]="{ tab: 'settings' }"
-        style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)"
-        (click)="closeMobileMenu()">Thông tin tài khoản</a>
-      }
-      <a routerLink="/nutrition"
-        style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line);color:var(--green-700)"
-        (click)="closeMobileMenu()">Dinh dưỡng thông minh</a>
-      <a routerLink="/cook-with-what-you-have"
-        style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line);color:var(--green-700)"
-        (click)="closeMobileMenu()">Nấu gì hôm nay?</a>
+  <div class="xanhla-drawer-backdrop" (click)="closeMobileMenu()">
+    <div class="xanhla-cart-drawer" style="width:300px" (click)="$event.stopPropagation()">
+      <div class="xanhla-drawer-header">
+        <h3>Menu</h3>
+        <button class="xanhla-drawer-close" type="button" (click)="closeMobileMenu()" aria-label="Đóng menu">
+          <i class="bi bi-x-lg" style="font-size:20px"></i>
+        </button>
+      </div>
+      <div class="xanhla-drawer-body">
+        <div class="xl-drawer-section-label">Điều hướng</div>
+        <a routerLink="/" style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)"
+          (click)="closeMobileMenu()">Trang chủ</a>
+        <a routerLink="/online-ordering"
+          style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)"
+          (click)="closeMobileMenu()">Đặt hàng trực tuyến</a>
+        <a routerLink="/vouchers"
+          style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)"
+          (click)="closeMobileMenu()">Ví Voucher &amp; Mã giảm giá</a>
+        <a routerLink="/loyalty"
+          style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)"
+          (click)="closeMobileMenu()">Điểm thưởng &amp; Hạng TV</a>
+        <a routerLink="/promotions"
+          style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)"
+          (click)="closeMobileMenu()">Chương trình khuyến mãi</a>
+        @if (cart.currentUser()) {
+          <a routerLink="/account" [queryParams]="{ tab: 'orders' }"
+            style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)"
+            (click)="closeMobileMenu()">Đơn hàng của tôi</a>
+          <a routerLink="/account" [queryParams]="{ tab: 'settings' }"
+            style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)"
+            (click)="closeMobileMenu()">Thông tin tài khoản</a>
+        } @else {
+          <div class="xl-drawer-auth-actions">
+            <button type="button" class="xl-drawer-auth-btn is-login" (click)="closeMobileMenu(); cart.openAuthModal('login')">
+              <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+              <span>Đăng nhập</span>
+            </button>
+            <button type="button" class="xl-drawer-auth-btn is-signup" (click)="closeMobileMenu(); cart.openAuthModal('signup')">
+              <i class="bi bi-person-plus" aria-hidden="true"></i>
+              <span>Đăng ký</span>
+            </button>
+          </div>
+        }
+        <a routerLink="/nutrition"
+          style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line);color:var(--green-700)"
+          (click)="closeMobileMenu()">Dinh dưỡng thông minh</a>
+        <a routerLink="/cook-with-what-you-have"
+          style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line);color:var(--green-700)"
+          (click)="closeMobileMenu()">Gợi ý món ngon</a>
 
-      <div class="xl-drawer-section-label" style="margin-top:12px">Danh mục sản phẩm</div>
-      @for (cat of categories; track cat.label) {
-      <a routerLink="/online-ordering" [queryParams]="{ category: cat.category }"
-        style="padding:10px 0;font-size:14px;border-bottom:1px solid var(--xanh-line)" (click)="closeMobileMenu()">
-        {{ cat.label }}
-      </a>
-      }
+        <div class="xl-drawer-section-label" style="margin-top:12px">Danh mục sản phẩm</div>
+        @for (cat of categories; track cat.label) {
+          <a routerLink="/online-ordering" [queryParams]="{ category: cat.category }"
+            style="padding:10px 0;font-size:14px;border-bottom:1px solid var(--xanh-line)" (click)="closeMobileMenu()">
+            {{ cat.label }}
+          </a>
+        }
 
-      <div style="padding:16px 0">
-        <a routerLink="/cart" class="xanhla-btn-primary"
-          style="display:flex;align-items:center;justify-content:center;gap:8px" (click)="closeMobileMenu()">
-          <i class="bi bi-bag"></i>
-          Giỏ hàng ({{ cart.itemCount() }})
-        </a>
+        <div style="padding:16px 0">
+          <a routerLink="/cart" class="xanhla-btn-primary"
+            style="display:flex;align-items:center;justify-content:center;gap:8px" (click)="closeMobileMenu()">
+            <i class="bi bi-bag"></i>
+            Giỏ hàng ({{ cart.itemCount() }})
+          </a>
+        </div>
       </div>
     </div>
   </div>
-</div>
 }

@@ -92,6 +92,38 @@ export const routes: Routes = [
       import('./pages/handbook/handbook-detail.component').then((m) => m.HandbookDetailComponent),
   },
 
+  // ── Trang Thông tin, Hỗ trợ & Chính sách ─────────────────────
+  {
+    path: 'gioi-thieu',
+    data: { section: 'about' },
+    loadComponent: () =>
+      import('./pages/info/info-page.component').then((m) => m.InfoPageComponent),
+  },
+  {
+    path: 'hoi-dap',
+    data: { section: 'faq' },
+    loadComponent: () =>
+      import('./pages/info/info-page.component').then((m) => m.InfoPageComponent),
+  },
+  {
+    path: 'ho-tro',
+    data: { section: 'help' },
+    loadComponent: () =>
+      import('./pages/info/info-page.component').then((m) => m.InfoPageComponent),
+  },
+  {
+    path: 'lien-he',
+    data: { section: 'contact' },
+    loadComponent: () =>
+      import('./pages/info/info-page.component').then((m) => m.InfoPageComponent),
+  },
+  { path: 'chinh-sach', redirectTo: 'chinh-sach/giao-hang', pathMatch: 'full' },
+  {
+    path: 'chinh-sach/:slug',
+    loadComponent: () =>
+      import('./pages/info/info-page.component').then((m) => m.InfoPageComponent),
+  },
+
   // ── Redirect các trang đã xóa ────────────────────────────────
   { path: 'menus',                  redirectTo: 'online-ordering', pathMatch: 'full' },
   { path: 'menus-1',                redirectTo: 'online-ordering', pathMatch: 'full' },

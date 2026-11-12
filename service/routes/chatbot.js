@@ -819,13 +819,14 @@ async function detectIngredientsWithGemini(imageBase64, apiKey) {
 
   const promptText = `You are a culinary AI for "Evergreen Mart" organic supermarket.
 Analyze this photo of a refrigerator, pantry, table, or food ingredients.
-Identify all individual cooking ingredients visible (e.g., vegetables, meats, seafood, eggs, fruits, roots, seasonings).
-Return ONLY a valid JSON array of objects with "name" (in Vietnamese) and "category", for example:
+Identify all individual cooking ingredients visible (e.g., vegetables, meats, seafood, eggs, fruits, roots, seasonings) along with estimated quantity and unit.
+Use only units from ["g", "kg", "quả", "củ", "bó", "gói", "phần"].
+Return ONLY a valid JSON array of objects with "name" (in Vietnamese), "category", "qty" (number), and "unit", for example:
 [
-  {"name": "Thịt bò", "category": "meat"},
-  {"name": "Cà chua", "category": "vegetables"},
-  {"name": "Cà rốt", "category": "vegetables"},
-  {"name": "Rau cải", "category": "vegetables"}
+  {"name": "Thịt bò", "category": "meat", "qty": 300, "unit": "g"},
+  {"name": "Cà chua", "category": "vegetables", "qty": 3, "unit": "quả"},
+  {"name": "Cà rốt", "category": "vegetables", "qty": 2, "unit": "củ"},
+  {"name": "Rau cải", "category": "vegetables", "qty": 1, "unit": "bó"}
 ]
 Return purely the JSON array without markdown code fence or extra explanation.`;
 
@@ -874,7 +875,13 @@ Return purely the JSON array without markdown code fence or extra explanation.`;
             if (Array.isArray(parsed) && parsed.length > 0) {
               return parsed.map(item => {
                 if (typeof item === 'string') return { name: item, category: 'other' };
-                return { name: item.name || 'Nguyên liệu', category: item.category || 'other' };
+                const qtyNum = Number(item.qty);
+                return {
+                  name: item.name || 'Nguyên liệu',
+                  category: item.category || 'other',
+                  qty: Number.isFinite(qtyNum) && qtyNum > 0 ? qtyNum : undefined,
+                  unit: typeof item.unit === 'string' && item.unit.trim() ? item.unit.trim() : undefined,
+                };
               });
             }
           } catch (e) {

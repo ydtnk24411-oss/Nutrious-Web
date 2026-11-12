@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { Router, RouterLink } from '@angular/router';
 import { VoucherService } from '../../shared/services/voucher.service';
-import { CartService, formatPrice } from '../../shared/services/cart.service';
+import { CartService, formatPrice, resolveProductMaxStock } from '../../shared/services/cart.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { ApiService } from '../../shared/services/api.service';
 import { Voucher, XanhLaProduct } from '../../shared/models/xanh-la.models';
@@ -120,6 +120,10 @@ function toDealCartProduct(p: ApiProduct, dealPrice: number): XanhLaProduct {
     type: p.type || '',
     weight: p.weight || '',
     options: p.options,
+    stock: typeof p.availableStock === 'number' ? p.availableStock : p.stock,
+    availableStock: p.availableStock,
+    comboStatus: p.comboStatus,
+    isCombo: p.isCombo,
   };
 }
 
@@ -293,6 +297,8 @@ export class PromotionsComponent implements OnInit, OnDestroy {
       dry: [],
     };
     for (const p of products) {
+      const s = p.isCombo && typeof p.availableStock === 'number' ? p.availableStock : p.stock;
+      if (p.isActive === false || (typeof s === 'number' && s <= 0)) continue;
       const { group } = classifyCategory(p);
       if (byGroup[group].length < 6) {
         byGroup[group].push(p);
@@ -402,16 +408,28 @@ export class PromotionsComponent implements OnInit, OnDestroy {
   }
 
   addDealToCart(deal: ProductDealItem): void {
+    if (resolveProductMaxStock(deal.cartProduct) === 0) {
+      this.showToast(`"${deal.name}" hiện đã tạm hết hàng.`);
+      return;
+    }
     this.cart.addItem(deal.cartProduct, 1);
     this.showToast(`Đã thêm "${deal.name}" (Giá Deal ${deal.dealPriceText}) vào giỏ hàng!`);
   }
 
   addComboToCart(combo: ComboDealItem): void {
-    for (const item of combo.items) {
+    const available = combo.items.filter((item) => resolveProductMaxStock(item.product) !== 0);
+    if (available.length === 0) {
+      this.showToast(`Các nguyên liệu trong combo "${combo.name}" hiện đang tạm hết hàng.`);
+      return;
+    }
+    for (const item of available) {
       this.cart.addItem(item.product, 1);
     }
     this.voucher.copyCode(combo.voucherCode);
-    this.showToast(`Đã thêm trọn bộ "${combo.name}" vào giỏ hàng và sao chép mã ${combo.voucherCode}!`);
+    const suffix = available.length < combo.items.length
+      ? ` (đã thêm ${available.length}/${combo.items.length} món còn hàng)`
+      : '';
+    this.showToast(`Đã thêm trọn bộ "${combo.name}"${suffix} vào giỏ hàng và sao chép mã ${combo.voucherCode}!`);
   }
 
   setTab(tab: 'vouchers' | 'points'): void {

@@ -206,10 +206,15 @@
 
 /* User dropdown menu */
 .xanhla-user-menu {
-  top: 64px;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 245px;
+  width: max-content;
+  max-width: 300px;
+  z-index: 200;
   border-top: 2.5px solid var(--green-700);
   box-shadow: 0 14px 44px rgba(28, 52, 26, .14);
-  border-radius: 0 0 var(--r-md) var(--r-md);
+  border-radius: var(--r-md);
 }
 
 .xanhla-user-menu-header {
@@ -1363,6 +1368,468 @@
   .xl-cat-menu-wrapper,
   .xl-area-wrapper,
   .xl-subnav {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   OPTION 1: MODERN BALANCED 2-TIER E-COMMERCE HEADER
+   ========================================================================== */
+
+/* Topbar inner */
+.xl-topbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 max(16px, 3.5vw);
+  box-sizing: border-box;
+}
+.xl-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.xl-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.xl-topbar-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Main header container */
+.xanhla-header {
+  height: 76px;
+  display: flex;
+  align-items: center;
+  background: #ffffff !important;
+  border-bottom: 1px solid #eef2e8;
+  padding: 0 !important;
+  box-shadow: 0 2px 12px rgba(22, 66, 25, 0.05);
+}
+.xl-header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(16px, 2.5vw, 36px);
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 max(16px, 3.5vw);
+  box-sizing: border-box;
+}
+
+/* Brand text tagline */
+.xanhla-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.xanhla-logo-text {
+  display: flex;
+  flex-direction: column;
+}
+.xanhla-brand-word {
+  color: #164219;
+  font-family: var(--xanh-font-display);
+  font-size: 21px;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+.xanhla-brand-tagline {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #657e63;
+  letter-spacing: 0.02em;
+  margin-top: 2px;
+}
+
+/* Search bar styling */
+.xl-header-search-wrapper {
+  flex: 1 1 520px;
+  max-width: 580px;
+  position: relative;
+}
+.xl-header-search {
+  height: 46px;
+  padding: 3px 3px 3px 18px;
+  background: #f7f9f5;
+  border: 1.8px solid #d5e5d3;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.xl-header-search:focus-within {
+  background: #ffffff;
+  border-color: #164219;
+  box-shadow: 0 0 0 3.5px rgba(22, 66, 25, 0.12), 0 4px 14px rgba(22, 66, 25, 0.06);
+}
+.xl-search-input {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #1a3d22;
+}
+.xl-search-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 50% !important;
+  background: #164219 !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  transition: all 0.15s ease !important;
+}
+.xl-search-btn:hover {
+  background: #235f28 !important;
+  transform: scale(1.06);
+}
+
+/* Right Actions Group */
+.xanhla-header-actions {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.2vw, 16px);
+  margin-left: 0;
+  flex-shrink: 0;
+}
+
+/* Action button with icon & text */
+.xl-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #1e3d24;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+.xl-action-btn:hover {
+  background: #f4f8f1;
+  border-color: #e2ede0;
+}
+.xl-action-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: #164219;
+}
+.xl-action-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #274026;
+  white-space: nowrap;
+}
+.xl-account-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  line-height: 1.2;
+}
+.xl-account-sub {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #71886e;
+}
+.xl-account-name {
+  font-size: 13px;
+  font-weight: 750;
+  color: #164219;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.xl-acc-chevron {
+  font-size: 11px;
+  color: #71886e;
+  margin-left: 2px;
+}
+
+.xl-auth-guest-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.xl-register-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1.5px solid #164219;
+  background: #f4f9ef;
+  color: #164219;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 750;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.xl-register-pill-btn:hover {
+  background: #164219;
+  color: #ffffff;
+}
+
+.xl-drawer-auth-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--xanh-line);
+}
+
+.xl-drawer-auth-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.xl-drawer-auth-btn.is-login {
+  background: #ffffff;
+  color: #164219;
+  border: 1.5px solid #164219;
+}
+
+.xl-drawer-auth-btn.is-signup {
+  background: #164219;
+  color: #ffffff;
+  border: 1.5px solid #164219;
+}
+
+/* Cart Button: High-visibility Lime Pill */
+.xl-cart-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: #d5ed57;
+  border: 1.8px solid #164219;
+  color: #164219;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 850;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(22, 66, 25, 0.12);
+}
+.xl-cart-pill-btn:hover {
+  background: #c8ee4f;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(22, 66, 25, 0.2);
+}
+.xl-cart-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.xl-cart-badge-count {
+  position: absolute;
+  top: -8px;
+  right: -9px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 800;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #ffffff;
+}
+
+/* ── SECONDARY NAV BAR (ROW 2: BALANCED) ── */
+.xl-subnav {
+  height: 48px;
+  background: #ffffff;
+  border-bottom: 1.5px solid #eef2e8;
+  display: flex;
+  align-items: center;
+}
+.xl-subnav-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 max(16px, 3.5vw);
+  box-sizing: border-box;
+}
+
+/* Category Menu button inside subnav */
+.xl-subnav .xl-cat-menu-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+.xl-subnav .xl-cat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: #164219;
+  border: 1px solid #164219;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.xl-subnav .xl-cat-btn:hover,
+.xl-subnav .xl-cat-btn.is-open {
+  background: #235f28;
+  border-color: #235f28;
+}
+
+/* Center subnav links */
+.xl-subnav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.xl-subnav-links::-webkit-scrollbar {
+  display: none;
+}
+.xl-subnav-links .xl-subnav-link {
+  display: inline-flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #2d452f;
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.xl-subnav-links .xl-subnav-link:hover {
+  color: #164219;
+}
+.xl-subnav-links .xl-subnav-link.is-active {
+  color: #164219;
+  border-bottom-color: #164219;
+}
+
+/* Right quick utilities to balance the subnav */
+.xl-subnav-utilities {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+.xl-subnav-util-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #2d452f;
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.xl-subnav-util-item:hover {
+  background: #f4f8f1;
+  color: #164219;
+}
+.xl-subnav-util-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 750;
+  color: #166534;
+  background: #ecf8ec;
+  border: 1px solid #cce8cd;
+  padding: 5px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.xl-subnav-util-badge:hover {
+  background: #dcfce7;
+  border-color: #166534;
+  color: #14532d;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(22, 101, 52, 0.15);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1080px) {
+  .xl-subnav-utilities {
+    display: none;
+  }
+}
+@media (max-width: 960px) {
+  .xanhla-header {
+    height: 64px;
+  }
+  .xl-header-search-wrapper,
+  .xl-action-label,
+  .xl-account-text,
+  .xl-acc-chevron,
+  .xl-register-pill-btn,
+  .xl-cart-pill-label,
+  .xl-subnav {
+    display: none !important;
+  }
+  .xl-cart-pill-btn {
+    padding: 0;
+    width: 42px;
+    height: 42px;
+    justify-content: center;
+  }
+  .xanhla-brand-tagline {
     display: none;
   }
 }

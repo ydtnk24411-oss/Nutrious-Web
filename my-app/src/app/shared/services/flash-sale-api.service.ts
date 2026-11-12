@@ -15,6 +15,7 @@ export interface FlashSaleItem {
   totalQuantity: number;
   soldQuantity: number;
   soldPercent: number;
+  stock?: number;
   isSoldOut: boolean;
   startDate: string;
   endDate: string;

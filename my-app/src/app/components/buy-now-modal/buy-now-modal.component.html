@@ -57,13 +57,20 @@
         <!-- Chọn số lượng -->
         <div class="bn-section">
           <div class="bn-qty-header">
-            <label class="bn-label" style="margin:0">Chọn số lượng:</label>
+            <label class="bn-label" style="margin:0">
+              Chọn số lượng:
+              @if (maxStock() !== null) {
+                <span style="font-weight:500;font-size:12px;color:#64748b;margin-left:6px">
+                  {{ isOutOfStock() ? '(Tạm hết hàng)' : '(Còn ' + maxStock() + ' sản phẩm)' }}
+                </span>
+              }
+            </label>
             <div class="bn-qty-picker">
               <button
                 type="button"
                 class="bn-qty-btn"
                 (click)="decrease()"
-                [disabled]="quantity() <= 1"
+                [disabled]="isOutOfStock() || quantity() <= 1"
                 aria-label="Giảm"
               >
                 <i class="bi bi-dash"></i>
@@ -73,13 +80,15 @@
                 class="bn-qty-input"
                 [value]="quantity()"
                 (change)="onQtyInput($event)"
+                [disabled]="isOutOfStock()"
                 min="1"
-                max="999"
+                [attr.max]="maxStock() ?? 999"
               />
               <button
                 type="button"
                 class="bn-qty-btn"
                 (click)="increase()"
+                [disabled]="isOutOfStock() || (maxStock() !== null && quantity() >= maxStock()!)"
                 aria-label="Tăng"
               >
                 <i class="bi bi-plus"></i>
@@ -98,8 +107,8 @@
       <!-- Footer Actions -->
       <div class="bn-footer">
         <button type="button" class="bn-btn-cancel" (click)="close()">Hủy bỏ</button>
-        <button type="button" class="bn-btn-confirm" (click)="confirm()">
-          <span>Xác nhận &amp; Thanh toán ngay</span>
+        <button type="button" class="bn-btn-confirm" [disabled]="isOutOfStock()" (click)="confirm()">
+          <span>{{ isOutOfStock() ? 'Tạm hết hàng' : 'Xác nhận & Thanh toán ngay' }}</span>
           <i class="bi bi-arrow-right"></i>
         </button>
       </div>

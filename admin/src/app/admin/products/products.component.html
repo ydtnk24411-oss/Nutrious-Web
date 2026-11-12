@@ -608,6 +608,159 @@
                       (input)="setField('description', $any($event.target).value)"></textarea>
           </div>
 
+          <!-- ============================================ -->
+          <!-- KHỐI THÔNG SỐ CHI TIẾT & DINH DƯỠNG SẢN PHẨM -->
+          <!-- ============================================ -->
+          <div class="admin-field" style="grid-column:1/-1;margin-top:10px;padding:16px;background:#f8faf6;border:1.5px solid #d4e7c5;border-radius:12px">
+            <div style="margin-bottom:14px;border-bottom:1px solid #e2ebd8;padding-bottom:10px">
+              <strong style="font-size:15px;color:#1c4217;display:flex;align-items:center;gap:6px">
+                🌿 Thông số nguồn gốc & Hướng dẫn sử dụng
+              </strong>
+              <div style="font-size:12px;color:#5c715e;margin-top:2px">
+                Hiển thị trong bảng thông số kỹ thuật, xuất xứ và hướng dẫn trên trang chi tiết sản phẩm.
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <!-- Thương hiệu -->
+              <div class="admin-field">
+                <label style="font-size:12.5px;font-weight:600;color:#2c3e50">Thương hiệu</label>
+                <input type="text" placeholder="VD: Evergreen Mart Farm, SalMar, Orion..."
+                       [value]="form().brand || ''"
+                       (input)="setField('brand', $any($event.target).value)" />
+              </div>
+
+              <!-- Xuất xứ -->
+              <div class="admin-field">
+                <label style="font-size:12.5px;font-weight:600;color:#2c3e50">Xuất xứ nguồn gốc</label>
+                <input type="text" placeholder="VD: Đơn Dương, Lâm Đồng, Việt Nam..."
+                       [value]="form().origin || ''"
+                       (input)="setField('origin', $any($event.target).value)" />
+              </div>
+
+              <!-- Nhà sản xuất -->
+              <div class="admin-field">
+                <label style="font-size:12.5px;font-weight:600;color:#2c3e50">Nhà sản xuất / Nông trại</label>
+                <input type="text" placeholder="VD: HTX Nông nghiệp Evergreen Mart..."
+                       [value]="form().manufacturer || ''"
+                       (input)="setField('manufacturer', $any($event.target).value)" />
+              </div>
+
+              <!-- Quy cách đóng gói -->
+              <div class="admin-field">
+                <label style="font-size:12.5px;font-weight:600;color:#2c3e50">Quy cách đóng gói (Unit)</label>
+                <input type="text" placeholder="VD: Gói (350g), Con (5kg – 6kg), Hộp 12 cái..."
+                       [value]="form().unit || ''"
+                       (input)="setField('unit', $any($event.target).value)" />
+              </div>
+
+              <!-- Hướng dẫn bảo quản -->
+              <div class="admin-field" style="grid-column:1/-1">
+                <label style="font-size:12.5px;font-weight:600;color:#2c3e50">Hướng dẫn bảo quản</label>
+                <textarea rows="2" placeholder="VD: Bảo quản ngăn mát tủ lạnh (2°C – 8°C) trong túi thông khí, dùng tốt nhất trong 3 - 5 ngày..."
+                          [value]="form().storageInstructions || ''"
+                          (input)="setField('storageInstructions', $any($event.target).value)"></textarea>
+              </div>
+
+              <!-- Hướng dẫn sử dụng -->
+              <div class="admin-field" style="grid-column:1/-1">
+                <label style="font-size:12.5px;font-weight:600;color:#2c3e50">Hướng dẫn sử dụng & Chế biến</label>
+                <textarea rows="2" placeholder="VD: Rửa sạch dưới vòi nước, xào tỏi, nấu canh hoặc làm salad tươi ngon..."
+                          [value]="form().usageInstructions || ''"
+                          (input)="setField('usageInstructions', $any($event.target).value)"></textarea>
+              </div>
+            </div>
+
+            <!-- Bảng Dinh dưỡng & Tiêu chuẩn kỹ thuật -->
+            <div style="margin-top:16px;padding-top:14px;border-top:1px dashed #c9dcbd">
+              <strong style="font-size:13.5px;color:#1c4217;display:block;margin-bottom:6px">
+                🥗 Bảng dinh dưỡng & Tiêu chuẩn chất lượng (Specifications)
+              </strong>
+              <div style="font-size:11.5px;color:#64748b;margin-bottom:12px">
+                Các chỉ số này sẽ tự động hiển thị trong bảng dinh dưỡng chi tiết ngoài trang sản phẩm.
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div class="admin-field">
+                  <label style="font-size:11.5px;color:#475569">Tiêu chuẩn canh tác</label>
+                  <input type="text" placeholder="VD: VietGAP, GlobalGAP, Hữu cơ..."
+                         [value]="getSpecValue('Tiêu chuẩn')"
+                         (input)="setSpecField('Tiêu chuẩn', $any($event.target).value)" />
+                </div>
+                <div class="admin-field">
+                  <label style="font-size:11.5px;color:#475569">Hạn sử dụng</label>
+                  <input type="text" placeholder="VD: 3 - 5 ngày, 12 tháng..."
+                         [value]="getSpecValue('Hạn sử dụng')"
+                         (input)="setSpecField('Hạn sử dụng', $any($event.target).value)" />
+                </div>
+                <div class="admin-field">
+                  <label style="font-size:11.5px;color:#475569">Năng lượng (Calories)</label>
+                  <input type="text" placeholder="VD: 13 kcal / 100g, 208 kcal..."
+                         [value]="getSpecValue('Năng lượng')"
+                         (input)="setSpecField('Năng lượng', $any($event.target).value)" />
+                </div>
+                <div class="admin-field">
+                  <label style="font-size:11.5px;color:#475569">Chất đạm (Protein)</label>
+                  <input type="text" placeholder="VD: 1.5g / 100g, 20.4g..."
+                         [value]="getSpecValue('Chất đạm (Protein)')"
+                         (input)="setSpecField('Chất đạm (Protein)', $any($event.target).value)" />
+                </div>
+                <div class="admin-field">
+                  <label style="font-size:11.5px;color:#475569">Chất béo (Lipid)</label>
+                  <input type="text" placeholder="VD: 0.2g / 100g, 13.4g..."
+                         [value]="getSpecValue('Chất béo (Lipid)')"
+                         (input)="setSpecField('Chất béo (Lipid)', $any($event.target).value)" />
+                </div>
+                <div class="admin-field">
+                  <label style="font-size:11.5px;color:#475569">Carbohydrate (Tinh bột / Đường)</label>
+                  <input type="text" placeholder="VD: 2.2g / 100g, 0g..."
+                         [value]="getSpecValue('Carbohydrate')"
+                         (input)="setSpecField('Carbohydrate', $any($event.target).value)" />
+                </div>
+                <div class="admin-field">
+                  <label style="font-size:11.5px;color:#475569">Chất xơ</label>
+                  <input type="text" placeholder="VD: 1.0g / 100g..."
+                         [value]="getSpecValue('Chất xơ')"
+                         (input)="setSpecField('Chất xơ', $any($event.target).value)" />
+                </div>
+                <div class="admin-field">
+                  <label style="font-size:11.5px;color:#475569">Vitamin & Khoáng chất</label>
+                  <input type="text" placeholder="VD: Vitamin C, A, Canxi, Kali, Omega-3..."
+                         [value]="getSpecValue('Vitamin & Khoáng chất')"
+                         (input)="setSpecField('Vitamin & Khoáng chất', $any($event.target).value)" />
+                </div>
+              </div>
+
+              <!-- Thêm thông số tùy chỉnh khác -->
+              @if (getCustomSpecKeys().length > 0) {
+                <div style="margin-top:10px;padding:8px 10px;background:#fff;border-radius:8px;border:1px solid #e2e8f0">
+                  <div style="font-size:11.5px;font-weight:700;color:#334155;margin-bottom:6px">Thông số kỹ thuật bổ sung khác:</div>
+                  @for (ck of getCustomSpecKeys(); track ck) {
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f1f5f9;font-size:12px">
+                      <span><strong>{{ ck }}:</strong> {{ getSpecValue(ck) }}</span>
+                      <button type="button" (click)="removeSpec(ck)" style="color:#ef4444;background:none;border:none;cursor:pointer;font-size:12px;font-weight:bold" title="Xóa">✕</button>
+                    </div>
+                  }
+                </div>
+              }
+
+              <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+                <input type="text" placeholder="Tên thông số khác (VD: Phương pháp)"
+                       [value]="newSpecKey()"
+                       (input)="newSpecKey.set($any($event.target).value)"
+                       style="flex:1;font-size:12px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:6px" />
+                <input type="text" placeholder="Giá trị (VD: Canh tác nhà màng)"
+                       [value]="newSpecVal()"
+                       (input)="newSpecVal.set($any($event.target).value)"
+                       style="flex:1;font-size:12px;padding:6px 10px;border:1px solid #cbd5e1;border-radius:6px" />
+                <button type="button" (click)="addCustomSpec()"
+                        style="padding:6px 12px;background:#176b3a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">
+                  + Thêm
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- isActive -->
           <div class="admin-field" style="grid-column:1/-1;flex-direction:row;align-items:center;justify-content:space-between;padding:12px 14px;background:#f8faf6;border:1px solid #e1ecdc;border-radius:10px">
             <div>

@@ -10,9 +10,9 @@
 }
 
 .loyalty-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: var(--font-display);
   font-size: 32px;
-  font-weight: 400;
+  font-weight: 600;
   color: var(--xanh-ink);
   margin: 0 0 8px 0;
 }
@@ -62,9 +62,9 @@
 }
 
 .loyalty-section-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: var(--font-display);
   font-size: 24px;
-  font-weight: 400;
+  font-weight: 600;
   color: var(--xanh-ink);
   margin: 0 0 20px 0;
 }

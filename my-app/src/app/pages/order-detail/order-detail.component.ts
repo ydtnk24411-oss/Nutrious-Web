@@ -47,6 +47,11 @@ interface Order {
   shippingMethod: 'pickup' | 'delivery';
   shippingAddress?: string;
   paymentMethod: 'cod' | 'bank_transfer';
+  paymentStatus?: 'unpaid' | 'paid' | 'expired';
+  paymentExpiresAt?: string | null;
+  paidAt?: string | null;
+  qrUrl?: string | null;
+  bankInfo?: { bankId: string; accountNo: string; accountName: string } | null;
   status: 'pending' | 'confirmed' | 'preparing' | 'shipping' | 'delivered' | 'cancelled';
   estimatedPoints?: number;
   createdAt: string;

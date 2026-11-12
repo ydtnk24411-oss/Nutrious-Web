@@ -22,6 +22,8 @@ router.get('/active', async (req, res, next) => {
       const total = sale.totalQuantity || 1;
       const sold = Math.min(total, sale.soldQuantity || 0);
       const percent = Math.min(100, Math.round((sold / total) * 100));
+      const productStock = typeof p.stock === 'number' ? Math.max(0, Math.floor(p.stock)) : undefined;
+      const isOutOfStock = typeof productStock === 'number' && productStock <= 0;
 
       return {
         _id: sale._id,
@@ -37,7 +39,8 @@ router.get('/active', async (req, res, next) => {
         totalQuantity: total,
         soldQuantity: sold,
         soldPercent: percent,
-        isSoldOut: sold >= total,
+        stock: productStock,
+        isSoldOut: sold >= total || isOutOfStock,
         startDate: sale.startDate,
         endDate: sale.endDate,
         isActive: sale.isActive,

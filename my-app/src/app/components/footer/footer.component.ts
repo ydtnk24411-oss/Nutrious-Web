@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../shared/services/api.service';
 import { logoImage } from '../../shared/data/xanh-la.data';
@@ -65,9 +65,9 @@ const DEFAULT_CONTACT_INFO = {
 
 const DEFAULT_TRUST_ITEMS: FooterTrustItem[] = [
   { iconKey: 'leaf', title: '100% Hữu Cơ & VietGAP', subtitle: 'Nguồn gốc rõ ràng từ nông trại' },
-  { iconKey: 'truck', title: 'Giao Nhanh Trong 2 Giờ', subtitle: 'Giữ trọn độ tươi ngon mỗi ngày' },
-  { iconKey: 'shield', title: 'Đồng Kiểm Khi Nhận Hàng', subtitle: 'Đổi trả miễn phí trong 24 giờ' },
-  { iconKey: 'headset', title: 'Hỗ Trợ Tận Tâm 24/7', subtitle: 'Hotline tư vấn: 1800 6999' },
+  { iconKey: 'truck', title: 'Giao Nhanh 30 – 45 Phút', subtitle: '18 chi nhánh tại 10 tỉnh thành' },
+  { iconKey: 'shield', title: 'Đồng Kiểm Khi Nhận Hàng', subtitle: 'Kiểm tra hàng tươi sống tại chỗ' },
+  { iconKey: 'headset', title: 'Tổng Đài 07:00 – 21:00', subtitle: 'Hotline miễn cước: 1800 6999' },
 ];
 
 const DEFAULT_ABOUT_LINKS: FooterNavLink[] = [
@@ -79,20 +79,20 @@ const DEFAULT_ABOUT_LINKS: FooterNavLink[] = [
 ];
 
 const DEFAULT_UTILITY_LINKS: FooterNavLink[] = [
-  { label: '🥗 Dinh dưỡng thông minh', route: '/nutrition' },
-  { label: '🍳 Nấu gì với đồ sẵn có?', route: '/cook-with-what-you-have' },
-  { label: '📦 Theo dõi đơn hàng', route: '/tracker-page' },
-  { label: '🎟️ Ví Voucher của tôi', route: '/vouchers' },
-  { label: '⭐ Điểm thưởng & Hạng thành viên', route: '/loyalty' },
+  { label: 'Dinh dưỡng thông minh', route: '/nutrition' },
+  { label: 'Nấu gì với đồ sẵn có?', route: '/cook-with-what-you-have' },
+  { label: 'Theo dõi đơn hàng', route: '/tracker-page' },
+  { label: 'Ví Voucher của tôi', route: '/vouchers' },
+  { label: 'Điểm thưởng & Hạng thành viên', route: '/loyalty' },
 ];
 
 const DEFAULT_POLICY_LINKS: FooterNavLink[] = [
   { label: 'Chính sách giao hàng & Đồng kiểm', policyKey: 'shipping', icon: 'truck' },
-  { label: 'Chính sách đổi trả & Hoàn tiền', policyKey: 'returns', icon: 'refresh' },
+  { label: 'Chính sách kiểm hàng & Đổi trả', policyKey: 'returns', icon: 'refresh' },
   { label: 'Chính sách bảo mật thông tin', policyKey: 'privacy', icon: 'shield' },
   { label: 'Điều khoản sử dụng dịch vụ', policyKey: 'terms', icon: 'doc' },
   { label: 'Câu hỏi thường gặp (FAQ)', policyKey: 'faq', icon: 'help' },
-  { label: 'Hướng dẫn đặt hàng & Thanh toán', policyKey: 'help', icon: 'info' },
+  { label: 'Hướng dẫn đặt hàng & Thanh toán', policyKey: 'guide', icon: 'info' },
 ];
 
 const DEFAULT_SOCIAL_LINKS: FooterSocialLink[] = [
@@ -102,7 +102,7 @@ const DEFAULT_SOCIAL_LINKS: FooterSocialLink[] = [
   { platform: 'zalo', label: 'Zalo OA Evergreen Mart', url: 'https://zalo.me' },
 ];
 
-const DEFAULT_PAYMENT_METHODS: string[] = ['COD', 'VietQR', 'MoMo', 'VNPay', 'ZaloPay', 'Visa/Master'];
+const DEFAULT_PAYMENT_METHODS: string[] = ['COD', 'VietQR'];
 
 const DEFAULT_POLICIES_MAP: Record<string, PolicyContent> = {
   about: {
@@ -131,51 +131,43 @@ const DEFAULT_POLICIES_MAP: Record<string, PolicyContent> = {
   shipping: {
     key: 'shipping',
     title: 'Chính Sách Giao Hàng & Đồng Kiểm',
-    subtitle: 'Quy trình vận chuyển chuyên biệt bảo vệ độ tươi ngon của nông sản',
-    updatedAt: '01/10/2026',
+    subtitle: 'Tính phí minh bạch theo khoảng cách & bảo quản lạnh Cold-Chain',
+    updatedAt: '11/2026',
     sections: [
       {
         heading: '1. Phạm vi & Thời gian giao hàng',
         content: [
-          'Giao hàng hỏa tốc trong 30 - 60 phút cho các quận nội thành TP. Hồ Chí Minh.',
-          'Giao theo khung giờ hẹn trước (8h–11h, 14h–17h, 18h–20h) cho các khu vực lân cận.',
-          'Phí giao hàng: Miễn phí cho đơn từ 200.000đ. Dưới 200.000đ: 20.000đ.',
+          'Giao ngay dự kiến 30–45 phút (07:00 – 21:15) hoặc chọn 8 khung giờ từ 07h30–22h00, bán kính tối đa 20 km quanh 18 chi nhánh.',
+          'Phí nền theo khoảng cách từ 15.000đ (≤ 2 km) đến 30.000đ (8–10 km); trên 10 km cộng 5.000đ/km vượt. Nhận tại cửa hàng miễn phí 0đ.',
+          'Hỗ trợ ship tự động: đơn từ 150.000đ–299.000đ giảm 10.000đ; đơn từ 300.000đ hỗ trợ tối đa 25.000đ và kết hợp thêm Voucher Freeship.',
         ],
       },
       {
-        heading: '2. Bảo quản Cold-Chain trong suốt hành trình',
+        heading: '2. Bảo quản Cold-Chain & Quyền đồng kiểm',
         content: [
-          'Nông sản hữu cơ được đóng thùng giữ nhiệt kèm túi đá gel duy trì nhiệt độ 0°C – 4°C.',
-          'Thịt, cá và hải sản được đóng gói chân không và bảo quản lạnh riêng biệt.',
-        ],
-      },
-      {
-        heading: '3. Quyền đồng kiểm khi nhận hàng',
-        content: [
-          'Quý khách được mở thùng kiểm tra số lượng và độ tươi trước khi thanh toán.',
-          'Có quyền từ chối nhận hàng nếu sản phẩm không đạt chất lượng cam kết.',
+          'Nông sản tươi sống được bảo quản lạnh 0°C – 4°C tại 18 kho chi nhánh trong suốt quá trình giao nhận.',
+          'Quý khách được đồng kiểm số lượng, chủng loại và độ tươi trước khi thanh toán hoặc xác nhận nhận hàng.',
         ],
       },
     ],
   },
   returns: {
     key: 'returns',
-    title: 'Chính Sách Đổi Trả & Hoàn Tiền 100%',
-    subtitle: 'Bảo hành chất lượng tươi sạch — An tâm tuyệt đối khi mua sắm',
-    updatedAt: '01/10/2026',
+    title: 'Chính Sách Kiểm Hàng & Đổi Trả',
+    subtitle: 'Đồng kiểm trực tiếp thực phẩm tươi sống & xử lý sự cố đơn hàng',
+    updatedAt: '11/2026',
     sections: [
       {
-        heading: '1. Điều kiện áp dụng',
+        heading: '1. Quy định với thực phẩm tươi sống',
         content: [
-          'Áp dụng trong vòng 24 giờ kể từ khi nhận hàng đối với rau củ quả, thịt cá tươi sống.',
-          'Sản phẩm bị dập nát, héo úa, không đúng đơn đặt hàng hoặc lỗi đóng gói.',
+          'Áp dụng đồng kiểm trực tiếp lúc giao với Rau củ, Trái cây, Thịt tươi sống, Cá & Hải sản.',
+          'Có quyền từ chối nhận ngay tại chỗ nếu sản phẩm dập nát hoặc không đúng mô tả. Sau khi xác nhận nhận hàng, không hỗ trợ đổi trả hàng tươi sống.',
         ],
       },
       {
-        heading: '2. Hình thức xử lý',
+        heading: '2. Xử lý sự cố giao thiếu / hàng đóng gói lỗi',
         content: [
-          'Đổi mới 1:1 hỏa tốc trong 2 giờ hoặc hoàn tiền 100% qua chuyển khoản ngân hàng.',
-          'Thời gian hoàn tiền: 1–3 ngày làm việc tùy ngân hàng.',
+          'Gửi ảnh kèm mã đơn qua mục Gửi khiếu nại & Phản ánh hoặc Hotline 1800 6999 để được giao bù hoặc hoàn tiền trong 1–3 ngày làm việc.',
         ],
       },
     ],
@@ -269,6 +261,19 @@ const DEFAULT_POLICIES_MAP: Record<string, PolicyContent> = {
 })
 export class FooterComponent implements OnInit {
   private api = inject(ApiService);
+  private router = inject(Router);
+
+  private readonly policyRouteMap: Record<string, string> = {
+    about: '/gioi-thieu',
+    faq: '/hoi-dap',
+    help: '/ho-tro',
+    guide: '/chinh-sach/huong-dan',
+    contact: '/lien-he',
+    shipping: '/chinh-sach/giao-hang',
+    returns: '/chinh-sach/doi-tra',
+    privacy: '/chinh-sach/bao-mat',
+    terms: '/chinh-sach/dieu-khoan',
+  };
 
   protected readonly logoImage = logoImage;
   protected email = signal('');
@@ -382,8 +387,28 @@ export class FooterComponent implements OnInit {
     });
   }
 
-  openPolicy(key: string, event: Event): void {
+  resolveLinkRoute(link: FooterNavLink): string | null {
+    if (link.route) return link.route;
+    if (!link.policyKey) return null;
+    if (link.policyKey === 'help' && /hướng dẫn/i.test(link.label || '')) {
+      return '/chinh-sach/huong-dan';
+    }
+    return this.policyRouteMap[link.policyKey] || null;
+  }
+
+  openPolicy(key: string, event: Event, label = ''): void {
     event.preventDefault();
+    if (key === 'help' && /hướng dẫn/i.test(label)) {
+      this.router.navigate(['/chinh-sach/huong-dan']);
+      this.scrollToTop();
+      return;
+    }
+    const targetRoute = this.policyRouteMap[key];
+    if (targetRoute) {
+      this.router.navigate([targetRoute]);
+      this.scrollToTop();
+      return;
+    }
     const policy = this.policiesMap()[key];
     if (policy) {
       this.activePolicy.set(policy);

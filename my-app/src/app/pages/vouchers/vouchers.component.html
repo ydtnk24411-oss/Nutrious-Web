@@ -19,15 +19,15 @@
       <div class="vouchers-toast" [class.vouchers-toast--error]="toastType() === 'error'" role="status">
         <div style="display:flex;align-items:center;gap:8px">
           @if (toastType() === 'error') {
-            <span>⚠️</span>
+            <i class="bi bi-exclamation-triangle-fill"></i>
           } @else {
-            <span>✓</span>
+            <i class="bi bi-check-circle-fill"></i>
           }
           <span>{{ toastMessage() }}</span>
         </div>
         <div style="display:flex;align-items:center;gap:12px">
-          <a routerLink="/checkout" class="vouchers-toast-link">Đến Thanh toán →</a>
-          <button type="button" class="vouchers-toast-close" (click)="closeToast()" aria-label="Đóng thông báo">✕</button>
+          <a routerLink="/checkout" class="vouchers-toast-link">Đến Thanh toán <i class="bi bi-arrow-right"></i></a>
+          <button type="button" class="vouchers-toast-close" (click)="closeToast()" aria-label="Đóng thông báo"><i class="bi bi-x-lg"></i></button>
         </div>
       </div>
     }
@@ -48,7 +48,9 @@
     <!-- ── Loading State ── -->
     @if (isLoading()) {
       <div style="text-align:center;padding:60px 20px;color:var(--xanh-muted)">
-        <div style="font-size:32px;margin-bottom:12px;animation:spin 1s linear infinite;display:inline-block">⏳</div>
+        <div style="font-size:32px;margin-bottom:12px;animation:spin 1s linear infinite;display:inline-block">
+          <i class="bi bi-arrow-repeat"></i>
+        </div>
         <div>Đang tải danh sách voucher từ hệ thống...</div>
       </div>
     } @else {
@@ -83,8 +85,8 @@
                     Đã hết hạn
                   </span>
                 } @else if (statusInfo.type === 'available') {
-                  <span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;background:#dcfce7;color:#15803d">
-                    ✓ Đã lưu trong ví
+                  <span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;background:#dcfce7;color:#15803d">
+                    <i class="bi bi-check-lg"></i> Đã lưu trong ví
                   </span>
                 } @else {
                   <span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;background:#f3f4f6;color:#6b7280">
@@ -109,16 +111,18 @@
                   [class.copied]="isCopied(v.code)"
                   (click)="copyCode(v.code, $event)"
                 >
-                  {{ isCopied(v.code) ? '✓ Đã sao chép' : 'Sao chép mã' }}
+                  @if (isCopied(v.code)) {
+                    <i class="bi bi-check-lg"></i> Đã sao chép
+                  } @else {
+                    Sao chép mã
+                  }
                 </button>
               </div>
 
               <!-- Meta: HSD + đơn tối thiểu + giảm tối đa -->
               <div class="voucher-card-meta">
                 <span class="voucher-card-expiry">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                  </svg>
+                  <i class="bi bi-clock" style="font-size:12px"></i>
                   HSD: {{ v.endDate }}
                 </span>
                 <span class="voucher-card-tag">Đơn từ {{ (v.minValue || 0).toLocaleString('vi-VN') }}đ</span>
@@ -135,7 +139,7 @@
             <div class="voucher-card-actions">
               @if (isCollected(v.id)) {
                 <button type="button" class="voucher-save-btn is-saved" disabled>
-                  ✓ Đã lưu ví
+                  <i class="bi bi-check-lg"></i> Đã lưu ví
                 </button>
               } @else {
                 <button type="button" class="voucher-save-btn" (click)="collectVoucher(v.id, $event)">
@@ -145,7 +149,7 @@
 
               @if (statusInfo.type !== 'used' && statusInfo.type !== 'expired') {
                 <a class="voucher-use-btn" routerLink="/checkout" [queryParams]="{ voucher: v.code }">
-                  Dùng ưu đãi ngay →
+                  Dùng ngay <i class="bi bi-arrow-right"></i>
                 </a>
               } @else {
                 <span class="voucher-use-btn" style="opacity:0.5;pointer-events:none">
@@ -162,10 +166,7 @@
       @if (tabVouchers().length === 0) {
         <div class="vouchers-empty">
           <div class="vouchers-empty-icon">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="1" y="4" width="22" height="16" rx="2"/>
-              <line x1="1" y1="10" x2="23" y2="10"/>
-            </svg>
+            <i class="bi bi-ticket-perforated" style="font-size:38px"></i>
           </div>
           @if (activeTab() === 'collected') {
             <p>Bạn chưa lưu voucher nào vào ví. Hãy nhấn "Lưu vào ví" ở tab Tất cả ưu đãi nhé!</p>

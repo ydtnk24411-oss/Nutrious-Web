@@ -32,7 +32,7 @@ router.put('/me', protect, async (req, res, next) => {
     }
 
     // Only update fields that were actually sent in the request body
-    const allowedFields = ['name', 'avatar', 'firstName', 'lastName', 'title', 'addresses'];
+    const allowedFields = ['name', 'avatar', 'firstName', 'lastName', 'title', 'phone', 'addresses'];
     const updateData = {};
     for (const field of allowedFields) {
       if (req.body[field] !== undefined) {
@@ -86,19 +86,41 @@ router.get('/addresses', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// Chuẩn hóa các trường địa chỉ có cấu trúc + tọa độ ghim từ request body
+function pickStructuredAddress(body) {
+  const toNum = (v) => (v === null || v === undefined || v === '' || Number.isNaN(Number(v)) ? null : Number(v));
+  const lat = toNum(body.lat);
+  const lng = toNum(body.lng);
+  const validCoords = lat !== null && lng !== null && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
+  return {
+    province: String(body.province || '').trim(),
+    provinceCode: toNum(body.provinceCode),
+    ward: String(body.ward || '').trim(),
+    wardCode: toNum(body.wardCode),
+    street: String(body.street || '').trim(),
+    lat: validCoords ? lat : null,
+    lng: validCoords ? lng : null,
+  };
+}
+
 // POST /api/account/addresses - Add new address
 router.post('/addresses', protect, async (req, res, next) => {
   try {
     const { label, fullName, phone, address, city, isDefault } = req.body;
+    if (!fullName || !phone || !address || !city) {
+      return res.status(400).json({ success: false, message: 'Vui lòng nhập đầy đủ người nhận, số điện thoại và địa chỉ.' });
+    }
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
     }
+    // Địa chỉ đầu tiên luôn là mặc định
+    const makeDefault = Boolean(isDefault) || user.addresses.length === 0;
     // Nếu set làm default, bỏ default của các địa chỉ khác
-    if (isDefault) {
+    if (makeDefault) {
       user.addresses = user.addresses.map(addr => ({ ...addr.toObject(), isDefault: false }));
     }
-    user.addresses.push({ label, fullName, phone, address, city, isDefault });
+    user.addresses.push({ label, fullName, phone, address, city, isDefault: makeDefault, ...pickStructuredAddress(req.body) });
     await user.save();
     res.json({ success: true, data: user.addresses });
   } catch (err) { next(err); }
@@ -119,7 +141,18 @@ router.put('/addresses/:id', protect, async (req, res, next) => {
     if (isDefault) {
       user.addresses = user.addresses.map(addr => ({ ...addr.toObject(), isDefault: false }));
     }
-    user.addresses[addressIndex] = { ...user.addresses[addressIndex].toObject(), label, fullName, phone, address, city, isDefault };
+    const prev = user.addresses[addressIndex].toObject();
+    const structured = pickStructuredAddress({ ...prev, ...req.body });
+    user.addresses[addressIndex] = {
+      ...prev,
+      label: label ?? prev.label,
+      fullName: fullName ?? prev.fullName,
+      phone: phone ?? prev.phone,
+      address: address ?? prev.address,
+      city: city ?? prev.city,
+      isDefault: isDefault ?? prev.isDefault,
+      ...structured,
+    };
     await user.save();
     res.json({ success: true, data: user.addresses });
   } catch (err) { next(err); }

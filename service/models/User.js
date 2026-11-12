@@ -7,6 +7,15 @@ const addressSchema = new mongoose.Schema({
   phone: { type: String, required: true },
   address: { type: String, required: true },
   city: { type: String, required: true },
+  // Địa chỉ có cấu trúc theo đơn vị hành chính 2 cấp (Tỉnh/Thành → Phường/Xã)
+  province: { type: String, default: '' },
+  provinceCode: { type: Number, default: null },
+  ward: { type: String, default: '' },
+  wardCode: { type: Number, default: null },
+  street: { type: String, default: '' },
+  // Tọa độ ghim giao hàng do khách hàng xác nhận trên bản đồ
+  lat: { type: Number, default: null },
+  lng: { type: Number, default: null },
   isDefault: { type: Boolean, default: false },
 }, { _id: true });
 
@@ -33,7 +42,7 @@ const userSchema = new mongoose.Schema(
     lastName:  { type: String, default: '' },
     title:     { type: String, default: '' },
     email:     { type: String, default: '', lowercase: true, trim: true },
-    password:  { type: String, required: false, minlength: 6, select: false },
+    password:  { type: String, required: false, minlength: 8, select: false },
     phone:     { type: String, default: '', trim: true },
     avatar:    { type: String, default: '' },
     googleId:  { type: String, default: '' },
@@ -59,6 +68,10 @@ const userSchema = new mongoose.Schema(
 // Hash password before save
 userSchema.pre('save', async function (next) {
   if (!this.password || !this.isModified('password')) return next();
+  // Nếu mật khẩu đã được băm bằng bcrypt (ví dụ từ dữ liệu đăng ký tạm thời OTP) thì không băm lại
+  if (typeof this.password === 'string' && /^\$2[aby]\$\d{2}\$/.test(this.password) && this.password.length === 60) {
+    return next();
+  }
   this.password = await bcrypt.hash(this.password, 12);
   next();
 });

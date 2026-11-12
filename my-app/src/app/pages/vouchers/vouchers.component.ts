@@ -80,7 +80,7 @@ export class VouchersComponent implements OnInit {
     event?.stopPropagation();
     this.voucher.collectVoucher(voucherId).subscribe((res) => {
       if (res.success) {
-        this.showToast('✓ Đã lưu voucher vào Ví của bạn! Mã sẵn sàng dùng khi thanh toán.', 'success');
+        this.showToast('Đã lưu voucher vào Ví của bạn! Mã sẵn sàng dùng khi thanh toán.', 'success');
       } else {
         this.showToast(res.message || 'Không thể thu thập voucher.', 'error');
       }

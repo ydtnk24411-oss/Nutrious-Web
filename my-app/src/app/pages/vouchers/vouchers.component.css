@@ -28,7 +28,7 @@
 }
 
 .vouchers-title {
-  font-family: 'Georgia', 'Times New Roman', serif;
+  font-family: var(--font-display);
   font-size: 30px;
   font-weight: 700;
   color: var(--xanh-ink, #1a3d22);
@@ -437,7 +437,8 @@
 }
 .voucher-card-body { display: flex; flex: 1; flex-direction: column; align-items: flex-start; padding: 20px 18px 14px; }
 .voucher-card-img { display: flex; align-items: center; justify-content: center; width: 54px; height: 54px; margin-bottom: 14px; }
-.voucher-card-img svg { width: 48px; height: 48px; }
+.voucher-card-img svg,
+.voucher-card-img i.bi { width: 48px; height: 48px; font-size: 44px; display: inline-flex; align-items: center; justify-content: center; }
 .voucher-card-title { width: 100%; margin: 0 0 7px; color: #29470b; font-size: 16px; font-weight: 800; line-height: 1.4; }
 .voucher-card-desc { min-height: 40px; margin: 0 0 14px; color: #69735f; font-size: 12px; line-height: 1.6; }
 .voucher-code-box { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 10px; border: 1px dashed #a8c65a; border-radius: 4px; background: #f7fbe9; }
@@ -450,19 +451,64 @@
 .voucher-card-meta { display: flex; width: 100%; justify-content: space-between; gap: 8px; margin-top: 13px; color: #77816c; font-size: 10px; }
 .voucher-card-expiry { display: inline-flex; align-items: center; gap: 4px; }
 .voucher-card-tag { color: #53643f; }
-.voucher-card-actions { display: flex; gap: 8px; padding: 0 18px 18px; }
-.voucher-save-btn, .voucher-use-btn {
-  display: inline-flex; flex: 1; min-width: 0; align-items: center; justify-content: center;
-  padding: 10px 9px; border: 1px solid #31540d; border-radius: 5px;
-  background: #31540d; color: #fff; font-size: 10px; font-weight: 800; text-align: center; text-decoration: none; cursor: pointer;
+.voucher-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding: 12px 18px 18px;
+  border-top: 1px solid #edf4e5;
 }
-.voucher-save-btn:hover, .voucher-use-btn:hover { background: #243f0a; color: #fff; }
-.voucher-save-btn.is-saved { border-color: #d9e3cc; background: #f2f5ed; color: #69735f; cursor: default; }
+.voucher-save-btn, .voucher-use-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+}
+.voucher-save-btn {
+  flex: 0 0 auto;
+  border: 1.5px solid #31540d;
+  background: #fff;
+  color: #31540d;
+}
+.voucher-save-btn:hover:not(:disabled) {
+  background: #f3f8ec;
+  border-color: #243f0a;
+  color: #243f0a;
+}
+.voucher-save-btn.is-saved {
+  border-color: #cbd9b5;
+  background: #f4f8ee;
+  color: #53643f;
+  cursor: default;
+}
+.voucher-use-btn {
+  flex: 1;
+  min-width: 0;
+  border: 1.5px solid #31540d;
+  background: #31540d;
+  color: #fff;
+}
+.voucher-use-btn:hover {
+  background: #243f0a;
+  border-color: #243f0a;
+  color: #fff;
+}
 .vouchers-empty-icon { border-radius: 8px; }
 @media (max-width: 600px) {
   .vouchers-page { padding: 32px 16px 56px; }
   .vouchers-grid { grid-template-columns: 1fr; }
-  .voucher-card-actions { flex-wrap: wrap; }
+  .voucher-card-actions { flex-wrap: nowrap; }
 }
 
 .vouchers-toast--error {

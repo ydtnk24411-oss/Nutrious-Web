@@ -371,7 +371,13 @@ export class HeaderComponent implements OnDestroy {
     if (!t.closest('.xl-cat-menu-wrapper'))  this.catMenuOpen.set(false);
     if (!t.closest('.xl-area-wrapper'))      this.areaMenuOpen.set(false);
     if (!t.closest('.xl-notif-wrapper'))     this.notifMenuOpen.set(false);
-    if (!t.closest('.xanhla-user-menu') && !t.closest('.xl-icon-btn') && !t.closest('.xanhla-member-bar')) {
+    if (
+      !t.closest('.xanhla-user-menu') &&
+      !t.closest('.xl-account-wrapper') &&
+      !t.closest('.xl-account-btn') &&
+      !t.closest('.xl-icon-btn') &&
+      !t.closest('.xanhla-member-bar')
+    ) {
       this.userMenuOpen.set(false);
     }
   }

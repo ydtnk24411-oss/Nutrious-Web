@@ -9,12 +9,24 @@ import { ApiService } from '../../shared/services/api.service';
 import { onlineOrderProducts } from '../../shared/data/xanh-la.data';
 import { XanhLaProduct } from '../../shared/models/xanh-la.models';
 
+export type IngredientUnit = 'g' | 'kg' | 'quả' | 'củ' | 'bó' | 'gói' | 'phần';
+
+export const COOK_INGREDIENT_UNITS: { value: IngredientUnit; label: string }[] = [
+  { value: 'g', label: 'g' },
+  { value: 'kg', label: 'kg' },
+  { value: 'quả', label: 'quả' },
+  { value: 'củ', label: 'củ' },
+  { value: 'bó', label: 'bó' },
+  { value: 'gói', label: 'gói' },
+  { value: 'phần', label: 'phần' },
+];
+
 export interface UserIngredient {
   name: string;
   productId?: string | null;
   product?: ApiProduct | null;
-  qty?: string;
-  unit?: string;
+  qty: number;
+  unit: IngredientUnit;
   fromVision?: boolean;
 }
 
@@ -37,9 +49,16 @@ export interface RecipeIngredient {
   name: string;
   amountPer1Serving: number;
   unit: string;
-  inFridge: boolean; // true if user has it
+  requiredAmount: number;
+  availableAmount: number;
+  missingAmount: number;
+  inFridge: boolean; // true only when user's quantity covers requiredAmount
+  hasPartial: boolean; // true when user has some but less than requiredAmount
   product: ApiProduct | null; // matched ApiProduct or null
   productId?: string | null;
+  buyQuantity: number; // recommended packs/units to buy for missingAmount
+  packLabel: string;
+  isOutOfStock: boolean;
   selected: boolean;
 }
 
@@ -288,6 +307,91 @@ function removeVietnameseTones(str: string): string {
     .trim();
 }
 
+function normalizeUnit(raw?: string): IngredientUnit {
+  const s = removeVietnameseTones(raw || '');
+  if (s === 'kg') return 'kg';
+  if (s === 'qua' || s === 'trai') return 'quả';
+  if (s === 'cu') return 'củ';
+  if (s === 'bo') return 'bó';
+  if (s === 'goi' || s === 'hop' || s === 'khay' || s === 'tui') return 'gói';
+  if (s === 'phan' || s === 'suat') return 'phần';
+  return 'g';
+}
+
+function gramsPerCountUnit(ingName: string, unit: string, packGramsFallback = 250): number {
+  const u = normalizeUnit(unit);
+  const name = removeVietnameseTones(ingName);
+  if (u === 'g') return 1;
+  if (u === 'kg') return 1000;
+  if (u === 'quả') {
+    if (name.includes('bo')) return 250;
+    if (name.includes('dua')) return 150;
+    if (name.includes('ca chua bi')) return 20;
+    if (name.includes('ca chua')) return 100;
+    return 120;
+  }
+  if (u === 'củ') {
+    if (name.includes('ca rot')) return 150;
+    return 150;
+  }
+  if (u === 'bó') return 300;
+  if (u === 'gói' || u === 'phần') return packGramsFallback;
+  return 200;
+}
+
+function parseWeightString(weightStr?: string): { qty: number; unit: IngredientUnit; label: string } | null {
+  const raw = String(weightStr || '').trim();
+  const m = raw.match(/(\d+(?:[.,]\d+)?)\s*(kg|gr|g|qua|quả|cu|củ|bo|bó|goi|gói)/i);
+  if (!m) return null;
+  const qty = parseFloat(m[1].replace(',', '.'));
+  if (!Number.isFinite(qty) || qty <= 0) return null;
+  const unit = normalizeUnit(m[2]);
+  return { qty, unit, label: `${qty}${unit === 'g' || unit === 'kg' ? unit : ' ' + unit}` };
+}
+
+function inferDefaultQtyUnit(name: string, prod?: ApiProduct | null): { qty: number; unit: IngredientUnit } {
+  const parsed = parseWeightString(prod?.weight);
+  if (parsed) return { qty: parsed.qty, unit: parsed.unit };
+  const n = removeVietnameseTones(name);
+  if (n.includes('ca chua bi')) return { qty: 200, unit: 'g' };
+  if (n.includes('ca chua') || n.includes('dua leo') || n.includes('dua chuot')) return { qty: 2, unit: 'quả' };
+  if (n.includes('bo hass') || n.includes('qua bo')) return { qty: 1, unit: 'quả' };
+  if (n.includes('ca rot')) return { qty: 1, unit: 'củ' };
+  if (n.includes('rau cai') || n.includes('cai thia')) return { qty: 300, unit: 'g' };
+  return { qty: 200, unit: 'g' };
+}
+
+function convertQty(
+  qty: number,
+  fromUnit: string,
+  toUnit: string,
+  ingName: string,
+  packGramsFallback = 250
+): number {
+  if (!Number.isFinite(qty) || qty <= 0) return 0;
+  const fromNorm = normalizeUnit(fromUnit);
+  const toNorm = normalizeUnit(toUnit);
+  if (fromNorm === toNorm) return qty;
+  const fromGrams = qty * gramsPerCountUnit(ingName, fromNorm, packGramsFallback);
+  const targetPerUnit = gramsPerCountUnit(ingName, toNorm, packGramsFallback);
+  return targetPerUnit > 0 ? fromGrams / targetPerUnit : qty;
+}
+
+function round1(val: number): number {
+  return Math.round(val * 10) / 10;
+}
+
+function isApiProductOutOfStock(p: ApiProduct | null | undefined): boolean {
+  if (!p) return false;
+  if (p.isActive === false) return true;
+  if (p.isCombo) {
+    if (p.comboStatus === 'paused' || p.comboStatus === 'hidden') return true;
+    const s = typeof p.availableStock === 'number' ? p.availableStock : p.stock;
+    return typeof s === 'number' && s <= 0;
+  }
+  return typeof p.stock === 'number' && p.stock <= 0;
+}
+
 function toCartProduct(p: any): XanhLaProduct {
   return {
     id: p._id || p.id || p.slug,
@@ -310,6 +414,10 @@ function toCartProduct(p: any): XanhLaProduct {
     thickness: p.thickness || 'Vừa',
     type: p.type || 'Fresh',
     weight: p.weight || '500g',
+    stock: typeof p.availableStock === 'number' ? p.availableStock : p.stock,
+    availableStock: p.availableStock,
+    comboStatus: p.comboStatus,
+    isCombo: p.isCombo,
     description: p.description || p.name,
     options: p.options || [],
   };
@@ -326,9 +434,13 @@ export class CookComponent implements OnInit {
   protected cart = inject(CartService);
   private productApi = inject(ProductApiService);
   private api = inject(ApiService);
+  readonly unitOptions = COOK_INGREDIENT_UNITS;
 
   // ── Signals ──────────────────────────────────────────────
   inputText = signal('');
+  inputQty = signal<number>(200);
+  inputUnit = signal<IngredientUnit>('g');
+  private manualQtyEdited = false;
   myIngredients = signal<UserIngredient[]>([]);
   servings = signal(2);
   maxTime = signal<number | null>(null);
@@ -365,6 +477,34 @@ export class CookComponent implements OnInit {
     });
   }
 
+  onInputTextChange(value: string): void {
+    this.inputText.set(value);
+    if (!this.manualQtyEdited && value.trim().length >= 2) {
+      const def = inferDefaultQtyUnit(value);
+      this.inputQty.set(def.qty);
+      this.inputUnit.set(def.unit);
+    }
+  }
+
+  onManualQtyInput(raw: string | number): void {
+    const val = Number(raw);
+    this.manualQtyEdited = true;
+    this.inputQty.set(Number.isFinite(val) && val > 0 ? val : 1);
+  }
+
+  onManualUnitChange(unit: string): void {
+    this.manualQtyEdited = true;
+    this.inputUnit.set(normalizeUnit(unit));
+  }
+
+  setServings(next: number): void {
+    const clamped = Math.max(1, Math.min(10, Math.round(next)));
+    this.servings.set(clamped);
+    if (this.hasSearched()) {
+      this.results.set(this.computeRecipeResults());
+    }
+  }
+
   // ── Method 1: Manual Autocomplete & Tag Management ───────
   suggestProducts(): ApiProduct[] {
     const raw = this.inputText().trim();
@@ -387,61 +527,115 @@ export class CookComponent implements OnInit {
     return matches.slice(0, 8);
   }
 
-  selectProductSuggestion(prod: ApiProduct): void {
+  private upsertFridgeIngredient(entry: UserIngredient): void {
     const current = this.myIngredients();
-    const exists = current.some(i =>
-      (i.productId && i.productId === prod._id) ||
-      removeVietnameseTones(i.name) === removeVietnameseTones(prod.name)
+    const entryNorm = removeVietnameseTones(entry.name);
+    const idx = current.findIndex(i =>
+      (i.productId && entry.productId && i.productId === entry.productId) ||
+      removeVietnameseTones(i.name) === entryNorm
     );
-
-    if (!exists) {
-      this.myIngredients.update(list => [
-        ...list,
-        {
-          name: prod.name,
-          productId: prod._id,
-          product: prod,
-          qty: '1',
-          unit: 'phần'
-        }
-      ]);
+    if (idx >= 0) {
+      this.myIngredients.update(list => list.map((item, i) => {
+        if (i !== idx) return item;
+        const addedInSameUnit = convertQty(entry.qty, entry.unit, item.unit, item.name);
+        return {
+          ...item,
+          qty: round1(item.qty + addedInSameUnit),
+        };
+      }));
+    } else {
+      this.myIngredients.update(list => [...list, entry]);
     }
-    this.inputText.set('');
+    if (this.hasSearched()) {
+      this.results.set(this.computeRecipeResults());
+    }
+  }
+
+  selectProductSuggestion(prod: ApiProduct): void {
+    const def = inferDefaultQtyUnit(prod.name, prod);
+    const qty = this.manualQtyEdited ? this.inputQty() : def.qty;
+    const unit = this.manualQtyEdited ? this.inputUnit() : def.unit;
+    this.upsertFridgeIngredient({
+      name: prod.name,
+      productId: prod._id,
+      product: prod,
+      qty: qty > 0 ? qty : def.qty,
+      unit,
+    });
+    this.resetManualInput();
   }
 
   addIngredient(customName?: string): void {
-    const raw = (customName !== undefined ? customName : this.inputText()).trim();
+    const isQuick = customName !== undefined;
+    const raw = (isQuick ? customName : this.inputText()).trim();
     if (!raw) return;
 
-    const current = this.myIngredients();
     const rawNorm = removeVietnameseTones(raw);
-    const exists = current.some(i => removeVietnameseTones(i.name) === rawNorm);
+    const matched = this.catalogueProducts().find(p => {
+      const pNorm = removeVietnameseTones(p.name);
+      return pNorm.includes(rawNorm) || rawNorm.includes(pNorm);
+    }) || null;
 
-    if (!exists) {
-      // Find matching product in catalog
-      const matched = this.catalogueProducts().find(p => {
-        const pNorm = removeVietnameseTones(p.name);
-        return pNorm.includes(rawNorm) || rawNorm.includes(pNorm);
-      });
+    const def = inferDefaultQtyUnit(matched ? matched.name : raw, matched);
+    const qty = !isQuick && this.manualQtyEdited ? this.inputQty() : def.qty;
+    const unit = !isQuick && this.manualQtyEdited ? this.inputUnit() : def.unit;
 
-      this.myIngredients.update(list => [
-        ...list,
-        {
-          name: matched ? matched.name : raw,
-          productId: matched ? matched._id : null,
-          product: matched || null,
-          qty: '1',
-          unit: 'phần'
-        }
-      ]);
+    this.upsertFridgeIngredient({
+      name: matched ? matched.name : raw,
+      productId: matched ? matched._id : null,
+      product: matched,
+      qty: qty > 0 ? qty : def.qty,
+      unit,
+    });
+    if (!isQuick) {
+      this.resetManualInput();
     }
+  }
+
+  private resetManualInput(): void {
     this.inputText.set('');
+    this.inputQty.set(200);
+    this.inputUnit.set('g');
+    this.manualQtyEdited = false;
+  }
+
+  updateIngredientQty(name: string, rawVal: string | number): void {
+    const parsed = Number(rawVal);
+    if (!Number.isFinite(parsed) || parsed <= 0) return;
+    const norm = removeVietnameseTones(name);
+    const nextQty = round1(parsed);
+    this.myIngredients.update(list => list.map(i =>
+      removeVietnameseTones(i.name) === norm ? { ...i, qty: nextQty } : i
+    ));
+    this.detectedFromImage.update(list => list.map(i =>
+      removeVietnameseTones(i.name) === norm ? { ...i, qty: nextQty } : i
+    ));
+    if (this.hasSearched()) {
+      this.results.set(this.computeRecipeResults());
+    }
+  }
+
+  updateIngredientUnit(name: string, rawUnit: string): void {
+    const unit = normalizeUnit(rawUnit);
+    const norm = removeVietnameseTones(name);
+    this.myIngredients.update(list => list.map(i =>
+      removeVietnameseTones(i.name) === norm ? { ...i, unit } : i
+    ));
+    this.detectedFromImage.update(list => list.map(i =>
+      removeVietnameseTones(i.name) === norm ? { ...i, unit } : i
+    ));
+    if (this.hasSearched()) {
+      this.results.set(this.computeRecipeResults());
+    }
   }
 
   removeIngredient(name: string): void {
     this.myIngredients.update(list => list.filter(i => removeVietnameseTones(i.name) !== removeVietnameseTones(name)));
     // Also remove from detected list if present
     this.detectedFromImage.update(list => list.filter(i => removeVietnameseTones(i.name) !== removeVietnameseTones(name)));
+    if (this.hasSearched()) {
+      this.results.set(this.computeRecipeResults());
+    }
   }
 
   quickAdd(name: string): void {
@@ -536,12 +730,17 @@ export class CookComponent implements OnInit {
               prod = this.catalogueProducts().find(p => removeVietnameseTones(p.name).includes(norm)) || null;
             }
 
+            const def = inferDefaultQtyUnit(prod ? prod.name : rawName, prod);
+            const rawQty = Number(item.qty);
+            const resolvedQty = Number.isFinite(rawQty) && rawQty > 0 ? rawQty : def.qty;
+            const resolvedUnit = item.unit ? normalizeUnit(item.unit) : def.unit;
+
             const userIng: UserIngredient = {
               name: prod ? prod.name : rawName,
               productId: prod ? prod._id : (item.productId || null),
               product: prod,
-              qty: '1',
-              unit: 'phần',
+              qty: resolvedQty,
+              unit: resolvedUnit,
               fromVision: true
             };
 
@@ -559,7 +758,10 @@ export class CookComponent implements OnInit {
           }
 
           this.detectedFromImage.set(newDetected);
-          this.visionMessage.set(`✨ Gemini Vision đã nhận diện thành công ${newDetected.length} nguyên liệu trong ảnh!`);
+          this.visionMessage.set(`Gemini Vision đã nhận diện thành công ${newDetected.length} nguyên liệu trong ảnh!`);
+          if (this.hasSearched()) {
+            this.results.set(this.computeRecipeResults());
+          }
         } else {
           this.fallbackLocalVisionDetection();
         }
@@ -585,13 +787,14 @@ export class CookComponent implements OnInit {
       const prod = this.catalogueProducts().find(p =>
         removeVietnameseTones(p.name).includes(removeVietnameseTones(s.name))
       ) || null;
+      const def = inferDefaultQtyUnit(prod ? prod.name : s.name, prod);
 
       const item: UserIngredient = {
         name: prod ? prod.name : s.name,
         productId: prod ? prod._id : null,
         product: prod,
-        qty: '1',
-        unit: 'phần',
+        qty: def.qty,
+        unit: def.unit,
         fromVision: true
       };
       detected.push(item);
@@ -605,7 +808,10 @@ export class CookComponent implements OnInit {
     }
 
     this.detectedFromImage.set(detected);
-    this.visionMessage.set(`🌿 Đã nhận diện ${detected.length} nguyên liệu nấu ăn từ hình ảnh của bạn!`);
+    this.visionMessage.set(`Đã nhận diện ${detected.length} nguyên liệu nấu ăn từ hình ảnh của bạn!`);
+    if (this.hasSearched()) {
+      this.results.set(this.computeRecipeResults());
+    }
   }
 
   // ── Method 3: Search & Recipe Priority Calculation ──────
@@ -614,148 +820,154 @@ export class CookComponent implements OnInit {
     this.hasSearched.set(true);
 
     setTimeout(() => {
-      const userIngredients = this.myIngredients();
-      const userProductIds = new Set(
-        userIngredients.map(i => i.productId).filter((id): id is string => Boolean(id))
-      );
-      const userNamesNorm = userIngredients.map(i => removeVietnameseTones(i.name));
-
-      const avoid = removeVietnameseTones(this.avoidText());
-      const maxT = this.maxTime();
-      const catalogue = this.catalogueProducts();
-
-      const matchedResults: CookResult[] = [];
-
-      for (const raw of RECIPE_DB) {
-        const totalDuration = raw.prepTime + raw.cookTime;
-        if (maxT !== null && maxT > 0 && totalDuration > maxT) {
-          continue;
-        }
-
-        // Avoid allergen filter
-        if (avoid) {
-          const hasAvoid = raw.ingredients.some(ing =>
-            removeVietnameseTones(ing.name).includes(avoid) ||
-            (ing.keywords || []).some(k => removeVietnameseTones(k).includes(avoid))
-          );
-          if (hasAvoid) continue;
-        }
-
-        // Meal type filter
-        if (this.mealType() === 'breakfast' && raw.id !== 'op-la-ca-chua' && raw.id !== 'bo-xay-mat-ong') {
-          // Allow gentle match
-        }
-
-        const ingredients: RecipeIngredient[] = raw.ingredients.map(ing => {
-          const normIng = removeVietnameseTones(ing.name);
-          const ingKeywords = (ing.keywords || []).map(k => removeVietnameseTones(k));
-
-          // 1. Match recipe ingredient with product catalog
-          let matchedProd = catalogue.find(prod => {
-            if (ing.productId && prod._id === ing.productId) return true;
-            const normP = removeVietnameseTones(prod.name);
-            return normP.includes(normIng) || normIng.includes(normP) ||
-              ingKeywords.some(kw => normP.includes(kw));
-          }) || null;
-
-          const resolvedProductId = matchedProd?._id || ing.productId || null;
-
-          // 2. Check if user already has this ingredient in fridge
-          let inFridge = false;
-
-          // By Product ID matching
-          if (resolvedProductId && userProductIds.has(resolvedProductId)) {
-            inFridge = true;
-          }
-
-          // By User Ingredient product reference
-          if (!inFridge) {
-            inFridge = userIngredients.some(u => {
-              if (u.productId && resolvedProductId && u.productId === resolvedProductId) return true;
-              if (u.product && matchedProd && (u.product._id === matchedProd._id || (u.product as any).id === matchedProd._id)) return true;
-              return false;
-            });
-          }
-
-          // By Normalized Name / Keyword fuzzy matching
-          if (!inFridge) {
-            inFridge = userNamesNorm.some(uName => {
-              if (uName.includes(normIng) || normIng.includes(uName)) return true;
-              if (ingKeywords.some(kw => uName.includes(kw) || kw.includes(uName))) return true;
-              return false;
-            });
-          }
-
-          return {
-            name: ing.name,
-            amountPer1Serving: ing.amountPer1Serving,
-            unit: ing.unit,
-            inFridge,
-            product: matchedProd,
-            productId: resolvedProductId,
-            selected: !inFridge // default selected if missing so user can buy
-          };
-        });
-
-        const total = ingredients.length;
-        const have = ingredients.filter(i => i.inFridge).length;
-        const matchPercentage = total > 0 ? Math.round((have / total) * 100) : 0;
-
-        // ── Requirement 3: Priority Calculation ──
-        // >= 66% (>= 2/3): priority "high" -> Green border/badge
-        // 33% - 65% (1/3 to < 2/3): priority "medium" -> Yellow border/badge
-        // < 33%: priority "low" -> Red border/badge
-        let priority: 'high' | 'medium' | 'low';
-        if (matchPercentage >= 66) {
-          priority = 'high';
-        } else if (matchPercentage >= 33) {
-          priority = 'medium';
-        } else {
-          priority = 'low';
-        }
-
-        let readiness: 'ready' | 'almost' | 'needs-more';
-        if (have === total && total > 0) {
-          readiness = 'ready';
-        } else if (matchPercentage >= 50) {
-          readiness = 'almost';
-        } else {
-          readiness = 'needs-more';
-        }
-
-        matchedResults.push({
-          id: raw.id,
-          name: raw.name,
-          image: raw.image,
-          description: raw.description,
-          prepTime: raw.prepTime,
-          cookTime: raw.cookTime,
-          servingBase: raw.servingBase,
-          steps: raw.steps,
-          ingredients,
-          matchPercentage,
-          priority,
-          readiness
-        });
-      }
-
-      // Sort: Ordered by Green (high: 1) -> Yellow (medium: 2) -> Red (low: 3)
-      // Within each group, sort by match percentage descending
-      const priorityRank: Record<'high' | 'medium' | 'low', number> = {
-        high: 1,
-        medium: 2,
-        low: 3
-      };
-
-      matchedResults.sort((a, b) => {
-        const rankDiff = priorityRank[a.priority] - priorityRank[b.priority];
-        if (rankDiff !== 0) return rankDiff;
-        return b.matchPercentage - a.matchPercentage;
-      });
-
-      this.results.set(matchedResults);
+      this.results.set(this.computeRecipeResults());
       this.loading.set(false);
     }, 600);
+  }
+
+  private computeRecipeResults(): CookResult[] {
+    const userIngredients = this.myIngredients();
+    const avoid = removeVietnameseTones(this.avoidText());
+    const maxT = this.maxTime();
+    const catalogue = this.catalogueProducts();
+    const matchedResults: CookResult[] = [];
+
+    for (const raw of RECIPE_DB) {
+      const totalDuration = raw.prepTime + raw.cookTime;
+      if (maxT !== null && maxT > 0 && totalDuration > maxT) {
+        continue;
+      }
+
+      if (avoid) {
+        const hasAvoid = raw.ingredients.some(ing =>
+          removeVietnameseTones(ing.name).includes(avoid) ||
+          (ing.keywords || []).some(k => removeVietnameseTones(k).includes(avoid))
+        );
+        if (hasAvoid) continue;
+      }
+
+      let coverageSum = 0;
+      const ingredients: RecipeIngredient[] = raw.ingredients.map(ing => {
+        const normIng = removeVietnameseTones(ing.name);
+        const ingKeywords = (ing.keywords || []).map(k => removeVietnameseTones(k));
+
+        // Ưu tiên chọn sản phẩm còn hàng trong danh mục khớp nguyên liệu
+        const candidates = catalogue.filter(prod => {
+          if (ing.productId && prod._id === ing.productId) return true;
+          const normP = removeVietnameseTones(prod.name);
+          return normP.includes(normIng) || normIng.includes(normP) ||
+            ingKeywords.some(kw => normP.includes(kw));
+        });
+        const matchedProd = candidates.find(c => !isApiProductOutOfStock(c)) || candidates[0] || null;
+        const resolvedProductId = matchedProd?._id || ing.productId || null;
+
+        const requiredAmount = this.scaledAmount(ing.amountPer1Serving, raw.servingBase);
+
+        // Cộng dồn tất cả nguyên liệu khớp trong tủ lạnh (quy đổi về đơn vị công thức)
+        let availableAmount = 0;
+        for (const u of userIngredients) {
+          const uNorm = removeVietnameseTones(u.name);
+          const idMatch = (u.productId && resolvedProductId && u.productId === resolvedProductId) ||
+            (u.product && matchedProd && (u.product._id === matchedProd._id || (u.product as any).id === matchedProd._id));
+          const nameMatch = uNorm.includes(normIng) || normIng.includes(uNorm) ||
+            ingKeywords.some(kw => uNorm.includes(kw) || kw.includes(uNorm));
+          if (!idMatch && !nameMatch) continue;
+
+          const uParsedPack = parseWeightString(u.product?.weight);
+          const uPackGrams = uParsedPack ? convertQty(uParsedPack.qty, uParsedPack.unit, 'g', u.name) : 250;
+          availableAmount += convertQty(u.qty, u.unit, ing.unit, ing.name, uPackGrams);
+        }
+        availableAmount = round1(availableAmount);
+
+        const missingAmount = Math.max(0, round1(requiredAmount - availableAmount));
+        const inFridge = missingAmount <= 0;
+        const hasPartial = availableAmount > 0 && missingAmount > 0;
+        const ratio = requiredAmount > 0 ? Math.min(1, availableAmount / requiredAmount) : 1;
+        coverageSum += ratio;
+
+        const outOfStock = isApiProductOutOfStock(matchedProd);
+        const parsedPack = parseWeightString(matchedProd?.weight);
+        let packSizeInRecipeUnit = 1;
+        let packLabel = '1 phần';
+        if (parsedPack) {
+          const convertedPack = convertQty(parsedPack.qty, parsedPack.unit, ing.unit, ing.name);
+          packSizeInRecipeUnit = convertedPack > 0 ? convertedPack : 1;
+          packLabel = parsedPack.label;
+        } else if (matchedProd) {
+          const defPack = inferDefaultQtyUnit(matchedProd.name, matchedProd);
+          const convertedDef = convertQty(defPack.qty, defPack.unit, ing.unit, ing.name);
+          packSizeInRecipeUnit = convertedDef > 0 ? convertedDef : 1;
+          packLabel = `${defPack.qty}${defPack.unit === 'g' || defPack.unit === 'kg' ? defPack.unit : ' ' + defPack.unit}`;
+        }
+
+        let buyQuantity = missingAmount > 0 && matchedProd && !outOfStock
+          ? Math.max(1, Math.ceil(missingAmount / packSizeInRecipeUnit))
+          : 0;
+        if (matchedProd && typeof matchedProd.stock === 'number' && matchedProd.stock > 0) {
+          buyQuantity = Math.min(buyQuantity, Math.floor(matchedProd.stock));
+        }
+
+        return {
+          name: ing.name,
+          amountPer1Serving: ing.amountPer1Serving,
+          unit: ing.unit,
+          requiredAmount,
+          availableAmount,
+          missingAmount,
+          inFridge,
+          hasPartial,
+          product: matchedProd,
+          productId: resolvedProductId,
+          buyQuantity,
+          packLabel,
+          isOutOfStock: outOfStock,
+          selected: !inFridge && Boolean(matchedProd) && !outOfStock && buyQuantity > 0
+        };
+      });
+
+      const total = ingredients.length;
+      const matchPercentage = total > 0 ? Math.round((coverageSum / total) * 100) : 0;
+
+      let priority: 'high' | 'medium' | 'low';
+      if (matchPercentage >= 66) priority = 'high';
+      else if (matchPercentage >= 33) priority = 'medium';
+      else priority = 'low';
+
+      const missingCount = ingredients.filter(i => !i.inFridge).length;
+      let readiness: 'ready' | 'almost' | 'needs-more';
+      if (missingCount === 0 && total > 0) readiness = 'ready';
+      else if (matchPercentage >= 50) readiness = 'almost';
+      else readiness = 'needs-more';
+
+      matchedResults.push({
+        id: raw.id,
+        name: raw.name,
+        image: raw.image,
+        description: raw.description,
+        prepTime: raw.prepTime,
+        cookTime: raw.cookTime,
+        servingBase: raw.servingBase,
+        steps: raw.steps,
+        ingredients,
+        matchPercentage,
+        priority,
+        readiness
+      });
+    }
+
+    const priorityRank: Record<'high' | 'medium' | 'low', number> = {
+      high: 1,
+      medium: 2,
+      low: 3
+    };
+
+    matchedResults.sort((a, b) => {
+      const rankDiff = priorityRank[a.priority] - priorityRank[b.priority];
+      if (rankDiff !== 0) return rankDiff;
+      return b.matchPercentage - a.matchPercentage;
+    });
+
+    return matchedResults;
   }
 
   // ── Card Interaction & "I Already Have This" Feature ────
@@ -768,68 +980,47 @@ export class CookComponent implements OnInit {
   }
 
   hasIngredients(recipe: CookResult): RecipeIngredient[] {
-    return recipe.ingredients.filter(i => i.inFridge);
+    return recipe.ingredients.filter(i => i.inFridge || i.hasPartial);
   }
 
   markAsAlreadyHave(recipe: CookResult, ing: RecipeIngredient): void {
-    // Add to user's fridge ingredients
-    const exists = this.myIngredients().some(i =>
+    const targetName = ing.product ? ing.product.name : ing.name;
+    const targetUnit = normalizeUnit(ing.unit);
+    const norm = removeVietnameseTones(targetName);
+    const existingIdx = this.myIngredients().findIndex(i =>
+      (i.productId && ing.productId && i.productId === ing.productId) ||
+      removeVietnameseTones(i.name) === norm ||
       removeVietnameseTones(i.name) === removeVietnameseTones(ing.name)
     );
 
-    if (!exists) {
+    if (existingIdx >= 0) {
+      this.myIngredients.update(list => list.map((item, idx) =>
+        idx === existingIdx
+          ? { ...item, qty: ing.requiredAmount, unit: targetUnit }
+          : item
+      ));
+    } else {
       this.myIngredients.update(list => [
         ...list,
         {
-          name: ing.product ? ing.product.name : ing.name,
+          name: targetName,
           productId: ing.productId || null,
           product: ing.product,
-          qty: '1',
-          unit: 'phần'
+          qty: ing.requiredAmount,
+          unit: targetUnit
         }
       ]);
     }
 
-    // Flip inFridge in current results for instant visual feedback
-    this.results.update(recipes => recipes.map(r => {
-      const updatedIngs = r.ingredients.map(item => {
-        if (removeVietnameseTones(item.name) === removeVietnameseTones(ing.name)) {
-          return { ...item, inFridge: true, selected: false };
-        }
-        return item;
-      });
-
-      const total = updatedIngs.length;
-      const have = updatedIngs.filter(i => i.inFridge).length;
-      const matchPercentage = total > 0 ? Math.round((have / total) * 100) : 0;
-
-      let priority: 'high' | 'medium' | 'low';
-      if (matchPercentage >= 66) priority = 'high';
-      else if (matchPercentage >= 33) priority = 'medium';
-      else priority = 'low';
-
-      let readiness: 'ready' | 'almost' | 'needs-more';
-      if (have === total && total > 0) readiness = 'ready';
-      else if (matchPercentage >= 50) readiness = 'almost';
-      else readiness = 'needs-more';
-
-      return {
-        ...r,
-        ingredients: updatedIngs,
-        matchPercentage,
-        priority,
-        readiness
-      };
-    }));
-
-    this.addedFeedback.set(`Đã đánh dấu "${ing.name}" vào danh sách có sẵn!`);
+    this.results.set(this.computeRecipeResults());
+    this.addedFeedback.set(`Đã cập nhật đủ ${ing.requiredAmount} ${ing.unit} "${ing.name}" trong bếp!`);
     setTimeout(() => this.addedFeedback.set(null), 3000);
   }
 
   totalMissingCost(recipe: CookResult): number {
     return this.missingIngredients(recipe)
-      .filter(i => i.selected && i.product)
-      .reduce((sum, i) => sum + (i.product?.priceNumber || 0), 0);
+      .filter(i => i.selected && i.product && !i.isOutOfStock && i.buyQuantity > 0)
+      .reduce((sum, i) => sum + ((i.product?.priceNumber || 0) * i.buyQuantity), 0);
   }
 
   toggleIngredientSelect(recipeId: string, name: string): void {
@@ -838,34 +1029,59 @@ export class CookComponent implements OnInit {
       return {
         ...r,
         ingredients: r.ingredients.map(ing =>
-          ing.name === name ? { ...ing, selected: !ing.selected } : ing
+          ing.name === name && !ing.isOutOfStock ? { ...ing, selected: !ing.selected } : ing
         )
       };
     }));
   }
 
+  adjustMissingBuyQty(recipeId: string, name: string, delta: number): void {
+    this.results.update(list => list.map(r => {
+      if (r.id !== recipeId) return r;
+      return {
+        ...r,
+        ingredients: r.ingredients.map(ing => {
+          if (ing.name !== name || ing.isOutOfStock) return ing;
+          const maxStock = typeof ing.product?.stock === 'number' && ing.product.stock > 0
+            ? Math.floor(ing.product.stock)
+            : 99;
+          const next = Math.max(1, Math.min(maxStock, ing.buyQuantity + delta));
+          return { ...ing, buyQuantity: next, selected: true };
+        })
+      };
+    }));
+  }
+
   addMissingToCart(recipe: CookResult): void {
-    const missingSelected = this.missingIngredients(recipe).filter(i => i.selected && i.product);
+    const missingSelected = this.missingIngredients(recipe).filter(
+      i => i.selected && i.product && !i.isOutOfStock && i.buyQuantity > 0
+    );
     if (missingSelected.length === 0) {
-      this.addedFeedback.set('Chưa chọn nguyên liệu nào có sẵn tại cửa hàng Evergreen Mart.');
+      this.addedFeedback.set('Chưa chọn nguyên liệu nào đang còn hàng tại Evergreen Mart.');
       setTimeout(() => this.addedFeedback.set(null), 3000);
       return;
     }
 
-    const addedNames: string[] = [];
-    const seenSlugs = new Set<string>();
+    let totalUnits = 0;
+    const qtyByProdSlug = new Map<string, { prod: ApiProduct; qty: number }>();
 
     for (const ing of missingSelected) {
       const prod = ing.product!;
       const slug = prod.slug || prod._id;
-      if (!seenSlugs.has(slug)) {
-        seenSlugs.add(slug);
-        this.cart.addItem(toCartProduct(prod), 1);
-        addedNames.push(prod.name);
+      const existing = qtyByProdSlug.get(slug);
+      if (existing) {
+        existing.qty = Math.max(existing.qty, ing.buyQuantity);
+      } else {
+        qtyByProdSlug.set(slug, { prod, qty: ing.buyQuantity });
       }
     }
 
-    this.addedFeedback.set(`Đã thêm ${addedNames.length} món nguyên liệu vào giỏ hàng!`);
+    for (const entry of qtyByProdSlug.values()) {
+      this.cart.addItem(toCartProduct(entry.prod), entry.qty);
+      totalUnits += entry.qty;
+    }
+
+    this.addedFeedback.set(`Đã thêm ${qtyByProdSlug.size} loại nguyên liệu (${totalUnits} phần) còn thiếu vào giỏ hàng!`);
     setTimeout(() => this.addedFeedback.set(null), 4000);
   }
 

@@ -1,9 +1,19 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
 
+export interface ApiComboLimitingItem {
+  productId: string;
+  name: string;
+  productStock: number;
+  requiredQty: number;
+  maxCombos: number;
+  isInactive?: boolean;
+}
+
 export interface ApiComboItem {
-  product: Pick<ApiProduct, '_id' | 'name' | 'slug' | 'image' | 'price' | 'priceNumber' | 'unit' | 'weight' | 'stock'>;
+  product: Pick<ApiProduct, '_id' | 'name' | 'slug' | 'image' | 'price' | 'priceNumber' | 'unit' | 'weight' | 'stock' | 'isActive' | 'category' | 'categoryVi'>;
   quantity: number;
+  lineTotal?: number;
 }
 
 export interface ApiAddOnDeal {
@@ -32,8 +42,14 @@ export interface ApiProduct {
   usageInstructions?: string;
   specifications?: Record<string, string>;
   isCombo?: boolean;
+  comboStatus?: 'active' | 'paused' | 'hidden';
   comboItems?: ApiComboItem[];
   originalPriceNumber?: number;
+  retailTotal?: number;
+  savingAmount?: number;
+  savingPercent?: number;
+  availableStock?: number;
+  limitingItem?: ApiComboLimitingItem | null;
   addOnDeals?: ApiAddOnDeal[];
   stock: number;
   isActive: boolean;

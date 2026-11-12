@@ -25,7 +25,7 @@
       <!-- Error -->
       @if (error()) {
         <div style="background:#fff5f5;color:#c53030;border:1px solid #feb2b2;border-radius:8px;padding:14px 16px;font-size:14px;margin-bottom:20px">
-          ⚠ {{ error() }}
+          <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> {{ error() }}
         </div>
       }
 
@@ -57,9 +57,7 @@
                          [style.border]="stepActive(step) ? '3px solid var(--xanh-moss)' : '3px solid #e8eaed'"
                          style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .3s">
                       @if (stepActive(step)) {
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3">
-                          <polyline points="20 6 9 17 4 12"/>
-                        </svg>
+                        <i class="bi bi-check-lg" style="color:#fff;font-size:14px" aria-hidden="true"></i>
                       }
                     </div>
                     <span style="font-size:11px;color:#888;text-align:center;max-width:72px;line-height:1.3">
@@ -83,7 +81,20 @@
             </div>
             <div>
               <div style="font-size:12px;color:#888;margin-bottom:3px">Thanh toán</div>
-              <div style="font-weight:600">{{ o.paymentMethod === 'cod' ? 'COD / Tiền mặt' : 'Chuyển khoản' }}</div>
+              <div style="font-weight:600">
+                @if (o.paymentMethod === 'cod') {
+                  COD / Tiền mặt
+                } @else {
+                  Chuyển khoản VietQR
+                  @if (o.paymentStatus === 'paid') {
+                    <span style="color:#15803d;font-size:12px;margin-left:4px">(Đã thanh toán)</span>
+                  } @else if (o.paymentStatus === 'expired' || o.status === 'cancelled') {
+                    <span style="color:#b91c1c;font-size:12px;margin-left:4px">(Chưa thanh toán / Hết hạn)</span>
+                  } @else {
+                    <span style="color:#b45309;font-size:12px;margin-left:4px">(Chờ thanh toán)</span>
+                  }
+                }
+              </div>
             </div>
             <div>
               <div style="font-size:12px;color:#888;margin-bottom:3px">Ngày đặt</div>

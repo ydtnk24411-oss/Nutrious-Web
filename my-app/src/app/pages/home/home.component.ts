@@ -47,24 +47,24 @@ export class HomeComponent implements OnInit, OnDestroy {
   private heroTimer: ReturnType<typeof setInterval> | null = null;
 
   readonly quickCategories = [
-    { name: 'Rau củ', icon: '🥬' },
-    { name: 'Trái cây', icon: '🍎' },
-    { name: 'Thịt', icon: '🥩' },
-    { name: 'Cá & Hải sản', icon: '🐟' },
-    { name: 'Sữa & Thực phẩm mát', icon: '🥛' },
-    { name: 'Thức uống', icon: '🥤' },
-    { name: 'Bánh & Đồ ăn vặt', icon: '🍪' },
-    { name: 'Gia vị & Thực phẩm khô', icon: '🧂' },
+    { name: 'Rau củ', icon: 'bi-basket' },
+    { name: 'Trái cây', icon: 'bi-brightness-high' },
+    { name: 'Thịt', icon: 'bi-award' },
+    { name: 'Cá & Hải sản', icon: 'bi-water' },
+    { name: 'Sữa & Thực phẩm mát', icon: 'bi-cup-straw' },
+    { name: 'Thức uống', icon: 'bi-cup-hot' },
+    { name: 'Bánh & Đồ ăn vặt', icon: 'bi-cookie' },
+    { name: 'Gia vị & Thực phẩm khô', icon: 'bi-box-seam' },
   ];
   readonly visualCategories = [
-    { name: 'Rau củ', icon: '🥬', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Trái cây', icon: '🍎', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Thịt', icon: '🥩', image: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Cá & Hải sản', icon: '🐟', image: 'https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Sữa & Thực phẩm mát', icon: '🥛', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Thức uống', icon: '🥤', image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Bánh & Đồ ăn vặt', icon: '🍪', image: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Gia vị & Thực phẩm khô', icon: '🧂', image: 'https://images.unsplash.com/photo-1532336414038-cf19250c5757?auto=format&fit=crop&w=700&q=85' },
+    { name: 'Rau củ', icon: 'bi-basket', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=700&q=85' },
+    { name: 'Trái cây', icon: 'bi-brightness-high', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=700&q=85' },
+    { name: 'Thịt', icon: 'bi-award', image: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=700&q=85' },
+    { name: 'Cá & Hải sản', icon: 'bi-water', image: 'https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?auto=format&fit=crop&w=700&q=85' },
+    { name: 'Sữa & Thực phẩm mát', icon: 'bi-cup-straw', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=700&q=85' },
+    { name: 'Thức uống', icon: 'bi-cup-hot', image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=700&q=85' },
+    { name: 'Bánh & Đồ ăn vặt', icon: 'bi-cookie', image: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=700&q=85' },
+    { name: 'Gia vị & Thực phẩm khô', icon: 'bi-box-seam', image: 'https://images.unsplash.com/photo-1532336414038-cf19250c5757?auto=format&fit=crop&w=700&q=85' },
   ];
   readonly vouchers = computed<Voucher[]>(() => this.voucherService.publicVouchers().slice(0, 6).map((voucher, index) => ({
     id: voucher.id,
@@ -80,6 +80,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   flashSales: FlashSaleItem[] = [];
   loadingFlashSales = true;
+  private liveProductMap = new Map<string, ApiProduct>();
   readonly newsItems: NewsItem[] = [
     { title: 'Mẹo chọn rau củ tươi ngon cho cả tuần', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=900&q=85', path: '/cam-nang/meo-chon-rau-cu-tuoi-ngon', date: 'CẨM NANG MUA SẮM' },
     { title: 'Gợi ý thực đơn nhanh gọn cho ngày bận rộn', image: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=85', path: '/cam-nang/thuc-don-nhanh-gon-ngay-ban-ron', date: 'CẢM HỨNG GIAN BẾP' },
@@ -126,6 +127,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       next: res => {
         if (res.success && res.data) {
           this.flashSales = res.data;
+          this.syncFlashSaleStock();
         }
         this.loadingFlashSales = false;
       },
@@ -133,6 +135,23 @@ export class HomeComponent implements OnInit, OnDestroy {
         console.error('Failed to load flash sales:', err);
         this.loadingFlashSales = false;
       },
+    });
+    this.productApi.getAll({ limit: 500 }).subscribe({
+      next: res => {
+        const list = res?.data || [];
+        const map = new Map<string, ApiProduct>();
+        for (const p of list) {
+          if (p._id) map.set(p._id, p);
+          if (p.slug) {
+            map.set(p.slug, p);
+            const cleanSlug = p.slug.replace(/^\/product-page\//, '').replace(/^\//, '');
+            if (cleanSlug) map.set(cleanSlug, p);
+          }
+        }
+        this.liveProductMap = map;
+        this.syncFlashSaleStock();
+      },
+      error: () => {},
     });
     this.heroTimer = setInterval(() => this.nextHero(), 6500);
     this.countdownTimer = setInterval(() => this.tickCountdown(), 1000);
@@ -180,7 +199,17 @@ export class HomeComponent implements OnInit, OnDestroy {
     return `${discount}${minimum}.`;
   }
   productSlug(p: ApiProduct): string { return p.slug?.startsWith('/') ? p.slug : `/product-page/${p.slug}`; }
+  isProductUnavailable(p: ApiProduct): boolean {
+    if (p.isActive === false) return true;
+    if (p.isCombo) {
+      if (p.comboStatus === 'paused' || p.comboStatus === 'hidden') return true;
+      const comboStock = typeof p.availableStock === 'number' ? p.availableStock : p.stock;
+      return typeof comboStock === 'number' && comboStock <= 0;
+    }
+    return typeof p.stock === 'number' && p.stock <= 0;
+  }
   addToCart(p: ApiProduct, event?: Event): void {
+    if (this.isProductUnavailable(p)) return;
     if (event) {
       this.cart.animateFlyToCart(event, p.image);
     }
@@ -189,13 +218,33 @@ export class HomeComponent implements OnInit, OnDestroy {
   getCategoryName(categoryId: string): string {
     return this.categories.find(c => c._id === categoryId)?.name ?? 'Chưa phân loại';
   }
-  addDealToCart(deal: FlashSaleItem, event?: Event): void {
-    if (event) {
-      this.cart.animateFlyToCart(event, deal.image);
-    }
-    if (deal.isSoldOut) return;
-    const priceText = (deal.flashSalePrice || 0).toLocaleString('vi-VN') + 'đ';
-    const product = {
+  isDealOutOfStock(deal: FlashSaleItem): boolean {
+    return typeof deal.stock === 'number' && deal.stock <= 0;
+  }
+
+  private syncFlashSaleStock(): void {
+    if (!this.flashSales.length || !this.liveProductMap.size) return;
+    this.flashSales = this.flashSales.map((deal) => {
+      const cleanSlug = (deal.slug || '').replace(/^\/product-page\//, '').replace(/^\//, '');
+      const live = this.liveProductMap.get(String(deal.productId || ''))
+        || this.liveProductMap.get(deal.slug || '')
+        || this.liveProductMap.get(cleanSlug);
+      if (!live) return deal;
+      const liveStock = live.isCombo && typeof live.availableStock === 'number'
+        ? Math.max(0, Math.floor(live.availableStock))
+        : (typeof live.stock === 'number' ? Math.max(0, Math.floor(live.stock)) : deal.stock);
+      const isOutOfStock = live.isActive === false || (typeof liveStock === 'number' && liveStock <= 0);
+      return {
+        ...deal,
+        stock: liveStock,
+        isSoldOut: Boolean(deal.isSoldOut || isOutOfStock),
+      };
+    });
+  }
+
+  private buildDealCartProduct(deal: FlashSaleItem): XanhLaProduct {
+    const priceText = `${(deal.flashSalePrice || 0).toLocaleString('vi-VN')}đ`;
+    return {
       id: deal.productId || deal._id,
       name: deal.name,
       slug: deal.slug || deal._id,
@@ -205,28 +254,26 @@ export class HomeComponent implements OnInit, OnDestroy {
       category: 'Vegetables',
       categoryVi: deal.category,
       description: deal.description,
+      stock: deal.stock,
     } as XanhLaProduct;
-    this.cart.addItem(product, 1);
+  }
+
+  addDealToCart(deal: FlashSaleItem, event?: Event): void {
+    if (deal.isSoldOut || this.isDealOutOfStock(deal)) return;
+    if (event) {
+      this.cart.animateFlyToCart(event, deal.image);
+    }
+    this.cart.addItem(this.buildDealCartProduct(deal), 1);
   }
 
   openBuyNow(product: ApiProduct): void {
+    if (this.isProductUnavailable(product)) return;
     this.cart.openBuyNowModal(this.toCartProduct(product));
   }
 
   openBuyNowDeal(deal: FlashSaleItem): void {
-    const priceText = `${(deal.flashSalePrice || 0).toLocaleString('vi-VN')}đ`;
-    const product = {
-      id: deal.productId || deal._id,
-      name: deal.name,
-      slug: deal.slug || deal._id,
-      price: priceText,
-      priceNumber: deal.flashSalePrice,
-      image: deal.image,
-      category: 'Vegetables',
-      categoryVi: deal.category,
-      description: deal.description,
-    } as XanhLaProduct;
-    this.cart.openBuyNowModal(product);
+    if (deal.isSoldOut || this.isDealOutOfStock(deal)) return;
+    this.cart.openBuyNowModal(this.buildDealCartProduct(deal));
   }
 
   formatPrice(val: number): string {
@@ -241,7 +288,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       priceNumber: p.priceNumber,
       image: p.image,
       category: p.categoryId,
-      categoryVi: '',
+      categoryVi: p.categoryVi || '',
       description: p.description,
 
       container: p.container,
@@ -257,6 +304,13 @@ export class HomeComponent implements OnInit, OnDestroy {
       type: p.type,
       weight: p.weight,
       options: p.options,
+      stock: typeof p.availableStock === 'number' ? p.availableStock : p.stock,
+      availableStock: p.availableStock,
+      comboStatus: p.comboStatus,
+      isCombo: Boolean(p.isCombo || (Array.isArray(p.comboItems) && p.comboItems.length > 0)),
+      originalPriceNumber: p.originalPriceNumber,
+      comboItems: p.comboItems,
+      addOnDeals: p.addOnDeals as any,
     } as XanhLaProduct;
   }
   private tickCountdown(): void {

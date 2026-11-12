@@ -9,14 +9,14 @@
       <!-- Feedback Alerts -->
       @if (redeemMessage()) {
         <div style="background:#ecfdf5;border:1.5px solid #34d399;color:#065f46;padding:12px 18px;border-radius:10px;font-weight:600;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
-          <span>✓ {{ redeemMessage() }}</span>
-          <button type="button" (click)="redeemMessage.set('')" style="background:none;border:none;cursor:pointer;font-size:16px;color:inherit">✕</button>
+          <span style="display:inline-flex;align-items:center;gap:8px"><i class="bi bi-check-circle-fill"></i> {{ redeemMessage() }}</span>
+          <button type="button" (click)="redeemMessage.set('')" style="background:none;border:none;cursor:pointer;font-size:16px;color:inherit" aria-label="Đóng"><i class="bi bi-x-lg"></i></button>
         </div>
       }
       @if (redeemError()) {
         <div style="background:#fef2f2;border:1.5px solid #f87171;color:#991b1b;padding:12px 18px;border-radius:10px;font-weight:600;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
-          <span>⚠️ {{ redeemError() }}</span>
-          <button type="button" (click)="redeemError.set('')" style="background:none;border:none;cursor:pointer;font-size:16px;color:inherit">✕</button>
+          <span style="display:inline-flex;align-items:center;gap:8px"><i class="bi bi-exclamation-triangle-fill"></i> {{ redeemError() }}</span>
+          <button type="button" (click)="redeemError.set('')" style="background:none;border:none;cursor:pointer;font-size:16px;color:inherit" aria-label="Đóng"><i class="bi bi-x-lg"></i></button>
         </div>
       }
 
@@ -36,7 +36,12 @@
       <div class="loyalty-tier-section">
         <h2 class="loyalty-section-title">Hạng thành viên hiện tại</h2>
         <div class="loyalty-tier-card">
-          <div class="loyalty-tier-icon">{{ userTier().icon }}</div>
+          <div class="loyalty-tier-icon">
+            <i
+              [class]="'bi ' + userTier().icon"
+              [style.color]="userTier().tier === 'Platinum' ? '#0284c7' : userTier().tier === 'Gold' ? '#d97706' : userTier().tier === 'Silver' ? '#64748b' : '#b45309'"
+            ></i>
+          </div>
           <div class="loyalty-tier-details">
             <h3 class="loyalty-tier-name">{{ userTier().name }}</h3>
             <p class="loyalty-tier-requirement">Yêu cầu chi tiêu: {{ formatPrice(userTier().minSpent) }} (Đã tích lũy: {{ formatPrice(loyalty.totalSpent()) }})</p>
@@ -58,7 +63,12 @@
         <div class="loyalty-tiers-grid">
           @for (tier of tierConfigs; track tier.name) {
             <div class="loyalty-tier-item" [class.current]="tier.name === userTier().name" [class.completed]="tier.minSpent < userTier().minSpent">
-              <div class="loyalty-tier-emoji">{{ tier.icon }}</div>
+              <div class="loyalty-tier-emoji">
+                <i
+                  [class]="'bi ' + tier.icon"
+                  [style.color]="tier.tier === 'Platinum' ? '#0284c7' : tier.tier === 'Gold' ? '#d97706' : tier.tier === 'Silver' ? '#64748b' : '#b45309'"
+                ></i>
+              </div>
               <div class="loyalty-tier-title">{{ tier.name }}</div>
               <div class="loyalty-tier-min">{{ formatPrice(tier.minSpent) }}</div>
             </div>
@@ -71,7 +81,9 @@
         <h2 class="loyalty-section-title">Đổi quà &amp; Voucher ưu đãi</h2>
         @if (isLoadingRewards()) {
           <div style="text-align:center;padding:40px 20px;color:var(--xanh-muted)">
-            <div style="font-size:28px;margin-bottom:8px;animation:spin 1s linear infinite;display:inline-block">⏳</div>
+            <div style="font-size:28px;margin-bottom:8px;animation:spin 1s linear infinite;display:inline-block">
+              <i class="bi bi-arrow-repeat"></i>
+            </div>
             <p>Đang tải danh sách quà tặng...</p>
           </div>
         } @else if (availableRewards().length > 0) {
@@ -81,8 +93,8 @@
                 @if (reward.image) {
                   <img [src]="reward.image" [alt]="reward.name" class="loyalty-reward-image" />
                 } @else {
-                  <div style="height:140px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:36px">
-                    🎁
+                  <div style="height:140px;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:36px;color:#15803d">
+                    <i class="bi bi-gift"></i>
                   </div>
                 }
                 <div class="loyalty-reward-content">
@@ -109,7 +121,7 @@
           </div>
         } @else {
           <div class="loyalty-empty" style="text-align:center;padding:40px;background:#f9fafb;border-radius:12px;border:1px dashed #d1d5db;color:#6b7280">
-            <div style="font-size:32px;margin-bottom:8px">🎁</div>
+            <div style="font-size:32px;margin-bottom:8px;color:#6b7280"><i class="bi bi-gift"></i></div>
             <p style="margin:0;font-size:14.5px">Hiện tại chưa có phần quà đổi điểm khả dụng từ hệ thống.</p>
           </div>
         }
@@ -127,7 +139,13 @@
             @for (tx of userTransactions(); track tx.id || $index) {
               <div class="loyalty-transaction-item">
                 <div class="loyalty-transaction-icon">
-                  {{ tx.type === 'earned' ? '➕' : tx.type === 'redeemed' ? '➖' : '🔄' }}
+                  @if (tx.type === 'earned') {
+                    <i class="bi bi-plus-circle-fill" style="color:#16a34a"></i>
+                  } @else if (tx.type === 'redeemed') {
+                    <i class="bi bi-dash-circle-fill" style="color:#d97706"></i>
+                  } @else {
+                    <i class="bi bi-arrow-repeat" style="color:#64748b"></i>
+                  }
                 </div>
                 <div class="loyalty-transaction-info">
                   <div class="loyalty-transaction-desc">{{ tx.description }}</div>
@@ -141,7 +159,7 @@
           </div>
         } @else {
           <div class="loyalty-empty" style="text-align:center;padding:40px;background:#f9fafb;border-radius:12px;border:1px dashed #d1d5db;color:#6b7280">
-            <div style="font-size:32px;margin-bottom:8px">📊</div>
+            <div style="font-size:32px;margin-bottom:8px;color:#6b7280"><i class="bi bi-bar-chart-line"></i></div>
             <p style="margin:0;font-size:14.5px">Bạn chưa có lịch sử tích lũy hoặc đổi điểm nào.</p>
             <p style="margin:6px 0 0;font-size:13px;color:#9ca3af">Điểm sẽ được tự động cộng khi đơn hàng của bạn hoàn thành giao hàng.</p>
           </div>
@@ -151,14 +169,17 @@
   } @else {
     <!-- Chưa đăng nhập -->
     <div style="text-align:center;padding:80px 24px">
-      <div style="font-size:48px;margin-bottom:16px">🔒</div>
+      <div style="font-size:44px;margin-bottom:16px;color:#64748b"><i class="bi bi-lock"></i></div>
       <h2 style="font-family:var(--xanh-font-display);font-size:24px;margin-bottom:12px">
         Bạn chưa đăng nhập
       </h2>
       <p style="color:var(--xanh-muted);margin-bottom:24px">
-        Vui lòng đăng nhập để xem điểm tích lũy và chương trình khách hàng thân thiết.
+        Đăng nhập hoặc tạo tài khoản mới để tích điểm và tham gia chương trình khách hàng thân thiết.
       </p>
-      <button class="xanhla-btn-primary" (click)="cart.openAuthModal('login')">Đăng nhập ngay</button>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="xanhla-btn-primary" type="button" (click)="cart.openAuthModal('login')">Đăng nhập ngay</button>
+        <button class="xanhla-btn-secondary" type="button" (click)="cart.openAuthModal('signup')">Đăng ký tài khoản</button>
+      </div>
     </div>
   }
 </app-shell>

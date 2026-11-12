@@ -31,13 +31,6 @@
           </div>
           <div class="xanhla-hero-image-wrap">
             <img src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=700&h=450&fit=crop" alt="Fresh cooking ingredients" />
-            <div class="xanhla-hero-badge-overlay">
-              <span class="hero-badge-icon">🥗</span>
-              <div>
-                <strong>Bếp ngon Evergreen Mart</strong>
-                <small>Nhận diện ảnh AI • Đủ món gia đình</small>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -56,9 +49,6 @@
           <div>
             <span class="coop-eyebrow">TIẾP NHẬN NGUYÊN LIỆU (DUAL-INPUT)</span>
             <h2 class="xanhla-section-title">Tủ lạnh của bạn đang có gì?</h2>
-            <p class="xanhla-section-desc">
-              Chọn một trong hai phương thức tiện lợi: Tải ảnh chụp tủ lạnh hoặc Tìm kiếm nguyên liệu theo tên.
-            </p>
           </div>
           <div class="xanhla-ingredients-counter">
             <span class="counter-badge">{{ myIngredients().length }} nguyên liệu sẵn sàng</span>
@@ -89,9 +79,6 @@
 
               <div class="dropzone-copy">
                 <strong class="dropzone-title">Cách 1: Tải lên hoặc Chụp ảnh tủ lạnh / nguyên liệu</strong>
-                <p class="dropzone-sub">
-                  Kéo thả ảnh vào đây hoặc bấm nút bên dưới để Gemini Vision tự động nhận diện nguyên liệu trong 3 giây.
-                </p>
               </div>
 
               <div class="dropzone-actions">
@@ -110,30 +97,54 @@
           <!-- METHOD 1: MANUAL AUTOCOMPLETE INPUT -->
           <div class="xanhla-manual-input-box">
             <div class="manual-box-header">
-              <strong class="manual-title">Cách 2: Tìm kiếm nguyên liệu thủ công</strong>
-              <p class="manual-sub">Nhập tên thực phẩm, hệ thống sẽ gợi ý nông sản sạch đối soát trực tiếp từ cơ sở dữ liệu Evergreen Mart.</p>
+              <strong class="manual-title">Cách 2: Tìm kiếm &amp; nhập số lượng nguyên liệu đang có</strong>
             </div>
 
             <div class="xanhla-search-wrapper">
-              <i class="bi bi-search xanhla-input-icon" style="font-size:16px"></i>
-              <input
-                type="text"
-                class="xanhla-ingredient-input"
-                placeholder="Nhập tên nguyên liệu (vd: Thịt bò, Cà chua, Cải thìa, Cá hồi...)"
-                [value]="inputText()"
-                (input)="inputText.set($any($event.target).value)"
-                (keydown.enter)="addIngredient()"
-              />
-              @if (inputText()) {
-                <button
-                  type="button"
-                  class="xanhla-input-clear"
-                  (click)="inputText.set('')"
-                  aria-label="Xóa văn bản"
+              <div class="xanhla-search-input-box">
+                <i class="bi bi-search xanhla-input-icon" style="font-size:16px"></i>
+                <input
+                  type="text"
+                  class="xanhla-ingredient-input"
+                  placeholder="Tên nguyên liệu (vd: Thịt bò, Cà chua...)"
+                  [value]="inputText()"
+                  (input)="onInputTextChange($any($event.target).value)"
+                  (keydown.enter)="addIngredient()"
+                />
+                @if (inputText()) {
+                  <button
+                    type="button"
+                    class="xanhla-input-clear"
+                    (click)="inputText.set('')"
+                    aria-label="Xóa văn bản"
+                  >
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                }
+              </div>
+
+              <div class="xanhla-manual-qty-group" aria-label="Số lượng hiện có">
+                <input
+                  type="number"
+                  class="xanhla-manual-qty-input"
+                  min="0.1"
+                  step="any"
+                  aria-label="Số lượng nguyên liệu"
+                  [value]="inputQty()"
+                  (input)="onManualQtyInput($any($event.target).value)"
+                  (keydown.enter)="addIngredient()"
+                />
+                <select
+                  class="xanhla-manual-unit-select"
+                  aria-label="Đơn vị nguyên liệu"
+                  [value]="inputUnit()"
+                  (change)="onManualUnitChange($any($event.target).value)"
                 >
-                  <i class="bi bi-x-lg"></i>
-                </button>
-              }
+                  @for (u of unitOptions; track u.value) {
+                    <option [value]="u.value">{{ u.label }}</option>
+                  }
+                </select>
+              </div>
 
               <button
                 type="button"
@@ -235,6 +246,27 @@
                       <span class="xanhla-tag-pill is-detected">
                         <span class="xanhla-tag-dot"></span>
                         <span class="xanhla-tag-name">{{ item.name }}</span>
+                        <span class="xanhla-tag-qty-edit" (click)="$event.stopPropagation()">
+                          <input
+                            type="number"
+                            class="xanhla-tag-qty-input"
+                            min="0.1"
+                            step="any"
+                            [value]="item.qty"
+                            (change)="updateIngredientQty(item.name, $any($event.target).value)"
+                            [attr.aria-label]="'Số lượng ' + item.name"
+                          />
+                          <select
+                            class="xanhla-tag-unit-select"
+                            [value]="item.unit"
+                            (change)="updateIngredientUnit(item.name, $any($event.target).value)"
+                            [attr.aria-label]="'Đơn vị ' + item.name"
+                          >
+                            @for (u of unitOptions; track u.value) {
+                              <option [value]="u.value">{{ u.label }}</option>
+                            }
+                          </select>
+                        </span>
                         @if (item.productId) {
                           <span class="tag-matched-badge">Evergreen DB</span>
                         }
@@ -262,7 +294,7 @@
         <!-- CURRENT INGREDIENTS BADGES/TAGS BAR (Method 1 & 2 Combined) -->
         <div class="xanhla-active-tags-card">
           <div class="tags-card-header">
-            <span class="tags-title">📋 Tất cả nguyên liệu đang có trong tủ lạnh của bạn:</span>
+            <span class="tags-title"><i class="bi bi-card-checklist me-1"></i> Tất cả nguyên liệu đang có trong tủ lạnh của bạn:</span>
             @if (myIngredients().length > 0) {
               <button type="button" class="tags-clear-all" (click)="myIngredients.set([]); detectedFromImage.set([])">
                 Xóa tất cả ({{ myIngredients().length }})
@@ -280,6 +312,27 @@
                 <span class="xanhla-tag-pill" [class.is-from-vision]="item.fromVision">
                   <span class="xanhla-tag-dot"></span>
                   <span class="xanhla-tag-name">{{ item.name }}</span>
+                  <span class="xanhla-tag-qty-edit" (click)="$event.stopPropagation()">
+                    <input
+                      type="number"
+                      class="xanhla-tag-qty-input"
+                      min="0.1"
+                      step="any"
+                      [value]="item.qty"
+                      (change)="updateIngredientQty(item.name, $any($event.target).value)"
+                      [attr.aria-label]="'Số lượng ' + item.name"
+                    />
+                    <select
+                      class="xanhla-tag-unit-select"
+                      [value]="item.unit"
+                      (change)="updateIngredientUnit(item.name, $any($event.target).value)"
+                      [attr.aria-label]="'Đơn vị ' + item.name"
+                    >
+                      @for (u of unitOptions; track u.value) {
+                        <option [value]="u.value">{{ u.label }}</option>
+                      }
+                    </select>
+                  </span>
                   @if (item.productId) {
                     <span class="tag-matched-badge">ID: {{ item.productId.slice(-5) }}</span>
                   }
@@ -307,7 +360,7 @@
                 type="button"
                 class="xanhla-number-btn"
                 [disabled]="servings() <= 1"
-                (click)="servings.set(servings() - 1)"
+                (click)="setServings(servings() - 1)"
                 aria-label="Giảm khẩu phần"
               >
                 <i class="bi bi-dash"></i>
@@ -317,7 +370,7 @@
                 type="button"
                 class="xanhla-number-btn"
                 [disabled]="servings() >= 10"
-                (click)="servings.set(servings() + 1)"
+                (click)="setServings(servings() + 1)"
                 aria-label="Tăng khẩu phần"
               >
                 <i class="bi bi-plus"></i>
@@ -400,8 +453,8 @@
               <h2 class="xanhla-results-title">Thực đơn gợi ý cho gian bếp của bạn</h2>
               <p class="xanhla-results-sub">
                 Được sắp xếp nghiêm ngặt theo 3 mức ưu tiên:
-                <strong class="color-green">Xanh (Cao >= 66%)</strong> ➜
-                <strong class="color-yellow">Vàng (Vừa 33% - 65%)</strong> ➜
+                <strong class="color-green">Xanh (Cao >= 66%)</strong> <i class="bi bi-arrow-right"></i>
+                <strong class="color-yellow">Vàng (Vừa 33% - 65%)</strong> <i class="bi bi-arrow-right"></i>
                 <strong class="color-red">Đỏ (Thấp &lt; 33%)</strong>
               </p>
             </div>
@@ -412,7 +465,7 @@
 
           @if (results().length === 0) {
             <div class="xanhla-empty-state">
-              <div class="xanhla-empty-icon">🍳</div>
+              <div class="xanhla-empty-icon"><i class="bi bi-egg-fried"></i></div>
               <h3 class="xanhla-empty-title">Chưa tìm thấy món ăn phù hợp với bộ lọc</h3>
               <p class="xanhla-empty-desc">
                 Hãy thử nới lỏng bộ lọc thời gian hoặc thêm thêm một vài nguyên liệu tươi cơ bản như rau cải, cà chua, thịt hoặc trứng nhé!
@@ -456,7 +509,7 @@
 
                       <!-- Readiness Pill -->
                       @if (recipe.readiness === 'ready') {
-                        <span class="recipe-ready-tag">✓ Nấu được ngay</span>
+                        <span class="recipe-ready-tag"><i class="bi bi-check-lg"></i> Nấu được ngay</span>
                       }
                     </div>
 
@@ -501,7 +554,7 @@
                       <!-- Missing Ingredients Quick Summary -->
                       <div class="xanhla-card-stats">
                         <span class="xanhla-stat-have">
-                          ✓ Đã có trong tủ lạnh: {{ hasIngredients(recipe).length }}/{{ recipe.ingredients.length }}
+                          <i class="bi bi-check-lg"></i> Đã có trong tủ lạnh: {{ hasIngredients(recipe).length }}/{{ recipe.ingredients.length }}
                         </span>
                         @if (missingIngredients(recipe).length > 0) {
                           <span class="xanhla-stat-missing">
@@ -546,10 +599,17 @@
                             } @else {
                               <ul class="xanhla-ing-list">
                                 @for (ing of hasIngredients(recipe); track ing.name) {
-                                  <li class="xanhla-ing-item is-ready">
-                                    <span class="xanhla-ing-bullet">✓</span>
+                                  <li class="xanhla-ing-item" [class.is-ready]="ing.inFridge" [class.is-partial]="ing.hasPartial">
+                                    <span class="xanhla-ing-bullet">
+                                      <i class="bi" [class.bi-circle-half]="ing.hasPartial" [class.bi-check-lg]="!ing.hasPartial"></i>
+                                    </span>
                                     <span class="xanhla-ing-title">{{ ing.name }}</span>
-                                    <span class="xanhla-ing-scale">({{ scaledAmount(ing.amountPer1Serving, recipe.servingBase) }} {{ ing.unit }})</span>
+                                    <span class="xanhla-ing-scale">
+                                      Có {{ ing.availableAmount }} / cần {{ ing.requiredAmount }} {{ ing.unit }}
+                                    </span>
+                                    @if (ing.hasPartial) {
+                                      <span class="xanhla-ing-partial-badge">Thiếu {{ ing.missingAmount }} {{ ing.unit }}</span>
+                                    }
                                   </li>
                                 }
                               </ul>
@@ -565,7 +625,7 @@
 
                             @if (missingIngredients(recipe).length === 0) {
                               <div class="xanhla-ready-celebrate">
-                                🎉 Tuyệt vời! Bạn đã có đủ tất cả nguyên liệu để nấu ngay món ăn này.
+                                <i class="bi bi-check-circle-fill me-1"></i> Tuyệt vời! Bạn đã có đủ tất cả nguyên liệu để nấu ngay món ăn này.
                               </div>
                             } @else {
                               <div class="xanhla-missing-items">
@@ -576,20 +636,38 @@
                                         type="checkbox"
                                         class="xanhla-checkbox"
                                         [checked]="ing.selected"
-                                        [disabled]="!ing.product"
+                                        [disabled]="!ing.product || ing.isOutOfStock"
                                         (change)="toggleIngredientSelect(recipe.id, ing.name)"
                                       />
                                       <div class="xanhla-missing-info">
                                         <div class="xanhla-missing-name">
                                           {{ ing.name }}
-                                          <span class="xanhla-missing-scale">({{ scaledAmount(ing.amountPer1Serving, recipe.servingBase) }} {{ ing.unit }})</span>
+                                          <span class="xanhla-missing-scale">
+                                            @if (ing.hasPartial) {
+                                              (Thiếu {{ ing.missingAmount }} {{ ing.unit }} — đã có {{ ing.availableAmount }}/{{ ing.requiredAmount }} {{ ing.unit }})
+                                            } @else {
+                                              (Thiếu {{ ing.missingAmount }} {{ ing.unit }})
+                                            }
+                                          </span>
                                         </div>
                                         @if (ing.product) {
                                           <div class="xanhla-product-match">
-                                            <span class="xanhla-badge-source">Nông sản sạch Evergreen Mart:</span>
+                                            <span class="xanhla-badge-source">Nông sản sạch:</span>
                                             <span class="xanhla-prod-name">{{ ing.product.name }}</span>
                                             <span class="xanhla-prod-price">{{ ing.product.price }}</span>
+                                            <span class="xanhla-pack-hint">• Quy cách ~{{ ing.packLabel }}</span>
+                                            @if (ing.isOutOfStock) {
+                                              <span class="xanhla-outofstock-tag">Tạm hết hàng</span>
+                                            }
                                           </div>
+                                          @if (!ing.isOutOfStock) {
+                                            <div class="xanhla-buy-qty-row" (click)="$event.stopPropagation()">
+                                              <span class="xanhla-buy-qty-label">Số phần mua:</span>
+                                              <button type="button" class="xanhla-buy-qty-btn" (click)="adjustMissingBuyQty(recipe.id, ing.name, -1)" [disabled]="ing.buyQuantity <= 1">−</button>
+                                              <strong class="xanhla-buy-qty-num">{{ ing.buyQuantity }}</strong>
+                                              <button type="button" class="xanhla-buy-qty-btn" (click)="adjustMissingBuyQty(recipe.id, ing.name, 1)">+</button>
+                                            </div>
+                                          }
                                         } @else {
                                           <span class="xanhla-self-prep">Gia vị cơ bản / Cần tự chuẩn bị</span>
                                         }
@@ -601,9 +679,9 @@
                                       type="button"
                                       class="btn-already-have"
                                       (click)="markAsAlreadyHave(recipe, ing)"
-                                      title="Bấm vào nếu bạn đã có sẵn món này trong bếp"
+                                      title="Bấm vào nếu bạn đã có đủ món này trong bếp"
                                     >
-                                      ✓ Tôi đã có món này
+                                      <i class="bi bi-check-lg"></i> Tôi đã có đủ
                                     </button>
                                   </div>
                                 }
@@ -625,7 +703,7 @@
                                   <span>Thêm nguyên liệu còn thiếu vào giỏ hàng</span>
                                 </button>
                                 <p class="xanhla-cart-guarantee">
-                                  🌿 Giao hàng xe lạnh chuyên dụng 0°C – 4°C, bảo toàn độ tươi giòn như vừa hái.
+                                  <i class="bi bi-snow2 me-1"></i> Giao hàng xe lạnh chuyên dụng 0°C – 4°C, bảo toàn độ tươi giòn như vừa hái.
                                 </p>
                               </div>
                             }
@@ -645,7 +723,7 @@
                           </ol>
 
                           <div class="xanhla-chef-tip">
-                            <strong>💡 Mẹo đầu bếp Evergreen Mart:</strong>
+                            <strong><i class="bi bi-lightbulb me-1"></i> Mẹo đầu bếp Evergreen Mart:</strong>
                             <p>Ướp và sơ chế nguyên liệu tươi trước khi xào hoặc nấu giúp giữ tối đa hàm lượng dưỡng chất, vitamin và hương vị thuần khiết tự nhiên.</p>
                           </div>
                         </div>

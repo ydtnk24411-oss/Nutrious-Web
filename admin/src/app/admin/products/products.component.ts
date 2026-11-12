@@ -42,6 +42,13 @@ const EMPTY_FORM = (): Partial<ApiProduct> => ({
   priceNumber: 0,
   categoryId: '',
   description: '',
+  brand: '',
+  manufacturer: '',
+  origin: '',
+  unit: '',
+  storageInstructions: '',
+  usageInstructions: '',
+  specifications: {},
   image: '',
   stock: 100,
   container: '',
@@ -303,7 +310,11 @@ export class AdminProductsComponent implements OnInit {
     const catId = typeof p.categoryId === 'object' && (p.categoryId as any)?._id
       ? (p.categoryId as any)._id.toString()
       : (p.categoryId ? p.categoryId.toString() : '');
-    this.form.set({ ...p, categoryId: catId });
+    this.form.set({
+      ...p,
+      categoryId: catId,
+      specifications: p.specifications ? { ...p.specifications } : {},
+    });
     this.addonSearch.set('');
     this.customProductSlug.set(true);
     this.productImageMode.set(p.image?.startsWith('data:') ? 'file' : 'url');
@@ -464,6 +475,57 @@ export class AdminProductsComponent implements OnInit {
 
   onImageLoadError(event: Event): void {
     (event.target as HTMLElement).style.display = 'none';
+  }
+
+  setSpecField(key: string, value: string): void {
+    this.form.update(f => {
+      const specs = { ...(f.specifications || {}) };
+      if (!value || value.trim() === '') {
+        delete specs[key];
+      } else {
+        specs[key] = value.trim();
+      }
+      return { ...f, specifications: specs };
+    });
+  }
+
+  getSpecValue(key: string): string {
+    return this.form().specifications?.[key] || '';
+  }
+
+  newSpecKey = signal('');
+  newSpecVal = signal('');
+
+  addCustomSpec(): void {
+    const k = this.newSpecKey().trim();
+    const v = this.newSpecVal().trim();
+    if (!k || !v) return;
+    this.setSpecField(k, v);
+    this.newSpecKey.set('');
+    this.newSpecVal.set('');
+  }
+
+  removeSpec(key: string): void {
+    this.form.update(f => {
+      const specs = { ...(f.specifications || {}) };
+      delete specs[key];
+      return { ...f, specifications: specs };
+    });
+  }
+
+  getCustomSpecKeys(): string[] {
+    const common = [
+      'Tiêu chuẩn',
+      'Hạn sử dụng',
+      'Năng lượng',
+      'Chất đạm (Protein)',
+      'Chất béo (Lipid)',
+      'Carbohydrate',
+      'Chất xơ',
+      'Vitamin & Khoáng chất'
+    ];
+    const specs = this.form().specifications || {};
+    return Object.keys(specs).filter(k => !common.includes(k));
   }
 
   save(): void {

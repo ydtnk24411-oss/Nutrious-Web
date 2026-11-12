@@ -185,12 +185,12 @@ export interface DayPlanComputedView {
 }
 
 export const GOAL_ICONS: Record<string, string> = {
-  protein: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8c0 2.2-1.8 4-4 4-1.1 0-2.1-.4-2.8-1.1"/><path d="M3 8c0 2.2 1.8 4 4 4 1.1 0-2.1-.4 2.8-1.1"/><path d="M12 20V4"/><path d="M8 16l4 4 4-4"/></svg>',
-  fiber: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22l14-14"/><path d="M4 8l14 14"/><path d="M18 4v4"/><path d="M18 8h4"/></svg>',
-  vitamin: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2v20"/><path d="M2 12h20"/></svg>',
-  mineral: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M12 2v20"/><path d="M2 12h20"/></svg>',
-  variety: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
-  balance: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><path d="M4 6h16"/><path d="M4 18h16"/><path d="M12 7l4-4"/><path d="M12 7l-4-4"/><path d="M12 17l4 4"/><path d="M12 17l-4-4"/></svg>',
+  protein: '<i class="bi bi-lightning-charge"></i>',
+  fiber: '<i class="bi bi-flower1"></i>',
+  vitamin: '<i class="bi bi-brightness-high"></i>',
+  mineral: '<i class="bi bi-gem"></i>',
+  variety: '<i class="bi bi-grid"></i>',
+  balance: '<i class="bi bi-sliders"></i>',
 };
 
 const FALLBACK_FOOD_IMG = 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=700&q=80';
@@ -1097,7 +1097,7 @@ export class NutritionComponent implements OnInit {
   protected formatPrice = formatPrice;
 
   heroConfig = signal<NutritionHeroConfig>({
-    kicker: '🥗 Trợ Lý Thực Đơn Khoa Học · Dữ Liệu Trực Tuyến',
+    kicker: 'Trợ Lý Thực Đơn Khoa Học · Dữ Liệu Trực Tuyến',
     title: 'Dinh dưỡng thông minh & Thực đơn chuẩn vị',
     subtitle:
       'Khám phá các gói thực đơn dinh dưỡng tiết kiệm, xem chi tiết công thức chế biến từng bước, bảng thành phần vi chất và thêm trọn bộ nguyên liệu tươi sạch vào giỏ hàng chỉ với một chạm.',
@@ -1130,13 +1130,13 @@ export class NutritionComponent implements OnInit {
   recentOrderedItemNames = signal<string[]>([]);
 
   readonly quickSearchTags = [
-    { label: '🍶 Sữa chua', query: 'sữa chua' },
-    { label: '🐟 Cá hồi', query: 'cá hồi' },
-    { label: '🥑 Quả bơ', query: 'bơ' },
-    { label: '🍗 Thịt gà', query: 'gà' },
-    { label: '🍓 Dâu tây', query: 'dâu tây' },
-    { label: '🥩 Thịt bò', query: 'thịt bò' },
-    { label: '🍄 Nấm đông cô', query: 'nấm' },
+    { label: 'Sữa chua', query: 'sữa chua' },
+    { label: 'Cá hồi', query: 'cá hồi' },
+    { label: 'Quả bơ', query: 'bơ' },
+    { label: 'Thịt gà', query: 'gà' },
+    { label: 'Dâu tây', query: 'dâu tây' },
+    { label: 'Thịt bò', query: 'thịt bò' },
+    { label: 'Nấm đông cô', query: 'nấm' },
   ];
 
   // ===== DAILY & WEEKLY MEAL PLANNER STATE =====
@@ -1151,10 +1151,10 @@ export class NutritionComponent implements OnInit {
   ];
 
   readonly MEAL_SLOTS_META: { key: MealSlotKey; label: string; time: string; icon: string }[] = [
-    { key: 'breakfast', label: 'Bữa Sáng Năng Lượng', time: '07:00 – 08:30', icon: '☀️' },
-    { key: 'lunch', label: 'Bữa Trưa Đủ Chất', time: '11:30 – 13:00', icon: '🍲' },
-    { key: 'snack', label: 'Bữa Phụ & Sữa Chua', time: '15:30 – 16:30', icon: '🥣' },
-    { key: 'dinner', label: 'Bữa Tối Thanh Đạm', time: '18:30 – 20:00', icon: '🥗' },
+    { key: 'breakfast', label: 'Bữa Sáng Năng Lượng', time: '07:00 – 08:30', icon: 'bi-brightness-high' },
+    { key: 'lunch', label: 'Bữa Trưa Đủ Chất', time: '11:30 – 13:00', icon: 'bi-sun' },
+    { key: 'snack', label: 'Bữa Phụ & Sữa Chua', time: '15:30 – 16:30', icon: 'bi-cup-straw' },
+    { key: 'dinner', label: 'Bữa Tối Thanh Đạm', time: '18:30 – 20:00', icon: 'bi-moon-stars' },
   ];
 
   plannerMode = signal<'day' | 'week'>('day');
@@ -1177,12 +1177,12 @@ export class NutritionComponent implements OnInit {
   private macroInputTimer: ReturnType<typeof setTimeout> | undefined;
 
   readonly NUTRIENT_BOOST_OPTIONS = [
-    { id: 'protein', label: '🥩 Tăng Đạm (Protein Xây Cơ)', desc: 'Thịt bò, ức gà, cá hồi, tôm sú' },
-    { id: 'fiber', label: '🥦 Giàu Chất Xơ (No Lâu)', desc: 'Bông cải xanh, cải ngọt, bí đỏ' },
-    { id: 'probiotic', label: '🍶 Lợi Khuẩn Sữa Chua', desc: 'Sữa chua Hy Lạp, men sống tiêu hóa' },
-    { id: 'omega3', label: '🐟 Omega-3 & Tim Mạch', desc: 'Cá hồi Na Uy, quả bơ sáp' },
-    { id: 'vitamin', label: '🍊 Vitamin Đẹp Da & Đề Kháng', desc: 'Dâu tây, cam sành, ớt chuông' },
-    { id: 'lowcarb', label: '🥑 Low-Carb (Giảm Tinh Bột)', desc: 'Ưu tiên rau xanh & đạm nạc' },
+    { id: 'protein', label: 'Tăng Đạm (Protein Xây Cơ)', desc: 'Thịt bò, ức gà, cá hồi, tôm sú' },
+    { id: 'fiber', label: 'Giàu Chất Xơ (No Lâu)', desc: 'Bông cải xanh, cải ngọt, bí đỏ' },
+    { id: 'probiotic', label: 'Lợi Khuẩn Sữa Chua', desc: 'Sữa chua Hy Lạp, men sống tiêu hóa' },
+    { id: 'omega3', label: 'Omega-3 & Tim Mạch', desc: 'Cá hồi Na Uy, quả bơ sáp' },
+    { id: 'vitamin', label: 'Vitamin Đẹp Da & Đề Kháng', desc: 'Dâu tây, cam sành, ớt chuông' },
+    { id: 'lowcarb', label: 'Low-Carb (Giảm Tinh Bột)', desc: 'Ưu tiên rau xanh & đạm nạc' },
   ];
 
   readonly DAY_THEMES: Record<'eatclean' | 'protein' | 'family' | 'yogurt_detox', string> = {
@@ -1320,20 +1320,20 @@ export class NutritionComponent implements OnInit {
 
   getCalorieStatusText(total: number, target: number): string {
     const diff = total - target;
-    if (Math.abs(diff) <= 80) return '✓ Đạt chuẩn';
+    if (Math.abs(diff) <= 80) return 'Đạt chuẩn';
     if (diff > 80) return `Vượt ${diff} kcal`;
     return `Thiếu ${Math.abs(diff)} kcal`;
   }
 
   getProteinStatusText(total: number, target: number): string {
     if (total > target) return `Vượt ${total - target}g`;
-    if (total === target) return '✓ Đạt';
+    if (total === target) return 'Đạt';
     return `Thiếu ${target - total}g`;
   }
 
   getNutrientStatusText(actual: number, target: number): string {
     if (actual > target) return `Vượt ${actual - target}g`;
-    if (actual === target) return '✓ Đạt';
+    if (actual === target) return 'Đạt';
     return `Thiếu ${target - actual}g`;
   }
 
@@ -1935,7 +1935,7 @@ export class NutritionComponent implements OnInit {
     this.generateSmartPlan();
   }
 
-  generateSmartPlan(): void {
+  generateSmartPlan(shouldScroll: boolean = false): void {
     this.computeRecipes();
     const pool = this.results();
     if (pool.length === 0) return;
@@ -1953,9 +1953,19 @@ export class NutritionComponent implements OnInit {
     this.weeklySchedule.set(newSchedule);
     const modeLabel = this.plannerMode() === 'day' ? `Thực đơn Ngày (${this.mealsPerDay()} bữa)` : `Thực đơn Cả Tuần 7 Ngày (${this.mealsPerDay()} bữa/ngày)`;
     this.addedToCart.set(
-      `✓ Đã thiết lập ${modeLabel} theo mục tiêu: ${this.targetDailyKcal()} kcal/ngày · Đạm ${this.targetProtein()}g · Chất xơ ${this.targetFiber()}g!`
+      `Đã thiết lập ${modeLabel} theo mục tiêu: ${this.targetDailyKcal()} kcal/ngày · Đạm ${this.targetProtein()}g · Chất xơ ${this.targetFiber()}g!`
     );
     setTimeout(() => this.addedToCart.set(null), 3500);
+
+    // CHỈ cuộn mượt xuống khi người dùng chủ động nhấn nút cuối cùng
+    if (shouldScroll && typeof window !== 'undefined') {
+      setTimeout(() => {
+        const el = document.getElementById('active-day-plan-preview');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
   }
 
   private optimizeMealPlan(pool: RecipeResult[], previouslyUsed: string[] = []): DayMealPlanMap {
@@ -2145,7 +2155,7 @@ export class NutritionComponent implements OnInit {
     // Đảm bảo tất cả nguyên liệu của thực đơn (cả món mới thêm và món đã có từ trước) đều được tick chọn trong giỏ hàng
     this.cart.ensureItemsSelected(dayPlan.matchedProducts.map((p) => p.name || p.slug));
     for (const s of dayPlan.slots) {
-      if (s.recipe) this.recordRecentMeal(s.recipe.id, '✓ Đã lên thực đơn & mua gần đây');
+      if (s.recipe) this.recordRecentMeal(s.recipe.id, 'Đã lên thực đơn & mua gần đây');
     }
     this.voucher.copyCode('NUTRITION10');
 
@@ -2292,8 +2302,8 @@ export class NutritionComponent implements OnInit {
       const prodId = ing.product?._id || ing.product?.slug || '';
       return cartItems.some((ci) => ci.product.id === prodId);
     });
-    if (inCart) return '🛒 Đang có nguyên liệu trong giỏ';
-    if (this.getRecentScore(recipe) > 0) return '🛍️ Đã mua nguyên liệu gần đây';
+    if (inCart) return 'Đang có nguyên liệu trong giỏ';
+    if (this.getRecentScore(recipe) > 0) return 'Đã mua nguyên liệu gần đây';
     return '';
   }
 
@@ -2310,15 +2320,15 @@ export class NutritionComponent implements OnInit {
     const defaultRecent: Record<string, { timestamp: number; label: string }> = {
       'sua-chua-hy-lap-trai-cay': {
         timestamp: Date.now() - 3600 * 1000 * 5,
-        label: '🥣 Đã ăn / Mua gần đây',
+        label: 'Đã ăn / Mua gần đây',
       },
       'ca-hoi-ap-chao': {
         timestamp: Date.now() - 3600 * 1000 * 18,
-        label: '🐟 Đã mua nguyên liệu tuần này',
+        label: 'Đã mua nguyên liệu tuần này',
       },
       'salad-ga-nuong': {
         timestamp: Date.now() - 3600 * 1000 * 36,
-        label: '🥗 Đã mua nguyên liệu gần đây',
+        label: 'Đã mua nguyên liệu gần đây',
       },
     };
 
@@ -2357,7 +2367,7 @@ export class NutritionComponent implements OnInit {
     }
   }
 
-  private recordRecentMeal(recipeId: string, label = '✓ Vừa chọn / Đã mua gần đây'): void {
+  private recordRecentMeal(recipeId: string, label = 'Vừa chọn / Đã mua gần đây'): void {
     const updated = {
       ...this.recentMealsMap(),
       [recipeId]: {
@@ -2453,7 +2463,7 @@ export class NutritionComponent implements OnInit {
     }
     const found = this.results().find(r => r.id === recipeId);
     if (found) {
-      this.recordRecentMeal(recipeId, '👁️ Vừa xem / Đã chọn gần đây');
+      this.recordRecentMeal(recipeId, 'Vừa xem / Đã chọn gần đây');
       this.selectedPlanDetailId.set(null);
       this.selectedRecipeId.set(recipeId);
       this.activeGalleryImage.set(found.image);
@@ -2510,7 +2520,7 @@ export class NutritionComponent implements OnInit {
       this.cart.addItem(toCartProduct(p, discounted), 1);
     }
     for (const rId of plan.recipeIds) {
-      this.recordRecentMeal(rId, '🛍️ Vừa mua trong gói Combo');
+      this.recordRecentMeal(rId, 'Vừa mua trong gói Combo');
     }
     this.voucher.copyCode(plan.voucherCode);
     this.addedToCart.set(
@@ -2959,7 +2969,7 @@ export class NutritionComponent implements OnInit {
     this.cart.selectOnlyRecipeItems(recipe.ingredients.filter(i => i.selected && !i.owned));
 
     this.lastAddedRecipe.set(recipe);
-    this.recordRecentMeal(recipe.id, '✓ Vừa mua nguyên liệu món này');
+    this.recordRecentMeal(recipe.id, 'Vừa mua nguyên liệu món này');
     this.voucher.copyCode('NUTRITION10');
 
     if (alreadyEnough.length > 0) {
@@ -2994,7 +3004,7 @@ export class NutritionComponent implements OnInit {
 
     // 3. Áp mã ưu đãi combo dinh dưỡng
     this.voucher.copyCode('NUTRITION10');
-    this.recordRecentMeal(recipe.id, '✓ Đang thanh toán nguyên liệu món này');
+    this.recordRecentMeal(recipe.id, 'Đang thanh toán nguyên liệu món này');
 
     // 4. Chuyển thẳng sang trang Checkout
     this.router.navigate(['/checkout'], { queryParams: { voucher: 'NUTRITION10' } });

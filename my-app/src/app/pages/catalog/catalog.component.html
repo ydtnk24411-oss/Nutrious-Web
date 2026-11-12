@@ -2,10 +2,10 @@
   <div class="xanhla-container">
     <div class="xanhla-breadcrumb" style="margin-top:32px">
       <a routerLink="/">Trang chủ</a>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      <i class="bi bi-chevron-right" style="font-size:13px" aria-hidden="true"></i>
       <span>All Products</span>
       @if (category()) {
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        <i class="bi bi-chevron-right" style="font-size:13px" aria-hidden="true"></i>
         <span>{{ category() }}</span>
       }
     </div>
@@ -32,10 +32,8 @@
         <div class="xanhla-filter-group">
           <button class="xanhla-filter-group-header" type="button" (click)="toggleAccordion('price')">
             <span>Giá</span>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 [style.transform]="openAccordions()['price'] ? 'rotate(180deg)' : 'none'" style="transition:transform 0.2s">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
+            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform 0.2s;display:inline-block"
+               [style.transform]="openAccordions()['price'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
           </button>
           @if (openAccordions()['price']) {
             <div class="xanhla-filter-group-content">
@@ -55,10 +53,8 @@
           <div class="xanhla-filter-group">
             <button class="xanhla-filter-group-header" type="button" (click)="toggleAccordion(key)">
               <span>{{ facetLabel(key) }}</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                   [style.transform]="openAccordions()[key] ? 'rotate(180deg)' : 'none'" style="transition:transform 0.2s">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
+              <i class="bi bi-chevron-down" style="font-size:15px;transition:transform 0.2s;display:inline-block"
+                 [style.transform]="openAccordions()[key] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
             </button>
             @if (openAccordions()[key]) {
               <div class="xanhla-filter-group-content">
@@ -117,8 +113,12 @@
                       <span class="xanhla-prod-card-unit">/ {{ prod.weight }}</span>
                     }
                   </div>
-                  <button class="xanhla-prod-card-add" type="button" (click)="addToCart(prod)">
-                    Thêm vào giỏ
+                  <button class="xanhla-prod-card-add" type="button"
+                          [disabled]="isOutOfStock(prod)"
+                          [style.opacity]="isOutOfStock(prod) ? '0.5' : '1'"
+                          [style.cursor]="isOutOfStock(prod) ? 'not-allowed' : 'pointer'"
+                          (click)="addToCart(prod)">
+                    {{ isOutOfStock(prod) ? 'Tạm hết hàng' : 'Thêm vào giỏ' }}
                   </button>
                 </div>
               </div>

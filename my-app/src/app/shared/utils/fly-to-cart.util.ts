@@ -79,7 +79,7 @@ export function animateFlyToCart(source?: Event | HTMLElement, imageUrl?: string
     });
 
     if (!imageUrl) {
-      flyer.innerHTML = `<span style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:24px">🛒</span>`;
+      flyer.innerHTML = `<span style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:22px;color:#15803d"><i class="bi bi-cart-check-fill"></i></span>`;
     }
 
     document.body.appendChild(flyer);

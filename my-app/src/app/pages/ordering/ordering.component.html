@@ -81,11 +81,8 @@
         <div class="ord-filter-group">
           <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('sort')">
             <span>Sắp xếp</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 [style.transform]="openAccordions()['sort'] ? 'rotate(180deg)' : 'none'"
-                 style="transition:transform .2s">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
+            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+               [style.transform]="openAccordions()['sort'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
           </button>
           @if (openAccordions()['sort']) {
             <div class="ord-filter-body">
@@ -105,11 +102,8 @@
         <div class="ord-filter-group">
           <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('price')">
             <span>Giá</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 [style.transform]="openAccordions()['price'] ? 'rotate(180deg)' : 'none'"
-                 style="transition:transform .2s">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
+            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+               [style.transform]="openAccordions()['price'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
           </button>
           @if (openAccordions()['price']) {
             <div class="ord-filter-body">
@@ -128,11 +122,8 @@
         <div class="ord-filter-group">
           <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('category')">
             <span>Danh mục</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 [style.transform]="openAccordions()['category'] ? 'rotate(180deg)' : 'none'"
-                 style="transition:transform .2s">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
+            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+               [style.transform]="openAccordions()['category'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
           </button>
           @if (openAccordions()['category']) {
             <div class="ord-filter-body">
@@ -152,11 +143,8 @@
         <div class="ord-filter-group">
           <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('diet')">
             <span>Chế độ ăn chuyên biệt</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 [style.transform]="openAccordions()['diet'] ? 'rotate(180deg)' : 'none'"
-                 style="transition:transform .2s">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
+            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+               [style.transform]="openAccordions()['diet'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
           </button>
           @if (openAccordions()['diet']) {
             <div class="ord-filter-body">
@@ -176,11 +164,8 @@
         <div class="ord-filter-group">
           <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('nutritionTarget')">
             <span>Thông số dinh dưỡng mong muốn</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 [style.transform]="openAccordions()['nutritionTarget'] ? 'rotate(180deg)' : 'none'"
-                 style="transition:transform .2s">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
+            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+               [style.transform]="openAccordions()['nutritionTarget'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
           </button>
           @if (openAccordions()['nutritionTarget']) {
             <div class="ord-filter-body ord-nut-filter-body">
@@ -260,11 +245,8 @@
         <div class="ord-filter-group">
           <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('preparation')">
             <span>Chế biến</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 [style.transform]="openAccordions()['preparation'] ? 'rotate(180deg)' : 'none'"
-                 style="transition:transform .2s">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
+            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+               [style.transform]="openAccordions()['preparation'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
           </button>
           @if (openAccordions()['preparation']) {
             <div class="ord-filter-body">
@@ -284,11 +266,8 @@
         <div class="ord-filter-group">
           <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('ripeness')">
             <span>Độ chín</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 [style.transform]="openAccordions()['ripeness'] ? 'rotate(180deg)' : 'none'"
-                 style="transition:transform .2s">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
+            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+               [style.transform]="openAccordions()['ripeness'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
           </button>
           @if (openAccordions()['ripeness']) {
             <div class="ord-filter-body">
@@ -308,11 +287,8 @@
         <div class="ord-filter-group">
           <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('sizeGroup')">
             <span>Kích cỡ</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 [style.transform]="openAccordions()['sizeGroup'] ? 'rotate(180deg)' : 'none'"
-                 style="transition:transform .2s">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
+            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+               [style.transform]="openAccordions()['sizeGroup'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
           </button>
           @if (openAccordions()['sizeGroup']) {
             <div class="ord-filter-body">
@@ -332,11 +308,8 @@
         <div class="ord-filter-group">
           <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('type')">
             <span>Loại</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 [style.transform]="openAccordions()['type'] ? 'rotate(180deg)' : 'none'"
-                 style="transition:transform .2s">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
+            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+               [style.transform]="openAccordions()['type'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
           </button>
           @if (openAccordions()['type']) {
             <div class="ord-filter-body">
@@ -356,11 +329,8 @@
         <div class="ord-filter-group">
           <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('weight')">
             <span>Khối lượng</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 [style.transform]="openAccordions()['weight'] ? 'rotate(180deg)' : 'none'"
-                 style="transition:transform .2s">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
+            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+               [style.transform]="openAccordions()['weight'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
           </button>
           @if (openAccordions()['weight']) {
             <div class="ord-filter-body">
@@ -386,9 +356,7 @@
           <section class="ord-viewed-section" aria-label="Sản phẩm đã xem">
             <div class="ord-viewed-header">
               <div class="ord-viewed-title-wrap">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                </svg>
+                <i class="bi bi-clock-history" style="font-size:16px" aria-hidden="true"></i>
                 <h3 class="ord-viewed-title">Sản phẩm đã xem</h3>
                 <span class="ord-viewed-count">{{ cart.viewedProducts().length }} gần đây</span>
               </div>
@@ -419,83 +387,106 @@
           </section>
         }
 
-        <div class="ord-content-toolbar">
-          <h2 class="ord-menu-title" style="margin:0">Fresh Ingredients</h2>
-          <span class="ord-result-count">{{ categoryProducts().length }} sản phẩm</span>
+        <div class="ord-content-toolbar" id="ord-product-list">
+          <h2 class="ord-menu-title">{{ activeCategoryTitle() }}</h2>
+          <span class="ord-result-count">
+            @if (categoryProducts().length > pageSize) {
+              {{ visibleProducts().length }} / {{ categoryProducts().length }} sản phẩm
+            } @else {
+              {{ categoryProducts().length }} sản phẩm
+            }
+          </span>
         </div>
 
-        @if (filteredProducts().length === 0) {
+        @if (categoryProducts().length === 0) {
           <div class="ord-empty">
             <div style="font-size:36px;margin-bottom:12px;color:#94a3b8"><i class="bi bi-search"></i></div>
             <p>Không tìm thấy sản phẩm phù hợp.</p>
             <button class="xanhla-btn-outline" type="button" (click)="clearAllFilters()"
                     style="margin-top:12px">Xóa bộ lọc</button>
           </div>
-        }
+        } @else {
+          <div class="ord-section" [attr.id]="activeCategory() !== 'all' ? 'section-' + activeCategory() : null">
+            <div class="ord-grid">
+              @for (prod of visibleProducts(); track prod._id) {
+                <div class="xanhla-prod-card">
+                  <a class="xanhla-prod-card-img" [routerLink]="'/product-page/' + prod.slug">
+                    <img [src]="prod.image" [alt]="prod.name" loading="lazy" />
+                    @if (hasActiveAddOnDeals(prod)) {
+                      <span class="ord-addon-promo-tag">Mua kèm tiết kiệm</span>
+                    }
+                  </a>
 
-        @for (sec of sections(); track sec.id) {
-  @if (activeCategory() === 'all' || activeCategory() === sec.id) {
-    <div class="ord-section" [id]="'section-' + sec.id">
-      <div class="ord-section-divider"></div>
-      <h3 class="ord-section-title">{{ sec.title }}</h3>
+                  <div class="xanhla-prod-card-body">
+                    <div class="xanhla-prod-card-cat">
+                      <span>{{ getCategoryName(prod.categoryId) }}</span>
+                    </div>
 
-      <div class="ord-grid">
-        @for (prod of sec.items; track prod._id) {
-          <div class="xanhla-prod-card">
-            <a class="xanhla-prod-card-img" [routerLink]="'/product-page/' + prod.slug">
-              <img [src]="prod.image" [alt]="prod.name" loading="lazy" />
-              @if (hasActiveAddOnDeals(prod)) {
-                <span class="ord-addon-promo-tag">Mua kèm tiết kiệm</span>
+                    <a class="xanhla-prod-card-name" [routerLink]="'/product-page/' + prod.slug">
+                      {{ prod.name }}
+                    </a>
+
+                    @if (prod.description) {
+                      <div class="xanhla-prod-card-desc">{{ prod.description }}</div>
+                    }
+
+                    <div class="xanhla-prod-card-price-row">
+                      <span class="xanhla-prod-card-price">{{ prod.price }}</span>
+
+                      @if (prod.weight) {
+                        <span class="xanhla-prod-card-unit">/ {{ prod.weight }}</span>
+                      }
+                    </div>
+
+                    <div class="ord-card-btn-row">
+                      <button
+                        type="button"
+                        class="xanhla-prod-card-add"
+                        [disabled]="isProdUnavailable(prod) || itemQty(prod.slug) >= getProdStock(prod)"
+                        [style.opacity]="isProdUnavailable(prod) || itemQty(prod.slug) >= getProdStock(prod) ? '0.5' : '1'"
+                        [style.cursor]="isProdUnavailable(prod) || itemQty(prod.slug) >= getProdStock(prod) ? 'not-allowed' : 'pointer'"
+                        (click)="addOne(prod, $event)"
+                        [attr.aria-label]="'Thêm ' + prod.name + ' vào giỏ'">
+                        @if (!isProdUnavailable(prod)) {
+                          <i class="bi bi-cart-plus" style="font-size:14px"></i>
+                        }
+                        @if (prod.isCombo && prod.comboStatus === 'paused') {
+                          <span>Tạm ngừng</span>
+                        } @else if (isProdUnavailable(prod)) {
+                          <span>Tạm hết hàng</span>
+                        } @else if (itemQty(prod.slug) >= getProdStock(prod)) {
+                          <span>Đã đạt tối đa</span>
+                        } @else {
+                          <span>Thêm giỏ</span>
+                        }
+                      </button>
+
+                      @if (!isProdUnavailable(prod)) {
+                        <button
+                          type="button"
+                          class="xanhla-prod-card-buynow"
+                          (click)="openBuyNow(prod)"
+                          [attr.aria-label]="'Mua ngay ' + prod.name">
+                          <i class="bi bi-lightning-charge-fill" style="font-size:13px"></i>
+                          <span>Mua ngay</span>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                </div>
               }
-            </a>
-
-            <div class="xanhla-prod-card-body">
-              <div class="xanhla-prod-card-cat">
-                <span>{{ getCategoryName(prod.categoryId) }}</span>
-              </div>
-
-              <a class="xanhla-prod-card-name" [routerLink]="'/product-page/' + prod.slug">
-                {{ prod.name }}
-              </a>
-
-              @if (prod.description) {
-                <div class="xanhla-prod-card-desc">{{ prod.description }}</div>
-              }
-
-              <div class="xanhla-prod-card-price-row">
-                <span class="xanhla-prod-card-price">{{ prod.price }}</span>
-
-                @if (prod.weight) {
-                  <span class="xanhla-prod-card-unit">/ {{ prod.weight }}</span>
-                }
-              </div>
-
-              <div class="ord-card-btn-row">
-                <button
-                  type="button"
-                  class="xanhla-prod-card-add"
-                  (click)="addOne(prod, $event)"
-                  [attr.aria-label]="'Thêm ' + prod.name + ' vào giỏ'">
-                  <i class="bi bi-cart-plus" style="font-size:14px"></i>
-                  <span>Thêm giỏ</span>
-                </button>
-
-                <button
-                  type="button"
-                  class="xanhla-prod-card-buynow"
-                  (click)="openBuyNow(prod)"
-                  [attr.aria-label]="'Mua ngay ' + prod.name">
-                  <i class="bi bi-lightning-charge-fill" style="font-size:13px"></i>
-                  <span>Mua ngay</span>
-                </button>
-              </div>
             </div>
+
+            @if (remainingCount() > 0) {
+              <div class="ord-load-more-wrap">
+                <button type="button" class="ord-load-more-btn" (click)="showMoreProducts()">
+                  <span>Xem thêm</span>
+                  <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                </button>
+              </div>
+            }
           </div>
         }
-      </div>
-    </div>
-  }
-}
       </div>
 
     </div><!-- end ord-layout -->

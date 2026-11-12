@@ -1,10 +1,6 @@
 <app-shell>
   <main id="home-view" class="coop-home">
-    <div class="coop-service-strip">
-      <div class="coop-container service-inner">
-        <span>Giao hàng tận nhà</span><span class="service-divider"></span><span>Thực phẩm tươi mỗi ngày</span><span class="service-divider"></span><span>Ưu đãi dành riêng cho bạn</span>
-      </div>
-    </div>
+    
 
     <section class="coop-hero coop-container" aria-label="Ưu đãi nổi bật">
       <div class="coop-hero-main">
@@ -60,10 +56,14 @@
             <small>{{ voucher.expiry }}</small>
             <div class="coop-voucher-actions">
               <button type="button" class="coop-copy-btn" (click)="copyVoucher(voucher.code)">
-                {{ isVoucherCopied(voucher.code) ? '✓ Mã: ' + voucher.code : 'Sao chép mã' }}
+                @if (isVoucherCopied(voucher.code)) {
+                  <i class="bi bi-check-lg"></i> Mã: {{ voucher.code }}
+                } @else {
+                  Sao chép mã
+                }
               </button>
               @if (isVoucherSaved(voucher.id)) {
-                <b>✓ Đã lưu ví</b>
+                <b><i class="bi bi-check-lg"></i> Đã lưu ví</b>
               } @else {
                 <button type="button" class="coop-voucher-save-btn" (click)="saveVoucher(voucher.id)">+ Lưu vào ví</button>
               }
@@ -137,8 +137,8 @@
 
                 <div class="coop-flash-quota-text" [class.is-soldout]="deal.isSoldOut">
                   <ng-container *ngIf="deal.isSoldOut; else activeQuota">
-                    <span class="coop-flash-soldout-label">Hết suất</span>
-                    <span class="coop-flash-sold-percent">100%</span>
+                    <span class="coop-flash-soldout-label">{{ isDealOutOfStock(deal) ? 'Hết hàng' : 'Hết suất' }}</span>
+                    <span class="coop-flash-sold-percent">{{ isDealOutOfStock(deal) ? deal.soldPercent : 100 }}%</span>
                   </ng-container>
                   <ng-template #activeQuota>
                     <span class="coop-flash-sold-count">Đã bán {{ deal.soldQuantity }}/{{ deal.totalQuantity }} suất</span>
@@ -148,24 +148,34 @@
               </div>
 
               <div style="display:flex;gap:6px;margin-top:8px">
-                <button
-                  type="button"
-                  class="coop-add-btn"
-                  style="flex:1"
-                  [disabled]="deal.isSoldOut"
-                  (click)="addDealToCart(deal, $event)"
-                >
-                  <i class="bi bi-cart-plus" *ngIf="!deal.isSoldOut" style="margin-right:4px"></i><span>{{ deal.isSoldOut ? 'Hết suất' : 'Thêm giỏ' }}</span>
-                </button>
-                <button
-                  type="button"
-                  class="coop-buynow-btn"
-                  style="flex:1;background:#15803d;color:#fff;border:none;border-radius:6px;font-weight:700;font-size:12px;padding:8px;cursor:pointer"
-                  [disabled]="deal.isSoldOut"
-                  (click)="openBuyNowDeal(deal)"
-                >
-                  <i class="bi bi-lightning-charge-fill" style="margin-right:4px"></i><span>Mua ngay</span>
-                </button>
+                <ng-container *ngIf="deal.isSoldOut; else activeDealBtns">
+                  <button
+                    type="button"
+                    class="coop-add-btn"
+                    style="flex:1"
+                    disabled
+                  >
+                    <span>Tạm hết hàng</span>
+                  </button>
+                </ng-container>
+                <ng-template #activeDealBtns>
+                  <button
+                    type="button"
+                    class="coop-add-btn"
+                    style="flex:1"
+                    (click)="addDealToCart(deal, $event)"
+                  >
+                    <i class="bi bi-cart-plus" style="margin-right:4px"></i><span>Thêm giỏ</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="coop-buynow-btn"
+                    style="flex:1;background:#15803d;color:#fff;border:none;border-radius:6px;font-weight:700;font-size:12px;padding:8px;cursor:pointer"
+                    (click)="openBuyNowDeal(deal)"
+                  >
+                    <i class="bi bi-lightning-charge-fill" style="margin-right:4px"></i><span>Mua ngay</span>
+                  </button>
+                </ng-template>
               </div>
             </div>
           </article>
@@ -180,7 +190,7 @@
       <div class="coop-product-grid coop-api-grid" *ngIf="!loadingProducts && apiProducts.length">
         <article *ngFor="let product of visibleProducts" class="coop-product-card">
           <a class="coop-product-photo" [routerLink]="productSlug(product)"><img [src]="product.image || fallbackProductImage" [alt]="product.name" loading="lazy"><span class="coop-product-tag">{{ getCategoryName(product.categoryId) }}</span></a>
-          <div class="coop-product-info"><small>{{ getCategoryName(product.categoryId) }}</small><h3><a [routerLink]="productSlug(product)">{{ product.name }}</a></h3><p>{{ product.description || 'Lựa chọn tiện lợi cho gia đình bạn.' }}</p><div class="coop-price-row"><strong>{{ product.price }}</strong></div><div style="display:flex;gap:6px;margin-top:8px"><button type="button" class="coop-add-btn" style="flex:1" (click)="addToCart(product, $event)">Thêm giỏ</button><button type="button" class="coop-buynow-btn" style="flex:1;background:#15803d;color:#fff;border:none;border-radius:6px;font-weight:700;font-size:12px;padding:8px;cursor:pointer" (click)="openBuyNow(product)">Mua ngay</button></div></div>
+          <div class="coop-product-info"><small>{{ getCategoryName(product.categoryId) }}</small><h3><a [routerLink]="productSlug(product)">{{ product.name }}</a></h3><p>{{ product.description || 'Lựa chọn tiện lợi cho gia đình bạn.' }}</p><div class="coop-price-row"><strong>{{ product.price }}</strong></div><div style="display:flex;gap:6px;margin-top:8px"><ng-container *ngIf="isProductUnavailable(product); else availableProductBtns"><button type="button" class="coop-add-btn" style="flex:1" disabled><span>{{ product.isCombo && product.comboStatus === 'paused' ? 'Tạm ngừng kinh doanh' : 'Tạm hết hàng' }}</span></button></ng-container><ng-template #availableProductBtns><button type="button" class="coop-add-btn" style="flex:1" (click)="addToCart(product, $event)"><i class="bi bi-cart-plus" style="margin-right:4px"></i><span>Thêm giỏ</span></button><button type="button" class="coop-buynow-btn" style="flex:1;background:#15803d;color:#fff;border:none;border-radius:6px;font-weight:700;font-size:12px;padding:8px;cursor:pointer" (click)="openBuyNow(product)"><i class="bi bi-lightning-charge-fill" style="margin-right:4px"></i><span>Mua ngay</span></button></ng-template></div></div>
         </article>
       </div>
     </section>
@@ -195,7 +205,7 @@
     </section>
 
     <section class="coop-section coop-news-section coop-section-news">
-      <div class="coop-container"><div class="coop-section-heading"><div><span class="coop-eyebrow">GÓC NHÀ XANH</span><h2>Cẩm nang & cảm hứng</h2><p>Mẹo nhỏ và ý tưởng hay cho nhịp sống mỗi ngày.</p></div><a routerLink="/cam-nang" class="coop-text-link">Xem tất cả</a></div>
+      <div class="coop-container"><div class="coop-section-heading"><div><span class="coop-eyebrow">GÓC NHÀ XANH</span><h2>Cẩm nang</h2><p>Mẹo nhỏ và ý tưởng hay cho nhịp sống mỗi ngày.</p></div><a routerLink="/cam-nang" class="coop-text-link">Xem tất cả</a></div>
         <div class="coop-news-grid"><a *ngFor="let item of newsItems" [routerLink]="item.path" class="coop-news-card"><div class="coop-news-image"><img [src]="item.image" [alt]="item.title" loading="lazy"><span>GÓC SỐNG XANH</span></div><div class="coop-news-copy"><small>{{ item.date }}</small><h3>{{ item.title }}</h3><span class="coop-read-more">Đọc thêm</span></div></a></div>
       </div>
     </section>

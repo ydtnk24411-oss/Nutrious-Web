@@ -63,7 +63,10 @@ export interface XanhLaProduct {
   options?: { name: string; values: string[] }[];
   averageRating?: number;
   reviewCount?: number;
+  stock?: number;
+  availableStock?: number;
   isCombo?: boolean;
+  comboStatus?: 'active' | 'paused' | 'hidden';
   originalPriceNumber?: number;
   comboItems?: any[];
   addOnDeals?: AddOnDealInfo[];
@@ -82,12 +85,20 @@ export interface XanhLaNutritionGoal {
 
 export interface XanhLaAddress {
   id: string;
+  _id?: string;
   label: string;       // "Nhà riêng", "Văn phòng"...
   fullName: string;
   phone: string;
   address: string;
   city: string;
   isDefault: boolean;
+  province?: string;
+  provinceCode?: number;
+  ward?: string;
+  wardCode?: number;
+  street?: string;
+  lat?: number;
+  lng?: number;
 }
 
 export interface XanhLaUser {
@@ -303,6 +314,9 @@ export interface Order {
   total: number;
   status: OrderStatus;
   shippingAddress: XanhLaAddress;
+  hasNonRefundableItems?: boolean;
+  nonRefundableAccepted?: boolean;
+  nonRefundableItems?: Array<{ name: string; categoryName: string; isCombo?: boolean }>;
   createdAt: string;
   updatedAt: string;
 }

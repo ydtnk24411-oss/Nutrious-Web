@@ -269,8 +269,8 @@ export const logoImage = wixMedia('0d1a41_99cbfe9e9ab04d228185d68d4a866f7f~mv2.p
 export const navItems: NavItem[] = [
   { label: 'Trang chủ', path: '/' },
   { label: 'Đặt hàng', path: '/online-ordering' },
-  { label: 'Dinh dưỡng TM', path: '/nutrition' },
-  { label: 'Nấu gì hôm nay?', path: '/cook-with-what-you-have' },
+  { label: 'Dinh dưỡng thông minh', path: '/nutrition' },
+  { label: 'Gợi ý món ngon', path: '/cook-with-what-you-have' },
 ];
 
 export const FILTER_FACETS = {

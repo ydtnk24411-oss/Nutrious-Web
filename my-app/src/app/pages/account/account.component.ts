@@ -9,13 +9,17 @@ import { GoogleAuthService } from '../../shared/services/google-auth.service';
 import { LoyaltyService } from '../../shared/services/loyalty.service';
 import { VoucherService } from '../../shared/services/voucher.service';
 import { XanhLaAddress } from '../../shared/models/xanh-la.models';
+import {
+  AddressPickerModalComponent,
+  AddressPickerResult,
+} from '../../components/address-picker-modal/address-picker-modal.component';
 
 type Tab = 'overview' | 'orders' | 'addresses' | 'settings';
 
 @Component({
   selector: 'app-account',
   standalone: true,
-  imports: [CommonModule, FormsModule, ShellComponent, RouterLink],
+  imports: [CommonModule, FormsModule, ShellComponent, RouterLink, AddressPickerModalComponent],
   templateUrl: './account.component.html',
   styleUrl: './account.component.css',
 })
@@ -37,8 +41,6 @@ export class AccountComponent implements OnInit, OnDestroy {
         this.lastName.set(u.lastName ?? '');
         this.phone.set(u.phone ?? '');
         this.title.set(u.title ?? '');
-        this.addrFullName.set(u.name ?? '');
-        this.addrPhone.set(u.phone ?? '');
       }
     });
   }
@@ -59,13 +61,8 @@ export class AccountComponent implements OnInit, OnDestroy {
   avatarMenuOpen = signal(false);
 
   // ── My Addresses ─────────────────────────────
-  showAddressForm = signal(false);
-  addrLabel    = signal('Nhà riêng');
-  addrFullName = signal('');
-  addrPhone    = signal('');
-  addrAddress  = signal('');
-  addrCity     = signal('');
-  addrDefault  = signal(false);
+  showAddressModal = signal(false);
+  editingAddress = signal<Partial<XanhLaAddress> | null>(null);
 
   // ── Order History ───────────────
   orders = signal<any[]>([]);
@@ -132,9 +129,6 @@ export class AccountComponent implements OnInit, OnDestroy {
     this.phone.set(u.phone ?? '');
     this.title.set(u.title ?? '');
     // avatar lay truc tiep tu cart.currentUser() de luon dong bo
-    // Pre-fill address form name
-    this.addrFullName.set(u.name ?? '');
-    this.addrPhone.set(u.phone ?? '');
 
     // Fetch moi nhat tu backend de dam bao avatar luon dung sau login
     this.route.queryParams.subscribe(params => {
@@ -294,21 +288,53 @@ export class AccountComponent implements OnInit, OnDestroy {
   }
 
   // ── Addresses ────────────────────────────────
-  addAddress(e: Event): void {
-    e.preventDefault();
-    if (!this.addrFullName() || !this.addrAddress()) return;
+  openAddAddressModal(): void {
+    this.editingAddress.set(null);
+    this.showAddressModal.set(true);
+  }
+
+  editAddress(id: string): void {
+    const addr = this.cart.currentUser()?.addresses?.find(a => a.id === id);
+    if (!addr) return;
+    this.editingAddress.set({ ...addr });
+    this.showAddressModal.set(true);
+  }
+
+  closeAddressModal(): void {
+    this.showAddressModal.set(false);
+    this.editingAddress.set(null);
+  }
+
+  onAddressPickerConfirmed(res: AddressPickerResult): void {
+    const editing = this.editingAddress();
     const addr: XanhLaAddress = {
-      id:        Date.now().toString(),
-      label:     this.addrLabel(),
-      fullName:  this.addrFullName(),
-      phone:     this.addrPhone(),
-      address:   this.addrAddress(),
-      city:      this.addrCity(),
-      isDefault: this.addrDefault(),
+      id:           editing?.id || ('addr_' + Date.now()),
+      label:        res.label || 'Nhà riêng',
+      fullName:     res.receiverName,
+      phone:        res.receiverPhone,
+      address:      res.fullAddress,
+      city:         res.provinceName,
+      province:     res.provinceName,
+      provinceCode: res.provinceCode,
+      ward:         res.wardName,
+      wardCode:     res.wardCode,
+      street:       res.street,
+      lat:          res.lat,
+      lng:          res.lng,
+      isDefault:    res.isDefault,
     };
-    this.cart.addAddress(addr);
-    this.resetAddressForm();
-    this.showAddressForm.set(false);
+
+    if (editing?.id) {
+      this.cart.updateAddress(addr);
+    } else {
+      this.cart.addAddress(addr);
+    }
+    this.closeAddressModal();
+  }
+
+  isCityIncludedInAddress(addr: XanhLaAddress): boolean {
+    if (!addr.city || !addr.address) return false;
+    return addr.address.toLowerCase().includes(addr.city.toLowerCase());
   }
 
   removeAddress(id: string): void {
@@ -320,26 +346,6 @@ export class AccountComponent implements OnInit, OnDestroy {
       ...a, isDefault: a.id === id,
     }));
     this.cart.updateUser({ addresses: addrs });
-  }
-
-  editAddress(id: string): void {
-    const addr = this.cart.currentUser()?.addresses?.find(a => a.id === id);
-    if (addr) {
-      this.addrLabel.set(addr.label);
-      this.addrFullName.set(addr.fullName);
-      this.addrPhone.set(addr.phone);
-      this.addrAddress.set(addr.address);
-      this.addrCity.set(addr.city);
-      this.addrDefault.set(addr.isDefault);
-      this.showAddressForm.set(true);
-    }
-  }
-
-  private resetAddressForm(): void {
-    this.addrLabel.set('Nhà riêng');
-    this.addrAddress.set('');
-    this.addrCity.set('');
-    this.addrDefault.set(false);
   }
 
   // ── Orders ─────────────────────────────────

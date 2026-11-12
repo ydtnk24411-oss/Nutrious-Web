@@ -11,9 +11,7 @@
       <!-- ── Hero Banner ── -->
       <header class="cp-hero">
         <div class="cp-hero-badge">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
+          <i class="bi bi-shield-check" style="font-size:15px"></i>
           <span>Dịch vụ Khách hàng Evergreen Mart</span>
         </div>
         <h1 class="cp-hero-title">Tiếp nhận khiếu nại &amp; Phản ánh</h1>
@@ -26,11 +24,7 @@
         <div class="cp-commitments">
           <div class="cp-commit-card">
             <div class="cp-commit-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="23 4 23 10 17 10"/>
-                <polyline points="1 20 1 14 7 14"/>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-              </svg>
+              <i class="bi bi-arrow-repeat" style="font-size:19px"></i>
             </div>
             <div class="cp-commit-body">
               <h2 class="cp-commit-title">Đổi mới 1-1 miễn phí</h2>
@@ -40,10 +34,7 @@
 
           <div class="cp-commit-card">
             <div class="cp-commit-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12 6 12 12 16 14"/>
-              </svg>
+              <i class="bi bi-clock" style="font-size:19px"></i>
             </div>
             <div class="cp-commit-body">
               <h2 class="cp-commit-title">Phản hồi trong 2-4 giờ</h2>
@@ -53,10 +44,7 @@
 
           <div class="cp-commit-card">
             <div class="cp-commit-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="5" width="20" height="14" rx="2"/>
-                <line x1="2" y1="10" x2="22" y2="10"/>
-              </svg>
+              <i class="bi bi-credit-card" style="font-size:19px"></i>
             </div>
             <div class="cp-commit-body">
               <h2 class="cp-commit-title">Bồi hoàn thỏa đáng</h2>
@@ -74,10 +62,7 @@
           [class.active]="activeTab() === 'form'"
           (click)="switchTab('form')"
         >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
+          <i class="bi bi-pencil-square" style="font-size:16px"></i>
           Gửi khiếu nại mới
         </button>
 
@@ -87,10 +72,7 @@
           [class.active]="activeTab() === 'track'"
           (click)="switchTab('track')"
         >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"/>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
+          <i class="bi bi-search" style="font-size:16px"></i>
           Tra cứu tiến độ xử lý
         </button>
 
@@ -101,12 +83,7 @@
             [class.active]="activeTab() === 'history'"
             (click)="switchTab('history')"
           >
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-            </svg>
+            <i class="bi bi-file-earmark-text" style="font-size:16px"></i>
             Lịch sử khiếu nại của tôi
           </button>
         }
@@ -120,9 +97,7 @@
           <!-- Màn hình gửi thành công -->
           <div class="cp-card cp-success-card">
             <div class="cp-success-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
+              <i class="bi bi-check-lg" style="font-size:30px"></i>
             </div>
             <h2 class="cp-success-title">Đã tiếp nhận yêu cầu khiếu nại</h2>
             <p class="cp-success-sub">
@@ -134,10 +109,7 @@
               <div class="cp-code-group">
                 <span class="cp-code-number">{{ sub.complaintCode }}</span>
                 <button type="button" class="cp-btn-copy" (click)="copyCode(sub.complaintCode)">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                  </svg>
+                  <i class="bi bi-clipboard" style="font-size:14px"></i>
                   Sao chép mã
                 </button>
               </div>
@@ -188,11 +160,7 @@
               <!-- Thông báo lỗi nếu có -->
               @if (errorMessage()) {
                 <div class="cp-alert cp-alert-danger" role="alert">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="8" x2="12" y2="12"/>
-                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                  </svg>
+                  <i class="bi bi-exclamation-circle" style="font-size:17px;flex-shrink:0"></i>
                   <span>{{ errorMessage() }}</span>
                 </div>
               }
@@ -256,34 +224,15 @@
                     >
                       <div class="cp-type-icon">
                         @if (opt.iconKey === 'product') {
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
-                            <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
-                          </svg>
+                          <i class="bi bi-basket2" style="font-size:19px"></i>
                         } @else if (opt.iconKey === 'delivery') {
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="1" y="3" width="15" height="13" rx="1"/>
-                            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
-                            <circle cx="5.5" cy="18.5" r="2.5"/>
-                            <circle cx="18.5" cy="18.5" r="2.5"/>
-                          </svg>
+                          <i class="bi bi-truck" style="font-size:19px"></i>
                         } @else if (opt.iconKey === 'order') {
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/>
-                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-                            <line x1="12" y1="22.08" x2="12" y2="12"/>
-                          </svg>
+                          <i class="bi bi-box-seam" style="font-size:19px"></i>
                         } @else if (opt.iconKey === 'payment') {
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="2" y="5" width="20" height="14" rx="2"/>
-                            <line x1="2" y1="10" x2="22" y2="10"/>
-                            <line x1="6" y1="15" x2="8" y2="15"/>
-                          </svg>
+                          <i class="bi bi-credit-card" style="font-size:19px"></i>
                         } @else {
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                          </svg>
+                          <i class="bi bi-chat-dots" style="font-size:19px"></i>
                         }
                       </div>
 
@@ -358,10 +307,7 @@
                             title="Xóa ảnh này"
                             aria-label="Xóa ảnh"
                           >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                              <line x1="18" y1="6" x2="6" y2="18"/>
-                              <line x1="6" y1="6" x2="18" y2="18"/>
-                            </svg>
+                            <i class="bi bi-x-lg" style="font-size:12px"></i>
                           </button>
                         </div>
                       }
@@ -369,11 +315,7 @@
                       @if (images().length < 4) {
                         <label class="cp-btn-upload-box">
                           <input type="file" accept="image/*" multiple (change)="onImageSelect($event)" style="display:none" />
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                            <circle cx="8.5" cy="8.5" r="1.5"/>
-                            <polyline points="21 15 16 10 5 21"/>
-                          </svg>
+                          <i class="bi bi-image" style="font-size:20px"></i>
                           <span>Tải ảnh lên</span>
                         </label>
                       }
@@ -392,10 +334,7 @@
                     <span class="cp-spinner"></span>
                     <span>Đang gửi hồ sơ...</span>
                   } @else {
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="22" y1="2" x2="11" y2="13"/>
-                      <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                    </svg>
+                    <i class="bi bi-send" style="font-size:15px"></i>
                     <span>Gửi yêu cầu khiếu nại</span>
                   }
                 </button>
@@ -419,10 +358,7 @@
           <form (submit)="onTrackSubmit($event)" class="cp-search-form">
             <div class="cp-search-input-group">
               <span class="cp-search-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="11" cy="11" r="8"/>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                </svg>
+                <i class="bi bi-search" style="font-size:17px"></i>
               </span>
               <input
                 type="text"
@@ -445,11 +381,7 @@
 
           @if (trackError()) {
             <div class="cp-alert cp-alert-danger cp-mt-3" role="alert">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
+              <i class="bi bi-exclamation-circle" style="font-size:17px;flex-shrink:0"></i>
               <span>{{ trackError() }}</span>
             </div>
           }
@@ -500,9 +432,7 @@
               @if (item.resolutionNote) {
                 <div class="cp-resolution-card">
                   <div class="cp-resolution-head">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                    </svg>
+                    <i class="bi bi-chat-left-text" style="font-size:17px"></i>
                     <h4>Phản hồi từ CSKH Evergreen Mart</h4>
                   </div>
                   <p class="cp-resolution-body">{{ item.resolutionNote }}</p>
@@ -514,10 +444,7 @@
                 </div>
               } @else {
                 <div class="cp-pending-card">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                  </svg>
+                  <i class="bi bi-clock" style="font-size:17px;flex-shrink:0"></i>
                   <div>
                     <strong>Đang trong tiến trình kiểm tra:</strong>
                     Bộ phận CSKH đang đối soát thông tin kho vận và sẽ liên hệ hỗ trợ bạn qua điện thoại trong thời gian sớm nhất.
@@ -547,10 +474,7 @@
           } @else if (myComplaints().length === 0) {
             <div class="cp-empty-state">
               <div class="cp-empty-icon">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                </svg>
+                <i class="bi bi-file-earmark-text" style="font-size:36px"></i>
               </div>
               <h3 class="cp-empty-title">Bạn chưa có khiếu nại nào</h3>
               <p class="cp-empty-desc">Tất cả các đơn hàng đã mua đều hoạt động tốt và không có ghi nhận sự cố.</p>
@@ -598,9 +522,7 @@
       <footer class="cp-support-banner">
         <div class="cp-support-col">
           <div class="cp-support-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.71 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.58 2.81.71A2 2 0 0 1 22 16.92z"/>
-            </svg>
+            <i class="bi bi-telephone" style="font-size:20px"></i>
           </div>
           <div class="cp-support-info">
             <h3 class="cp-support-title">Hotline CSKH trực tiếp</h3>
@@ -611,10 +533,7 @@
 
         <div class="cp-support-col">
           <div class="cp-support-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-              <polyline points="22,6 12,13 2,6"/>
-            </svg>
+            <i class="bi bi-envelope" style="font-size:20px"></i>
           </div>
           <div class="cp-support-info">
             <h3 class="cp-support-title">Hòm thư tiếp nhận</h3>
@@ -625,9 +544,7 @@
 
         <div class="cp-support-col">
           <div class="cp-support-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
+            <i class="bi bi-chat-dots" style="font-size:20px"></i>
           </div>
           <div class="cp-support-info">
             <h3 class="cp-support-title">Trò chuyện trực tuyến</h3>

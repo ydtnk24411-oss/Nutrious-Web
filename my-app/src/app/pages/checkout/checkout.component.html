@@ -1,536 +1,1432 @@
 <app-shell>
   <div class="xanhla-container" style="padding:48px max(24px,4vw)">
 
-    <!-- Thành công -->
+    <!-- ── Thành công ─────────────────────────────────── -->
     @if (completed()) {
-      <!-- 1. Luồng COD -->
-      @if (paymentMethod() === 'cod') {
-        <div style="max-width:600px;margin:40px auto;padding:48px;background:#fff;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line);text-align:center">
-          <div style="width:64px;height:64px;border-radius:50%;background:var(--xanh-light-green);color:var(--xanh-moss);display:flex;align-items:center;justify-content:center;margin:0 auto 20px auto">
-            <i class="bi bi-check2-circle" style="font-size:36px"></i>
+    <!-- 1. Luồng COD: giữ nguyên giao diện cũ 100% không hiện QR -->
+    @if (paymentMethod() === 'cod') {
+    <div
+      style="max-width:600px;margin:40px auto;padding:48px;background:#fff;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line);text-align:center">
+      <div
+        style="width:64px;height:64px;border-radius:50%;background:var(--xanh-light-green);color:var(--xanh-moss);display:flex;align-items:center;justify-content:center;margin:0 auto 20px auto">
+        <i class="bi bi-check-lg" style="font-size:32px" aria-hidden="true"></i>
+      </div>
+      <h1 style="font-family:var(--xanh-font-display);font-size:30px;margin:0 0 12px 0">Cảm ơn bạn đã đặt hàng!</h1>
+      <p style="font-size:16px;color:var(--xanh-muted);margin-bottom:8px">
+        Mã đơn hàng: <strong style="color:var(--xanh-moss);font-size:18px">{{ orderCode() }}</strong>
+      </p>
+      <p style="font-size:14px;color:var(--xanh-muted);margin-bottom:32px">
+        Evergreen Mart sẽ chuẩn bị nguyên liệu tươi và liên hệ xác nhận qua số điện thoại của bạn.
+      </p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <a class="xanhla-btn-primary" routerLink="/tracker-page">Theo dõi đơn hàng</a>
+        <a class="xanhla-btn-secondary" routerLink="/">Về trang chủ</a>
+      </div>
+
+      @if (!cart.currentUser()) {
+        <div class="checkout-post-register-card">
+          <div class="checkout-post-register-head">
+            <i class="bi bi-gift" aria-hidden="true"></i>
+            <span>Tạo tài khoản nhanh để lưu đơn &amp; tích điểm</span>
           </div>
-          <h1 style="font-family:var(--xanh-font-display);font-size:30px;margin:0 0 12px 0">Cảm ơn bạn đã đặt hàng!</h1>
-          <p style="font-size:16px;color:var(--xanh-muted);margin-bottom:8px">
-            Mã đơn hàng: <strong style="color:var(--xanh-moss);font-size:18px">{{ orderCode() }}</strong>
+          <p class="checkout-post-register-desc">
+            Đăng ký bằng số điện thoại <strong>{{ guestPhone() }}</strong> để tự động lưu đơn <strong>{{ orderCode() }}</strong> vào tài khoản và nhận ưu đãi lần mua sau.
           </p>
-          <p style="font-size:14px;color:var(--xanh-muted);margin-bottom:32px">
-            Evergreen Mart sẽ chuẩn bị nguyên liệu tươi và liên hệ xác nhận qua số điện thoại của bạn.
-          </p>
-          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-            <a class="xanhla-btn-primary" routerLink="/tracker-page">
-              <i class="bi bi-truck me-1"></i> Theo dõi đơn hàng
-            </a>
-            <a class="xanhla-btn-secondary" routerLink="/">
-              <i class="bi bi-house me-1"></i> Về trang chủ
-            </a>
-          </div>
+          <button type="button" class="xanhla-btn-primary" (click)="openGuestAuth('signup')">
+            <i class="bi bi-person-plus" aria-hidden="true"></i>
+            <span>Đăng ký nhanh với SĐT này</span>
+          </button>
+        </div>
+      } @else if (guestOrderSubmitted()) {
+        <div class="checkout-post-register-success">
+          <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+          <span>Đã tạo tài khoản và lưu đơn <strong>{{ orderCode() }}</strong>!</span>
+          <a routerLink="/account" [queryParams]="{ tab: 'orders' }">Xem trong Đơn hàng của tôi</a>
         </div>
       }
+    </div>
+    }
 
-      <!-- 2. Luồng Bank Transfer -->
-      @if (paymentMethod() === 'bank_transfer') {
-        <div class="qr-payment-card" style="max-width:680px;margin:40px auto;background:#fff;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line);overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.06)">
-          <div style="padding:28px 32px;background:linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);border-bottom:1px solid #bbf7d0;text-align:center">
-            <div style="width:48px;height:48px;border-radius:50%;background:#16a34a;color:#fff;display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px">
-              <i class="bi bi-check-circle-fill" style="font-size:26px"></i>
+    <!-- 2. Luồng Bank Transfer: Chờ thanh toán VietQR -> Kiểm tra thực tế -> Thành công -->
+    @if (paymentMethod() === 'bank_transfer') {
+      @if (qrPaymentStatus() === 'paid') {
+        <!-- 2B. Đã xác nhận thanh toán thành công -->
+        <div
+          style="max-width:600px;margin:40px auto;padding:48px 36px;background:#fff;border-radius:var(--xanh-radius-md);border:1px solid #bbf7d0;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.05)">
+          <div
+            style="width:64px;height:64px;border-radius:50%;background:#16a34a;color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 20px auto;box-shadow:0 6px 18px rgba(22,163,74,0.28)">
+            <i class="bi bi-check-lg" style="font-size:30px" aria-hidden="true"></i>
+          </div>
+          <h1 style="font-family:var(--xanh-font-display);font-size:28px;margin:0 0 10px 0;color:#14532d">
+            Thanh toán &amp; Đặt hàng thành công!
+          </h1>
+          <p style="font-size:15px;color:#334155;margin:0 0 8px 0">
+            Hệ thống đã ghi nhận thanh toán <strong>{{ formatPrice(createdTotal()) }}</strong> cho đơn hàng
+            <strong style="color:#15803d;font-size:17px">{{ orderCode() }}</strong>.
+          </p>
+          <p style="font-size:13.5px;color:#64748b;margin:0 0 28px 0;line-height:1.5">
+            Đơn hàng đã được xác nhận. Evergreen Mart sẽ chuẩn bị nông sản tươi mới và giao đúng khung giờ bạn đã chọn.
+          </p>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+            <a class="xanhla-btn-primary" routerLink="/tracker-page">Theo dõi đơn hàng</a>
+            <a class="xanhla-btn-secondary" routerLink="/">Về trang chủ</a>
+          </div>
+
+          @if (!cart.currentUser()) {
+            <div class="checkout-post-register-card">
+              <div class="checkout-post-register-head">
+                <i class="bi bi-gift" aria-hidden="true"></i>
+                <span>Tạo tài khoản nhanh để lưu đơn &amp; tích điểm</span>
+              </div>
+              <p class="checkout-post-register-desc">
+                Đăng ký bằng số điện thoại <strong>{{ guestPhone() }}</strong> để tự động lưu đơn <strong>{{ orderCode() }}</strong> vào tài khoản và nhận ưu đãi lần mua sau.
+              </p>
+              <button type="button" class="xanhla-btn-primary" (click)="openGuestAuth('signup')">
+                <i class="bi bi-person-plus" aria-hidden="true"></i>
+                <span>Đăng ký nhanh với SĐT này</span>
+              </button>
             </div>
-            <h1 style="font-family:var(--xanh-font-display);font-size:26px;margin:0 0 6px 0;color:#14532d">Đặt hàng thành công!</h1>
-            <p style="font-size:14px;color:#166534;margin:0">
-              Vui lòng quét mã VietQR bên dưới bằng ứng dụng Ngân hàng để thanh toán đơn hàng.
+          } @else if (guestOrderSubmitted()) {
+            <div class="checkout-post-register-success">
+              <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+              <span>Đã tạo tài khoản và lưu đơn <strong>{{ orderCode() }}</strong>!</span>
+              <a routerLink="/account" [queryParams]="{ tab: 'orders' }">Xem trong Đơn hàng của tôi</a>
+            </div>
+          }
+        </div>
+      } @else if (qrPaymentStatus() === 'expired') {
+        <!-- 2C. Hết thời gian chờ thanh toán VietQR -->
+        <div
+          style="max-width:580px;margin:40px auto;padding:44px 32px;background:#fff;border-radius:var(--xanh-radius-md);border:1px solid #fecaca;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.05)">
+          <div
+            style="width:60px;height:60px;border-radius:50%;background:#fef2f2;color:#dc2626;display:flex;align-items:center;justify-content:center;margin:0 auto 18px auto;border:1px solid #fecaca">
+            <i class="bi bi-clock" style="font-size:26px" aria-hidden="true"></i>
+          </div>
+          <h1 style="font-family:var(--xanh-font-display);font-size:24px;margin:0 0 10px 0;color:#991b1b">
+            Phiên thanh toán VietQR đã hết hạn
+          </h1>
+          <p style="font-size:14.5px;color:#475569;margin:0 0 24px 0;line-height:1.5">
+            Đã quá thời gian giữ đơn cho mã <strong>{{ orderCode() }}</strong>. Đơn hàng chưa thanh toán đã được hủy tự động và hoàn lại tồn kho để tránh giữ chỗ.
+          </p>
+          <button type="button" class="xanhla-btn-primary" (click)="resetExpiredQrToCheckout()">
+            Quay lại thanh toán &amp; Đặt lại
+          </button>
+        </div>
+      } @else {
+        <!-- 2A. Màn hình chờ quét mã VietQR (chưa báo thành công) -->
+        <div class="qr-payment-card"
+          style="max-width:720px;margin:40px auto;background:#fff;border-radius:var(--xanh-radius-md);border:1px solid #fde68a;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.06)">
+          <!-- Header chờ thanh toán -->
+          <div
+            style="padding:24px 32px;background:linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);border-bottom:1px solid #fde68a;text-align:center">
+            <div
+              style="display:inline-flex;align-items:center;gap:8px;padding:5px 14px;border-radius:999px;background:#fff;border:1px solid #fcd34d;color:#b45309;font-size:12px;font-weight:800;letter-spacing:0.4px;margin-bottom:10px">
+              <span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block"></span>
+              ĐANG CHỜ THANH TOÁN
+            </div>
+            <h1 style="font-family:var(--xanh-font-display);font-size:25px;margin:0 0 6px 0;color:#78350f">
+              Quét mã VietQR để hoàn tất đơn hàng
+            </h1>
+            <p style="font-size:14px;color:#92400e;margin:0;line-height:1.5">
+              Mã đơn <strong>{{ orderCode() }}</strong> đang được giữ chỗ trong
+              <strong style="color:#b45309;font-family:monospace;font-size:15px">{{ qrCountdownText() }}</strong>.
+              Đơn hàng sẽ chỉ được xác nhận sau khi hệ thống ghi nhận giao dịch chuyển khoản.
             </p>
           </div>
 
-          <div class="qr-grid" style="padding:32px;display:grid;grid-template-columns:250px 1fr;gap:28px;align-items:center">
+          <!-- Khung quét mã QR & thông tin chuyển khoản -->
+          <div class="qr-grid"
+            style="padding:28px 32px;display:grid;grid-template-columns:250px 1fr;gap:28px;align-items:center">
+            <!-- Cột ảnh QR -->
             <div style="text-align:center">
               @if (qrUrl()) {
-                <div style="padding:10px;background:#fff;border:2px solid var(--xanh-moss);border-radius:12px;display:inline-block;box-shadow:0 2px 10px rgba(0,0,0,0.05)">
-                  <img [src]="qrUrl()" alt="Mã VietQR thanh toán" style="width:220px;height:220px;display:block;border-radius:6px;object-fit:contain" />
-                </div>
+              <div
+                style="padding:10px;background:#fff;border:2px solid #f59e0b;border-radius:12px;display:inline-block;box-shadow:0 2px 10px rgba(0,0,0,0.05)">
+                <img [src]="qrUrl()" alt="Mã VietQR thanh toán"
+                  style="width:220px;height:220px;display:block;border-radius:6px;object-fit:contain" />
+              </div>
               } @else {
-                <div style="width:220px;height:220px;background:#f3f4f6;border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--xanh-muted);font-size:13px;margin:0 auto">
-                  Đang tạo mã VietQR...
-                </div>
+              <div
+                style="width:220px;height:220px;background:#f3f4f6;border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--xanh-muted);font-size:13px;margin:0 auto">
+                Đang tạo mã VietQR...
+              </div>
               }
+              <div style="margin-top:10px;font-size:12.5px;color:#64748b;font-weight:600">
+                Thời gian còn lại: <strong style="color:#b45309;font-family:monospace">{{ qrCountdownText() }}</strong>
+              </div>
             </div>
 
+            <!-- Cột chi tiết chuyển khoản -->
             <div style="display:flex;flex-direction:column;gap:10px">
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;background:#f9fafb;border-radius:8px;font-size:13px">
+              <div
+                style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;background:#f9fafb;border-radius:8px;font-size:13px">
                 <span style="color:var(--xanh-muted)">Ngân hàng:</span>
                 <strong style="color:var(--xanh-ink)">MB (Ngân hàng Quân Đội)</strong>
               </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;background:#f9fafb;border-radius:8px;font-size:13px">
+
+              <div
+                style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;background:#f9fafb;border-radius:8px;font-size:13px">
                 <span style="color:var(--xanh-muted)">Chủ tài khoản:</span>
                 <strong style="color:var(--xanh-ink)">{{ bankInfo()?.accountName || 'VY TAM NHU' }}</strong>
               </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;background:#f9fafb;border-radius:8px;font-size:13px">
+
+              <div
+                style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;background:#f9fafb;border-radius:8px;font-size:13px">
                 <span style="color:var(--xanh-muted)">Số tài khoản:</span>
                 <div style="display:flex;align-items:center;gap:8px">
                   <strong style="color:var(--xanh-moss);font-size:15px;letter-spacing:0.5px">{{ bankInfo()?.accountNo || '0962299122' }}</strong>
-                  <button type="button" (click)="copyToClipboard(bankInfo()?.accountNo || '0962299122', 'stk')" style="padding:4px 9px;font-size:11.5px;background:#eef6e8;color:var(--xanh-moss);border:1px solid #bbf7d0;border-radius:4px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:4px">
-                    <i class="bi" [class.bi-check-lg]="copiedField() === 'stk'" [class.bi-clipboard]="copiedField() !== 'stk'"></i>
-                    {{ copiedField() === 'stk' ? 'Đã chép' : 'Sao chép' }}
+                  <button type="button" (click)="copyToClipboard(bankInfo()?.accountNo || '0962299122', 'stk')"
+                    style="padding:3px 8px;font-size:11px;background:#eef6e8;color:var(--xanh-moss);border:1px solid #bbf7d0;border-radius:4px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:4px">
+                    @if (copiedField() === 'stk') {
+                      <i class="bi bi-check-lg"></i> Đã chép
+                    } @else {
+                      Sao chép
+                    }
                   </button>
                 </div>
               </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:13px">
-                <span style="color:#166534;font-weight:600">Số tiền:</span>
+
+              <div
+                style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:13px">
+                <span style="color:#166534;font-weight:600">Số tiền cần chuyển:</span>
                 <strong style="color:#16a34a;font-size:17px">{{ formatPrice(createdTotal()) }}</strong>
               </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:13px">
+
+              <div
+                style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:13px">
                 <span style="color:#92400e;font-weight:600">Nội dung CK:</span>
                 <div style="display:flex;align-items:center;gap:8px">
                   <strong style="color:#b45309;font-size:16px;font-family:monospace;letter-spacing:1px">{{ orderCode() }}</strong>
-                  <button type="button" (click)="copyToClipboard(orderCode(), 'code')" style="padding:4px 9px;font-size:11.5px;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:4px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:4px">
-                    <i class="bi" [class.bi-check-lg]="copiedField() === 'code'" [class.bi-clipboard]="copiedField() !== 'code'"></i>
-                    {{ copiedField() === 'code' ? 'Đã chép' : 'Sao chép' }}
+                  <button type="button" (click)="copyToClipboard(orderCode(), 'code')"
+                    style="padding:3px 8px;font-size:11px;background:#fef3c7;color:#92400e;border:1px solid #fcd34d;border-radius:4px;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:4px">
+                    @if (copiedField() === 'code') {
+                      <i class="bi bi-check-lg"></i> Đã chép
+                    } @else {
+                      Sao chép
+                    }
                   </button>
                 </div>
               </div>
-              <div style="padding:10px 12px;background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;font-size:12px;color:#be123c;line-height:1.4;display:flex;align-items:flex-start;gap:6px">
-                <i class="bi bi-exclamation-triangle-fill" style="flex-shrink:0;margin-top:1px"></i>
-                <div><strong>Vui lòng giữ nguyên nội dung chuyển khoản</strong> để hệ thống tự động xác nhận đơn hàng của bạn.</div>
-              </div>
+
+              @if (qrStatusNote()) {
+                <div style="padding:8px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e;line-height:1.4">
+                  {{ qrStatusNote() }}
+                </div>
+              }
             </div>
           </div>
 
-          <div style="padding:20px 32px;background:#fafaf8;border-top:1px solid var(--xanh-line);display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-            <a class="xanhla-btn-primary" routerLink="/tracker-page">
-              <i class="bi bi-truck me-1"></i> Theo dõi đơn hàng
-            </a>
-            <a class="xanhla-btn-secondary" routerLink="/">
-              <i class="bi bi-house me-1"></i> Về trang chủ
-            </a>
+          <!-- Nút kiểm tra & quay lại -->
+          <div
+            style="padding:18px 32px;background:#fafaf8;border-top:1px solid var(--xanh-line);display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+            <button
+              type="button"
+              class="xanhla-btn-primary"
+              [disabled]="qrChecking() || qrCancelling()"
+              (click)="checkQrPaymentStatusNow()">
+              {{ qrChecking() ? 'Đang kiểm tra...' : 'Kiểm tra' }}
+            </button>
+            <button
+              type="button"
+              class="xanhla-btn-secondary"
+              [disabled]="qrChecking() || qrCancelling()"
+              (click)="cancelPendingQrOrder()">
+              {{ qrCancelling() ? 'Đang hủy chờ thanh toán...' : 'Hủy thanh toán & Quay lại' }}
+            </button>
           </div>
         </div>
       }
     }
+    }
 
-    <!-- Form thanh toán -->
+    <!-- ── Form thanh toán ───────────────────────────── -->
     @if (!completed()) {
-      <h1 style="font-family:var(--xanh-font-display);font-size:32px;margin-bottom:20px">Thanh toán đơn hàng</h1>
+    <h1 style="font-family:var(--xanh-font-display);font-size:32px;margin-bottom:32px">Thanh toán đơn hàng</h1>
 
-      @if (checkoutItems().length === 0) {
-        <div style="background:#fff;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line);padding:48px 24px;text-align:center;max-width:600px;margin:20px auto">
-          <p style="font-size:18px;color:var(--xanh-muted);margin-bottom:20px">
-            Bạn chưa chọn sản phẩm nào trong giỏ hàng để thanh toán.
-          </p>
-          <a class="xanhla-btn-primary" routerLink="/online-ordering">Khám phá sản phẩm tươi ngay</a>
-        </div>
-      } @else {
-        @if (errorMsg()) {
-          <div style="background:#fff5f5;color:#c53030;border:1px solid #feb2b2;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:14px;display:flex;align-items:center;gap:8px">
-            <i class="bi bi-exclamation-circle-fill"></i>
-            <span>{{ errorMsg() }}</span>
+    @if (checkoutItems().length === 0) {
+    <div
+      style="background:#fff;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line);padding:48px 24px;text-align:center;max-width:600px;margin:20px auto">
+      <p style="font-size:18px;color:var(--xanh-muted);margin-bottom:20px">
+        {{ isBuyNowMode() ? 'Phiên mua ngay chưa có sản phẩm nào.' : 'Bạn chưa chọn sản phẩm nào trong giỏ hàng để thanh toán.' }}
+      </p>
+      <a class="xanhla-btn-primary" [routerLink]="isBuyNowMode() ? '/ordering' : '/cart'">
+        {{ isBuyNowMode() ? 'Tiếp tục mua sắm' : 'Quay lại giỏ hàng để chọn sản phẩm' }}
+      </a>
+    </div>
+    } @else {
+
+    @if (errorMsg()) {
+    <div
+      style="background:#fff5f5;color:#c53030;border:1px solid #feb2b2;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:14px">
+      <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i> {{ errorMsg() }}
+    </div>
+    }
+
+    <form (submit)="handleSubmit($event)" style="display:grid;grid-template-columns:1fr 380px;gap:40px">
+      <div style="display:flex;flex-direction:column;gap:28px">
+
+        @if (!cart.currentUser()) {
+          <div class="checkout-guest-auth-banner">
+            <div class="checkout-guest-auth-copy">
+              <div class="checkout-guest-auth-title">
+                <i class="bi bi-person-badge" aria-hidden="true"></i>
+                <span>Mua nhanh không cần tài khoản — hoặc đăng ký để tích điểm</span>
+              </div>
+              <p class="checkout-guest-auth-desc">
+                Đăng nhập hoặc tạo tài khoản miễn phí để lưu địa chỉ, dùng Voucher giảm giá và theo dõi đơn hàng dễ dàng hơn.
+              </p>
+            </div>
+            <div class="checkout-guest-auth-actions">
+              <button type="button" class="xanhla-btn-secondary" (click)="openGuestAuth('login')">
+                Đăng nhập
+              </button>
+              <button type="button" class="xanhla-btn-primary" (click)="openGuestAuth('signup')">
+                Đăng ký ngay
+              </button>
+            </div>
           </div>
         }
 
-        <form (submit)="handleSubmit($event)" style="display:grid;grid-template-columns:1fr 380px;gap:40px">
-          <div style="display:flex;flex-direction:column;gap:28px">
-
-            <!-- 1. Thông tin liên hệ -->
-            <div style="background:#fff;padding:28px;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line)">
-              <h3 style="margin:0 0 20px 0;font-size:18px;display:flex;align-items:center;gap:8px">
-                <i class="bi bi-person-lines-fill" style="color:var(--xanh-moss)"></i>
-                <span>1. Thông tin liên hệ</span>
-              </h3>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-                <div>
-                  <label style="display:block;font-size:14px;margin-bottom:6px">Họ và tên *</label>
-                  <input type="text" required placeholder="Nguyễn Văn A" [value]="guestName()"
-                    (input)="guestName.set($any($event.target).value)"
-                    style="width:100%;padding:10px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)" />
-                </div>
-                <div>
-                  <label style="display:block;font-size:14px;margin-bottom:6px">Số điện thoại *</label>
-                  <input type="tel" required placeholder="0987 654 321" [value]="guestPhone()"
-                    (input)="guestPhone.set($any($event.target).value)"
-                    style="width:100%;padding:10px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)" />
-                </div>
-              </div>
-              <div>
-                <label style="display:block;font-size:14px;margin-bottom:6px">Email *</label>
-                <input type="email" required placeholder="name@example.com" [value]="guestEmail()"
-                  (input)="guestEmail.set($any($event.target).value)"
-                  style="width:100%;padding:10px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)" />
-              </div>
-            </div>
-
-            <!-- 2. Hình thức nhận hàng -->
-            <div style="background:#fff;padding:28px;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line)">
-              <h3 style="margin:0 0 20px 0;font-size:18px;display:flex;align-items:center;gap:8px">
-                <i class="bi bi-truck" style="color:var(--xanh-moss)"></i>
-                <span>2. Hình thức nhận hàng</span>
-              </h3>
-              <div style="display:flex;gap:16px;margin-bottom:20px">
-                <label [style.border]="shippingMethod()==='pickup' ? '2px solid var(--xanh-moss)' : '1px solid var(--xanh-line)'"
-                  style="flex:1;padding:16px;border-radius:var(--xanh-radius-sm);cursor:pointer">
-                  <input type="radio" name="method" value="pickup" [checked]="shippingMethod()==='pickup'"
-                    (change)="shippingMethod.set('pickup')" style="margin-right:8px" />
-                  <strong>Đến lấy trực tiếp</strong>
-                  <p style="margin:4px 0 0 0;font-size:13px;color:var(--xanh-muted)">Khu phố 6, Phường Linh Trung, TP. Thủ Đức, TP.HCM (Tối đa 30p)</p>
-                </label>
-                <label [style.border]="shippingMethod()==='delivery' ? '2px solid var(--xanh-moss)' : '1px solid var(--xanh-line)'"
-                  style="flex:1;padding:16px;border-radius:var(--xanh-radius-sm);cursor:pointer">
-                  <input type="radio" name="method" value="delivery" [checked]="shippingMethod()==='delivery'"
-                    (change)="shippingMethod.set('delivery')" style="margin-right:8px" />
-                  <strong>Giao hàng tận nơi</strong>
-                  <p style="margin:4px 0 0 0;font-size:13px;color:var(--xanh-muted)">Giao nhanh trong ngày bằng xe lạnh (Tối đa 10 km)</p>
-                </label>
-              </div>
-              @if (shippingMethod() === 'delivery') {
-                <div style="display:flex;flex-direction:column;gap:16px">
-                  <app-shipping-map-picker
-                    [initialAddress]="shippingAddr()"
-                    [subtotal]="checkoutSubtotal()"
-                    (locationChanged)="onLocationChanged($event)"
-                    (outOfRange)="onOutOfRange($event)">
-                  </app-shipping-map-picker>
-                </div>
+        <!-- 1. Thông tin liên hệ -->
+        <div id="section-contact-info" style="background:#fff;padding:28px;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line)">
+          <h3 style="margin:0 0 20px 0;font-size:18px">1. Thông tin liên hệ</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+            <div>
+              <label style="display:block;font-size:14px;margin-bottom:6px;font-weight:600">Họ và tên *</label>
+              <input type="text" id="contact-name" required placeholder="Nguyễn Văn A" [value]="guestName()"
+                (input)="guestName.set($any($event.target).value)"
+                [class.input-has-error]="submitAttempted() && !guestName().trim()"
+                style="width:100%;padding:10px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)" />
+              @if (submitAttempted() && !guestName().trim()) {
+                <span class="field-error-text">* Vui lòng nhập họ và tên người nhận</span>
               }
             </div>
-
-            <!-- 3. Phương thức thanh toán -->
-            <div style="background:#fff;padding:28px;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line)">
-              <h3 style="margin:0 0 16px 0;font-size:18px;display:flex;align-items:center;gap:8px">
-                <i class="bi bi-credit-card-2-front" style="color:var(--xanh-moss)"></i>
-                <span>3. Phương thức thanh toán</span>
-              </h3>
-              <div style="display:flex;flex-direction:column;gap:10px">
-                <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer">
-                  <input type="radio" name="payment" value="cod" [checked]="paymentMethod()==='cod'"
-                    (change)="paymentMethod.set('cod')" />
-                  <span>Thanh toán khi nhận hàng (COD / Tiền mặt)</span>
-                </label>
-                <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer">
-                  <input type="radio" name="payment" value="bank_transfer" [checked]="paymentMethod()==='bank_transfer'"
-                    (change)="paymentMethod.set('bank_transfer')" />
-                  <span>Chuyển khoản ngân hàng / QR Code</span>
-                </label>
-              </div>
+            <div>
+              <label style="display:block;font-size:14px;margin-bottom:6px;font-weight:600">Số điện thoại *</label>
+              <input type="tel" id="contact-phone" required placeholder="0987 654 321" [value]="guestPhone()"
+                (input)="guestPhone.set($any($event.target).value)"
+                [class.input-has-error]="submitAttempted() && !guestPhone().trim()"
+                style="width:100%;padding:10px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)" />
+              @if (submitAttempted() && !guestPhone().trim()) {
+                <span class="field-error-text">* Vui lòng nhập số điện thoại liên hệ</span>
+              }
             </div>
           </div>
+          <div>
+            <label style="display:block;font-size:14px;margin-bottom:6px;font-weight:600">Email *</label>
+            <input type="email" id="contact-email" required placeholder="name@example.com" [value]="guestEmail()"
+              (input)="guestEmail.set($any($event.target).value)"
+              [class.input-has-error]="submitAttempted() && !guestEmail().trim()"
+              style="width:100%;padding:10px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)" />
+            @if (submitAttempted() && !guestEmail().trim()) {
+              <span class="field-error-text">* Vui lòng nhập địa chỉ email</span>
+            }
+          </div>
+        </div>
 
-          <!-- Summary sidebar (Đơn hàng) -->
-          <div style="background:#fff;padding:28px;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line);height:fit-content">
-            <h3 style="margin:0 0 16px 0;font-size:18px;display:flex;align-items:center;gap:8px">
-              <i class="bi bi-bag-check" style="color:var(--xanh-moss)"></i>
-              <span>Đơn hàng ({{ checkoutItems().length }} món)</span>
-            </h3>
-            <div style="display:flex;flex-direction:column;gap:12px;max-height:480px;overflow-y:auto;margin-bottom:16px;padding-right:2px">
-              @for (item of checkoutItems(); track itemKey(item)) {
-                @let p = itemPricing(item);
-                <div style="padding:14px;border:1px solid #eef2ed;border-radius:12px;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.02)">
-                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-                    <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
-                      <img
-                        [src]="item.product.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=120&q=80'"
-                        [alt]="item.product.name"
-                        style="width:52px;height:52px;object-fit:cover;border-radius:10px;border:1px solid #e2e8f0;flex-shrink:0;background:#f8faf7"
-                        loading="lazy"
-                      />
-                      <div style="flex:1;min-width:0">
-                        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                          @if (p.itemType === 'combo') {
-                            <span style="display:inline-block;padding:2px 7px;background:#ecfdf5;color:#15803d;border:1px solid #86efac;border-radius:4px;font-size:10.5px;font-weight:700">COMBO TIẾT KIỆM</span>
-                          } @else if (p.itemType === 'addon') {
-                            <span style="display:inline-block;padding:2px 7px;background:#eff6eb;color:#203d0b;border:1px solid #bdd982;border-radius:4px;font-size:10.5px;font-weight:700">MUA KÈM TIẾT KIỆM</span>
-                          } @else if (p.discountedByAddon) {
-                            <span style="display:inline-block;padding:2px 7px;background:#fef9c3;color:#854d0e;border:1px solid #fde047;border-radius:4px;font-size:10.5px;font-weight:700">SP CHÍNH (GIẢM MUA KÈM)</span>
-                          } @else {
-                            <span style="display:inline-block;padding:1.5px 6px;background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;border-radius:4px;font-size:10px;font-weight:600">MUA LẺ</span>
-                          }
-                          <span style="font-weight:700;font-size:15px;color:#0f381e;line-height:1.3" [title]="item.product.name">
-                            {{ item.product.name }}
-                          </span>
-                        </div>
-                        @if (p.relationLabel) {
-                          <div style="font-size:11.5px;color:#1e532b;font-weight:600;margin-top:2px">{{ p.relationLabel }}</div>
-                        }
-                        @if (item.selectedOption) {
-                          <div style="font-size:12px;color:#64748b;margin-top:2px">{{ item.selectedOption }}</div>
-                        }
-                      </div>
-                    </div>
+        <!-- 2. Hình thức nhận hàng -->
+        <div style="background:#fff;padding:28px;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line)">
+          <h3 style="margin:0 0 20px 0;font-size:18px">2. Hình thức nhận hàng</h3>
+          
+          <!-- Thanh chuyển đổi Giao tận nơi / Nhận tại cửa hàng (Style Bách Hoá XANH) -->
+          <div class="delivery-tabs-header">
+            <button
+              type="button"
+              class="delivery-tab-btn"
+              [class.is-active]="shippingMethod() === 'delivery'"
+              (click)="shippingMethod.set('delivery')"
+            >
+              Giao tận nơi
+            </button>
+            <button
+              type="button"
+              class="delivery-tab-btn"
+              [class.is-active]="shippingMethod() === 'pickup'"
+              (click)="shippingMethod.set('pickup')"
+            >
+              <span>Nhận tại cửa hàng</span>
+              <span class="tab-badge-freeship-pill">Miễn phí ship</span>
+            </button>
+          </div>
 
-                    <!-- Cột giá & bộ nút tăng giảm số lượng -->
-                    <div style="white-space:nowrap;text-align:right;flex-shrink:0">
-                      <div style="font-size:13px;color:#64748b;font-weight:500;margin-bottom:2px">
-                        {{ formatPrice(p.effectiveUnitPrice) }} × {{ item.quantity }}
-                      </div>
-                      <div style="font-size:16px;font-weight:800;color:#047857">
-                        {{ formatPrice(p.linePayableTotal) }}
-                      </div>
-
-                      <!-- Cụm tăng giảm số lượng trực tiếp tại Checkout -->
-                      <div style="margin-top:8px;display:flex;align-items:center;justify-content:flex-end">
-                        <div style="display:inline-flex;align-items:center;border:1.5px solid #cbd5e1;border-radius:8px;overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,0.04)">
-                          <button type="button" (click)="decreaseQty($index)" [disabled]="item.quantity <= 1"
-                            style="width:28px;height:28px;border:none;background:#f1f5f9;font-weight:bold;cursor:pointer;color:#334155;display:flex;align-items:center;justify-content:center"
-                            [style.opacity]="item.quantity <= 1 ? '0.35' : '1'"
-                            aria-label="Giảm số lượng">
-                            <i class="bi bi-dash"></i>
-                          </button>
-                          <span style="min-width:32px;text-align:center;font-size:13px;font-weight:700;color:#1e293b;padding:0 3px">
-                            {{ item.quantity }}
-                          </span>
-                          <button type="button" (click)="increaseQty($index)"
-                            style="width:28px;height:28px;border:none;background:#f1f5f9;font-weight:bold;cursor:pointer;color:#334155;display:flex;align-items:center;justify-content:center"
-                            aria-label="Tăng số lượng">
-                            <i class="bi bi-plus"></i>
-                          </button>
-                        </div>
-                      </div>
-
-                      @if (p.lineSaving > 0) {
-                        <div style="font-size:11.5px;color:#94a3b8;text-decoration:line-through;margin-top:4px">
-                          {{ formatPrice(p.lineOriginalTotal) }}
-                        </div>
-                        <div style="font-size:11.5px;color:#16a34a;font-weight:700;margin-top:1px">
-                          Tiết kiệm {{ formatPrice(p.lineSaving) }}
-                        </div>
-                      }
-                    </div>
-                  </div>
-
-                  @if (item.product.isCombo && item.product.comboItems?.length) {
-                    <div style="margin-top:12px;padding:10px 12px;background:#f8fbf7;border:1px solid #dcfce7;border-radius:10px">
-                      <div style="font-weight:700;color:#166534;font-size:12.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px">
-                        <i class="bi bi-check2"></i>
-                        Gồm {{ item.product.comboItems?.length }} sản phẩm trong combo này:
-                      </div>
-                      <div style="display:flex;flex-direction:column;gap:6px">
-                        @for (ci of item.product.comboItems; track $index) {
-                          <div style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:#ffffff;border:1px solid #eef2ed;border-radius:8px">
-                            <img
-                              [src]="getComboItemImage(ci) || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&q=80'"
-                              alt=""
-                              style="width:36px;height:36px;border-radius:6px;object-fit:cover;border:1px solid #e2e8f0;flex-shrink:0"
-                            />
-                            <div style="flex:1;min-width:0">
-                              <span style="font-size:13.5px;font-weight:600;color:#1e293b;line-height:1.3;display:block">
-                                {{ getComboItemName(ci) }}
-                              </span>
-                            </div>
-                            <div style="flex-shrink:0;text-align:right">
-                              <span style="font-size:13.5px;font-weight:700;color:#15803d">
-                                {{ getComboItemPrice(ci) }}
-                              </span>
-                            </div>
-                          </div>
-                        }
-                      </div>
-                    </div>
-                  }
+          <!-- Danh sách cửa hàng khi chọn Đến lấy trực tiếp -->
+          @if (shippingMethod() === 'pickup') {
+            <div class="checkout-store-branches-wrap">
+              <div class="store-branches-title">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <i class="bi bi-shop" style="font-size:17px" aria-hidden="true"></i>
+                  <span>Chọn cửa hàng Evergreen Mart đến nhận hàng:</span>
                 </div>
-              }
-            </div>
-
-            <!-- Voucher Section -->
-            <div style="border-top:1px solid var(--xanh-line);padding-top:16px;margin-bottom:16px">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-                <label style="font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px">
-                  <i class="bi bi-ticket-perforated" style="color:var(--xanh-moss)"></i>
-                  <span>Mã giảm giá / Ưu đãi</span>
-                </label>
-                <button type="button" (click)="showVoucherPicker.set(!showVoucherPicker())"
-                  style="background:none;border:none;color:var(--xanh-moss);font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;padding:0">
-                  {{ showVoucherPicker() ? 'Ẩn danh sách' : 'Chọn ưu đãi (' + checkoutVoucherOptions().length + ')' }}
-                </button>
+                <span class="store-branches-count">({{ filteredStoreBranches().length }} điểm nhận)</span>
               </div>
 
-              @if (checkoutVoucherOptions().length > 0) {
-                <div style="margin-bottom:10px">
-                  <select [value]="selectedVoucher()?.code || ''"
-                    (change)="onSelectVoucherDropdown($any($event.target).value)"
-                    style="width:100%;padding:9px 10px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm);font-size:13px;background:#fafaf8;cursor:pointer">
-                    <option value="">-- Chọn nhanh ưu đãi áp dụng --</option>
-                    @for (opt of checkoutVoucherOptions(); track opt.voucher.code) {
-                      <option [value]="opt.voucher.code" [disabled]="!opt.isEligible">
-                        {{ opt.inWallet ? '★ [Ví của bạn] ' : '' }}{{ opt.voucher.code }} — {{ opt.voucher.name }}
-                        {{ opt.isEligible ? '(-' + formatPrice(opt.estimatedDiscount) + ')' : '(Đơn tối thiểu ' + formatPrice(opt.voucher.minValue || 0) + ')' }}
-                      </option>
+              <!-- Thanh lọc Tỉnh/Thành & Tìm kiếm chi nhánh -->
+              <div class="store-filter-bar">
+                <div class="store-filter-col store-filter-select-wrap">
+                  <select
+                    class="store-filter-select"
+                    [ngModel]="pickupProvinceFilter()"
+                    (ngModelChange)="pickupProvinceFilter.set($event)"
+                    [ngModelOptions]="{ standalone: true }"
+                  >
+                    <option value="all" [selected]="pickupProvinceFilter() === 'all'">Tất cả khu vực / Tỉnh thành</option>
+                    @if (hasEnteredCustomerAddress() && !customerMatchedPickupProvince()) {
+                      <option value="__UNSERVED__" [selected]="pickupProvinceFilter() === '__UNSERVED__'">{{ customerAddressProvinceLabel() }} (chưa có cửa hàng)</option>
+                    }
+                    @for (prov of pickupProvinces(); track prov) {
+                      <option [value]="prov" [selected]="pickupProvinceFilter() === prov">{{ prov }}</option>
                     }
                   </select>
                 </div>
-              }
+                <div class="store-filter-col store-filter-input-wrap">
+                  <i class="bi bi-search store-filter-search-icon" style="font-size:14px" aria-hidden="true"></i>
+                  <input
+                    type="text"
+                    class="store-filter-input"
+                    placeholder="Tìm theo tên kho, đường, quận..."
+                    [value]="pickupSearchQuery()"
+                    (input)="pickupSearchQuery.set($any($event.target).value)"
+                  />
+                  @if (pickupSearchQuery()) {
+                    <button type="button" class="store-filter-clear-btn" (click)="pickupSearchQuery.set('')" aria-label="Xóa">
+                      <i class="bi bi-x-lg" style="font-size:11px" aria-hidden="true"></i>
+                    </button>
+                  }
+                </div>
+              </div>
 
-              @if (showVoucherPicker() && checkoutVoucherOptions().length > 0) {
-                <div style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;margin-bottom:10px;padding:8px;background:#f8faf7;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)">
-                  @for (opt of checkoutVoucherOptions(); track opt.voucher.code) {
-                    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;background:#fff;border-radius:6px;border:1px solid var(--xanh-line)"
-                      [style.border-color]="selectedVoucher()?.code === opt.voucher.code ? 'var(--xanh-moss)' : 'var(--xanh-line)'"
-                      [style.opacity]="opt.isEligible ? '1' : '0.6'">
-                      <div style="min-width:0;flex:1">
-                        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                          <strong style="font-size:12px;font-family:monospace;background:#eef5eb;color:var(--xanh-moss);padding:2px 6px;border-radius:4px">{{ opt.voucher.code }}</strong>
-                          @if (opt.inWallet) {
-                            <span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:4px;font-weight:600">Đã lưu trong ví</span>
+              <div class="store-branches-grid">
+                @for (store of filteredStoreBranches(); track store.id) {
+                  <div
+                    class="store-branch-card"
+                    [class.is-selected]="selectedPickupStoreId() === store.id"
+                    (click)="selectPickupStore(store)"
+                  >
+                    <div class="store-branch-radio">
+                      <input
+                        type="radio"
+                        name="pickupStoreChoice"
+                        [value]="store.id"
+                        [checked]="selectedPickupStoreId() === store.id"
+                        (change)="selectPickupStore(store)"
+                      />
+                    </div>
+                    <div class="store-branch-details">
+                      <div class="store-branch-head">
+                        <strong class="store-branch-name">{{ store.name }}</strong>
+                        @if (store.isHeadquarter) {
+                          <span class="store-hq-badge">Trụ sở chính</span>
+                        }
+                      </div>
+                      <div class="store-branch-addr">
+                        <i class="bi bi-geo-alt" style="font-size:14px" aria-hidden="true"></i>
+                        <span>{{ store.address }}</span>
+                      </div>
+                      <div class="store-branch-meta">
+                        <span class="store-meta-item">
+                          <i class="bi bi-clock" style="font-size:13px" aria-hidden="true"></i>
+                          {{ store.openingHours }}
+                        </span>
+                        <span class="store-meta-sep">•</span>
+                        <span class="store-meta-item">
+                          <i class="bi bi-telephone" style="font-size:13px" aria-hidden="true"></i>
+                          {{ store.phone }}
+                        </span>
+                        <span class="store-meta-sep">•</span>
+                        <span class="store-ready-pill">{{ store.readyTime }}</span>
+                      </div>
+                    </div>
+                  </div>
+                }
+                @if (filteredStoreBranches().length === 0) {
+                  <div class="store-branches-empty">
+                    <i class="bi bi-slash-circle" style="color:#94a3b8;font-size:32px" aria-hidden="true"></i>
+                    @if (pickupProvinceFilter() === '__UNSERVED__') {
+                      <p style="margin:8px 0 4px 0;font-weight:600;color:#475569">
+                        Hiện Evergreen Mart chưa có cửa hàng tại {{ customerAddressProvinceLabel() }}
+                      </p>
+                      <span style="font-size:12.5px;color:#64748b;display:block;margin-bottom:10px">
+                        Bạn có thể chọn tỉnh/thành lân cận trên ô lọc hoặc xem toàn bộ cửa hàng đang mở.
+                      </span>
+                      <button
+                        type="button"
+                        (click)="pickupProvinceFilter.set('all')"
+                        style="padding:7px 14px;background:#16a34a;color:#fff;border:none;border-radius:7px;font-size:12.5px;font-weight:600;cursor:pointer"
+                      >
+                        Xem tất cả {{ storeBranches.length }} cửa hàng toàn quốc
+                      </button>
+                    } @else {
+                      <p style="margin:8px 0 2px 0;font-weight:600;color:#475569">Không tìm thấy cửa hàng phù hợp</p>
+                      <span style="font-size:12.5px;color:#94a3b8">Vui lòng chọn khu vực khác hoặc điều chỉnh từ khóa tìm kiếm.</span>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Giao hàng tận nơi: Thẻ địa chỉ nhận hàng + Chọn thời gian giao hàng -->
+          @if (shippingMethod() === 'delivery') {
+          <div style="display:flex;flex-direction:column;gap:16px">
+
+            <!-- Thẻ địa chỉ nhận hàng Bách Hoá XANH style -->
+            <div class="bhx-address-summary-card">
+              @if (shippingAddr()) {
+                <div class="bhx-address-row" (click)="openAddressModal()">
+                  <div class="bhx-address-text-group">
+                    <div class="bhx-addr-line">
+                      <span class="bhx-addr-lbl">Địa chỉ:</span>
+                      <strong class="bhx-addr-val">{{ shippingAddr() }}</strong>
+                    </div>
+                    <div class="bhx-receiver-line">
+                      {{ receiverSummary() }}
+                    </div>
+                  </div>
+                  <i class="bi bi-chevron-right bhx-arrow-icon" style="font-size:18px"></i>
+                </div>
+
+                <div class="bhx-dispatch-row" (click)="openAddressModal()">
+                  <div class="bhx-dispatch-content">
+                    <span class="bhx-dispatch-lbl">Giao từ:</span>
+                    <span class="bhx-dispatch-val">{{ nearestWarehouseDisplay() }}</span>
+                  </div>
+                  <i class="bi bi-chevron-right bhx-arrow-icon" style="font-size:18px"></i>
+                </div>
+              } @else {
+                <div class="bhx-empty-address-box" (click)="openAddressModal()">
+                  <div class="bhx-empty-left">
+                    <div class="bhx-empty-pin-circle">
+                      <i class="bi bi-geo-alt" style="font-size:20px"></i>
+                    </div>
+                    <div>
+                      <strong class="bhx-empty-title">Chưa có thông tin nhận hàng</strong>
+                      <p class="bhx-empty-desc">Nhấn để thêm địa chỉ giao tận nơi và tính phí giao hàng chính xác</p>
+                    </div>
+                  </div>
+                  <button type="button" class="bhx-btn-add-addr" (click)="openAddressModal()">+ Thêm thông tin nhận hàng</button>
+                </div>
+              }
+            </div>
+
+            <!-- Thanh thông báo nấc Freeship & nút CTA mua thêm sản phẩm -->
+            <div style="padding: 10px 14px; background: #eff6eb; border: 1px solid #bdd982; border-radius: 8px; font-size: 13px; color: #203d0b; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap">
+              <span style="font-weight: 500; flex: 1; min-width: 220px">{{ freeshipProgress().text }}</span>
+              @if (!freeshipProgress().qualifiedMax) {
+                <a
+                  routerLink="/online-ordering"
+                  style="padding: 6px 12px; background: #16a34a; color: #fff; border-radius: 7px; font-size: 12.5px; font-weight: 600; text-decoration: none; white-space: nowrap"
+                >
+                  Mua thêm sản phẩm
+                </a>
+              }
+            </div>
+
+            <!-- Cảnh báo nếu địa chỉ vượt quá bán kính tối đa 20km -->
+            @if (hasDeliveryLocation() && shippingUnsupported()) {
+              <div style="padding: 14px 16px; background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 10px; color: #991b1b; display: flex; flex-direction: column; gap: 10px">
+                <div style="display: flex; align-items: flex-start; gap: 10px">
+                  <i class="bi bi-exclamation-circle" style="flex-shrink:0;margin-top:2px;font-size:17px"></i>
+                  <div style="font-size: 13px; line-height: 1.5">
+                    <div style="font-weight: 700; margin-bottom: 3px">Vượt quá phạm vi giao hàng tận nơi (tối đa 20 km)</div>
+                    <div>{{ outOfRangeMessage() || ('Địa chỉ vượt quá 20 km từ ' + nearestWarehouse().name + '. Để giữ rau củ, thịt cá tươi ngon, Evergreen Mart chưa hỗ trợ giao tận nơi tới khu vực này.') }}</div>
+                    <div style="margin-top: 4px; font-size: 12px; color: #7f1d1d">
+                      <strong>Khu vực đang phục vụ (18 chi nhánh):</strong> {{ servedProvincesSummary() }}.
+                    </div>
+                  </div>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; padding-left: 28px">
+                  <button
+                    type="button"
+                    (click)="switchToPickupAtNearestStore()"
+                    style="padding: 7px 14px; background: #16a34a; color: #fff; border: none; border-radius: 7px; font-size: 12.5px; font-weight: 600; cursor: pointer"
+                  >
+                    Nhận tại {{ nearestWarehouse().name }} (Miễn phí ship)
+                  </button>
+                  <button
+                    type="button"
+                    (click)="openAddressModal()"
+                    style="padding: 7px 14px; background: #fff; color: #991b1b; border: 1px solid #fca5a5; border-radius: 7px; font-size: 12.5px; font-weight: 600; cursor: pointer"
+                  >
+                    Đổi địa chỉ khác
+                  </button>
+                </div>
+              </div>
+            }
+
+            <!-- Thông báo giao hàng xa có phụ thu (10 km < distance <= 20 km) -->
+            @if (isFarDelivery()) {
+              <div style="padding: 12px 14px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; color: #92400e; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px">
+                <div style="line-height: 1.5; flex: 1; min-width: 240px">
+                  <strong>Vùng giao xa ({{ shippingDistanceKm() }} km từ {{ nearestWarehouse().name }}):</strong>
+                  Áp dụng phụ thu bảo quản lạnh đường dài <strong>+{{ farDeliverySurcharge() | number }}đ</strong> (+5.000đ/km vượt chuẩn 10 km).
+                </div>
+                <button
+                  type="button"
+                  (click)="switchToPickupAtNearestStore()"
+                  style="padding: 6px 12px; background: #fff; color: #047857; border: 1px solid #34d399; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap"
+                >
+                  Đổi sang nhận tại cửa hàng (0đ ship)
+                </button>
+              </div>
+            }
+
+            <!-- Khối Chọn thời gian giao hàng (Chỉ mở khi đã có vị trí giao hàng hợp lệ trong phạm vi <= 20km) -->
+            @if (hasDeliveryLocation() && !shippingUnsupported()) {
+            <div class="delivery-time-widget">
+              <button
+                type="button"
+                class="delivery-time-widget-head"
+                (click)="toggleDeliveryTime()"
+              >
+                <span class="dt-head-title">Chọn thời gian giao hàng</span>
+                <i
+                  class="bi bi-chevron-up dt-chevron"
+                  [class.is-collapsed]="!deliveryTimeExpanded()"
+                  style="font-size:16px"
+                ></i>
+              </button>
+
+              @if (deliveryTimeExpanded()) {
+                <div class="delivery-time-widget-body">
+                  @if (isCalculatingShipping()) {
+                    <div style="margin-bottom: 10px; padding: 8px 12px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; font-size: 12.5px; color: #0369a1">
+                      Đang đo khoảng cách đường bộ từ kho gần nhất để tính phí ship chính xác...
+                    </div>
+                  }
+
+                      <!-- Option 1: Giao ngay (Khả dụng 07:00 - 21:15) -->
+                      <label
+                        class="dt-choice-card"
+                        [class.is-active]="selectedDeliveryType() === 'instant'"
+                        [class.is-disabled]="!instantDeliveryInfo().isAvailable"
+                        [style.cursor]="!instantDeliveryInfo().isAvailable ? 'not-allowed' : 'pointer'"
+                        [style.opacity]="!instantDeliveryInfo().isAvailable ? '0.6' : '1'"
+                        (click)="instantDeliveryInfo().isAvailable && setDeliveryType('instant')"
+                      >
+                        <div class="dt-choice-left">
+                          <input
+                            type="radio"
+                            name="deliveryTypeChoice"
+                            value="instant"
+                            [disabled]="!instantDeliveryInfo().isAvailable"
+                            [checked]="selectedDeliveryType() === 'instant'"
+                            (change)="setDeliveryType('instant')"
+                          />
+                          <div>
+                            <span class="dt-choice-title dt-orange">
+                              Giao ngay
+                            </span>
+                            @if (instantDeliveryInfo().isAvailable) {
+                              <span style="font-size:12px;color:#16a34a;margin-left:6px;font-weight:500">
+                                (35 - 45 phút, dự kiến {{ instantDeliveryInfo().expectedTimeStr }})
+                              </span>
+                            } @else {
+                              <span style="font-size:11.5px;color:#dc2626;margin-left:6px;display:block">
+                                {{ instantDeliveryInfo().unavailableReason }}
+                              </span>
+                            }
+                          </div>
+                        </div>
+                        <div class="dt-choice-right">
+                          @if (instantDeliveryInfo().isFreeship) {
+                            <del class="dt-old-price">{{ instantDeliveryInfo().originalPrice | number }}đ</del>
+                            <strong class="dt-freeship-badge">Freeship</strong>
+                          } @else if (instantDeliveryInfo().finalPrice < instantDeliveryInfo().originalPrice) {
+                            <del class="dt-old-price">{{ instantDeliveryInfo().originalPrice | number }}đ</del>
+                            <strong class="dt-price">{{ instantDeliveryInfo().finalPrice | number }}đ</strong>
+                          } @else {
+                            <strong class="dt-price">{{ instantDeliveryInfo().finalPrice | number }}đ</strong>
                           }
                         </div>
-                        <div style="font-size:12px;font-weight:600;margin-top:3px;color:var(--xanh-ink)">{{ opt.voucher.name }}</div>
-                        <div style="font-size:11px;color:var(--xanh-muted)">
-                          @if (opt.isEligible) {
-                            Giảm {{ formatPrice(opt.estimatedDiscount) }}
+                      </label>
+
+                      <!-- Option 2: Giao hàng tiết kiệm (trong 24h) -->
+                      <label
+                        class="dt-choice-card"
+                        [class.is-active]="selectedDeliveryType() === 'standard'"
+                        (click)="setDeliveryType('standard')"
+                      >
+                        <div class="dt-choice-left">
+                          <input
+                            type="radio"
+                            name="deliveryTypeChoice"
+                            value="standard"
+                            [checked]="selectedDeliveryType() === 'standard'"
+                            (change)="setDeliveryType('standard')"
+                          />
+                          <div>
+                            <span class="dt-choice-title">
+                              Giao hàng tiết kiệm (trong 24h)
+                            </span>
+                            <span style="font-size:11.5px;color:#64748b;display:block;margin-top:1px">
+                              Bảo quản thùng xốp đá gel lạnh tiêu chuẩn
+                            </span>
+                          </div>
+                        </div>
+                        <div class="dt-choice-right">
+                          @if (standardDeliveryInfo().isFreeship) {
+                            <del class="dt-old-price">{{ standardDeliveryInfo().originalPrice | number }}đ</del>
+                            <strong class="dt-freeship-badge">Freeship</strong>
+                          } @else if (standardDeliveryInfo().finalPrice < standardDeliveryInfo().originalPrice) {
+                            <del class="dt-old-price">{{ standardDeliveryInfo().originalPrice | number }}đ</del>
+                            <strong class="dt-price">{{ standardDeliveryInfo().finalPrice | number }}đ</strong>
                           } @else {
-                            Cần đơn tối thiểu {{ formatPrice(opt.voucher.minValue || 0) }}
+                            <strong class="dt-price">{{ standardDeliveryInfo().finalPrice | number }}đ</strong>
+                          }
+                        </div>
+                      </label>
+
+                      <!-- Option 3: Tuỳ chọn khung giờ nhận hàng -->
+                      <div
+                        class="dt-timeslot-box"
+                        [class.is-active]="selectedDeliveryType() === 'timeslot'"
+                      >
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                          <div class="dt-timeslot-box-title" style="margin-bottom:0">Tuỳ chọn khung giờ nhận hàng</div>
+                          <span style="font-size:11px;color:#047857;background:#ecfdf5;border:1px solid #a7f3d0;padding:2px 8px;border-radius:12px;font-weight:600">
+                            Cửa hàng mở 07:00 - 22:00
+                          </span>
+                        </div>
+
+                        <!-- 2 tab: Hôm nay (DD/MM) / Ngày mai (DD/MM) -->
+                        <div class="dt-day-tabs">
+                          <button
+                            type="button"
+                            class="dt-day-tab"
+                            [class.is-active]="selectedDeliveryDay() === 'today'"
+                            (click)="setDeliveryDay('today')"
+                          >
+                            Hôm nay ({{ deliveryDates().todayStr }})
+                          </button>
+                          <button
+                            type="button"
+                            class="dt-day-tab"
+                            [class.is-active]="selectedDeliveryDay() === 'tomorrow'"
+                            (click)="setDeliveryDay('tomorrow')"
+                          >
+                            Ngày mai ({{ deliveryDates().tomorrowStr }})
+                          </button>
+                        </div>
+
+                        <!-- Cảnh báo nếu hôm nay đã hết khung giờ khả dụng -->
+                        @if (selectedDeliveryDay() === 'today' && !hasAvailableSlotsToday()) {
+                          <div style="margin: 10px 0; padding: 10px 12px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; font-size: 12.5px; color: #92400e; display: flex; align-items: center; gap: 8px">
+                            <i class="bi bi-clock" style="flex-shrink:0"></i>
+                            <span>Các khung giờ hôm nay đã kết thúc nhận đơn. Quý khách vui lòng chọn tab <strong>Ngày mai</strong> để nhận hàng tươi ngon sớm nhất!</span>
+                          </div>
+                        }
+
+                        <!-- Danh sách khung giờ có cuộn dọc -->
+                        <div class="dt-timeslot-list-scroll">
+                          @for (slot of availableTimeSlots(); track slot.label) {
+                            <label
+                              class="dt-timeslot-row"
+                              [class.is-selected]="selectedDeliveryType() === 'timeslot' && selectedTimeSlot() === slot.label"
+                              [class.is-disabled]="!slot.isAvailable"
+                              [style.cursor]="!slot.isAvailable ? 'not-allowed' : 'pointer'"
+                              [style.opacity]="!slot.isAvailable ? '0.55' : '1'"
+                              [style.background]="!slot.isAvailable ? '#f8fafc' : '#fff'"
+                              (click)="slot.isAvailable && setTimeSlot(slot.label)"
+                            >
+                              <div class="dt-slot-left">
+                                <input
+                                  type="radio"
+                                  name="slotChoice"
+                                  [value]="slot.label"
+                                  [disabled]="!slot.isAvailable"
+                                  [checked]="selectedDeliveryType() === 'timeslot' && selectedTimeSlot() === slot.label"
+                                  (change)="setTimeSlot(slot.label)"
+                                />
+                                <strong class="dt-slot-label" [style.color]="!slot.isAvailable ? '#64748b' : '#1e293b'">
+                                  {{ slot.label }}
+                                </strong>
+                              </div>
+                              <div class="dt-slot-right">
+                                @if (!slot.isAvailable) {
+                                  <span style="font-size:11.5px;color:#64748b;background:#f1f5f9;padding:2px 8px;border-radius:4px;font-weight:600">
+                                    {{ slot.unavailableReason || 'Đã qua khung giờ' }}
+                                  </span>
+                                } @else if (slot.isFreeship) {
+                                  <del class="dt-old-price">{{ slot.originalPrice | number }}đ</del>
+                                  <strong class="dt-freeship-badge">Freeship</strong>
+                                } @else if (slot.finalPrice < slot.originalPrice) {
+                                  <del class="dt-old-price">{{ slot.originalPrice | number }}đ</del>
+                                  <strong style="color:#16a34a;font-weight:700">{{ slot.finalPrice | number }}đ</strong>
+                                } @else {
+                                  <strong style="color:#1e293b;font-weight:700">{{ slot.finalPrice | number }}đ</strong>
+                                }
+                              </div>
+                            </label>
                           }
                         </div>
                       </div>
-                      <button type="button" (click)="selectOfferCode(opt.voucher.code)" [disabled]="!opt.isEligible"
-                        style="padding:6px 10px;font-size:12px;font-weight:600;border-radius:4px;border:none;cursor:pointer;white-space:nowrap"
-                        [style.background]="selectedVoucher()?.code === opt.voucher.code ? '#166534' : (opt.isEligible ? 'var(--xanh-moss)' : '#d1d5db')"
-                        [style.color]="'#fff'">
-                        {{ selectedVoucher()?.code === opt.voucher.code ? 'Đang dùng' : 'Áp dụng' }}
-                      </button>
+                </div>
+              }
+            </div>
+            }
+          </div>
+          }
+        </div>
+
+        <!-- 3. Thanh toán -->
+        <div style="background:#fff;padding:28px;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line)">
+          <h3 style="margin:0 0 16px 0;font-size:18px">3. Phương thức thanh toán</h3>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer">
+              <input type="radio" name="payment" value="cod" [checked]="paymentMethod()==='cod'"
+                (change)="paymentMethod.set('cod')" />
+              <span>Thanh toán khi nhận hàng (COD / Tiền mặt)</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer">
+              <input type="radio" name="payment" value="bank_transfer" [checked]="paymentMethod()==='bank_transfer'"
+                (change)="paymentMethod.set('bank_transfer')" />
+              <span>Chuyển khoản ngân hàng / QR Code</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary sidebar -->
+      <div
+        style="background:#fff;padding:28px;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line);height:fit-content">
+        <h3 style="margin:0 0 16px 0;font-size:18px">Đơn hàng ({{ checkoutItems().length }} món)</h3>
+        <div style="display:flex;flex-direction:column;gap:12px;max-height:480px;overflow-y:auto;margin-bottom:16px;padding-right:2px">
+          @for (item of checkoutItems(); track itemKey(item)) {
+          @let p = itemPricing(item);
+          @let maxStock = getCheckoutItemMaxStock(item);
+          @let stockWarn = getCheckoutItemStockWarning(item);
+          <div style="padding:14px;border:1px solid #eef2ed;border-radius:12px;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.02)"
+               [style.borderColor]="stockWarn ? '#fca5a5' : '#eef2ed'"
+               [style.background]="stockWarn ? '#fffafa' : '#ffffff'">
+            <!-- Header hàng: Ảnh + Tên + Giá -->
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+              <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
+                <img
+                  [src]="item.product.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=120&q=80'"
+                  [alt]="item.product.name"
+                  style="width:52px;height:52px;object-fit:cover;border-radius:10px;border:1px solid #e2e8f0;flex-shrink:0;background:#f8faf7"
+                  loading="lazy"
+                />
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                    @if (p.itemType === 'combo') {
+                      <span style="display:inline-block;padding:2px 7px;background:#ecfdf5;color:#15803d;border:1px solid #86efac;border-radius:4px;font-size:10.5px;font-weight:700;white-space:nowrap">COMBO TIẾT KIỆM</span>
+                    } @else if (p.itemType === 'addon') {
+                      <span style="display:inline-block;padding:2px 7px;background:#eff6eb;color:#203d0b;border:1px solid #bdd982;border-radius:4px;font-size:10.5px;font-weight:700;white-space:nowrap">MUA KÈM TIẾT KIỆM</span>
+                    } @else if (p.discountedByAddon) {
+                      <span style="display:inline-block;padding:2px 7px;background:#fef9c3;color:#854d0e;border:1px solid #fde047;border-radius:4px;font-size:10.5px;font-weight:700;white-space:nowrap">ƯU ĐÃI MUA KÈM</span>
+                    } @else if (isMainOfAddon(item)) {
+                      <span style="display:inline-block;padding:2px 7px;background:#ecfdf5;color:#15803d;border:1px solid #86efac;border-radius:4px;font-size:10.5px;font-weight:700;white-space:nowrap">SẢN PHẨM CHÍNH</span>
+                    } @else {
+                      <span style="display:inline-block;padding:1.5px 6px;background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;border-radius:4px;font-size:10px;font-weight:600;white-space:nowrap">MUA LẺ</span>
+                    }
+                    <span style="font-weight:700;font-size:15px;color:#0f381e;line-height:1.3" [title]="item.product.name">
+                      {{ item.product.name }}
+                    </span>
+                  </div>
+                  @if (p.relationLabel) {
+                    <div style="font-size:11.5px;color:#1e532b;font-weight:600;margin-top:2px">{{ p.relationLabel }}</div>
+                  }
+                  @if (item.selectedOption) {
+                    <div style="font-size:12px;color:#64748b;margin-top:2px">{{ item.selectedOption }}</div>
+                  }
+                  <!-- Thanh tăng/giảm số lượng sản phẩm -->
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px">
+                    <div style="display:inline-flex;align-items:center;border:1px solid #cbd5e1;border-radius:7px;background:#f8fafc;overflow:hidden">
+                      <button
+                        type="button"
+                        (click)="adjustCheckoutItemQty(item, -1)"
+                        [disabled]="item.quantity <= 1"
+                        [style.opacity]="item.quantity <= 1 ? '0.4' : '1'"
+                        [style.cursor]="item.quantity <= 1 ? 'not-allowed' : 'pointer'"
+                        aria-label="Giảm số lượng"
+                        style="width:28px;height:26px;border:none;background:transparent;font-size:15px;font-weight:700;color:#1e293b;display:flex;align-items:center;justify-content:center;padding:0"
+                      >−</button>
+                      <span style="min-width:28px;text-align:center;font-size:13px;font-weight:700;color:#0f381e;background:#fff;height:26px;line-height:26px;border-left:1px solid #e2e8f0;border-right:1px solid #e2e8f0;padding:0 6px">
+                        {{ item.quantity }}
+                      </span>
+                      <button
+                        type="button"
+                        (click)="adjustCheckoutItemQty(item, 1)"
+                        [disabled]="maxStock <= 0 || item.quantity >= maxStock"
+                        [style.opacity]="(maxStock <= 0 || item.quantity >= maxStock) ? '0.4' : '1'"
+                        [style.cursor]="(maxStock <= 0 || item.quantity >= maxStock) ? 'not-allowed' : 'pointer'"
+                        aria-label="Tăng số lượng"
+                        style="width:28px;height:26px;border:none;background:transparent;font-size:15px;font-weight:700;color:#1e293b;display:flex;align-items:center;justify-content:center;padding:0"
+                      >+</button>
+                    </div>
+                    @if (maxStock > 0 && maxStock < 99) {
+                      <span style="font-size:11.5px;color:#64748b">Kho còn {{ maxStock }}</span>
+                    }
+                  </div>
+                </div>
+              </div>
+              <div style="white-space:nowrap;text-align:right;flex-shrink:0">
+                <div style="font-size:13px;color:#64748b;font-weight:500;margin-bottom:2px">
+                  {{ formatPrice(p.effectiveUnitPrice) }} × {{ item.quantity }}
+                </div>
+                <div style="font-size:16px;font-weight:800;color:#047857">
+                  {{ formatPrice(p.linePayableTotal) }}
+                </div>
+                @if (p.lineSaving > 0) {
+                  <div style="font-size:11.5px;color:#94a3b8;text-decoration:line-through">
+                    {{ formatPrice(p.lineOriginalTotal) }}
+                  </div>
+                  <div style="font-size:11.5px;color:#16a34a;font-weight:700;margin-top:1px">
+                    Tiết kiệm {{ formatPrice(p.lineSaving) }}
+                  </div>
+                }
+              </div>
+            </div>
+            @if (stockWarn) {
+              <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 10px;border-radius:8px;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;font-size:12px;font-weight:600;line-height:1.4">
+                <span style="display:inline-flex;align-items:center;gap:6px"><i class="bi bi-exclamation-triangle-fill"></i> {{ stockWarn }}</span>
+                @if (maxStock <= 0) {
+                  <button type="button" (click)="removeOutOfStockItem(item)" style="border:none;background:none;color:#b91c1c;text-decoration:underline;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;padding:0;flex-shrink:0">
+                    {{ isBuyNowMode() ? 'Chọn món khác' : 'Bỏ sản phẩm' }}
+                  </button>
+                }
+              </div>
+            }
+
+            <!-- Danh sách sản phẩm thành phần trong combo (Hiển thị rộng rãi, rõ ràng) -->
+            @if (item.product.isCombo && item.product.comboItems?.length) {
+              <div style="margin-top:12px;padding:10px 12px;background:#f8fbf7;border:1px solid #dcfce7;border-radius:10px">
+                <div style="font-weight:700;color:#166534;font-size:12.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+                  <i class="bi bi-check-lg" style="font-size:14px"></i>
+                  Gồm {{ item.product.comboItems?.length }} sản phẩm trong combo này:
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  @for (ci of item.product.comboItems; track $index) {
+                    <div style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:#ffffff;border:1px solid #eef2ed;border-radius:8px">
+                      <img
+                        [src]="getComboItemImage(ci) || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&q=80'"
+                        alt=""
+                        style="width:36px;height:36px;border-radius:6px;object-fit:cover;border:1px solid #e2e8f0;flex-shrink:0"
+                      />
+                      <div style="flex:1;min-width:0">
+                        <span style="font-size:13.5px;font-weight:600;color:#1e293b;line-height:1.3;display:block">
+                          {{ getComboItemName(ci) }}
+                        </span>
+                      </div>
+                      <span style="padding:2px 7px;border-radius:5px;background:#eff6eb;color:#166534;font-size:12px;font-weight:700;flex-shrink:0">
+                        ×{{ getComboItemQty(ci) }}
+                      </span>
+                      <div style="flex-shrink:0;text-align:right">
+                        <span style="font-size:13.5px;font-weight:700;color:#15803d">
+                          {{ getComboItemPrice(ci) }}
+                        </span>
+                      </div>
                     </div>
                   }
                 </div>
-              }
+              </div>
+            }
+          </div>
+          }
+        </div>
 
-              <div style="display:flex;gap:8px;margin-bottom:8px">
-                <input type="text" placeholder="Nhập hoặc dán mã voucher" [value]="voucherCode()"
-                  (input)="voucherCode.set($any($event.target).value)"
-                  style="flex:1;padding:10px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)" />
-                <button type="button" (click)="applyVoucher()"
-                  style="padding:10px 16px;background:var(--xanh-moss);color:#fff;border:none;border-radius:var(--xanh-radius-sm);cursor:pointer;font-weight:600">
-                  Áp dụng
+        <!-- Khuyến mãi kép: Voucher Đơn Hàng + Voucher Miễn Phí Vận Chuyển -->
+        <div style="border-top:1px solid var(--xanh-line);padding-top:16px;margin-bottom:16px">
+          <div style="margin-bottom:12px">
+            <label style="font-size:14.5px;font-weight:700;color:#0f381e">Voucher</label>
+          </div>
+
+          <!-- 1. VOUCHER ĐƠN HÀNG / SẢN PHẨM -->
+          <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:12.5px;font-weight:600;color:#475569">Voucher giảm giá đơn hàng</span>
+            </div>
+
+            @if (orderVoucherOptions().length > 0) {
+              <button
+                type="button"
+                (click)="showOrderVoucherPicker.set(!showOrderVoucherPicker())"
+                style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm);background:#fbfcfb;cursor:pointer;transition:all 0.2s ease"
+                [style.border-color]="showOrderVoucherPicker() ? 'var(--xanh-moss)' : 'var(--xanh-line)'"
+              >
+                <span style="font-size:13px;font-weight:600;color:var(--xanh-moss)">
+                  Chọn ưu đãi đơn hàng
+                </span>
+                <i class="bi bi-chevron-down"
+                  [style.transform]="showOrderVoucherPicker() ? 'rotate(180deg)' : 'rotate(0deg)'"
+                  style="display:inline-block;transition:transform 0.25s ease;color:var(--xanh-moss);font-size:14px"></i>
+              </button>
+            }
+
+            @if (showOrderVoucherPicker() && orderVoucherOptions().length > 0) {
+              <div
+                style="display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto;margin-top:8px;padding:8px;background:#f8faf7;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)">
+                @for (opt of orderVoucherOptions(); track opt.voucher.code) {
+                  <div
+                    (click)="opt.isEligible && selectOrderVoucher(opt.voucher.code)"
+                    style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 12px;background:#fff;border-radius:6px;border:1px solid;transition:all 0.15s ease"
+                    [style.cursor]="opt.isEligible ? 'pointer' : 'not-allowed'"
+                    [style.border-color]="selectedOrderVoucher()?.code === opt.voucher.code ? '#111827' : 'var(--xanh-line)'"
+                    [style.opacity]="opt.isEligible ? '1' : '0.55'">
+                    <div style="min-width:0;flex:1">
+                      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                        <strong
+                          style="font-size:11.5px;font-family:monospace;background:#eef5eb;color:var(--xanh-moss);padding:2px 6px;border-radius:4px">
+                          {{ opt.voucher.code }}
+                        </strong>
+                        @if (opt.inWallet) {
+                          <span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:4px;font-weight:600">Đã lưu</span>
+                        }
+                      </div>
+                      <div style="font-size:12px;font-weight:600;margin-top:3px;color:var(--xanh-ink)">
+                        {{ opt.voucher.name }}
+                      </div>
+                      <div style="font-size:11.5px;color:var(--xanh-muted)">
+                        @if (opt.isEligible) {
+                          Giảm {{ formatPrice(opt.estimatedDiscount) }}
+                        } @else {
+                          Cần đơn tối thiểu {{ formatPrice(opt.voucher.minValue || 0) }}
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Hình tròn: đang chọn có chấm đen ở trong, không chọn thì tròn rỗng -->
+                    <div
+                      style="width:20px;height:20px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s ease"
+                      [style.border-color]="!opt.isEligible ? '#cbd5e1' : (selectedOrderVoucher()?.code === opt.voucher.code ? '#111827' : '#94a3b8')"
+                      [style.background]="!opt.isEligible ? '#f1f5f9' : '#fff'">
+                      @if (selectedOrderVoucher()?.code === opt.voucher.code) {
+                        <div style="width:10px;height:10px;border-radius:50%;background:#111827"></div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
+            @if (selectedOrderVoucher()) {
+              <div
+                style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12.5px;margin-top:6px">
+                <span>Mã <strong>{{ selectedOrderVoucher()?.code }}</strong>: Giảm {{ formatPrice(orderVoucherDiscount()) }}</span>
+                <button type="button" (click)="removeOrderVoucher()"
+                  style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:12px;font-weight:600;text-decoration:underline">
+                  Xóa
                 </button>
               </div>
-              @if (voucherMessage()) {
-                <div style="font-size:13px;margin-bottom:8px" [style.color]="selectedVoucher() ? '#166534' : '#c53030'">
-                  {{ voucherMessage() }}
-                </div>
-              }
-              @if (selectedVoucher()) {
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:#f0fdf4;border-radius:4px;font-size:13px">
-                  <span>Mã <strong>{{ selectedVoucher()?.code }}</strong>: Giảm {{ formatPrice(voucherDiscount()) }}</span>
-                  <button type="button" (click)="removeVoucher()"
-                    style="background:none;border:none;color:#c53030;cursor:pointer;font-size:12px;text-decoration:underline">
-                    Xóa
-                  </button>
-                </div>
-              }
+            }
+          </div>
+
+          <!-- 2. VOUCHER FREESHIP / VẬN CHUYỂN -->
+          <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:12.5px;font-weight:600;color:#475569">Voucher vận chuyển</span>
             </div>
 
-            <!-- Loyalty Points Estimate -->
-            <div style="border-top:1px solid var(--xanh-line);padding-top:16px;margin-bottom:16px">
-              <div style="display:flex;justify-content:space-between;align-items:center;font-size:14px">
-                <span style="display:flex;align-items:center;gap:6px">
-                  <i class="bi bi-star-fill" style="color:#eab308"></i>
-                  <span>Điểm dự kiến nhận</span>
+            @if (shippingVoucherOptions().length > 0) {
+              <button
+                type="button"
+                (click)="showShippingVoucherPicker.set(!showShippingVoucherPicker())"
+                style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm);background:#fbfcfb;cursor:pointer;transition:all 0.2s ease"
+                [style.border-color]="showShippingVoucherPicker() ? 'var(--xanh-moss)' : 'var(--xanh-line)'"
+              >
+                <span style="font-size:13px;font-weight:600;color:var(--xanh-moss)">
+                  Chọn ưu đãi vận chuyển
                 </span>
-                <span style="font-weight:600;color:var(--xanh-moss)">+{{ estimatedPoints() }} điểm</span>
-              </div>
-              <div style="font-size:12px;color:var(--xanh-muted);margin-top:4px">
-                1 điểm cho mỗi 1.000đ chi tiêu
-              </div>
-            </div>
+                <i class="bi bi-chevron-down"
+                  [style.transform]="showShippingVoucherPicker() ? 'rotate(180deg)' : 'rotate(0deg)'"
+                  style="display:inline-block;transition:transform 0.25s ease;color:var(--xanh-moss);font-size:14px"></i>
+              </button>
+            }
 
-            <!-- Totals -->
-            <div style="border-top:1px solid var(--xanh-line);padding-top:14px;display:flex;flex-direction:column;gap:8px">
-              @if (comboDiscount() > 0 || addonDiscount() > 0) {
-                <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#64748b">
-                  <span>Tổng giá gốc hàng hóa</span>
-                  <del>{{ formatPrice(originalSubtotal()) }}</del>
-                </div>
-                @if (comboDiscount() > 0) {
-                  <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#16a34a;font-weight:600">
-                    <span>Tiết kiệm Combo</span>
-                    <span>-{{ formatPrice(comboDiscount()) }}</span>
-                  </div>
-                }
-                @if (addonDiscount() > 0) {
-                  <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#16a34a;font-weight:600">
-                    <span>Ưu đãi Mua kèm tiết kiệm</span>
-                    <span>-{{ formatPrice(addonDiscount()) }}</span>
-                  </div>
-                }
-              }
-              <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:600">
-                <span>Tạm tính tiền hàng</span>
-                <span>{{ formatPrice(checkoutSubtotal()) }}</span>
-              </div>
+            @if (showShippingVoucherPicker() && shippingVoucherOptions().length > 0) {
+              <div
+                style="display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto;margin-top:8px;padding:8px;background:#f8faf7;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)">
+                @for (opt of shippingVoucherOptions(); track opt.voucher.code) {
+                  <div
+                    (click)="opt.isEligible && selectShippingVoucher(opt.voucher.code)"
+                    style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 12px;background:#fff;border-radius:6px;border:1px solid;transition:all 0.15s ease"
+                    [style.cursor]="opt.isEligible ? 'pointer' : 'not-allowed'"
+                    [style.border-color]="selectedShippingVoucher()?.code === opt.voucher.code ? '#111827' : 'var(--xanh-line)'"
+                    [style.opacity]="opt.isEligible ? '1' : '0.55'">
+                    <div style="min-width:0;flex:1">
+                      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                        <strong
+                          style="font-size:11.5px;font-family:monospace;background:#dcfce7;color:#15803d;padding:2px 6px;border-radius:4px">
+                          {{ opt.voucher.code }}
+                        </strong>
+                        <span style="font-size:10px;background:#eff6eb;color:#166534;padding:1px 6px;border-radius:4px;font-weight:600">
+                          Hỗ trợ ship
+                        </span>
+                      </div>
+                      <div style="font-size:12px;font-weight:600;margin-top:3px;color:var(--xanh-ink)">
+                        {{ opt.voucher.name }}
+                      </div>
+                      <div style="font-size:11.5px;color:var(--xanh-muted)">
+                        @if (opt.isEligible) {
+                          Hỗ trợ tối đa {{ formatPrice(opt.estimatedDiscount) }}
+                        } @else {
+                          Cần đơn tối thiểu {{ formatPrice(opt.voucher.minValue || 0) }}
+                        }
+                      </div>
+                    </div>
 
-              <!-- Phí giao hàng -->
-              <div style="display:flex;justify-content:space-between;align-items:center;font-size:14px">
-                <div>
-                  <span>Phí giao hàng</span>
-                  @if (shippingMethod() === 'delivery' && shippingDistanceKm() > 0) {
-                    <div style="font-size:12px;color:var(--xanh-muted)">
-                      {{ shippingDistanceKm() }} km
-                      @if (estimatedDeliveryTime()) {
-                        <span> • {{ estimatedDeliveryTime() }}</span>
+                    <!-- Hình tròn chọn Freeship -->
+                    <div
+                      style="width:20px;height:20px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s ease"
+                      [style.border-color]="!opt.isEligible ? '#cbd5e1' : (selectedShippingVoucher()?.code === opt.voucher.code ? '#111827' : '#94a3b8')"
+                      [style.background]="!opt.isEligible ? '#f1f5f9' : '#fff'">
+                      @if (selectedShippingVoucher()?.code === opt.voucher.code) {
+                        <div style="width:10px;height:10px;border-radius:50%;background:#111827"></div>
                       }
                     </div>
-                  }
-                </div>
-                <div style="text-align:right">
-                  @if (shippingMethod() === 'pickup') {
-                    <span style="color:#16a34a;font-weight:600">Miễn phí (Kho)</span>
-                  } @else if (shippingUnsupported()) {
-                    <span style="color:#dc2626;font-weight:600;font-size:13px">Ngoài bán kính</span>
-                  } @else {
-                    <div>
-                      @if (shippingDiscount() > 0) {
-                        <del style="color:var(--xanh-muted);font-size:12px;margin-right:6px">
-                          {{ formatPrice(shippingFee() + shippingDiscount()) }}
-                        </del>
-                      }
-                      <span style="font-weight:600" [style.color]="shippingFee() === 0 ? '#16a34a' : 'inherit'">
-                        {{ shippingFee() === 0 ? 'Miễn phí' : formatPrice(shippingFee()) }}
-                      </span>
-                    </div>
-                    @if (shippingDiscount() > 0) {
-                      <span style="font-size:11px;color:#16a34a;display:block">
-                        Đã giảm {{ formatPrice(shippingDiscount()) }}
-                      </span>
-                    }
-                  }
-                </div>
+                  </div>
+                }
               </div>
+            }
 
-              @if (voucherDiscount() > 0) {
-                <div style="display:flex;justify-content:space-between;font-size:14px;color:#166534">
-                  <span>Giảm giá</span>
-                  <span>-{{ formatPrice(voucherDiscount()) }}</span>
-                </div>
-              }
-              <div style="display:flex;justify-content:space-between;font-size:18px;font-weight:700;margin-top:8px;padding-top:8px;border-top:1px solid var(--xanh-line)">
-                <span>Tổng thanh toán</span>
-                <span>{{ formatPrice(finalTotal()) }}</span>
+            @if (selectedShippingVoucher()) {
+              <div
+                style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12.5px;margin-top:6px">
+                @if (shippingMethod() === 'delivery' && !hasDeliveryLocation()) {
+                  <span>Mã <strong>{{ selectedShippingVoucher()?.code }}</strong>: Sẵn sàng giảm tối đa {{ formatPrice(selectedShippingVoucher()?.discount || 30000) }} khi có địa chỉ</span>
+                } @else {
+                  <span>Mã <strong>{{ selectedShippingVoucher()?.code }}</strong>: Giảm {{ formatPrice(shippingVoucherDiscount()) }} ship</span>
+                }
+                <button type="button" (click)="removeShippingVoucher()"
+                  style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:12px;font-weight:600;text-decoration:underline">
+                  Xóa
+                </button>
               </div>
+            }
+          </div>
 
-              @if (shippingMethod() === 'delivery') {
-                <div style="margin-top:8px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;color:#166534;line-height:1.4;display:flex;align-items:flex-start;gap:6px">
-                  <i class="bi bi-shield-check" style="font-size:14px;flex-shrink:0;margin-top:1px"></i>
-                  <div><strong>Cam kết nông sản tươi ngon:</strong> Đóng thùng xốp/túi giữ nhiệt đá gel, xe lạnh chuyên dụng giao nhanh trong ngày.</div>
-                </div>
-              }
-            </div>
-
-            <button class="xanhla-btn-primary" type="submit" style="width:100%;position:relative;margin-top:24px"
-              [disabled]="submitting() || checkoutItems().length === 0">
-              @if (submitting()) {
-                <span style="display:inline-flex;align-items:center;gap:8px">
-                  <i class="bi bi-arrow-repeat spin-icon"></i>
-                  Đang xử lý...
-                </span>
-              } @else {
-                Hoàn tất đặt hàng
-              }
+          <!-- 3. Nhập hoặc dán mã voucher thủ công -->
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <input type="text" placeholder="Nhập hoặc dán mã voucher" [value]="voucherCode()"
+              (input)="voucherCode.set($any($event.target).value)"
+              style="flex:1;padding:9px 12px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm);font-size:13px" />
+            <button type="button" (click)="applyVoucher()"
+              style="padding:9px 16px;background:var(--xanh-moss);color:#fff;border:none;border-radius:var(--xanh-radius-sm);cursor:pointer;font-weight:600;font-size:13px">
+              Áp dụng
             </button>
           </div>
-        </form>
-      }
+          @if (voucherMessage()) {
+            <div style="font-size:12.5px;margin-top:6px" [style.color]="(selectedOrderVoucher() || selectedShippingVoucher()) ? '#166534' : '#c53030'">
+              {{ voucherMessage() }}
+            </div>
+          }
+        </div>
+
+        <!-- Loyalty Points Estimate -->
+        <div style="border-top:1px solid var(--xanh-line);padding-top:14px;margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:14px">
+            <span>Điểm dự kiến nhận</span>
+            <span style="font-weight:600;color:var(--xanh-moss)">+{{ estimatedPoints() }} điểm</span>
+          </div>
+          <div style="font-size:12px;color:var(--xanh-muted);margin-top:3px">
+            1 điểm cho mỗi 1.000đ chi tiêu
+          </div>
+        </div>
+
+        <!-- Totals & Breakdown chi tiết, minh bạch -->
+        <div style="border-top:1px solid var(--xanh-line);padding-top:14px;display:flex;flex-direction:column;gap:9px">
+          <!-- 1. TIỀN HÀNG (Giá gốc -> Giảm Combo/Mua kèm -> Giảm Voucher Đơn -> Tổng tiền hàng) -->
+          <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#475569">
+            <span>Giá gốc sản phẩm</span>
+            <span [style.text-decoration]="productDiscount() > 0 ? 'line-through' : 'none'" [style.color]="productDiscount() > 0 ? '#94a3b8' : '#334155'">
+              {{ formatPrice(originalSubtotal()) }}
+            </span>
+          </div>
+
+          @if (comboDiscount() > 0 && addonDiscount() > 0) {
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#16a34a;padding-left:8px">
+              <span>• Giảm Combo</span>
+              <span>-{{ formatPrice(comboDiscount()) }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#16a34a;padding-left:8px">
+              <span>• Giảm Mua kèm</span>
+              <span>-{{ formatPrice(addonDiscount()) }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#16a34a;font-weight:600">
+              <span>Giảm giá sản phẩm</span>
+              <span>-{{ formatPrice(productDiscount()) }}</span>
+            </div>
+          } @else if (comboDiscount() > 0) {
+            <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#16a34a;font-weight:600">
+              <span>Giảm giá sản phẩm (Combo)</span>
+              <span>-{{ formatPrice(comboDiscount()) }}</span>
+            </div>
+          } @else if (addonDiscount() > 0) {
+            <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#16a34a;font-weight:600">
+              <span>Giảm giá sản phẩm (Mua kèm)</span>
+              <span>-{{ formatPrice(addonDiscount()) }}</span>
+            </div>
+          } @else {
+            <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#64748b">
+              <span>Giảm giá sản phẩm</span>
+              <span>0đ</span>
+            </div>
+          }
+
+          @if (orderVoucherDiscount() > 0) {
+            <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#16a34a;font-weight:600">
+              <span>
+                Voucher giảm đơn hàng
+                @if (selectedOrderVoucher()) {
+                  <span style="font-size:11px;background:#ecfdf5;color:#15803d;padding:1px 6px;border-radius:4px;border:1px solid #a7f3d0;margin-left:4px">
+                    {{ selectedOrderVoucher()?.code }}
+                  </span>
+                }
+              </span>
+              <span>-{{ formatPrice(orderVoucherDiscount()) }}</span>
+            </div>
+          }
+
+          <div style="display:flex;justify-content:space-between;font-size:14.5px;font-weight:700;color:#1e293b;padding-bottom:8px;border-bottom:1px dashed #e2e8f0">
+            <span>Tổng tiền hàng</span>
+            <span>{{ formatPrice(checkoutSubtotal() - orderVoucherDiscount()) }}</span>
+          </div>
+
+          <!-- 2. PHÍ VẬN CHUYỂN (Phí gốc -> Hỗ trợ tự động -> Voucher Freeship -> Tổng tiền ship) -->
+          @if (shippingMethod() === 'delivery' && !hasDeliveryLocation()) {
+            <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#475569;margin-top:2px">
+              <span>Phí vận chuyển gốc</span>
+              <span style="color:#64748b;font-style:italic">Chờ nhập địa chỉ</span>
+            </div>
+
+            @if (selectedShippingVoucher()) {
+              <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#16a34a;padding-left:8px">
+                <span>• Voucher {{ selectedShippingVoucher()?.code }}</span>
+                <span>Áp dụng khi có địa chỉ</span>
+              </div>
+            }
+
+            <div style="display:flex;justify-content:space-between;font-size:14.5px;font-weight:700;color:#1e293b;padding-bottom:8px;border-bottom:1px dashed #e2e8f0">
+              <span>Tổng phí vận chuyển</span>
+              <span style="color:#64748b;font-size:13px;font-weight:500;font-style:italic">Chờ nhập địa chỉ</span>
+            </div>
+          } @else {
+            <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#475569;margin-top:2px">
+              <span>Phí vận chuyển gốc</span>
+              <span [style.text-decoration]="shippingDiscount() > 0 ? 'line-through' : 'none'" [style.color]="shippingDiscount() > 0 ? '#94a3b8' : '#334155'">
+                {{ formatPrice(originalShippingFee()) }}
+              </span>
+            </div>
+
+            @if (autoShippingDiscount() > 0) {
+              <div style="display:flex;justify-content:space-between;font-size:13px;color:#16a34a;padding-left:8px">
+                <span>• Hỗ trợ ship theo đơn</span>
+                <span>-{{ formatPrice(autoShippingDiscount()) }}</span>
+              </div>
+            }
+
+            @if (shippingVoucherDiscount() > 0) {
+              <div style="display:flex;justify-content:space-between;font-size:13px;color:#16a34a;padding-left:8px">
+                <span>
+                  • Voucher vận chuyển
+                  @if (selectedShippingVoucher()) {
+                    <span style="font-size:10.5px;background:#ecfdf5;color:#15803d;padding:1px 5px;border-radius:4px;border:1px solid #a7f3d0;margin-left:3px">
+                      {{ selectedShippingVoucher()?.code }}
+                    </span>
+                  }
+                </span>
+                <span>-{{ formatPrice(shippingVoucherDiscount()) }}</span>
+              </div>
+            }
+
+            <div
+              style="display:flex;justify-content:space-between;font-size:13.5px"
+              [style.color]="shippingDiscount() > 0 ? '#16a34a' : '#64748b'"
+              [style.font-weight]="shippingDiscount() > 0 ? '600' : '400'"
+            >
+              <span>Tổng giảm phí vận chuyển</span>
+              <span>
+                {{ shippingDiscount() > 0 ? '-' + formatPrice(shippingDiscount()) : '0đ' }}
+              </span>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;font-size:14.5px;font-weight:700;color:#1e293b;padding-bottom:8px;border-bottom:1px dashed #e2e8f0">
+              <span>Tổng phí vận chuyển</span>
+              @if (shippingUnsupported()) {
+                <span style="color:#dc2626;font-size:13px">Ngoài bán kính</span>
+              } @else {
+                <span>{{ formatPrice(shippingFee()) }}</span>
+              }
+            </div>
+          }
+
+          <!-- 3. TỔNG THANH TOÁN (Hàng sau voucher + Ship sau voucher) -->
+          <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:18px;font-weight:800;color:#0f381e;margin-top:6px;padding-top:8px;border-top:1px solid var(--xanh-line)">
+            <div>
+              <span>Tổng thanh toán</span>
+              @if (shippingMethod() === 'delivery' && !hasDeliveryLocation()) {
+                <div style="font-size:11.5px;font-weight:500;color:#64748b;margin-top:2px">
+                  (Chưa gồm phí vận chuyển)
+                </div>
+              }
+            </div>
+            <span style="font-size:20px;color:#16a34a">{{ formatPrice(finalTotal()) }}</span>
+          </div>
+
+          @if (shippingMethod() === 'delivery') {
+          <div style="margin-top:8px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12px;color:#166534;line-height:1.4;display:flex;align-items:flex-start;gap:7px">
+            <i class="bi bi-patch-check-fill" style="color:#16a34a;flex-shrink:0;margin-top:1px"></i>
+            <span><strong>Cam kết nông sản tươi ngon:</strong> Đóng thùng xốp/túi giữ nhiệt đá gel, xe lạnh chuyên dụng giao nhanh trong ngày.</span>
+          </div>
+          }
+        </div>
+
+        @if (checkoutStockCheck().hasIssues) {
+          <div style="margin-top:16px;padding:10px 12px;border-radius:8px;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;font-size:12.5px;font-weight:600;line-height:1.4;display:flex;align-items:flex-start;gap:7px">
+            <i class="bi bi-exclamation-triangle-fill" style="flex-shrink:0;margin-top:1px"></i>
+            <span>{{ checkoutStockCheck().firstError }} Vui lòng điều chỉnh số lượng hoặc bỏ sản phẩm hết hàng trước khi đặt đơn.</span>
+          </div>
+        }
+
+        <button class="xanhla-btn-primary" type="submit" style="width:100%;position:relative;margin-top:16px"
+          [disabled]="submitting() || checkoutItems().length === 0 || checkoutStockCheck().hasIssues"
+          [style.opacity]="(submitting() || checkoutItems().length === 0 || checkoutStockCheck().hasIssues) ? '0.55' : '1'"
+          [style.cursor]="(submitting() || checkoutItems().length === 0 || checkoutStockCheck().hasIssues) ? 'not-allowed' : 'pointer'">
+          @if (submitting()) {
+          <span style="display:inline-flex;align-items:center;gap:8px">
+            <i class="bi bi-arrow-repeat" style="display:inline-block;animation:spin .7s linear infinite;font-size:16px"></i>
+            Đang xử lý...
+          </span>
+          } @else {
+          Hoàn tất đặt hàng
+          }
+        </button>
+
+        
+      </div>
+    </form>
+    }
     }
   </div>
+
+  <!-- Modal Popup Xác nhận Quy chế Hàng tươi sống khi nhấn Đặt hàng -->
+  @if (showNonRefundableModal()) {
+    <div class="fresh-modal-backdrop" (click)="closeNonRefundableModal()">
+      <div class="fresh-modal-container" (click)="$event.stopPropagation()">
+        <button type="button" class="fresh-modal-close-btn" (click)="closeNonRefundableModal()" title="Đóng"><i class="bi bi-x-lg"></i></button>
+        
+        <div class="fresh-modal-icon-badge">
+          <i class="bi bi-shield-exclamation" style="font-size:32px;color:#b45309"></i>
+        </div>
+
+        @if (shippingMethod() === 'delivery') {
+          <!-- 1. Giao hàng tận nơi -->
+          <h3 class="fresh-modal-title">Xác nhận chính sách kiểm hàng khi nhận</h3>
+          <span class="fresh-policy-tag" style="display:inline-block;margin-bottom:14px">Đồng kiểm cùng shipper</span>
+          
+          <div class="fresh-modal-alert">
+            <i class="bi bi-exclamation-circle" style="flex-shrink:0;margin-top:2px;font-size:20px;color:#d97706"></i>
+            <div style="text-align:left">
+              <div style="margin-bottom:6px">
+                Quý khách vui lòng <strong>kiểm tra kỹ hàng hóa ngay khi nhận từ shipper</strong> và có thể <strong>từ chối nhận hoặc yêu cầu đổi ngay</strong> nếu sản phẩm bị dập nát, hư hỏng hoặc không đúng mô tả.
+              </div>
+              <div style="color:#b45309;font-weight:700">
+                Evergreen Mart không hỗ trợ đổi trả đối với thực phẩm tươi sống sau khi Quý khách đã xác nhận nhận hàng.
+              </div>
+            </div>
+          </div>
+        } @else {
+          <!-- 2. Lấy hàng tận nơi (Nhận tại cửa hàng) -->
+          <h3 class="fresh-modal-title">Xác nhận chính sách kiểm hàng tại cửa hàng</h3>
+          <span class="fresh-policy-tag" style="display:inline-block;margin-bottom:14px">Kiểm tra trước khi rời cửa hàng</span>
+          
+          <div class="fresh-modal-alert">
+            <i class="bi bi-exclamation-circle" style="flex-shrink:0;margin-top:2px;font-size:20px;color:#d97706"></i>
+            <div style="text-align:left">
+              <div style="margin-bottom:6px">
+                Quý khách vui lòng <strong>kiểm tra kỹ hàng hóa trực tiếp tại quầy</strong> trước khi rời cửa hàng và <strong>yêu cầu nhân viên hỗ trợ đổi ngay</strong> nếu phát hiện sản phẩm hư hỏng hoặc lỗi.
+              </div>
+              <div style="color:#b45309;font-weight:700">
+                Evergreen Mart không hỗ trợ đổi trả đối với thực phẩm tươi sống sau khi Quý khách đã hoàn tất nhận hàng tại cửa hàng.
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (nonRefundablePolicy().items.length > 0) {
+          <div class="fresh-modal-items-section">
+            <div class="fresh-modal-items-title">Sản phẩm áp dụng trong đơn ({{ nonRefundablePolicy().items.length }}):</div>
+            <div class="fresh-modal-items-scroll">
+              @for (fi of nonRefundablePolicy().items; track fi.name) {
+                <div class="fresh-modal-item-row">
+                  <img
+                    class="fresh-modal-item-thumb"
+                    [src]="fi.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=120&q=80'"
+                    [alt]="fi.name"
+                    loading="lazy"
+                  />
+                  <div class="fresh-modal-item-info">
+                    <span class="fresh-modal-cat-tag">{{ fi.categoryName }}</span>
+                    <span class="fresh-modal-prod-name">{{ fi.name }}</span>
+                  </div>
+                  @if (fi.quantity && fi.quantity > 0) {
+                    <span class="fresh-modal-item-qty">×{{ fi.quantity }}</span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Checkbox bắt buộc người dùng tick chọn -->
+        <label class="fresh-modal-checkbox-row">
+          <input
+            type="checkbox"
+            class="fresh-modal-checkbox-input"
+            [checked]="modalPolicyChecked()"
+            (change)="modalPolicyChecked.set($any($event.target).checked)"
+          />
+          <span class="fresh-modal-checkbox-text">
+            @if (shippingMethod() === 'delivery') {
+              Tôi đã đọc và đồng ý <strong>kiểm tra hàng ngay khi nhận từ shipper</strong>; Evergreen Mart <strong>không áp dụng đổi trả sau khi đơn hàng đã được giao nhận thành công</strong>.
+            } @else {
+              Tôi đã đọc và đồng ý <strong>kiểm tra hàng trực tiếp tại cửa hàng</strong>; Evergreen Mart <strong>không áp dụng đổi trả sau khi Quý khách đã nhận hàng và rời khỏi quầy</strong>.
+            }
+          </span>
+        </label>
+
+        <div class="fresh-modal-actions">
+          <button
+            type="button"
+            class="fresh-modal-btn-cancel"
+            (click)="closeNonRefundableModal()"
+          >
+            Xem lại đơn hàng
+          </button>
+          <button
+            type="button"
+            class="fresh-modal-btn-confirm"
+            [disabled]="!modalPolicyChecked() || submitting()"
+            (click)="confirmNonRefundableAndPlaceOrder()"
+          >
+            @if (submitting()) {
+              Đang xử lý...
+            } @else if (paymentMethod() === 'bank_transfer') {
+              Tiếp tục thanh toán QR
+            } @else {
+              Xác nhận đặt hàng
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Modal Thông tin địa chỉ nhận hàng (Bách Hoá XANH) ───────────────────── -->
+  <app-address-picker-modal
+    [open]="showAddressModal()"
+    mode="checkout"
+    [defaultReceiverName]="guestName() || cart.currentUser()?.name || 'Khách hàng'"
+    [defaultReceiverPhone]="guestPhone() || cart.currentUser()?.phone || ''"
+    [servedProvinces]="pickupProvinces()"
+    [initialAddress]="_defaultAddressObj()"
+    (closed)="closeAddressModal()"
+    (confirmed)="onCheckoutAddressConfirmed($event)"
+  ></app-address-picker-modal>
 </app-shell>
 
 <style>
-  .spin-icon {
-    display: inline-block;
-    animation: spin .7s linear infinite;
-  }
   @keyframes spin {
     to {
       transform: rotate(360deg);
