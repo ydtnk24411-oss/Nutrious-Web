@@ -10,6 +10,23 @@ const Review = require('../models/Review');
 const ShippingConfig = require('../models/ShippingConfig');
 const { protect, staffOnly } = require('../middleware/auth');
 
+const dashCache = new Map();
+function clearDashboardCache() {
+  dashCache.clear();
+}
+function getCache(key) {
+  const item = dashCache.get(key);
+  if (!item) return null;
+  if (Date.now() > item.expires) {
+    dashCache.delete(key);
+    return null;
+  }
+  return item.data;
+}
+function setCache(key, data, ttlMs = 30000) {
+  dashCache.set(key, { data, expires: Date.now() + ttlMs });
+}
+
 function buildDateFilter(startDate, endDate) {
   const filter = {};
   if (startDate && endDate) {
@@ -31,96 +48,111 @@ function buildDateFilter(startDate, endDate) {
 router.get('/stats', protect, staffOnly, async (req, res, next) => {
   try {
     const { startDate, endDate } = req.query;
+    const cacheKey = `stats_${startDate || ''}_${endDate || ''}`;
+    const cached = getCache(cacheKey);
+    if (cached) return res.json(cached);
+
     const dateFilter = buildDateFilter(startDate, endDate);
     const now = new Date();
 
     const [
-      totalProducts,
-      totalOrders,
+      stockAgg,
+      orderAgg,
       totalUsers,
-      pendingOrders,
-      revenue,
-      validOrdersCount,
       recentOrders,
-      ordersByStatus,
-      lowStockCount,
-      outOfStockCount,
       pendingComplaintsCount,
       waitingSupportCount,
       activeVouchersCount,
-      reviews,
+      reviewsAgg,
     ] = await Promise.all([
-      Product.countDocuments({ isActive: { $ne: false } }),
-      Order.countDocuments(dateFilter),
-      User.countDocuments({ role: 'customer' }),
-      Order.countDocuments({ ...dateFilter, status: 'pending' }),
+      Product.aggregate([
+        { $match: { isActive: { $ne: false } } },
+        {
+          $group: {
+            _id: null,
+            totalProducts: { $sum: 1 },
+            lowStockCount: {
+              $sum: { $cond: [{ $and: [{ $gt: ['$stock', 0] }, { $lte: ['$stock', 10] }] }, 1, 0] },
+            },
+            outOfStockCount: {
+              $sum: { $cond: [{ $lte: ['$stock', 0] }, 1, 0] },
+            },
+          },
+        },
+      ]).option({ maxTimeMS: 6000 }),
 
-      // Total revenue from all active orders (not cancelled)
-      Order.aggregate([
-        { $match: { ...dateFilter, status: { $ne: 'cancelled' } } },
-        { $group: { _id: null, total: { $sum: '$total' } } },
-      ]),
-
-      // Count valid orders for average calculation
-      Order.countDocuments({ ...dateFilter, status: { $ne: 'cancelled' } }),
-
-      // Last 5 orders
-      Order.find(dateFilter).sort({ createdAt: -1 }).limit(5)
-        .select('orderCode guestName total status createdAt'),
-
-      // Orders by status breakdown
       Order.aggregate([
         { $match: dateFilter },
-        { $group: { _id: '$status', count: { $sum: 1 } } },
-      ]),
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 },
+            revenue: { $sum: { $cond: [{ $ne: ['$status', 'cancelled'] }, '$total', 0] } },
+            validCount: { $sum: { $cond: [{ $ne: ['$status', 'cancelled'] }, 1, 0] } },
+          },
+        },
+      ]).option({ maxTimeMS: 6000 }),
 
-      // Low stock count (<= 10 and > 0)
-      Product.countDocuments({ isActive: { $ne: false }, stock: { $gt: 0, $lte: 10 } }),
+      User.countDocuments({ role: 'customer' }).maxTimeMS(6000),
 
-      // Out of stock count (<= 0)
-      Product.countDocuments({ isActive: { $ne: false }, stock: { $lte: 0 } }),
+      Order.find(dateFilter)
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select('orderCode guestName total status createdAt')
+        .maxTimeMS(6000)
+        .lean(),
 
-      // Pending complaints
-      Complaint.countDocuments({ status: 'pending' }),
+      Complaint.countDocuments({ status: 'pending' }).maxTimeMS(6000),
+      Conversation.countDocuments({ status: 'WAITING_FOR_ADMIN' }).maxTimeMS(6000),
+      Voucher.countDocuments({ isActive: true, endDate: { $gte: now } }).maxTimeMS(6000),
 
-      // Waiting live chat
-      Conversation.countDocuments({ status: 'WAITING_FOR_ADMIN' }),
-
-      // Active vouchers
-      Voucher.countDocuments({ isActive: true, endDate: { $gte: now } }),
-
-      // Reviews summary
-      Review.find({ isHidden: { $ne: true } }).select('rating'),
+      Review.aggregate([
+        { $match: { isHidden: { $ne: true } } },
+        {
+          $group: {
+            _id: null,
+            averageRating: { $avg: '$rating' },
+            totalReviews: { $sum: 1 },
+          },
+        },
+      ]).option({ maxTimeMS: 6000 }),
     ]);
 
-    const averageOrderValue = validOrdersCount > 0 ? (revenue[0]?.total ?? 0) / validOrdersCount : 0;
+    const stock = stockAgg[0] || { totalProducts: 0, lowStockCount: 0, outOfStockCount: 0 };
+    const ordersByStatus = (orderAgg || []).map((o) => ({ _id: o._id, count: o.count }));
+    const totalOrders = (orderAgg || []).reduce((s, o) => s + o.count, 0);
+    const pendingOrders = (orderAgg || []).find((o) => o._id === 'pending')?.count || 0;
+    const totalRevenue = (orderAgg || []).reduce((s, o) => s + o.revenue, 0);
+    const validOrdersCount = (orderAgg || []).reduce((s, o) => s + o.validCount, 0);
+    const averageOrderValue = validOrdersCount > 0 ? Math.round(totalRevenue / validOrdersCount) : 0;
+    const reviewData = reviewsAgg[0] || { averageRating: 0, totalReviews: 0 };
+    const averageRating = reviewData.averageRating ? Math.round(reviewData.averageRating * 10) / 10 : 0;
 
-    let reviewSum = 0;
-    reviews.forEach((r) => (reviewSum += r.rating || 0));
-    const averageRating = reviews.length ? Math.round((reviewSum / reviews.length) * 10) / 10 : 0;
-
-    res.json({
+    const responseData = {
       success: true,
       data: {
-        totalProducts,
+        totalProducts: stock.totalProducts,
         totalOrders,
         totalUsers,
         pendingOrders,
-        totalRevenue: revenue[0]?.total ?? 0,
+        totalRevenue,
         averageOrderValue,
-        recentOrders,
+        recentOrders: recentOrders || [],
         ordersByStatus,
-        lowStockCount,
-        outOfStockCount,
+        lowStockCount: stock.lowStockCount,
+        outOfStockCount: stock.outOfStockCount,
         pendingComplaintsCount,
         waitingSupportCount,
         activeVouchersCount,
         reviewStats: {
           averageRating,
-          totalReviews: reviews.length,
+          totalReviews: reviewData.totalReviews,
         },
       },
-    });
+    };
+
+    setCache(cacheKey, responseData, 30000);
+    res.json(responseData);
   } catch (err) { next(err); }
 });
 
@@ -128,7 +160,10 @@ router.get('/stats', protect, staffOnly, async (req, res, next) => {
 router.get('/revenue', protect, staffOnly, async (req, res, next) => {
   try {
     const { startDate, endDate } = req.query;
-    
+    const cacheKey = `rev_${startDate || ''}_${endDate || ''}`;
+    const cached = getCache(cacheKey);
+    if (cached) return res.json(cached);
+
     const start = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 86400000);
     const end = endDate ? new Date(endDate) : new Date();
     end.setHours(23, 59, 59, 999);
@@ -179,7 +214,9 @@ router.get('/revenue', protect, staffOnly, async (req, res, next) => {
       cur.setDate(cur.getDate() + 1);
     }
 
-    res.json({ success: true, data: formattedData });
+    const responseData = { success: true, data: formattedData };
+    setCache(cacheKey, responseData, 30000);
+    res.json(responseData);
   } catch (err) { next(err); }
 });
 
@@ -187,6 +224,10 @@ router.get('/revenue', protect, staffOnly, async (req, res, next) => {
 router.get('/revenue-by-category', protect, staffOnly, async (req, res, next) => {
   try {
     const { startDate, endDate } = req.query;
+    const cacheKey = `revcat_${startDate || ''}_${endDate || ''}`;
+    const cached = getCache(cacheKey);
+    if (cached) return res.json(cached);
+
     const dateFilter = {
       ...buildDateFilter(startDate, endDate),
       status: { $ne: 'cancelled' },
@@ -232,7 +273,9 @@ router.get('/revenue-by-category', protect, staffOnly, async (req, res, next) =>
       .filter(item => item.revenue > 0)
       .sort((a, b) => b.revenue - a.revenue);
 
-    res.json({ success: true, data: result });
+    const responseData = { success: true, data: result };
+    setCache(cacheKey, responseData, 30000);
+    res.json(responseData);
   } catch (err) { next(err); }
 });
 
@@ -240,6 +283,10 @@ router.get('/revenue-by-category', protect, staffOnly, async (req, res, next) =>
 router.get('/top-products', protect, staffOnly, async (req, res, next) => {
   try {
     const { startDate, endDate, limit = 5 } = req.query;
+    const cacheKey = `topprod_${startDate || ''}_${endDate || ''}_${limit}`;
+    const cached = getCache(cacheKey);
+    if (cached) return res.json(cached);
+
     const dateFilter = {
       ...buildDateFilter(startDate, endDate),
       status: { $ne: 'cancelled' },
@@ -269,7 +316,9 @@ router.get('/top-products', protect, staffOnly, async (req, res, next) => {
       },
     ]);
 
-    res.json({ success: true, data: top });
+    const responseData = { success: true, data: top };
+    setCache(cacheKey, responseData, 30000);
+    res.json(responseData);
   } catch (err) { next(err); }
 });
 
@@ -492,4 +541,6 @@ router.get('/finance', protect, staffOnly, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+router.clearDashboardCache = clearDashboardCache;
 module.exports = router;
+module.exports.clearDashboardCache = clearDashboardCache;

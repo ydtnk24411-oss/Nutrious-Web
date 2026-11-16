@@ -1,8 +1,11 @@
 /* Header Xanh Lá — supermarket style */
 :host {
   display: block;
-  position: relative;
-  position: sticky; top: -36px; z-index: 900; width: 100%;
+  position: -webkit-sticky;
+  position: sticky;
+  top: -36px;
+  z-index: 950;
+  width: 100%;
 }
 
 /* ── Announcement bar ── */
@@ -23,7 +26,6 @@
 
 /* ── Main header ── */
 .xanhla-header {
-  top: 36px;
   height: 72px;
   padding-inline: clamp(16px, 4.5vw, 72px); background: rgba(255, 255, 255, 0.98) !important; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   background: #fff;
@@ -429,7 +431,6 @@
   }
 
   .xanhla-header {
-    top: 30px;
     padding-inline: 14px;
   }
 
@@ -1682,6 +1683,7 @@
   height: 48px;
   background: #ffffff;
   border-bottom: 1.5px solid #eef2e8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
 }
@@ -1813,6 +1815,20 @@
 @media (max-width: 960px) {
   .xanhla-header {
     height: 64px;
+    width: 100%;
+    overflow-x: clip;
+  }
+  .xl-header-container {
+    padding: 0 14px;
+    gap: 10px;
+  }
+  .xanhla-logo {
+    min-width: 0;
+    flex-shrink: 1;
+  }
+  .xanhla-brand-word {
+    font-size: 18px;
+    white-space: nowrap;
   }
   .xl-header-search-wrapper,
   .xl-action-label,
@@ -1831,5 +1847,16 @@
   }
   .xanhla-brand-tagline {
     display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .xl-topbar-right {
+    display: none;
+  }
+  .xl-topbar-inner {
+    justify-content: center;
+    text-align: center;
+    font-size: 11px;
   }
 }

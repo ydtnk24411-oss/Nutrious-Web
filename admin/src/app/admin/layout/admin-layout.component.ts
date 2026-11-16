@@ -1,5 +1,5 @@
-import { Component, signal, inject, HostListener, ViewChild, ElementRef } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router';
+import { Component, signal, computed, inject, HostListener, ViewChild, ElementRef } from '@angular/core';
+import { RouterLink, RouterOutlet, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminAuthService } from '../../shared/services/admin-auth.service';
@@ -30,7 +30,7 @@ export interface AdminNavSection {
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [CommonModule, FormsModule, RouterLink, RouterOutlet],
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.css',
 })
@@ -42,10 +42,31 @@ export class AdminLayoutComponent {
   private userApi      = inject(UserApiService);
 
   sidebarOpen = signal(true);
+  mobileNavOpen = signal(false);
   expandedMenus = signal<Record<string, boolean>>({
     products: true,
     support: true
   });
+
+  toggleMobileNav(): void {
+    this.mobileNavOpen.update(v => !v);
+  }
+
+  closeMobileNav(): void {
+    this.mobileNavOpen.set(false);
+  }
+
+  handleItemClick(item: AdminNavItem, event: Event): void {
+    if (item.children && item.children.length > 0) {
+      this.toggleSubmenu(item.id, event);
+      if (!this.isActive(item.path)) {
+        this.navigate(item.path, event);
+      }
+    } else {
+      this.navigate(item.path, event);
+      this.closeMobileNav();
+    }
+  }
 
   // Header Quick Search & Dropdown
   @ViewChild('headerSearchInput') headerSearchInput?: ElementRef<HTMLInputElement>;
@@ -238,6 +259,40 @@ export class AdminLayoutComponent {
       ]
     }
   ];
+
+  filteredNavSections = computed(() => {
+    const rawRole = (this.auth.user()?.role || '').toLowerCase();
+    const role = (rawRole === 'admin' ? 'manager' : (rawRole === 'content' ? 'marketing' : rawRole));
+
+    return this.navSections
+      .map(sec => {
+        const items = sec.items.filter(item => this.canAccessNavItem(item.id, role));
+        return { ...sec, items };
+      })
+      .filter(sec => sec.items.length > 0);
+  });
+
+  canAccessNavItem(itemId: string, role: string): boolean {
+    // 1. Manager & Admin: Toàn quyền điều hành toàn bộ phân hệ
+    if (role === 'manager' || role === 'admin') return true;
+
+    switch (role) {
+      case 'sales':
+        // 2. Sales: Vận hành luồng đơn hàng, CSKH, Tra cứu khách hàng, Xem danh sách sản phẩm, Xem số đơn Dashboard
+        return ['dashboard', 'orders', 'support', 'products', 'users'].includes(itemId);
+
+      case 'warehouse':
+        // 3. Warehouse: Quản lý tồn kho, Cấu hình vận chuyển, Đơn hàng (đóng gói & in phiếu)
+        return ['inventory', 'shipping', 'orders'].includes(itemId);
+
+      case 'marketing':
+        // 4. Marketing: Quản lý sản phẩm & danh mục, Quản lý voucher, Phân tích (top SP)
+        return ['products', 'vouchers', 'analytics'].includes(itemId);
+
+      default:
+        return false;
+    }
+  }
 
   isActive(path: string): boolean {
     const current = this.router.url.split('?')[0];

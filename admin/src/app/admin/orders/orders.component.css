@@ -191,6 +191,29 @@
   gap: 2px;
 }
 
+.ord-popover--right {
+  left: auto;
+  right: 0;
+}
+
+.ord-popover--export {
+  width: max-content;
+  min-width: 165px;
+  right: 0;
+  left: auto;
+  padding: 6px;
+  gap: 2px;
+}
+
+.ord-popover--export .ord-pop-item {
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .ord-pop-group {
   display: flex;
   flex-direction: column;

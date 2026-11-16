@@ -65,11 +65,11 @@
 
           <div class="header-titles">
             <div class="header-title-row">
-              <h3 class="xanh-chat-title">
+              <h3 class="xanh-chat-title" [title]="chat.isStaffMode() ? (chat.assignedStaffName() || 'Nhân viên tư vấn Evergreen Mart') : 'NutriBot AI'">
                 {{ chat.isStaffMode() ? (chat.assignedStaffName() || 'Nhân viên tư vấn Evergreen Mart') : 'NutriBot AI' }}
               </h3>
               <span class="header-status-pill" [class.pill-live]="chat.isStaffMode()">
-                {{ chat.isStaffMode() ? 'Live 1-1' : 'Gemini 3.5' }}
+                {{ chat.isStaffMode() ? 'Live' : 'Gemini 3.5' }}
               </span>
             </div>
             <span class="xanh-chat-status">

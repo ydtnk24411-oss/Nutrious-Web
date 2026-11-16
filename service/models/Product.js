@@ -56,6 +56,8 @@ const productSchema = new mongoose.Schema(
     options: [optionSchema],
     isActive: { type: Boolean, default: true },
     stock: { type: Number, default: 100, min: 0 },
+    reservedStock: { type: Number, default: 0, min: 0 },
+    safetyBuffer: { type: Number, default: 2, min: 0 },
     // Combo mua kèm tiết kiệm: combo là một sản phẩm riêng có giá ưu đãi
     isCombo: { type: Boolean, default: false },
     comboStatus: {
@@ -71,9 +73,21 @@ const productSchema = new mongoose.Schema(
     reviewCount: { type: Number, default: 0, min: 0 },
     soldCount: { type: Number, default: 0, min: 0 },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
 
+productSchema.virtual('availableOnlineStock').get(function () {
+  const physical = this.stock ?? 0;
+  const reserved = this.reservedStock ?? 0;
+  const buffer = this.safetyBuffer ?? 0;
+  return Math.max(0, physical - reserved - buffer);
+});
+
 productSchema.index({ name: 'text', description: 'text' });
+productSchema.index({ categoryId: 1, stock: 1 });
 
 module.exports = mongoose.model('Product', productSchema);

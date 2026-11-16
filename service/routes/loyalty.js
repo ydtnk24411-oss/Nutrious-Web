@@ -2,15 +2,15 @@ const router = require('express').Router();
 const User = require('../models/User');
 const PointTransaction = require('../models/PointTransaction');
 const { protect } = require('../middleware/auth');
-const { REWARDS, tierFor } = require('../utils/loyalty');
+const { REWARDS, tierFor, syncUserLoyalty } = require('../utils/loyalty');
 
 // GET /api/loyalty/rewards - danh sách quà đổi điểm (public)
 router.get('/rewards', (_req, res) => res.json({ success: true, data: REWARDS }));
 
-// GET /api/loyalty/my - điểm, hạng và lịch sử điểm của tài khoản đang đăng nhập
+// GET /api/loyalty/my - điểm, hạng và lịch sử điểm của tài khoản đang đăng nhập (đồng bộ chi tiêu theo đơn hàng thực tế)
 router.get('/my', protect, async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id).select('points tier totalSpent');
+    const user = await syncUserLoyalty(req.user._id);
     if (!user) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
     }

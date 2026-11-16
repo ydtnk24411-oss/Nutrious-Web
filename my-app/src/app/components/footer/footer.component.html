@@ -127,10 +127,9 @@
         </div>
         <ul class="xanhla-footer-links">
           <li>
-            <a routerLink="/complaint" (click)="scrollToTop()" class="xanhla-highlight-link">
+            <a routerLink="/complaint" (click)="scrollToTop()">
               <span class="xanhla-arrow">›</span>
               <span>Gửi khiếu nại &amp; Phản ánh</span>
-              <span class="xanhla-mini-badge">Hot</span>
             </a>
           </li>
           @for (link of utilityLinks(); track link.label) {

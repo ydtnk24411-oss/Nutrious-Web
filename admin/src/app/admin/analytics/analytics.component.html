@@ -6,13 +6,17 @@
     </div>
 
     <div style="display:flex;align-items:center;gap:10px">
+      <div class="ana-live-badge" title="Dữ liệu đồng bộ ngầm tự động mỗi 10 giây hoặc khi quay lại cửa sổ">
+        <span class="ana-live-dot" [class.is-syncing]="isRefreshing()"></span>
+        <span class="ana-live-text">Trực tiếp (10s)</span>
+      </div>
       <div class="ana-time-pills">
         <button type="button" class="ana-time-pill" [class.is-active]="timeRange() === '7d'" (click)="onRangeChange('7d')">7 ngày</button>
         <button type="button" class="ana-time-pill" [class.is-active]="timeRange() === '30d'" (click)="onRangeChange('30d')">30 ngày</button>
         <button type="button" class="ana-time-pill" [class.is-active]="timeRange() === '90d'" (click)="onRangeChange('90d')">90 ngày</button>
       </div>
       <button type="button" class="ana-time-pill" (click)="loadData()" [disabled]="loading()" title="Cập nhật số liệu mới nhất" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer">
-        <i class="bi bi-arrow-clockwise" [class.spin-anim]="loading()"></i>
+        <i class="bi bi-arrow-clockwise" [class.spin-anim]="loading() || isRefreshing()"></i>
         <span>Làm mới</span>
       </button>
     </div>
@@ -28,7 +32,7 @@
     <button type="button" class="ana-tab" [class.is-active]="activeTab() === 'health'" (click)="activeTab.set('health')">Hiệu năng &amp; Trải nghiệm</button>
   </nav>
 
-  @if (loading()) {
+  @if (loading() && !overview()) {
     <div class="ana-loading">
       <div class="ana-spinner"></div>
       <p>Đang tổng hợp dữ liệu phân tích hệ thống...</p>
@@ -39,7 +43,7 @@
       {{ error() }}
     </div>
   }
-  @if (!loading() && overview(); as data) {
+  @if (overview(); as data) {
 
     <!-- ── 1. TRAFFIC & ACQUISITION ────────────────────────────────────── -->
     @if (activeTab() === 'all' || activeTab() === 'traffic') {

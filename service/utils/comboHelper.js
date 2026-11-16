@@ -112,7 +112,15 @@ function enrichProductOrComboList(docs) {
   if (!Array.isArray(docs)) return [];
   return docs.map((d) => {
     const isCombo = d && d.isCombo === true;
-    return isCombo ? enrichComboDocument(d) : d;
+    if (isCombo) return enrichComboDocument(d);
+    const obj = typeof d?.toObject === 'function' ? d.toObject({ virtuals: true }) : { ...d };
+    if (obj && obj.availableOnlineStock === undefined) {
+      const stock = obj.stock ?? 0;
+      const reserved = obj.reservedStock ?? 0;
+      const buffer = obj.safetyBuffer ?? 2;
+      obj.availableOnlineStock = Math.max(0, stock - reserved - buffer);
+    }
+    return obj;
   });
 }
 

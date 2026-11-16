@@ -2,6 +2,7 @@ const router = require('express').Router();
 const Recipe = require('../models/Recipe');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
+const { cacheMiddleware } = require('../utils/cache');
 
 function normalizeVi(str) {
   return String(str || '')
@@ -226,8 +227,8 @@ function mapRecipeDoc(r, products = []) {
   };
 }
 
-// GET /api/nutrition — Lấy cấu hình hero, gói thực đơn mẫu, mục tiêu dinh dưỡng và danh sách công thức từ MongoDB
-router.get('/', async (req, res, next) => {
+// GET /api/nutrition — Lấy cấu hình hero, gói thực đơn mẫu, mục tiêu dinh dưỡng và danh sách công thức từ MongoDB (cache 60s)
+router.get('/', cacheMiddleware(60), async (req, res, next) => {
   try {
     const [recipes, products, recentOrders] = await Promise.all([
       Recipe.find({ isActive: true }).sort({ createdAt: 1 }),
