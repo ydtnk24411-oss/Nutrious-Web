@@ -1,0 +1,295 @@
+:host {
+  --ana-deep: #14532d;
+  --ana-forest: #166534;
+  --ana-bg: #f4f7f5;
+  --ana-card: #ffffff;
+  --ana-border: #dce5df;
+  --ana-ink: #17231b;
+  --ana-muted: #5d6f64;
+  display: block;
+}
+
+.ana-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: var(--ana-ink);
+}
+
+.ana-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ana-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ana-deep);
+  margin: 0 0 4px;
+}
+
+.ana-subtitle {
+  font-size: 13.5px;
+  color: var(--ana-muted);
+}
+
+.ana-time-pills {
+  display: inline-flex;
+  background: #e6ede8;
+  padding: 3px;
+  border-radius: 10px;
+  gap: 2px;
+}
+
+.ana-time-pill {
+  border: 0;
+  background: transparent;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ana-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ana-time-pill.is-active {
+  background: #fff;
+  color: var(--ana-deep);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+/* Nav Tabs */
+.ana-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1.5px solid var(--ana-border);
+  overflow-x: auto;
+}
+
+.ana-tab {
+  border: 0;
+  background: transparent;
+  padding: 10px 14px 11px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ana-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2.5px solid transparent;
+  margin-bottom: -1.5px;
+  transition: all 0.15s ease;
+}
+
+.ana-tab:hover {
+  color: var(--ana-deep);
+}
+
+.ana-tab.is-active {
+  color: var(--ana-deep);
+  border-bottom-color: var(--ana-deep);
+  font-weight: 700;
+}
+
+/* Section */
+.ana-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ana-sec-title {
+  font-size: 16px;
+  font-weight: 750;
+  color: var(--ana-deep);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 0;
+}
+
+.ana-sec-title::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 16px;
+  background: var(--ana-deep);
+  border-radius: 2px;
+}
+
+/* KPI Grid */
+.ana-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.ana-kpi-card {
+  background: var(--ana-card);
+  border: 1px solid var(--ana-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ana-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(18, 56, 32, 0.08);
+}
+
+.ana-kpi-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ana-muted);
+}
+
+.ana-kpi-val {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ana-ink);
+  letter-spacing: -0.5px;
+}
+
+.ana-kpi-sub {
+  font-size: 11.5px;
+  color: #728478;
+}
+
+.ana-kpi-highlight {
+  border-left: 3.5px solid var(--ana-deep);
+}
+
+.ana-kpi-warn {
+  border-left: 3.5px solid #d97706;
+}
+
+/* 2-Col Split Grid */
+.ana-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 14px;
+}
+
+.ana-box {
+  background: var(--ana-card);
+  border: 1px solid var(--ana-border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ana-box-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--ana-ink);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Funnel Steps */
+.ana-funnel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ana-funnel-step {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ana-funnel-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.ana-funnel-bar-bg {
+  width: 100%;
+  height: 22px;
+  background: #eff3f0;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.ana-funnel-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #166534, #22c55e);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.ana-funnel-drop {
+  font-size: 11px;
+  color: #dc2626;
+  font-weight: 600;
+  text-align: right;
+}
+
+/* List Items / Breakdown */
+.ana-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ana-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: #fbfdfc;
+  border: 1px solid #edf2ee;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.ana-chip {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: #eef5f0;
+  color: var(--ana-deep);
+}
+
+/* Empty / Loading */
+.ana-loading {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--ana-muted);
+}
+
+.ana-spinner {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 12px;
+  border: 3px solid #dce5df;
+  border-top-color: var(--ana-deep);
+  border-radius: 50%;
+  animation: anaSpin 0.7s linear infinite;
+}
+
+.spin-anim {
+  animation: anaSpin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes anaSpin {
+  to { transform: rotate(360deg); }
+}

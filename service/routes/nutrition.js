@@ -86,7 +86,7 @@ function findExactProductForIngredient(ingName, products) {
 }
 
 const NUTRITION_HERO = {
-  kicker: '🥗 Trợ Lý Thực Đơn Khoa Học · Dữ Liệu Trực Tuyến',
+  kicker: '🥗 Trợ Lý Thực Đơn Khoa Học - Dữ Liệu Trực Tuyến',
   title: 'Dinh dưỡng thông minh & Thực đơn chuẩn vị',
   subtitle:
     'Khám phá các gói thực đơn dinh dưỡng tiết kiệm, xem chi tiết công thức chế biến từng bước, bảng thành phần vi chất và thêm trọn bộ nguyên liệu tươi sạch vào giỏ hàng chỉ với một chạm.',

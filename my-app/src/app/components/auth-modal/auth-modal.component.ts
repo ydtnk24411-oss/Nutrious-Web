@@ -1,6 +1,7 @@
 import { Component, signal, inject, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { CookieService } from 'ngx-cookie-service';
 import { CartService, AuthTab } from '../../shared/services/cart.service';
 import { GoogleAuthService } from '../../shared/services/google-auth.service';
 
@@ -14,8 +15,15 @@ import { GoogleAuthService } from '../../shared/services/google-auth.service';
 export class AuthModalComponent implements OnDestroy {
   protected cart = inject(CartService);
   protected googleAuth = inject(GoogleAuthService);
+  protected cookieService = inject(CookieService);
 
   constructor() {
+    const saved = this.cookieService.get('customer_remembered_username');
+    if (saved) {
+      this.loginIdentifier.set(saved);
+      this.rememberMe.set(true);
+    }
+
     effect(() => {
       const open = this.cart.authModalOpen();
       const prefill = this.cart.authPrefill();
@@ -36,6 +44,7 @@ export class AuthModalComponent implements OnDestroy {
   protected loginIdentifier = signal('');
   protected password = signal('');
   protected confirmPassword = signal('');
+  protected rememberMe = signal(true);
 
   // Forgot password flow signals
   protected forgotPhone = signal('');
@@ -141,6 +150,11 @@ export class AuthModalComponent implements OnDestroy {
       password,
       () => {
         this.loading.set(false);
+        if (this.rememberMe()) {
+          this.cookieService.set('customer_remembered_username', identifier, 30, '/');
+        } else {
+          this.cookieService.delete('customer_remembered_username', '/');
+        }
         this.resetForm();
       },
       (errMsg) => {

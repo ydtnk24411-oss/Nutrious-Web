@@ -337,6 +337,150 @@ router.post(
 // ============================================================================
 
 // POST /api/auth/login
+// POST /api/auth/login-cust (Dành riêng cho Khách hàng - Customer)
+router.post(
+  '/login-cust',
+  [
+    body('username').optional().trim(),
+    body('identifier').optional().trim(),
+    body('phone').optional().trim(),
+    body('email').optional().trim(),
+    body('password').notEmpty().withMessage('Mật khẩu không được để trống.'),
+  ],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { password } = req.body;
+      const rawInput = (req.body.username || req.body.identifier || req.body.phone || req.body.email || '').trim();
+
+      if (!rawInput) {
+        return res.status(400).json({
+          success: false,
+          message: 'Vui lòng nhập Email hoặc Số điện thoại để đăng nhập.',
+        });
+      }
+
+      const normalizedPhone = normalizeVietnamesePhone(rawInput);
+      const emailInput = rawInput.toLowerCase();
+
+      const user = await User.findOne({
+        $or: [
+          ...(isValidVietnamesePhone(normalizedPhone) ? [{ phone: normalizedPhone }] : []),
+          { phone: rawInput },
+          { email: emailInput },
+        ],
+      }).select('+password');
+
+      if (!user || !(await user.comparePassword(password))) {
+        return res.status(401).json({
+          success: false,
+          message: 'Tài khoản hoặc mật khẩu không chính xác.',
+        });
+      }
+
+      if (!user.isActive) {
+        return res.status(403).json({
+          success: false,
+          message: 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ CSKH.',
+        });
+      }
+
+      // Tái tạo Session ID nếu dùng express-session để chống Session Fixation
+      if (req.session && typeof req.session.regenerate === 'function') {
+        req.session.regenerate((err) => {
+          if (err) console.error('Session regenerate error:', err);
+        });
+      }
+
+      const token = signToken(user);
+      return res.json({
+        success: true,
+        message: 'Đăng nhập khách hàng thành công!',
+        token,
+        user: publicUser(user),
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// POST /api/auth/login-emp (Dành riêng cho Nhân viên - Bắt buộc quyền role Sales hoặc Admin)
+router.post(
+  '/login-emp',
+  [
+    body('username').optional().trim(),
+    body('identifier').optional().trim(),
+    body('phone').optional().trim(),
+    body('email').optional().trim(),
+    body('password').notEmpty().withMessage('Mật khẩu không được để trống.'),
+  ],
+  validate,
+  async (req, res, next) => {
+    try {
+      const { password } = req.body;
+      const rawInput = (req.body.username || req.body.identifier || req.body.phone || req.body.email || '').trim();
+
+      if (!rawInput) {
+        return res.status(400).json({
+          success: false,
+          message: 'Vui lòng nhập Email hoặc Số điện thoại nhân viên.',
+        });
+      }
+
+      const normalizedPhone = normalizeVietnamesePhone(rawInput);
+      const emailInput = rawInput.toLowerCase();
+
+      const user = await User.findOne({
+        $or: [
+          ...(isValidVietnamesePhone(normalizedPhone) ? [{ phone: normalizedPhone }] : []),
+          { phone: rawInput },
+          { email: emailInput },
+        ],
+      }).select('+password');
+
+      if (!user || !(await user.comparePassword(password))) {
+        return res.status(401).json({
+          success: false,
+          message: 'Tài khoản hoặc mật khẩu nhân viên không chính xác.',
+        });
+      }
+
+      // Kiểm tra quyền nhân viên: Bắt buộc phải có vai trò sales, admin, warehouse, support hoặc content
+      const allowedRoles = ['sales', 'admin', 'warehouse', 'support', 'content'];
+      if (!allowedRoles.includes(user.role?.toLowerCase())) {
+        return res.status(403).json({
+          success: false,
+          message: 'Truy cập bị từ chối: Tài khoản không có quyền hạn nhân viên bán hàng (Sales/Admin).',
+        });
+      }
+
+      if (!user.isActive) {
+        return res.status(403).json({
+          success: false,
+          message: 'Tài khoản nhân viên đã bị khóa hoặc ngừng hoạt động.',
+        });
+      }
+
+      if (req.session && typeof req.session.regenerate === 'function') {
+        req.session.regenerate((err) => {
+          if (err) console.error('Session regenerate error:', err);
+        });
+      }
+
+      const token = signToken(user);
+      return res.json({
+        success: true,
+        message: 'Đăng nhập nhân viên thành công!',
+        token,
+        user: publicUser(user),
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 // Mặc định đăng nhập bằng Số điện thoại + Mật khẩu (vẫn hỗ trợ Email cho tài khoản cũ)
 router.post(
   '/login',

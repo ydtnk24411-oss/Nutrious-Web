@@ -15,7 +15,7 @@
           <p class="info-hero-subtitle">{{ headerMeta().subtitle }}</p>
           <div class="info-hero-meta">
             <span><i class="bi bi-patch-check-fill" aria-hidden="true"></i> {{ headerMeta().updatedAt }}</span>
-            <span class="info-meta-dot" aria-hidden="true">&bull;</span>
+            <span class="info-meta-dash" aria-hidden="true">-</span>
             <span><i class="bi bi-telephone-fill" aria-hidden="true"></i> Hotline: 1800 6999 (07:00 – 21:00)</span>
           </div>
         </div>
@@ -212,13 +212,13 @@
               <div class="info-card">
                 <h2 class="info-card-title">Lối tắt tự phục vụ nhanh chóng</h2>
                 <div class="info-feature-grid info-feature-grid--2">
-                  <a routerLink="/tracker-page" class="info-action-tile">
+                  <a routerLink="/account" [queryParams]="{ tab: 'orders' }" class="info-action-tile">
                     <div class="info-tile-head">
                       <i class="bi bi-box-seam" aria-hidden="true"></i>
-                      <strong>Tra cứu &amp; Theo dõi đơn hàng</strong>
+                      <strong>Lịch sử đơn hàng của tôi</strong>
                     </div>
-                    <span>Kiểm tra tiến trình xử lý, chi nhánh xuất hàng và thời gian dự kiến giao.</span>
-                    <span class="info-tile-link">Tra cứu đơn <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+                    <span>Xem danh sách đơn hàng đã đặt, tiến trình xử lý và hóa đơn chi tiết.</span>
+                    <span class="info-tile-link">Xem đơn hàng <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
                   </a>
                   <a routerLink="/complaint" class="info-action-tile">
                     <div class="info-tile-head">
@@ -309,7 +309,7 @@
                     <div class="info-step-badge">Bước 4</div>
                     <div>
                       <h4>Thanh toán COD hoặc VietQR &amp; Đồng kiểm khi nhận</h4>
-                      <p>Xác nhận chính sách đồng kiểm đối với thực phẩm tươi sống, chọn thanh toán <strong>COD</strong> hoặc <strong>Chuyển khoản VietQR</strong> và theo dõi đơn hàng trực tiếp tại trang <a routerLink="/tracker-page">Theo dõi đơn hàng</a>.</p>
+                      <p>Xác nhận chính sách đồng kiểm đối với thực phẩm tươi sống, chọn thanh toán <strong>COD</strong> hoặc <strong>Chuyển khoản VietQR</strong> và xem lại lịch sử tại <a routerLink="/account" [queryParams]="{ tab: 'orders' }">Đơn hàng của tôi</a>.</p>
                     </div>
                   </div>
                 </div>
@@ -343,7 +343,7 @@
                   <div class="info-feature-icon"><i class="bi bi-telephone" aria-hidden="true"></i></div>
                   <h3>Tổng đài CSKH</h3>
                   <p class="info-contact-highlight">1800 6999</p>
-                  <span>Miễn cước &bull; 07:00 – 21:00 hằng ngày (kể cả Thứ 7, CN)</span>
+                  <span>Miễn cước - 07:00 – 21:00 hằng ngày (kể cả Thứ 7, CN)</span>
                 </div>
                 <div class="info-card info-contact-card">
                   <div class="info-feature-icon"><i class="bi bi-envelope" aria-hidden="true"></i></div>
@@ -355,7 +355,7 @@
                   <div class="info-feature-icon"><i class="bi bi-building" aria-hidden="true"></i></div>
                   <h3>Trụ sở &amp; Hệ thống kho</h3>
                   <p class="info-contact-highlight">18 chi nhánh / 10 tỉnh thành</p>
-                  <span>Tổng kho Thủ Đức (TP.HCM) • Mở cửa 07:00 – 21:30</span>
+                  <span>Tổng kho Thủ Đức (TP.HCM) - Mở cửa 07:00 – 21:30</span>
                 </div>
               </div>
 

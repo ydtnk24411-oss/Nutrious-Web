@@ -1,5 +1,7 @@
 
-import { Component, signal, inject, OnInit, computed, effect } from '@angular/core';
+import { Component, signal, inject, OnInit, OnDestroy, computed, effect } from '@angular/core';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
@@ -14,6 +16,7 @@ import {
   ApiCategory
 } from '../../shared/services/category-api.service';
 import { removeVietnameseTones, scoreProduct } from '../../shared/utils/search.util';
+import { AnalyticsTrackerService } from '../../shared/services/analytics-tracker.service';
 
 function toCartProduct(p: ApiProduct): XanhLaProduct {
   return {
@@ -554,15 +557,34 @@ export function matchProductByNutritionSliders(
   templateUrl: './ordering.component.html',
   styleUrl: './ordering.component.css',
 })
-export class OrderingComponent implements OnInit {
+export class OrderingComponent implements OnInit, OnDestroy {
+  private searchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
+  protected inStockOnly = signal(false);
   protected cart = inject(CartService);
 
   private productApi = inject(ProductApiService);
   private categoryApi = inject(CategoryApiService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private analytics = inject(AnalyticsTrackerService);
+  private lastTrackedKeyword = '';
 
   constructor() {
+    this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe((q) => {
+      this.search.set(q);
+      this.syncQueryParamsToUrl();
+      const trimmed = (q || '').trim();
+      if (trimmed.length >= 2 && trimmed !== this.lastTrackedKeyword) {
+        this.lastTrackedKeyword = trimmed;
+        const count = this.filteredProducts().length;
+        this.analytics.trackSearch(trimmed, count);
+      }
+    });
     effect(() => {
       // Tự động đặt lại hiển thị 20 sản phẩm đầu khi đổi danh mục, tìm kiếm, bộ lọc hoặc sắp xếp
       this.activeCategory();
@@ -747,6 +769,7 @@ export class OrderingComponent implements OnInit {
       }
 
       if (p.priceNumber > maxP) return false;
+      if (this.inStockOnly() && (!p.stock || p.stock <= 0)) return false;
 
       if (activeSliders.length > 0) {
         const res = matchProductByNutritionSliders(p, activeSliders);
@@ -797,6 +820,12 @@ export class OrderingComponent implements OnInit {
       return true;
     });
 
+    if (this.sortBy() === 'bestseller') {
+      return [...list].sort((a, b) => (b.stock || 0) - (a.stock || 0));
+    }
+    if (this.sortBy() === 'newest') {
+      return [...list].sort((a, b) => (b._id || '').localeCompare(a._id || ''));
+    }
     if (this.sortBy() === 'price-asc') {
       list = [...list].sort((a, b) => a.priceNumber - b.priceNumber);
     } else if (this.sortBy() === 'price-desc') {
@@ -890,6 +919,45 @@ export class OrderingComponent implements OnInit {
     });
   }
 
+  
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  protected onSearchInput(event: Event): void {
+    const val = (event.target as HTMLInputElement).value || '';
+    this.searchSubject.next(val);
+  }
+
+  protected toggleInStock(): void {
+    this.inStockOnly.update(v => !v);
+    this.syncQueryParamsToUrl();
+  }
+
+  protected onSortChange(newSort: string): void {
+    this.sortBy.set(newSort);
+    this.syncQueryParamsToUrl();
+  }
+
+  protected onMaxPriceChange(newPrice: number): void {
+    this.maxPrice.set(newPrice);
+    this.syncQueryParamsToUrl();
+  }
+
+  protected syncQueryParamsToUrl(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        q: this.search().trim() || null,
+        sort: this.sortBy() !== 'default' ? this.sortBy() : null,
+        maxPrice: this.maxPrice() < this.maxPriceInDB() ? this.maxPrice() : null,
+        inStock: this.inStockOnly() ? 'true' : null,
+      },
+      queryParamsHandling: 'merge',
+    });
+  }
+
   protected sections = computed(() => {
     const products = this.categoryProducts();
 
@@ -904,6 +972,24 @@ export class OrderingComponent implements OnInit {
 
   ngOnInit(): void {
     this.cart.loadViewedProducts();
+    this.route.queryParamMap.subscribe(params => {
+      const q = params.get('q');
+      if (q !== null && q !== undefined) {
+        this.search.set(q);
+        const trimmed = q.trim();
+        if (trimmed.length >= 2 && trimmed !== this.lastTrackedKeyword) {
+          this.lastTrackedKeyword = trimmed;
+          const count = this.filteredProducts().length;
+          this.analytics.trackSearch(trimmed, count);
+        }
+      }
+      const sort = params.get('sort');
+      if (sort) this.sortBy.set(sort);
+      const inStock = params.get('inStock');
+      if (inStock === 'true') this.inStockOnly.set(true);
+      const maxP = params.get('maxPrice');
+      if (maxP) this.maxPrice.set(Number(maxP));
+    });
     const q = this.route.snapshot.queryParamMap.get('q');
 
     if (q) {

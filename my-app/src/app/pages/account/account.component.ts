@@ -14,7 +14,9 @@ import {
   AddressPickerResult,
 } from '../../components/address-picker-modal/address-picker-modal.component';
 
-type Tab = 'overview' | 'orders' | 'addresses' | 'settings';
+import { WishlistService } from '../../shared/services/wishlist.service';
+
+type Tab = 'overview' | 'orders' | 'wishlist' | 'addresses' | 'settings';
 
 @Component({
   selector: 'app-account',
@@ -25,6 +27,7 @@ type Tab = 'overview' | 'orders' | 'addresses' | 'settings';
 })
 export class AccountComponent implements OnInit, OnDestroy {
   protected cart       = inject(CartService);
+  protected wishlist   = inject(WishlistService);
   protected googleAuth = inject(GoogleAuthService);
   protected router     = inject(Router);
   private loyalty      = inject(LoyaltyService);
@@ -70,6 +73,8 @@ export class AccountComponent implements OnInit, OnDestroy {
 
   orderStatusFilter = signal<'all' | 'pending' | 'processing' | 'delivering' | 'completed' | 'cancelled'>('all');
   orderSearchQuery = signal('');
+  orderPage = signal(1);
+  orderPageSize = signal(5);
 
   filteredOrders = computed(() => {
     const statusFilter = this.orderStatusFilter();
@@ -93,6 +98,25 @@ export class AccountComponent implements OnInit, OnDestroy {
       return matchesStatus && matchesSearch;
     });
   });
+
+  orderTotalPages = computed(() => Math.ceil(this.filteredOrders().length / this.orderPageSize()) || 1);
+  paginatedOrders = computed(() => {
+    const list = this.filteredOrders();
+    const start = (this.orderPage() - 1) * this.orderPageSize();
+    return list.slice(start, start + this.orderPageSize());
+  });
+
+  prevOrderPage(): void {
+    if (this.orderPage() > 1) this.orderPage.update(p => p - 1);
+  }
+
+  nextOrderPage(): void {
+    if (this.orderPage() < this.orderTotalPages()) this.orderPage.update(p => p + 1);
+  }
+
+  onOrderFilterChange(): void {
+    this.orderPage.set(1);
+  }
 
   // ── Loyalty & Points ────────────────────────
   readonly userPoints = computed(() => {
@@ -133,7 +157,7 @@ export class AccountComponent implements OnInit, OnDestroy {
     // Fetch moi nhat tu backend de dam bao avatar luon dung sau login
     this.route.queryParams.subscribe(params => {
       const tab = params['tab'];
-      if (tab && ['overview', 'orders', 'addresses', 'settings'].includes(tab)) {
+      if (tab && ['overview', 'orders', 'wishlist', 'addresses', 'settings'].includes(tab)) {
         this.activeTab.set(tab as Tab);
       }
     });
@@ -173,6 +197,17 @@ export class AccountComponent implements OnInit, OnDestroy {
         console.error('Failed to load user orders:', err);
       }
     });
+  }
+
+  addWishlistItemToCart(item: any): void {
+    const p = {
+      ...item,
+      id: item.id || item._id,
+      rating: item.rating ?? 5,
+      soldCount: item.soldCount ?? 0,
+      tags: item.tags || [],
+    };
+    this.cart.addItem(p as any, 1);
   }
 
   // ── Save account info ────────────────────────
@@ -410,7 +445,7 @@ export class AccountComponent implements OnInit, OnDestroy {
     return (this.cart.currentUser()?.name ?? 'U').charAt(0).toUpperCase();
   }
 
-  maskPassword(): string { return '•••••••'; }
+  maskPassword(): string { return '*******'; }
 
   formatPrice(value: number): string {
     return value.toLocaleString('vi-VN') + 'đ';

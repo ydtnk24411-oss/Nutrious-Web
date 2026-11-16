@@ -395,10 +395,10 @@
                   <h3 class="cp-tracked-title">{{ item.title }}</h3>
                   <div class="cp-tracked-meta">
                     <span>Phân loại: <strong>{{ getTypeLabel(item.type) }}</strong></span>
-                    <span class="cp-meta-sep">•</span>
+                    <span class="cp-meta-sep">-</span>
                     <span>Ngày gửi: {{ item.createdAt | date:'HH:mm - dd/MM/yyyy' }}</span>
                     @if (item.order?.orderCode) {
-                      <span class="cp-meta-sep">•</span>
+                      <span class="cp-meta-sep">-</span>
                       <span>Mã đơn hàng: <strong>{{ item.order?.orderCode }}</strong></span>
                     }
                   </div>

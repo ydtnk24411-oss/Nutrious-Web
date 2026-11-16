@@ -1,0 +1,355 @@
+<!-- Header & Store / Time Filters -->
+<div class="fin-header">
+  <div>
+    <h2 class="admin-page-title">Quản lý Tài chính &amp; Chi nhánh</h2>
+    <p class="admin-page-subtitle">Theo dõi P&amp;L, dòng tiền COD/VietQR, chiết khấu khuyến mãi và hiệu quả từng cửa hàng</p>
+  </div>
+
+  <div class="fin-controls">
+    <select
+      class="admin-select fin-store-select"
+      [ngModel]="selectedStore()"
+      (ngModelChange)="onStoreChange($event)"
+      aria-label="Lọc theo cửa hàng"
+    >
+      <option value="">Tất cả cửa hàng (Toàn chuỗi)</option>
+      @for (st of report()?.stores ?? []; track st.storeName) {
+        <option [value]="st.storeName">{{ st.storeName }}</option>
+      }
+    </select>
+
+    <div class="fin-time-pills">
+      <button type="button" class="fin-pill-btn" [class.is-active]="timeFilter() === '7d'" (click)="onTimeFilterChange('7d')">7 ngày</button>
+      <button type="button" class="fin-pill-btn" [class.is-active]="timeFilter() === '30d'" (click)="onTimeFilterChange('30d')">30 ngày</button>
+      <button type="button" class="fin-pill-btn" [class.is-active]="timeFilter() === '90d'" (click)="onTimeFilterChange('90d')">90 ngày</button>
+      <button type="button" class="fin-pill-btn" [class.is-active]="timeFilter() === 'custom'" (click)="onTimeFilterChange('custom')">Tùy chọn</button>
+    </div>
+
+    @if (timeFilter() === 'custom') {
+      <div class="fin-custom-dates">
+        <input type="date" [value]="customStartDate()" (change)="onCustomDateChange('start', $any($event.target).value)" />
+        <span>→</span>
+        <input type="date" [value]="customEndDate()" (change)="onCustomDateChange('end', $any($event.target).value)" />
+      </div>
+    }
+
+    <button type="button" class="fin-export-btn" (click)="exportFinanceCsv()" [disabled]="!report()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      <span>Xuất báo cáo CSV</span>
+    </button>
+  </div>
+</div>
+
+@if (selectedStore()) {
+  <div class="fin-active-store-bar">
+    <span>Đang lọc dữ liệu tài chính riêng cho: <strong>{{ selectedStore() }}</strong></span>
+    <button type="button" class="fin-reset-store" (click)="onStoreChange('')">Xem toàn chuỗi</button>
+  </div>
+}
+
+@if (loading()) {
+  <div class="admin-empty" style="padding:72px 20px">
+    <div class="admin-spinner" style="width:36px;height:36px;border-width:3px;margin:0 auto 12px"></div>
+    <p>Đang tổng hợp báo cáo tài chính...</p>
+  </div>
+} @else if (error()) {
+  <div class="admin-alert admin-alert-error">{{ error() }}</div>
+} @else {
+  @if (report(); as rep) {
+  <!-- 4 Core Financial KPIs -->
+  <div class="fin-kpi-grid">
+    <div class="fin-kpi-card is-primary">
+      <div class="fin-kpi-top">
+        <span class="fin-kpi-label">Doanh thu thuần (Net)</span>
+        <span class="fin-kpi-badge">{{ rep.summary.validOrdersCount }} đơn</span>
+      </div>
+      <div class="fin-kpi-val">{{ formatPrice(rep.summary.netRevenue) }}</div>
+      <div class="fin-kpi-sub">DT gộp: {{ formatPrice(rep.summary.grossRevenue) }} - AOV: {{ formatPrice(rep.summary.avgOrderValue) }}</div>
+    </div>
+
+    <div class="fin-kpi-card">
+      <div class="fin-kpi-top">
+        <span class="fin-kpi-label">Lợi nhuận gộp ước tính</span>
+        <span class="fin-kpi-badge is-lime">Biên {{ rep.summary.profitMargin }}%</span>
+      </div>
+      <div class="fin-kpi-val is-green">{{ formatPrice(rep.summary.estimatedProfit) }}</div>
+      <div class="fin-kpi-sub">Sau giá vốn ({{ formatPrice(rep.summary.estimatedCogs) }}) &amp; vận hành</div>
+    </div>
+
+    <div class="fin-kpi-card">
+      <div class="fin-kpi-top">
+        <span class="fin-kpi-label">Tiền đã thu thực tế</span>
+        <span class="fin-kpi-badge">{{ pct(rep.summary.collectedAmount, rep.summary.netRevenue) }}%</span>
+      </div>
+      <div class="fin-kpi-val">{{ formatPrice(rep.summary.collectedAmount) }}</div>
+      <div class="fin-kpi-sub">Đơn đã giao hoàn tất hoặc đã TT VietQR</div>
+    </div>
+
+    <div class="fin-kpi-card">
+      <div class="fin-kpi-top">
+        <span class="fin-kpi-label">Chờ thu / Công nợ</span>
+        <span class="fin-kpi-badge is-warn">Hủy: {{ rep.summary.cancelledOrdersCount }} đơn</span>
+      </div>
+      <div class="fin-kpi-val is-amber">{{ formatPrice(rep.summary.pendingAmount) }}</div>
+      <div class="fin-kpi-sub">Thất thoát đơn hủy: {{ formatPrice(rep.summary.cancelledAmount) }}</div>
+    </div>
+  </div>
+
+  <!-- P&L Breakdown + Cashflow Channels & Promo -->
+  <div class="fin-mid-grid">
+    <!-- P&L Statement -->
+    <div class="fin-card">
+      <div class="fin-card-header">
+        <h3>Bảng cân đối Lãi / Lỗ (P&amp;L)</h3>
+        <span class="fin-tag">Ước tính theo kỳ</span>
+      </div>
+
+      <div class="fin-pl-list">
+        <div class="fin-pl-row">
+          <span>1. Doanh thu hàng hóa gộp (Subtotal)</span>
+          <strong>{{ formatPrice(rep.summary.grossRevenue) }}</strong>
+        </div>
+        <div class="fin-pl-row is-minus">
+          <span>2. Chiết khấu &amp; Giảm giá (Voucher, Combo, Mua kèm)</span>
+          <strong>-{{ formatPrice(rep.summary.totalDiscount) }}</strong>
+        </div>
+        <div class="fin-pl-row">
+          <span>3. Phí giao hàng thu từ khách</span>
+          <strong>+{{ formatPrice(rep.summary.shippingRevenue) }}</strong>
+        </div>
+        <div class="fin-pl-row is-subtotal">
+          <span>Doanh thu thuần (Net Revenue)</span>
+          <strong>{{ formatPrice(rep.summary.netRevenue) }}</strong>
+        </div>
+        <div class="fin-pl-row is-minus">
+          <span>4. Giá vốn hàng bán ước tính (~64% hàng hóa)</span>
+          <strong>-{{ formatPrice(rep.summary.estimatedCogs) }}</strong>
+        </div>
+        <div class="fin-pl-row is-minus">
+          <span>5. Chi phí vận hành &amp; Logistics (~8% DT thuần)</span>
+          <strong>-{{ formatPrice(rep.summary.estimatedOps) }}</strong>
+        </div>
+        <div class="fin-pl-row is-profit">
+          <span>Lợi nhuận gộp ước tính</span>
+          <strong>{{ formatPrice(rep.summary.estimatedProfit) }} ({{ rep.summary.profitMargin }}%)</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Channels & Promotions -->
+    <div class="fin-card">
+      <div class="fin-card-header">
+        <h3>Kênh thanh toán &amp; Trợ giá</h3>
+        <span class="fin-tag">Dòng tiền</span>
+      </div>
+
+      <div class="fin-channel-box">
+        <div class="fin-channel-item">
+          <div class="fin-ch-head">
+            <span class="fin-ch-name">Chuyển khoản VietQR ({{ rep.summary.vietqrCount }} đơn)</span>
+            <strong>{{ formatPrice(rep.summary.vietqrAmount) }}</strong>
+          </div>
+          <div class="fin-ch-bar">
+            <div class="fin-ch-fill is-forest" [style.width.%]="pct(rep.summary.vietqrAmount, rep.summary.netRevenue)"></div>
+          </div>
+          <div class="fin-ch-meta">
+            <span>Đã nhận: <strong>{{ formatPrice(rep.summary.vietqrPaidAmount) }}</strong></span>
+            <span>Chờ đối soát: <strong>{{ formatPrice(rep.summary.vietqrPendingAmount) }}</strong></span>
+          </div>
+        </div>
+
+        <div class="fin-channel-item">
+          <div class="fin-ch-head">
+            <span class="fin-ch-name">COD / Tiền mặt ({{ rep.summary.codCount }} đơn)</span>
+            <strong>{{ formatPrice(rep.summary.codAmount) }}</strong>
+          </div>
+          <div class="fin-ch-bar">
+            <div class="fin-ch-fill is-amber" [style.width.%]="pct(rep.summary.codAmount, rep.summary.netRevenue)"></div>
+          </div>
+          <div class="fin-ch-meta">
+            <span>Tỷ trọng: <strong>{{ pct(rep.summary.codAmount, rep.summary.netRevenue) }}%</strong> tổng doanh thu</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="fin-promo-grid">
+        <div class="fin-promo-cell">
+          <span>Voucher đơn hàng</span>
+          <strong>{{ formatPrice(rep.summary.voucherDiscount) }}</strong>
+        </div>
+        <div class="fin-promo-cell">
+          <span>Ưu đãi Combo</span>
+          <strong>{{ formatPrice(rep.summary.comboDiscount) }}</strong>
+        </div>
+        <div class="fin-promo-cell">
+          <span>Mua kèm (Add-on)</span>
+          <strong>{{ formatPrice(rep.summary.addonDiscount) }}</strong>
+        </div>
+        <div class="fin-promo-cell">
+          <span>Trợ giá vận chuyển</span>
+          <strong>{{ formatPrice(rep.summary.shippingDiscount) }}</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Store-by-Store Financial Breakdown -->
+  <div class="fin-card" style="margin-bottom:20px">
+    <div class="fin-card-header">
+      <div>
+        <h3>Hiệu quả Tài chính theo Cửa hàng / Chi nhánh</h3>
+        <p class="fin-card-sub">Nhấn vào một chi nhánh để lọc xem riêng P&amp;L và sổ cái của cửa hàng đó</p>
+      </div>
+      <span class="fin-tag">{{ rep.stores.length }} chi nhánh</span>
+    </div>
+
+    <div class="admin-table-wrap" style="border:none">
+      <table class="admin-table fin-store-table">
+        <thead>
+          <tr>
+            <th>Cửa hàng / Chi nhánh</th>
+            <th class="is-num">Đơn (Hợp lệ / Hủy)</th>
+            <th class="is-num">DT gộp</th>
+            <th class="is-num">Chiết khấu</th>
+            <th class="is-num">DT thuần</th>
+            <th class="is-num">Đã thu / Chờ thu</th>
+            <th class="is-num">LN ước tính</th>
+            <th class="is-num">Tỷ trọng</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (st of rep.stores; track st.storeName) {
+            <tr
+              class="fin-store-row"
+              [class.is-selected]="selectedStore() === st.storeName"
+              (click)="toggleStoreRow(st)"
+            >
+              <td>
+                <div class="fin-store-name">
+                  <span>{{ st.storeName }}</span>
+                  @if (st.isHeadquarter) {
+                    <span class="fin-hq-badge">Trung tâm</span>
+                  }
+                </div>
+                @if (st.address) {
+                  <div class="fin-store-addr">{{ st.address }}</div>
+                }
+              </td>
+              <td class="is-num">
+                <strong>{{ st.orderCount }}</strong>
+                <span class="fin-muted"> / {{ st.cancelledCount }}</span>
+              </td>
+              <td class="is-num">{{ formatPrice(st.grossRevenue) }}</td>
+              <td class="is-num fin-minus">-{{ formatPrice(st.totalDiscount) }}</td>
+              <td class="is-num">
+                <strong class="fin-net">{{ formatPrice(st.netRevenue) }}</strong>
+                <div class="fin-muted">AOV {{ formatPrice(st.avgOrderValue) }}</div>
+              </td>
+              <td class="is-num">
+                <div class="fin-collected">{{ formatPrice(st.collectedAmount) }}</div>
+                <div class="fin-pending">Chờ: {{ formatPrice(st.pendingAmount) }}</div>
+              </td>
+              <td class="is-num">
+                <strong class="fin-profit-txt">{{ formatPrice(st.estimatedProfit) }}</strong>
+                <div class="fin-muted">Biên {{ st.profitMargin }}%</div>
+              </td>
+              <td class="is-num">
+                <div class="fin-share-wrap">
+                  <span>{{ st.revenueShare }}%</span>
+                  <div class="fin-share-bar">
+                    <div class="fin-share-fill" [style.width.%]="st.revenueShare"></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Financial Ledger -->
+  <div class="fin-card">
+    <div class="fin-card-header fin-ledger-head">
+      <div>
+        <h3>Sổ cái Giao dịch Tài chính</h3>
+        <p class="fin-card-sub">Chi tiết tạm tính, giảm giá, phí vận chuyển, thực thu và lợi nhuận ước tính từng đơn</p>
+      </div>
+
+      <div class="fin-ledger-tools">
+        <div class="fin-time-pills">
+          <button type="button" class="fin-pill-btn" [class.is-active]="txFilter() === 'all'" (click)="txFilter.set('all')">Tất cả</button>
+          <button type="button" class="fin-pill-btn" [class.is-active]="txFilter() === 'collected'" (click)="txFilter.set('collected')">Đã thu</button>
+          <button type="button" class="fin-pill-btn" [class.is-active]="txFilter() === 'pending'" (click)="txFilter.set('pending')">Chờ thu</button>
+          <button type="button" class="fin-pill-btn" [class.is-active]="txFilter() === 'cancelled'" (click)="txFilter.set('cancelled')">Đã hủy</button>
+        </div>
+        <input
+          type="text"
+          class="fin-tx-search"
+          placeholder="Tìm mã đơn, khách, chi nhánh..."
+          [ngModel]="txSearch()"
+          (ngModelChange)="txSearch.set($event)"
+        />
+      </div>
+    </div>
+
+    @if (filteredTransactions().length === 0) {
+      <div class="admin-empty" style="padding:36px 16px">
+        <p>Không có giao dịch tài chính nào khớp bộ lọc.</p>
+      </div>
+    } @else {
+      <div class="admin-table-wrap" style="border:none">
+        <table class="admin-table fin-ledger-table">
+          <thead>
+            <tr>
+              <th>Mã đơn &amp; Ngày</th>
+              <th>Cửa hàng</th>
+              <th>Khách hàng</th>
+              <th>Kênh TT</th>
+              <th class="is-num">Tạm tính</th>
+              <th class="is-num">Giảm giá</th>
+              <th class="is-num">Phí ship</th>
+              <th class="is-num">Thực thu</th>
+              <th class="is-num">LN ước tính</th>
+              <th>Thu tiền</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (tx of filteredTransactions(); track tx._id) {
+              <tr>
+                <td>
+                  <code class="fin-order-code">#{{ tx.orderCode }}</code>
+                  <div class="fin-muted">{{ tx.createdAt | date:'dd/MM/yy HH:mm' }}</div>
+                </td>
+                <td>{{ tx.storeName }}</td>
+                <td>{{ tx.customer }}</td>
+                <td>
+                  <span class="fin-pay-pill">{{ tx.paymentMethod === 'bank_transfer' ? 'VietQR' : 'COD' }}</span>
+                </td>
+                <td class="is-num">{{ formatPrice(tx.subtotal) }}</td>
+                <td class="is-num fin-minus">{{ tx.totalDiscount > 0 ? '-' + formatPrice(tx.totalDiscount) : '0đ' }}</td>
+                <td class="is-num">{{ formatPrice(tx.shippingFee) }}</td>
+                <td class="is-num"><strong>{{ formatPrice(tx.total) }}</strong></td>
+                <td class="is-num">
+                  <span [class.fin-profit-txt]="tx.estimatedProfit > 0">{{ formatPrice(tx.estimatedProfit) }}</span>
+                </td>
+                <td>
+                  @if (tx.status === 'cancelled') {
+                    <span class="fin-status-pill is-cancel">Đã hủy</span>
+                  } @else if (tx.isCollected) {
+                    <span class="fin-status-pill is-done">Đã thu</span>
+                  } @else {
+                    <span class="fin-status-pill is-wait">Chờ thu</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+  }
+}

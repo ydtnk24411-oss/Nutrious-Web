@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -16,6 +16,7 @@ import {
   styleUrl: './complaints.component.css',
 })
 export class AdminComplaintsComponent implements OnInit {
+  protected readonly Math = Math;
   private complaintApi = inject(ComplaintApiService);
 
   complaints = signal<ComplaintItem[]>([]);
@@ -32,6 +33,12 @@ export class AdminComplaintsComponent implements OnInit {
   selectedStatus = signal<string>('all');
   selectedType = signal<string>('all');
 
+  // Pagination
+  page = signal(1);
+  pageSize = signal(10);
+  total = signal(0);
+  totalPages = computed(() => Math.ceil(this.total() / this.pageSize()) || 1);
+
   // Modal
   detailModalOpen = signal(false);
   activeComplaint = signal<ComplaintItem | null>(null);
@@ -45,7 +52,10 @@ export class AdminComplaintsComponent implements OnInit {
 
   loadComplaints(): void {
     this.loading.set(true);
-    const params: Record<string, string | number> = { limit: 50 };
+    const params: Record<string, string | number> = {
+      page: this.page(),
+      limit: this.pageSize(),
+    };
     if (this.searchQuery()) params['search'] = this.searchQuery();
     if (this.selectedStatus() !== 'all') params['status'] = this.selectedStatus();
     if (this.selectedType() !== 'all') params['type'] = this.selectedType();
@@ -54,12 +64,32 @@ export class AdminComplaintsComponent implements OnInit {
       next: (res) => {
         if (res.success) {
           this.complaints.set(res.data);
+          this.total.set(res.total || res.data.length);
           if (res.stats) this.stats.set(res.stats);
         }
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  prevPage(): void {
+    if (this.page() > 1) {
+      this.page.update((p) => p - 1);
+      this.loadComplaints();
+    }
+  }
+
+  nextPage(): void {
+    if (this.page() < this.totalPages()) {
+      this.page.update((p) => p + 1);
+      this.loadComplaints();
+    }
+  }
+
+  onFilterChange(): void {
+    this.page.set(1);
+    this.loadComplaints();
   }
 
   openDetailModal(item: ComplaintItem): void {

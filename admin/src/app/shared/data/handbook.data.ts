@@ -29,7 +29,7 @@ export const HANDBOOK_ARTICLES: HandbookArticle[] = [
     category: 'CẨM NANG MUA SẮM',
     badge: 'GÓC SỐNG XANH',
     image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1200&q=85',
-    date: 'CẨM NANG MUA SẮM • 28/10/2026',
+    date: 'CẨM NANG MUA SẮM - 28/10/2026',
     readTime: '4 phút đọc',
     summary: 'Bí quyết chọn lựa rau củ quả tươi sạch mọng nước, không hóa chất và phương pháp bảo quản giữ trọn vitamin, khoáng chất suốt cả tuần bận rộn.',
     sections: [
@@ -76,7 +76,7 @@ export const HANDBOOK_ARTICLES: HandbookArticle[] = [
     category: 'CẢM HỨNG GIAN BẾP',
     badge: 'GÓC SỐNG XANH',
     image: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1200&q=85',
-    date: 'CẢM HỨNG GIAN BẾP • 26/10/2026',
+    date: 'CẢM HỨNG GIAN BẾP - 26/10/2026',
     readTime: '5 phút đọc',
     summary: 'Công thức lên thực đơn 30 phút cho bữa cơm gia đình đủ 4 nhóm dưỡng chất: đạm, chất xơ, vitamin và tinh bột lành mạnh mà không tốn công chuẩn bị.',
     sections: [
@@ -114,7 +114,7 @@ export const HANDBOOK_ARTICLES: HandbookArticle[] = [
     category: 'SỐNG TIỆN NGHI',
     badge: 'GÓC SỐNG XANH',
     image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1200&q=85',
-    date: 'SỐNG TIỆN NGHI • 24/10/2026',
+    date: 'SỐNG TIỆN NGHI - 24/10/2026',
     readTime: '4 phút đọc',
     summary: 'Cách bố trí các khu vực nấu nướng, gia vị và tủ lạnh khoa học theo phương pháp Nhật Bản giúp căn bếp luôn ngăn nắp, tiết kiệm thời gian nội trợ.',
     sections: [

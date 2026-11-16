@@ -2,6 +2,7 @@ import { Component, signal, inject, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { CookieService } from 'ngx-cookie-service';
 import { AdminAuthService } from '../../shared/services/admin-auth.service';
 import { GoogleAuthService } from '../../shared/services/google-auth.service';
 
@@ -17,17 +18,27 @@ export class AdminLoginComponent implements OnInit {
   private googleAuth = inject(GoogleAuthService);
   private router = inject(Router);
   private route  = inject(ActivatedRoute);
+  private cookieService = inject(CookieService);
 
-  email    = signal('admin@xanhla.farm');
-  password = signal('admin123');
-  loading  = signal(false);
+  email      = signal('admin@xanhla.farm');
+  password   = signal('admin123');
+  rememberMe = signal(true);
+  loading    = signal(false);
   googleLoading = signal(false);
-  error    = signal('');
-  expired  = signal(false);  // ← hiện banner token hết hạn
+  error      = signal('');
+  expired    = signal(false);  // ← hiện banner token hết hạn
 
   ngOnInit(): void {
     // Kiểm tra query param ?expired=1 do interceptor redirect
     this.expired.set(this.route.snapshot.queryParamMap.get('expired') === '1');
+    
+    // Ghi nhớ tài khoản: Đọc tên đăng nhập từ Cookie nếu có
+    const savedUsername = this.cookieService.get('admin_remembered_username');
+    if (savedUsername) {
+      this.email.set(savedUsername);
+      this.rememberMe.set(true);
+    }
+
     // Nếu đã đăng nhập hợp lệ thì redirect về dashboard luôn
     if (this.auth.isLoggedIn()) {
       this.router.navigate(['/admin/dashboard']);
@@ -45,15 +56,30 @@ export class AdminLoginComponent implements OnInit {
     this.auth.login(this.email(), this.password()).subscribe({
       next: (res) => {
         this.loading.set(false);
-        if (res.success && res.user.role === 'admin') {
+        const role = (res.user?.role || '').toLowerCase();
+        if (res.success && (role === 'sales' || role === 'admin')) {
+          // Ghi nhớ tên đăng nhập bằng cookie
+          if (this.rememberMe()) {
+            this.cookieService.set('admin_remembered_username', this.email().trim(), 30, '/');
+          } else {
+            this.cookieService.delete('admin_remembered_username', '/');
+          }
           this.router.navigate(['/admin/dashboard']);
         } else {
-          this.error.set('Tài khoản không có quyền admin.');
+          const errMsg = 'Tài khoản không có quyền nhân viên bán hàng (Sales/Admin).';
+          this.error.set(errMsg);
+          this.router.navigate(['/admin/login-failed'], {
+            queryParams: { reason: 'unauthorized', message: errMsg },
+          });
         }
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(err.error?.message || 'Đăng nhập thất bại.');
+        const errMsg = err.error?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.';
+        this.error.set(errMsg);
+        this.router.navigate(['/admin/login-failed'], {
+          queryParams: { reason: 'auth_failed', message: errMsg },
+        });
       },
     });
   }

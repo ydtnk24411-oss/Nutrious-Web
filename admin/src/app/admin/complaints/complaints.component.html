@@ -74,14 +74,14 @@
         type="text"
         placeholder="Tìm theo mã khiếu nại, tên khách hoặc đơn hàng..."
         [ngModel]="searchQuery()"
-        (ngModelChange)="searchQuery.set($event); loadComplaints()"
+        (ngModelChange)="searchQuery.set($event); onFilterChange()"
       />
     </div>
 
     <div class="filter-controls">
       <select
         [ngModel]="selectedType()"
-        (ngModelChange)="selectedType.set($event); loadComplaints()"
+        (ngModelChange)="selectedType.set($event); onFilterChange()"
         class="filter-select"
       >
         <option value="all">Tất cả phân loại</option>
@@ -94,7 +94,7 @@
 
       <select
         [ngModel]="selectedStatus()"
-        (ngModelChange)="selectedStatus.set($event); loadComplaints()"
+        (ngModelChange)="selectedStatus.set($event); onFilterChange()"
         class="filter-select"
       >
         <option value="all">Tất cả trạng thái</option>
@@ -180,6 +180,19 @@
           }
         </tbody>
       </table>
+
+      @if (totalPages() > 1) {
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid #e5e7eb;background:#fafaf9">
+          <span style="font-size:13px;color:#6b7280">
+            Hiển thị <strong>{{ (page() - 1) * pageSize() + 1 }}</strong> - <strong>{{ Math.min(page() * pageSize(), total()) }}</strong> trên <strong>{{ total() }}</strong> khiếu nại
+          </span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button type="button" class="btn-action-outline" [disabled]="page() <= 1" (click)="prevPage()">← Trước</button>
+            <span style="font-size:13px;font-weight:600;padding:0 8px">{{ page() }} / {{ totalPages() }}</span>
+            <button type="button" class="btn-action-outline" [disabled]="page() >= totalPages()" (click)="nextPage()">Sau →</button>
+          </div>
+        </div>
+      }
     }
   </div>
 

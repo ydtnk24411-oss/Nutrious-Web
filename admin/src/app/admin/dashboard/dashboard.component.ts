@@ -30,6 +30,17 @@ export class AdminDashboardComponent implements OnInit {
   timeFilter = signal<'7d' | '30d' | '90d' | 'custom'>('30d');
   customStartDate = signal('');
   customEndDate = signal('');
+  chartMode = signal<'revenue' | 'orders'>('revenue');
+  selectedMetric = signal<'revenue' | 'orders' | 'profit' | 'aov'>('revenue');
+  compareOrders = signal(true);
+
+  // Interactive chart hover states
+  hoveredLineIndex = signal<number | null>(null);
+  hoveredBarIndex = signal<number | null>(null);
+  hoveredHistIndex = signal<number | null>(null);
+  hoveredDonutStatus = signal<string | null>(null);
+  selectedDonutStatus = signal<string | null>(null);
+  hoveredFinSeg = signal<'cogs' | 'ops' | 'profit' | null>(null);
 
   readonly orderStatusMap: Record<string, string> = {
     pending:   'Chờ xử lý',
@@ -300,5 +311,219 @@ export class AdminDashboardComponent implements OnInit {
   hasOrderStatusData(): boolean {
     const s = this.stats();
     return !!(s && s.ordersByStatus && s.ordersByStatus.length > 0);
+  }
+
+  setChartMode(mode: 'revenue' | 'orders'): void {
+    this.chartMode.set(mode);
+  }
+
+  selectMetric(metric: 'revenue' | 'orders' | 'profit' | 'aov'): void {
+    this.selectedMetric.set(metric);
+    this.chartMode.set(metric === 'orders' ? 'orders' : 'revenue');
+  }
+
+  toggleCompareOrders(): void {
+    this.compareOrders.update(v => !v);
+  }
+
+  get maxOrderCount(): number {
+    const data = this.lineData();
+    if (data.length === 0) return 1;
+    return Math.max(...data.map(d => d.count), 1);
+  }
+
+  orderLinePointY(count: number): number {
+    const max = this.maxOrderCount;
+    const h = 180;
+    const padding = 20;
+    return h - ((count / max) * (h - padding * 2)) - padding;
+  }
+
+  get orderOverlayLinePoints(): string {
+    const data = this.lineData();
+    if (data.length === 0) return '';
+    if (data.length === 1) return `300,${this.orderLinePointY(data[0].count)}`;
+    const step = 560 / (data.length - 1);
+    return data.map((d, i) => `${(i * step) + 20},${this.orderLinePointY(d.count)}`).join(' ');
+  }
+
+  get rightYAxisTicks(): string[] {
+    const max = this.maxOrderCount;
+    return [String(max), String(Math.round(max / 2)), '0'];
+  }
+
+  get avgReferenceY(): number {
+    if (this.chartMode() === 'orders') {
+      const data = this.lineData();
+      const avg = data.length ? data.reduce((s, d) => s + d.count, 0) / data.length : 0;
+      return this.chartPointY(avg);
+    }
+    return this.chartPointY(this.avgDailyRevenue);
+  }
+
+  get deliveredCount(): number {
+    return this.stats()?.ordersByStatus?.find(s => s._id === 'delivered')?.count ?? 0;
+  }
+
+  get cancelledCount(): number {
+    return this.stats()?.ordersByStatus?.find(s => s._id === 'cancelled')?.count ?? 0;
+  }
+
+  formatCompact(v: number): string {
+    if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1).replace(/\.0$/, '')}tr`;
+    if (v >= 1_000) return `${Math.round(v / 1_000)}k`;
+    return `${v}`;
+  }
+
+  get maxChartValue(): number {
+    const data = this.lineData();
+    if (data.length === 0) return 1;
+    const mode = this.chartMode();
+    return Math.max(...data.map(d => (mode === 'revenue' ? d.revenue : d.count)), 1);
+  }
+
+  chartPointY(val: number): number {
+    const max = this.maxChartValue;
+    const h = 180;
+    const padding = 20;
+    return h - ((val / max) * (h - padding * 2)) - padding;
+  }
+
+  get activeLinePoints(): string {
+    const data = this.lineData();
+    if (data.length === 0) return '';
+    const mode = this.chartMode();
+    const val = (d: LinePoint) => (mode === 'revenue' ? d.revenue : d.count);
+    if (data.length === 1) return `300,${this.chartPointY(val(data[0]))}`;
+    const step = 560 / (data.length - 1);
+    return data.map((d, i) => `${(i * step) + 20},${this.chartPointY(val(d))}`).join(' ');
+  }
+
+  get activeLineAreaPoints(): string {
+    const points = this.activeLinePoints;
+    if (!points) return '';
+    const data = this.lineData();
+    const mode = this.chartMode();
+    if (data.length === 1) {
+      const y = this.chartPointY(mode === 'revenue' ? data[0].revenue : data[0].count);
+      return `20,200 20,${y} 580,${y} 580,200`;
+    }
+    const lastX = ((data.length - 1) * (560 / (data.length - 1))) + 20;
+    return `20,200 ${points} ${lastX},200`;
+  }
+
+  get yAxisTicks(): string[] {
+    const max = this.maxChartValue;
+    if (this.chartMode() === 'orders') {
+      return [String(max), String(Math.round(max / 2)), '0'];
+    }
+    return [this.formatCompact(max), this.formatCompact(Math.round(max / 2)), '0đ'];
+  }
+
+  get peakLinePoint(): LinePoint | null {
+    const data = this.lineData();
+    if (data.length === 0) return null;
+    return data.reduce((best, cur) => (cur.revenue > best.revenue ? cur : best), data[0]);
+  }
+
+  get avgDailyRevenue(): number {
+    const data = this.lineData();
+    if (data.length === 0) return 0;
+    const total = data.reduce((sum, d) => sum + d.revenue, 0);
+    return Math.round(total / data.length);
+  }
+
+  get totalLineOrders(): number {
+    return this.lineData().reduce((sum, d) => sum + d.count, 0);
+  }
+
+  get recentOrderBars(): LinePoint[] {
+    const data = this.lineData();
+    return data.length > 14 ? data.slice(-14) : data;
+  }
+
+  orderBarHeight(count: number): number {
+    const bars = this.recentOrderBars;
+    const max = Math.max(...bars.map(b => b.count), 1);
+    if (count === 0) return 4;
+    return Math.max(12, Math.round((count / max) * 125));
+  }
+
+  get totalStatusOrders(): number {
+    const s = this.stats();
+    if (!s?.ordersByStatus) return 0;
+    return s.ordersByStatus.reduce((sum, item) => sum + item.count, 0);
+  }
+
+  get completionRate(): number {
+    const total = this.totalStatusOrders;
+    if (total === 0) return 0;
+    const delivered = this.stats()?.ordersByStatus?.find(s => s._id === 'delivered')?.count ?? 0;
+    return Number(((delivered / total) * 100).toFixed(1));
+  }
+
+  get cancellationRate(): number {
+    const total = this.totalStatusOrders;
+    if (total === 0) return 0;
+    const cancelled = this.stats()?.ordersByStatus?.find(s => s._id === 'cancelled')?.count ?? 0;
+    return Number(((cancelled / total) * 100).toFixed(1));
+  }
+
+  get activePipelineCount(): number {
+    const statuses = this.stats()?.ordersByStatus ?? [];
+    const active = new Set(['pending', 'confirmed', 'preparing', 'shipping']);
+    return statuses.filter(s => active.has(s._id)).reduce((sum, s) => sum + s.count, 0);
+  }
+
+  get categoryTotalRevenue(): number {
+    return this.barData().reduce((sum, b) => sum + b.revenue, 0);
+  }
+
+  categoryShare(rev: number): string {
+    const total = this.categoryTotalRevenue;
+    if (total <= 0) return '0';
+    return ((rev / total) * 100).toFixed(1);
+  }
+
+  get hoveredLinePoint(): LinePoint | null {
+    const idx = this.hoveredLineIndex();
+    if (idx === null) return null;
+    return this.lineData()[idx] ?? null;
+  }
+
+  get hoveredLineLeftPct(): number {
+    const idx = this.hoveredLineIndex();
+    if (idx === null) return 50;
+    return (this.linePointX(idx) / 600) * 100;
+  }
+
+  lineHitStartX(index: number): number {
+    const data = this.lineData();
+    if (data.length <= 1 || index === 0) return 0;
+    const halfStep = 560 / (data.length - 1) / 2;
+    return this.linePointX(index) - halfStep;
+  }
+
+  lineHitRectWidth(index: number): number {
+    const data = this.lineData();
+    if (data.length <= 1) return 600;
+    const start = this.lineHitStartX(index);
+    const halfStep = 560 / (data.length - 1) / 2;
+    const end = index === data.length - 1 ? 600 : this.linePointX(index) + halfStep;
+    return Math.max(1, end - start);
+  }
+
+  get activeDonutStatus(): string | null {
+    return this.hoveredDonutStatus() ?? this.selectedDonutStatus();
+  }
+
+  toggleDonutStatus(status: string): void {
+    this.selectedDonutStatus.update(cur => (cur === status ? null : status));
+  }
+
+  get hoveredDonutSegment() {
+    const status = this.activeDonutStatus;
+    if (!status) return null;
+    return this.getDonutSegments().find(seg => seg.status === status) ?? null;
   }
 }

@@ -10,6 +10,7 @@ interface ApiVoucher {
   code: string;
   name: string;
   description?: string;
+  voucherType?: 'ORDER_DISCOUNT' | 'SHIPPING_DISCOUNT';
   discountType: 'percentage' | 'fixed';
   discountValue: number;
   minOrderValue?: number;
@@ -19,7 +20,15 @@ interface ApiVoucher {
   endDate: string;
   usageLimit?: number;
   usedCount: number;
+  maxUsagePerUser?: number;
+  isFirstOrderOnly?: boolean;
+  isPublic?: boolean;
+  activeTimeWindow?: { start: string; end: string } | null;
+  activeDaysOfWeek?: number[];
   applicableCategories?: string[];
+  applicableProductIds?: string[];
+  excludeSaleItems?: boolean;
+  requiredPaymentMethod?: string | null;
 }
 
 interface ApiUserVoucher {
@@ -36,16 +45,25 @@ function toVoucher(v: ApiVoucher): Voucher {
     code: v.code,
     name: v.name,
     type: v.discountType,
+    voucherType: v.voucherType,
     value: v.discountValue,
     minValue: v.minOrderValue || undefined,
     maxValue: v.maxDiscountValue || undefined,
     categorySlugs: v.applicableCategories?.length ? v.applicableCategories : undefined,
+    applicableCategories: v.applicableCategories,
+    applicableProductIds: v.applicableProductIds,
+    excludeSaleItems: Boolean(v.excludeSaleItems),
+    requiredPaymentMethod: v.requiredPaymentMethod || null,
+    activeTimeWindow: v.activeTimeWindow || null,
+    activeDaysOfWeek: v.activeDaysOfWeek,
     startDate: v.startDate,
     endDate: new Date(v.endDate).toLocaleDateString('vi-VN'),
     usageLimit: v.usageLimit || undefined,
     usedCount: v.usedCount || 0,
+    maxUsagePerUser: v.maxUsagePerUser || 0,
+    isFirstOrderOnly: Boolean(v.isFirstOrderOnly),
     description: v.description ?? '',
-    isPublic: true,
+    isPublic: v.isPublic !== false,
   };
 }
 
@@ -169,15 +187,95 @@ export class VoucherService {
     );
   }
 
+  /** Kiểm tra hiệu lực theo khung giờ vàng / chu kỳ thời gian trên client để hiển thị nhãn trạng thái */
+  checkTimeWindow(v: Voucher): { valid: boolean; statusLabel?: string } {
+    if (!v) return { valid: true };
+    const now = new Date();
+    const currentDay = now.getDay(); // 0: CN, 1: T2, ..., 6: T7
+    if (Array.isArray(v.activeDaysOfWeek) && v.activeDaysOfWeek.length > 0) {
+      if (!v.activeDaysOfWeek.includes(currentDay)) {
+        return { valid: false, statusLabel: 'Không áp dụng hôm nay' };
+      }
+    }
+    if (v.activeTimeWindow?.start && v.activeTimeWindow?.end) {
+      const currentMins = now.getHours() * 60 + now.getMinutes();
+      const [sh, sm] = v.activeTimeWindow.start.split(':').map(Number);
+      const [eh, em] = v.activeTimeWindow.end.split(':').map(Number);
+      const startMins = sh * 60 + (sm || 0);
+      const endMins = eh * 60 + (em || 0);
+      if (currentMins < startMins) {
+        return { valid: false, statusLabel: `Sắp diễn ra lúc ${v.activeTimeWindow.start}` };
+      }
+      if (currentMins > endMins) {
+        return { valid: false, statusLabel: `Đã kết thúc lúc ${v.activeTimeWindow.end}` };
+      }
+    }
+    return { valid: true };
+  }
+
   // Server kiểm tra voucher + tính số tiền giảm
   validateVoucher(
     voucherCode: string,
-    cartTotal: number
-  ): Observable<{ valid: boolean; message?: string; discount: number }> {
-    return this.api.post<{ success: boolean; valid: boolean; message?: string; discount: number }>(
-      '/vouchers/validate', { code: voucherCode, subtotal: cartTotal }
+    cartTotalOrOptions: number | {
+      subtotal: number;
+      items?: any[];
+      phone?: string;
+      email?: string;
+      paymentMethod?: string;
+      expectedVoucherType?: 'ORDER_DISCOUNT' | 'SHIPPING_DISCOUNT';
+    },
+    phone?: string,
+    email?: string
+  ): Observable<{
+    valid: boolean;
+    message?: string;
+    discount: number;
+    eligibleSubtotal?: number;
+    voucherType?: string;
+    reason?: string;
+    timeWindow?: { start: string; end: string };
+  }> {
+    let payload: any = { code: voucherCode };
+    if (typeof cartTotalOrOptions === 'object' && cartTotalOrOptions !== null) {
+      payload = {
+        code: voucherCode,
+        subtotal: cartTotalOrOptions.subtotal,
+        items: cartTotalOrOptions.items || [],
+        phone: cartTotalOrOptions.phone,
+        email: cartTotalOrOptions.email,
+        paymentMethod: cartTotalOrOptions.paymentMethod,
+        expectedVoucherType: cartTotalOrOptions.expectedVoucherType,
+      };
+    } else {
+      payload = {
+        code: voucherCode,
+        subtotal: cartTotalOrOptions,
+        phone,
+        email,
+      };
+    }
+
+    return this.api.post<{
+      success: boolean;
+      valid: boolean;
+      message?: string;
+      discount: number;
+      eligibleSubtotal?: number;
+      voucherType?: string;
+      reason?: string;
+      timeWindow?: { start: string; end: string };
+    }>(
+      '/vouchers/validate', payload
     ).pipe(
-      map((res) => ({ valid: !!res.valid, message: res.message, discount: res.discount || 0 })),
+      map((res) => ({
+        valid: !!res.valid,
+        message: res.message,
+        discount: res.discount || 0,
+        eligibleSubtotal: res.eligibleSubtotal,
+        voucherType: res.voucherType,
+        reason: res.reason,
+        timeWindow: res.timeWindow,
+      })),
       catchError((err) => of({
         valid: false,
         message: (err?.error?.message as string | undefined) ?? 'Không kiểm tra được voucher, vui lòng thử lại.',

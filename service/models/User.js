@@ -59,6 +59,8 @@ const userSchema = new mongoose.Schema(
     totalSpent: { type: Number, default: 0 },
     // Addresses
     addresses: [addressSchema],
+    // Danh sách sản phẩm yêu thích (Wishlist)
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
     // Lịch sử sản phẩm đã xem (gắn riêng theo từng tài khoản)
     viewedProducts: { type: [viewedProductSchema], default: [], select: false },
   },
@@ -66,20 +68,38 @@ const userSchema = new mongoose.Schema(
 );
 
 // Hash password before save
+const crypto = require('crypto');
+
 userSchema.pre('save', async function (next) {
   if (!this.password || !this.isModified('password')) return next();
-  // Nếu mật khẩu đã được băm bằng bcrypt (ví dụ từ dữ liệu đăng ký tạm thời OTP) thì không băm lại
+  // Nếu mật khẩu đã là chuỗi băm một chiều SHA-256 (64 hex characters) hoặc bcrypt thì không băm lại
+  if (/^[a-f0-9]{64}$/i.test(this.password)) {
+    return next();
+  }
   if (typeof this.password === 'string' && /^\$2[aby]\$\d{2}\$/.test(this.password) && this.password.length === 60) {
     return next();
   }
-  this.password = await bcrypt.hash(this.password, 12);
+  // Mặc định băm bằng SHA-256 theo yêu cầu bảo mật nghiệp vụ
+  this.password = crypto.createHash('sha256').update(this.password).digest('hex');
   next();
 });
 
-// Compare password
+// Compare password (hỗ trợ cả bcrypt và SHA-256 đối chiếu)
 userSchema.methods.comparePassword = async function (plain) {
   if (!this.password) return false;
-  return bcrypt.compare(plain, this.password);
+  // 1. Kiểm tra đối chiếu bcrypt tiêu chuẩn
+  if (this.password.startsWith('$2')) {
+    const isBcryptMatch = await bcrypt.compare(plain, this.password);
+    if (isBcryptMatch) return true;
+  }
+  // 2. Kiểm tra đối chiếu chuỗi băm một chiều SHA-256
+  const sha256Hash = crypto.createHash('sha256').update(plain).digest('hex');
+  if (this.password === sha256Hash) return true;
+
+  // 3. Nếu dữ liệu lưu dạng plain text (dev seed) thì kiểm tra trực tiếp
+  if (this.password === plain) return true;
+
+  return false;
 };
 
 // Partial unique indexes để bảo đảm tính duy nhất nhưng không xung đột với các bản ghi rỗng

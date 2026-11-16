@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 const { body } = require('express-validator');
 const Product  = require('../models/Product');
 const Category = require('../models/Category');
-const { protect, adminOnly } = require('../middleware/auth');
+const SearchLog = require('../models/SearchLog');
+const { protect, adminOnly, optionalAuth, authorizeRoles } = require('../middleware/auth');
 const { validate }           = require('../middleware/validate');
 const {
   COMBO_ITEM_POPULATE_FIELDS,
@@ -65,9 +66,23 @@ async function sanitizeAddOnDeals(rawDeals, selfId, mainDoc) {
 }
 
 // GET /api/products  — public, supports ?categoryId=&category=&search=&sort=&page=&limit=
-router.get('/', async (req, res, next) => {
+router.get('/', optionalAuth, async (req, res, next) => {
   try {
-    const { categoryId, category, search, sort = 'createdAt', page = 1, limit = 20, isCombo } = req.query;
+    const {
+      categoryId,
+      category,
+      search,
+      keyword,
+      minPrice,
+      maxPrice,
+      inStock,
+      sort = 'createdAt',
+      page = 1,
+      limit = 20,
+      isCombo
+    } = req.query;
+
+    const searchTerm = (keyword || search || '').trim();
     const catParam = categoryId || category;
     const filter = { isActive: { $ne: false } };
 
@@ -81,7 +96,6 @@ router.get('/', async (req, res, next) => {
       if (mongoose.Types.ObjectId.isValid(catParam)) {
         filter.categoryId = new mongoose.Types.ObjectId(catParam);
       } else {
-        // Find category by slug or name
         const cleanSlug = catParam.startsWith('/') ? catParam : `/category/${catParam}`;
         const foundCat = await Category.findOne({
           $or: [
@@ -101,13 +115,31 @@ router.get('/', async (req, res, next) => {
       }
     }
 
-    if (search && search.trim()) {
-      const searchRegex = new RegExp(search.trim(), 'i');
+    // 1. Khoảng giá (minPrice, maxPrice)
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      filter.priceNumber = {};
+      if (minPrice !== undefined && !isNaN(Number(minPrice))) {
+        filter.priceNumber.$gte = Math.max(0, Number(minPrice));
+      }
+      if (maxPrice !== undefined && !isNaN(Number(maxPrice))) {
+        filter.priceNumber.$lte = Number(maxPrice);
+      }
+    }
+
+    // 2. Tình trạng còn hàng (inStock)
+    if (inStock === 'true' || inStock === true) {
+      filter.stock = { $gt: 0 };
+    }
+
+    // 3. Tìm kiếm từ khóa / mã sản phẩm (keyword / search)
+    if (searchTerm) {
+      const searchRegex = new RegExp(searchTerm, 'i');
       const searchCondition = {
         $or: [
           { name: { $regex: searchRegex } },
           { slug: { $regex: searchRegex } },
           { description: { $regex: searchRegex } },
+          { brand: { $regex: searchRegex } },
         ]
       };
       if (filter.$or) {
@@ -118,10 +150,14 @@ router.get('/', async (req, res, next) => {
       }
     }
 
-    const sortObj = sort === 'price-asc'  ? { priceNumber:  1 }
-                  : sort === 'price-desc' ? { priceNumber: -1 }
-                  : sort === 'name-asc'   ? { name:  1 }
-                  : sort === 'name-desc'  ? { name: -1 }
+    // 4. Sắp xếp kết quả (Sort)
+    const sortObj = (sort === 'price-asc' || sort === 'priceNumber')   ? { priceNumber:  1 }
+                  : (sort === 'price-desc' || sort === '-priceNumber')  ? { priceNumber: -1 }
+                  : (sort === 'name-asc' || sort === 'name')           ? { name:  1 }
+                  : (sort === 'name-desc' || sort === '-name')          ? { name: -1 }
+                  : sort === 'bestseller' || sort === 'popular'         ? { soldCount: -1, createdAt: -1 }
+                  : sort === 'rating'                                   ? { averageRating: -1, createdAt: -1 }
+                  : sort === 'newest'                                   ? { createdAt: -1 }
                   : { createdAt: -1 };
 
     const limitNum = Number(limit);
@@ -130,14 +166,28 @@ router.get('/', async (req, res, next) => {
       .sort(sortObj)
       .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
       .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
+
     if (limitNum > 0) {
       const skip = (pageNum - 1) * limitNum;
       query = query.skip(skip).limit(limitNum);
     }
+
     const [products, total] = await Promise.all([
       query,
       Product.countDocuments(filter),
     ]);
+
+    if (searchTerm && searchTerm.trim().length >= 2) {
+      const cleanKw = searchTerm.trim();
+      SearchLog.create({
+        keyword: cleanKw,
+        normalizedKeyword: cleanKw.toLowerCase(),
+        resultCount: total,
+        customerId: req.user?._id || null,
+        sessionId: req.sessionID || req.headers['x-session-id'] || '',
+      }).catch(() => {});
+    }
+
     res.json({
       success: true,
       total,
@@ -163,7 +213,8 @@ router.get('/:slug/related', async (req, res, next) => {
     const filter = {
       _id: { $ne: product._id },
       isActive: { $ne: false },
-      isCombo: { $ne: true }
+      isCombo: { $ne: true },
+      stock: { $gt: 0 },
     };
 
     if (product.categoryId) {
@@ -172,20 +223,53 @@ router.get('/:slug/related', async (req, res, next) => {
       filter.category = product.category;
     }
 
-    let related = await Product.find(filter).limit(limitNum);
+    // Thuật toán: Cùng danh mục, còn tồn kho (stock > 0), sắp xếp theo rating và lượt bán nhiều nhất
+    let related = await Product.find(filter)
+      .sort({ rating: -1, soldCount: -1, createdAt: -1 })
+      .limit(limitNum);
 
-    // Nếu danh mục có ít sản phẩm, bổ sung thêm các sản phẩm nông sản tươi khác
+    // Nếu danh mục có ít sản phẩm, bổ sung thêm các sản phẩm nông sản tươi khác còn tồn kho
     if (related.length < limitNum) {
       const excludeIds = [product._id, ...related.map((r) => r._id)];
       const fallbackProducts = await Product.find({
         _id: { $nin: excludeIds },
         isActive: { $ne: false },
-        isCombo: { $ne: true }
-      }).limit(limitNum - related.length);
+        isCombo: { $ne: true },
+        stock: { $gt: 0 },
+      })
+        .sort({ rating: -1, soldCount: -1 })
+        .limit(limitNum - related.length);
       related = [...related, ...fallbackProducts];
     }
 
     res.json({ success: true, data: related });
+  } catch (err) { next(err); }
+});
+
+// GET /api/products/:slug/frequently-bought — Sản phẩm thường được mua cùng nhau (Frequently Bought Together)
+router.get('/:slug/frequently-bought', async (req, res, next) => {
+  try {
+    const rawSlug = req.params.slug;
+    let product = await Product.findOne({ slug: rawSlug, isActive: { $ne: false } });
+    if (!product && mongoose.Types.ObjectId.isValid(rawSlug)) {
+      product = await Product.findOne({ _id: rawSlug, isActive: { $ne: false } });
+    }
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
+    }
+
+    // Tìm 2 sản phẩm gợi ý mua cùng: còn hàng, khác sản phẩm hiện tại, sắp xếp theo lượt bán và đánh giá
+    const companionProducts = await Product.find({
+      _id: { $ne: product._id },
+      isActive: { $ne: false },
+      isCombo: { $ne: true },
+      stock: { $gt: 0 },
+    })
+      .sort({ soldCount: -1, rating: -1 })
+      .limit(2)
+      .lean();
+
+    res.json({ success: true, data: companionProducts });
   } catch (err) { next(err); }
 });
 
@@ -277,8 +361,19 @@ router.post('/', protect, adminOnly, productValidation, validate, async (req, re
 });
 
 // PUT /api/products/:id — admin
-router.put('/:id', protect, adminOnly, async (req, res, next) => {
+router.put('/:id', protect, authorizeRoles('Manager', 'Admin', 'Sales'), async (req, res, next) => {
   try {
+    const userRole = String(req.user?.role || req.session?.employee?.role || '').toLowerCase();
+    const isPriceChanged = req.body.priceNumber !== undefined || req.body.price !== undefined;
+    
+    // Độc quyền Manager/Admin: Sales không được tự ý sửa giá sản phẩm
+    if (isPriceChanged && userRole === 'sales') {
+      return res.status(403).json({
+        success: false,
+        message: 'Chỉ Quản lý (Manager) hoặc Admin mới có quyền điều chỉnh giá sản phẩm.',
+      });
+    }
+
     if (req.body.categoryId) {
       const cat = await Category.findById(req.body.categoryId);
       if (cat) {

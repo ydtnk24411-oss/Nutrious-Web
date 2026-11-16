@@ -4,6 +4,7 @@ const orderItemSchema = new mongoose.Schema(
   {
     product:        { type: String, default: '' },  // MongoDB _id hoặc slug — optional snapshot
     productName:    { type: String, required: true },
+    categoryName:   { type: String, default: '' },   // Lưu cứng phi chuẩn hóa danh mục tại thời điểm mua
     productImage:   { type: String, default: '' },
     productPrice:   { type: String, default: '' },
     priceNumber:    { type: Number, required: true },
@@ -58,11 +59,11 @@ const orderSchema = new mongoose.Schema(
     },
     shippingAddress: { type: String, default: '' },
     paymentMethod: {
-      type: String, enum: ['cod', 'bank_transfer'], default: 'cod',
+      type: String, enum: ['cod', 'bank_transfer', 'vnpay', 'momo'], default: 'cod',
     },
     paymentStatus: {
       type: String,
-      enum: ['unpaid', 'paid', 'expired'],
+      enum: ['unpaid', 'paid', 'refunded', 'expired'],
       default: 'unpaid',
     },
     paymentExpiresAt: { type: Date, default: null },
@@ -82,6 +83,15 @@ const orderSchema = new mongoose.Schema(
     nonRefundableAccepted: { type: Boolean, default: false },
     nonRefundableItems:    { type: Array, default: [] },
     note: { type: String, default: '' },
+    statusHistory: [
+      {
+        status:    { type: String, required: true },
+        updatedBy: { type: String, default: 'Hệ thống' },
+        role:      { type: String, default: 'System' },
+        note:      { type: String, default: '' },
+        updatedAt: { type: Date, default: Date.now },
+      }
+    ],
   },
   { timestamps: true }
 );

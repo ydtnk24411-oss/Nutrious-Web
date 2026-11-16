@@ -1,6 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { AnalyticsTrackerService } from './shared/services/analytics-tracker.service';
 
 @Component({
   selector: 'app-root',
@@ -9,8 +10,13 @@ import { filter } from 'rxjs/operators';
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   private router = inject(Router);
+  private analytics = inject(AnalyticsTrackerService);
+
+  ngOnInit(): void {
+    this.analytics.init();
+  }
 
   constructor() {
     this.router.events

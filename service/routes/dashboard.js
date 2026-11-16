@@ -7,6 +7,7 @@ const Complaint = require('../models/Complaint');
 const Conversation = require('../models/Conversation');
 const Voucher = require('../models/Voucher');
 const Review = require('../models/Review');
+const ShippingConfig = require('../models/ShippingConfig');
 const { protect, staffOnly } = require('../middleware/auth');
 
 function buildDateFilter(startDate, endDate) {
@@ -269,6 +270,225 @@ router.get('/top-products', protect, staffOnly, async (req, res, next) => {
     ]);
 
     res.json({ success: true, data: top });
+  } catch (err) { next(err); }
+});
+
+// GET /api/dashboard/finance — full & per-store financial analytics
+router.get('/finance', protect, staffOnly, async (req, res, next) => {
+  try {
+    const { startDate, endDate, store } = req.query;
+    const dateFilter = buildDateFilter(startDate, endDate);
+
+    const [orders, shippingCfg] = await Promise.all([
+      Order.find(dateFilter)
+        .sort({ createdAt: -1 })
+        .select('orderCode guestName subtotal discount comboDiscount addonDiscount shippingDiscount shippingVoucherDiscount shippingFee total shippingMethod pickupStore paymentMethod paymentStatus status createdAt')
+        .lean(),
+      ShippingConfig.findOne({ key: 'default' }).lean(),
+    ]);
+
+    const rawWarehouses = Array.isArray(shippingCfg?.warehouses) && shippingCfg.warehouses.length > 0
+      ? shippingCfg.warehouses
+      : [{
+          id: 'hq',
+          name: shippingCfg?.warehouse?.name || 'Cửa hàng Trung tâm Evergreen Mart',
+          address: shippingCfg?.warehouse?.address || 'TP. Hồ Chí Minh',
+          isHeadquarter: true,
+        }];
+
+    const hqStore = rawWarehouses.find((w) => w.isHeadquarter) || rawWarehouses[0];
+    const storeMap = new Map();
+
+    const ensureStore = (name, address = '', isHeadquarter = false) => {
+      const key = name || hqStore.name;
+      if (!storeMap.has(key)) {
+        storeMap.set(key, {
+          storeName: key,
+          address,
+          isHeadquarter,
+          orderCount: 0,
+          cancelledCount: 0,
+          grossRevenue: 0,
+          voucherDiscount: 0,
+          comboDiscount: 0,
+          addonDiscount: 0,
+          shippingDiscount: 0,
+          totalDiscount: 0,
+          shippingRevenue: 0,
+          netRevenue: 0,
+          collectedAmount: 0,
+          pendingAmount: 0,
+          cancelledAmount: 0,
+          codAmount: 0,
+          codCount: 0,
+          vietqrAmount: 0,
+          vietqrCount: 0,
+          vietqrPaidAmount: 0,
+          vietqrPendingAmount: 0,
+        });
+      }
+      return storeMap.get(key);
+    };
+
+    rawWarehouses.forEach((w) => ensureStore(w.name, w.address || '', Boolean(w.isHeadquarter)));
+
+    const resolveOrderStoreName = (o) => {
+      const pName = o.pickupStore?.name?.trim();
+      if (pName) return pName;
+      return hqStore.name;
+    };
+
+    const transactions = [];
+
+    for (const o of orders) {
+      const sName = resolveOrderStoreName(o);
+      const bucket = ensureStore(sName, o.pickupStore?.address || '', sName === hqStore.name);
+      const isCancelled = o.status === 'cancelled';
+      const isCollected = !isCancelled && (o.status === 'delivered' || o.paymentStatus === 'paid');
+      const subtotal = Number(o.subtotal || 0);
+      const total = Number(o.total || 0);
+      const vDisc = Number(o.discount || 0);
+      const cDisc = Number(o.comboDiscount || 0);
+      const aDisc = Number(o.addonDiscount || 0);
+      const sDisc = Number(o.shippingDiscount || 0) + Number(o.shippingVoucherDiscount || 0);
+      const shipFee = Number(o.shippingFee || 0);
+      const orderDiscount = vDisc + cDisc + aDisc;
+
+      if (isCancelled) {
+        bucket.cancelledCount += 1;
+        bucket.cancelledAmount += total;
+      } else {
+        bucket.orderCount += 1;
+        bucket.grossRevenue += subtotal;
+        bucket.voucherDiscount += vDisc;
+        bucket.comboDiscount += cDisc;
+        bucket.addonDiscount += aDisc;
+        bucket.shippingDiscount += sDisc;
+        bucket.totalDiscount += orderDiscount;
+        bucket.shippingRevenue += shipFee;
+        bucket.netRevenue += total;
+
+        if (isCollected) bucket.collectedAmount += total;
+        else bucket.pendingAmount += total;
+
+        if (o.paymentMethod === 'bank_transfer') {
+          bucket.vietqrCount += 1;
+          bucket.vietqrAmount += total;
+          if (o.paymentStatus === 'paid') bucket.vietqrPaidAmount += total;
+          else bucket.vietqrPendingAmount += total;
+        } else {
+          bucket.codCount += 1;
+          bucket.codAmount += total;
+        }
+      }
+
+      if (!store || store === sName) {
+        const estCogs = Math.round(subtotal * 0.64);
+        const estOps = Math.round(total * 0.08);
+        transactions.push({
+          _id: String(o._id),
+          orderCode: o.orderCode,
+          storeName: sName,
+          customer: o.guestName || 'Khách lẻ',
+          shippingMethod: o.shippingMethod,
+          paymentMethod: o.paymentMethod,
+          paymentStatus: o.paymentStatus,
+          status: o.status,
+          subtotal,
+          totalDiscount: orderDiscount,
+          shippingFee: shipFee,
+          total,
+          estimatedProfit: isCancelled ? 0 : (total - estCogs - estOps),
+          isCollected,
+          createdAt: o.createdAt,
+        });
+      }
+    }
+
+    const totalSystemNet = Array.from(storeMap.values()).reduce((sum, s) => sum + s.netRevenue, 0);
+
+    const stores = Array.from(storeMap.values()).map((s) => {
+      const estimatedCogs = Math.round(s.grossRevenue * 0.64);
+      const estimatedOps = Math.round(s.netRevenue * 0.08);
+      const estimatedProfit = s.netRevenue - estimatedCogs - estimatedOps;
+      const profitMargin = s.netRevenue > 0 ? Number(((estimatedProfit / s.netRevenue) * 100).toFixed(1)) : 0;
+      const avgOrderValue = s.orderCount > 0 ? Math.round(s.netRevenue / s.orderCount) : 0;
+      const revenueShare = totalSystemNet > 0 ? Number(((s.netRevenue / totalSystemNet) * 100).toFixed(1)) : 0;
+      return {
+        ...s,
+        estimatedCogs,
+        estimatedOps,
+        estimatedProfit,
+        profitMargin,
+        avgOrderValue,
+        revenueShare,
+      };
+    }).sort((a, b) => b.netRevenue - a.netRevenue);
+
+    const activeStores = store ? stores.filter((s) => s.storeName === store) : stores;
+    const summary = activeStores.reduce((acc, s) => ({
+      validOrdersCount: acc.validOrdersCount + s.orderCount,
+      cancelledOrdersCount: acc.cancelledOrdersCount + s.cancelledCount,
+      grossRevenue: acc.grossRevenue + s.grossRevenue,
+      voucherDiscount: acc.voucherDiscount + s.voucherDiscount,
+      comboDiscount: acc.comboDiscount + s.comboDiscount,
+      addonDiscount: acc.addonDiscount + s.addonDiscount,
+      shippingDiscount: acc.shippingDiscount + s.shippingDiscount,
+      totalDiscount: acc.totalDiscount + s.totalDiscount,
+      shippingRevenue: acc.shippingRevenue + s.shippingRevenue,
+      netRevenue: acc.netRevenue + s.netRevenue,
+      collectedAmount: acc.collectedAmount + s.collectedAmount,
+      pendingAmount: acc.pendingAmount + s.pendingAmount,
+      cancelledAmount: acc.cancelledAmount + s.cancelledAmount,
+      codAmount: acc.codAmount + s.codAmount,
+      codCount: acc.codCount + s.codCount,
+      vietqrAmount: acc.vietqrAmount + s.vietqrAmount,
+      vietqrCount: acc.vietqrCount + s.vietqrCount,
+      vietqrPaidAmount: acc.vietqrPaidAmount + s.vietqrPaidAmount,
+      vietqrPendingAmount: acc.vietqrPendingAmount + s.vietqrPendingAmount,
+      estimatedCogs: acc.estimatedCogs + s.estimatedCogs,
+      estimatedOps: acc.estimatedOps + s.estimatedOps,
+      estimatedProfit: acc.estimatedProfit + s.estimatedProfit,
+    }), {
+      validOrdersCount: 0,
+      cancelledOrdersCount: 0,
+      grossRevenue: 0,
+      voucherDiscount: 0,
+      comboDiscount: 0,
+      addonDiscount: 0,
+      shippingDiscount: 0,
+      totalDiscount: 0,
+      shippingRevenue: 0,
+      netRevenue: 0,
+      collectedAmount: 0,
+      pendingAmount: 0,
+      cancelledAmount: 0,
+      codAmount: 0,
+      codCount: 0,
+      vietqrAmount: 0,
+      vietqrCount: 0,
+      vietqrPaidAmount: 0,
+      vietqrPendingAmount: 0,
+      estimatedCogs: 0,
+      estimatedOps: 0,
+      estimatedProfit: 0,
+    });
+
+    summary.profitMargin = summary.netRevenue > 0
+      ? Number(((summary.estimatedProfit / summary.netRevenue) * 100).toFixed(1))
+      : 0;
+    summary.avgOrderValue = summary.validOrdersCount > 0
+      ? Math.round(summary.netRevenue / summary.validOrdersCount)
+      : 0;
+
+    res.json({
+      success: true,
+      data: {
+        summary,
+        stores,
+        transactions: transactions.slice(0, 60),
+      },
+    });
   } catch (err) { next(err); }
 });
 

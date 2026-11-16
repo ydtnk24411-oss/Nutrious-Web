@@ -58,6 +58,13 @@ export interface ApiOrder {
   note: string;
   createdAt: string;
   user?: { name: string; email: string };
+  statusHistory?: {
+    status: string;
+    updatedBy: string;
+    role?: string;
+    note?: string;
+    updatedAt: string;
+  }[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -65,7 +72,7 @@ export class OrderApiService {
   private api = inject(ApiService);
 
   getMyOrders(params?: Record<string, string | number>) {
-    return this.api.get<{ success: boolean; total: number; data: ApiOrder[] }>('/orders/my', params);
+    return this.api.get<{ success: boolean; total: number; data: ApiOrder[] }>('/orders/my-orders', params);
   }
 
   getByCode(code: string) {

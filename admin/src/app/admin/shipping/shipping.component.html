@@ -3,14 +3,14 @@
     <div>
       <h1 class="page-title">Cấu hình Vận chuyển & Kho hàng</h1>
       <p class="page-subtitle">
-        Quản lý tọa độ kho Leaflet/OSM, bảng phí theo khoảng cách OSRM, ưu đãi đơn hàng và bán kính an toàn cho thực phẩm tươi mát.
+        Cài đặt vị trí kho, bán kính giao hàng và bảng phí vận chuyển.
       </p>
     </div>
     <button class="btn-save" (click)="saveConfig()" [disabled]="saving()">
       @if (saving()) {
         <span>Đang lưu...</span>
       } @else {
-        <span>💾 Lưu cấu hình vận chuyển</span>
+        <span>Lưu cấu hình</span>
       }
     </button>
   </div>
@@ -34,23 +34,23 @@
     </div>
   } @else {
     <div class="grid-layout">
-      <!-- Cột trái: Kho hàng & Bản đồ Leaflet -->
+      <!-- Cột trái: Kho hàng & Bản đồ -->
       <div class="card map-card">
         <div class="card-header">
-          <div class="card-icon">🏭</div>
+          <div class="card-icon">📍</div>
           <div>
-            <h3 class="card-title">Vị trí kho hàng thực tế (Leaflet & OpenStreetMap)</h3>
-            <p class="card-desc">Ghim và kéo thả marker trên bản đồ hoặc nhập tìm kiếm địa chỉ tại Việt Nam.</p>
+            <h3 class="card-title">Vị trí kho hàng</h3>
+            <p class="card-desc">Chọn vị trí kho trên bản đồ hoặc tìm kiếm địa chỉ.</p>
           </div>
         </div>
 
         <div class="form-group search-group">
-          <label class="form-label">Tìm nhanh địa chỉ kho qua OpenStreetMap (Nominatim)</label>
+          <label class="form-label">Tìm kiếm địa chỉ</label>
           <div class="search-input-wrap">
             <input
               type="text"
               class="form-input"
-              placeholder="Nhập địa chỉ kho (ví dụ: Linh Trung, Thủ Đức, TP.HCM)..."
+              placeholder="Nhập địa chỉ cần tìm (ví dụ: Linh Trung, Thủ Đức)..."
               [value]="searchQuery()"
               (input)="onSearchInput($any($event.target).value)"
             />
@@ -72,7 +72,7 @@
 
         <div class="form-grid-2">
           <div class="form-group">
-            <label class="form-label">Tên cơ sở / Kho hàng</label>
+            <label class="form-label">Tên kho hàng</label>
             <input
               type="text"
               class="form-input"
@@ -93,7 +93,7 @@
 
         <div class="coords-bar">
           <div>
-            <span class="coord-label">Vĩ độ (Lat):</span>
+            <span class="coord-label">Vĩ độ:</span>
             <input
               type="number"
               step="0.0001"
@@ -103,7 +103,7 @@
             />
           </div>
           <div>
-            <span class="coord-label">Kinh độ (Lng):</span>
+            <span class="coord-label">Kinh độ:</span>
             <input
               type="number"
               step="0.0001"
@@ -113,18 +113,18 @@
             />
           </div>
           <div class="hint-pill">
-            💡 Kéo thả ghim 🏭 hoặc click trực tiếp lên bản đồ
+            Kéo ghim hoặc click trên bản đồ
           </div>
         </div>
 
-        <!-- Khung bản đồ Leaflet -->
+        <!-- Khung bản đồ -->
         <div class="map-wrapper">
           <div #adminMapContainer class="admin-leaflet-container"></div>
         </div>
 
         <!-- Chính sách bảo quản thực phẩm -->
         <div class="form-group policy-box">
-          <label class="form-label">🌿 Cam kết vận chuyển & bảo quản nông sản tươi sống</label>
+          <label class="form-label">Cam kết bảo quản nông sản tươi</label>
           <textarea
             rows="3"
             class="form-textarea"
@@ -132,7 +132,7 @@
             (input)="foodPreservationPolicy.set($any($event.target).value)"
           ></textarea>
           <p class="form-hint">
-            Thông điệp này hiển thị tại trang checkout để khách hàng yên tâm về quy trình đóng gói túi gel đá lạnh / thùng cách nhiệt và giao ngay trong ngày.
+            Hiển thị tại trang thanh toán để thông tin đến khách hàng.
           </p>
         </div>
       </div>
@@ -145,14 +145,14 @@
             <div class="card-icon">⚡</div>
             <div>
               <h3 class="card-title">Bán kính giao hàng tối đa</h3>
-              <p class="card-desc">Bảo đảm độ tươi sống cho rau củ quả, thịt cá mát.</p>
+              <p class="card-desc">Đảm bảo chất lượng thực phẩm tươi mát.</p>
             </div>
           </div>
 
           <div class="radius-control">
             <div class="radius-val">
               <strong>{{ maxRadiusKm() }} km</strong>
-              <span>(Khoảng cách đường bộ thực tế OSRM)</span>
+              <span>(Khoảng cách đường bộ)</span>
             </div>
             <input
               type="range"
@@ -165,11 +165,11 @@
             />
             <div class="radius-legend">
               <span>3 km</span>
-              <span class="rec-tag">Khuyến nghị thực phẩm mát: 10 km</span>
+              <span class="rec-tag">Khuyến nghị: 10 km</span>
               <span>25 km</span>
             </div>
             <div class="warning-callout">
-              Đơn hàng có địa chỉ vượt quá {{ maxRadiusKm() }} km sẽ tự động bị từ chối đặt trực tuyến vì không đảm bảo chất lượng rau củ & thủy hải sản tươi mát.
+              Đơn ngoài {{ maxRadiusKm() }} km sẽ tự động từ chối để đảm bảo chất lượng hàng tươi.
             </div>
           </div>
         </div>
@@ -179,8 +179,8 @@
           <div class="card-header">
             <div class="card-icon">🚚</div>
             <div>
-              <h3 class="card-title">Bảng phí theo khoảng cách (OSRM)</h3>
-              <p class="card-desc">Tự động áp dụng theo khoảng cách đường lái xe thực tế.</p>
+              <h3 class="card-title">Bảng phí theo khoảng cách</h3>
+              <p class="card-desc">Tự động tính theo cự ly di chuyển thực tế.</p>
             </div>
           </div>
 
@@ -222,7 +222,7 @@
                   <strong>Trên {{ maxRadiusKm() }} km</strong>
                 </td>
                 <td colspan="2">
-                  <span class="badge-danger">Không hỗ trợ giao tươi (Tự động từ chối)</span>
+                  <span class="badge-danger">Ngoài bán kính (Tự động từ chối)</span>
                 </td>
               </tr>
             </tbody>
@@ -234,8 +234,8 @@
           <div class="card-header">
             <div class="card-icon">🎁</div>
             <div>
-              <h3 class="card-title">Ưu đãi giảm phí ship theo giá trị đơn</h3>
-              <p class="card-desc">Tự động trừ trực tiếp vào phí vận chuyển (không âm).</p>
+              <h3 class="card-title">Ưu đãi phí ship theo giá trị đơn</h3>
+              <p class="card-desc">Tự động trừ vào phí vận chuyển.</p>
             </div>
           </div>
 

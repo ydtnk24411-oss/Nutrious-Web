@@ -2868,7 +2868,7 @@
   color: #fff;
 }
 
-/* 4 Meal Slots Grid (Bữa Sáng · Bữa Trưa · Bữa Phụ Sữa Chua · Bữa Tối) */
+/* 4 Meal Slots Grid (Bữa Sáng - Bữa Trưa - Bữa Phụ Sữa Chua - Bữa Tối) */
 .xl-day-slots-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

@@ -48,6 +48,9 @@ export interface ApiOrder {
   estimatedDeliveryTime?: string;
   shippingMethod: 'pickup' | 'delivery';
   shippingAddress: string;
+  pickupStore?: { name?: string; address?: string } | null;
+  deliveryTimeSlot?: string;
+  hasNonRefundableItems?: boolean;
   paymentMethod: 'cod' | 'bank_transfer';
   paymentStatus?: 'unpaid' | 'paid' | 'expired';
   paymentExpiresAt?: string | null;
@@ -56,6 +59,13 @@ export interface ApiOrder {
   note: string;
   createdAt: string;
   user?: { name: string; email: string };
+  statusHistory?: {
+    status: string;
+    updatedBy: string;
+    role?: string;
+    note?: string;
+    updatedAt: string;
+  }[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -71,7 +81,7 @@ export class OrderApiService {
   }
 
   getAll(params?: Record<string, string | number>) {
-    return this.api.get<{ success: boolean; total: number; data: ApiOrder[] }>('/orders', params);
+    return this.api.get<{ success: boolean; total: number; data: ApiOrder[]; statusCounts?: Record<string, number> }>('/orders', params);
   }
 
   getById(id: string) {

@@ -34,10 +34,34 @@
 /* ── Grid View (Exact Ordering Page Style) ───────── */
 .prod-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(235px, 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 18px;
   margin-bottom: 26px;
   align-items: stretch;
+}
+
+@media (max-width: 1499px) {
+  .prod-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 1099px) {
+  .prod-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 767px) {
+  .prod-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 479px) {
+  .prod-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .xanhla-prod-card {

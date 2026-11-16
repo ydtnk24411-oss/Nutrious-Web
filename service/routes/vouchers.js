@@ -12,6 +12,7 @@ router.get('/', async (req, res, next) => {
     const now = new Date();
     const vouchers = await Voucher.find({
       isActive: true,
+      isPublic: { $ne: false },
       startDate: { $lte: now },
       endDate: { $gte: now },
       $or: [
@@ -180,13 +181,46 @@ router.get('/my', protect, async (req, res, next) => {
 router.post('/validate', optionalAuth, async (req, res, next) => {
   try {
     const subtotal = Number(req.body.subtotal) || 0;
-    const r = await evaluateVoucher(req.body.code, subtotal, req.user?._id);
-    if (!r.valid) return res.json({ success: true, valid: false, message: r.message, discount: 0 });
+    const phone = req.body.phone || req.user?.phone || '';
+    const email = req.body.email || req.user?.email || '';
+    const items = Array.isArray(req.body.items) ? req.body.items : [];
+    const paymentMethod = req.body.paymentMethod || null;
+    const expectedVoucherType = req.body.expectedVoucherType || null;
+
+    const r = await evaluateVoucher(req.body.code, {
+      subtotal,
+      items,
+      userId: req.user?._id,
+      customerPhone: phone,
+      customerEmail: email,
+      paymentMethod,
+      expectedVoucherType,
+    });
+
+    if (!r.valid) {
+      return res.json({
+        success: true,
+        valid: false,
+        message: r.message,
+        discount: 0,
+        reason: r.reason,
+        timeWindow: r.timeWindow,
+      });
+    }
+
     res.json({
       success: true,
       valid: true,
       discount: r.discount,
-      data: { code: r.voucher.code, name: r.voucher.name },
+      eligibleSubtotal: r.eligibleSubtotal,
+      eligibleItemsCount: r.eligibleItemsCount,
+      voucherType: r.voucherType,
+      data: {
+        code: r.voucher.code,
+        name: r.voucher.name,
+        voucherType: r.voucherType,
+        maxDiscountValue: r.voucher.maxDiscountValue,
+      },
     });
   } catch (err) { next(err); }
 });

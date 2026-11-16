@@ -23,7 +23,7 @@
               } @else if (comboStock(p) <= 0) {
                 <span class="pd-combo-stock-pill is-out">Tạm hết hàng</span>
               } @else {
-                <span class="pd-combo-stock-pill is-in">Còn {{ comboStock(p) }} gói Combo</span>
+                <span class="pd-combo-stock-pill is-in">Còn hàng</span>
               }
             </div>
           }
@@ -65,7 +65,7 @@
                         <div class="pd-combo-detail-sub">
                           Giá tham khảo: {{ ci.product.price || money(ci.product.priceNumber) }}
                           @if (ci.product.weight || ci.product.unit) {
-                            <span>· {{ ci.product.weight || ci.product.unit }}</span>
+                            <span>- {{ ci.product.weight || ci.product.unit }}</span>
                           }
                         </div>
                       </div>
@@ -101,9 +101,6 @@
           <div style="margin-bottom:24px">
             <span class="xanhla-option-label">
               {{ p.isCombo ? 'Số lượng gói Combo' : 'Số lượng' }}
-              @if (!isProductUnavailable(p) && productMaxStock(p) > 0) {
-                <span style="font-weight:500;color:#64748b;margin-left:6px;font-size:12.5px">(Còn {{ productMaxStock(p) }} sản phẩm)</span>
-              }
             </span>
             <div class="xanhla-quantity-picker">
               <button type="button" [disabled]="isProductUnavailable(p) || quantity() <= 1" (click)="dec()">−</button>
@@ -140,6 +137,16 @@
                 Mua ngay
               </button>
             }
+            <button
+              type="button"
+              (click)="wishlist.toggleWishlist(p)"
+              [title]="wishlist.isWishlisted(p._id) ? 'Bỏ khỏi yêu thích' : 'Thêm vào yêu thích'"
+              style="width:48px;height:48px;border-radius:var(--xanh-radius-sm);border:1px solid #fecdd3;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;flex-shrink:0"
+              [style.color]="wishlist.isWishlisted(p._id) ? '#e11d48' : '#64748b'"
+              [style.background]="wishlist.isWishlisted(p._id) ? '#fff1f2' : '#ffffff'"
+            >
+              <i class="bi" [class.bi-heart-fill]="wishlist.isWishlisted(p._id)" [class.bi-heart]="!wishlist.isWishlisted(p._id)" style="font-size:20px"></i>
+            </button>
           </div>
 
           <div class="xanhla-product-accordions">
@@ -202,7 +209,7 @@
                 }
                 <tr>
                   <th>Khả năng cung ứng hiện tại</th>
-                  <td>{{ comboStock(p) > 0 ? 'Có thể đặt tối đa ' + comboStock(p) + ' gói Combo' : 'Tạm hết hàng thành phần' }}</td>
+                  <td>{{ comboStock(p) > 0 ? 'Còn hàng' : 'Tạm hết hàng thành phần' }}</td>
                 </tr>
               } @else {
                 @if (p.manufacturer) {
@@ -448,7 +455,7 @@
                       </div>
                       <div class="pd-combo-item-name">{{ it.product.name }}</div>
                       <div class="pd-combo-item-price">
-                        {{ it.product.price || money(it.product.priceNumber) }} · SL: {{ it.quantity }}
+                        {{ it.product.price || money(it.product.priceNumber) }} - SL: {{ it.quantity }}
                       </div>
                     </a>
                     @if (!last) {
@@ -480,7 +487,7 @@
                   }
                   <div class="pd-combo-stock-hint">
                     @if (comboStock(combo) > 0) {
-                      Còn {{ comboStock(combo) }} gói Combo
+                      Còn hàng
                     } @else {
                       Tạm hết hàng thành phần
                     }
@@ -499,6 +506,57 @@
                 </div>
               </article>
             }
+          </div>
+        </section>
+      }
+
+      <!-- ── Thường được mua cùng nhau (Frequently Bought Together) ── -->
+      @if (frequentlyBoughtProducts().length > 0) {
+        @let companion = frequentlyBoughtProducts()[0];
+        @let bundleTotal = getBundleTotal(p, companion);
+        <section class="pd-bundle-section" style="background:#fff;border:1px solid #dcfce7;border-radius:16px;padding:24px;margin:32px 0;box-shadow:0 2px 8px rgba(22,163,74,0.06)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+            <span style="background:#ecfdf5;color:#15803d;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700">COMBO GỢI Ý</span>
+            <h2 style="font-family:var(--xanh-font-display);font-size:20px;color:#0f381e;margin:0">Thường được mua cùng nhau</h2>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <!-- Sản phẩm đang xem -->
+            <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#f8faf7;border-radius:10px;border:1px solid #e2e8f0;max-width:280px;flex:1">
+              <img [src]="p.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=120&q=80'" [alt]="p.name" style="width:52px;height:52px;object-fit:cover;border-radius:8px;background:#fff" />
+              <div style="min-width:0;flex:1">
+                <div style="font-size:11px;font-weight:600;color:#15803d">Sản phẩm này</div>
+                <div style="font-size:13.5px;font-weight:700;color:#0f381e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" [title]="p.name">{{ p.name }}</div>
+                <div style="font-size:14px;font-weight:800;color:#047857">{{ (p.price || 0).toLocaleString('vi-VN') }}đ</div>
+              </div>
+            </div>
+
+            <!-- Dấu cộng -->
+            <div style="font-size:22px;font-weight:800;color:#15803d;display:flex;align-items:center;justify-content:center;width:32px;height:32px;background:#ecfdf5;border-radius:50%">+</div>
+
+            <!-- Món mua kèm -->
+            <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#f8faf7;border-radius:10px;border:1px solid #e2e8f0;max-width:280px;flex:1">
+              <img [src]="companion.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=120&q=80'" [alt]="companion.name" style="width:52px;height:52px;object-fit:cover;border-radius:8px;background:#fff" />
+              <div style="min-width:0;flex:1">
+                <div style="font-size:11px;font-weight:600;color:#64748b">Thường mua kèm</div>
+                <div style="font-size:13.5px;font-weight:700;color:#0f381e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" [title]="companion.name">{{ companion.name }}</div>
+                <div style="font-size:14px;font-weight:800;color:#047857">{{ (companion.price || 0).toLocaleString('vi-VN') }}đ</div>
+              </div>
+            </div>
+
+            <!-- Dấu bằng & Tổng cộng & Nút mua -->
+            <div style="display:flex;align-items:center;gap:16px;margin-left:auto;flex-wrap:wrap">
+              <div>
+                <div style="font-size:12px;color:#64748b;font-weight:600">Tổng cộng combo:</div>
+                <div style="font-size:20px;font-weight:800;color:#0f381e">{{ bundleTotal.toLocaleString('vi-VN') }}đ</div>
+              </div>
+              <button
+                type="button"
+                class="xanhla-btn-primary"
+                (click)="addComboBundleToCart(companion)"
+                style="padding:10px 20px;font-size:14px;border-radius:8px;white-space:nowrap;display:inline-flex;align-items:center;gap:8px">
+                <i class="bi bi-cart-plus"></i> Thêm cả 2 vào giỏ
+              </button>
+            </div>
           </div>
         </section>
       }

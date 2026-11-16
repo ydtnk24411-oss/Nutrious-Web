@@ -81,7 +81,7 @@ const DEFAULT_ABOUT_LINKS: FooterNavLink[] = [
 const DEFAULT_UTILITY_LINKS: FooterNavLink[] = [
   { label: 'Dinh dưỡng thông minh', route: '/nutrition' },
   { label: 'Nấu gì với đồ sẵn có?', route: '/cook-with-what-you-have' },
-  { label: 'Theo dõi đơn hàng', route: '/tracker-page' },
+  { label: 'Lịch sử đơn hàng của tôi', route: '/account' },
   { label: 'Ví Voucher của tôi', route: '/vouchers' },
   { label: 'Điểm thưởng & Hạng thành viên', route: '/loyalty' },
 ];

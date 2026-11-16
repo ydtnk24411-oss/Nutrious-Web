@@ -120,8 +120,7 @@
             </div>
             <span class="chat-user-meta">
               {{ activeConversation()?.customerEmail || 'Khách vãng lai' }}
-              @if (activeConversation()?.customerPhone) {
-                • {{ activeConversation()?.customerPhone }}
+              @if (activeConversation()?.customerPhone) { - {{ activeConversation()?.customerPhone }}
               }
             </span>
           </div>

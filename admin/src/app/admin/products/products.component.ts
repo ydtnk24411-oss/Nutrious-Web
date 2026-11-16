@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, computed } from '@angular/core';
+import { Component, signal, inject, OnInit, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -109,7 +109,8 @@ export class AdminProductsComponent implements OnInit {
   category = signal('');
   sort = signal('createdAt');
   page = signal(1);
-  limit = signal(12);
+  limit = signal(15);
+  comboFilter = signal<'all' | 'single' | 'combo'>('all');
 
   // View mode
   viewMode = signal<'grid' | 'table'>('grid');
@@ -154,7 +155,50 @@ export class AdminProductsComponent implements OnInit {
     Math.ceil(this.total() / this.limit()) || 1
   );
 
+  // Grid alignment: tự động đồng bộ số lượng mỗi trang với số cột thực tế trên màn hình để luôn đầy lưới
+  gridCols = signal(5);
+  desiredRows = signal(3); // Mặc định 3 hàng đầy đủ
+
+  detectColumns(): number {
+    if (typeof window === 'undefined') return 5;
+    const w = window.innerWidth;
+    if (w < 480) return 1;
+    if (w < 768) return 2;
+    if (w < 1100) return 3;
+    if (w < 1500) return 4;
+    return 5;
+  }
+
+  updateGridColumns(reload: boolean = false): void {
+    const cols = this.detectColumns();
+    this.gridCols.set(cols);
+    const newLimit = cols * this.desiredRows();
+    if (this.limit() !== newLimit) {
+      this.limit.set(newLimit);
+      if (reload) {
+        this.page.set(1);
+        this.load();
+      }
+    }
+  }
+
+  @HostListener('window:resize')
+  onResize(): void {
+    const cols = this.detectColumns();
+    if (cols !== this.gridCols()) {
+      this.updateGridColumns(true);
+    }
+  }
+
+  onRowsChange(rows: number): void {
+    this.desiredRows.set(rows);
+    this.limit.set(this.gridCols() * rows);
+    this.page.set(1);
+    this.load();
+  }
+
   ngOnInit(): void {
+    this.updateGridColumns(false);
     this.loadCategories();
     this.load();
 
@@ -220,6 +264,11 @@ export class AdminProductsComponent implements OnInit {
     if (this.category()) {
       params['categoryId'] = this.category();
     }
+    if (this.comboFilter() === 'single') {
+      params['isCombo'] = 'false';
+    } else if (this.comboFilter() === 'combo') {
+      params['isCombo'] = 'true';
+    }
 
     this.productApi.getAll(params).subscribe({
       next: (res) => {
@@ -258,6 +307,12 @@ export class AdminProductsComponent implements OnInit {
 
   onSort(val: string): void {
     this.sort.set(val);
+    this.page.set(1);
+    this.load();
+  }
+
+  onComboFilterChange(val: 'all' | 'single' | 'combo'): void {
+    this.comboFilter.set(val);
     this.page.set(1);
     this.load();
   }

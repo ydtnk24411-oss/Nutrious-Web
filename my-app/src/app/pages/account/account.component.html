@@ -9,6 +9,9 @@
       <div class="acc-tabs">
         <button class="acc-tab" [class.is-active]="activeTab()==='overview'"  (click)="activeTab.set('overview')">Tổng quan</button>
         <button class="acc-tab" [class.is-active]="activeTab()==='orders'"    (click)="activeTab.set('orders')">Đơn hàng của tôi</button>
+        <button class="acc-tab" [class.is-active]="activeTab()==='wishlist'"  (click)="activeTab.set('wishlist')">
+          <i class="bi bi-heart me-1" style="color:#e11d48"></i> Sản phẩm yêu thích ({{ wishlist.count() }})
+        </button>
         <button class="acc-tab" [class.is-active]="activeTab()==='addresses'" (click)="activeTab.set('addresses')">Sổ địa chỉ</button>
         <button class="acc-tab" [class.is-active]="activeTab()==='settings'"  (click)="activeTab.set('settings')">Thông tin và cài đặt</button>
       </div>
@@ -440,42 +443,42 @@
             <button
               class="acc-filter-btn"
               [class.is-active]="orderStatusFilter() === 'all'"
-              (click)="orderStatusFilter.set('all')"
+              (click)="orderStatusFilter.set('all'); onOrderFilterChange()"
             >
               Tất cả
             </button>
             <button
               class="acc-filter-btn"
               [class.is-active]="orderStatusFilter() === 'pending'"
-              (click)="orderStatusFilter.set('pending')"
+              (click)="orderStatusFilter.set('pending'); onOrderFilterChange()"
             >
               Chờ xác nhận
             </button>
             <button
               class="acc-filter-btn"
               [class.is-active]="orderStatusFilter() === 'processing'"
-              (click)="orderStatusFilter.set('processing')"
+              (click)="orderStatusFilter.set('processing'); onOrderFilterChange()"
             >
               Đang xử lý
             </button>
             <button
               class="acc-filter-btn"
               [class.is-active]="orderStatusFilter() === 'delivering'"
-              (click)="orderStatusFilter.set('delivering')"
+              (click)="orderStatusFilter.set('delivering'); onOrderFilterChange()"
             >
               Đang giao
             </button>
             <button
               class="acc-filter-btn"
               [class.is-active]="orderStatusFilter() === 'completed'"
-              (click)="orderStatusFilter.set('completed')"
+              (click)="orderStatusFilter.set('completed'); onOrderFilterChange()"
             >
               Đã giao
             </button>
             <button
               class="acc-filter-btn"
               [class.is-active]="orderStatusFilter() === 'cancelled'"
-              (click)="orderStatusFilter.set('cancelled')"
+              (click)="orderStatusFilter.set('cancelled'); onOrderFilterChange()"
             >
               Đã hủy
             </button>
@@ -485,7 +488,7 @@
             <input
               type="text"
               [value]="orderSearchQuery()"
-              (input)="orderSearchQuery.set($any($event.target).value)"
+              (input)="orderSearchQuery.set($any($event.target).value); onOrderFilterChange()"
               placeholder="Tìm kiếm theo mã đơn..."
             />
           </div>
@@ -495,7 +498,7 @@
           <div class="acc-empty" style="padding:40px">Đang tải danh sách đơn hàng...</div>
         } @else if (filteredOrders().length > 0) {
           <div class="acc-order-list-full">
-            @for (order of filteredOrders(); track order.id) {
+            @for (order of paginatedOrders(); track order.id) {
               <div class="acc-order-card">
                 <div class="acc-order-header">
                   <div class="acc-order-code">{{ order.orderCode }}</div>
@@ -523,8 +526,124 @@
               </div>
             }
           </div>
+
+          @if (orderTotalPages() > 1) {
+            <nav class="acc-order-pagination" style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:24px" aria-label="Phân trang đơn hàng">
+              <button type="button" class="acc-btn-outline acc-btn-sm" [disabled]="orderPage() <= 1" (click)="prevOrderPage()">
+                ← Trang trước
+              </button>
+              <span style="font-size:13px;font-weight:600">Trang {{ orderPage() }} / {{ orderTotalPages() }}</span>
+              <button type="button" class="acc-btn-outline acc-btn-sm" [disabled]="orderPage() >= orderTotalPages()" (click)="nextOrderPage()">
+                Trang sau →
+              </button>
+            </nav>
+          }
         } @else {
           <div class="acc-empty">Không tìm thấy đơn hàng nào</div>
+        }
+      }
+
+      <!-- ══════════════════════════════════════════════
+           TAB: WISHLIST (Sản phẩm yêu thích)
+      ══════════════════════════════════════════════ -->
+      @if (activeTab() === 'wishlist') {
+        <div class="acc-section-header">
+          <h2 class="acc-section-title">
+            <i class="bi bi-heart-fill me-2" style="color:#e11d48"></i>
+            Danh sách sản phẩm yêu thích ({{ wishlist.count() }})
+          </h2>
+          <span style="font-size:13.5px;color:var(--xanh-muted)">
+            Lưu lại các món nông sản bạn quan tâm để dễ dàng theo dõi và đặt hàng nhanh
+          </span>
+        </div>
+
+        @if (wishlist.loading()) {
+          <div style="text-align:center;padding:48px 0;color:var(--xanh-muted)">
+            <i class="bi bi-arrow-repeat spin" style="font-size:24px;display:inline-block"></i>
+            <p style="margin-top:8px;font-size:14px">Đang tải danh sách yêu thích...</p>
+          </div>
+        } @else if (wishlist.items().length === 0) {
+          <div class="acc-empty" style="text-align:center;padding:64px 20px;background:#fff;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line)">
+            <div style="width:64px;height:64px;border-radius:50%;background:#ffe4e6;color:#e11d48;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+              <i class="bi bi-heart" style="font-size:30px"></i>
+            </div>
+            <h3 style="font-family:var(--xanh-font-display);font-size:18px;margin-bottom:8px">Chưa có sản phẩm yêu thích</h3>
+            <p style="font-size:14px;color:var(--xanh-muted);max-width:400px;margin:0 auto 20px">
+              Hãy bấm biểu tượng trái tim trên các sản phẩm bạn quan tâm để lưu và theo dõi giá tại đây.
+            </p>
+            <a routerLink="/ordering" class="acc-btn-primary" style="display:inline-block;text-decoration:none">
+              Khám phá sản phẩm ngay
+            </a>
+          </div>
+        } @else {
+          <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:20px;margin-top:20px">
+            @for (item of wishlist.items(); track item._id) {
+              <div style="background:#fff;border:1px solid var(--xanh-line);border-radius:12px;padding:16px;display:flex;flex-direction:column;position:relative;transition:all 0.2s ease;box-shadow:0 1px 4px rgba(0,0,0,0.04)">
+                <!-- Nút bỏ thích -->
+                <button
+                  type="button"
+                  (click)="wishlist.toggleWishlist(item)"
+                  title="Bỏ khỏi yêu thích"
+                  style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;background:#fff;border:1px solid #fee2e2;color:#e11d48;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.08);z-index:2">
+                  <i class="bi bi-heart-fill" style="font-size:14px"></i>
+                </button>
+
+                <!-- Ảnh sản phẩm -->
+                <a [routerLink]="['/product', item.slug || item._id]" style="display:block;text-decoration:none;margin-bottom:12px;overflow:hidden;border-radius:8px">
+                  <img
+                    [src]="item.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300&q=80'"
+                    [alt]="item.name"
+                    style="width:100%;height:160px;object-fit:cover;border-radius:8px;background:#f8faf7"
+                    loading="lazy"
+                  />
+                </a>
+
+                <!-- Tên & Danh mục -->
+                <div style="flex:1">
+                  @if (item.category) {
+                    <span style="font-size:11px;font-weight:600;color:#15803d;background:#ecfdf5;padding:2px 8px;border-radius:4px;display:inline-block;margin-bottom:6px">
+                      {{ item.category }}
+                    </span>
+                  }
+                  <h3 style="font-size:15px;font-weight:700;line-height:1.3;margin:0 0 8px">
+                    <a [routerLink]="['/product', item.slug || item._id]" style="color:#0f381e;text-decoration:none">
+                      {{ item.name }}
+                    </a>
+                  </h3>
+                  <div style="font-size:16px;font-weight:800;color:#15803d;margin-bottom:8px">
+                    {{ (item.price || 0).toLocaleString('vi-VN') }}đ
+                    @if (item.unit) {
+                      <span style="font-size:12px;color:#64748b;font-weight:400">/ {{ item.unit }}</span>
+                    }
+                  </div>
+                  @if (item.stock > 0) {
+                    <div style="font-size:12px;color:#16a34a;margin-bottom:12px">
+                      <i class="bi bi-check-circle-fill me-1"></i> Còn hàng
+                    </div>
+                  } @else {
+                    <div style="font-size:12px;color:#dc2626;margin-bottom:12px">
+                      <i class="bi bi-x-circle-fill me-1"></i> Tạm hết hàng
+                    </div>
+                  }
+                </div>
+
+                <!-- Thao tác mua hàng -->
+                <div style="display:flex;gap:8px;margin-top:auto">
+                  <button
+                    type="button"
+                    (click)="addWishlistItemToCart(item)"
+                    [disabled]="item.stock <= 0"
+                    class="acc-btn-primary acc-btn-sm"
+                    style="flex:1;justify-content:center">
+                    <i class="bi bi-cart-plus me-1"></i> Thêm giỏ
+                  </button>
+                  <a [routerLink]="['/product', item.slug || item._id]" class="acc-btn-outline acc-btn-sm">
+                    Chi tiết
+                  </a>
+                </div>
+              </div>
+            }
+          </div>
         }
       }
 

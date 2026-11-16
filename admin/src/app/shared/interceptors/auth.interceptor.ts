@@ -1,14 +1,20 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, throwError } from 'rxjs';
+import { catchError, retry, throwError } from 'rxjs';
 import { CartService } from '../services/cart.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const cartService = inject(CartService);
 
-  return next(req).pipe(
+  // Bật withCredentials: true trên các yêu cầu HTTP chéo cổng theo yêu cầu nghiệp vụ
+  const credentialReq = req.clone({
+    withCredentials: true,
+  });
+
+  return next(credentialReq).pipe(
+    retry({ count: 1, delay: 500 }),
     catchError((err: HttpErrorResponse) => {
       // Chỉ xử lý khi request có gửi token (tức là phiên đăng nhập hết hạn / không hợp lệ).
       // Đăng nhập sai mật khẩu (/auth/login) cũng trả 401 nhưng không có token → bỏ qua.

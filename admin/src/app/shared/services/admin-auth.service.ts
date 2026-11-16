@@ -36,10 +36,11 @@ export class AdminAuthService {
 
   login(email: string, password: string) {
     return this.api.post<{ success: boolean; token: string; user: AdminUser }>(
-      '/auth/login', { email, password }
+      '/auth/login-emp', { username: email.trim(), email: email.trim(), password }
     ).pipe(
       tap(res => {
-        if (res.success && res.user.role === 'admin') {
+        const role = (res.user?.role || '').toLowerCase();
+        if (res.success && (role === 'sales' || role === 'admin')) {
           localStorage.setItem(TOKEN_KEY, res.token);
           localStorage.setItem(USER_KEY, JSON.stringify(res.user));  // ← lưu user
           this._token.set(res.token);

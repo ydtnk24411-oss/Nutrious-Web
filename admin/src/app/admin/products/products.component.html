@@ -107,6 +107,13 @@
       }
     </select>
 
+    <!-- Product Type Filter (Phân loại Đơn lẻ / Combo) -->
+    <select class="admin-select" [value]="comboFilter()" (change)="onComboFilterChange($any($event.target).value)">
+      <option value="all">Tất cả mặt hàng</option>
+      <option value="single">Chỉ nông sản lẻ</option>
+      <option value="combo">Chỉ gói Combo tiết kiệm</option>
+    </select>
+
     <!-- Sort Filter -->
     <select class="admin-select" [value]="sort()" (change)="onSort($any($event.target).value)">
       <option value="createdAt">Mới nhất</option>
@@ -167,7 +174,7 @@
                 <div style="display:flex;flex-direction:column;gap:3px">
                   @for (ci of p.comboItems; track $index) {
                     <div style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#15803d">
-                      <span style="font-weight:bold">•</span>
+                      <span style="font-weight:bold">-</span>
                       <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ getComboItemName(ci) }}</span>
                       <span style="color:#64748b;font-weight:600">x{{ getComboItemQty(ci) }}</span>
                     </div>
@@ -224,8 +231,8 @@
               <th style="width:60px">Ảnh</th>
               <th>Tên sản phẩm</th>
               <th>Danh mục</th>
-              <th>Giá niêm yết</th>
-              <th>Tồn kho</th>
+              <th style="text-align:right">Giá niêm yết</th>
+              <th style="text-align:right">Tồn kho</th>
               <th>Trạng thái</th>
               <th style="width:130px;text-align:right">Thao tác</th>
             </tr>
@@ -258,7 +265,7 @@
                       <div style="display:flex;flex-direction:column;gap:2px">
                         @for (ci of p.comboItems; track $index) {
                           <div style="display:flex;align-items:center;gap:4px;color:#15803d;font-size:11px">
-                            <span>•</span>
+                            <span>-</span>
                             <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ getComboItemName(ci) }}</span>
                             <span style="color:#64748b">x{{ getComboItemQty(ci) }}</span>
                           </div>
@@ -270,11 +277,11 @@
                 <td>
                   <span class="prod-table-cat">{{ getCategoryName(p.categoryId, p) }}</span>
                 </td>
-                <td>
-                  <strong class="prod-table-price">{{ p.price || (p.priceNumber.toLocaleString('vi-VN') + 'đ') }}</strong>
+                <td style="text-align:right">
+                  <strong class="prod-table-price" style="font-variant-numeric:tabular-nums">{{ p.price || (p.priceNumber.toLocaleString('vi-VN') + 'đ') }}</strong>
                 </td>
-                <td>
-                  <span class="prod-table-stock" [class.is-low]="p.stock < 10">{{ p.stock }}</span>
+                <td style="text-align:right">
+                  <span class="prod-table-stock" [class.is-low]="p.stock < 10" style="font-variant-numeric:tabular-nums">{{ p.stock }}</span>
                 </td>
                 <td>
                   <span class="admin-badge" [class.badge-active]="p.isActive !== false" [class.badge-inactive]="p.isActive === false">
@@ -308,14 +315,32 @@
   <!-- Pagination -->
   @if (!loading() && products().length > 0) {
     <div class="admin-pagination">
-      <span>Hiển thị {{ products().length }} / {{ total() }} sản phẩm</span>
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <span>Hiển thị {{ products().length }} / {{ total() }} mặt hàng</span>
+        <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#4a6152">
+          <label for="prod-page-limit">Hiển thị:</label>
+          <select
+            id="prod-page-limit"
+            class="admin-select"
+            style="padding:3px 8px;font-size:12.5px;height:30px;min-width:145px"
+            [value]="desiredRows()"
+            (change)="onRowsChange(+$any($event.target).value)"
+          >
+            <option [value]="2">2 hàng ({{ gridCols() * 2 }} sản phẩm)</option>
+            <option [value]="3">3 hàng ({{ gridCols() * 3 }} sản phẩm)</option>
+            <option [value]="4">4 hàng ({{ gridCols() * 4 }} sản phẩm)</option>
+            <option [value]="5">5 hàng ({{ gridCols() * 5 }} sản phẩm)</option>
+            <option [value]="6">6 hàng ({{ gridCols() * 6 }} sản phẩm)</option>
+          </select>
+        </div>
+      </div>
       <div class="admin-pagination-btns">
         <button class="admin-btn-secondary" style="padding:7px 14px;font-size:13px"
                 [disabled]="page() === 1" (click)="prevPage()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
           <span>Trước</span>
         </button>
-        <span style="padding:6px 12px;font-size:13px;font-weight:700;color:#10321c">{{ page() }} / {{ totalPages() }}</span>
+        <span style="padding:6px 12px;font-size:13px;font-weight:700;color:#10321c">Trang {{ page() }} / {{ totalPages() }}</span>
         <button class="admin-btn-secondary" style="padding:7px 14px;font-size:13px"
                 [disabled]="page() >= totalPages()" (click)="nextPage()">
           <span>Sau</span>
@@ -340,8 +365,8 @@
               <th style="width: 70px;">Ảnh</th>
               <th>Tên Danh mục</th>
               <th>Đường dẫn (Slug)</th>
-              <th>Thứ tự</th>
-              <th>Số lượng sản phẩm</th>
+              <th style="text-align: right;">Thứ tự</th>
+              <th style="text-align: right;">Số lượng sản phẩm</th>
               <th>Trạng thái</th>
               <th style="width: 140px; text-align: right;">Thao tác</th>
             </tr>
@@ -362,9 +387,9 @@
                 <td>
                   <span class="prod-table-slug">{{ cat.slug }}</span>
                 </td>
-                <td>{{ cat.order || 0 }}</td>
-                <td>
-                  <span class="cat-prod-badge">{{ cat.productCount || 0 }} sản phẩm</span>
+                <td style="text-align: right; font-variant-numeric: tabular-nums;">{{ cat.order || 0 }}</td>
+                <td style="text-align: right;">
+                  <span class="cat-prod-badge" style="margin-left: auto;">{{ cat.productCount || 0 }} sản phẩm</span>
                 </td>
                 <td>
                   <span class="admin-badge badge-active">Đang áp dụng</span>
@@ -556,7 +581,7 @@
                     <img [src]="form().image" alt="Preview" class="preview-img" />
                     <div class="preview-info">
                       <div class="preview-title">Ảnh sản phẩm đã sẵn sàng</div>
-                      <div class="preview-sub">Đã tải lên • Xem trước trực tiếp</div>
+                      <div class="preview-sub">Đã tải lên - Xem trước trực tiếp</div>
                       <div class="preview-actions">
                         <button type="button" class="btn-preview-change" (click)="prodFileInput.click()">
                           Đổi ảnh khác
@@ -1010,7 +1035,7 @@
                     <img [src]="catFormImage()" alt="Preview" class="preview-img" />
                     <div class="preview-info">
                       <div class="preview-title">Ảnh danh mục đã sẵn sàng</div>
-                      <div class="preview-sub">Đã tải lên • Xem trước trực tiếp</div>
+                      <div class="preview-sub">Đã tải lên - Xem trước trực tiếp</div>
                       <div class="preview-actions">
                         <button type="button" class="btn-preview-change" (click)="catFileInput.click()">
                           Đổi ảnh khác

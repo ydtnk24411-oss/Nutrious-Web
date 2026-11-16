@@ -5,12 +5,22 @@
     } @else if (error()) {
     <div class="order-error">{{ error() }}</div>
     } @else {
-    <div class="order-detail-header">
-      <h1 class="order-title">Chi tiết đơn hàng</h1>
-      <div class="order-meta">
-        <span class="order-code">Mã đơn: {{ order()!.orderCode }}</span>
-        <span class="order-date">{{ formatDate(order()!.createdAt) }}</span>
+    <div class="order-detail-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h1 class="order-title">Chi tiết đơn hàng</h1>
+        <div class="order-meta">
+          <span class="order-code">Mã đơn: {{ order()!.orderCode }}</span>
+          <span class="order-date">{{ formatDate(order()!.createdAt) }}</span>
+        </div>
       </div>
+      <button
+        type="button"
+        class="xanhla-btn-secondary btn-print-invoice"
+        (click)="printOrder()"
+        style="padding:8px 16px;font-size:13.5px;border-radius:8px;display:inline-flex;align-items:center;gap:6px">
+        <i class="bi bi-printer" style="font-size:16px"></i>
+        <span>In phiếu giao hàng (PDF)</span>
+      </button>
     </div>
 
     <!-- Status Timeline -->
@@ -223,6 +233,9 @@
 
     <!-- Actions -->
     <div class="order-actions-section">
+      <button type="button" class="btn-print btn-print-invoice" (click)="printOrder()" style="display:inline-flex;align-items:center;gap:6px">
+        <i class="bi bi-printer"></i> In phiếu giao hàng
+      </button>
       @if (order()!.status === 'pending' || order()!.status === 'confirmed') {
       <button class="btn-cancel" [disabled]="cancelling()" (click)="cancelOrder()">
         @if (cancelling()) {

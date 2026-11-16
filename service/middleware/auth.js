@@ -13,7 +13,9 @@ const signToken = (user) =>
 
 const getBearerToken = (req) => {
   const auth = req.headers.authorization;
-  return auth && auth.startsWith('Bearer ') ? auth.split(' ')[1] : null;
+  if (auth && auth.startsWith('Bearer ')) return auth.split(' ')[1];
+  if (req.query && req.query.token) return String(req.query.token).trim();
+  return null;
 };
 
 // Xác thực token → trả về user (không có password) hoặc null nếu không hợp lệ
@@ -76,11 +78,24 @@ const staffOnly = (req, res, next) => {
 };
 
 // Role-based access control
-const hasRole = (...roles) => (req, res, next) => {
-  if (!req.user || (!roles.includes(req.user.role) && req.user.role !== 'admin')) {
-    return res.status(403).json({ success: false, message: 'Bạn không có quyền thực hiện thao tác này.' });
+const authorizeRoles = (...roles) => (req, res, next) => {
+  const normalizedAllowed = roles.map(r => String(r).toLowerCase());
+  const userRole = String(req.user?.role || req.session?.employee?.role || '').toLowerCase();
+
+  // Admin hoặc Manager có quyền tối thượng
+  if (userRole === 'admin' || userRole === 'manager') {
+    return next();
+  }
+
+  if (!userRole || !normalizedAllowed.includes(userRole)) {
+    return res.status(403).json({
+      success: false,
+      message: `Bạn không có quyền thực hiện thao tác này. Yêu cầu một trong các quyền: ${roles.join(', ')}.`,
+    });
   }
   next();
 };
 
-module.exports = { protect, optionalAuth, adminOnly, staffOnly, hasRole, signToken };
+const hasRole = authorizeRoles;
+
+module.exports = { protect, optionalAuth, adminOnly, staffOnly, hasRole, authorizeRoles, signToken };

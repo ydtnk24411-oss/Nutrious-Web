@@ -65,8 +65,8 @@
         <!-- Search -->
         <div class="ord-filter-search">
           <i class="bi bi-search" style="font-size:14px;color:var(--xl-forest)"></i>
-          <input type="text" placeholder="Tìm sản phẩm..."
-                 [value]="search()" (input)="search.set($any($event.target).value)" />
+          <input type="text" placeholder="Tìm sản phẩm theo tên, SKU..."
+                 [value]="search()" (input)="onSearchInput($event)" />
         </div>
 
         <!-- Header sidebar -->
@@ -87,13 +87,32 @@
           @if (openAccordions()['sort']) {
             <div class="ord-filter-body">
               <select class="ord-filter-select"
-        [value]="sortBy()"
-        (change)="sortBy.set($any($event.target).value)">
-  <option value="default">Mặc định</option>
-  <option value="price-asc">Giá: Thấp đến cao</option>
-  <option value="price-desc">Giá: Cao đến thấp</option>
-  <option value="name-asc">Tên: A đến Z</option>
-</select>
+                [value]="sortBy()"
+                (change)="onSortChange($any($event.target).value)">
+                <option value="default">Mặc định</option>
+                <option value="price-asc">Giá: Thấp đến cao</option>
+                <option value="price-desc">Giá: Cao đến thấp</option>
+                <option value="newest">Sản phẩm mới nhất</option>
+                <option value="bestseller">Bán chạy nhất</option>
+                <option value="name-asc">Tên: A đến Z</option>
+              </select>
+            </div>
+          }
+        </div>
+
+        <!-- Tình trạng tồn kho -->
+        <div class="ord-filter-group">
+          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('stock')">
+            <span>Tình trạng kho</span>
+            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+               [style.transform]="openAccordions()['stock'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
+          </button>
+          @if (openAccordions()['stock']) {
+            <div class="ord-filter-body">
+              <label class="ord-filter-checkbox-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13.5px">
+                <input type="checkbox" [checked]="inStockOnly()" (change)="toggleInStock()" />
+                <span>Chỉ hiện sản phẩm còn hàng</span>
+              </label>
             </div>
           }
         </div>
@@ -101,7 +120,7 @@
         <!-- Price slider -->
         <div class="ord-filter-group">
           <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('price')">
-            <span>Giá</span>
+            <span>Khoảng giá</span>
             <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
                [style.transform]="openAccordions()['price'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
           </button>
@@ -112,7 +131,7 @@
                 <span style="font-weight:600;color:var(--xanh-moss)">{{ maxPrice() }} ₫</span>
               </div>
               <input type="range" [min]="0" [max]="maxPriceInDB()" [value]="maxPrice()"
-                     (input)="maxPrice.set(+$any($event.target).value)"
+                     (input)="onMaxPriceChange(+$any($event.target).value)"
                      style="width:100%;accent-color:var(--xanh-moss);cursor:pointer" />
             </div>
           }
@@ -231,8 +250,7 @@
                     <button type="button" class="ord-nut-reset-link" (click)="clearNutritionTargets()">Bỏ chọn</button>
                   </div>
                   @for (s of activeNutritionSliders(); track s.key) {
-                    <div class="ord-nut-active-item">
-                      • {{ s.label }}: <strong>{{ s.value }}{{ s.unit }}</strong> (±{{ s.tolerance }}{{ s.unit }})
+                    <div class="ord-nut-active-item"> - {{ s.label }}: <strong>{{ s.value }}{{ s.unit }}</strong> (±{{ s.tolerance }}{{ s.unit }})
                     </div>
                   }
                 </div>

@@ -1,7 +1,7 @@
-import { Component, signal, inject, computed, effect, OnInit, OnDestroy } from '@angular/core';
+import { Component, signal, inject, computed, effect, untracked, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { CartService, formatPrice, getCartItemKey, CartPricingTotals, resolveProductMaxStock } from '../../shared/services/cart.service';
 import { OrderApiService } from '../../shared/services/order-api.service';
@@ -28,6 +28,9 @@ export interface CheckoutVoucherOption {
   inWallet: boolean;
   isEligible: boolean;
   estimatedDiscount: number;
+  timeWindowValid?: boolean;
+  timeWindowLabel?: string;
+  categoryMismatch?: boolean;
 }
 
 export interface NonRefundableItemSummary {
@@ -113,11 +116,13 @@ export function isFreshPerishableProduct(p: any): { isFresh: boolean; categoryNa
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [CommonModule, FormsModule, ShellComponent, RouterLink, AddressPickerModalComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, ShellComponent, RouterLink, AddressPickerModalComponent],
   templateUrl: './checkout.component.html',
   styleUrl: './checkout.component.css',
 })
 export class CheckoutComponent implements OnInit, OnDestroy {
+  private checkoutStartTime = Date.now();
+  private checkoutDurationSent = false;
   protected cart     = inject(CartService);
   private orderApi   = inject(OrderApiService);
   private productApi = inject(ProductApiService);
@@ -474,34 +479,109 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     );
   }
 
+  readonly hasPriorValidOrders = signal<boolean>(false);
+
   /** Danh sách ưu đãi để chọn trực tiếp khi thanh toán (gồm Ví voucher + ưu đãi công khai từ MongoDB). */
   readonly checkoutVoucherOptions = computed<CheckoutVoucherOption[]>(() => {
     const sub = this.checkoutSubtotal();
     const walletSet = new Set(this.voucher.availableVouchers().map(uv => uv.voucher.code.toUpperCase()));
     const byCode = new Map<string, Voucher>();
 
+    const isSingleUse = (v: Voucher) => {
+      const code = (v.code || '').toUpperCase();
+      const desc = `${v.name || ''} ${v.description || ''}`.toLowerCase();
+      return (
+        code.startsWith('WELCOME') ||
+        v.maxUsagePerUser === 1 ||
+        Boolean(v.isFirstOrderOnly) ||
+        desc.includes('đơn hàng đầu tiên') ||
+        desc.includes('thành viên mới')
+      );
+    };
+
+    const isFirstOrderOnly = (v: Voucher) => {
+      const code = (v.code || '').toUpperCase();
+      const desc = `${v.name || ''} ${v.description || ''}`.toLowerCase();
+      return (
+        Boolean(v.isFirstOrderOnly) ||
+        code.startsWith('WELCOME') ||
+        desc.includes('đơn hàng đầu tiên') ||
+        desc.includes('thành viên mới')
+      );
+    };
+
+    const usedSingleUseCodes = new Set(
+      this.voucher.usedVouchers()
+        .filter(uv => isSingleUse(uv.voucher))
+        .map(uv => uv.voucher.code.toUpperCase())
+    );
+
+    // 1. Voucher có sẵn trong ví người dùng (chưa sử dụng)
     for (const uv of this.voucher.availableVouchers()) {
-      byCode.set(uv.voucher.code.toUpperCase(), uv.voucher);
+      const k = uv.voucher.code.toUpperCase();
+      // Nếu là mã chỉ dành cho đơn đầu nhưng khách đã có đơn trước -> bỏ qua
+      if (isFirstOrderOnly(uv.voucher) && (this.hasPriorValidOrders() || usedSingleUseCodes.has(k))) {
+        continue;
+      }
+      byCode.set(k, uv.voucher);
     }
+
+    // 2. Voucher công khai từ kho ưu đãi
     for (const pub of this.voucher.publicVouchers()) {
       const k = pub.code.toUpperCase();
-      if (!byCode.has(k)) byCode.set(k, pub);
+      // Nếu là voucher dành riêng cho đơn đầu tiên nhưng khách đã có đơn trước -> tự động ẩn
+      if (isFirstOrderOnly(pub) && (this.hasPriorValidOrders() || usedSingleUseCodes.has(k))) {
+        continue;
+      }
+      // Chỉ ẩn các voucher dùng 1 lần (maxUsagePerUser: 1) nếu đã được sử dụng
+      if (isSingleUse(pub) && usedSingleUseCodes.has(k)) {
+        continue;
+      }
+      // Với voucher dùng nhiều lần (nếu kho còn số lượng), luôn cho phép khách chọn lại
+      if (!byCode.has(k)) {
+        byCode.set(k, pub);
+      }
     }
 
     return Array.from(byCode.values())
       .map((v) => {
+        // Kiểm tra khung giờ vàng / chu kỳ thời gian
+        const timeCheck = this.voucher.checkTimeWindow(v);
+        const isTimeValid = timeCheck.valid;
+        const timeLabel = timeCheck.statusLabel;
+
+        // Kiểm tra danh mục/sản phẩm áp dụng
+        let eligibleSub = sub;
+        let isCatEligible = true;
+        const hasCat = (v.applicableCategories && v.applicableCategories.length > 0) || (v.categorySlugs && v.categorySlugs.length > 0);
+        if (hasCat) {
+          const cats = (v.applicableCategories || v.categorySlugs || []).map(c => c.toLowerCase());
+          const matchItems = this.checkoutItems().filter(it => {
+            const prod = (it.product as any) || {};
+            const c = (prod.category || prod.categoryVi || prod.categorySlug || '').toLowerCase();
+            return cats.some(tc => c.includes(tc) || tc.includes(c));
+          });
+          eligibleSub = matchItems.reduce((s, it) => s + (((it as any).product?.price || (it as any).price || 0) * (it.quantity || 1)), 0);
+          isCatEligible = eligibleSub > 0;
+        }
+
         const minVal = v.minValue || 0;
-        const isEligible = sub >= minVal && sub > 0;
-        let disc = v.type === 'percentage' ? Math.floor((sub * v.value) / 100) : v.value;
+        const isEligible = isTimeValid && isCatEligible && eligibleSub >= minVal && eligibleSub > 0;
+
+        let disc = v.type === 'percentage' ? Math.floor((eligibleSub * v.value) / 100) : v.value;
         if (v.type === 'percentage' && v.maxValue) {
           disc = Math.min(disc, v.maxValue);
         }
-        disc = isEligible ? Math.max(0, Math.min(disc, sub)) : 0;
+        disc = isEligible ? Math.max(0, Math.min(disc, eligibleSub)) : 0;
+
         return {
           voucher: v,
           inWallet: walletSet.has(v.code.toUpperCase()),
           isEligible,
           estimatedDiscount: disc,
+          timeWindowValid: isTimeValid,
+          timeWindowLabel: timeLabel,
+          categoryMismatch: !isCatEligible,
         };
       })
       .sort((a, b) => {
@@ -514,6 +594,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   /** Kiểm tra voucher có phải là mã giảm phí vận chuyển / Freeship hay không */
   isShippingVoucher(v: Voucher): boolean {
     if (!v) return false;
+    if (v.voucherType === 'SHIPPING_DISCOUNT') return true;
+    if (v.voucherType === 'ORDER_DISCOUNT') return false;
     const text = `${v.code} ${v.name || ''} ${v.description || ''}`.toLowerCase();
     return v.code.toUpperCase() === 'FREESHIP' || /freeship|vận chuyển|giao hàng|phí ship/.test(text);
   }
@@ -994,6 +1076,18 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     return this.shippingMethod() === 'delivery' && (this.isOutOfRange() || (this.shippingCalculation() !== null && this.shippingCalculation()?.supported === false));
   });
 
+  // Reactive Forms: FormGroup quản lý thông tin khách hàng thanh toán kèm validation
+  protected checkoutForm = new FormGroup({
+    fullName: new FormControl('', [Validators.required]),
+    phone: new FormControl('', [
+      Validators.required,
+      Validators.pattern(/^(0|\+84)(3|5|7|8|9)[0-9]{8}$/),
+    ]),
+    email: new FormControl('', [Validators.email]),
+    address: new FormControl('', [Validators.required]),
+    note: new FormControl(''),
+  });
+
   // form fields
   protected guestName    = signal(this.cart.currentUser()?.name  ?? '');
   protected guestPhone   = signal(this.cart.currentUser()?.phone ?? '');
@@ -1001,6 +1095,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   protected shippingAddr = signal(this._defaultAddress());
 
   constructor() {
+    this.voucher.refreshMine();
+    this.voucher.loadPublic();
+
     effect(() => {
       const code = this.pendingQueryVoucher();
       const subtotal = this.checkoutSubtotal();
@@ -1010,23 +1107,42 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       }
     });
 
+    // Đồng bộ giá trị từ Reactive Forms controls sang signals
+    this.checkoutForm.get('fullName')?.valueChanges.subscribe(v => this.guestName.set(v ?? ''));
+    this.checkoutForm.get('phone')?.valueChanges.subscribe(v => this.guestPhone.set(v ?? ''));
+    this.checkoutForm.get('email')?.valueChanges.subscribe(v => this.guestEmail.set(v ?? ''));
+
+    // Tự động điền dữ liệu bằng Reactive Forms patchValue() khi khách hàng đăng nhập (chỉ chạy 1 lần khi có user)
+    let lastAutofilledUserId: string | null = null;
     effect(() => {
       const u = this.cart.currentUser();
-      if (u) {
-        if (!this.guestName()) this.guestName.set(u.name || '');
-        if (!this.guestEmail()) this.guestEmail.set(u.email || '');
-        if (!this.guestPhone()) this.guestPhone.set(u.phone || '');
-        const def = this._defaultAddressObj();
-        if (def) {
-          if (!this.shippingAddr()) this.shippingAddr.set(this._formatAddress(def));
-          if (!this.confirmedDeliveryProvince() && (def.province || def.city)) {
-            this.confirmedDeliveryProvince.set(def.province || def.city || '');
+      const currentId = u?._id ? String(u._id) : (u ? 'logged-in' : null);
+      if (currentId && currentId !== lastAutofilledUserId) {
+        lastAutofilledUserId = currentId;
+        untracked(() => {
+          const def = this._defaultAddressObj();
+          const formattedAddr = def ? this._formatAddress(def) : (this.shippingAddr() || '');
+          this.checkoutForm.patchValue({
+            fullName: u?.name || '',
+            phone: u?.phone || '',
+            email: u?.email || '',
+            address: formattedAddr,
+          });
+
+          if (u?.name) this.guestName.set(u.name);
+          if (u?.email) this.guestEmail.set(u.email);
+          if (u?.phone) this.guestPhone.set(u.phone);
+          if (def) {
+            if (!this.shippingAddr()) this.shippingAddr.set(formattedAddr);
+            if (!this.confirmedDeliveryProvince() && (def.province || def.city)) {
+              this.confirmedDeliveryProvince.set(def.province || def.city || '');
+            }
+            if (!this.shippingCoordinates() && def.lat && def.lng) {
+              this.shippingCoordinates.set({ lat: def.lat, lng: def.lng });
+              this.recalculateShipping(def.lat, def.lng);
+            }
           }
-          if (!this.shippingCoordinates() && def.lat && def.lng) {
-            this.shippingCoordinates.set({ lat: def.lat, lng: def.lng });
-            this.recalculateShipping(def.lat, def.lng);
-          }
-        }
+        });
       }
     });
 
@@ -1102,6 +1218,16 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     }
     this.voucher.loadPublic();
     this.voucher.refreshMine();
+    if (this.cart.currentUser()) {
+      this.orderApi.getMyOrders({ limit: 10 }).subscribe({
+        next: (res: any) => {
+          if (res && Array.isArray(res.data)) {
+            const valid = res.data.filter((o: any) => o.status !== 'cancelled');
+            this.hasPriorValidOrders.set(valid.length > 0);
+          }
+        },
+      });
+    }
     const qCode = this.route.snapshot.queryParamMap.get('voucher');
     if (qCode) {
       const code = qCode.trim().toUpperCase();
@@ -1171,6 +1297,20 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopQrTimers();
+    if (!this.checkoutDurationSent) {
+      this.checkoutDurationSent = true;
+      const duration = Math.round((Date.now() - this.checkoutStartTime) / 1000);
+      if (duration >= 2) {
+        const payload = JSON.stringify({
+          eventType: 'checkout_duration',
+          durationSeconds: duration,
+          sessionId: sessionStorage.getItem('xanhla_session_id') || 'guest_checkout',
+        });
+        if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+          navigator.sendBeacon('http://localhost:3000/api/analytics/telemetry', payload);
+        }
+      }
+    }
   }
 
   /** Lấy thông tin đối tượng địa chỉ mặc định của người dùng */
@@ -1197,12 +1337,23 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   selectOrderVoucher(code: string): void {
     if (this.selectedOrderVoucher()?.code === code) {
       this.removeOrderVoucher();
+      this.showOrderVoucherPicker.set(false);
       return;
     }
     const opt = this.orderVoucherOptions().find(o => o.voucher.code === code);
     if (!opt || !opt.isEligible) return;
 
-    this.voucher.validateVoucher(code, this.checkoutSubtotal()).subscribe((res) => {
+    // Đóng dropdown ngay lập tức khi người dùng chọn mã
+    this.showOrderVoucherPicker.set(false);
+
+    this.voucher.validateVoucher(code, {
+      subtotal: this.checkoutSubtotal(),
+      items: this.checkoutItems(),
+      phone: this.guestPhone(),
+      email: this.guestEmail(),
+      paymentMethod: this.paymentMethod(),
+      expectedVoucherType: 'ORDER_DISCOUNT',
+    }).subscribe((res) => {
       if (res.valid) {
         this.selectedOrderVoucher.set({
           code,
@@ -1219,17 +1370,29 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   removeOrderVoucher(): void {
     this.selectedOrderVoucher.set(null);
     this.voucherMessage.set('');
+    this.showOrderVoucherPicker.set(false);
   }
 
   selectShippingVoucher(code: string): void {
     if (this.selectedShippingVoucher()?.code === code) {
       this.removeShippingVoucher();
+      this.showShippingVoucherPicker.set(false);
       return;
     }
     const opt = this.shippingVoucherOptions().find(o => o.voucher.code === code);
     if (!opt || !opt.isEligible) return;
 
-    this.voucher.validateVoucher(code, this.checkoutSubtotal()).subscribe((res) => {
+    // Đóng dropdown ngay lập tức khi người dùng chọn mã
+    this.showShippingVoucherPicker.set(false);
+
+    this.voucher.validateVoucher(code, {
+      subtotal: this.checkoutSubtotal(),
+      items: this.checkoutItems(),
+      phone: this.guestPhone(),
+      email: this.guestEmail(),
+      paymentMethod: this.paymentMethod(),
+      expectedVoucherType: 'SHIPPING_DISCOUNT',
+    }).subscribe((res) => {
       if (res.valid) {
         this.selectedShippingVoucher.set({
           code,
@@ -1246,6 +1409,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   removeShippingVoucher(): void {
     this.selectedShippingVoucher.set(null);
     this.voucherMessage.set('');
+    this.showShippingVoucherPicker.set(false);
   }
 
   selectOfferCode(code: string): void {
@@ -1265,14 +1429,20 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     }
     this.voucherCode.set(code);
 
-    this.voucher.validateVoucher(code, this.checkoutSubtotal()).subscribe((result) => {
+    this.voucher.validateVoucher(code, {
+      subtotal: this.checkoutSubtotal(),
+      items: this.checkoutItems(),
+      phone: this.guestPhone(),
+      email: this.guestEmail(),
+      paymentMethod: this.paymentMethod(),
+    }).subscribe((result) => {
       if (result.valid) {
         const allVouchers = [
           ...this.voucher.availableVouchers().map(uv => uv.voucher),
           ...this.voucher.publicVouchers()
         ];
         const matched = allVouchers.find(v => v.code.toUpperCase() === code);
-        const isShip = matched ? this.isShippingVoucher(matched) : (code.includes('FREESHIP') || code.includes('SHIP'));
+        const isShip = result.voucherType === 'SHIPPING_DISCOUNT' || (matched ? this.isShippingVoucher(matched) : (code.includes('FREESHIP') || code.includes('SHIP')));
 
         if (isShip) {
           const discountVal = result.discount || matched?.value || 30000;
@@ -1282,6 +1452,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
             voucher: matched || ({ code, name: 'Voucher Miễn Phí Vận Chuyển', type: 'fixed', value: discountVal } as any)
           });
           this.voucherMessage.set(`Đã áp dụng mã Freeship ${code}`);
+          this.showShippingVoucherPicker.set(false);
         } else {
           this.selectedOrderVoucher.set({
             code,
@@ -1289,11 +1460,25 @@ export class CheckoutComponent implements OnInit, OnDestroy {
             voucher: matched || ({ code, name: 'Voucher Giảm Giá', type: 'percentage', value: result.discount } as any)
           });
           this.voucherMessage.set(`Đã áp dụng mã giảm đơn hàng ${code}: -${formatPrice(result.discount)}`);
+          this.showOrderVoucherPicker.set(false);
         }
       } else {
         this.voucherMessage.set(result.message || 'Mã voucher không hợp lệ');
       }
     });
+  }
+
+  selectPaymentMethod(method: 'cod' | 'bank_transfer'): void {
+    this.paymentMethod.set(method);
+    const curOrder = this.selectedOrderVoucher();
+    if (curOrder && curOrder.voucher?.requiredPaymentMethod) {
+      const req = curOrder.voucher.requiredPaymentMethod.toLowerCase();
+      const isOnlineReq = req === 'online' || req === 'bank_transfer';
+      if (isOnlineReq && method === 'cod') {
+        this.selectedOrderVoucher.set(null);
+        this.voucherMessage.set(`Mã ưu đãi ${curOrder.code} đã tự động gỡ do chỉ áp dụng khi thanh toán trực tuyến.`);
+      }
+    }
   }
 
   removeVoucher(): void {
@@ -1470,8 +1655,13 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       this.focusField('contact-phone');
       return;
     }
-    if (!this.guestEmail()?.trim()) {
-      this.errorMsg.set('Vui lòng điền địa chỉ email nhận thông tin đơn hàng.');
+    if (this.checkoutForm.get('phone')?.invalid) {
+      this.errorMsg.set('Số điện thoại không hợp lệ (cần 10 chữ số, ví dụ 0912345678).');
+      this.focusField('contact-phone');
+      return;
+    }
+    if (this.guestEmail()?.trim() && this.checkoutForm.get('email')?.invalid) {
+      this.errorMsg.set('Địa chỉ email không đúng định dạng. Vui lòng kiểm tra lại hoặc để trống.');
       this.focusField('contact-email');
       return;
     }
@@ -1490,14 +1680,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Bật modal popup thông báo kiểm tra hàng & đồng kiểm khi khách hàng nhấn xác nhận đặt hàng nếu chưa tick đồng ý
-    if (!this.nonRefundableConfirmed()) {
-      this.modalPolicyChecked.set(false);
-      this.showNonRefundableModal.set(true);
-      return;
-    }
-
-    this.executeOrderPlacement();
+    // Luôn mở bước popup xác nhận kiểm hàng & đặt đơn
+    this.modalPolicyChecked.set(false);
+    this.showNonRefundableModal.set(true);
   }
 
   focusField(id: string): void {
@@ -1652,6 +1837,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
           this.updateQrCountdownText();
           this.scrollToTop(0);
 
+          this.cart.loadUserData();
+          this.voucher.refreshMine();
+          this.voucher.loadPublic();
           if (pStatus === 'paid') {
             this.finalizePaidQrOrder();
           } else if (pStatus === 'unpaid') {
@@ -1665,6 +1853,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         this.scrollToTop(0);
         this.cart.loadUserData();
         this.voucher.refreshMine();
+        this.voucher.loadPublic();
         if (this.isBuyNowMode()) {
           this.cart.clearBuyNowSession();
         } else {
@@ -1673,8 +1862,10 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.submitting.set(false);
+        this.nonRefundableConfirmed.set(false);
         this.errorMsg.set(err.error?.message || 'Đặt hàng thất bại, vui lòng thử lại.');
         this.loadLiveProductStock();
+        this.scrollToTop(0);
       },
     });
   }

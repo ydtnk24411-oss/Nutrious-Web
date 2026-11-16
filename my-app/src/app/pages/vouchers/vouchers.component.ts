@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { VoucherService } from '../../shared/services/voucher.service';
 import { CartService } from '../../shared/services/cart.service';
+import { OrderApiService } from '../../shared/services/order-api.service';
 import { Voucher, UserVoucher } from '../../shared/models/xanh-la.models';
 
 @Component({
@@ -16,36 +17,69 @@ import { Voucher, UserVoucher } from '../../shared/models/xanh-la.models';
 export class VouchersComponent implements OnInit {
   protected voucher = inject(VoucherService);
   protected cart = inject(CartService);
+  protected orderApi = inject(OrderApiService);
 
   activeTab = signal<'all' | 'available' | 'collected'>('all');
   toastMessage = signal<string>('');
   toastType = signal<'success' | 'error' | 'info'>('success');
+  readonly hasPriorValidOrders = signal<boolean>(false);
   private toastTimer: any = null;
 
   readonly publicVouchers = this.voucher.publicVouchers;
   readonly collectedVouchers = this.voucher.userVouchers;
   readonly isLoading = this.voucher.isLoading;
 
+  private isFirstOrderOnly(v: Voucher): boolean {
+    const code = (v.code || '').toUpperCase();
+    const desc = `${v.name || ''} ${v.description || ''}`.toLowerCase();
+    return (
+      Boolean(v.isFirstOrderOnly) ||
+      code.startsWith('WELCOME') ||
+      desc.includes('đơn hàng đầu tiên') ||
+      desc.includes('thành viên mới')
+    );
+  }
+
   readonly uncollectedCount = computed(() =>
-    this.publicVouchers().filter(v => !this.voucher.isSaved(v.id)).length
+    this.filteredPublicVouchers().filter(v => !this.voucher.isSaved(v.id)).length
   );
   readonly savedCount = computed(() => this.collectedVouchers().length);
+
+  readonly filteredPublicVouchers = computed<Voucher[]>(() => {
+    return this.publicVouchers().filter(v => {
+      // Nếu là mã chỉ dành riêng cho đơn đầu nhưng khách đã có đơn hàng hợp lệ -> tự động ẩn
+      if (this.isFirstOrderOnly(v) && this.hasPriorValidOrders()) {
+        return false;
+      }
+      return true;
+    });
+  });
 
   readonly tabVouchers = computed<Voucher[]>(() => {
     switch (this.activeTab()) {
       case 'available':
-        return this.publicVouchers().filter(v => !this.isCollected(v.id));
+        return this.filteredPublicVouchers().filter(v => !this.isCollected(v.id));
       case 'collected':
         return this.collectedVouchers().map(uv => uv.voucher);
       case 'all':
       default:
-        return this.publicVouchers();
+        return this.filteredPublicVouchers();
     }
   });
 
   ngOnInit(): void {
     this.voucher.loadPublic();
     this.voucher.refreshMine();
+    if (this.cart.currentUser()) {
+      this.orderApi.getMyOrders({ limit: 5 }).subscribe({
+        next: (res: any) => {
+          if (res && Array.isArray(res.data)) {
+            const valid = res.data.filter((o: any) => o.status !== 'cancelled');
+            this.hasPriorValidOrders.set(valid.length > 0);
+          }
+        },
+      });
+    }
   }
 
   isCollected(voucherId: string): boolean {

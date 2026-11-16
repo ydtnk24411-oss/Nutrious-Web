@@ -374,24 +374,24 @@ export class ChatbotService {
 
     if (hasImage) {
       return `**NutriBot đã phân tích hình ảnh của bạn:**\n\n` +
-        `• **Món ăn:** **Salad Ức Gà Rau Củ Hữu Cơ Evergreen Mart**\n` +
-        `• **Thành phần:** Ức gà phi lê tươi, xà lách Lô Tô xanh, cà chua bi Đà Lạt, dưa leo tươi giòn, ngô ngọt.\n\n` +
+        `- **Món ăn:** **Salad Ức Gà Rau Củ Hữu Cơ Evergreen Mart**\n` +
+        `- **Thành phần:** Ức gà phi lê tươi, xà lách Lô Tô xanh, cà chua bi Đà Lạt, dưa leo tươi giòn, ngô ngọt.\n\n` +
         `**Ước tính giá trị dinh dưỡng (Khẩu phần tiêu chuẩn):**\n` +
-        `• Năng lượng: **320 kcal**\n` +
-        `• Đạm (Protein): 28g | Tinh bột: 16g | Chất béo tốt: 11g | Chất xơ: 6g\n\n` +
+        `- Năng lượng: **320 kcal**\n` +
+        `- Đạm (Protein): 28g | Tinh bột: 16g | Chất béo tốt: 11g | Chất xơ: 6g\n\n` +
         `*Tất cả nguyên liệu trên đều có sẵn tại hệ thống Nông sản Evergreen Mart.*`;
     }
 
     if (q.includes('ship') || q.includes('giao hang') || q.includes('van chuyen') || q.includes('phi')) {
-      return `**Chính sách giao hàng xe lạnh Evergreen Mart:**\n\n• **Miễn phí vận chuyển (0đ)** cho đơn hàng từ **300.000đ** trở lên.\n• Đơn dưới 300.000đ: Đồng giá 25.000đ nội thành.\n• Giao nhanh trong 2 giờ bảo quản bằng thùng lạnh 0°C – 4°C để đảm bảo độ tươi giòn.`;
+      return `**Chính sách giao hàng xe lạnh Evergreen Mart:**\n\n- **Miễn phí vận chuyển (0đ)** cho đơn hàng từ **300.000đ** trở lên.\n- Đơn dưới 300.000đ: Đồng giá 25.000đ nội thành.\n- Giao nhanh trong 2 giờ bảo quản bằng thùng lạnh 0°C – 4°C để đảm bảo độ tươi giòn.`;
     }
 
     if (q.includes('voucher') || q.includes('giam gia') || q.includes('khuyen mai') || q.includes('code')) {
-      return `**Chương trình ưu đãi hiện hành:**\n\n• Mã **WELCOME20**: Giảm ngay 20.000đ cho khách hàng mới.\n• Mã **FREESHIP**: Miễn phí vận chuyển cho đơn từ 200.000đ.\n\nNhập mã tại bước thanh toán để áp dụng.`;
+      return `**Chương trình ưu đãi hiện hành:**\n\n- Mã **WELCOME20**: Giảm ngay 20.000đ cho khách hàng mới.\n- Mã **FREESHIP**: Miễn phí vận chuyển cho đơn từ 200.000đ.\n\nNhập mã tại bước thanh toán để áp dụng.`;
     }
 
     if (q.includes('an gi') || q.includes('nau gi') || q.includes('thuc don') || q.includes('mon ngon')) {
-      return `**Gợi ý thực đơn tươi lành hôm nay:**\n\n• **Món canh:** Canh cải thìa thịt bằm thanh nhiệt.\n• **Món rau:** Xà lách Lô Tô sốt mè rang thanh mát.\n• **Món mặn:** Cá hồi áp chảo bơ tỏi hoặc Thịt bò xào cần tây.\n\n*Nông sản Evergreen Mart thu hoạch sớm mỗi sáng luôn sẵn sàng phục vụ bạn.*`;
+      return `**Gợi ý thực đơn tươi lành hôm nay:**\n\n- **Món canh:** Canh cải thìa thịt bằm thanh nhiệt.\n- **Món rau:** Xà lách Lô Tô sốt mè rang thanh mát.\n- **Món mặn:** Cá hồi áp chảo bơ tỏi hoặc Thịt bò xào cần tây.\n\n*Nông sản Evergreen Mart thu hoạch sớm mỗi sáng luôn sẵn sàng phục vụ bạn.*`;
     }
 
     return `Cảm ơn bạn đã liên hệ **Trợ lý AI Evergreen Mart**.\n\nTôi luôn sẵn sàng giải đáp thông tin nông sản, phân tích dinh dưỡng và hỗ trợ đặt hàng.\n\n*Hotline hỗ trợ: **1900 6868** (Hỗ trợ 24/7).*`;

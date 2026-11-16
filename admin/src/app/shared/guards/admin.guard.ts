@@ -6,8 +6,46 @@ export const adminGuard: CanActivateFn = () => {
   const auth   = inject(AdminAuthService);
   const router = inject(Router);
 
-  if (auth.isLoggedIn()) return true;
+  if (!auth.isLoggedIn()) {
+    router.navigate(['/admin/login']);
+    return false;
+  }
 
-  router.navigate(['/admin/login']);
-  return false;
+  // Cho phép nhân viên quản trị có vai trò role: "Sales", "Manager", "Admin"
+  const role = (auth.user()?.role || '').toLowerCase();
+  const isAuthorized = role === 'sales' || role === 'manager' || role === 'admin';
+
+  if (!isAuthorized) {
+    router.navigate(['/admin/login-failed'], {
+      queryParams: { reason: 'unauthorized_role', message: 'Tài khoản không có quyền nhân viên (Sales/Manager) để truy cập quản trị.' }
+    });
+    return false;
+  }
+
+  return true;
+};
+
+// Route Guard tham số hóa roleGuard(['Sales', 'Manager']) theo yêu cầu nghiệp vụ 14
+export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
+  return () => {
+    const auth = inject(AdminAuthService);
+    const router = inject(Router);
+
+    if (!auth.isLoggedIn()) {
+      router.navigate(['/admin/login']);
+      return false;
+    }
+
+    const role = (auth.user()?.role || '').toLowerCase();
+    const normalized = allowedRoles.map(r => r.toLowerCase());
+
+    if (role === 'admin' || role === 'manager' || normalized.includes(role)) {
+      return true;
+    }
+
+    router.navigate(['/admin/orders'], {
+      queryParams: { error: 'permission_denied', message: 'Chỉ Quản lý (Manager) mới có quyền truy cập chức năng này.' }
+    });
+    return false;
+  };
 };

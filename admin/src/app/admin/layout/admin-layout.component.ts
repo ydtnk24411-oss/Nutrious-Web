@@ -1,7 +1,11 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, inject, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { AdminAuthService } from '../../shared/services/admin-auth.service';
+import { ProductApiService } from '../../shared/services/product-api.service';
+import { OrderApiService } from '../../shared/services/order-api.service';
+import { UserApiService } from '../../shared/services/user-api.service';
 
 export interface AdminNavSubItem {
   id: string;
@@ -26,19 +30,122 @@ export interface AdminNavSection {
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [CommonModule, FormsModule, RouterLink, RouterLinkActive, RouterOutlet],
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.css',
 })
 export class AdminLayoutComponent {
-  protected auth   = inject(AdminAuthService);
-  protected router = inject(Router);
+  protected auth       = inject(AdminAuthService);
+  protected router     = inject(Router);
+  private productApi   = inject(ProductApiService);
+  private orderApi     = inject(OrderApiService);
+  private userApi      = inject(UserApiService);
 
   sidebarOpen = signal(true);
   expandedMenus = signal<Record<string, boolean>>({
     products: true,
     support: true
   });
+
+  // Header Quick Search & Dropdown
+  @ViewChild('headerSearchInput') headerSearchInput?: ElementRef<HTMLInputElement>;
+  quickSearchOpen = signal(false);
+  quickSearchQuery = signal('');
+  quickSearchLoading = signal(false);
+  quickSearchResults = signal<{ type: string; title: string; subtitle: string; path: string }[]>([]);
+
+  @HostListener('window:keydown', ['$event'])
+  onGlobalKeydown(e: KeyboardEvent): void {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+      e.preventDefault();
+      this.openQuickSearch();
+      setTimeout(() => this.headerSearchInput?.nativeElement.focus(), 50);
+    } else if (e.key === 'Escape' && this.quickSearchOpen()) {
+      this.closeQuickSearch();
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(e: MouseEvent): void {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.admin-header-search-wrap')) {
+      this.closeQuickSearch();
+    }
+  }
+
+  toggleQuickSearch(): void {
+    if (this.quickSearchOpen()) {
+      this.closeQuickSearch();
+    } else {
+      this.openQuickSearch();
+    }
+  }
+
+  openQuickSearch(): void {
+    this.quickSearchOpen.set(true);
+  }
+
+  closeQuickSearch(): void {
+    this.quickSearchOpen.set(false);
+  }
+
+  clearQuickSearch(): void {
+    this.quickSearchQuery.set('');
+    this.quickSearchResults.set([]);
+    this.headerSearchInput?.nativeElement.focus();
+  }
+
+  onQuickSearchInput(val: string): void {
+    this.quickSearchQuery.set(val);
+    const q = val.trim().toLowerCase();
+    if (!q) {
+      this.quickSearchResults.set([]);
+      return;
+    }
+
+    this.quickSearchLoading.set(true);
+    const results: { type: string; title: string; subtitle: string; path: string }[] = [];
+
+    // Search Products
+    this.productApi.getAll({ search: q, limit: 4 }).subscribe({
+      next: (res) => {
+        (res.data || []).forEach(p => {
+          results.push({
+            type: p.isCombo ? 'Combo' : 'Sản phẩm',
+            title: p.name,
+            subtitle: `${p.price || ''} - Tồn kho: ${p.stock}`,
+            path: p.isCombo ? '/admin/combos' : '/admin/products'
+          });
+        });
+
+        // Search Orders
+        this.orderApi.getAll({ search: q, limit: 4 }).subscribe({
+          next: (ordRes) => {
+            (ordRes.data || []).forEach(o => {
+              results.push({
+                type: 'Đơn hàng',
+                title: `#${o.orderCode} - ${o.guestName || o.user?.name || 'Khách lẻ'}`,
+                subtitle: `${(o.total || 0).toLocaleString('vi-VN')}đ - Trạng thái: ${o.status}`,
+                path: '/admin/orders'
+              });
+            });
+            this.quickSearchResults.set(results);
+            this.quickSearchLoading.set(false);
+          },
+          error: () => {
+            this.quickSearchResults.set(results);
+            this.quickSearchLoading.set(false);
+          }
+        });
+      },
+      error: () => this.quickSearchLoading.set(false)
+    });
+  }
+
+  goToSearchResult(path: string): void {
+    this.closeQuickSearch();
+    this.router.navigateByUrl(path);
+  }
 
   readonly navSections: AdminNavSection[] = [
     {
@@ -48,6 +155,16 @@ export class AdminLayoutComponent {
           id: 'dashboard',
           label: 'Bảng tổng quan',
           path: '/admin/dashboard',
+        },
+        {
+          id: 'analytics',
+          label: 'Phân tích & Hành vi',
+          path: '/admin/analytics',
+        },
+        {
+          id: 'finance',
+          label: 'Quản lý tài chính',
+          path: '/admin/finance',
         }
       ]
     },

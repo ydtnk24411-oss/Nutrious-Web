@@ -1,0 +1,398 @@
+<div class="ana-page">
+  <!-- Top Header with Title and Time Range Selector -->
+  <div class="ana-header">
+    <div>
+      <h2 class="ana-title">Phân tích &amp; Hành vi người dùng</h2>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="ana-time-pills">
+        <button type="button" class="ana-time-pill" [class.is-active]="timeRange() === '7d'" (click)="onRangeChange('7d')">7 ngày</button>
+        <button type="button" class="ana-time-pill" [class.is-active]="timeRange() === '30d'" (click)="onRangeChange('30d')">30 ngày</button>
+        <button type="button" class="ana-time-pill" [class.is-active]="timeRange() === '90d'" (click)="onRangeChange('90d')">90 ngày</button>
+      </div>
+      <button type="button" class="ana-time-pill" (click)="loadData()" [disabled]="loading()" title="Cập nhật số liệu mới nhất" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer">
+        <i class="bi bi-arrow-clockwise" [class.spin-anim]="loading()"></i>
+        <span>Làm mới</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Navigation Pillars -->
+  <nav class="ana-tabs" aria-label="Phân loại chỉ số">
+    <button type="button" class="ana-tab" [class.is-active]="activeTab() === 'all'" (click)="activeTab.set('all')">Tất cả chỉ số</button>
+    <button type="button" class="ana-tab" [class.is-active]="activeTab() === 'traffic'" (click)="activeTab.set('traffic')">Lưu lượng &amp; Người dùng</button>
+    <button type="button" class="ana-tab" [class.is-active]="activeTab() === 'discovery'" (click)="activeTab.set('discovery')">Tìm kiếm &amp; Xem sản phẩm</button>
+    <button type="button" class="ana-tab" [class.is-active]="activeTab() === 'funnel'" (click)="activeTab.set('funnel')">Phễu Giỏ hàng &amp; Thanh toán</button>
+    <button type="button" class="ana-tab" [class.is-active]="activeTab() === 'sales'" (click)="activeTab.set('sales')">Chuyển đổi &amp; Doanh số</button>
+    <button type="button" class="ana-tab" [class.is-active]="activeTab() === 'health'" (click)="activeTab.set('health')">Hiệu năng &amp; Trải nghiệm</button>
+  </nav>
+
+  @if (loading()) {
+    <div class="ana-loading">
+      <div class="ana-spinner"></div>
+      <p>Đang tổng hợp dữ liệu phân tích hệ thống...</p>
+    </div>
+  }
+  @if (error()) {
+    <div style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:14px;border-radius:10px">
+      {{ error() }}
+    </div>
+  }
+  @if (!loading() && overview(); as data) {
+
+    <!-- ── 1. TRAFFIC & ACQUISITION ────────────────────────────────────── -->
+    @if (activeTab() === 'all' || activeTab() === 'traffic') {
+      <section class="ana-section">
+        <h3 class="ana-sec-title">1. Lưu lượng &amp; Người dùng (Traffic &amp; Users)</h3>
+        <div class="ana-kpi-grid">
+          <div class="ana-kpi-card ana-kpi-highlight">
+            <span class="ana-kpi-label">Tổng lượt truy cập website</span>
+            <strong class="ana-kpi-val">{{ data.traffic.totalPageviews | number }}</strong>
+            <span class="ana-kpi-sub">Số lượt xem trang toàn site</span>
+          </div>
+          <div class="ana-kpi-card">
+            <span class="ana-kpi-label">Số phiên truy cập (Sessions)</span>
+            <strong class="ana-kpi-val">{{ data.traffic.totalSessions | number }}</strong>
+            <span class="ana-kpi-sub">Phiên hoạt động của khách</span>
+          </div>
+          <div class="ana-kpi-card">
+            <span class="ana-kpi-label">Tổng số người dùng</span>
+            <strong class="ana-kpi-val">{{ data.traffic.totalUsers | number }}</strong>
+            <span class="ana-kpi-sub">{{ data.traffic.newUsers }} mới - {{ data.traffic.returningUsers }} quay lại</span>
+          </div>
+          <div class="ana-kpi-card">
+            <span class="ana-kpi-label">Thời gian tương tác TB</span>
+            <strong class="ana-kpi-val">{{ formatDuration(data.traffic.avgDurationSeconds) }}</strong>
+            <span class="ana-kpi-sub">Thời gian giữ chân trên site</span>
+          </div>
+          <div class="ana-kpi-card ana-kpi-warn">
+            <span class="ana-kpi-label">Tỷ lệ thoát (Bounce Rate)</span>
+            <strong class="ana-kpi-val">{{ data.traffic.bounceRate }}%</strong>
+            <span class="ana-kpi-sub">Rời đi chỉ sau 1 trang</span>
+          </div>
+          <div class="ana-kpi-card">
+            <span class="ana-kpi-label">Số trang xem TB / phiên</span>
+            <strong class="ana-kpi-val">{{ data.traffic.avgPagesPerSession }} trang</strong>
+            <span class="ana-kpi-sub">Mức độ khám phá nội dung</span>
+          </div>
+        </div>
+
+        <div class="ana-grid-2">
+          <!-- Nguồn truy cập -->
+          <div class="ana-box">
+            <h4 class="ana-box-title">
+              <span>Lượt truy cập theo nguồn (Acquisition Channels)</span>
+              <small style="color:var(--ana-muted);font-weight:500">Phần trăm</small>
+            </h4>
+            <div class="ana-list">
+              @for (src of data.traffic.sources; track src._id) {
+                <div class="ana-list-item">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="display:inline-block;width:10px;height:10px;border-radius:50%" [style.background]="getSourceColor(src._id)"></span>
+                    <strong>{{ getSourceLabel(src._id) }}</strong>
+                  </div>
+                  <div>
+                    <span style="font-weight:700">{{ src.count | number }}</span>
+                    <span style="color:var(--ana-muted);font-size:12px;margin-left:6px">({{ getSourcePercent(src.count, data.traffic.sources) }})</span>
+                  </div>
+                </div>
+              }
+              @if (data.traffic.sources.length === 0) {
+                <div style="padding:16px;text-align:center;color:var(--ana-muted);font-size:13px">Chưa có dữ liệu nguồn truy cập</div>
+              }
+            </div>
+          </div>
+
+          <!-- Phân bổ theo thiết bị -->
+          <div class="ana-box">
+            <h4 class="ana-box-title">
+              <span>Lượt truy cập theo thiết bị (Devices)</span>
+              <small style="color:var(--ana-muted);font-weight:500">Mobile-first</small>
+            </h4>
+            <div class="ana-list">
+              @for (dev of data.traffic.devices; track dev._id) {
+                <div class="ana-list-item">
+                  <strong>{{ getDeviceLabel(dev._id) }}</strong>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span class="ana-chip">{{ getDevicePercent(dev.count, data.traffic.devices) }}</span>
+                    <strong>{{ dev.count | number }} lượt</strong>
+                  </div>
+                </div>
+              }
+              @if (data.traffic.devices.length === 0) {
+                <div style="padding:16px;text-align:center;color:var(--ana-muted);font-size:13px">Chưa có dữ liệu thiết bị truy cập</div>
+              }
+            </div>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- ── 2. SEARCH & PRODUCT DISCOVERY ──────────────────────────────── -->
+    @if (activeTab() === 'all' || activeTab() === 'discovery') {
+      <section class="ana-section">
+        <h3 class="ana-sec-title">2. Tìm kiếm &amp; Khám phá sản phẩm (Discovery)</h3>
+        <div class="ana-kpi-grid">
+          <div class="ana-kpi-card">
+            <span class="ana-kpi-label">Số lượt tìm kiếm</span>
+            <strong class="ana-kpi-val">{{ data.searchDiscovery.totalSearches | number }}</strong>
+            <span class="ana-kpi-sub">Lượt gõ tìm trên thanh search</span>
+          </div>
+          <div class="ana-kpi-card ana-kpi-warn">
+            <span class="ana-kpi-label">Tìm kiếm không có kết quả</span>
+            <strong class="ana-kpi-val">{{ data.searchDiscovery.searchNoResultRate }}%</strong>
+            <span class="ana-kpi-sub">Cần bổ sung từ khóa / hàng hóa</span>
+          </div>
+          <div class="ana-kpi-card">
+            <span class="ana-kpi-label">Số lượt xem danh mục</span>
+            <strong class="ana-kpi-val">{{ data.searchDiscovery.categoryViews | number }}</strong>
+            <span class="ana-kpi-sub">Khám phá theo chuyên mục</span>
+          </div>
+          <div class="ana-kpi-card">
+            <span class="ana-kpi-label">Số lượt xem chi tiết SP</span>
+            <strong class="ana-kpi-val">{{ data.searchDiscovery.productDetailViews | number }}</strong>
+            <span class="ana-kpi-sub">Vào trang chi tiết sản phẩm</span>
+          </div>
+          <div class="ana-kpi-card">
+            <span class="ana-kpi-label">Thời gian xem SP trung bình</span>
+            <strong class="ana-kpi-val">{{ data.searchDiscovery.avgProductViewDuration }} giây</strong>
+            <span class="ana-kpi-sub">Độ kỹ lưỡng khi đọc thông tin</span>
+          </div>
+          <div class="ana-kpi-card">
+            <span class="ana-kpi-label">Lượt xem ảnh &amp; chọn phân loại</span>
+            <strong class="ana-kpi-val">{{ data.searchDiscovery.imageClicks + data.searchDiscovery.optionVariantClicks }}</strong>
+            <span class="ana-kpi-sub">{{ data.searchDiscovery.imageClicks }} zoom ảnh - {{ data.searchDiscovery.optionVariantClicks }} chọn size/vị</span>
+          </div>
+        </div>
+
+        <div class="ana-grid-2">
+          <!-- Top từ khóa tìm kiếm -->
+          <div class="ana-box">
+            <h4 class="ana-box-title">
+              <span>Từ khóa tìm kiếm phổ biến nhất</span>
+            </h4>
+            <div class="ana-list">
+              @for (kw of data.searchDiscovery.popularKeywords; track kw.keyword) {
+                <div class="ana-list-item">
+                  <span>🔍 {{ kw.keyword }}</span>
+                  <span class="ana-chip">{{ kw.count }} lượt tìm</span>
+                </div>
+              }
+              @if (data.searchDiscovery.popularKeywords.length === 0) {
+                <div style="padding:16px;text-align:center;color:var(--ana-muted);font-size:13px">Chưa có dữ liệu từ khóa tìm kiếm</div>
+              }
+            </div>
+          </div>
+
+          <!-- Top sản phẩm được xem nhiều nhất -->
+          <div class="ana-box">
+            <h4 class="ana-box-title">
+              <span>Sản phẩm được xem nhiều nhất (Top Viewed)</span>
+            </h4>
+            <div class="ana-list">
+              @for (p of data.searchDiscovery.topViewedProducts; track p._id) {
+                <div class="ana-list-item">
+                  <div style="display:flex;flex-direction:column">
+                    <strong>{{ p._id }}</strong>
+                    @if (p.price) {
+                      <span style="font-size:12px;color:#166534">{{ formatPrice(p.price) }}</span>
+                    }
+                  </div>
+                  <span class="ana-chip">{{ p.count }} lượt xem</span>
+                </div>
+              }
+              @if (data.searchDiscovery.topViewedProducts.length === 0) {
+                <div style="padding:16px;text-align:center;color:var(--ana-muted);font-size:13px">Chưa có dữ liệu sản phẩm xem nhiều</div>
+              }
+            </div>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- ── 3. CART & CHECKOUT FUNNEL ─────────────────────────────────── -->
+    @if (activeTab() === 'all' || activeTab() === 'funnel') {
+      <section class="ana-section">
+        <h3 class="ana-sec-title">3. Phễu Giỏ hàng &amp; Thanh toán (Cart &amp; Checkout Funnel)</h3>
+        <div class="ana-kpi-grid">
+          <div class="ana-kpi-card ana-kpi-highlight">
+            <span class="ana-kpi-label">Số lượt thêm vào giỏ hàng</span>
+            <strong class="ana-kpi-val">{{ data.cartCheckout.addToCartCount | number }}</strong>
+            <span class="ana-kpi-sub">Số lần bấm "Thêm vào giỏ"</span>
+          </div>
+          <div class="ana-kpi-card">
+            <span class="ana-kpi-label">Số lượt xóa khỏi giỏ</span>
+            <strong class="ana-kpi-val">{{ data.cartCheckout.removeFromCartCount | number }}</strong>
+            <span class="ana-kpi-sub">Xóa bớt món khỏi giỏ</span>
+          </div>
+          <div class="ana-kpi-card ana-kpi-warn">
+            <span class="ana-kpi-label">Tỷ lệ bỏ giỏ hàng</span>
+            <strong class="ana-kpi-val">{{ data.cartCheckout.cartAbandonmentRate }}%</strong>
+            <span class="ana-kpi-sub">Chưa bấm tiến hành thanh toán</span>
+          </div>
+          <div class="ana-kpi-card">
+            <span class="ana-kpi-label">Giá trị giỏ hàng trung bình</span>
+            <strong class="ana-kpi-val">{{ formatPrice(data.cartCheckout.averageCartValue) }}</strong>
+            <span class="ana-kpi-sub">Giá trị nhặt hàng dự kiến</span>
+          </div>
+          <div class="ana-kpi-card">
+            <span class="ana-kpi-label">Số lượt bắt đầu thanh toán</span>
+            <strong class="ana-kpi-val">{{ data.cartCheckout.beginCheckoutCount | number }}</strong>
+            <span class="ana-kpi-sub">Vào trang thanh toán (Checkout)</span>
+          </div>
+          <div class="ana-kpi-card">
+            <span class="ana-kpi-label">Tỷ lệ bỏ thanh toán (Drop-off)</span>
+            <strong class="ana-kpi-val">{{ data.cartCheckout.checkoutAbandonmentRate }}%</strong>
+            <span class="ana-kpi-sub">Thoát khi đang điền form</span>
+          </div>
+        </div>
+
+        <!-- Trực quan hóa phễu thanh toán -->
+        <div class="ana-box">
+          <h4 class="ana-box-title">
+            <span>Tiến trình hoàn thành phễu thanh toán (Checkout Funnel Steps)</span>
+          </h4>
+          <div class="ana-funnel">
+            <div class="ana-funnel-step">
+              <div class="ana-funnel-header">
+                <span>1. Bắt đầu thanh toán (Begin Checkout)</span>
+                <strong>{{ data.cartCheckout.beginCheckoutCount }} phiên{{ data.cartCheckout.beginCheckoutCount > 0 ? ' (100%)' : '' }}</strong>
+              </div>
+              <div class="ana-funnel-bar-bg">
+                <div class="ana-funnel-bar-fill" [style.width.%]="data.cartCheckout.beginCheckoutCount > 0 ? 100 : 0"></div>
+              </div>
+            </div>
+
+            <div class="ana-funnel-step">
+              <div class="ana-funnel-header">
+                <span>2. Hoàn thành thông tin giao hàng</span>
+                <strong>{{ data.cartCheckout.shippingCompleteRate }}% tiếp tục</strong>
+              </div>
+              <div class="ana-funnel-bar-bg">
+                <div class="ana-funnel-bar-fill" [style.width.%]="data.cartCheckout.shippingCompleteRate"></div>
+              </div>
+              @if (data.cartCheckout.beginCheckoutCount > 0) {
+                <div class="ana-funnel-drop">Rơi rụng: {{ 100 - data.cartCheckout.shippingCompleteRate }}%</div>
+              }
+            </div>
+
+            <div class="ana-funnel-step">
+              <div class="ana-funnel-header">
+                <span>3. Hoàn tất thanh toán &amp; Đặt hàng</span>
+                <strong>{{ data.cartCheckout.paymentCompleteRate }}% hoàn tất</strong>
+              </div>
+              <div class="ana-funnel-bar-bg">
+                <div class="ana-funnel-bar-fill" [style.width.%]="data.cartCheckout.beginCheckoutCount > 0 ? ((data.cartCheckout.shippingCompleteRate * data.cartCheckout.paymentCompleteRate) / 100) : 0"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- ── 4. SALES, CONVERSION & CTA ─────────────────────────────────── -->
+    @if (activeTab() === 'all' || activeTab() === 'sales') {
+      <section class="ana-section">
+        <h3 class="ana-sec-title">4. Chuyển đổi, Doanh thu &amp; Tương tác (Sales &amp; Conversion)</h3>
+        <div class="ana-kpi-grid">
+          <div class="ana-kpi-card ana-kpi-highlight">
+            <span class="ana-kpi-label">Số đơn hàng thành công</span>
+            <strong class="ana-kpi-val">{{ data.salesConversion.completedOrders | number }}</strong>
+            <span class="ana-kpi-sub">Đơn giao thành công</span>
+          </div>
+          <div class="ana-kpi-card ana-kpi-highlight">
+            <span class="ana-kpi-label">Tỷ lệ chuyển đổi (CR)</span>
+            <strong class="ana-kpi-val">{{ data.salesConversion.conversionRate }}%</strong>
+            <span class="ana-kpi-sub">Đơn thành công / Phiên</span>
+          </div>
+          <div class="ana-kpi-card">
+            <span class="ana-kpi-label">Doanh thu website</span>
+            <strong class="ana-kpi-val" style="color:#166534">{{ formatPrice(data.salesConversion.websiteRevenue) }}</strong>
+            <span class="ana-kpi-sub">Doanh số thực tế ghi nhận</span>
+          </div>
+          <div class="ana-kpi-card">
+            <span class="ana-kpi-label">Giá trị đơn hàng TB (AOV)</span>
+            <strong class="ana-kpi-val">{{ formatPrice(data.salesConversion.averageOrderValue) }}</strong>
+            <span class="ana-kpi-sub">Mỗi đơn mang lại</span>
+          </div>
+          <div class="ana-kpi-card">
+            <span class="ana-kpi-label">Tỷ lệ khách quay lại mua</span>
+            <strong class="ana-kpi-val">{{ data.salesConversion.repeatCustomerRate }}%</strong>
+            <span class="ana-kpi-sub">Khách mua từ 2 lần trở lên</span>
+          </div>
+          <div class="ana-kpi-card">
+            <span class="ana-kpi-label">Tỷ lệ nhấp CTA</span>
+            <strong class="ana-kpi-val">{{ data.salesConversion.ctaClickRate }}%</strong>
+            <span class="ana-kpi-sub">{{ data.salesConversion.ctaClicks | number }} lượt nhấp nút</span>
+          </div>
+        </div>
+
+        <div class="ana-grid-2">
+          <!-- Tương tác liên hệ & CSKH -->
+          <div class="ana-box">
+            <h4 class="ana-box-title">
+              <span>Lượt liên hệ qua website</span>
+            </h4>
+            <div class="ana-list">
+              <div class="ana-list-item">
+                <span>💬 Lượt nhấp nút Inbox / Chat</span>
+                <strong style="color:#166534">{{ data.salesConversion.inboxClicks }} lượt</strong>
+              </div>
+              <div class="ana-list-item">
+                <span>📞 Lượt nhấp thông tin liên hệ (Hotline/Zalo/Email)</span>
+                <strong style="color:#166534">{{ data.salesConversion.contactInfoClicks }} lượt</strong>
+              </div>
+              <div class="ana-list-item" style="background:#f0fdf4">
+                <strong>Tổng số cơ hội liên hệ tư vấn</strong>
+                <span class="ana-chip" style="font-size:13px">{{ data.salesConversion.totalContactCount }} khách hàng</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lời khuyên tối ưu chuyển đổi -->
+          <div class="ana-box" style="background:#fafdf9">
+            <h4 class="ana-box-title">
+              <span>Đánh giá hiệu suất kinh doanh</span>
+            </h4>
+            @if (data.salesConversion.completedOrders === 0) {
+              <p style="font-size:13.5px;color:var(--ana-muted);margin:0;line-height:1.6">
+                Chưa có đơn hàng thành công trong kỳ này để tổng hợp đánh giá hiệu suất kinh doanh.
+              </p>
+            } @else {
+              <p style="font-size:13.5px;color:var(--ana-muted);margin:0;line-height:1.6">
+                - Tỷ lệ chuyển đổi đạt <strong>{{ data.salesConversion.conversionRate }}%</strong> (tiêu chuẩn ngành thực phẩm sạch là 2.5% - 4.0%).<br>
+                - Giá trị trung bình đơn hàng <strong>{{ formatPrice(data.salesConversion.averageOrderValue) }}</strong> rất tốt nhờ chính sách combo và gợi ý mua kèm.<br>
+                - Tỷ lệ khách quay lại đạt <strong>{{ data.salesConversion.repeatCustomerRate }}%</strong> phản ánh chất lượng sản phẩm giữ chân khách hàng tốt.
+              </p>
+            }
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- ── 5. PERFORMANCE & UX HEALTH ─────────────────────────────────── -->
+    @if (activeTab() === 'all' || activeTab() === 'health') {
+      <section class="ana-section">
+        <h3 class="ana-sec-title">5. Hiệu năng kỹ thuật &amp; Trải nghiệm (Performance &amp; Health)</h3>
+        <div class="ana-kpi-grid">
+          <div class="ana-kpi-card ana-kpi-highlight">
+            <span class="ana-kpi-label">Thời gian tải trang (Page Load)</span>
+            <strong class="ana-kpi-val">{{ data.performanceHealth.avgLoadTimeMs > 0 ? (data.performanceHealth.avgLoadTimeMs + ' ms') : '0 ms' }}</strong>
+            <span class="ana-kpi-sub">{{ data.performanceHealth.avgLoadTimeMs > 0 ? '&lt; 1 giây (Tốc độ mượt mà)' : 'Chưa ghi nhận lượt tải' }}</span>
+          </div>
+          <div class="ana-kpi-card ana-kpi-highlight">
+            <span class="ana-kpi-label">Điểm hiển thị di động (Mobile UX)</span>
+            <strong class="ana-kpi-val" style="color:#16a34a">{{ data.performanceHealth.mobilePerformanceScore > 0 ? (data.performanceHealth.mobilePerformanceScore + ' / 100') : '—' }}</strong>
+            <span class="ana-kpi-sub">{{ data.performanceHealth.mobilePerformanceScore > 0 ? 'Tối ưu chuẩn Google Mobile' : 'Chưa có mẫu đo lường' }}</span>
+          </div>
+          <div class="ana-kpi-card" [class.ana-kpi-warn]="data.performanceHealth.errorRate > 1">
+            <span class="ana-kpi-label">Tỷ lệ lỗi website</span>
+            <strong class="ana-kpi-val">{{ data.performanceHealth.errorRate }}%</strong>
+            <span class="ana-kpi-sub">{{ data.performanceHealth.errorCount }} lỗi JS/API ghi nhận</span>
+          </div>
+        </div>
+      </section>
+    }
+  }
+</div>

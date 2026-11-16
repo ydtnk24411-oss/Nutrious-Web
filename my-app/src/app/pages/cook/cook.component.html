@@ -171,7 +171,7 @@
                       <img [src]="prod.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&q=80'" [alt]="prod.name" class="item-thumb" />
                       <div class="item-info">
                         <strong class="item-name">{{ prod.name }}</strong>
-                        <span class="item-meta">{{ prod.categoryVi || 'Nông sản sạch' }} • {{ prod.price }}</span>
+                        <span class="item-meta">{{ prod.categoryVi || 'Nông sản sạch' }} - {{ prod.price }}</span>
                       </div>
                       <span class="item-badge">+ Chọn</span>
                     </button>
@@ -519,12 +519,12 @@
                           <i class="bi bi-clock me-1"></i>
                           Chuẩn bị: {{ recipe.prepTime }}p
                         </span>
-                        <span class="xanhla-meta-dot">•</span>
+                        <span class="xanhla-meta-dot">-</span>
                         <span class="xanhla-meta-item">
                           <i class="bi bi-fire me-1"></i>
                           Nấu: {{ recipe.cookTime }}p
                         </span>
-                        <span class="xanhla-meta-dot">•</span>
+                        <span class="xanhla-meta-dot">-</span>
                         <span class="xanhla-meta-item">
                           <i class="bi bi-people me-1"></i>
                           {{ servings() }} phần ăn
@@ -557,8 +557,7 @@
                           <i class="bi bi-check-lg"></i> Đã có trong tủ lạnh: {{ hasIngredients(recipe).length }}/{{ recipe.ingredients.length }}
                         </span>
                         @if (missingIngredients(recipe).length > 0) {
-                          <span class="xanhla-stat-missing">
-                            • Còn thiếu:
+                          <span class="xanhla-stat-missing"> - Còn thiếu:
                             @for (m of missingIngredients(recipe); track m.name; let isLast = $last) {
                               <strong>{{ m.name }}</strong>{{ isLast ? '' : ', ' }}
                             }
@@ -655,7 +654,7 @@
                                             <span class="xanhla-badge-source">Nông sản sạch:</span>
                                             <span class="xanhla-prod-name">{{ ing.product.name }}</span>
                                             <span class="xanhla-prod-price">{{ ing.product.price }}</span>
-                                            <span class="xanhla-pack-hint">• Quy cách ~{{ ing.packLabel }}</span>
+                                            <span class="xanhla-pack-hint">- Quy cách ~{{ ing.packLabel }}</span>
                                             @if (ing.isOutOfStock) {
                                               <span class="xanhla-outofstock-tag">Tạm hết hàng</span>
                                             }

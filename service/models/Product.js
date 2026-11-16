@@ -67,6 +67,9 @@ const productSchema = new mongoose.Schema(
     originalPriceNumber: { type: Number, default: 0, min: 0 }, // tổng giá mua lẻ
     // Mua kèm tiết kiệm hơn: danh sách sản phẩm đề xuất mua kèm độc lập với Combo
     addOnDeals: { type: [addOnDealSchema], default: [] },
+    averageRating: { type: Number, default: 5, min: 1, max: 5 },
+    reviewCount: { type: Number, default: 0, min: 0 },
+    soldCount: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 );

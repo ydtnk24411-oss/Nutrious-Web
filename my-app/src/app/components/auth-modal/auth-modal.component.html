@@ -73,7 +73,7 @@
             </button>
           </div>
           <div class="auth-password-wrap">
-            <input id="login-password" [type]="showLoginPassword() ? 'text' : 'password'" placeholder="••••••••"
+            <input id="login-password" [type]="showLoginPassword() ? 'text' : 'password'" placeholder="Nhập mật khẩu"
               [value]="password()" (input)="password.set($any($event.target).value)"
               autocomplete="current-password" required />
             <button type="button" class="auth-password-toggle"
@@ -83,6 +83,13 @@
               <i class="bi" [class.bi-eye]="!showLoginPassword()" [class.bi-eye-slash]="showLoginPassword()"></i>
             </button>
           </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0 16px;font-size:13px">
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:#374151">
+            <input type="checkbox" [checked]="rememberMe()" (change)="rememberMe.set($any($event.target).checked)" style="accent-color:#16a34a" />
+            <span>Ghi nhớ tên đăng nhập</span>
+          </label>
         </div>
 
         <button class="xanhla-btn-primary auth-submit-btn" type="submit" [disabled]="loading()">

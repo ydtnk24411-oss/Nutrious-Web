@@ -1242,7 +1242,7 @@ img { display: block; max-width: 100%; }
 
 /* ==========================================================================
    XANH LÁ — Premium Admin Design System
-   Modern Organic Farm Dashboard · Deep Forest & Vibrant Lime
+   Modern Organic Farm Dashboard - Deep Forest & Vibrant Lime
    ========================================================================== */
 
 /* ── Admin Card ───────────────────────────────────── */
@@ -1559,13 +1559,8 @@ img { display: block; max-width: 100%; }
 }
 
 .admin-badge::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 0 6px currentColor;
-  flex-shrink: 0;
+  content: none !important;
+  display: none !important;
 }
 
 .badge-pending {
@@ -1922,4 +1917,164 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 
 .cart-badge-pop {
   animation: cartBadgePop 0.45s ease-out !important;
+}
+
+/* ==========================================================================
+   UI STANDARDIZATION GUIDELINES (Thiết kế giao diện chuẩn mực)
+   ========================================================================== */
+
+/* 1. Các nút nằm trong cùng một cột dọc (Cùng chiều cao, cùng padding, cùng kích thước icon, min-width thẳng hàng) */
+.vertical-action-col,
+.acc-order-actions-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.vertical-action-btn,
+.acc-btn-sm {
+  height: 34px !important;
+  min-height: 34px !important;
+  min-width: 104px;
+  padding: 0 14px !important;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.vertical-action-btn i,
+.vertical-action-btn svg,
+.acc-btn-sm i,
+.acc-btn-sm svg {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* 2. Huy hiệu trạng thái (Pending, Processing, Completed, Cancelled)
+      Cùng chiều cao, cùng cỡ chữ, cùng bo góc, min-width cố định thẳng tắp */
+.acc-order-status,
+.status-badge,
+.order-status-badge,
+.cp-badge-status {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+  width: 104px !important;
+  min-width: 104px !important;
+  max-width: 104px !important;
+  padding: 0 8px !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
+  line-height: 1 !important;
+  border: 1px solid transparent !important;
+}
+
+.acc-order-status::before,
+.status-badge::before,
+.order-status-badge::before,
+.cp-badge-status::before {
+  content: none !important;
+  display: none !important;
+}
+
+/* Chuẩn mực kế toán: Toàn bộ cột số, đơn giá, thành tiền, số lượng phải căn phải */
+th.is-num, td.is-num,
+th.col-num, td.col-num,
+th.col-price, td.col-price,
+th.col-total, td.col-total,
+th.text-right, td.text-right,
+.acc-num-col, .col-currency, .num-cell {
+  text-align: right !important;
+  justify-content: flex-end !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* 3. Ô nhập liệu & Nút bấm trong Biểu mẫu (Forms — Đăng nhập, Thanh toán) */
+.xanhla-auth-field input,
+.xanhla-auth-field select,
+#section-contact-info input,
+#section-contact-info select,
+.checkout-form-input {
+  width: 100% !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  box-sizing: border-box !important;
+  padding: 0 14px !important;
+  font-size: 14px;
+  border-radius: var(--xanh-radius-sm);
+}
+
+.xanhla-auth-field textarea,
+#section-contact-info textarea,
+.checkout-form-textarea {
+  width: 100% !important;
+  min-height: 88px;
+  box-sizing: border-box !important;
+  padding: 10px 14px !important;
+}
+
+/* Nhóm nút hành động cuối Form (ví dụ Quay lại và Xác nhận đặt hàng) bắt buộc cùng chiều cao */
+.checkout-submit-actions,
+.fresh-modal-actions,
+.auth-submit-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.checkout-submit-actions button,
+.checkout-submit-actions a,
+.fresh-modal-actions button,
+.fresh-modal-actions a {
+  height: 48px !important;
+  min-height: 48px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* 4. Ngoại lệ: Thẻ lọc nhanh (Filter Chips / Category Pills) co giãn tự nhiên */
+.category-filter-chips,
+.filter-chips-strip,
+.ord-filter-pills,
+.xanhla-cat-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.category-filter-chip,
+.filter-chip-pill,
+.xanhla-cat-pill {
+  height: 36px !important;
+  min-height: 36px !important;
+  width: auto !important;
+  min-width: unset !important;
+  padding: 0 16px !important;
+  white-space: nowrap !important;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }

@@ -179,16 +179,39 @@ router.post('/adjust', protect, hasRole('warehouse', 'admin'), async (req, res, 
 // GET /api/inventory/logs — get stock adjustment history
 router.get('/logs', protect, staffOnly, async (req, res, next) => {
   try {
-    const { page = 1, limit = 50, productId } = req.query;
+    const { page = 1, limit = 100, productId, days, startDate, endDate } = req.query;
     const filter = {};
     if (productId) filter.product = productId;
 
-    const skip = (Number(page) - 1) * Number(limit);
+    if (startDate || endDate) {
+      filter.createdAt = {};
+      if (startDate) {
+        const s = new Date(startDate);
+        s.setHours(0, 0, 0, 0);
+        filter.createdAt.$gte = s;
+      }
+      if (endDate) {
+        const e = new Date(endDate);
+        e.setHours(23, 59, 59, 999);
+        filter.createdAt.$lte = e;
+      }
+    } else if (days && days !== 'all') {
+      const numDays = Number(days);
+      if (!isNaN(numDays) && numDays > 0) {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - numDays);
+        cutoff.setHours(0, 0, 0, 0);
+        filter.createdAt = { $gte: cutoff };
+      }
+    }
+
+    const maxLimit = Math.min(Number(limit) || 100, 500);
+    const skip = (Number(page) - 1) * maxLimit;
     const [logs, total] = await Promise.all([
       InventoryLog.find(filter)
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(Number(limit))
+        .limit(maxLimit)
         .populate('updatedBy', 'name email'),
       InventoryLog.countDocuments(filter),
     ]);

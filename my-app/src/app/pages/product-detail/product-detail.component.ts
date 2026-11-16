@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject, OnInit, ViewChild, ElementRef, effect } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, OnDestroy, ViewChild, ElementRef, effect } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -6,6 +6,7 @@ import { ShellComponent } from '../../components/shell/shell.component';
 import { CartService, formatPrice, calcAddOnUnitDiscount, resolveProductOption } from '../../shared/services/cart.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { ReviewService, ReviewEligibility } from '../../shared/services/review.service';
+import { WishlistService } from '../../shared/services/wishlist.service';
 import { XanhLaProduct } from '../../shared/models/xanh-la.models';
 
 export interface AddOnCardView {
@@ -54,12 +55,15 @@ function toCartProduct(p: ApiProduct): XanhLaProduct {
   templateUrl: './product-detail.component.html',
   styleUrl: './product-detail.component.css',
 })
-export class ProductDetailComponent implements OnInit {
+export class ProductDetailComponent implements OnInit, OnDestroy {
+  dwellStartTime = Date.now();
+  dwellSent = false;
   protected cart          = inject(CartService);
   private route           = inject(ActivatedRoute);
   private router          = inject(Router);
   private productApi      = inject(ProductApiService);
   private reviewService   = inject(ReviewService);
+  protected wishlist      = inject(WishlistService);
 
   protected product       = signal<ApiProduct | null>(null);
   protected loading       = signal(true);
@@ -67,6 +71,11 @@ export class ProductDetailComponent implements OnInit {
   protected quantity      = signal(1);
   protected selectedRipeness = signal('Ready to Eat');
   protected openAccordions   = signal({ info: true, refund: false, shipping: false });
+
+  // Frequently Bought Together (Thường được mua cùng nhau)
+  protected frequentlyBoughtProducts = signal<ApiProduct[]>([]);
+  protected addedBundleMessage = signal<string>('');
+  protected addedSuccess = signal(false);
 
   // Related products (WinMart style)
   protected relatedProducts = signal<ApiProduct[]>([]);
@@ -380,8 +389,20 @@ export class ProductDetailComponent implements OnInit {
 
   private loadRelatedProducts(current: ApiProduct | null | undefined): void {
     this.relatedProducts.set([]);
+    this.frequentlyBoughtProducts.set([]);
     this.loadCombos(current);
     if (!current) return;
+
+    if (current.slug || current._id) {
+      this.productApi.getFrequentlyBought(current.slug || current._id).subscribe({
+        next: (res) => {
+          if (res.success && Array.isArray(res.data)) {
+            this.frequentlyBoughtProducts.set(res.data);
+          }
+        },
+      });
+    }
+
     this.loadingRelated.set(true);
     const exclude = (list: ApiProduct[]) =>
       (list || []).filter(p => p._id !== current._id).slice(0, 12);
@@ -713,6 +734,21 @@ export class ProductDetailComponent implements OnInit {
     this.router.navigate(['/checkout'], { queryParams: { mode: 'buynow' } });
   }
 
+  addComboBundleToCart(companionProduct: ApiProduct): void {
+    const current = this.product();
+    if (!current) return;
+    this.cart.addItem(toCartProduct(current), 1, this.currentSelectedOption());
+    this.cart.addItem(toCartProduct(companionProduct), 1);
+    this.addedSuccess.set(true);
+    setTimeout(() => this.addedSuccess.set(false), 2500);
+  }
+
+  getBundleTotal(p: any, companion: any): number {
+    const p1 = Number(p?.price) || 0;
+    const p2 = Number(companion?.price) || 0;
+    return p1 + p2;
+  }
+
   // ── Review Methods ───────────────────────────────
   get reviews() {
     const p = this.product();
@@ -821,6 +857,27 @@ export class ProductDetailComponent implements OnInit {
     });
   }
 
+  
+  ngOnDestroy(): void {
+    if (this.dwellSent) return;
+    const p = this.product();
+    if (!p) return;
+    const duration = Math.round((Date.now() - this.dwellStartTime) / 1000);
+    if (duration >= 2) {
+      this.dwellSent = true;
+      const payload = JSON.stringify({
+        eventType: 'dwell_time',
+        productId: p._id,
+        productName: p.name,
+        durationSeconds: duration,
+        sessionId: sessionStorage.getItem('xanhla_session_id') || 'guest_detail',
+      });
+      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        navigator.sendBeacon('http://localhost:3000/api/analytics/telemetry', payload);
+      }
+    }
+  }
+
   isReviewHelpful(review: any): boolean {
     return !!review.isHelpful || this.localHelpfulReviews().has(review.id);
   }
@@ -828,6 +885,18 @@ export class ProductDetailComponent implements OnInit {
   markHelpful(reviewId: string): void {
     const p = this.product();
     if (!p) return;
+
+    const u = this.cart.currentUser();
+    if (!u) {
+      alert('Vui lòng đăng nhập tài khoản để bình chọn đánh giá hữu ích.');
+      return;
+    }
+
+    const review = ((this.reviews as any) || []).find((r: any) => r.id === reviewId || r._id === reviewId);
+    if (review && (review.userId === u._id || review.user === u._id)) {
+      alert('Bạn không thể tự bình chọn đánh giá của chính mình.');
+      return;
+    }
 
     const currentSet = new Set(this.localHelpfulReviews());
     const isCurrentlyLiked = currentSet.has(reviewId);

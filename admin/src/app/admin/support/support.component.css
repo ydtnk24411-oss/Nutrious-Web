@@ -209,13 +209,8 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 .conv-status-tag::before {
-  content: '';
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 0 5px currentColor;
-  flex-shrink: 0;
+  content: none !important;
+  display: none !important;
 }
 .badge-waiting  { background: linear-gradient(135deg, #fff5f5 0%, #fee2e2 100%); color: #dc2626; border-color: #fca5a5; }
 .badge-admin    { background: linear-gradient(135deg, #fffdf5 0%, #fef3c7 100%); color: #b45309; border-color: #fcd34d; }

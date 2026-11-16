@@ -150,7 +150,7 @@ export class AdminShippingComponent implements OnInit, OnDestroy {
       draggable: true,
     }).addTo(this.map);
 
-    this.warehouseMarker.bindPopup(`<b>${this.warehouseName()}</b><br>Kéo thả marker để đổi vị trí kho`).openPopup();
+    this.warehouseMarker.bindPopup(`<b>${this.warehouseName()}</b><br>Kéo ghim để đổi vị trí`).openPopup();
 
     this.warehouseMarker.on('dragend', (e: any) => {
       const pos = e.target.getLatLng();

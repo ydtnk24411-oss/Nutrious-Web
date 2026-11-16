@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { customerGuard } from './shared/guards/customer.guard';
 
 export const routes: Routes = [
   // ── Public storefront routes ──────────────────────────────────
@@ -30,6 +31,7 @@ export const routes: Routes = [
     path: 'checkout',
     loadComponent: () =>
       import('./pages/checkout/checkout.component').then((m) => m.CheckoutComponent),
+    canActivate: [customerGuard],
   },
   {
     path: 'account',
@@ -58,8 +60,8 @@ export const routes: Routes = [
   },
   {
     path: 'tracker-page',
-    loadComponent: () =>
-      import('./pages/tracker/tracker.component').then((m) => m.TrackerComponent),
+    redirectTo: 'account',
+    pathMatch: 'full',
   },
   {
     path: 'complaint',

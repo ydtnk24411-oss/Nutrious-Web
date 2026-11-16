@@ -330,4 +330,65 @@ router.delete('/viewed-products', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// GET /api/account/wishlist — Lấy danh sách sản phẩm yêu thích của tài khoản
+router.get('/wishlist', protect, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id).populate('wishlist').lean();
+    if (!user) return res.status(404).json({ success: false, message: 'Không tìm thấy tài khoản.' });
+    const products = (user.wishlist || []).filter(p => p && p.isActive !== false);
+    res.json({ success: true, data: products });
+  } catch (err) { next(err); }
+});
+
+// POST /api/account/wishlist/toggle — Thêm hoặc bỏ sản phẩm khỏi Wishlist
+router.post('/wishlist/toggle', protect, async (req, res, next) => {
+  try {
+    const { productId } = req.body;
+    if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ success: false, message: 'Mã sản phẩm không hợp lệ.' });
+    }
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success: false, message: 'Không tìm thấy tài khoản.' });
+
+    if (!user.wishlist) user.wishlist = [];
+    const index = user.wishlist.findIndex(id => String(id) === String(productId));
+    let added = false;
+    if (index >= 0) {
+      user.wishlist.splice(index, 1);
+      added = false;
+    } else {
+      user.wishlist.push(productId);
+      added = true;
+    }
+    await user.save();
+    res.json({ success: true, added, wishlist: user.wishlist });
+  } catch (err) { next(err); }
+});
+
+// POST /api/account/wishlist/sync — Đồng bộ danh sách wishlist từ localStorage khi khách đăng nhập
+router.post('/wishlist/sync', protect, async (req, res, next) => {
+  try {
+    const { productIds } = req.body;
+    if (!Array.isArray(productIds)) {
+      return res.status(400).json({ success: false, message: 'Danh sách sản phẩm không hợp lệ.' });
+    }
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success: false, message: 'Không tìm thấy tài khoản.' });
+
+    if (!user.wishlist) user.wishlist = [];
+    const set = new Set(user.wishlist.map(id => String(id)));
+    for (const pid of productIds) {
+      if (mongoose.Types.ObjectId.isValid(pid)) {
+        set.add(String(pid));
+      }
+    }
+    user.wishlist = Array.from(set);
+    await user.save();
+
+    const populated = await User.findById(user._id).populate('wishlist').lean();
+    const products = (populated.wishlist || []).filter(p => p && p.isActive !== false);
+    res.json({ success: true, data: products });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;

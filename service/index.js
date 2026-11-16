@@ -8,6 +8,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
+const session = require('express-session');
 
 const productRoutes = require('./routes/products');
 const comboRoutes = require('./routes/combos');
@@ -29,6 +31,9 @@ const footerRoutes = require('./routes/footer');
 const flashSaleRoutes = require('./routes/flashSales');
 const shippingRoutes = require('./routes/shipping');
 const locationRoutes = require('./routes/locations');
+const analyticsRoutes = require('./routes/analytics');
+const cartRoutes = require('./routes/cart');
+const notificationRoutes = require('./routes/notifications');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -54,6 +59,21 @@ app.use(
   })
 );
 app.use(morgan('dev'));
+app.use(cookieParser(process.env.SESSION_SECRET || 'evergreen_secret_key'));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'evergreen_session_secret',
+    resave: false,
+    saveUninitialized: false,
+    name: 'evergreen_sid',
+    cookie: {
+      maxAge: 24 * 60 * 60 * 1000, // 24 giờ kiểm soát vòng đời phiên Session Timeout
+      httpOnly: true,
+      secure: false, // Để chạy được qua http://localhost chéo cổng
+      sameSite: 'lax',
+    },
+  })
+);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -89,6 +109,9 @@ app.use('/api/footer', footerRoutes);
 app.use('/api/flash-sales', flashSaleRoutes);
 app.use('/api/shipping', shippingRoutes);
 app.use('/api/locations', locationRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // ── Health check ──────────────────────────────────────────
 app.get('/api/health', (_req, res) => {
@@ -118,6 +141,15 @@ async function startServer() {
       serverSelectionTimeoutMS: 12000,
     });
     console.log('✅ MongoDB connected');
+
+    // Dọn dẹp các bản ghi SearchLog rác do bắt sự kiện gõ phím ở frontend trước đó
+    const SearchLog = require('./models/SearchLog');
+    SearchLog.deleteMany({
+      $or: [
+        { normalizedKeyword: { $regex: /^.{1,2}$/ } },
+        { keyword: { $in: ['c', 'r', 'ca', 'ra', 'cà', 'cà c', 'cà ch', 'ca·', 'cà chu'] } },
+      ],
+    }).catch(() => {});
   } catch (err) {
     console.error('❌ MongoDB connection error:', err.message);
     console.error(`   Environment file loaded from: ${envPath}`);

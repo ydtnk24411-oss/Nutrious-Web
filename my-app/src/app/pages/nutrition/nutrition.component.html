@@ -224,7 +224,7 @@
                           <span class="xl-detail-ing-qty-badge">Cần: {{ item.amount }} {{ item.unit }}</span>
                           @if (getCartQty(item.product) > 0) {
                             @if (getIngredientMissingQty(item, detail.servings, detail.meals) > 0) {
-                              <span class="xl-in-cart-badge is-warning"><i class="bi bi-cart3 me-1"></i> Đã có {{ getCartQty(item.product) }} {{ getProductUnit(item) }} · Cần thêm {{ getIngredientMissingQty(item, detail.servings, detail.meals) }} {{ getProductUnit(item) }} nữa</span>
+                              <span class="xl-in-cart-badge is-warning"><i class="bi bi-cart3 me-1"></i> Đã có {{ getCartQty(item.product) }} {{ getProductUnit(item) }} - Cần thêm {{ getIngredientMissingQty(item, detail.servings, detail.meals) }} {{ getProductUnit(item) }} nữa</span>
                             } @else {
                               <span class="xl-in-cart-badge is-full"><i class="bi bi-check-lg me-1"></i> Đã đủ {{ getIngredientNeededPacks(item, detail.servings, detail.meals) }} {{ getProductUnit(item) }} trong giỏ</span>
                             }
@@ -246,7 +246,7 @@
                             @if (getCartQty(item.product) > 0 && getIngredientMissingQty(item, detail.servings, detail.meals) > 0) {
                               <span class="xl-detail-ing-price">{{ formatPrice(getIngredientRemainingPrice(item, detail.servings, detail.meals)) }}</span>
                               <span class="xl-detail-unit-breakdown">
-                                (Giá {{ getIngredientMissingQty(item, detail.servings, detail.meals) }} {{ getProductUnit(item) }} còn thiếu · Đã có sẵn {{ getCartQty(item.product) }} trong giỏ)
+                                (Giá {{ getIngredientMissingQty(item, detail.servings, detail.meals) }} {{ getProductUnit(item) }} còn thiếu - Đã có sẵn {{ getCartQty(item.product) }} trong giỏ)
                               </span>
                             } @else if (getCartQty(item.product) > 0 && isIngredientFullyInCart(item, detail.servings, detail.meals)) {
                               <span class="xl-detail-ing-price" style="color: #15803d;">0đ</span>
@@ -343,7 +343,7 @@
                   <div class="xl-related-card" (click)="openRecipeDetail(rel.id)">
                     <img [src]="rel.image" [alt]="rel.name" (error)="onImageError($event)" />
                     <div class="xl-related-card-body">
-                      <span class="xl-related-kcal"> {{ rel.calories }} kcal ·  {{ rel.prepTime }}</span>
+                      <span class="xl-related-kcal"> {{ rel.calories }} kcal - {{ rel.prepTime }}</span>
                       <h4>{{ rel.name }}</h4>
                       <p>{{ rel.description }}</p>
                       <span class="xl-related-cta">Xem công thức &amp; nguyên liệu →</span>
@@ -389,7 +389,7 @@
             <div class="xl-plan-detail-info">
               <span class="xl-plans-pill"> GÓI THỰC ĐƠN THIẾT KẾ SẴN</span>
               <h1>{{ planDetail.name }}</h1>
-              <p class="xl-plan-audience" style="font-size:14px"> {{ planDetail.targetAudience }} ·  {{ planDetail.calories }}</p>
+              <p class="xl-plan-audience" style="font-size:14px"> {{ planDetail.targetAudience }} - {{ planDetail.calories }}</p>
               <p class="xl-detail-desc">{{ planDetail.description }}</p>
 
               <div class="xl-detail-buy-box" style="margin-top:20px">
@@ -423,7 +423,7 @@
                     <span class="xl-detail-kcal-badge"> {{ dish.calories }} kcal</span>
                   </div>
                   <div class="xl-plan-dish-body">
-                    <div class="xl-plan-dish-meta"> Sơ chế {{ dish.prepTime }} ·  Nấu {{ dish.cookTime }} ·  Đạm {{ dish.macros.protein }}</div>
+                    <div class="xl-plan-dish-meta"> Sơ chế {{ dish.prepTime }} - Nấu {{ dish.cookTime }} - Đạm {{ dish.macros.protein }}</div>
                     <h3 (click)="openRecipeDetail(dish.id)" style="cursor:pointer">{{ dish.name }}</h3>
                     <p>{{ dish.description }}</p>
                     <div class="xl-plan-dish-ings">
@@ -574,7 +574,7 @@
                   <div class="xl-step-meta">
                     <span class="xl-stepper-tab-kicker">BƯỚC 2</span>
                     <strong class="xl-step-name">Lịch ăn &amp; Số bữa</strong>
-                    <span class="xl-step-val">{{ mealsPerDay() }} bữa · {{ plannerMode() === 'week' ? '7 Ngày' : 'Theo Ngày' }}</span>
+                    <span class="xl-step-val">{{ mealsPerDay() }} bữa - {{ plannerMode() === 'week' ? '7 Ngày' : 'Theo Ngày' }}</span>
                   </div>
                 </button>
 
@@ -590,7 +590,7 @@
                   <div class="xl-step-meta">
                     <span class="xl-stepper-tab-kicker">BƯỚC 3</span>
                     <strong class="xl-step-name">Khẩu phần &amp; Chỉ số</strong>
-                    <span class="xl-step-val">{{ servings() }} người · {{ targetDailyKcal() }} kcal</span>
+                    <span class="xl-step-val">{{ servings() }} người - {{ targetDailyKcal() }} kcal</span>
                   </div>
                 </button>
               </nav>
@@ -620,7 +620,7 @@
                         <div class="xl-gsc-details">
                           <h4 class="xl-gsc-name">Tập Gym &amp; Tăng Cơ</h4>
                           <p class="xl-gsc-text">Tối ưu phục hồi &amp; xây dựng cơ bắp với ức gà, thăn bò, cá hồi Na Uy, trứng gà ta.</p>
-                          <div class="xl-gsc-foot-meta">~2.000 kcal · 145g Protein</div>
+                          <div class="xl-gsc-foot-meta">~2.000 kcal - 145g Protein</div>
                         </div>
                       </div>
                       <div class="xl-gsc-check-indicator"></div>
@@ -640,7 +640,7 @@
                         <div class="xl-gsc-details">
                           <h4 class="xl-gsc-name">Giảm Cân &amp; Siết Mỡ (Eat Clean)</h4>
                           <p class="xl-gsc-text">Thâm hụt calo lành mạnh, dồi dào chất xơ tự nhiên, loại bỏ đường tinh luyện.</p>
-                          <div class="xl-gsc-foot-meta">~1.350 kcal · 95g Protein</div>
+                          <div class="xl-gsc-foot-meta">~1.350 kcal - 95g Protein</div>
                         </div>
                       </div>
                       <div class="xl-gsc-check-indicator"></div>
@@ -660,7 +660,7 @@
                         <div class="xl-gsc-details">
                           <h4 class="xl-gsc-name">Giữ Dáng &amp; Cơm Nhà Cân Bằng</h4>
                           <p class="xl-gsc-text">Cân đối vi chất chuẩn tháp dinh dưỡng, thanh mát, thơm ngon, dễ chuẩn bị cho cả nhà.</p>
-                          <div class="xl-gsc-foot-meta">~1.750 kcal · Đủ 4 nhóm chất</div>
+                          <div class="xl-gsc-foot-meta">~1.750 kcal - Đủ 4 nhóm chất</div>
                         </div>
                       </div>
                       <div class="xl-gsc-check-indicator"></div>
@@ -680,7 +680,7 @@
                         <div class="xl-gsc-details">
                           <h4 class="xl-gsc-name">Thanh Lọc &amp; Tiêu Hóa Khỏe</h4>
                           <p class="xl-gsc-text">Bổ sung sữa chua men sống, sinh tố hạt chia thanh mát, nhẹ bụng sáng da.</p>
-                          <div class="xl-gsc-foot-meta">~1.400 kcal · Lợi khuẩn đường ruột</div>
+                          <div class="xl-gsc-foot-meta">~1.400 kcal - Lợi khuẩn đường ruột</div>
                         </div>
                       </div>
                       <div class="xl-gsc-check-indicator"></div>
@@ -965,7 +965,7 @@
                   <span class="xl-gpb-badge"> LỘ TRÌNH TRONG NGÀY</span>
                   <h3 class="xl-gpb-theme">{{ dayPlan.dayTheme }}</h3>
                   <span class="xl-gpb-sub">
-                    Thực đơn <strong>{{ dayPlan.mealsPerDayCount }} bữa</strong> · Khẩu phần <strong>{{ servings() }} người</strong>
+                    Thực đơn <strong>{{ dayPlan.mealsPerDayCount }} bữa</strong> - Khẩu phần <strong>{{ servings() }} người</strong>
                   </span>
                 </div>
 
@@ -1040,7 +1040,7 @@
                   <div class="xl-week-day-col" [class.is-today]="selectedWeekDay() === dayPlan.dayKey">
                     <div class="xl-week-col-head" (click)="weeklyOverviewMode.set(false); selectedWeekDay.set(dayPlan.dayKey)" style="cursor:pointer">
                       <strong>{{ dayPlan.dayLabel }} ({{ dayPlan.mealsPerDayCount }} bữa)</strong>
-                      <span> {{ dayPlan.totalCalories }} kcal ·  {{ dayPlan.totalProtein }}g đạm</span>
+                      <span> {{ dayPlan.totalCalories }} kcal - {{ dayPlan.totalProtein }}g đạm</span>
                     </div>
                     <div class="xl-week-col-meals">
                       @for (slot of dayPlan.slots; track slot.slotKey) {
@@ -1050,7 +1050,7 @@
                             <div class="xl-mini-slot-info">
                               <small><i [class]="'bi ' + slot.slotIcon + ' me-1'"></i>{{ slot.slotLabel }}</small>
                               <strong (click)="openRecipeDetail(r.id)">{{ r.name }}</strong>
-                              <span>{{ slot.scaledCalories || r.calories }} kcal · Đạm {{ slot.scaledProtein || r.macros.protein }}g</span>
+                              <span>{{ slot.scaledCalories || r.calories }} kcal - Đạm {{ slot.scaledProtein || r.macros.protein }}g</span>
                             </div>
                             <button type="button" class="xl-mini-swap-btn" (click)="swapMealInSlot(slot.slotKey, dayPlan.dayKey)" title="Đổi món khác"></button>
                           </div>
@@ -1092,9 +1092,9 @@
                           <h3 class="xl-slot-dish-name" (click)="openRecipeDetail(dish.id)">{{ dish.name }}</h3>
                           <div class="xl-slot-macros">
                             <span> Đạm {{ slot.scaledProtein || dish.macros.protein }}g</span>
-                            <span>·</span>
+                            <span>-</span>
                             <span> Xơ {{ slot.scaledFiber || dish.macros.fiber }}g</span>
-                            <span>·</span>
+                            <span>-</span>
                             <span> {{ dish.prepTime }}</span>
                           </div>
                           <!-- Ingredient Product Avatars with 100% accurate MongoDB product images -->
@@ -1131,9 +1131,9 @@
                   <div class="xl-summary-title">
                     <span class="xl-summary-icon"><i class="bi bi-bar-chart-line"></i></span>
                     @if (plannerMode() === 'day') {
-                      <span>Tổng dinh dưỡng thực đơn <strong>({{ dayPlan.mealsPerDayCount }} bữa · {{ servings() }} người)</strong>:</span>
+                      <span>Tổng dinh dưỡng thực đơn <strong>({{ dayPlan.mealsPerDayCount }} bữa - {{ servings() }} người)</strong>:</span>
                     } @else {
-                      <span>Dinh dưỡng {{ dayPlan.dayLabel }} <strong>(TB tuần: ~{{ weeklyPlanSummary().avgCaloriesPerDay }} kcal/ngày · {{ weeklyPlanSummary().totalMeals }} bữa)</strong>:</span>
+                      <span>Dinh dưỡng {{ dayPlan.dayLabel }} <strong>(TB tuần: ~{{ weeklyPlanSummary().avgCaloriesPerDay }} kcal/ngày - {{ weeklyPlanSummary().totalMeals }} bữa)</strong>:</span>
                     }
                   </div>
                   <div class="xl-summary-pills">
@@ -1277,7 +1277,7 @@
                         @if (dayPlan.alreadyInCartCount > 0) {
                           Mua thêm {{ dayPlan.missingCount }} món còn thiếu (được giảm 12%):
                         } @else {
-                          Trọn bộ {{ dayPlan.matchedProducts.length }} nguyên liệu nông sản tươi ({{ dayPlan.mealsPerDayCount }} bữa · {{ servings() }} người):
+                          Trọn bộ {{ dayPlan.matchedProducts.length }} nguyên liệu nông sản tươi ({{ dayPlan.mealsPerDayCount }} bữa - {{ servings() }} người):
                         }
                       </div>
                       <div class="xl-planner-price-nums">
@@ -1302,7 +1302,7 @@
                         @if (weeklyPlanSummary().alreadyInCartCount > 0) {
                           Mua thêm {{ weeklyPlanSummary().missingCount }} loại nông sản còn thiếu (được giảm 20%):
                         } @else {
-                          Đi chợ trọn tuần 7 ngày ({{ weeklyPlanSummary().matchedProducts.length }} loại nông sản · {{ weeklyPlanSummary().totalMeals }} bữa):
+                          Đi chợ trọn tuần 7 ngày ({{ weeklyPlanSummary().matchedProducts.length }} loại nông sản - {{ weeklyPlanSummary().totalMeals }} bữa):
                         }
                       </div>
                       <div class="xl-planner-price-nums">
@@ -1406,7 +1406,7 @@
                       <strong class="xl-plan-price-now">{{ plan.dealTotalText }}</strong>
                       <span class="xl-plan-price-old">{{ plan.originalTotalText }}</span>
                     </div>
-                    <span class="xl-plan-save-tag">Tiết kiệm {{ plan.savedText }} · Mã {{ plan.voucherCode }}</span>
+                    <span class="xl-plan-save-tag">Tiết kiệm {{ plan.savedText }} - Mã {{ plan.voucherCode }}</span>
                   </div>
 
                   <div class="xl-plan-actions">
@@ -1535,7 +1535,7 @@
                       loading="lazy"
                     />
                     <span class="xl-clean-score-badge">{{ recipe.matchScore }}% phù hợp</span>
-                    <span class="xl-clean-time-badge"> {{ recipe.calories }} kcal ·  {{ recipe.prepTime }}</span>
+                    <span class="xl-clean-time-badge"> {{ recipe.calories }} kcal - {{ recipe.prepTime }}</span>
                     @if (isRecentMeal(recipe)) {
                       <span class="xl-clean-recent-badge">{{ getRecentBadgeText(recipe) }}</span>
                     }
@@ -1626,7 +1626,7 @@
                                       }
                                       @if (getCartQty(item.product) > 0) {
                                         @if (getIngredientMissingQty(item, recipe.servings, recipe.meals) > 0) {
-                                          <span class="xl-in-cart-badge-sm is-warning"><i class="bi bi-cart3 me-1"></i> Đã có {{ getCartQty(item.product) }} {{ getProductUnit(item) }} · Cần thêm {{ getIngredientMissingQty(item, recipe.servings, recipe.meals) }} {{ getProductUnit(item) }}</span>
+                                          <span class="xl-in-cart-badge-sm is-warning"><i class="bi bi-cart3 me-1"></i> Đã có {{ getCartQty(item.product) }} {{ getProductUnit(item) }} - Cần thêm {{ getIngredientMissingQty(item, recipe.servings, recipe.meals) }} {{ getProductUnit(item) }}</span>
                                         } @else {
                                           <span class="xl-in-cart-badge-sm is-full"><i class="bi bi-check-lg me-1"></i> Đã đủ {{ getIngredientNeededPacks(item, recipe.servings, recipe.meals) }} {{ getProductUnit(item) }}</span>
                                         }

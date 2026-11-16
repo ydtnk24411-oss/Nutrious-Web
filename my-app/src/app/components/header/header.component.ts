@@ -8,6 +8,9 @@ import { navItems, logoImage } from '../../shared/data/xanh-la.data';
 import { CategoryApiService } from '../../shared/services/category-api.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { searchProducts, highlightMatch } from '../../shared/utils/search.util';
+import { NotificationService, InAppNotification } from '../../shared/services/notification.service';
+import { WishlistService } from '../../shared/services/wishlist.service';
+import { AnalyticsTrackerService } from '../../shared/services/analytics-tracker.service';
 
 const CATEGORIES = [
   { label: 'Rau củ', path: '/online-ordering', category: 'Rau củ' },
@@ -45,12 +48,16 @@ export class HeaderComponent implements OnDestroy {
   private categoryApi = inject(CategoryApiService, { optional: true });
   private productApi = inject(ProductApiService, { optional: true });
   private orderApi = inject(OrderApiService);
+  protected notifService = inject(NotificationService);
+  protected wishlist = inject(WishlistService);
+  private analytics = inject(AnalyticsTrackerService);
 
   protected readonly navItems    = navItems;
   protected readonly logoImage   = logoImage;
   protected categories           = CATEGORIES;
   protected readonly areas       = AREAS;
-  protected notifications        = signal<HeaderNotification[]>([]);
+  protected readonly notifications = this.notifService.notifications;
+  protected readonly unreadCount = this.notifService.unreadCount;
 
   protected mobileMenuOpen  = signal(false);
   protected userMenuOpen    = signal(false);
@@ -94,12 +101,6 @@ export class HeaderComponent implements OnDestroy {
         }
       },
       error: () => { },
-    });
-
-    // Cập nhật thông báo tự động theo tài khoản người dùng
-    effect(() => {
-      const user = this.cart.currentUser();
-      this.loadNotifications(user);
     });
 
     // Đồng bộ từ khóa tìm kiếm trên thanh search với URL hiện tại
@@ -146,82 +147,9 @@ export class HeaderComponent implements OnDestroy {
       error: () => {},
     });
   }
-  private loadNotifications(user: any): void {
-    if (!user) {
-      this.notifications.set([
-        {
-          id: 'guest-welcome',
-          title: 'Chào mừng bạn đến với Evergreen Mart',
-          body: 'Nông sản hữu cơ tươi ngon mỗi ngày. Đăng nhập để nhận ưu đãi thành viên.',
-          path: '/online-ordering',
-          unread: false,
-        },
-      ]);
-      return;
-    }
-
-    // Với tài khoản đã đăng nhập: lấy đơn hàng thực tế của chính tài khoản đó
-    this.orderApi.getMyOrders().subscribe({
-      next: (res) => {
-        const orders = res?.data || [];
-        const notifs: HeaderNotification[] = [];
-
-        // Tìm các đơn hàng đang hoạt động của user
-        const activeOrders = orders.filter((o: any) =>
-          ['pending', 'confirmed', 'preparing', 'shipping', 'delivering'].includes(o.status)
-        );
-
-        if (activeOrders.length > 0) {
-          for (const ord of activeOrders.slice(0, 3)) {
-            const isShipping = ['shipping', 'delivering'].includes(ord.status);
-            notifs.push({
-              id: 'ord-' + ord._id,
-              title: isShipping ? 'Đơn hàng đang giao' : 'Đơn hàng đang xử lý',
-              body: `Đơn #${ord.orderCode || ord._id.slice(-6)} ${isShipping ? 'đang trên đường giao đến bạn.' : 'đang được chuẩn bị nguyên liệu.'}`,
-              path: `/tracker-page?code=${ord.orderCode || ''}`,
-              unread: true,
-            });
-          }
-        } else {
-          // Tài khoản mới / không có đơn nào đang giao: hiển thị lời chào và hướng dẫn nhận ưu đãi
-          notifs.push({
-            id: 'welcome-member',
-            title: `Chào mừng ${user.name}!`,
-            body: 'Cảm ơn bạn đã gia nhập Evergreen Mart. Khám phá các thực phẩm hữu cơ tươi ngon ngay.',
-            path: '/online-ordering',
-            unread: true,
-          });
-          notifs.push({
-            id: 'member-voucher',
-            title: 'Ưu đãi thành viên mới',
-            body: 'Tích điểm nhận quà và voucher cho mỗi đơn hàng thành công.',
-            path: '/loyalty',
-            unread: false,
-          });
-        }
-
-        this.notifications.set(notifs);
-      },
-      error: () => {
-        this.notifications.set([
-          {
-            id: 'welcome-member',
-            title: `Chào mừng ${user.name}!`,
-            body: 'Khám phá các nông sản tươi sạch hữu cơ tại Evergreen Mart.',
-            path: '/online-ordering',
-            unread: false,
-          },
-        ]);
-      },
-    });
-  }
-
-  protected unreadCount(): number {
-    return this.notifications().filter(n => n.unread).length;
-  }
 
   markAllAsRead(): void {
-    this.notifications.update(items => items.map(n => ({ ...n, unread: false })));
+    this.notifService.markAllAsRead();
   }
 
   toggleMobileMenu(): void { this.mobileMenuOpen.update(v => !v); }
@@ -299,6 +227,10 @@ export class HeaderComponent implements OnDestroy {
   private executeSearch(q: string): void {
     this.showSuggestions.set(false);
     this.closeMobileMenu();
+    if (q && q.trim().length >= 2) {
+      const matchCount = this.suggestedProducts().length;
+      this.analytics.trackSearch(q.trim(), matchCount);
+    }
     this.router.navigate(['/online-ordering'], { queryParams: q ? { q } : {} });
   }
 

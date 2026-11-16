@@ -126,10 +126,10 @@
             <th>Mã Voucher</th>
             <th>Tên chương trình</th>
             <th>Loại giảm</th>
-            <th>Mức giảm</th>
-            <th>Đơn tối thiểu</th>
+            <th style="text-align: right;">Mức giảm</th>
+            <th style="text-align: right;">Đơn tối thiểu</th>
             <th>Thời hạn</th>
-            <th>Lượt dùng</th>
+            <th style="text-align: right;">Lượt dùng</th>
             <th>Trạng thái</th>
             <th style="width: 140px; text-align: right;">Thao tác</th>
           </tr>
@@ -152,16 +152,16 @@
               <td>
                 <span class="type-badge">{{ item.discountType === 'percentage' ? 'Phần trăm (%)' : 'Cố định (₫)' }}</span>
               </td>
-              <td>
-                <span class="discount-value">
+              <td style="text-align: right;">
+                <span class="discount-value" style="font-variant-numeric: tabular-nums;">
                   {{ item.discountType === 'percentage' ? item.discountValue + '%' : (item.discountValue | number) + ' ₫' }}
                 </span>
                 @if (item.discountType === 'percentage' && item.maxDiscountValue) {
-                  <span class="max-disc-tag">Tối đa {{ item.maxDiscountValue | number }} ₫</span>
+                  <span class="max-disc-tag" style="display: block; text-align: right;">Tối đa {{ item.maxDiscountValue | number }} ₫</span>
                 }
               </td>
-              <td>
-                <span>{{ item.minOrderValue ? (item.minOrderValue | number) + ' ₫' : 'Không yêu cầu' }}</span>
+              <td style="text-align: right;">
+                <span style="font-variant-numeric: tabular-nums;">{{ item.minOrderValue ? (item.minOrderValue | number) + ' ₫' : 'Không yêu cầu' }}</span>
               </td>
               <td>
                 <div class="date-col">
@@ -171,11 +171,11 @@
                   }
                 </div>
               </td>
-              <td>
-                <div class="usage-col">
-                  <span class="usage-text">{{ item.usedCount }} / {{ item.usageLimit > 0 ? item.usageLimit : '∞' }}</span>
+              <td style="text-align: right;">
+                <div class="usage-col" style="margin-left: auto;">
+                  <span class="usage-text" style="text-align: right; font-variant-numeric: tabular-nums;">{{ item.usedCount }} / {{ item.usageLimit > 0 ? item.usageLimit : '∞' }}</span>
                   @if (item.usageLimit > 0) {
-                    <div class="usage-bar">
+                    <div class="usage-bar" style="margin-left: auto;">
                       <div class="usage-progress" [style.width.%]="(item.usedCount / item.usageLimit) * 100"></div>
                     </div>
                   }

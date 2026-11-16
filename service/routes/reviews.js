@@ -7,6 +7,32 @@ const Product = require('../models/Product');
 const { protect, optionalAuth, staffOnly, hasRole, adminOnly } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 
+
+async function syncProductRating(productId) {
+  try {
+    const stats = await Review.aggregate([
+      { $match: { product: String(productId), isHidden: { $ne: true } } },
+      {
+        $group: {
+          _id: '$product',
+          avgRating: { $avg: '$rating' },
+          totalReviews: { $sum: 1 },
+        },
+      },
+    ]);
+    const avg = stats.length > 0 ? Math.round(stats[0].avgRating * 10) / 10 : 5;
+    const count = stats.length > 0 ? stats[0].totalReviews : 0;
+
+    let filter = { _id: productId };
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      filter = { slug: productId };
+    }
+    await Product.updateOne(filter, { $set: { averageRating: avg, reviewCount: count } });
+  } catch (err) {
+    console.error('Error syncing product rating:', err);
+  }
+}
+
 const toDto = (r, viewerId) => {
   const userObj = r.user && typeof r.user === 'object' ? r.user : null;
   const userAvatar = r.userAvatar || userObj?.avatar || '';
@@ -23,7 +49,10 @@ const toDto = (r, viewerId) => {
     title: r.title || undefined,
     content: r.content,
     images: r.images || [],
-    helpfulCount: (r.helpfulBy || []).length + (r.guestHelpfulCount || 0),
+    helpfulCount: r.likeCount !== undefined ? r.likeCount : ((r.likedBy || r.helpfulBy || []).length),
+    likeCount: r.likeCount !== undefined ? r.likeCount : ((r.likedBy || r.helpfulBy || []).length),
+    isLiked: viewerId ? ((r.likedBy || r.helpfulBy || []).some((u) => String(u) === String(viewerId))) : false,
+    sellerReply: r.sellerReply?.text ? r.sellerReply : (r.adminReply ? { text: r.adminReply, repliedBy: 'Cửa hàng Evergreen Mart', role: 'Sales', repliedAt: r.adminReplyAt } : null),
     isHelpful: viewerId ? (r.helpfulBy || []).some((u) => String(u) === String(viewerId)) : false,
     adminReply: r.adminReply || '',
     adminReplyAt: r.adminReplyAt || null,
@@ -53,7 +82,7 @@ router.get('/product/:productId', optionalAuth, async (req, res, next) => {
       isHidden: { $ne: true },
     })
       .populate('user', 'name avatar email')
-      .sort({ createdAt: -1 });
+      .sort({ likeCount: -1, createdAt: -1 });
 
     let defaultProductImage = '';
     const needsProdImg = reviews.some((r) => !r.productImage);
@@ -155,7 +184,7 @@ router.get('/admin', protect, staffOnly, async (req, res, next) => {
 });
 
 // PUT /api/reviews/:id/reply — admin reply
-router.put('/:id/reply', protect, hasRole('support', 'admin'), async (req, res, next) => {
+router.put('/:id/reply', protect, hasRole('sales', 'manager', 'admin', 'support'), async (req, res, next) => {
   try {
     const { reply } = req.body;
     const review = await Review.findById(req.params.id);
@@ -163,12 +192,21 @@ router.put('/:id/reply', protect, hasRole('support', 'admin'), async (req, res, 
       return res.status(404).json({ success: false, message: 'Không tìm thấy đánh giá.' });
     }
 
+    const responder = req.user?.name || req.session?.employee?.name || 'Nhân viên kinh doanh';
+    const responderRole = req.user?.role || req.session?.employee?.role || 'Sales';
+
     review.adminReply = (reply || '').trim();
     review.adminReplyAt = new Date();
+    review.sellerReply = {
+      text: (reply || '').trim(),
+      repliedBy: responder,
+      role: responderRole === 'admin' ? 'Manager' : 'Sales',
+      repliedAt: new Date(),
+    };
     await review.save();
 
     await review.populate('user', 'name email avatar');
-    res.json({ success: true, data: review });
+    res.json({ success: true, data: toDto(review, req.user?._id) });
   } catch (err) { next(err); }
 });
 
@@ -183,6 +221,7 @@ router.put('/:id/hide', protect, hasRole('support', 'admin'), async (req, res, n
 
     review.isHidden = typeof isHidden === 'boolean' ? isHidden : !review.isHidden;
     await review.save();
+    await syncProductRating(review.product);
 
     res.json({ success: true, data: review });
   } catch (err) { next(err); }
@@ -195,6 +234,7 @@ router.delete('/:id', protect, adminOnly, async (req, res, next) => {
     if (!review) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy đánh giá.' });
     }
+    await syncProductRating(review.product);
     res.json({ success: true, message: 'Đã xóa đánh giá.' });
   } catch (err) { next(err); }
 });
@@ -390,12 +430,74 @@ router.post(
         verifiedPurchase: true,
       });
 
+      await syncProductRating(targetId);
       res.status(201).json({ success: true, data: toDto(review, req.user._id) });
     } catch (err) { next(err); }
   }
 );
 
 // POST /api/reviews/:id/helpful (Cho phép cả thành viên đã đăng nhập và khách vãng lai)
+
+// POST /api/reviews/:id/like — Toggle Helpful Vote (Chỉ cho thành viên đăng nhập, chặn khách vãng lai, chặn tự like)
+router.post('/:id/like', protect, async (req, res, next) => {
+  try {
+    const review = await Review.findById(req.params.id);
+    if (!review) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đánh giá.' });
+    }
+
+    const currentUserId = String(req.user._id);
+    const reviewAuthorId = String(review.user?._id || review.user);
+
+    // Chặn người dùng tự thích đánh giá của chính mình
+    if (currentUserId === reviewAuthorId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Bạn không thể tự bình chọn hữu ích cho đánh giá của chính mình.',
+      });
+    }
+
+    const likedList = (review.likedBy || review.helpfulBy || []).map(id => String(id));
+    const alreadyLiked = likedList.includes(currentUserId);
+
+    let updatedReview;
+    if (alreadyLiked) {
+      // Hủy thích (Unlike)
+      updatedReview = await Review.findByIdAndUpdate(
+        req.params.id,
+        {
+          $pull: { likedBy: req.user._id, helpfulBy: req.user._id },
+          $inc: { likeCount: -1 },
+        },
+        { new: true }
+      ).populate('user', 'name avatar email');
+      // Đảm bảo likeCount không âm
+      if (updatedReview.likeCount < 0) {
+        updatedReview.likeCount = 0;
+        await updatedReview.save();
+      }
+    } else {
+      // Thích (Like)
+      updatedReview = await Review.findByIdAndUpdate(
+        req.params.id,
+        {
+          $addToSet: { likedBy: req.user._id, helpfulBy: req.user._id },
+          $inc: { likeCount: 1 },
+        },
+        { new: true }
+      ).populate('user', 'name avatar email');
+    }
+
+    res.json({
+      success: true,
+      isLiked: !alreadyLiked,
+      likeCount: Math.max(0, updatedReview.likeCount || 0),
+      data: toDto(updatedReview, req.user._id),
+      message: !alreadyLiked ? 'Đã bình chọn đánh giá hữu ích.' : 'Đã hủy bình chọn.',
+    });
+  } catch (err) { next(err); }
+});
+
 router.post('/:id/helpful', optionalAuth, async (req, res, next) => {
   try {
     const review = await Review.findById(req.params.id);

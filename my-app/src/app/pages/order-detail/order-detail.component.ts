@@ -268,4 +268,8 @@ export class OrderDetailComponent implements OnInit {
       }
     });
   }
+
+  printOrder(): void {
+    window.print();
+  }
 }

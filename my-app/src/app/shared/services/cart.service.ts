@@ -1302,6 +1302,11 @@ export class CartService {
     persistSelectedKeys(new Set());
     if (u) {
       try { localStorage.removeItem(cartKey(u.phone || u.email || u._id || 'guest')); } catch { /**/ }
+    } else {
+      try {
+        sessionStorage.removeItem(cartKey('guest'));
+        localStorage.removeItem(cartKey('guest'));
+      } catch { /**/ }
     }
   }
 
@@ -1539,7 +1544,8 @@ export class CartService {
       token: string;
       user: XanhLaUser;
       message?: string;
-    }>('/auth/login', {
+    }>('/auth/login-cust', {
+      username: identifier.trim(),
       identifier: identifier.trim(),
       password,
     }).subscribe({
@@ -1865,7 +1871,10 @@ export class CartService {
           merged.push(gItem);
         }
       }
-      try { localStorage.removeItem(cartKey('guest')); } catch {}
+      try {
+        sessionStorage.removeItem(cartKey('guest'));
+        localStorage.removeItem(cartKey('guest'));
+      } catch {}
     }
 
     this._items.set(merged);
@@ -1976,6 +1985,14 @@ export class CartService {
 
   private _loadCartForUser(ident: string, fallbackEmail?: string): XanhLaCartItem[] {
     try {
+      if (!ident || ident === 'guest') {
+        // Khách vãng lai: chỉ đọc từ sessionStorage để tắt tab/trình duyệt là mất giỏ hàng
+        const sessionRaw = sessionStorage.getItem(cartKey('guest'));
+        // Dọn sạch tàn dư cũ trong localStorage nếu có
+        try { localStorage.removeItem(cartKey('guest')); } catch {}
+        return sessionRaw ? JSON.parse(sessionRaw) : [];
+      }
+
       let raw = localStorage.getItem(cartKey(ident));
       if (!raw && fallbackEmail && fallbackEmail !== ident) {
         raw = localStorage.getItem(cartKey(fallbackEmail));
@@ -1984,10 +2001,47 @@ export class CartService {
     } catch { return []; }
   }
 
+    private _syncDebounceTimer: any = null;
+  private _syncCartToServer(items: XanhLaCartItem[]): void {
+    if (this._syncDebounceTimer) clearTimeout(this._syncDebounceTimer);
+    this._syncDebounceTimer = setTimeout(() => {
+      try {
+        const u = this._currentUser();
+        const payload = {
+          items: items.map(i => ({
+            product: i.product.id || i.product.slug,
+            productName: i.product.name,
+            productImage: i.product.image,
+            price: i.product.priceNumber,
+            quantity: i.quantity,
+            selectedOption: i.selectedOption || '',
+            isCombo: i.isCombo,
+          })),
+          totalAmount: this.allItemsTotal ? this.allItemsTotal() : 0,
+          customerName: u?.name || '',
+          customerEmail: u?.email || '',
+          customerPhone: u?.phone || '',
+        };
+        this.api.post('/cart/sync', payload).subscribe({
+          error: () => {}
+        });
+      } catch (_) {}
+    }, 1500);
+  }
+
   private _saveCartForCurrentUser(items: XanhLaCartItem[]): void {
+    this._syncCartToServer(items);
     const u = this._currentUser();
     const ident = u ? (u.phone || u.email || u._id || 'guest') : 'guest';
-    try { localStorage.setItem(cartKey(ident), JSON.stringify(items)); } catch { /**/ }
+    try {
+      if (ident === 'guest') {
+        // Khách vãng lai lưu vào sessionStorage
+        sessionStorage.setItem(cartKey('guest'), JSON.stringify(items));
+        try { localStorage.removeItem(cartKey('guest')); } catch {}
+      } else {
+        localStorage.setItem(cartKey(ident), JSON.stringify(items));
+      }
+    } catch { /**/ }
   }
 
   private _loadUser(): XanhLaUser | null {

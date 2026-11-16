@@ -1097,7 +1097,7 @@ export class NutritionComponent implements OnInit {
   protected formatPrice = formatPrice;
 
   heroConfig = signal<NutritionHeroConfig>({
-    kicker: 'Trợ Lý Thực Đơn Khoa Học · Dữ Liệu Trực Tuyến',
+    kicker: 'Trợ Lý Thực Đơn Khoa Học - Dữ Liệu Trực Tuyến',
     title: 'Dinh dưỡng thông minh & Thực đơn chuẩn vị',
     subtitle:
       'Khám phá các gói thực đơn dinh dưỡng tiết kiệm, xem chi tiết công thức chế biến từng bước, bảng thành phần vi chất và thêm trọn bộ nguyên liệu tươi sạch vào giỏ hàng chỉ với một chạm.',
@@ -1643,7 +1643,7 @@ export class NutritionComponent implements OnInit {
       if (missingPacks > 0) missingCount++;
 
       const usedInSlots = agg.usedSlots.map((u) => `${u.slotLabel} (${u.portion}x)`);
-      const formulaExplanation = `Dùng cho ${usedInSlots.join(' + ')} · Tổng ${agg.totalPortion}x khẩu phần (${this.servings()} người ăn) → Cần ~${agg.totalGrams}g. Quy cách gói ${p.weight || packGramSize + 'g'} → Cần mua ${neededPacks} ${this.getProductPackUnit(p)}.`;
+      const formulaExplanation = `Dùng cho ${usedInSlots.join(' + ')} - Tổng ${agg.totalPortion}x khẩu phần (${this.servings()} người ăn) → Cần ~${agg.totalGrams}g. Quy cách gói ${p.weight || packGramSize + 'g'} → Cần mua ${neededPacks} ${this.getProductPackUnit(p)}.`;
 
       return {
         product: p,
@@ -1953,7 +1953,7 @@ export class NutritionComponent implements OnInit {
     this.weeklySchedule.set(newSchedule);
     const modeLabel = this.plannerMode() === 'day' ? `Thực đơn Ngày (${this.mealsPerDay()} bữa)` : `Thực đơn Cả Tuần 7 Ngày (${this.mealsPerDay()} bữa/ngày)`;
     this.addedToCart.set(
-      `Đã thiết lập ${modeLabel} theo mục tiêu: ${this.targetDailyKcal()} kcal/ngày · Đạm ${this.targetProtein()}g · Chất xơ ${this.targetFiber()}g!`
+      `Đã thiết lập ${modeLabel} theo mục tiêu: ${this.targetDailyKcal()} kcal/ngày - Đạm ${this.targetProtein()}g - Chất xơ ${this.targetFiber()}g!`
     );
     setTimeout(() => this.addedToCart.set(null), 3500);
 

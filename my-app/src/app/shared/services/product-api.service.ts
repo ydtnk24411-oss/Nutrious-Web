@@ -90,6 +90,10 @@ export class ProductApiService {
     return this.api.get<{ success: boolean; data: ApiProduct[] }>(`/products/${slug}/related`, { limit });
   }
 
+  getFrequentlyBought(slug: string, limit: number = 2) {
+    return this.api.get<{ success: boolean; data: ApiProduct[] }>(`/products/${slug}/frequently-bought`, { limit });
+  }
+
   getCombos(slug: string, limit: number = 3) {
     return this.api.get<{ success: boolean; data: ApiProduct[] }>(`/products/${slug}/combos`, { limit });
   }

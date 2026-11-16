@@ -205,14 +205,24 @@ export interface Voucher {
   code: string;
   name: string;
   type: VoucherType;
+  voucherType?: 'ORDER_DISCOUNT' | 'SHIPPING_DISCOUNT';
   value: number; // percentage or fixed amount
   minValue?: number; // minimum order value
   maxValue?: number; // maximum discount amount
   categorySlugs?: string[]; // applicable categories
+  applicableCategories?: string[];
+  applicableProductIds?: string[];
+  excludeSaleItems?: boolean;
+  requiredPaymentMethod?: string | null;
+  assignedCustomerIds?: string[];
+  activeTimeWindow?: { start: string; end: string } | null;
+  activeDaysOfWeek?: number[];
   startDate: string;
   endDate: string;
   usageLimit?: number;
   usedCount: number;
+  maxUsagePerUser?: number;
+  isFirstOrderOnly?: boolean;
   description: string;
   isPublic: boolean;
 }

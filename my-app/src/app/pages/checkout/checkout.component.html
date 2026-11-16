@@ -19,7 +19,7 @@
         Evergreen Mart sẽ chuẩn bị nguyên liệu tươi và liên hệ xác nhận qua số điện thoại của bạn.
       </p>
       <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-        <a class="xanhla-btn-primary" routerLink="/tracker-page">Theo dõi đơn hàng</a>
+        <a class="xanhla-btn-primary" routerLink="/account" [queryParams]="{ tab: 'orders' }">Xem lịch sử đơn hàng</a>
         <a class="xanhla-btn-secondary" routerLink="/">Về trang chủ</a>
       </div>
 
@@ -68,7 +68,7 @@
             Đơn hàng đã được xác nhận. Evergreen Mart sẽ chuẩn bị nông sản tươi mới và giao đúng khung giờ bạn đã chọn.
           </p>
           <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-            <a class="xanhla-btn-primary" routerLink="/tracker-page">Theo dõi đơn hàng</a>
+            <a class="xanhla-btn-primary" routerLink="/account" [queryParams]="{ tab: 'orders' }">Xem lịch sử đơn hàng</a>
             <a class="xanhla-btn-secondary" routerLink="/">Về trang chủ</a>
           </div>
 
@@ -288,38 +288,35 @@
         }
 
         <!-- 1. Thông tin liên hệ -->
-        <div id="section-contact-info" style="background:#fff;padding:28px;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line)">
+        <div id="section-contact-info" [formGroup]="checkoutForm" style="background:#fff;padding:28px;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line)">
           <h3 style="margin:0 0 20px 0;font-size:18px">1. Thông tin liên hệ</h3>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
             <div>
               <label style="display:block;font-size:14px;margin-bottom:6px;font-weight:600">Họ và tên *</label>
-              <input type="text" id="contact-name" required placeholder="Nguyễn Văn A" [value]="guestName()"
-                (input)="guestName.set($any($event.target).value)"
-                [class.input-has-error]="submitAttempted() && !guestName().trim()"
-                style="width:100%;padding:10px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)" />
-              @if (submitAttempted() && !guestName().trim()) {
+              <input type="text" id="contact-name" formControlName="fullName" required placeholder="Nguyễn Văn A"
+                [class.input-has-error]="submitAttempted() && (!guestName().trim() || checkoutForm.get('fullName')?.invalid)"
+                style="width:100%;height:44px;box-sizing:border-box;padding:0 14px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm);font-size:14px" />
+              @if (submitAttempted() && (!guestName().trim() || checkoutForm.get('fullName')?.invalid)) {
                 <span class="field-error-text">* Vui lòng nhập họ và tên người nhận</span>
               }
             </div>
             <div>
               <label style="display:block;font-size:14px;margin-bottom:6px;font-weight:600">Số điện thoại *</label>
-              <input type="tel" id="contact-phone" required placeholder="0987 654 321" [value]="guestPhone()"
-                (input)="guestPhone.set($any($event.target).value)"
-                [class.input-has-error]="submitAttempted() && !guestPhone().trim()"
-                style="width:100%;padding:10px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)" />
-              @if (submitAttempted() && !guestPhone().trim()) {
-                <span class="field-error-text">* Vui lòng nhập số điện thoại liên hệ</span>
+              <input type="tel" id="contact-phone" formControlName="phone" required placeholder="0987 654 321"
+                [class.input-has-error]="submitAttempted() && (!guestPhone().trim() || checkoutForm.get('phone')?.invalid)"
+                style="width:100%;height:44px;box-sizing:border-box;padding:0 14px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm);font-size:14px" />
+              @if (submitAttempted() && (!guestPhone().trim() || checkoutForm.get('phone')?.invalid)) {
+                <span class="field-error-text">* Vui lòng nhập số điện thoại hợp lệ</span>
               }
             </div>
           </div>
           <div>
-            <label style="display:block;font-size:14px;margin-bottom:6px;font-weight:600">Email *</label>
-            <input type="email" id="contact-email" required placeholder="name@example.com" [value]="guestEmail()"
-              (input)="guestEmail.set($any($event.target).value)"
-              [class.input-has-error]="submitAttempted() && !guestEmail().trim()"
-              style="width:100%;padding:10px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm)" />
-            @if (submitAttempted() && !guestEmail().trim()) {
-              <span class="field-error-text">* Vui lòng nhập địa chỉ email</span>
+            <label style="display:block;font-size:14px;margin-bottom:6px;font-weight:600">Email</label>
+            <input type="email" id="contact-email" formControlName="email" placeholder="name@example.com"
+              [class.input-has-error]="submitAttempted() && !!guestEmail().trim() && checkoutForm.get('email')?.invalid"
+              style="width:100%;height:44px;box-sizing:border-box;padding:0 14px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm);font-size:14px" />
+            @if (submitAttempted() && !!guestEmail().trim() && checkoutForm.get('email')?.invalid) {
+              <span class="field-error-text">* Vui lòng nhập đúng định dạng email</span>
             }
           </div>
         </div>
@@ -427,12 +424,12 @@
                           <i class="bi bi-clock" style="font-size:13px" aria-hidden="true"></i>
                           {{ store.openingHours }}
                         </span>
-                        <span class="store-meta-sep">•</span>
+                        <span class="store-meta-sep">-</span>
                         <span class="store-meta-item">
                           <i class="bi bi-telephone" style="font-size:13px" aria-hidden="true"></i>
                           {{ store.phone }}
                         </span>
-                        <span class="store-meta-sep">•</span>
+                        <span class="store-meta-sep">-</span>
                         <span class="store-ready-pill">{{ store.readyTime }}</span>
                       </div>
                     </div>
@@ -774,12 +771,12 @@
           <div style="display:flex;flex-direction:column;gap:10px">
             <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer">
               <input type="radio" name="payment" value="cod" [checked]="paymentMethod()==='cod'"
-                (change)="paymentMethod.set('cod')" />
+                (change)="selectPaymentMethod('cod')" />
               <span>Thanh toán khi nhận hàng (COD / Tiền mặt)</span>
             </label>
             <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer">
               <input type="radio" name="payment" value="bank_transfer" [checked]="paymentMethod()==='bank_transfer'"
-                (change)="paymentMethod.set('bank_transfer')" />
+                (change)="selectPaymentMethod('bank_transfer')" />
               <span>Chuyển khoản ngân hàng / QR Code</span>
             </label>
           </div>
@@ -798,9 +795,26 @@
           <div style="padding:14px;border:1px solid #eef2ed;border-radius:12px;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.02)"
                [style.borderColor]="stockWarn ? '#fca5a5' : '#eef2ed'"
                [style.background]="stockWarn ? '#fffafa' : '#ffffff'">
+            @if (p.itemType === 'combo') {
+              <div style="margin-bottom:8px">
+                <span style="display:inline-block;padding:2px 7px;background:#ecfdf5;color:#15803d;border:1px solid #86efac;border-radius:4px;font-size:10.5px;font-weight:700;white-space:nowrap">COMBO TIẾT KIỆM</span>
+              </div>
+            } @else if (p.itemType === 'addon') {
+              <div style="margin-bottom:8px">
+                <span style="display:inline-block;padding:2px 7px;background:#eff6eb;color:#203d0b;border:1px solid #bdd982;border-radius:4px;font-size:10.5px;font-weight:700;white-space:nowrap">MUA KÈM TIẾT KIỆM</span>
+              </div>
+            } @else if (p.discountedByAddon) {
+              <div style="margin-bottom:8px">
+                <span style="display:inline-block;padding:2px 7px;background:#fef9c3;color:#854d0e;border:1px solid #fde047;border-radius:4px;font-size:10.5px;font-weight:700;white-space:nowrap">ƯU ĐÃI MUA KÈM</span>
+              </div>
+            } @else if (isMainOfAddon(item)) {
+              <div style="margin-bottom:8px">
+                <span style="display:inline-block;padding:2px 7px;background:#ecfdf5;color:#15803d;border:1px solid #86efac;border-radius:4px;font-size:10.5px;font-weight:700;white-space:nowrap">SẢN PHẨM CHÍNH</span>
+              </div>
+            }
             <!-- Header hàng: Ảnh + Tên + Giá -->
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-              <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+              <div style="display:flex;align-items:flex-start;gap:12px;flex:1;min-width:0">
                 <img
                   [src]="item.product.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=120&q=80'"
                   [alt]="item.product.name"
@@ -808,21 +822,8 @@
                   loading="lazy"
                 />
                 <div style="flex:1;min-width:0">
-                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                    @if (p.itemType === 'combo') {
-                      <span style="display:inline-block;padding:2px 7px;background:#ecfdf5;color:#15803d;border:1px solid #86efac;border-radius:4px;font-size:10.5px;font-weight:700;white-space:nowrap">COMBO TIẾT KIỆM</span>
-                    } @else if (p.itemType === 'addon') {
-                      <span style="display:inline-block;padding:2px 7px;background:#eff6eb;color:#203d0b;border:1px solid #bdd982;border-radius:4px;font-size:10.5px;font-weight:700;white-space:nowrap">MUA KÈM TIẾT KIỆM</span>
-                    } @else if (p.discountedByAddon) {
-                      <span style="display:inline-block;padding:2px 7px;background:#fef9c3;color:#854d0e;border:1px solid #fde047;border-radius:4px;font-size:10.5px;font-weight:700;white-space:nowrap">ƯU ĐÃI MUA KÈM</span>
-                    } @else if (isMainOfAddon(item)) {
-                      <span style="display:inline-block;padding:2px 7px;background:#ecfdf5;color:#15803d;border:1px solid #86efac;border-radius:4px;font-size:10.5px;font-weight:700;white-space:nowrap">SẢN PHẨM CHÍNH</span>
-                    } @else {
-                      <span style="display:inline-block;padding:1.5px 6px;background:#f8fafc;color:#64748b;border:1px solid #e2e8f0;border-radius:4px;font-size:10px;font-weight:600;white-space:nowrap">MUA LẺ</span>
-                    }
-                    <span style="font-weight:700;font-size:15px;color:#0f381e;line-height:1.3" [title]="item.product.name">
-                      {{ item.product.name }}
-                    </span>
+                  <div style="font-weight:700;font-size:15px;color:#0f381e;line-height:1.3" [title]="item.product.name">
+                    {{ item.product.name }}
                   </div>
                   @if (p.relationLabel) {
                     <div style="font-size:11.5px;color:#1e532b;font-weight:600;margin-top:2px">{{ p.relationLabel }}</div>
@@ -855,9 +856,6 @@
                         style="width:28px;height:26px;border:none;background:transparent;font-size:15px;font-weight:700;color:#1e293b;display:flex;align-items:center;justify-content:center;padding:0"
                       >+</button>
                     </div>
-                    @if (maxStock > 0 && maxStock < 99) {
-                      <span style="font-size:11.5px;color:#64748b">Kho còn {{ maxStock }}</span>
-                    }
                   </div>
                 </div>
               </div>
@@ -942,15 +940,39 @@
               <button
                 type="button"
                 (click)="showOrderVoucherPicker.set(!showOrderVoucherPicker())"
-                style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm);background:#fbfcfb;cursor:pointer;transition:all 0.2s ease"
-                [style.border-color]="showOrderVoucherPicker() ? 'var(--xanh-moss)' : 'var(--xanh-line)'"
+                style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border:1px solid;border-radius:var(--xanh-radius-sm);cursor:pointer;transition:all 0.2s ease"
+                [style.background]="selectedOrderVoucher() ? '#f0fdf4' : '#fbfcfb'"
+                [style.border-color]="selectedOrderVoucher() ? '#86efac' : (showOrderVoucherPicker() ? 'var(--xanh-moss)' : 'var(--xanh-line)')"
               >
-                <span style="font-size:13px;font-weight:600;color:var(--xanh-moss)">
-                  Chọn ưu đãi đơn hàng
-                </span>
-                <i class="bi bi-chevron-down"
-                  [style.transform]="showOrderVoucherPicker() ? 'rotate(180deg)' : 'rotate(0deg)'"
-                  style="display:inline-block;transition:transform 0.25s ease;color:var(--xanh-moss);font-size:14px"></i>
+                @if (selectedOrderVoucher(); as sel) {
+                  <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1">
+                    <span style="font-size:11.5px;font-family:monospace;background:#dcfce7;color:#15803d;padding:2px 6px;border-radius:4px;font-weight:700">
+                      {{ sel.code }}
+                    </span>
+                    <span style="font-size:13px;font-weight:700;color:#15803d;white-space:nowrap">
+                      -{{ formatPrice(orderVoucherDiscount()) }}
+                    </span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+                    <span
+                      role="button"
+                      tabindex="0"
+                      (click)="$event.stopPropagation(); removeOrderVoucher()"
+                      style="color:#dc2626;font-size:12px;font-weight:600;text-decoration:underline;cursor:pointer">
+                      Xóa
+                    </span>
+                    <i class="bi bi-chevron-down"
+                      [style.transform]="showOrderVoucherPicker() ? 'rotate(180deg)' : 'rotate(0deg)'"
+                      style="display:inline-block;transition:transform 0.25s ease;color:#15803d;font-size:14px"></i>
+                  </div>
+                } @else {
+                  <span style="font-size:13px;font-weight:600;color:var(--xanh-moss)">
+                    Chọn ưu đãi đơn hàng
+                  </span>
+                  <i class="bi bi-chevron-down"
+                    [style.transform]="showOrderVoucherPicker() ? 'rotate(180deg)' : 'rotate(0deg)'"
+                    style="display:inline-block;transition:transform 0.25s ease;color:var(--xanh-moss);font-size:14px"></i>
+                }
               </button>
             }
 
@@ -973,12 +995,21 @@
                         @if (opt.inWallet) {
                           <span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:4px;font-weight:600">Đã lưu</span>
                         }
+                        @if (!opt.timeWindowValid) {
+                          <span style="font-size:10px;background:#fee2e2;color:#b91c1c;padding:1px 6px;border-radius:4px;font-weight:600">
+                            <i class="bi bi-clock-history me-1"></i>{{ opt.timeWindowLabel }}
+                          </span>
+                        }
                       </div>
                       <div style="font-size:12px;font-weight:600;margin-top:3px;color:var(--xanh-ink)">
                         {{ opt.voucher.name }}
                       </div>
                       <div style="font-size:11.5px;color:var(--xanh-muted)">
-                        @if (opt.isEligible) {
+                        @if (!opt.timeWindowValid) {
+                          <span style="color:#b91c1c;font-weight:600">{{ opt.timeWindowLabel }}</span>
+                        } @else if (opt.categoryMismatch) {
+                          <span style="color:#b45309">Chỉ áp dụng cho một số ngành hàng</span>
+                        } @else if (opt.isEligible) {
                           Giảm {{ formatPrice(opt.estimatedDiscount) }}
                         } @else {
                           Cần đơn tối thiểu {{ formatPrice(opt.voucher.minValue || 0) }}
@@ -999,17 +1030,6 @@
                 }
               </div>
             }
-
-            @if (selectedOrderVoucher()) {
-              <div
-                style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12.5px;margin-top:6px">
-                <span>Mã <strong>{{ selectedOrderVoucher()?.code }}</strong>: Giảm {{ formatPrice(orderVoucherDiscount()) }}</span>
-                <button type="button" (click)="removeOrderVoucher()"
-                  style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:12px;font-weight:600;text-decoration:underline">
-                  Xóa
-                </button>
-              </div>
-            }
           </div>
 
           <!-- 2. VOUCHER FREESHIP / VẬN CHUYỂN -->
@@ -1022,15 +1042,43 @@
               <button
                 type="button"
                 (click)="showShippingVoucherPicker.set(!showShippingVoucherPicker())"
-                style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border:1px solid var(--xanh-line);border-radius:var(--xanh-radius-sm);background:#fbfcfb;cursor:pointer;transition:all 0.2s ease"
-                [style.border-color]="showShippingVoucherPicker() ? 'var(--xanh-moss)' : 'var(--xanh-line)'"
+                style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border:1px solid;border-radius:var(--xanh-radius-sm);cursor:pointer;transition:all 0.2s ease"
+                [style.background]="selectedShippingVoucher() ? '#f0fdf4' : '#fbfcfb'"
+                [style.border-color]="selectedShippingVoucher() ? '#86efac' : (showShippingVoucherPicker() ? 'var(--xanh-moss)' : 'var(--xanh-line)')"
               >
-                <span style="font-size:13px;font-weight:600;color:var(--xanh-moss)">
-                  Chọn ưu đãi vận chuyển
-                </span>
-                <i class="bi bi-chevron-down"
-                  [style.transform]="showShippingVoucherPicker() ? 'rotate(180deg)' : 'rotate(0deg)'"
-                  style="display:inline-block;transition:transform 0.25s ease;color:var(--xanh-moss);font-size:14px"></i>
+                @if (selectedShippingVoucher(); as selShip) {
+                  <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1">
+                    <span style="font-size:11.5px;font-family:monospace;background:#dcfce7;color:#15803d;padding:2px 6px;border-radius:4px;font-weight:700">
+                      {{ selShip.code }}
+                    </span>
+                    <span style="font-size:13px;font-weight:700;color:#15803d;white-space:nowrap">
+                      @if (shippingMethod() === 'delivery' && !hasDeliveryLocation()) {
+                        Tối đa -{{ formatPrice(selShip.discount || 30000) }}
+                      } @else {
+                        -{{ formatPrice(shippingVoucherDiscount()) }}
+                      }
+                    </span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+                    <span
+                      role="button"
+                      tabindex="0"
+                      (click)="$event.stopPropagation(); removeShippingVoucher()"
+                      style="color:#dc2626;font-size:12px;font-weight:600;text-decoration:underline;cursor:pointer">
+                      Xóa
+                    </span>
+                    <i class="bi bi-chevron-down"
+                      [style.transform]="showShippingVoucherPicker() ? 'rotate(180deg)' : 'rotate(0deg)'"
+                      style="display:inline-block;transition:transform 0.25s ease;color:#15803d;font-size:14px"></i>
+                  </div>
+                } @else {
+                  <span style="font-size:13px;font-weight:600;color:var(--xanh-moss)">
+                    Chọn ưu đãi vận chuyển
+                  </span>
+                  <i class="bi bi-chevron-down"
+                    [style.transform]="showShippingVoucherPicker() ? 'rotate(180deg)' : 'rotate(0deg)'"
+                    style="display:inline-block;transition:transform 0.25s ease;color:var(--xanh-moss);font-size:14px"></i>
+                }
               </button>
             }
 
@@ -1053,12 +1101,19 @@
                         <span style="font-size:10px;background:#eff6eb;color:#166534;padding:1px 6px;border-radius:4px;font-weight:600">
                           Hỗ trợ ship
                         </span>
+                        @if (!opt.timeWindowValid) {
+                          <span style="font-size:10px;background:#fee2e2;color:#b91c1c;padding:1px 6px;border-radius:4px;font-weight:600">
+                            <i class="bi bi-clock-history me-1"></i>{{ opt.timeWindowLabel }}
+                          </span>
+                        }
                       </div>
                       <div style="font-size:12px;font-weight:600;margin-top:3px;color:var(--xanh-ink)">
                         {{ opt.voucher.name }}
                       </div>
                       <div style="font-size:11.5px;color:var(--xanh-muted)">
-                        @if (opt.isEligible) {
+                        @if (!opt.timeWindowValid) {
+                          <span style="color:#b91c1c;font-weight:600">{{ opt.timeWindowLabel }}</span>
+                        } @else if (opt.isEligible) {
                           Hỗ trợ tối đa {{ formatPrice(opt.estimatedDiscount) }}
                         } @else {
                           Cần đơn tối thiểu {{ formatPrice(opt.voucher.minValue || 0) }}
@@ -1077,21 +1132,6 @@
                     </div>
                   </div>
                 }
-              </div>
-            }
-
-            @if (selectedShippingVoucher()) {
-              <div
-                style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;font-size:12.5px;margin-top:6px">
-                @if (shippingMethod() === 'delivery' && !hasDeliveryLocation()) {
-                  <span>Mã <strong>{{ selectedShippingVoucher()?.code }}</strong>: Sẵn sàng giảm tối đa {{ formatPrice(selectedShippingVoucher()?.discount || 30000) }} khi có địa chỉ</span>
-                } @else {
-                  <span>Mã <strong>{{ selectedShippingVoucher()?.code }}</strong>: Giảm {{ formatPrice(shippingVoucherDiscount()) }} ship</span>
-                }
-                <button type="button" (click)="removeShippingVoucher()"
-                  style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:12px;font-weight:600;text-decoration:underline">
-                  Xóa
-                </button>
               </div>
             }
           </div>
@@ -1136,11 +1176,11 @@
 
           @if (comboDiscount() > 0 && addonDiscount() > 0) {
             <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#16a34a;padding-left:8px">
-              <span>• Giảm Combo</span>
+              <span>- Giảm Combo</span>
               <span>-{{ formatPrice(comboDiscount()) }}</span>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#16a34a;padding-left:8px">
-              <span>• Giảm Mua kèm</span>
+              <span>- Giảm Mua kèm</span>
               <span>-{{ formatPrice(addonDiscount()) }}</span>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#16a34a;font-weight:600">
@@ -1166,14 +1206,7 @@
 
           @if (orderVoucherDiscount() > 0) {
             <div style="display:flex;justify-content:space-between;font-size:13.5px;color:#16a34a;font-weight:600">
-              <span>
-                Voucher giảm đơn hàng
-                @if (selectedOrderVoucher()) {
-                  <span style="font-size:11px;background:#ecfdf5;color:#15803d;padding:1px 6px;border-radius:4px;border:1px solid #a7f3d0;margin-left:4px">
-                    {{ selectedOrderVoucher()?.code }}
-                  </span>
-                }
-              </span>
+              <span>Voucher giảm đơn hàng</span>
               <span>-{{ formatPrice(orderVoucherDiscount()) }}</span>
             </div>
           }
@@ -1192,7 +1225,7 @@
 
             @if (selectedShippingVoucher()) {
               <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#16a34a;padding-left:8px">
-                <span>• Voucher {{ selectedShippingVoucher()?.code }}</span>
+                <span>- Voucher vận chuyển</span>
                 <span>Áp dụng khi có địa chỉ</span>
               </div>
             }
@@ -1211,21 +1244,14 @@
 
             @if (autoShippingDiscount() > 0) {
               <div style="display:flex;justify-content:space-between;font-size:13px;color:#16a34a;padding-left:8px">
-                <span>• Hỗ trợ ship theo đơn</span>
+                <span>- Hỗ trợ ship theo đơn</span>
                 <span>-{{ formatPrice(autoShippingDiscount()) }}</span>
               </div>
             }
 
             @if (shippingVoucherDiscount() > 0) {
               <div style="display:flex;justify-content:space-between;font-size:13px;color:#16a34a;padding-left:8px">
-                <span>
-                  • Voucher vận chuyển
-                  @if (selectedShippingVoucher()) {
-                    <span style="font-size:10.5px;background:#ecfdf5;color:#15803d;padding:1px 5px;border-radius:4px;border:1px solid #a7f3d0;margin-left:3px">
-                      {{ selectedShippingVoucher()?.code }}
-                    </span>
-                  }
-                </span>
+                <span>- Voucher vận chuyển</span>
                 <span>-{{ formatPrice(shippingVoucherDiscount()) }}</span>
               </div>
             }
@@ -1279,19 +1305,25 @@
           </div>
         }
 
-        <button class="xanhla-btn-primary" type="submit" style="width:100%;position:relative;margin-top:16px"
-          [disabled]="submitting() || checkoutItems().length === 0 || checkoutStockCheck().hasIssues"
-          [style.opacity]="(submitting() || checkoutItems().length === 0 || checkoutStockCheck().hasIssues) ? '0.55' : '1'"
-          [style.cursor]="(submitting() || checkoutItems().length === 0 || checkoutStockCheck().hasIssues) ? 'not-allowed' : 'pointer'">
-          @if (submitting()) {
-          <span style="display:inline-flex;align-items:center;gap:8px">
-            <i class="bi bi-arrow-repeat" style="display:inline-block;animation:spin .7s linear infinite;font-size:16px"></i>
-            Đang xử lý...
-          </span>
-          } @else {
-          Hoàn tất đặt hàng
-          }
-        </button>
+        <div class="checkout-submit-actions" style="display:flex;gap:10px;margin-top:16px">
+          <a routerLink="/cart" class="checkout-back-link" style="flex:1;height:48px;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:var(--xanh-radius-sm);color:#334155;font-size:14px;font-weight:600;text-decoration:none;box-sizing:border-box">
+            <i class="bi bi-chevron-left" style="font-size:14px"></i>
+            <span>Quay lại</span>
+          </a>
+          <button class="xanhla-btn-primary" type="submit" style="flex:2;height:48px;position:relative;margin:0;display:inline-flex;align-items:center;justify-content:center"
+            [disabled]="submitting() || checkoutItems().length === 0 || checkoutStockCheck().hasIssues"
+            [style.opacity]="(submitting() || checkoutItems().length === 0 || checkoutStockCheck().hasIssues) ? '0.55' : '1'"
+            [style.cursor]="(submitting() || checkoutItems().length === 0 || checkoutStockCheck().hasIssues) ? 'not-allowed' : 'pointer'">
+            @if (submitting()) {
+            <span style="display:inline-flex;align-items:center;gap:8px">
+              <i class="bi bi-arrow-repeat" style="display:inline-block;animation:spin .7s linear infinite;font-size:16px"></i>
+              <span>Đang xử lý...</span>
+            </span>
+            } @else {
+              <span>Xác nhận đặt hàng</span>
+            }
+          </button>
+        </div>
 
         
       </div>

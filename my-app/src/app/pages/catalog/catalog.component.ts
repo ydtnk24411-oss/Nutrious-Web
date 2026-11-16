@@ -50,12 +50,12 @@ export class CatalogComponent implements OnInit {
   protected loading  = signal(true);
   protected error    = signal('');
 
-  // Filters / sort / pagination
+  // Filters / sort / pagination: limit = 18 chia hết cho lưới 3 cột (6 hàng đầy đủ)
   protected category  = signal<string | null>(null);
   protected sortBy    = signal('createdAt');
   protected maxPrice  = signal(300);
   protected page      = signal(1);
-  protected readonly limit = 20;
+  protected readonly limit = 18;
 
   protected selectedFilters = signal<Record<string, string[]>>({
     categories: [], container: [], cutType: [], cutting: [],

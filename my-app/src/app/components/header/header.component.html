@@ -243,6 +243,15 @@
                 <i class="bi bi-box-seam me-2" style="font-size:16px"></i>
                 Đơn hàng của tôi
               </a>
+              <a routerLink="/account" [queryParams]="{ tab: 'wishlist' }" (click)="closeUserMenu()" style="display:flex;align-items:center">
+                <i class="bi bi-heart me-2" style="font-size:16px;color:#e11d48"></i>
+                <span>Sản phẩm yêu thích</span>
+                @if (wishlist.count() > 0) {
+                  <span style="margin-left:auto;font-size:11px;background:#ffe4e6;color:#e11d48;padding:1px 6px;border-radius:10px;font-weight:700">
+                    {{ wishlist.count() }}
+                  </span>
+                }
+              </a>
               <a routerLink="/vouchers" (click)="closeUserMenu()">
                 <i class="bi bi-ticket-perforated me-2" style="font-size:16px"></i>
                 Ví Voucher &amp; Ưu đãi
@@ -267,21 +276,15 @@
           }
         </div>
       } @else {
-        <div class="xl-auth-guest-group">
-          <button class="xl-action-btn xl-account-btn" type="button" (click)="cart.openAuthModal('login')" title="Đăng nhập tài khoản">
-            <span class="xl-action-icon-wrap">
-              <i class="bi bi-person" style="font-size:21px"></i>
-            </span>
-            <div class="xl-account-text">
-              <small class="xl-account-sub">Tài khoản</small>
-              <span class="xl-account-name">Đăng nhập</span>
-            </div>
-          </button>
-          <button class="xl-register-pill-btn" type="button" (click)="cart.openAuthModal('signup')" title="Đăng ký tài khoản mới">
-            <i class="bi bi-person-plus" style="font-size:14px" aria-hidden="true"></i>
-            <span>Đăng ký</span>
-          </button>
-        </div>
+        <button class="xl-action-btn xl-account-btn" type="button" (click)="cart.openAuthModal('login')" title="Đăng nhập / Đăng ký">
+          <span class="xl-action-icon-wrap">
+            <i class="bi bi-person" style="font-size:21px"></i>
+          </span>
+          <div class="xl-account-text">
+            <small class="xl-account-sub">Tài khoản</small>
+            <span class="xl-account-name">Đăng nhập</span>
+          </div>
+        </button>
       }
 
       <!-- Cart Button: Premium Pill Highlight -->
@@ -349,7 +352,7 @@
       }
     </div>
 
-    <!-- Right: Quick Promotion Utilities (Fills the 70% void!) -->
+    <!-- Right: Quick Promotion Utilities -->
     <div class="xl-subnav-utilities">
       <a routerLink="/promotions" class="xl-subnav-util-item">
         <i class="bi bi-lightning-charge-fill" style="color:#eab308"></i>
@@ -358,10 +361,6 @@
       <a routerLink="/vouchers" class="xl-subnav-util-item">
         <i class="bi bi-ticket-perforated-fill" style="color:#16a34a"></i>
         <span>Mã giảm giá</span>
-      </a>
-      <a routerLink="/tracker-page" class="xl-subnav-util-badge xl-subnav-track-btn" title="Tra cứu trạng thái đơn hàng">
-        <i class="bi bi-geo-alt-fill" style="color:#16a34a"></i>
-        <span>Tra cứu đơn hàng</span>
       </a>
     </div>
 
@@ -402,14 +401,10 @@
             style="padding:12px 0;font-size:15px;font-weight:600;border-bottom:1px solid var(--xanh-line)"
             (click)="closeMobileMenu()">Thông tin tài khoản</a>
         } @else {
-          <div class="xl-drawer-auth-actions">
+          <div class="xl-drawer-auth-actions" style="grid-template-columns: 1fr">
             <button type="button" class="xl-drawer-auth-btn is-login" (click)="closeMobileMenu(); cart.openAuthModal('login')">
               <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
               <span>Đăng nhập</span>
-            </button>
-            <button type="button" class="xl-drawer-auth-btn is-signup" (click)="closeMobileMenu(); cart.openAuthModal('signup')">
-              <i class="bi bi-person-plus" aria-hidden="true"></i>
-              <span>Đăng ký</span>
             </button>
           </div>
         }

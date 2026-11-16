@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -15,6 +15,7 @@ import {
   styleUrl: './reviews.component.css',
 })
 export class AdminReviewsComponent implements OnInit {
+  protected readonly Math = Math;
   private reviewApi = inject(ReviewAdminApiService);
 
   reviews = signal<AdminReviewItem[]>([]);
@@ -31,6 +32,12 @@ export class AdminReviewsComponent implements OnInit {
   selectedStatus = signal<'all' | 'visible' | 'hidden'>('all');
   selectedSort = signal<'newest' | 'oldest'>('newest');
 
+  // Pagination
+  page = signal(1);
+  pageSize = signal(10);
+  total = signal(0);
+  totalPages = computed(() => Math.ceil(this.total() / this.pageSize()) || 1);
+
   // Modal Reply
   replyModalOpen = signal(false);
   activeReview = signal<AdminReviewItem | null>(null);
@@ -43,7 +50,10 @@ export class AdminReviewsComponent implements OnInit {
 
   loadReviews(): void {
     this.loading.set(true);
-    const params: Record<string, string | number> = { limit: 50 };
+    const params: Record<string, string | number> = {
+      page: this.page(),
+      limit: this.pageSize(),
+    };
     if (this.searchQuery()) params['search'] = this.searchQuery();
     if (this.selectedRating() !== 'all') params['rating'] = this.selectedRating();
     if (this.selectedStatus() !== 'all') params['status'] = this.selectedStatus();
@@ -53,12 +63,32 @@ export class AdminReviewsComponent implements OnInit {
       next: (res) => {
         if (res.success) {
           this.reviews.set(res.data);
+          this.total.set(res.total || res.data.length);
           if (res.stats) this.stats.set(res.stats);
         }
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  prevPage(): void {
+    if (this.page() > 1) {
+      this.page.update((p) => p - 1);
+      this.loadReviews();
+    }
+  }
+
+  nextPage(): void {
+    if (this.page() < this.totalPages()) {
+      this.page.update((p) => p + 1);
+      this.loadReviews();
+    }
+  }
+
+  onFilterChange(): void {
+    this.page.set(1);
+    this.loadReviews();
   }
 
   openReplyModal(item: AdminReviewItem): void {

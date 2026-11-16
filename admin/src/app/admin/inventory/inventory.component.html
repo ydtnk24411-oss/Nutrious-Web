@@ -113,7 +113,7 @@
       <div class="filter-controls">
         <select
           [ngModel]="selectedCategory()"
-          (ngModelChange)="selectedCategory.set($event); loadInventory()"
+          (ngModelChange)="selectedCategory.set($event); onFilterChange()"
           class="filter-select"
         >
           <option value="">Tất cả danh mục</option>
@@ -124,7 +124,7 @@
 
         <select
           [ngModel]="selectedStatus()"
-          (ngModelChange)="selectedStatus.set($event); loadInventory()"
+          (ngModelChange)="selectedStatus.set($event); onFilterChange()"
           class="filter-select"
         >
           <option value="all">Tất cả trạng thái</option>
@@ -154,8 +154,8 @@
               <th>Sản phẩm</th>
               <th>Danh mục</th>
               <th>Đơn vị tính</th>
-              <th>Số lượng tồn</th>
-              <th>Mức tối thiểu</th>
+              <th style="text-align: right;">Số lượng tồn</th>
+              <th style="text-align: right;">Mức tối thiểu</th>
               <th>Trạng thái</th>
               <th style="width: 140px; text-align: right;">Thao tác</th>
             </tr>
@@ -184,13 +184,13 @@
                 <td>
                   <span class="unit-text">{{ item.unit || 'kg' }}</span>
                 </td>
-                <td>
-                  <span class="stock-number" [class.text-danger]="item.stock <= 0" [class.text-warning]="item.stock > 0 && item.stock <= (item.minStock || 10)">
+                <td style="text-align: right;">
+                  <span class="stock-number" [class.text-danger]="item.stock <= 0" [class.text-warning]="item.stock > 0 && item.stock <= (item.minStock || 10)" style="font-variant-numeric: tabular-nums;">
                     {{ item.stock }}
                   </span>
                 </td>
-                <td>
-                  <span class="text-muted">{{ item.minStock || 10 }}</span>
+                <td style="text-align: right;">
+                  <span class="text-muted" style="font-variant-numeric: tabular-nums;">{{ item.minStock || 10 }}</span>
                 </td>
                 <td>
                   <span class="status-badge" [ngClass]="status.cssClass">
@@ -215,6 +215,19 @@
             }
           </tbody>
         </table>
+
+        @if (totalPages() > 1) {
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid #e5e7eb;background:#fafaf9">
+            <span style="font-size:13px;color:#6b7280">
+              Hiển thị <strong>{{ (page() - 1) * pageSize() + 1 }}</strong> - <strong>{{ Math.min(page() * pageSize(), total()) }}</strong> trên <strong>{{ total() }}</strong> sản phẩm
+            </span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button type="button" class="btn-action-outline" [disabled]="page() <= 1" (click)="prevPage()">← Trước</button>
+              <span style="font-size:13px;font-weight:600;padding:0 8px">{{ page() }} / {{ totalPages() }}</span>
+              <button type="button" class="btn-action-outline" [disabled]="page() >= totalPages()" (click)="nextPage()">Sau →</button>
+            </div>
+          </div>
+        }
       }
     </div>
   } @else {
@@ -222,6 +235,30 @@
     <div class="table-card">
       <div class="card-header-bar">
         <h3 class="card-bar-title">Lịch sử điều chỉnh tồn kho gần đây</h3>
+
+        <div class="card-bar-controls">
+          <div class="log-time-pills">
+            <button type="button" class="log-pill-btn" [class.is-active]="logTimeFilter() === '7d'" (click)="onLogTimeFilterChange('7d')">7 ngày</button>
+            <button type="button" class="log-pill-btn" [class.is-active]="logTimeFilter() === '30d'" (click)="onLogTimeFilterChange('30d')">30 ngày</button>
+            <button type="button" class="log-pill-btn" [class.is-active]="logTimeFilter() === '90d'" (click)="onLogTimeFilterChange('90d')">90 ngày</button>
+            <button type="button" class="log-pill-btn" [class.is-active]="logTimeFilter() === 'custom'" (click)="onLogTimeFilterChange('custom')">Tùy chọn</button>
+          </div>
+
+          @if (logTimeFilter() === 'custom') {
+            <div class="log-custom-dates">
+              <input type="date" [value]="logCustomStartDate()" (change)="onLogCustomDateChange('start', $any($event.target).value)" />
+              <span>→</span>
+              <input type="date" [value]="logCustomEndDate()" (change)="onLogCustomDateChange('end', $any($event.target).value)" />
+            </div>
+          }
+
+          <button type="button" class="log-export-btn" (click)="exportLogsCsv()" [disabled]="logs().length === 0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>Xuất báo cáo CSV</span>
+          </button>
+        </div>
       </div>
       @if (loading()) {
         <div class="table-loading">
@@ -239,9 +276,9 @@
               <th>Thời gian</th>
               <th>Sản phẩm</th>
               <th>Loại thay đổi</th>
-              <th>Biến động</th>
-              <th>Tồn trước</th>
-              <th>Tồn sau</th>
+              <th style="text-align: right;">Biến động</th>
+              <th style="text-align: right;">Tồn trước</th>
+              <th style="text-align: right;">Tồn sau</th>
               <th>Lý do & Ghi chú</th>
               <th>Người thực hiện</th>
             </tr>
@@ -260,13 +297,13 @@
                     {{ log.type }}
                   </span>
                 </td>
-                <td>
-                  <span class="delta-value" [class.text-success]="log.delta > 0" [class.text-danger]="log.delta < 0">
+                <td style="text-align: right;">
+                  <span class="delta-value" [class.text-success]="log.delta > 0" [class.text-danger]="log.delta < 0" style="font-variant-numeric: tabular-nums;">
                     {{ log.delta > 0 ? '+' + log.delta : log.delta }}
                   </span>
                 </td>
-                <td>{{ log.oldStock }}</td>
-                <td class="font-bold">{{ log.newStock }}</td>
+                <td style="text-align: right; font-variant-numeric: tabular-nums;">{{ log.oldStock }}</td>
+                <td class="font-bold" style="text-align: right; font-variant-numeric: tabular-nums;">{{ log.newStock }}</td>
                 <td>
                   <div class="reason-col">
                     <span class="reason-title">{{ log.reason }}</span>
@@ -282,6 +319,19 @@
             }
           </tbody>
         </table>
+
+        @if (logTotalPages() > 1) {
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid #e5e7eb;background:#fafaf9">
+            <span style="font-size:13px;color:#6b7280">
+              Hiển thị <strong>{{ (logPage() - 1) * logPageSize() + 1 }}</strong> - <strong>{{ Math.min(logPage() * logPageSize(), logTotal()) }}</strong> trên <strong>{{ logTotal() }}</strong> biến động
+            </span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button type="button" class="btn-action-outline" [disabled]="logPage() <= 1" (click)="prevLogPage()">← Trước</button>
+              <span style="font-size:13px;font-weight:600;padding:0 8px">{{ logPage() }} / {{ logTotalPages() }}</span>
+              <button type="button" class="btn-action-outline" [disabled]="logPage() >= logTotalPages()" (click)="nextLogPage()">Sau →</button>
+            </div>
+          </div>
+        }
       }
     </div>
   }

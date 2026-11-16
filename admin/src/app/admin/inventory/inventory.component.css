@@ -159,14 +159,28 @@
   gap: 12px;
 }
 .filter-select {
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
+  border: 1px solid #dce5de;
+  background-color: #ffffff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%23334155' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   border-radius: 8px;
-  padding: 8px 14px;
+  padding: 8px 36px 8px 14px;
   font-size: 13.5px;
   color: #334155;
   outline: none;
   cursor: pointer;
+  transition: all 0.16s ease;
+}
+.filter-select:hover {
+  border-color: #14532d;
+}
+.filter-select:focus {
+  border-color: #14532d;
+  box-shadow: 0 0 0 3px rgba(20, 83, 45, 0.12);
 }
 
 /* Table Card */
@@ -243,23 +257,25 @@
 .status-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 4px 12px;
-  border-radius: 9999px;
-  font-size: 11.5px;
+  height: 28px;
+  width: 104px;
+  min-width: 104px;
+  max-width: 104px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   border: 1px solid transparent;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  box-sizing: border-box;
+  text-align: center;
+  white-space: nowrap;
 }
 .status-badge::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 0 6px currentColor;
-  flex-shrink: 0;
+  content: none !important;
+  display: none !important;
 }
 .badge-success {
   background: linear-gradient(135deg, #f4fdf6 0%, #dcfce7 100%);
@@ -472,4 +488,105 @@
 .text-warning { color: #d97706 !important; }
 .text-danger  { color: #dc2626 !important; }
 .font-bold { font-weight: 700; }
+
+/* Logs Header & Time Filter Pills */
+.card-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.card-bar-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #10321c;
+  letter-spacing: -0.01em;
+}
+
+.card-bar-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.log-time-pills {
+  display: inline-flex;
+  background: #ffffff;
+  border: 1px solid #dce5de;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.log-pill-btn {
+  border: none;
+  background: transparent;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #4a6152;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.log-pill-btn:hover {
+  background: #eef6f0;
+  color: #14532d;
+}
+
+.log-pill-btn.is-active {
+  background: #14532d;
+  color: #ffffff;
+}
+
+.log-custom-dates {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #dce5de;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
+}
+
+.log-custom-dates input {
+  border: none;
+  outline: none;
+  font-size: 12.5px;
+  color: #14532d;
+  font-weight: 600;
+}
+
+.log-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #14532d;
+  background: #14532d;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.log-export-btn:hover:not(:disabled) {
+  background: #166534;
+}
+
+.log-export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 

@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { adminGuard } from '../shared/guards/admin.guard';
+import { adminGuard, roleGuard } from '../shared/guards/admin.guard';
 
 /** Routes of the standalone admin app (served on http://localhost:4201). */
 export const adminRoutes: Routes = [
@@ -8,6 +8,11 @@ export const adminRoutes: Routes = [
     path: 'admin/login',
     loadComponent: () =>
       import('./login/login.component').then((m) => m.AdminLoginComponent),
+  },
+  {
+    path: 'admin/login-failed',
+    loadComponent: () =>
+      import('./login-failed/login-failed.component').then((m) => m.AdminLoginFailedComponent),
   },
   {
     path: 'admin',
@@ -20,6 +25,18 @@ export const adminRoutes: Routes = [
         path: 'dashboard',
         loadComponent: () =>
           import('./dashboard/dashboard.component').then((m) => m.AdminDashboardComponent),
+      },
+      {
+        path: 'finance',
+        loadComponent: () =>
+          import('./finance/finance.component').then((m) => m.AdminFinanceComponent),
+        canActivate: [roleGuard(['Manager', 'Admin'])],
+      },
+      {
+        path: 'analytics',
+        loadComponent: () =>
+          import('./analytics/analytics.component').then((m) => m.AdminAnalyticsComponent),
+        canActivate: [roleGuard(['Manager', 'Admin'])],
       },
       {
         path: 'orders',
@@ -72,11 +89,13 @@ export const adminRoutes: Routes = [
         path: 'vouchers',
         loadComponent: () =>
           import('./vouchers/vouchers.component').then((m) => m.AdminVouchersComponent),
+        canActivate: [roleGuard(['Manager', 'Admin'])],
       },
       {
         path: 'staff',
         loadComponent: () =>
           import('./staff/staff.component').then((m) => m.AdminStaffComponent),
+        canActivate: [roleGuard(['Manager', 'Admin'])],
       },
     ],
   },
