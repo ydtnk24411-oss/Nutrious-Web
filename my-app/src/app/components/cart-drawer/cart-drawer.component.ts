@@ -60,4 +60,12 @@ export class CartDrawerComponent {
     this.cart.closeCartDrawer();
     this.router.navigate(['/category/all-products']);
   }
+
+  getComboSubName(sub: any): string {
+    return sub?.product?.name || sub?.name || 'Sản phẩm thành phần';
+  }
+
+  getComboSubQty(sub: any): number {
+    return Math.max(1, Number(sub?.quantity) || 1);
+  }
 }

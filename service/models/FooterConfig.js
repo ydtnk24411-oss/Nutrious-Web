@@ -41,7 +41,7 @@ const socialLinkSchema = new mongoose.Schema(
 const footerConfigSchema = new mongoose.Schema(
   {
     key: { type: String, default: 'main', unique: true },
-    brandName: { type: String, default: 'Xanh Lá' },
+    brandName: { type: String, default: 'Evergreen Mart' },
     brandDesc: { type: String },
     newsletterTitle: { type: String },
     newsletterDesc: { type: String },
