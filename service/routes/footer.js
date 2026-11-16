@@ -64,7 +64,7 @@ router.get('/', async (req, res, next) => {
     doc.brandDesc = sanitizeText(doc.brandDesc) || 'Tự hào mang nông sản Việt đạt chuẩn VietGAP, GlobalGAP và Organic từ các nông trại xanh đến tận bàn ăn gia đình bạn mỗi ngày.';
     doc.newsletterTitle = sanitizeText(doc.newsletterTitle) || 'Bản tin dinh dưỡng & Ưu đãi Evergreen Mart';
     doc.newsletterDesc = sanitizeText(doc.newsletterDesc) || 'Đăng ký email để nhận ngay voucher giảm 20%, gợi ý thực đơn dinh dưỡng mỗi tuần và ưu đãi Flash Sale nông sản thu hoạch trong ngày.';
-    doc.copyrightText = sanitizeText(doc.copyrightText) || '© 2026 Evergreen Mart — Nông Nghiệp Hữu Cơ & Dinh Dưỡng Thông Minh. Bảo lưu mọi quyền.';
+    doc.copyrightText = sanitizeText(doc.copyrightText) || '© 2026 Evergreen Mart - Nông Nghiệp Hữu Cơ & Dinh Dưỡng Thông Minh. Bảo lưu mọi quyền.';
 
     doc.contactInfo = {
       hotline: '1800 6999 (07:00 – 21:00)',

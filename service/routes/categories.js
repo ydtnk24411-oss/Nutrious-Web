@@ -4,9 +4,10 @@ const Category = require('../models/Category');
 const Product  = require('../models/Product');
 const { protect, adminOnly, staffOnly, hasRole } = require('../middleware/auth');
 const { validate }           = require('../middleware/validate');
+const { cacheMiddleware, clearCache } = require('../utils/cache');
 
-// GET /api/categories — public
-router.get('/', async (req, res, next) => {
+// GET /api/categories — public (cache in-memory 60 giây)
+router.get('/', cacheMiddleware(60), async (req, res, next) => {
   try {
     const cats = await Category.find({ isActive: { $ne: false } }).sort({ order: 1, createdAt: 1 });
     res.json({ success: true, data: cats });
@@ -49,6 +50,7 @@ router.post('/', protect, hasRole('content', 'admin'),
   async (req, res, next) => {
     try {
       const cat = await Category.create(req.body);
+      clearCache();
       res.status(201).json({ success: true, data: cat });
     } catch (err) { next(err); }
   }
@@ -59,6 +61,7 @@ router.put('/:id', protect, hasRole('content', 'admin'), async (req, res, next) 
   try {
     const cat = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
     if (!cat) return res.status(404).json({ success: false, message: 'Không tìm thấy danh mục.' });
+    clearCache();
     res.json({ success: true, data: cat });
   } catch (err) { next(err); }
 });
@@ -89,6 +92,7 @@ router.delete('/:id', protect, adminOnly, async (req, res, next) => {
     }
 
     await Category.findByIdAndDelete(req.params.id);
+    clearCache();
     res.json({ success: true, message: 'Đã xóa danh mục.' });
   } catch (err) { next(err); }
 });

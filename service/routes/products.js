@@ -6,6 +6,8 @@ const Category = require('../models/Category');
 const SearchLog = require('../models/SearchLog');
 const { protect, adminOnly, optionalAuth, authorizeRoles } = require('../middleware/auth');
 const { validate }           = require('../middleware/validate');
+const { cacheMiddleware, clearCache } = require('../utils/cache');
+const { recordSearchLogSafely } = require('../utils/searchSanitizer');
 const {
   COMBO_ITEM_POPULATE_FIELDS,
   enrichComboDocument,
@@ -66,7 +68,8 @@ async function sanitizeAddOnDeals(rawDeals, selfId, mainDoc) {
 }
 
 // GET /api/products  — public, supports ?categoryId=&category=&search=&sort=&page=&limit=
-router.get('/', optionalAuth, async (req, res, next) => {
+// Cache 20 giây đối với các lượt duyệt catalog chung, KHÔNG cache đối với tìm kiếm từ khóa để đảm bảo ghi nhận SearchLog đầy đủ
+router.get('/', optionalAuth, cacheMiddleware(20, (req) => !req.query.search && !req.query.keyword), async (req, res, next) => {
   try {
     const {
       categoryId,
@@ -177,15 +180,13 @@ router.get('/', optionalAuth, async (req, res, next) => {
       Product.countDocuments(filter),
     ]);
 
-    if (searchTerm && searchTerm.trim().length >= 2) {
-      const cleanKw = searchTerm.trim();
-      SearchLog.create({
-        keyword: cleanKw,
-        normalizedKeyword: cleanKw.toLowerCase(),
+    if (searchTerm) {
+      recordSearchLogSafely({
+        keyword: searchTerm,
         resultCount: total,
         customerId: req.user?._id || null,
         sessionId: req.sessionID || req.headers['x-session-id'] || '',
-      }).catch(() => {});
+      });
     }
 
     res.json({
@@ -353,6 +354,7 @@ router.post('/', protect, adminOnly, productValidation, validate, async (req, re
       req.body.addOnDeals = req.body.isCombo ? [] : sanitizeAddOnDeals(req.body.addOnDeals, null);
     }
     const created = await Product.create(req.body);
+    clearCache();
     const product = await Product.findById(created._id)
       .populate('comboItems.product', 'name slug image price priceNumber unit weight stock')
       .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
@@ -388,6 +390,7 @@ router.put('/:id', protect, authorizeRoles('Manager', 'Admin', 'Sales'), async (
       .populate('comboItems.product', 'name slug image price priceNumber unit weight stock')
       .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     if (!product) return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
+    clearCache();
     res.json({ success: true, data: product });
   } catch (err) { next(err); }
 });
@@ -397,6 +400,7 @@ router.delete('/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const product = await Product.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
     if (!product) return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
+    clearCache();
     res.json({ success: true, message: 'Đã xóa sản phẩm.' });
   } catch (err) { next(err); }
 });

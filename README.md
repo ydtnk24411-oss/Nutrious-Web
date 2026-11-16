@@ -1,4 +1,4 @@
-# Evergreen Mart — Project Architecture
+# Evergreen Mart - Project Architecture
 
 Hệ thống được tổ chức thành 3 ứng dụng độc lập:
 

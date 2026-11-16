@@ -19,7 +19,7 @@
         (click)="printOrder()"
         style="padding:8px 16px;font-size:13.5px;border-radius:8px;display:inline-flex;align-items:center;gap:6px">
         <i class="bi bi-printer" style="font-size:16px"></i>
-        <span>In phiếu giao hàng (PDF)</span>
+        <span>In phiếu đơn hàng</span>
       </button>
     </div>
 
@@ -261,6 +261,117 @@
       }
       <a routerLink="/account" class="btn-back">Về tài khoản</a>
     </div>
+
+    <!-- Multi-Step Cancellation Modal with Retention Flow -->
+    @if (showCancelModal()) {
+      <div class="cancel-modal-backdrop" (click)="closeCancelModal()">
+        <div class="cancel-modal-container" (click)="$event.stopPropagation()">
+          <div class="cancel-modal-header">
+            <div class="cancel-modal-title">
+              <i class="bi bi-exclamation-triangle-fill" style="color:#d97706;font-size:20px"></i>
+              <span>Yêu cầu hủy đơn hàng #{{ order()!.orderCode }}</span>
+            </div>
+            <button type="button" class="cancel-modal-close" (click)="closeCancelModal()" [disabled]="cancelling()" aria-label="Đóng">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+
+          <div class="cancel-modal-body">
+            <!-- Retention warning alert -->
+            <div class="cancel-warning-box">
+              <div class="cancel-warning-head">
+                <i class="bi bi-info-circle-fill"></i>
+                <strong>Xin quý khách lưu ý khi hủy đơn hàng:</strong>
+              </div>
+              <ul class="cancel-warning-list">
+                <li>Các mã giảm giá / E-voucher áp dụng cho đơn hàng này sẽ <strong>hết hiệu lực</strong> và không được khôi phục.</li>
+                @if (order()!.estimatedPoints) {
+                  <li>Điểm thưởng tích lũy dự kiến (<strong>+{{ order()!.estimatedPoints }} điểm</strong>) cho đơn này sẽ không được cộng vào tài khoản.</li>
+                }
+                <li>Đơn hàng sau khi hủy sẽ không thể phục hồi lại.</li>
+              </ul>
+            </div>
+
+            <!-- Reason selection -->
+            <div class="cancel-form-group">
+              <label class="cancel-form-label">
+                1. Vui lòng chọn lý do chính khiến bạn muốn hủy đơn <span class="text-danger">*</span>:
+              </label>
+              <div class="cancel-reasons-list">
+                @for (r of cancelReasons; track r) {
+                  <label class="cancel-reason-option" [class.is-selected]="selectedCancelReason() === r">
+                    <input
+                      type="radio"
+                      name="cancelReason"
+                      [value]="r"
+                      [checked]="selectedCancelReason() === r"
+                      (change)="selectedCancelReason.set(r)"
+                    />
+                    <span>{{ r }}</span>
+                  </label>
+                }
+              </div>
+            </div>
+
+            <!-- Detailed explanation textarea -->
+            <div class="cancel-form-group">
+              <label class="cancel-form-label" for="cancelDetailReason">
+                2. Mô tả cụ thể lý do hủy (bắt buộc tối thiểu 10 ký tự) <span class="text-danger">*</span>:
+              </label>
+              <textarea
+                id="cancelDetailReason"
+                class="cancel-textarea"
+                rows="3"
+                placeholder="Vui lòng chia sẻ cụ thể lý do để Evergreen Mart nỗ lực cải thiện chất lượng phục vụ tốt hơn..."
+                [value]="cancelDetailReason()"
+                (input)="cancelDetailReason.set($any($event.target).value)"
+              ></textarea>
+              <div class="cancel-char-hint" [class.text-danger]="cancelDetailReason().trim().length < 10">
+                Đã nhập: {{ cancelDetailReason().trim().length }}/10 ký tự tối thiểu
+              </div>
+            </div>
+
+            <!-- Policy Confirmation Checkbox -->
+            <div class="cancel-form-group">
+              <label class="cancel-checkbox-label">
+                <input
+                  type="checkbox"
+                  [checked]="confirmedLossPolicy()"
+                  (change)="confirmedLossPolicy.set($any($event.target).checked)"
+                />
+                <span>Tôi đã đọc, hiểu rõ chính sách hủy đơn và đồng ý hủy đơn hàng này.</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="cancel-modal-footer">
+            <button
+              type="button"
+              class="cancel-btn-keep"
+              (click)="closeCancelModal()"
+              [disabled]="cancelling()"
+            >
+              <i class="bi bi-check-circle-fill me-1"></i>
+              Giữ lại đơn hàng này
+            </button>
+            <button
+              type="button"
+              class="cancel-btn-confirm"
+              [disabled]="cancelling() || !selectedCancelReason() || cancelDetailReason().trim().length < 10 || !confirmedLossPolicy()"
+              (click)="confirmCancelOrder()"
+            >
+              @if (cancelling()) {
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                Đang xử lý hủy...
+              } @else {
+                <i class="bi bi-trash3 me-1"></i>
+                Xác nhận hủy đơn
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    }
     }
   </div>
 </app-shell>

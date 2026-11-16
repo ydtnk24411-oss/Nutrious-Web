@@ -33,7 +33,7 @@ async function creditOrderPoints(orderId) {
   );
   if (!order) return null;
 
-  const points = order.estimatedPoints || Math.floor(order.subtotal / 1000);
+  const points = order.estimatedPoints || Math.floor((order.subtotal || order.total) / 1000);
   const user = await User.findByIdAndUpdate(
     order.user,
     { $inc: { points, totalSpent: order.total } },
@@ -55,5 +55,56 @@ async function creditOrderPoints(orderId) {
   return { points, balance: user.points };
 }
 
-module.exports = { TIERS, REWARDS, tierFor, creditOrderPoints };
+/**
+ * Đồng bộ tổng chi tiêu, tích điểm và hạng thành viên chính xác 100% theo các đơn hàng thực tế
+ */
+async function syncUserLoyalty(userId) {
+  if (!userId) return null;
+  const user = await User.findById(userId);
+  if (!user) return null;
+
+  // 1. Tự động cộng điểm cho bất kỳ đơn hàng nào đã thanh toán hoặc đã giao mà chưa tích điểm
+  const uncreditedOrders = await Order.find({
+    user: user._id,
+    status: { $ne: 'cancelled' },
+    pointsAwarded: { $ne: true },
+    $or: [
+      { paymentStatus: 'paid' },
+      { status: 'delivered' },
+    ],
+  });
+
+  for (const ord of uncreditedOrders) {
+    await creditOrderPoints(ord._id);
+  }
+
+  // 2. Thống kê chi tiêu thực tế từ các đơn hàng hợp lệ (không bị hủy), đồng nhất với phía Admin
+  const orderStats = await Order.aggregate([
+    { $match: { user: user._id, status: { $ne: 'cancelled' } } },
+    {
+      $group: {
+        _id: null,
+        totalSpent: { $sum: '$total' },
+        orderCount: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const actualSpent = orderStats[0]?.totalSpent || 0;
+  const freshUser = await User.findById(userId);
+  if (!freshUser) return null;
+
+  const currentPoints = freshUser.points || 0;
+  const correctTier = tierFor(currentPoints, actualSpent);
+
+  if (freshUser.totalSpent !== actualSpent || freshUser.tier !== correctTier) {
+    freshUser.totalSpent = actualSpent;
+    freshUser.tier = correctTier;
+    await freshUser.save();
+  }
+
+  return freshUser;
+}
+
+module.exports = { TIERS, REWARDS, tierFor, creditOrderPoints, syncUserLoyalty };
 

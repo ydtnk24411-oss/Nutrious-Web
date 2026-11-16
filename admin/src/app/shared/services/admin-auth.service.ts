@@ -40,7 +40,8 @@ export class AdminAuthService {
     ).pipe(
       tap(res => {
         const role = (res.user?.role || '').toLowerCase();
-        if (res.success && (role === 'sales' || role === 'admin')) {
+        const allowedRoles = ['admin', 'manager', 'sales', 'warehouse', 'marketing', 'support', 'content'];
+        if (res.success && allowedRoles.includes(role)) {
           localStorage.setItem(TOKEN_KEY, res.token);
           localStorage.setItem(USER_KEY, JSON.stringify(res.user));  // ← lưu user
           this._token.set(res.token);
@@ -59,7 +60,8 @@ export class AdminAuthService {
       message?: string;
     }>('/auth/google', { ...data, forAdmin: true }).pipe(
       tap(res => {
-        if (res.success && ['admin', 'sales', 'warehouse', 'support', 'content'].includes(res.user.role)) {
+        const role = (res.user?.role || '').toLowerCase();
+        if (res.success && ['admin', 'manager', 'sales', 'warehouse', 'marketing', 'support', 'content'].includes(role)) {
           localStorage.setItem(TOKEN_KEY, res.token);
           localStorage.setItem(USER_KEY, JSON.stringify(res.user));
           this._token.set(res.token);

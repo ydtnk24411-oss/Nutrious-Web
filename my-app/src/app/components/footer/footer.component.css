@@ -1,5 +1,5 @@
 /* ==========================================================================
-   EVERGREEN MART — SIGNATURE DEEP FOREST GREEN SUPERMARKET FOOTER
+   EVERGREEN MART - SIGNATURE DEEP FOREST GREEN SUPERMARKET FOOTER
    ========================================================================== */
 
 :host {
@@ -400,7 +400,7 @@
   align-items: center;
   justify-content: center;
   gap: clamp(10px, 1.6vw, 22px);
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .xanhla-trust-pill {
@@ -679,53 +679,53 @@
 /* ==========================================================================
    6. RESPONSIVE BREAKPOINTS
    ========================================================================== */
-@media (max-width: 1100px) {
+@media (max-width: 1024px) {
   .xanhla-newsletter-card {
-    grid-template-columns: minmax(160px, 1fr) minmax(220px, 1.4fr) minmax(230px, 1.5fr) auto;
+    grid-template-columns: 1fr;
     gap: 16px;
-    padding: 18px 22px;
+    padding: 20px;
   }
   .xanhla-footer-main {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 28px 22px;
   }
   .xanhla-footer-col--brand {
     grid-column: 1 / -1;
   }
-}
-
-@media (max-width: 860px) {
   .xanhla-trust-pay-row {
     flex-direction: column;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
     text-align: center;
   }
   .xanhla-trust-list {
+    flex-wrap: wrap;
     justify-content: center;
   }
   .xanhla-payment-methods {
     justify-content: center;
+    flex-wrap: wrap;
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 640px) {
   .xanhla-newsletter-card {
     grid-template-columns: 1fr;
     gap: 12px;
-    padding: 18px;
+    padding: 16px;
   }
   .xanhla-footer-main {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
     gap: 24px;
   }
   .xanhla-trust-list {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     gap: 10px;
     width: 100%;
   }
   .xanhla-trust-pill {
+    width: 100%;
     justify-content: flex-start;
   }
   .xanhla-payment-methods {

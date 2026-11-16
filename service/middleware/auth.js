@@ -63,7 +63,8 @@ const optionalAuth = async (req, res, next) => {
 
 // Admin only
 const adminOnly = (req, res, next) => {
-  if (req.user?.role !== 'admin') {
+  const userRole = (req.user?.role || '').toLowerCase();
+  if (userRole !== 'admin' && userRole !== 'manager') {
     return res.status(403).json({ success: false, message: 'Chỉ admin mới có quyền truy cập.' });
   }
   next();
@@ -71,7 +72,9 @@ const adminOnly = (req, res, next) => {
 
 // Staff or Admin
 const staffOnly = (req, res, next) => {
-  if (!req.user || req.user.role === 'customer') {
+  const staffRoles = ['admin', 'manager', 'sales', 'warehouse', 'marketing', 'support', 'content'];
+  const userRole = (req.user?.role || '').toLowerCase();
+  if (!req.user || !staffRoles.includes(userRole)) {
     return res.status(403).json({ success: false, message: 'Yêu cầu quyền quản trị hoặc nhân viên.' });
   }
   next();

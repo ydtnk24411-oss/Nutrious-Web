@@ -6,7 +6,13 @@
 @import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css');
 
 *, *::before, *::after { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
 
 body {
   background: #f7fdf5;
@@ -15,6 +21,7 @@ body {
   font-size: 15px;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
 }
 
 a { color: inherit; text-decoration: none; transition: color .15s; }
@@ -105,6 +112,9 @@ img { display: block; max-width: 100%; }
    ========================================================================== */
 .xanhla-site {
   min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
   background: var(--paper);
   color: var(--ink);
 }
@@ -112,12 +122,27 @@ img { display: block; max-width: 100%; }
 .xanhla-site a { color: inherit; text-decoration: none; transition: color .15s; }
 
 /* ==========================================================================
+   APP HEADER (STICKY UNIFIED BAR)
+   ========================================================================== */
+app-header {
+  display: block;
+  position: -webkit-sticky;
+  position: sticky;
+  top: -36px;
+  z-index: 950;
+  width: 100%;
+}
+
+@media (max-width: 520px) {
+  app-header {
+    top: -30px;
+  }
+}
+
+/* ==========================================================================
    TOP ANNOUNCEMENT BAR
    ========================================================================== */
 .xanhla-wix-bar {
-  position: sticky;
-  top: 0;
-  z-index: 50;
   height: 36px;
   display: flex;
   align-items: center;
@@ -135,11 +160,8 @@ img { display: block; max-width: 100%; }
    HEADER
    ========================================================================== */
 .xanhla-header {
-  position: sticky;
-  top: 36px;
-  z-index: 900;
   display: flex;
-  height: 68px;
+  height: 72px;
   align-items: center;
   justify-content: space-between;
   padding: 0 max(20px, 4vw);

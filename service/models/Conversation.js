@@ -31,7 +31,7 @@ const conversationSchema = new mongoose.Schema(
       index: true,
     },
     lastMessage: { type: String, default: '' },
-    lastMessageAt: { type: Date, default: Date.now },
+    lastMessageAt: { type: Date, default: Date.now, index: true },
     unreadAdminCount: { type: Number, default: 0 },
     unreadCustomerCount: { type: Number, default: 0 },
     assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
@@ -40,6 +40,8 @@ const conversationSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+conversationSchema.index({ status: 1, lastMessageAt: -1 });
 
 module.exports = mongoose.model('Conversation', conversationSchema);
 

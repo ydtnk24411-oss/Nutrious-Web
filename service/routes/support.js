@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const Conversation = require('../models/Conversation');
 const User = require('../models/User');
+const Order = require('../models/Order');
 const { protect, staffOnly, hasRole, optionalAuth } = require('../middleware/auth');
 
 const FALLBACK_AVATARS = {
@@ -8,87 +9,24 @@ const FALLBACK_AVATARS = {
   'Phạm Quốc Tuấn': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
 };
 
-async function enrichConversation(convDoc) {
+function enrichConversation(convDoc) {
   if (!convDoc) return null;
   const conv = convDoc.toObject ? convDoc.toObject() : { ...convDoc };
 
   // 1. If customer was populated from User model
   if (conv.customer && typeof conv.customer === 'object') {
-    conv.customerName = conv.customer.name || conv.customerName;
-    conv.customerEmail = conv.customer.email || conv.customerEmail;
-    conv.customerPhone = conv.customer.phone || conv.customerPhone;
-    conv.customerAvatar = conv.customer.avatar || conv.customerAvatar || '';
-  } else if (conv.customer) {
-    try {
-      const u = await User.findById(conv.customer).select('name email phone avatar');
-      if (u) {
-        conv.customer = {
-          _id: u._id,
-          name: u.name,
-          email: u.email,
-          phone: u.phone,
-          avatar: u.avatar,
-        };
-        conv.customerName = u.name || conv.customerName;
-        conv.customerEmail = u.email || conv.customerEmail;
-        conv.customerPhone = u.phone || conv.customerPhone;
-        conv.customerAvatar = u.avatar || conv.customerAvatar || '';
-      }
-    } catch (_) {}
+    conv.customerName = conv.customer.name || conv.customerName || 'Khách hàng';
+    conv.customerEmail = conv.customer.email || conv.customerEmail || '';
+    conv.customerPhone = conv.customer.phone || conv.customerPhone || '';
+    const userAvatar = conv.customer.avatar || '';
+    if (userAvatar && !userAvatar.startsWith('data:image/') && userAvatar.length <= 1000) {
+      conv.customerAvatar = userAvatar;
+    }
   }
 
-  // 2. If customer is null, but we have customerEmail, look up in User
-  if (!conv.customerAvatar && conv.customerEmail) {
-    try {
-      const user = await User.findOne({ email: conv.customerEmail.toLowerCase().trim() }).select('name email phone avatar');
-      if (user) {
-        conv.customer = {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          phone: user.phone,
-          avatar: user.avatar,
-        };
-        conv.customerName = user.name || conv.customerName;
-        conv.customerEmail = user.email || conv.customerEmail;
-        conv.customerPhone = user.phone || conv.customerPhone;
-        conv.customerAvatar = user.avatar || '';
-      }
-    } catch (_) {}
-  }
-
-  // 3. If customer is still not set or customerName === 'Khách hàng':
-  if (!conv.customerAvatar && (!conv.customerName || conv.customerName === 'Khách hàng')) {
-    try {
-      let activeCustomer = await User.findOne({
-        role: 'customer',
-        avatar: { $exists: true, $ne: '' }
-      }).sort({ updatedAt: -1, createdAt: -1 });
-
-      if (!activeCustomer) {
-        const customers = await User.find({ role: 'customer' }).sort({ updatedAt: -1, createdAt: -1 });
-        activeCustomer = customers.find((u) => u.avatar && u.avatar.length > 50);
-      }
-
-      if (activeCustomer) {
-        conv.customer = {
-          _id: activeCustomer._id,
-          name: activeCustomer.name,
-          email: activeCustomer.email,
-          phone: activeCustomer.phone,
-          avatar: activeCustomer.avatar,
-        };
-        conv.customerName = activeCustomer.name;
-        conv.customerEmail = activeCustomer.email;
-        conv.customerPhone = activeCustomer.phone || conv.customerPhone;
-        conv.customerAvatar = activeCustomer.avatar;
-      }
-    } catch (_) {}
-  }
-
-  // 4. Fallback avatar by customerName or dicebear fallback
-  if (!conv.customerAvatar) {
-    if (FALLBACK_AVATARS[conv.customerName]) {
+  // 2. Fallback avatar (loại bỏ base64 nặng nếu có)
+  if (!conv.customerAvatar || conv.customerAvatar.startsWith('data:image/') || conv.customerAvatar.length > 1000) {
+    if (conv.customerName && FALLBACK_AVATARS[conv.customerName]) {
       conv.customerAvatar = FALLBACK_AVATARS[conv.customerName];
     } else if (conv.customerName && conv.customerName !== 'Khách hàng') {
       conv.customerAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(conv.customerName)}&background=10321c&color=85dd52&bold=true`;
@@ -97,7 +35,7 @@ async function enrichConversation(convDoc) {
     }
   }
 
-  // Also enrich message sender avatars and sender names
+  // 3. Enrich message sender avatars and sender names
   if (Array.isArray(conv.messages)) {
     conv.messages = conv.messages.map((m) => {
       const msg = { ...m };
@@ -132,37 +70,40 @@ router.get('/conversations', protect, staffOnly, async (req, res, next) => {
       ];
     }
 
-    const [
-      conversations,
-      total,
-      totalWaiting,
-      totalAdminProcessing,
-      totalAiProcessing,
-      totalResolved,
-    ] = await Promise.all([
+    const [conversations, statsAgg] = await Promise.all([
       Conversation.find(filter)
+        .select('_id sessionId customerName customerEmail customerPhone customerAvatar status lastMessage lastMessageAt unreadAdminCount customer')
         .sort({ lastMessageAt: -1 })
         .skip((Number(page) - 1) * Number(limit))
         .limit(Number(limit))
-        .populate('customer', 'name email phone avatar')
-        .populate('assignedTo', 'name email')
-        .populate('relatedOrder', 'orderCode total status'),
-      Conversation.countDocuments(filter),
-      Conversation.countDocuments({ status: 'WAITING_FOR_ADMIN' }),
-      Conversation.countDocuments({ status: 'ADMIN_PROCESSING' }),
-      Conversation.countDocuments({ status: 'AI_PROCESSING' }),
-      Conversation.countDocuments({ status: 'RESOLVED' }),
+        .maxTimeMS(4500)
+        .lean(),
+      Conversation.aggregate([
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 },
+          },
+        },
+      ]).option({ maxTimeMS: 4500 }),
     ]);
 
+    const statsMap = {};
+    let totalAll = 0;
+    (statsAgg || []).forEach((item) => {
+      statsMap[item._id] = item.count;
+      totalAll += item.count;
+    });
+
     const stats = {
-      total,
-      waitingForAdmin: totalWaiting,
-      adminProcessing: totalAdminProcessing,
-      aiProcessing: totalAiProcessing,
-      resolved: totalResolved,
+      total: totalAll,
+      waitingForAdmin: statsMap['WAITING_FOR_ADMIN'] || 0,
+      adminProcessing: statsMap['ADMIN_PROCESSING'] || 0,
+      aiProcessing: statsMap['AI_PROCESSING'] || 0,
+      resolved: statsMap['RESOLVED'] || 0,
     };
 
-    const enriched = await Promise.all(conversations.map((c) => enrichConversation(c)));
+    const enriched = (conversations || []).map((c) => enrichConversation(c)).filter(Boolean);
 
     // Tự động gom (deduplicate) các hội thoại của cùng 1 khách hàng để chỉ hiển thị 1 khung chat duy nhất
     const uniqueMap = new Map();
@@ -197,7 +138,8 @@ router.get('/conversations', protect, staffOnly, async (req, res, next) => {
       total: finalConversations.length,
     });
   } catch (err) {
-    next(err);
+    console.error('Lỗi tải danh sách hội thoại support:', err);
+    res.status(500).json({ success: false, message: 'Lỗi tải danh sách hội thoại.', error: err.message });
   }
 });
 
@@ -217,11 +159,12 @@ router.get('/conversations/:id', protect, staffOnly, async (req, res, next) => {
     conv.unreadAdminCount = 0;
     await conv.save();
 
-    const enriched = await enrichConversation(conv);
+    const enriched = enrichConversation(conv);
 
     res.json({ success: true, data: enriched });
   } catch (err) {
-    next(err);
+    console.error('Lỗi tải danh sách hội thoại support:', err);
+    res.status(500).json({ success: false, message: 'Lỗi tải danh sách hội thoại.', error: err.message });
   }
 });
 
@@ -240,10 +183,11 @@ router.post('/conversations/:id/assign', protect, hasRole('support', 'admin'), a
     conv.status = 'ADMIN_PROCESSING';
     await conv.save();
 
-    const enriched = await enrichConversation(conv);
+    const enriched = enrichConversation(conv);
     res.json({ success: true, data: enriched });
   } catch (err) {
-    next(err);
+    console.error('Lỗi tải danh sách hội thoại support:', err);
+    res.status(500).json({ success: false, message: 'Lỗi tải danh sách hội thoại.', error: err.message });
   }
 });
 
@@ -282,10 +226,11 @@ router.post('/conversations/:id/reply', protect, hasRole('support', 'admin'), as
 
     await conv.save();
 
-    const enriched = await enrichConversation(conv);
+    const enriched = enrichConversation(conv);
     res.json({ success: true, data: enriched, message: msg });
   } catch (err) {
-    next(err);
+    console.error('Lỗi tải danh sách hội thoại support:', err);
+    res.status(500).json({ success: false, message: 'Lỗi tải danh sách hội thoại.', error: err.message });
   }
 });
 
@@ -309,10 +254,11 @@ router.put('/conversations/:id/status', protect, hasRole('support', 'admin'), as
     conv.status = status;
     await conv.save();
 
-    const enriched = await enrichConversation(conv);
+    const enriched = enrichConversation(conv);
     res.json({ success: true, data: enriched });
   } catch (err) {
-    next(err);
+    console.error('Lỗi tải danh sách hội thoại support:', err);
+    res.status(500).json({ success: false, message: 'Lỗi tải danh sách hội thoại.', error: err.message });
   }
 });
 
@@ -329,7 +275,8 @@ router.post('/request-human', optionalAuth, async (req, res, next) => {
     const cname = authUser ? authUser.name : (customerInfo?.name || '');
     const cemail = authUser ? authUser.email : (customerInfo?.email || '');
     const cphone = authUser ? (authUser.phone || '') : (customerInfo?.phone || '');
-    const cavatar = authUser ? (authUser.avatar || '') : (customerInfo?.avatar || '');
+    const rawAvatar = authUser ? (authUser.avatar || '') : (customerInfo?.avatar || '');
+    const cavatar = (rawAvatar && !rawAvatar.startsWith('data:image/') && rawAvatar.length <= 1000) ? rawAvatar : '';
 
     let conv = await Conversation.findOne({ sessionId });
     if (!conv) {
@@ -365,10 +312,11 @@ router.post('/request-human', optionalAuth, async (req, res, next) => {
 
     await conv.save();
 
-    const enriched = await enrichConversation(conv);
+    const enriched = enrichConversation(conv);
     res.json({ success: true, data: enriched });
   } catch (err) {
-    next(err);
+    console.error('Lỗi tải danh sách hội thoại support:', err);
+    res.status(500).json({ success: false, message: 'Lỗi tải danh sách hội thoại.', error: err.message });
   }
 });
 
