@@ -6,9 +6,11 @@ const inventoryLogSchema = new mongoose.Schema(
     productName: { type: String, required: true },
     type: {
       type: String,
-      enum: ['import', 'export', 'adjustment', 'order_cancel', 'order_confirmed'],
+      enum: ['import', 'export', 'adjustment', 'order_cancel', 'order_confirmed', 'pos_sale'],
       default: 'adjustment',
     },
+    storeId: { type: String, default: 'default' },
+    referenceId: { type: String, default: '' },
     delta: { type: Number, required: true },
     oldStock: { type: Number, required: true },
     newStock: { type: Number, required: true },

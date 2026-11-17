@@ -1,4 +1,4 @@
-# EVERGREENMART – BUSINESS RULES SPECIFICATION (WORKING DRAFT)
+# EVERGREENMART - BUSINESS RULES SPECIFICATION (WORKING DRAFT)
 
 - **Dự án:** Hệ thống Thương mại Điện tử Nông sản & Thực phẩm Sạch EvergreenMart (tên mã nội bộ trong repo: `Xanh Lá` / `Nutrious-Web`)
 - **Phiên bản tài liệu:** `v0.1 – Working Draft (Audit Source Code)`

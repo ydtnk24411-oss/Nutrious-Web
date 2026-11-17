@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, computed } from '@angular/core';
+import { Component, signal, inject, OnInit, OnDestroy, HostListener, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OrderApiService, ApiOrder } from '../../shared/services/order-api.service';
@@ -10,8 +10,9 @@ import { OrderApiService, ApiOrder } from '../../shared/services/order-api.servi
   templateUrl: './orders.component.html',
   styleUrl: './orders.component.css',
 })
-export class AdminOrdersComponent implements OnInit {
+export class AdminOrdersComponent implements OnInit, OnDestroy {
   private orderApi = inject(OrderApiService);
+  private pollTimer: any = null;
 
   orders   = signal<ApiOrder[]>([]);
   total    = signal(0);
@@ -33,6 +34,7 @@ export class AdminOrdersComponent implements OnInit {
   colMenuOpen = signal(false);
   filterMenuOpen = signal(false);
   dateMenuOpen = signal(false);
+  exportMenuOpen = signal(false);
   paymentFilter = signal<'' | 'cod' | 'bank_transfer'>('');
   paymentStateFilter = signal<'' | 'paid' | 'unpaid' | 'expired'>('');
   shippingFilter = signal<'' | 'delivery' | 'pickup'>('');
@@ -90,7 +92,26 @@ export class AdminOrdersComponent implements OnInit {
     pickup: 'Nhận tại cửa hàng', delivery: 'Giao xe lạnh tận nơi',
   };
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void {
+    this.load();
+    // Đồng bộ đơn hàng mới ngầm mỗi 12 giây
+    this.pollTimer = setInterval(() => {
+      this.load(true);
+    }, 12000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
+    }
+  }
+
+  @HostListener('window:focus')
+  onWindowFocus(): void {
+    // Khi Admin chuyển qua lại giữa các tab trình duyệt, tự động nạp đơn hàng mới
+    this.load(true);
+  }
 
   load(silent: boolean = false): void {
     if (!silent) {
@@ -151,10 +172,17 @@ export class AdminOrdersComponent implements OnInit {
   }
   closeDetail(): void { this.detailOpen.set(false); }
 
-  allowedStatusOptions(current: ApiOrder['status']): { value: string; label: string }[] {
+  allowedStatusOptions(current: ApiOrder['status'], order?: ApiOrder | null): { value: string; label: string }[] {
+    const o = order || this.selected();
     const allowed: ApiOrder['status'][] = [current];
-    const next = this.nextStatusOf(current);
-    if (next) allowed.push(next);
+    const isUnpaidQr = o && o.paymentMethod === 'bank_transfer' && o.paymentStatus !== 'paid';
+
+    // Đơn VietQR chưa thanh toán: BẮT BUỘC duyệt QR trước, không cho nhảy sang bước tiếp theo
+    if (!isUnpaidQr) {
+      const next = this.nextStatusOf(current);
+      if (next) allowed.push(next);
+    }
+
     if (current !== 'delivered' && current !== 'cancelled') {
       allowed.push('cancelled');
     }
@@ -203,7 +231,7 @@ export class AdminOrdersComponent implements OnInit {
       o.paymentMethod === 'bank_transfer' &&
       o.paymentStatus !== 'paid' &&
       o.paymentStatus !== 'expired' &&
-      o.status !== 'cancelled'
+      o.status === 'pending'
     );
   }
 
@@ -339,16 +367,18 @@ export class AdminOrdersComponent implements OnInit {
     return map[this.dateRange()];
   });
 
-  toggleMenu(menu: 'filter' | 'col' | 'date'): void {
+  toggleMenu(menu: 'filter' | 'col' | 'date' | 'export'): void {
     this.filterMenuOpen.set(menu === 'filter' ? !this.filterMenuOpen() : false);
     this.colMenuOpen.set(menu === 'col' ? !this.colMenuOpen() : false);
     this.dateMenuOpen.set(menu === 'date' ? !this.dateMenuOpen() : false);
+    this.exportMenuOpen.set(menu === 'export' ? !this.exportMenuOpen() : false);
   }
 
   closeMenus(): void {
     this.filterMenuOpen.set(false);
     this.colMenuOpen.set(false);
     this.dateMenuOpen.set(false);
+    this.exportMenuOpen.set(false);
   }
 
   resetFilters(): void {
@@ -375,8 +405,7 @@ export class AdminOrdersComponent implements OnInit {
       range === '30d' ? now.getTime() - 30 * 86400000 : 0;
 
     const list = this.orders().filter(o => {
-      // Giữ lại tất cả đơn đã xử lý trong phiên làm việc hiện tại để danh sách đứng yên, không nhảy hàng
-      if (this.recentlyUpdatedIds().has(o._id) || this.lastUpdatedOrderId() === o._id) return true;
+      // Tuân thủ nghiêm ngặt các bộ lọc thuộc tính người dùng đã chọn (Phương thức thanh toán, tình trạng tiền, hình thức nhận, thời gian)
       if (pay && o.paymentMethod !== pay) return false;
       if (payState && (o.paymentStatus || 'unpaid') !== payState) return false;
       if (ship && o.shippingMethod !== ship) return false;
@@ -483,14 +512,39 @@ export class AdminOrdersComponent implements OnInit {
     const currentStatus = this.status();
     const query = new URLSearchParams();
     if (currentStatus && currentStatus !== 'all') query.set('status', currentStatus);
-    const token = localStorage.getItem('xanhla_admin_token') || '';
+    const token = localStorage.getItem('xanhla_admin_token') || localStorage.getItem('xanhla_auth_token') || '';
     if (token) query.set('token', token);
-    const url = `/api/orders/export/excel?${query.toString()}`;
-    const a = document.createElement('a');
-    a.href = url;
-    a.target = '_blank';
-    a.download = `XanhLa_BaoCao_DonHang_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    a.click();
+
+    // Kết nối trực tiếp đến backend API port 3000 để lấy file nhị phân Excel thật
+    const fullUrl = `http://localhost:3000/api/orders/export/excel?${query.toString()}`;
+
+    fetch(fullUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+      }
+    })
+    .then(async (res) => {
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      return res.blob();
+    })
+    .then((blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `XanhLa_BaoCao_DonHang_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    })
+    .catch((err) => {
+      console.error('Lỗi tải file Excel:', err);
+      // Fallback xuất CSV nếu máy chủ từ chối
+      this.exportCsv();
+    });
   }
 
   printOrderInvoice(ord: ApiOrder): void {

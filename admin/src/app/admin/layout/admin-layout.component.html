@@ -1,12 +1,196 @@
-<div class="admin-shell" [class.mobile-nav-open]="!sidebarOpen()">
+<div class="admin-shell" [class.sidebar-collapsed]="!sidebarOpen()" [class.mobile-open]="mobileNavOpen()">
 
-  <!-- ── Top Header (Two-tier Command Bar) ─────────────── -->
-  <header class="admin-header-wrap">
+  <!-- Mobile Backdrop Overlay -->
+  @if (mobileNavOpen()) {
+    <div class="admin-backdrop" (click)="closeMobileNav()"></div>
+  }
 
-    <!-- Tier 1: Cobalt Brand & Utility Bar -->
-    <div class="admin-topbar">
+  <!-- ── Left Vertical Sidebar ──────────────────────────── -->
+  <aside class="admin-sidebar">
+    <!-- Brand Header -->
+    <div class="admin-sidebar-header">
+      <a class="admin-brand" routerLink="/admin/dashboard" (click)="closeMobileNav()">
+        <div class="admin-brand-logo">
+          <img src="/logo.png" alt="Evergreen Mart" class="admin-brand-logo-img" />
+        </div>
+        <div class="admin-brand-text">
+          <span class="admin-brand-name">EVERGREEN MART</span>
+          <span class="admin-brand-tag">COMMAND WORKSPACE</span>
+        </div>
+      </a>
+      <button
+        class="admin-sidebar-collapse-btn"
+        type="button"
+        (click)="toggleSidebar()"
+        [title]="sidebarOpen() ? 'Thu gọn thanh điều hướng' : 'Mở rộng thanh điều hướng'"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          @if (sidebarOpen()) {
+            <polyline points="15 18 9 12 15 6"></polyline>
+          } @else {
+            <polyline points="9 18 15 12 9 6"></polyline>
+          }
+        </svg>
+      </button>
+    </div>
+
+    <!-- Vertical Navigation List -->
+    <nav class="admin-sidebar-nav" aria-label="Điều hướng quản trị">
+      @for (sec of filteredNavSections(); track sec.title) {
+        <div class="nav-section-group">
+          @if (sec.title && sidebarOpen()) {
+            <div class="nav-section-title">{{ sec.title }}</div>
+          }
+          <div class="nav-items-list">
+            @for (item of sec.items; track item.id) {
+              <div class="nav-item-wrap" [class.has-children]="!!item.children" [class.is-expanded]="isMenuExpanded(item.id)">
+                <div class="nav-link-row" [class.is-active]="isActive(item.path)">
+                  <a
+                    [routerLink]="item.path"
+                    (click)="handleItemClick(item, $event)"
+                    class="nav-link"
+                    [class.is-active]="isActive(item.path)"
+                    [title]="item.label"
+                  >
+                    <span class="nav-icon">
+                      @switch (item.id) {
+                        @case ('dashboard') {
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/>
+                            <rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>
+                          </svg>
+                        }
+                        @case ('analytics') {
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="20" x2="18" y2="10"/>
+                            <line x1="12" y1="20" x2="12" y2="4"/>
+                            <line x1="6" y1="20" x2="6" y2="14"/>
+                          </svg>
+                        }
+                        @case ('finance') {
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" x2="21" y1="22" y2="22"/>
+                            <line x1="6" x2="6" y1="18" y2="11"/>
+                            <line x1="10" x2="10" y1="18" y2="11"/>
+                            <line x1="14" x2="14" y1="18" y2="11"/>
+                            <line x1="18" x2="18" y1="18" y2="11"/>
+                            <polygon points="12 2 20 7 4 7"/>
+                          </svg>
+                        }
+                        @case ('orders') {
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
+                          </svg>
+                        }
+                        @case ('products') {
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+                            <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+                          </svg>
+                        }
+                        @case ('inventory') {
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+                            <path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
+                          </svg>
+                        }
+                        @case ('shipping') {
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/>
+                            <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/>
+                            <circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>
+                          </svg>
+                        }
+                        @case ('users') {
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                            <path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                          </svg>
+                        }
+                        @case ('support') {
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                          </svg>
+                        }
+                        @case ('vouchers') {
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
+                            <path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>
+                          </svg>
+                        }
+                        @case ('staff') {
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>
+                          </svg>
+                        }
+                        @default {
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                          </svg>
+                        }
+                      }
+                    </span>
+                    @if (sidebarOpen()) {
+                      <span class="nav-label">{{ item.label }}</span>
+                    }
+                  </a>
+
+                  @if (item.children && sidebarOpen()) {
+                    <button
+                      type="button"
+                      class="nav-caret-btn"
+                      (click)="toggleSubmenu(item.id, $event)"
+                      [title]="isMenuExpanded(item.id) ? 'Thu gọn' : 'Mở rộng'"
+                    >
+                      <svg
+                        class="nav-caret"
+                        [class.caret-down]="isMenuExpanded(item.id)"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                      >
+                        <polyline points="9 18 15 12 9 6"/>
+                      </svg>
+                    </button>
+                  }
+                </div>
+
+                <!-- Submenu Accordion -->
+                @if (item.children && isMenuExpanded(item.id) && sidebarOpen()) {
+                  <div class="nav-submenu">
+                    @for (sub of item.children; track sub.id) {
+                      <a
+                        [routerLink]="sub.path"
+                        [queryParams]="sub.queryParam"
+                        (click)="navigate(sub.path, $event, sub.queryParam); closeMobileNav()"
+                        class="nav-sublink"
+                        [class.is-active]="isSubActive(sub)"
+                      >
+                        <span class="nav-subdot"></span>
+                        <span class="nav-sublabel">{{ sub.label }}</span>
+                      </a>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </nav>
+  </aside>
+
+  <!-- ── Main Workspace Body (Right Column) ─────────────── -->
+  <div class="admin-body">
+
+    <!-- Top Command Header Bar -->
+    <header class="admin-topbar">
       <div class="admin-topbar-left">
-        <button class="admin-mobile-toggle" type="button" (click)="toggleSidebar()" title="Đóng/mở menu">
+        <!-- Sidebar Toggle (Desktop Collapse / Mobile Open) -->
+        <button class="admin-sidebar-toggle-mobile" type="button" (click)="toggleMobileNav()" title="Mở danh mục điều hướng">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="3" y1="12" x2="21" y2="12"/>
             <line x1="3" y1="6"  x2="21" y2="6"/>
@@ -14,15 +198,12 @@
           </svg>
         </button>
 
-        <a class="admin-brand" routerLink="/admin/dashboard">
-          <div class="admin-brand-logo">
-            <img src="/logo.png" alt="Evergreen Mart" class="admin-brand-logo-img" />
-          </div>
-          <div class="admin-brand-text">
-            <span class="admin-brand-name">EVERGREEN MART</span>
-            <span class="admin-brand-tag">COMMAND WORKSPACE</span>
-          </div>
-        </a>
+        <button class="admin-sidebar-toggle-desktop" type="button" (click)="toggleSidebar()" title="Đóng/mở thanh bên">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+            <line x1="9" x2="9" y1="3" y2="21"/>
+          </svg>
+        </button>
       </div>
 
       <!-- Header Search Bar with Dropdown -->
@@ -157,7 +338,7 @@
         }
       </div>
 
-      <!-- Right Actions -->
+      <!-- Right Topbar Actions -->
       <div class="admin-topbar-actions">
         <button class="admin-topbar-store-btn" type="button" (click)="openStorefront()" title="Mở trang bán hàng">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -182,7 +363,7 @@
           </div>
           <div class="admin-user-info">
             <span class="admin-user-name">{{ auth.user()?.name ?? 'Admin Evergreen Mart' }}</span>
-            <span class="admin-user-role">{{ (auth.user()?.role || '').toLowerCase() === 'sales' ? 'Nhân viên kinh doanh (Sales)' : ((auth.user()?.role || '').toLowerCase() === 'manager' ? 'Quản lý (Manager)' : 'Quản trị viên') }}</span>
+            <span class="admin-user-role">{{ (auth.user()?.role || '').toLowerCase() === 'sales' ? 'Sales' : ((auth.user()?.role || '').toLowerCase() === 'manager' ? 'Quản lý' : 'Quản trị viên') }}</span>
           </div>
         </div>
 
@@ -194,140 +375,13 @@
           </svg>
         </button>
       </div>
-    </div>
+    </header>
 
-    <!-- Tier 2: Horizontal Navigation Bar (iBoard style) -->
-    <nav class="admin-topnav" aria-label="Điều hướng quản trị">
-      <div class="admin-topnav-inner">
-        @for (sec of navSections; track sec.title) {
-          @for (item of sec.items; track item.id) {
-            <div class="admin-topnav-group" [class.has-children]="!!item.children">
-              <a
-                [routerLink]="item.path"
-                routerLinkActive="is-active"
-                (click)="navigate(item.path, $event)"
-                class="admin-topnav-item"
-                [class.is-active]="isActive(item.path)"
-                [title]="item.label"
-              >
-                <span class="admin-topnav-icon">
-                  @switch (item.id) {
-                    @case ('dashboard') {
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/>
-                        <rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>
-                      </svg>
-                    }
-                    @case ('analytics') {
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="20" x2="18" y2="10"/>
-                        <line x1="12" y1="20" x2="12" y2="4"/>
-                        <line x1="6" y1="20" x2="6" y2="14"/>
-                      </svg>
-                    }
-                    @case ('finance') {
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="3" x2="21" y1="22" y2="22"/>
-                        <line x1="6" x2="6" y1="18" y2="11"/>
-                        <line x1="10" x2="10" y1="18" y2="11"/>
-                        <line x1="14" x2="14" y1="18" y2="11"/>
-                        <line x1="18" x2="18" y1="18" y2="11"/>
-                        <polygon points="12 2 20 7 4 7"/>
-                      </svg>
-                    }
-                    @case ('orders') {
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
-                      </svg>
-                    }
-                    @case ('products') {
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
-                        <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
-                      </svg>
-                    }
-                    @case ('inventory') {
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
-                        <path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
-                      </svg>
-                    }
-                    @case ('shipping') {
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/>
-                        <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/>
-                        <circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>
-                      </svg>
-                    }
-                    @case ('users') {
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                      </svg>
-                    }
-                    @case ('support') {
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                      </svg>
-                    }
-                    @case ('vouchers') {
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/>
-                        <path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>
-                      </svg>
-                    }
-                    @case ('staff') {
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>
-                      </svg>
-                    }
-                    @default {
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="3" x2="21" y1="22" y2="22"/>
-                        <line x1="6" x2="6" y1="18" y2="11"/>
-                        <line x1="10" x2="10" y1="18" y2="11"/>
-                        <line x1="14" x2="14" y1="18" y2="11"/>
-                        <line x1="18" x2="18" y1="18" y2="11"/>
-                        <polygon points="12 2 20 7 4 7"/>
-                      </svg>
-                    }
-                  }
-                </span>
-                <span class="admin-topnav-label">{{ item.label }}</span>
-                @if (item.children) {
-                  <svg class="admin-topnav-caret" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg>
-                }
-              </a>
-
-              @if (item.children) {
-                <div class="admin-topnav-dropdown">
-                  @for (sub of item.children; track sub.id) {
-                    <a
-                      [routerLink]="sub.path"
-                      [queryParams]="sub.queryParam"
-                      (click)="navigate(sub.path, $event, sub.queryParam)"
-                      class="admin-topnav-subitem"
-                      [class.is-active]="isSubActive(sub)"
-                    >
-                      <span class="admin-topnav-subdot"></span>
-                      <span>{{ sub.label }}</span>
-                    </a>
-                  }
-                </div>
-              }
-            </div>
-          }
-        }
+    <!-- ── Full-Width Main Content Area ──────────────────── -->
+    <main class="admin-main">
+      <div class="admin-content">
+        <router-outlet />
       </div>
-    </nav>
-  </header>
-
-  <!-- ── Full-Width Main Content Area ──────────────────── -->
-  <main class="admin-main">
-    <div class="admin-content">
-      <router-outlet />
-    </div>
-  </main>
+    </main>
+  </div>
 </div>

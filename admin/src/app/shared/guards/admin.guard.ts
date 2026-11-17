@@ -11,13 +11,14 @@ export const adminGuard: CanActivateFn = () => {
     return false;
   }
 
-  // Cho phép nhân viên quản trị có vai trò role: "Sales", "Manager", "Admin"
+  // Cho phép tất cả nhân viên thuộc 4 nhóm vai trò RBAC (Manager, Sales, Warehouse, Marketing)
   const role = (auth.user()?.role || '').toLowerCase();
-  const isAuthorized = role === 'sales' || role === 'manager' || role === 'admin';
+  const allowedRoles = ['admin', 'manager', 'sales', 'warehouse', 'marketing', 'support', 'content'];
+  const isAuthorized = allowedRoles.includes(role);
 
   if (!isAuthorized) {
     router.navigate(['/admin/login-failed'], {
-      queryParams: { reason: 'unauthorized_role', message: 'Tài khoản không có quyền nhân viên (Sales/Manager) để truy cập quản trị.' }
+      queryParams: { reason: 'unauthorized_role', message: 'Tài khoản không có quyền nhân viên hợp lệ để truy cập hệ thống quản trị.' }
     });
     return false;
   }

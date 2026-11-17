@@ -589,6 +589,10 @@ export class CartService {
   }
 
   startDirectBuyNow(product: XanhLaProduct, quantity: number, selectedOption?: string): void {
+    if (!this._currentUser()) {
+      this.openAuthModal('login');
+      return;
+    }
     const maxStock = resolveProductMaxStock(product);
     if (maxStock === 0) return;
     const cleanOption = resolveProductOption(product, selectedOption);
@@ -617,6 +621,10 @@ export class CartService {
       quantity?: number;
     }[]
   ): void {
+    if (!this._currentUser()) {
+      this.openAuthModal('login');
+      return;
+    }
     const mainMax = resolveProductMaxStock(mainProduct);
     if (mainMax === 0) return;
     const rawQty = Math.max(1, Math.round(mainQuantity || 1));
@@ -1032,6 +1040,10 @@ export class CartService {
     selectedOption?: string,
     opts?: { openDrawer?: boolean; event?: Event | HTMLElement; setExactQuantity?: boolean }
   ): void {
+    if (!this._currentUser()) {
+      this.openAuthModal('login');
+      return;
+    }
     const maxStock = resolveProductMaxStock(product);
     if (maxStock === 0) return;
 
@@ -1145,6 +1157,10 @@ export class CartService {
     }[],
     opts?: { openDrawer?: boolean; selectOnlyBundle?: boolean; setExactQuantity?: boolean }
   ): boolean {
+    if (!this._currentUser()) {
+      this.openAuthModal('login');
+      return false;
+    }
     const safeMainQty = Math.max(1, Math.round(mainQuantity || 1));
     const mainId = mainProduct.id || mainProduct.slug;
     const hasOptions = Array.isArray(mainProduct.options) && mainProduct.options.length > 0;
@@ -1879,9 +1895,46 @@ export class CartService {
 
     this._items.set(merged);
     this._saveCartForCurrentUser(merged);
-    const allKeys = new Set(merged.map(i => getCartItemKey(i)));
-    this._selectedKeys.set(allKeys);
-    persistSelectedKeys(allKeys);
+
+    // Xác định các sản phẩm được tích chọn thanh toán:
+    // Nếu khách vãng lai đã chủ động chọn món trước khi bấm đăng nhập (ví dụ chỉ chọn 1 sản phẩm để thanh toán):
+    // GIỮ NGUYÊN đúng sản phẩm mà khách đang chọn trong phiên hiện tại!
+    // Các món cũ trước đây của tài khoản vẫn nằm an toàn trong giỏ hàng nhưng KHÔNG bị tự động tích chọn vào đơn thanh toán hiện tại.
+    const currentSelectedBeforeLogin = new Set(this._selectedKeys());
+    const guestItemKeys = new Set(guestCart.map(i => getCartItemKey(i)));
+
+    let targetSelectedKeys = new Set<string>();
+
+    if (currentSelectedBeforeLogin.size > 0 && guestCart.length > 0) {
+      // Giữ nguyên đúng các món mà khách vừa tích chọn từ phiên vãng lai
+      for (const k of currentSelectedBeforeLogin) {
+        if (merged.some(m => getCartItemKey(m) === k)) {
+          targetSelectedKeys.add(k);
+        }
+      }
+    } else if (guestCart.length > 0) {
+      // Khách có giỏ hàng vãng lai: chỉ tích chọn các món từ giỏ hàng vãng lai này
+      for (const k of guestItemKeys) {
+        targetSelectedKeys.add(k);
+      }
+    } else {
+      // Khách đăng nhập bình thường từ đầu khi chưa có giỏ hàng vãng lai:
+      // Tải lại các món đã được tích chọn lưu trong session hoặc chọn toàn bộ giỏ
+      const savedKeys = loadSavedSelectedKeys();
+      if (savedKeys && savedKeys.size > 0) {
+        for (const k of savedKeys) {
+          if (merged.some(m => getCartItemKey(m) === k)) {
+            targetSelectedKeys.add(k);
+          }
+        }
+      }
+      if (targetSelectedKeys.size === 0) {
+        targetSelectedKeys = new Set(merged.map(i => getCartItemKey(i)));
+      }
+    }
+
+    this._selectedKeys.set(targetSelectedKeys);
+    persistSelectedKeys(targetSelectedKeys);
 
     // Tải lịch sử xem riêng của tài khoản từ MongoDB (không trộn lịch sử khách vãng lai)
     this._viewedProducts.set([]);

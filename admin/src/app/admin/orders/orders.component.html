@@ -153,17 +153,41 @@
         }
       </div>
 
-      <!-- Xuất dữ liệu Excel & CSV -->
-      <button type="button" class="ord-pill-btn" (click)="exportExcel()" title="Xuất tệp Excel .xlsx định dạng đẹp">
-        <i class="bi bi-file-earmark-excel text-emerald-600" style="font-size:15px"></i>
-        <span>Xuất Excel</span>
-      </button>
-      <button type="button" class="ord-pill-btn" (click)="exportCsv()" title="Xuất tệp CSV tiêu chuẩn">
-        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-          <path d="M10 3v9m0 0l-3.5-3.5M10 12l3.5-3.5M4 15.5h12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-        <span>Xuất CSV</span>
-      </button>
+      <!-- Xuất file Dropdown (Excel & CSV) -->
+      <div class="ord-pop-wrap">
+        <button
+          type="button"
+          class="ord-pill-btn"
+          [class.is-active]="exportMenuOpen()"
+          (click)="toggleMenu('export')"
+          title="Xuất file báo cáo đơn hàng"
+        >
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M10 3v9m0 0l-3.5-3.5M10 12l3.5-3.5M4 15.5h12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span>Xuất file</span>
+          <span class="ord-caret">▾</span>
+        </button>
+
+        @if (exportMenuOpen()) {
+          <div class="ord-popover ord-popover--export">
+            <button type="button" class="ord-pop-item" (click)="exportExcel(); closeMenus()">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" style="width:16px;height:16px;color:#16a34a;flex-shrink:0">
+                <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V7.5L13.5 3H4z" stroke="currentColor" stroke-width="1.6" />
+                <path d="M13 3v5h5M7 11l6 4M13 11l-6 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+              </svg>
+              <span>Xuất file Excel (.xlsx)</span>
+            </button>
+            <button type="button" class="ord-pop-item" (click)="exportCsv(); closeMenus()">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" style="width:16px;height:16px;color:#2563eb;flex-shrink:0">
+                <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V7.5L13.5 3H4z" stroke="currentColor" stroke-width="1.6" />
+                <path d="M13 3v5h5M7 13h6M7 10h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+              </svg>
+              <span>Xuất file CSV (.csv)</span>
+            </button>
+          </div>
+        }
+      </div>
     </div>
 
     <!-- Summary Strip -->
@@ -445,7 +469,7 @@
             [ngModel]="newStatus()"
             (ngModelChange)="newStatus.set($event)"
           >
-            @for (st of allowedStatusOptions(ord.status); track st.value) {
+            @for (st of allowedStatusOptions(ord.status, ord); track st.value) {
               <option [value]="st.value">{{ st.label }}</option>
             }
           </select>

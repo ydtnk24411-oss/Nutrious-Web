@@ -446,8 +446,8 @@ router.post(
         });
       }
 
-      // Kiểm tra quyền nhân viên: Bắt buộc phải có vai trò sales, admin, warehouse, support hoặc content
-      const allowedRoles = ['sales', 'admin', 'warehouse', 'support', 'content'];
+      // Kiểm tra quyền nhân viên: Bắt buộc phải có vai trò hợp lệ trong hệ thống quản trị
+      const allowedRoles = ['admin', 'manager', 'sales', 'warehouse', 'marketing', 'support', 'content'];
       if (!allowedRoles.includes(user.role?.toLowerCase())) {
         return res.status(403).json({
           success: false,

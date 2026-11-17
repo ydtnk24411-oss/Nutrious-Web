@@ -62,9 +62,33 @@
     <!-- Conversation Card List -->
     <div class="conv-list">
       @if (loading() && conversations().length === 0) {
-        <div class="conv-empty">Đang tải danh sách...</div>
+        <div class="conv-empty">
+          <div class="admin-spinner" style="width:24px;height:24px;margin:0 auto 10px;border-width:2.5px;"></div>
+          <span>Đang tải danh sách...</span>
+        </div>
+      } @else if (hasError() && conversations().length === 0) {
+        <div class="conv-empty conv-error-state">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="1.8" style="margin:0 auto 8px;display:block">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span class="conv-error-msg">{{ errorMessage() || 'Không thể tải danh sách hội thoại (Quá thời gian phản hồi)' }}</span>
+          <button type="button" class="conv-retry-btn" (click)="retryLoad()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 4v6h-6"/>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+            Thử lại
+          </button>
+        </div>
       } @else if (conversations().length === 0) {
-        <div class="conv-empty">Không có hội thoại nào</div>
+        <div class="conv-empty">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="margin:0 auto 8px;opacity:0.4;display:block">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          <span>Không có hội thoại nào</span>
+        </div>
       } @else {
         @for (conv of conversations(); track conv._id) {
           @let status = getStatusBadge(conv.status);
@@ -204,27 +228,30 @@
             <button type="button" class="btn-reopen-link" (click)="assignToMe()">Mở lại để nhắn tin</button>
           </div>
         } @else {
-          <div class="input-form-wrapper">
+          <div class="chat-input-card">
             <textarea
               class="chat-textarea"
               rows="2"
-              placeholder="Nhập nội dung phản hồi cho khách hàng... (Nhấn Gửi hoặc Ctrl + Enter)"
+              placeholder="Nhập nội dung phản hồi cho khách hàng..."
               [ngModel]="replyText()"
               (ngModelChange)="replyText.set($event)"
-              (keydown.control.enter)="sendReply()"
+              (keydown)="onTextareaKeyDown($event)"
             ></textarea>
-            <button
-              type="button"
-              class="btn-send-reply"
-              [disabled]="!replyText().trim() || sending()"
-              (click)="sendReply()"
-            >
-              <span>{{ sending() ? 'Đang gửi...' : 'Gửi phản hồi' }}</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="22" y1="2" x2="11" y2="13"/>
-                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-              </svg>
-            </button>
+
+            <div class="chat-input-actions">
+              <button
+                type="button"
+                class="btn-send-reply"
+                [disabled]="!replyText().trim() || sending()"
+                (click)="sendReply()"
+              >
+                <span>{{ sending() ? 'Đang gửi...' : 'Gửi phản hồi' }}</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"/>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+              </button>
+            </div>
           </div>
         }
       </footer>

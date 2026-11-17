@@ -2,8 +2,8 @@ const router = require('express').Router();
 const Cart = require('../models/Cart');
 const { optionalAuth, protect, staffOnly, authorizeRoles } = require('../middleware/auth');
 
-// POST /api/cart/sync — Đồng bộ giỏ hàng từ Storefront lên Server
-router.post('/sync', optionalAuth, async (req, res, next) => {
+// POST /api/cart/sync — Đồng bộ giỏ hàng từ Storefront lên Server (Bắt buộc đăng nhập tài khoản)
+router.post('/sync', protect, async (req, res, next) => {
   try {
     const { items = [], totalAmount = 0, customerName = '', customerEmail = '', customerPhone = '' } = req.body;
     const sessionId = req.sessionID || req.headers['x-session-id'] || req.cookies?.sessionId || 'session_' + Math.random().toString(36).substring(2);

@@ -5,6 +5,7 @@ const Cart = require('../models/Cart');
 const Order = require('../models/Order');
 const User = require('../models/User');
 const { protect, adminOnly, optionalAuth } = require('../middleware/auth');
+const { recordSearchLogSafely } = require('../utils/searchSanitizer');
 
 // ── 1. Ghi nhận sự kiện từ Storefront (Beaconing / Batch events) ──
 router.post('/track', optionalAuth, async (req, res) => {
@@ -66,17 +67,16 @@ router.post('/track', optionalAuth, async (req, res) => {
 
     await AnalyticsEvent.insertMany(eventsToInsert, { ordered: false });
 
-    // Tự động đồng bộ các lượt tìm kiếm hợp lệ (từ 2 ký tự trở lên) vào SearchLog
+    // Tự động đồng bộ các lượt tìm kiếm hợp lệ vào SearchLog (có lọc ký tự, chống spam)
     for (const evt of rawEvents) {
       const q = (evt.searchQuery || '').trim();
-      if ((evt.eventType === 'search' || q) && q.length >= 2) {
-        SearchLog.create({
+      if (evt.eventType === 'search' || q) {
+        recordSearchLogSafely({
           keyword: q,
-          normalizedKeyword: q.toLowerCase(),
           resultCount: evt.searchResultCount !== undefined ? Number(evt.searchResultCount) : (evt.searchHasResults === false ? 0 : 1),
           customerId: req.user?._id || null,
           sessionId: evt.sessionId || req.sessionID || '',
-        }).catch(() => {});
+        });
       }
     }
 

@@ -121,9 +121,9 @@
       <table class="admin-table">
         <thead>
           <tr>
-            <th>Mã</th>
-            <th>Khách hàng</th>
-            <th>Phân loại</th>
+            <th class="col-code">Mã</th>
+            <th class="col-customer">Khách hàng</th>
+            <th class="col-type">Phân loại</th>
             <th>Tiêu đề & Nội dung</th>
             <th>Đơn hàng</th>
             <th>Thời gian</th>
@@ -135,16 +135,16 @@
           @for (item of complaints(); track item._id) {
             @let status = getStatusBadge(item.status);
             <tr>
-              <td>
+              <td class="col-code">
                 <span class="code-badge">{{ item.complaintCode || ('KN-' + item._id.slice(-5).toUpperCase()) }}</span>
               </td>
-              <td>
+              <td class="col-customer">
                 <div class="customer-col">
                   <span class="customer-name">{{ item.customerName }}</span>
                   <span class="customer-phone">{{ item.customerPhone || item.customerEmail || 'Chưa có SĐT' }}</span>
                 </div>
               </td>
-              <td>
+              <td class="col-type">
                 <span class="type-pill">{{ getTypeLabel(item.type) }}</span>
               </td>
               <td>

@@ -51,7 +51,9 @@ const userSchema = new mongoose.Schema(
     googleName: { type: String, default: '' },
     googleAvatar: { type: String, default: '' },
     authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
-    role:     { type: String, enum: ['customer', 'admin', 'sales', 'warehouse', 'support', 'content'], default: 'customer' },
+    role:     { type: String, enum: ['customer', 'manager', 'sales', 'warehouse', 'marketing', 'admin', 'support', 'content'], default: 'customer' },
+    assignedStore: { type: String, default: 'default', trim: true }, // Chi nhánh phụ trách (khóa quyền O2O)
+    storeName:     { type: String, default: '', trim: true },
     isActive: { type: Boolean, default: true },
     // Loyalty program
     points: { type: Number, default: 0 },
