@@ -4,11 +4,6 @@ const User = require('../models/User');
 const Order = require('../models/Order');
 const { protect, staffOnly, hasRole, optionalAuth } = require('../middleware/auth');
 
-const FALLBACK_AVATARS = {
-  'Nguyễn Thị Mai': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80',
-  'Phạm Quốc Tuấn': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
-};
-
 function enrichConversation(convDoc) {
   if (!convDoc) return null;
   const conv = convDoc.toObject ? convDoc.toObject() : { ...convDoc };
@@ -26,9 +21,7 @@ function enrichConversation(convDoc) {
 
   // 2. Fallback avatar (loại bỏ base64 nặng nếu có)
   if (!conv.customerAvatar || conv.customerAvatar.startsWith('data:image/') || conv.customerAvatar.length > 1000) {
-    if (conv.customerName && FALLBACK_AVATARS[conv.customerName]) {
-      conv.customerAvatar = FALLBACK_AVATARS[conv.customerName];
-    } else if (conv.customerName && conv.customerName !== 'Khách hàng') {
+    if (conv.customerName && conv.customerName !== 'Khách hàng') {
       conv.customerAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(conv.customerName)}&background=10321c&color=85dd52&bold=true`;
     } else {
       conv.customerAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80';

@@ -26,8 +26,13 @@
           <div class="acc-profile-card">
             <div class="acc-profile-avatar-wrapper">
               <div class="acc-profile-avatar">
-                @if (cart.currentUser()?.avatar) {
-                  <img [src]="cart.currentUser()!.avatar" alt="Avatar" />
+                @if (cart.currentUserAvatar()) {
+                  <img
+                    [src]="cart.currentUserAvatar()"
+                    referrerpolicy="no-referrer"
+                    alt="Avatar"
+                    (error)="cart.markAvatarUrlFailed(cart.currentUserAvatar())"
+                  />
                 } @else {
                   <div class="acc-avatar-placeholder">{{ avatarChar() }}</div>
                 }
@@ -147,8 +152,13 @@
               <div class="acc-avatar-upload">
                 <div class="acc-avatar-preview-wrapper">
                   <div class="acc-avatar-preview">
-                    @if (cart.currentUser()?.avatar) {
-                      <img [src]="cart.currentUser()!.avatar" alt="Avatar preview" />
+                    @if (cart.currentUserAvatar()) {
+                      <img
+                        [src]="cart.currentUserAvatar()"
+                        referrerpolicy="no-referrer"
+                        alt="Avatar preview"
+                        (error)="cart.markAvatarUrlFailed(cart.currentUserAvatar())"
+                      />
                     } @else {
                       <div class="acc-avatar-placeholder-large">{{ avatarChar() }}</div>
                     }

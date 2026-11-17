@@ -1,40 +1,37 @@
-const fs = require('fs');
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+const mongoose = require('mongoose');
+const Product = require('../models/Product');
 
-const bakery = require('./data/bakery');
-const dairy = require('./data/dairy');
-const beverages = require('./data/beverages');
-const pantry = require('./data/pantry');
-const vegetables = require('./data/vegetables');
-const fruits = require('./data/fruits');
-const meat = require('./data/meat');
-const seafood = require('./data/seafood');
+async function main() {
+  await mongoose.connect(process.env.MONGODB_URI);
+  const products = await Product.find(
+    { isCombo: { $ne: true }, isActive: { $ne: false } },
+    'name slug brand origin unit storageInstructions usageInstructions specifications description'
+  ).lean();
 
-const allData = {
-  ...bakery,
-  ...dairy,
-  ...beverages,
-  ...pantry,
-  ...vegetables,
-  ...fruits,
-  ...meat,
-  ...seafood
-};
+  const missingMetadata = products.filter(
+    (p) =>
+      !p.brand ||
+      !p.origin ||
+      !p.unit ||
+      !p.description ||
+      !p.specifications ||
+      !p.specifications['Năng lượng']
+  );
 
-const products = JSON.parse(fs.readFileSync(__dirname + '/products-dump.json', 'utf-8'));
-console.log('Total products in database:', products.length);
-console.log('Total entries in data files:', Object.keys(allData).length);
-
-const missing = [];
-products.forEach(p => {
-  if (!allData[p.slug]) {
-    missing.push({ id: p._id, name: p.name, slug: p.slug, category: p.categoryVi || p.category });
+  console.log('Total non-combo active products in MongoDB:', products.length);
+  if (missingMetadata.length === 0) {
+    console.log('SUCCESS: All non-combo products have complete metadata & nutrition specs in MongoDB.');
+  } else {
+    console.log(`WARNING: ${missingMetadata.length} products missing metadata/nutrition specs:`);
+    missingMetadata.forEach((m) => console.log(`  - [${m.slug}] ${m.name}`));
   }
-});
 
-if (missing.length === 0) {
-  console.log('SUCCESS: All 261 products have a 100% exact matching entry in data files!');
-} else {
-  console.log(`WARNING: ${missing.length} products missing:`);
-  missing.forEach(m => console.log(`  - [${m.slug}] ${m.name} (${m.category})`));
+  await mongoose.disconnect();
 }
 
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

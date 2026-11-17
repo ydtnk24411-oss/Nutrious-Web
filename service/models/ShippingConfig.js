@@ -10,6 +10,8 @@ const warehouseLocationSchema = new mongoose.Schema(
     lat:      { type: Number, required: true },
     lng:      { type: Number, required: true },
     phone:    { type: String, default: '' },
+    openingHours: { type: String, default: '' },
+    readyTime:    { type: String, default: '' },
     isHeadquarter: { type: Boolean, default: false },
   },
   { _id: false }
