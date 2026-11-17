@@ -4,10 +4,10 @@ const Category = require('../models/Category');
 const Product  = require('../models/Product');
 const { protect, adminOnly, staffOnly, hasRole } = require('../middleware/auth');
 const { validate }           = require('../middleware/validate');
-const { cacheMiddleware, clearCache } = require('../utils/cache');
+const { clearCache } = require('../utils/cache');
 
-// GET /api/categories — public (cache in-memory 60 giây)
-router.get('/', cacheMiddleware(60), async (req, res, next) => {
+// GET /api/categories — public (luôn đọc trực tiếp từ MongoDB để cập nhật tức thì)
+router.get('/', async (req, res, next) => {
   try {
     const cats = await Category.find({ isActive: { $ne: false } }).sort({ order: 1, createdAt: 1 });
     res.json({ success: true, data: cats });

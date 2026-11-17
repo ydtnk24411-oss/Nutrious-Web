@@ -6,6 +6,7 @@ import { CartService } from '../../shared/services/cart.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { heroImage, originImage } from '../../shared/data/xanh-la.data';
 import { Voucher as ApiVoucher, XanhLaProduct } from '../../shared/models/xanh-la.models';
+import { API_BASE } from '../../shared/services/api.service';
 import { CategoryApiService, ApiCategory } from '../../shared/services/category-api.service';
 import { VoucherService } from '../../shared/services/voucher.service';
 import { FlashSaleApiService, FlashSaleItem } from '../../shared/services/flash-sale-api.service';
@@ -96,26 +97,33 @@ export class HomeComponent implements OnInit, OnDestroy {
   activeHero = 0;
   private heroTimer: ReturnType<typeof setInterval> | null = null;
 
-  readonly quickCategories = [
-    { name: 'Rau củ', icon: 'bi-basket' },
-    { name: 'Trái cây', icon: 'bi-brightness-high' },
-    { name: 'Thịt', icon: 'bi-award' },
-    { name: 'Cá & Hải sản', icon: 'bi-water' },
-    { name: 'Sữa & Thực phẩm mát', icon: 'bi-cup-straw' },
-    { name: 'Thức uống', icon: 'bi-cup-hot' },
-    { name: 'Bánh & Đồ ăn vặt', icon: 'bi-cookie' },
-    { name: 'Gia vị & Thực phẩm khô', icon: 'bi-box-seam' },
-  ];
-  readonly visualCategories = [
-    { name: 'Rau củ', icon: 'bi-basket', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Trái cây', icon: 'bi-brightness-high', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Thịt', icon: 'bi-award', image: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Cá & Hải sản', icon: 'bi-water', image: 'https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Sữa & Thực phẩm mát', icon: 'bi-cup-straw', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Thức uống', icon: 'bi-cup-hot', image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Bánh & Đồ ăn vặt', icon: 'bi-cookie', image: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Gia vị & Thực phẩm khô', icon: 'bi-box-seam', image: 'https://images.unsplash.com/photo-1532336414038-cf19250c5757?auto=format&fit=crop&w=700&q=85' },
-  ];
+  // =========================================================================
+  // 3. DANH MỤC SẢN PHẨM: LOAD 100% ĐỘNG TỪ MONGODB (KHÔNG HARDCODE)
+  // =========================================================================
+  private readonly backendOrigin = API_BASE.replace(/\/api\/?$/, '');
+  categories: ApiCategory[] = [];
+  loadingCategories = true;
+  fallbackCategoryImage = '/images/categories/cat-rau-cu-trai-cay.png';
+
+  onCatImageError(event: Event, rawImage?: string) {
+    const imgEl = event.target as HTMLImageElement;
+    if (!imgEl) return;
+
+    const clean = (rawImage || '').trim();
+    if (clean.startsWith('/') && !imgEl.dataset['triedBackend']) {
+      imgEl.dataset['triedBackend'] = '1';
+      imgEl.src = `${this.backendOrigin}${clean}`;
+      return;
+    }
+
+    if (!imgEl.src.includes(this.fallbackCategoryImage)) {
+      imgEl.src = this.fallbackCategoryImage;
+    }
+  }
+
+  trackByCatId(_index: number, cat: ApiCategory): string {
+    return cat._id;
+  }
   readonly vouchers = computed<Voucher[]>(() => this.voucherService.publicVouchers().slice(0, 6).map((voucher, index) => ({
     id: voucher.id,
     code: voucher.code,
@@ -138,7 +146,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   ];
 
   apiProducts: ApiProduct[] = [];
-  categories: ApiCategory[] = [];
   loadingProducts = true;
   productOffset = 0;
   countdown = { hours: '05', minutes: '42', seconds: '18' };
@@ -168,9 +175,11 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.categoryApi.getAll().subscribe({
       next: res => {
         this.categories = res.data || [];
+        this.loadingCategories = false;
       },
       error: err => {
-        console.error('Failed to load categories:', err);
+        console.error('Failed to load categories from MongoDB:', err);
+        this.loadingCategories = false;
       },
     });
     this.flashSaleApi.getActive().subscribe({

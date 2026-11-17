@@ -77,6 +77,12 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Serve static images from frontend public/images directly as fallback/live disk source
+const frontendImagesDir = path.join(__dirname, '..', 'my-app', 'public', 'images');
+if (fs.existsSync(frontendImagesDir)) {
+  app.use('/images', express.static(frontendImagesDir));
+}
+
 // Fail API requests clearly while MongoDB is disconnected instead of leaving
 // Mongoose queries buffered until they time out.
 app.use('/api', (req, res, next) => {

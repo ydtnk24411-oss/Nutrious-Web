@@ -632,11 +632,11 @@
   --xl-forest: #203d0b;
   --xl-ink: #23321a;
   --xl-muted: #66715c;
-  --xl-cream: #fbfff3;
+  --xl-cream: #ffffff;
   --xl-line: #d7e5b7;
   --xl-coral: #e94d3b;
   color: var(--xl-ink);
-  background: var(--xl-cream);
+  background: #ffffff;
   font-family: Inter, "Be Vietnam Pro", "Segoe UI", sans-serif;
 }
 .coop-home *, .coop-home *::before, .coop-home *::after { box-sizing: border-box; }
@@ -692,10 +692,63 @@
 .coop-home .coop-side-promo p { color: var(--xl-muted) !important; }
 .coop-home .coop-side-promo-warm > div { background: #fce9d9; }
 
-/* Plain-text quick links instead of icon tiles */
-.coop-home .coop-category-nav { display: grid; grid-template-columns: repeat(8, minmax(0,1fr)); gap: 9px; padding-top: 32px; padding-bottom: 20px; }
-.coop-home .coop-category-shortcut { min-height: 60px; display: flex; align-items: center; justify-content: center; padding: 12px 10px; text-align: center; background: #fff; border: 1px solid var(--xl-line); border-bottom: 4px solid var(--xl-green); border-radius: 4px 15px 4px 15px !important; color: var(--xl-forest) !important; font-size: 12px; font-weight: 850; line-height: 1.35; box-shadow: 2px 3px 0 #e4edce; transition: background .2s, transform .2s; }
-.coop-home .coop-category-shortcut:hover { background: var(--xl-lime); transform: translateY(-3px); }
+/* Category navigation under Hero banner - Chỉ hiển thị hình và tên danh mục trên nền trắng */
+.coop-home .coop-category-nav {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 28px 20px !important;
+  padding-top: 32px !important;
+  padding-bottom: 32px !important;
+  background: #ffffff !important;
+  border: none !important;
+  border-bottom: 1px solid #eef2ea !important;
+}
+
+.coop-home .coop-category-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 4px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  transition: transform 0.25s ease;
+}
+
+.coop-home .coop-category-item:hover {
+  transform: translateY(-4px);
+}
+
+.coop-home .coop-category-img {
+  width: 144px;
+  height: 104px;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  transition: transform 0.25s ease;
+}
+
+.coop-home .coop-category-item:hover .coop-category-img {
+  transform: scale(1.06);
+}
+
+.coop-home .coop-category-name {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: #2b3b2c;
+  text-align: center;
+  margin-top: 10px;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  transition: color 0.2s ease;
+}
+
+.coop-home .coop-category-item:hover .coop-category-name {
+  color: var(--xl-forest, #15803d);
+}
 
 /* Sections and wavy separators */
 .coop-home .coop-section { position: relative; padding-top: 48px; padding-bottom: 48px; }
@@ -729,8 +782,8 @@
 .coop-home .coop-department-grid { gap: 16px !important; }
 .coop-home .coop-department-card { border: 1px solid #d1dfb3 !important; border-radius: 7px 25px 7px 25px !important; background: #fff !important; overflow: hidden; box-shadow: 4px 5px 0 #e0ebc7 !important; transition: transform .22s ease, box-shadow .22s ease; }
 .coop-home .coop-department-card:hover { transform: translateY(-4px) rotate(-.3deg); border-color: var(--xl-green) !important; box-shadow: 7px 8px 0 var(--xl-lime) !important; }
-.coop-home .coop-department-image { background: #eaf2d5 !important; overflow: hidden; }
-.coop-home .coop-department-image img { transition: transform .35s ease; }
+.coop-home .coop-department-image { background: #ffffff !important; padding: 14px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.coop-home .coop-department-image img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; transition: transform .35s ease; }
 .coop-home .coop-department-card:hover img { transform: scale(1.06); }
 .coop-home .coop-department-name { padding: 15px !important; }
 .coop-home .coop-department-name strong { color: var(--xl-forest) !important; font-size: 15px; font-weight: 900; }
@@ -846,8 +899,9 @@
   .coop-home .coop-side-promo > div { padding: 12px !important; }
   .coop-home .coop-side-promo h2 { font-size: 17px; }
   .coop-home .coop-side-promo p { font-size: 11px; }
-  .coop-home .coop-category-nav { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; padding-top: 24px; }
-  .coop-home .coop-category-shortcut { min-height: 50px; }
+  .coop-home .coop-category-nav { grid-template-columns: repeat(2, minmax(0,1fr)) !important; gap: 16px 12px !important; padding-top: 24px !important; }
+  .coop-home .coop-category-img { width: 116px; height: 84px; }
+  .coop-home .coop-category-name { font-size: 13px; margin-top: 6px; }
   .coop-home .coop-section { padding-top: 34px; padding-bottom: 38px; }
   .coop-home .coop-section-heading { align-items: start; flex-direction: column; gap: 12px; }
   .coop-home .coop-section-heading h2 { font-size: 30px !important; }
