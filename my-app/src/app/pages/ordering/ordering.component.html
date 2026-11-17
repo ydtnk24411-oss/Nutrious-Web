@@ -1,94 +1,77 @@
 <app-shell>
-<div class="ord-page">
+  <div class="ord-page">
 
-  <!-- ── Hero Banner ───────────────────────────────────── -->
-  <div class="ord-hero">
-    <div class="ord-hero-overlay"></div>
-    <div class="ord-hero-content">
-      <div class="xanhla-container">
-        <span class="ord-hero-eyebrow">Cửa hàng trực tuyến</span>
-        <h1 class="ord-hero-title">Đặt hàng<br /><em>tươi ngon</em> mỗi ngày</h1>
-        <p class="ord-hero-desc">Chọn nguyên liệu tươi sạch từ Evergreen Mart - giao tận nơi hoặc đến lấy, nhanh chóng và tiện lợi.</p>
-
-        <!-- Status + fulfillment tabs nằm trong hero -->
-        <div class="ord-hero-meta">
-          
-        </div>
+    <!-- ── Hero Banner ───────────────────────────────────── -->
+    <section class="ord-hero-banner" aria-label="Cửa hàng trực tuyến - Đặt hàng tươi ngon mỗi ngày">
+      <div class="ord-hero-banner-wrap">
+        <img src="/images/banners/banner-ordering.png" alt="Cửa hàng trực tuyến - Đặt hàng tươi ngon mỗi ngày"
+          class="ord-hero-banner-img" loading="eager" fetchpriority="high" />
       </div>
-    </div>
-  </div>
+    </section>
 
-  <!-- ── Sticky nav bar ────────────────────────────────── -->
-  <div class="ord-page-inner">
-  <div class="ord-nav-bar">
-  <div class="ord-nav-sections">
+    <!-- ── Sticky nav bar ────────────────────────────────── -->
+    <div class="ord-page-inner">
+      <div class="ord-nav-bar">
+        <div class="ord-nav-sections">
 
-    <button
-      class="ord-nav-item"
-      [class.active]="activeCategory() === 'all'"
-      type="button"
-      (click)="selectCategory('all')">
-      Tất cả
-    </button>
+          <button class="ord-nav-item" [class.active]="activeCategory() === 'all'" type="button"
+            (click)="selectCategory('all')">
+            Tất cả
+          </button>
 
-    @for (cat of allCategories(); track cat._id) {
-      <button
-        class="ord-nav-item"
-        [class.active]="activeCategory() === cat._id"
-        type="button"
-        (click)="selectCategory(cat._id)">
-        {{ cat.name }}
-      </button>
-    }
+          @for (cat of allCategories(); track cat._id) {
+          <button class="ord-nav-item" [class.active]="activeCategory() === cat._id" type="button"
+            (click)="selectCategory(cat._id)">
+            {{ cat.name }}
+          </button>
+          }
 
-  </div>
+        </div>
 
-  @if (cart.itemCount() > 0) {
-    <button class="ord-cart-btn" type="button" (click)="goToCart()">
-      Xem giỏ hàng ({{ cart.itemCount() }})
-    </button>
-  }
-</div>
-  <!-- ── Loading / Error ──────────────────────────────── -->
-  @if (loading()) { <div class="ord-loading">Đang tải sản phẩm...</div> }
-  @if (error())   { <div class="ord-error">{{ error() }}</div> }
+        @if (cart.itemCount() > 0) {
+        <button class="ord-cart-btn" type="button" (click)="goToCart()">
+          Xem giỏ hàng ({{ cart.itemCount() }})
+        </button>
+        }
+      </div>
+      <!-- ── Loading / Error ──────────────────────────────── -->
+      @if (loading()) { <div class="ord-loading">Đang tải sản phẩm...</div> }
+      @if (error()) { <div class="ord-error">{{ error() }}</div> }
 
-  <!-- ── Main layout: sidebar + content ───────────────── -->
-  @if (!loading()) {
-    <div class="ord-layout">
+      <!-- ── Main layout: sidebar + content ───────────────── -->
+      @if (!loading()) {
+      <div class="ord-layout">
 
-      <!-- ════════════════════════════════════════
+        <!-- ════════════════════════════════════════
            SIDEBAR FILTER (trái)
       ════════════════════════════════════════ -->
-      <aside class="ord-sidebar">
+        <aside class="ord-sidebar">
 
-        <!-- Search -->
-        <div class="ord-filter-search">
-          <i class="bi bi-search" style="font-size:14px;color:var(--xl-forest)"></i>
-          <input type="text" placeholder="Tìm sản phẩm theo tên, SKU..."
-                 [value]="search()" (input)="onSearchInput($event)" />
-        </div>
+          <!-- Search -->
+          <div class="ord-filter-search">
+            <i class="bi bi-search" style="font-size:14px;color:var(--xl-forest)"></i>
+            <input type="text" placeholder="Tìm sản phẩm theo tên, SKU..." [value]="search()"
+              (input)="onSearchInput($event)" />
+          </div>
 
-        <!-- Header sidebar -->
-        <div class="ord-filter-header">
-          <span class="ord-filter-title">Lọc theo</span>
-          @if (hasActiveFilters()) {
+          <!-- Header sidebar -->
+          <div class="ord-filter-header">
+            <span class="ord-filter-title">Lọc theo</span>
+            @if (hasActiveFilters()) {
             <button class="ord-filter-clear" type="button" (click)="clearAllFilters()">Xóa tất cả</button>
-          }
-        </div>
+            }
+          </div>
 
-        <!-- Sort -->
-        <div class="ord-filter-group">
-          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('sort')">
-            <span>Sắp xếp</span>
-            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
-               [style.transform]="openAccordions()['sort'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
-          </button>
-          @if (openAccordions()['sort']) {
+          <!-- Sort -->
+          <div class="ord-filter-group">
+            <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('sort')">
+              <span>Sắp xếp</span>
+              <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+                [style.transform]="openAccordions()['sort'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
+            </button>
+            @if (openAccordions()['sort']) {
             <div class="ord-filter-body">
-              <select class="ord-filter-select"
-                [value]="sortBy()"
-                (change)="onSortChange($any($event.target).value)">
+              <select class="ord-filter-select" [value]="sortBy()" (change)="onSortChange($any($event.target).value)">
                 <option value="default">Mặc định</option>
                 <option value="price-asc">Giá: Thấp đến cao</option>
                 <option value="price-desc">Giá: Cao đến thấp</option>
@@ -97,280 +80,269 @@
                 <option value="name-asc">Tên: A đến Z</option>
               </select>
             </div>
-          }
-        </div>
+            }
+          </div>
 
-        <!-- Tình trạng tồn kho -->
-        <div class="ord-filter-group">
-          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('stock')">
-            <span>Tình trạng kho</span>
-            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
-               [style.transform]="openAccordions()['stock'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
-          </button>
-          @if (openAccordions()['stock']) {
+          <!-- Tình trạng tồn kho -->
+          <div class="ord-filter-group">
+            <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('stock')">
+              <span>Tình trạng kho</span>
+              <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+                [style.transform]="openAccordions()['stock'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
+            </button>
+            @if (openAccordions()['stock']) {
             <div class="ord-filter-body">
-              <label class="ord-filter-checkbox-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13.5px">
+              <label class="ord-filter-checkbox-label"
+                style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13.5px">
                 <input type="checkbox" [checked]="inStockOnly()" (change)="toggleInStock()" />
                 <span>Chỉ hiện sản phẩm còn hàng</span>
               </label>
             </div>
-          }
-        </div>
+            }
+          </div>
 
-        <!-- Price slider -->
-        <div class="ord-filter-group">
-          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('price')">
-            <span>Khoảng giá</span>
-            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
-               [style.transform]="openAccordions()['price'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
-          </button>
-          @if (openAccordions()['price']) {
+          <!-- Price slider -->
+          <div class="ord-filter-group">
+            <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('price')">
+              <span>Khoảng giá</span>
+              <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+                [style.transform]="openAccordions()['price'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
+            </button>
+            @if (openAccordions()['price']) {
             <div class="ord-filter-body">
               <div class="ord-price-range">
                 <span>0 ₫</span>
                 <span style="font-weight:600;color:var(--xanh-moss)">{{ maxPrice() }} ₫</span>
               </div>
               <input type="range" [min]="0" [max]="maxPriceInDB()" [value]="maxPrice()"
-                     (input)="onMaxPriceChange(+$any($event.target).value)"
-                     style="width:100%;accent-color:var(--xanh-moss);cursor:pointer" />
+                (input)="onMaxPriceChange(+$any($event.target).value)"
+                style="width:100%;accent-color:var(--xanh-moss);cursor:pointer" />
             </div>
-          }
-        </div>
+            }
+          </div>
 
-        <!-- Danh mục -->
-        <div class="ord-filter-group">
-          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('category')">
-            <span>Danh mục</span>
-            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
-               [style.transform]="openAccordions()['category'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
-          </button>
-          @if (openAccordions()['category']) {
+          <!-- Danh mục -->
+          <div class="ord-filter-group">
+            <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('category')">
+              <span>Danh mục</span>
+              <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+                [style.transform]="openAccordions()['category'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
+            </button>
+            @if (openAccordions()['category']) {
             <div class="ord-filter-body">
               @for (cat of facetOptions().category; track cat.value) {
-                <label class="ord-filter-label">
-                  <input type="checkbox" [checked]="isChecked('category', cat.value)"
-                         (change)="toggleFilter('category', cat.value)" />
-                  <span>{{ cat.label }}</span>
-                  <span class="ord-filter-count">({{ cat.count }})</span>
-                </label>
+              <label class="ord-filter-label">
+                <input type="checkbox" [checked]="isChecked('category', cat.value)"
+                  (change)="toggleFilter('category', cat.value)" />
+                <span>{{ cat.label }}</span>
+                <span class="ord-filter-count">({{ cat.count }})</span>
+              </label>
               }
             </div>
-          }
-        </div>
+            }
+          </div>
 
-        <!-- Chế độ ăn chuyên biệt (Theo thông số dinh dưỡng) -->
-        <div class="ord-filter-group">
-          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('diet')">
-            <span>Chế độ ăn chuyên biệt</span>
-            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
-               [style.transform]="openAccordions()['diet'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
-          </button>
-          @if (openAccordions()['diet']) {
+          <!-- Chế độ ăn chuyên biệt (Theo thông số dinh dưỡng) -->
+          <div class="ord-filter-group">
+            <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('diet')">
+              <span>Chế độ ăn chuyên biệt</span>
+              <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+                [style.transform]="openAccordions()['diet'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
+            </button>
+            @if (openAccordions()['diet']) {
             <div class="ord-filter-body">
               @for (opt of facetOptions().diet; track opt.value) {
-                <label class="ord-filter-label">
-                  <input type="checkbox" [checked]="isChecked('diet', opt.value)"
-                         (change)="toggleFilter('diet', opt.value)" />
-                  <span>{{ opt.label }}</span>
-                  <span class="ord-filter-count">({{ opt.count }})</span>
-                </label>
+              <label class="ord-filter-label">
+                <input type="checkbox" [checked]="isChecked('diet', opt.value)"
+                  (change)="toggleFilter('diet', opt.value)" />
+                <span>{{ opt.label }}</span>
+                <span class="ord-filter-count">({{ opt.count }})</span>
+              </label>
               }
             </div>
-          }
-        </div>
+            }
+          </div>
 
-        <!-- Lọc theo thông số dinh dưỡng mong muốn -->
-        <div class="ord-filter-group">
-          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('nutritionTarget')">
-            <span>Thông số dinh dưỡng mong muốn</span>
-            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
-               [style.transform]="openAccordions()['nutritionTarget'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
-          </button>
-          @if (openAccordions()['nutritionTarget']) {
+          <!-- Lọc theo thông số dinh dưỡng mong muốn -->
+          <div class="ord-filter-group">
+            <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('nutritionTarget')">
+              <span>Thông số dinh dưỡng mong muốn</span>
+              <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+                [style.transform]="openAccordions()['nutritionTarget'] ? 'rotate(180deg)' : 'none'"
+                aria-hidden="true"></i>
+            </button>
+            @if (openAccordions()['nutritionTarget']) {
             <div class="ord-filter-body ord-nut-filter-body">
               <div class="ord-nut-hint">
-                Tick chọn chỉ số dinh dưỡng và kéo thanh trượt hoặc nhập số lượng mong muốn (tự động hiển thị sản phẩm có mức chênh lệch <strong>± 1 – 5{{ 'g' }}</strong> nếu không trùng khớp tuyệt đối):
+                Tick chọn chỉ số dinh dưỡng và kéo thanh trượt hoặc nhập số lượng mong muốn (tự động hiển thị sản phẩm
+                có mức chênh lệch <strong>± 1 – 5{{ 'g' }}</strong> nếu không trùng khớp tuyệt đối):
               </div>
 
               <div class="ord-nut-sliders">
                 @for (item of nutritionSliders(); track item.key) {
-                  <div class="ord-nut-slider-item" [class.active]="item.enabled">
-                    <div class="ord-nut-slider-head">
-                      <label class="ord-nut-check-label">
-                        <input
-                          type="checkbox"
-                          [checked]="item.enabled"
-                          (change)="toggleNutritionSlider(item.key, $any($event.target).checked)"
-                        />
-                        <span class="ord-nut-name">{{ item.label }}</span>
-                      </label>
+                <div class="ord-nut-slider-item" [class.active]="item.enabled">
+                  <div class="ord-nut-slider-head">
+                    <label class="ord-nut-check-label">
+                      <input type="checkbox" [checked]="item.enabled"
+                        (change)="toggleNutritionSlider(item.key, $any($event.target).checked)" />
+                      <span class="ord-nut-name">{{ item.label }}</span>
+                    </label>
 
-                      <div class="ord-nut-input-wrap">
-                        <input
-                          type="number"
-                          class="ord-nut-num-input"
-                          [min]="item.min"
-                          [max]="item.max"
-                          [step]="item.step"
-                          [value]="item.value"
-                          (input)="onNutritionNumberInput(item.key, $any($event.target).value)"
-                        />
-                        <span class="ord-nut-unit">{{ item.unit }}</span>
-                      </div>
-                    </div>
-
-                    <div class="ord-nut-range-wrap">
-                      <input
-                        type="range"
-                        class="ord-nut-range"
-                        [min]="item.min"
-                        [max]="item.max"
-                        [step]="item.step"
-                        [value]="item.value"
-                        (input)="onNutritionSliderChange(item.key, +$any($event.target).value)"
-                      />
-                      <div class="ord-nut-range-meta">
-                        <span>{{ item.min }}{{ item.unit }}</span>
-                        @if (item.enabled) {
-                          <span class="ord-nut-tolerance">
-                            Phạm vi: {{ item.value > item.tolerance ? item.value - item.tolerance : 0 }} – {{ item.value + item.tolerance }}{{ item.unit }}
-                          </span>
-                        }
-                        <span>{{ item.max }}{{ item.unit }}</span>
-                      </div>
+                    <div class="ord-nut-input-wrap">
+                      <input type="number" class="ord-nut-num-input" [min]="item.min" [max]="item.max"
+                        [step]="item.step" [value]="item.value"
+                        (input)="onNutritionNumberInput(item.key, $any($event.target).value)" />
+                      <span class="ord-nut-unit">{{ item.unit }}</span>
                     </div>
                   </div>
+
+                  <div class="ord-nut-range-wrap">
+                    <input type="range" class="ord-nut-range" [min]="item.min" [max]="item.max" [step]="item.step"
+                      [value]="item.value" (input)="onNutritionSliderChange(item.key, +$any($event.target).value)" />
+                    <div class="ord-nut-range-meta">
+                      <span>{{ item.min }}{{ item.unit }}</span>
+                      @if (item.enabled) {
+                      <span class="ord-nut-tolerance">
+                        Phạm vi: {{ item.value > item.tolerance ? item.value - item.tolerance : 0 }} – {{ item.value +
+                        item.tolerance }}{{ item.unit }}
+                      </span>
+                      }
+                      <span>{{ item.max }}{{ item.unit }}</span>
+                    </div>
+                  </div>
+                </div>
                 }
               </div>
 
               @if (activeNutritionSliders().length) {
-                <div class="ord-nut-active-box">
-                  <div class="ord-nut-active-head">
-                    <span class="ord-nut-active-title">Đang lọc ({{ filteredProducts().length }} SP phù hợp):</span>
-                    <button type="button" class="ord-nut-reset-link" (click)="clearNutritionTargets()">Bỏ chọn</button>
-                  </div>
-                  @for (s of activeNutritionSliders(); track s.key) {
-                    <div class="ord-nut-active-item"> - {{ s.label }}: <strong>{{ s.value }}{{ s.unit }}</strong> (±{{ s.tolerance }}{{ s.unit }})
-                    </div>
-                  }
+              <div class="ord-nut-active-box">
+                <div class="ord-nut-active-head">
+                  <span class="ord-nut-active-title">Đang lọc ({{ filteredProducts().length }} SP phù hợp):</span>
+                  <button type="button" class="ord-nut-reset-link" (click)="clearNutritionTargets()">Bỏ chọn</button>
                 </div>
+                @for (s of activeNutritionSliders(); track s.key) {
+                <div class="ord-nut-active-item"> - {{ s.label }}: <strong>{{ s.value }}{{ s.unit }}</strong> (±{{
+                  s.tolerance }}{{ s.unit }})
+                </div>
+                }
+              </div>
               }
             </div>
-          }
-        </div>
+            }
+          </div>
 
-        <!-- Chế biến -->
-        <div class="ord-filter-group">
-          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('preparation')">
-            <span>Chế biến</span>
-            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
-               [style.transform]="openAccordions()['preparation'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
-          </button>
-          @if (openAccordions()['preparation']) {
+          <!-- Chế biến -->
+          <div class="ord-filter-group">
+            <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('preparation')">
+              <span>Chế biến</span>
+              <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+                [style.transform]="openAccordions()['preparation'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
+            </button>
+            @if (openAccordions()['preparation']) {
             <div class="ord-filter-body">
               @for (opt of facetOptions().preparation; track opt.value) {
-                <label class="ord-filter-label">
-                  <input type="checkbox" [checked]="isChecked('preparation', opt.value)"
-                         (change)="toggleFilter('preparation', opt.value)" />
-                  <span>{{ opt.label }}</span>
-                  <span class="ord-filter-count">({{ opt.count }})</span>
-                </label>
+              <label class="ord-filter-label">
+                <input type="checkbox" [checked]="isChecked('preparation', opt.value)"
+                  (change)="toggleFilter('preparation', opt.value)" />
+                <span>{{ opt.label }}</span>
+                <span class="ord-filter-count">({{ opt.count }})</span>
+              </label>
               }
             </div>
-          }
-        </div>
+            }
+          </div>
 
-        <!-- Độ chín -->
-        <div class="ord-filter-group">
-          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('ripeness')">
-            <span>Độ chín</span>
-            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
-               [style.transform]="openAccordions()['ripeness'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
-          </button>
-          @if (openAccordions()['ripeness']) {
+          <!-- Độ chín -->
+          <div class="ord-filter-group">
+            <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('ripeness')">
+              <span>Độ chín</span>
+              <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+                [style.transform]="openAccordions()['ripeness'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
+            </button>
+            @if (openAccordions()['ripeness']) {
             <div class="ord-filter-body">
               @for (opt of facetOptions().ripeness; track opt.value) {
-                <label class="ord-filter-label">
-                  <input type="checkbox" [checked]="isChecked('ripeness', opt.value)"
-                         (change)="toggleFilter('ripeness', opt.value)" />
-                  <span>{{ opt.label }}</span>
-                  <span class="ord-filter-count">({{ opt.count }})</span>
-                </label>
+              <label class="ord-filter-label">
+                <input type="checkbox" [checked]="isChecked('ripeness', opt.value)"
+                  (change)="toggleFilter('ripeness', opt.value)" />
+                <span>{{ opt.label }}</span>
+                <span class="ord-filter-count">({{ opt.count }})</span>
+              </label>
               }
             </div>
-          }
-        </div>
+            }
+          </div>
 
-        <!-- Size -->
-        <div class="ord-filter-group">
-          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('sizeGroup')">
-            <span>Kích cỡ</span>
-            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
-               [style.transform]="openAccordions()['sizeGroup'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
-          </button>
-          @if (openAccordions()['sizeGroup']) {
+          <!-- Size -->
+          <div class="ord-filter-group">
+            <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('sizeGroup')">
+              <span>Kích cỡ</span>
+              <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+                [style.transform]="openAccordions()['sizeGroup'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
+            </button>
+            @if (openAccordions()['sizeGroup']) {
             <div class="ord-filter-body">
               @for (opt of facetOptions().sizeGroup; track opt.value) {
-                <label class="ord-filter-label">
-                  <input type="checkbox" [checked]="isChecked('sizeGroup', opt.value)"
-                         (change)="toggleFilter('sizeGroup', opt.value)" />
-                  <span>{{ opt.label }}</span>
-                  <span class="ord-filter-count">({{ opt.count }})</span>
-                </label>
+              <label class="ord-filter-label">
+                <input type="checkbox" [checked]="isChecked('sizeGroup', opt.value)"
+                  (change)="toggleFilter('sizeGroup', opt.value)" />
+                <span>{{ opt.label }}</span>
+                <span class="ord-filter-count">({{ opt.count }})</span>
+              </label>
               }
             </div>
-          }
-        </div>
+            }
+          </div>
 
-        <!-- Loại -->
-        <div class="ord-filter-group">
-          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('type')">
-            <span>Loại</span>
-            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
-               [style.transform]="openAccordions()['type'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
-          </button>
-          @if (openAccordions()['type']) {
+          <!-- Loại -->
+          <div class="ord-filter-group">
+            <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('type')">
+              <span>Loại</span>
+              <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+                [style.transform]="openAccordions()['type'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
+            </button>
+            @if (openAccordions()['type']) {
             <div class="ord-filter-body">
               @for (opt of facetOptions().type; track opt.value) {
-                <label class="ord-filter-label">
-                  <input type="checkbox" [checked]="isChecked('type', opt.value)"
-                         (change)="toggleFilter('type', opt.value)" />
-                  <span>{{ opt.label }}</span>
-                  <span class="ord-filter-count">({{ opt.count }})</span>
-                </label>
+              <label class="ord-filter-label">
+                <input type="checkbox" [checked]="isChecked('type', opt.value)"
+                  (change)="toggleFilter('type', opt.value)" />
+                <span>{{ opt.label }}</span>
+                <span class="ord-filter-count">({{ opt.count }})</span>
+              </label>
               }
             </div>
-          }
-        </div>
+            }
+          </div>
 
-        <!-- Khối lượng -->
-        <div class="ord-filter-group">
-          <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('weight')">
-            <span>Khối lượng</span>
-            <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
-               [style.transform]="openAccordions()['weight'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
-          </button>
-          @if (openAccordions()['weight']) {
+          <!-- Khối lượng -->
+          <div class="ord-filter-group">
+            <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('weight')">
+              <span>Khối lượng</span>
+              <i class="bi bi-chevron-down" style="font-size:15px;transition:transform .2s;display:inline-block"
+                [style.transform]="openAccordions()['weight'] ? 'rotate(180deg)' : 'none'" aria-hidden="true"></i>
+            </button>
+            @if (openAccordions()['weight']) {
             <div class="ord-filter-body">
               @for (opt of facetOptions().weight; track opt.value) {
-                <label class="ord-filter-label">
-                  <input type="checkbox" [checked]="isChecked('weight', opt.value)"
-                         (change)="toggleFilter('weight', opt.value)" />
-                  <span>{{ opt.label }}</span>
-                  <span class="ord-filter-count">({{ opt.count }})</span>
-                </label>
+              <label class="ord-filter-label">
+                <input type="checkbox" [checked]="isChecked('weight', opt.value)"
+                  (change)="toggleFilter('weight', opt.value)" />
+                <span>{{ opt.label }}</span>
+                <span class="ord-filter-count">({{ opt.count }})</span>
+              </label>
               }
             </div>
-          }
-        </div>
+            }
+          </div>
 
-      </aside>
+        </aside>
 
-      <!-- ════════════════════════════════════════
+        <!-- ════════════════════════════════════════
            CONTENT (phải)
       ════════════════════════════════════════ -->
-      <div class="ord-content">
-        @if (cart.viewedProducts().length > 0) {
+        <div class="ord-content">
+          @if (cart.viewedProducts().length > 0) {
           <section class="ord-viewed-section" aria-label="Sản phẩm đã xem">
             <div class="ord-viewed-header">
               <div class="ord-viewed-title-wrap">
@@ -385,131 +357,125 @@
 
             <div class="ord-viewed-track">
               @for (vp of cart.viewedProducts(); track vp.slug) {
-                <a class="ord-viewed-card" [routerLink]="'/product-page/' + vp.slug" [title]="vp.name">
-                  <div class="ord-viewed-img">
-                    <img [src]="vp.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300&q=80'"
-                         [alt]="vp.name" loading="lazy" />
+              <a class="ord-viewed-card" [routerLink]="'/product-page/' + vp.slug" [title]="vp.name">
+                <div class="ord-viewed-img">
+                  <img [src]="vp.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300&q=80'"
+                    [alt]="vp.name" loading="lazy" />
+                </div>
+                <div class="ord-viewed-body">
+                  <div class="ord-viewed-name">{{ vp.name }}</div>
+                  <div class="ord-viewed-meta">
+                    <span class="ord-viewed-price">{{ vp.price || formatPrice(vp.priceNumber) }}</span>
+                    @if (vp.viewedAt) {
+                    <span class="ord-viewed-time">{{ formatViewedTime(vp.viewedAt) }}</span>
+                    }
                   </div>
-                  <div class="ord-viewed-body">
-                    <div class="ord-viewed-name">{{ vp.name }}</div>
-                    <div class="ord-viewed-meta">
-                      <span class="ord-viewed-price">{{ vp.price || formatPrice(vp.priceNumber) }}</span>
-                      @if (vp.viewedAt) {
-                        <span class="ord-viewed-time">{{ formatViewedTime(vp.viewedAt) }}</span>
-                      }
-                    </div>
-                  </div>
-                </a>
+                </div>
+              </a>
               }
             </div>
           </section>
-        }
+          }
 
-        <div class="ord-content-toolbar" id="ord-product-list">
-          <h2 class="ord-menu-title">{{ activeCategoryTitle() }}</h2>
-          <span class="ord-result-count">
-            @if (categoryProducts().length > pageSize) {
+          <div class="ord-content-toolbar" id="ord-product-list">
+            <h2 class="ord-menu-title">{{ activeCategoryTitle() }}</h2>
+            <span class="ord-result-count">
+              @if (categoryProducts().length > pageSize) {
               {{ visibleProducts().length }} / {{ categoryProducts().length }} sản phẩm
-            } @else {
+              } @else {
               {{ categoryProducts().length }} sản phẩm
-            }
-          </span>
-        </div>
+              }
+            </span>
+          </div>
 
-        @if (categoryProducts().length === 0) {
+          @if (categoryProducts().length === 0) {
           <div class="ord-empty">
             <div style="font-size:36px;margin-bottom:12px;color:#94a3b8"><i class="bi bi-search"></i></div>
             <p>Không tìm thấy sản phẩm phù hợp.</p>
-            <button class="xanhla-btn-outline" type="button" (click)="clearAllFilters()"
-                    style="margin-top:12px">Xóa bộ lọc</button>
+            <button class="xanhla-btn-outline" type="button" (click)="clearAllFilters()" style="margin-top:12px">Xóa bộ
+              lọc</button>
           </div>
-        } @else {
+          } @else {
           <div class="ord-section" [attr.id]="activeCategory() !== 'all' ? 'section-' + activeCategory() : null">
             <div class="ord-grid">
               @for (prod of visibleProducts(); track prod._id) {
-                <div class="xanhla-prod-card">
-                  <a class="xanhla-prod-card-img" [routerLink]="'/product-page/' + prod.slug">
-                    <img [src]="prod.image" [alt]="prod.name" loading="lazy" />
-                    @if (hasActiveAddOnDeals(prod)) {
-                      <span class="ord-addon-promo-tag">Mua kèm tiết kiệm</span>
-                    }
+              <div class="xanhla-prod-card">
+                <a class="xanhla-prod-card-img" [routerLink]="'/product-page/' + prod.slug">
+                  <img [src]="prod.image" [alt]="prod.name" loading="lazy" />
+                  @if (hasActiveAddOnDeals(prod)) {
+                  <span class="ord-addon-promo-tag">Mua kèm tiết kiệm</span>
+                  }
+                </a>
+
+                <div class="xanhla-prod-card-body">
+                  <div class="xanhla-prod-card-cat">
+                    <span>{{ getCategoryName(prod.categoryId) }}</span>
+                  </div>
+
+                  <a class="xanhla-prod-card-name" [routerLink]="'/product-page/' + prod.slug">
+                    {{ prod.name }}
                   </a>
 
-                  <div class="xanhla-prod-card-body">
-                    <div class="xanhla-prod-card-cat">
-                      <span>{{ getCategoryName(prod.categoryId) }}</span>
-                    </div>
+                  @if (prod.description) {
+                  <div class="xanhla-prod-card-desc">{{ prod.description }}</div>
+                  }
 
-                    <a class="xanhla-prod-card-name" [routerLink]="'/product-page/' + prod.slug">
-                      {{ prod.name }}
-                    </a>
+                  <div class="xanhla-prod-card-price-row">
+                    <span class="xanhla-prod-card-price">{{ prod.price }}</span>
 
-                    @if (prod.description) {
-                      <div class="xanhla-prod-card-desc">{{ prod.description }}</div>
+                    @if (prod.weight) {
+                    <span class="xanhla-prod-card-unit">/ {{ prod.weight }}</span>
                     }
+                  </div>
 
-                    <div class="xanhla-prod-card-price-row">
-                      <span class="xanhla-prod-card-price">{{ prod.price }}</span>
-
-                      @if (prod.weight) {
-                        <span class="xanhla-prod-card-unit">/ {{ prod.weight }}</span>
-                      }
-                    </div>
-
-                    <div class="ord-card-btn-row">
-                      <button
-                        type="button"
-                        class="xanhla-prod-card-add"
-                        [disabled]="isProdUnavailable(prod) || itemQty(prod.slug) >= getProdStock(prod)"
-                        [style.opacity]="isProdUnavailable(prod) || itemQty(prod.slug) >= getProdStock(prod) ? '0.5' : '1'"
-                        [style.cursor]="isProdUnavailable(prod) || itemQty(prod.slug) >= getProdStock(prod) ? 'not-allowed' : 'pointer'"
-                        (click)="addOne(prod, $event)"
-                        [attr.aria-label]="'Thêm ' + prod.name + ' vào giỏ'">
-                        @if (!isProdUnavailable(prod)) {
-                          <i class="bi bi-cart-plus" style="font-size:14px"></i>
-                        }
-                        @if (prod.isCombo && prod.comboStatus === 'paused') {
-                          <span>Tạm ngừng</span>
-                        } @else if (isProdUnavailable(prod)) {
-                          <span>Tạm hết hàng</span>
-                        } @else if (itemQty(prod.slug) >= getProdStock(prod)) {
-                          <span>Đã đạt tối đa</span>
-                        } @else {
-                          <span>Thêm giỏ</span>
-                        }
-                      </button>
-
+                  <div class="ord-card-btn-row">
+                    <button type="button" class="xanhla-prod-card-add"
+                      [disabled]="isProdUnavailable(prod) || itemQty(prod.slug) >= getProdStock(prod)"
+                      [style.opacity]="isProdUnavailable(prod) || itemQty(prod.slug) >= getProdStock(prod) ? '0.5' : '1'"
+                      [style.cursor]="isProdUnavailable(prod) || itemQty(prod.slug) >= getProdStock(prod) ? 'not-allowed' : 'pointer'"
+                      (click)="addOne(prod, $event)" [attr.aria-label]="'Thêm ' + prod.name + ' vào giỏ'">
                       @if (!isProdUnavailable(prod)) {
-                        <button
-                          type="button"
-                          class="xanhla-prod-card-buynow"
-                          (click)="openBuyNow(prod)"
-                          [attr.aria-label]="'Mua ngay ' + prod.name">
-                          <i class="bi bi-lightning-charge-fill" style="font-size:13px"></i>
-                          <span>Mua ngay</span>
-                        </button>
+                      <i class="bi bi-cart-plus" style="font-size:14px"></i>
                       }
-                    </div>
+                      @if (prod.isCombo && prod.comboStatus === 'paused') {
+                      <span>Tạm ngừng</span>
+                      } @else if (isProdUnavailable(prod)) {
+                      <span>Tạm hết hàng</span>
+                      } @else if (itemQty(prod.slug) >= getProdStock(prod)) {
+                      <span>Đã đạt tối đa</span>
+                      } @else {
+                      <span>Thêm giỏ</span>
+                      }
+                    </button>
+
+                    @if (!isProdUnavailable(prod)) {
+                    <button type="button" class="xanhla-prod-card-buynow" (click)="openBuyNow(prod)"
+                      [attr.aria-label]="'Mua ngay ' + prod.name">
+                      <i class="bi bi-lightning-charge-fill" style="font-size:13px"></i>
+                      <span>Mua ngay</span>
+                    </button>
+                    }
                   </div>
                 </div>
+              </div>
               }
             </div>
 
             @if (remainingCount() > 0) {
-              <div class="ord-load-more-wrap">
-                <button type="button" class="ord-load-more-btn" (click)="showMoreProducts()">
-                  <span>Xem thêm</span>
-                  <i class="bi bi-chevron-down" aria-hidden="true"></i>
-                </button>
-              </div>
+            <div class="ord-load-more-wrap">
+              <button type="button" class="ord-load-more-btn" (click)="showMoreProducts()">
+                <span>Xem thêm</span>
+                <i class="bi bi-chevron-down" aria-hidden="true"></i>
+              </button>
+            </div>
             }
           </div>
-        }
-      </div>
+          }
+        </div>
 
-    </div><!-- end ord-layout -->
-  }
-  </div><!-- end ord-page-inner -->
+      </div><!-- end ord-layout -->
+      }
+    </div><!-- end ord-page-inner -->
 
-</div>
+  </div>
 </app-shell>

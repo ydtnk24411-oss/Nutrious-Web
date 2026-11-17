@@ -206,8 +206,14 @@
         <div class="xl-account-wrapper" style="position:relative">
           <button class="xl-action-btn xl-account-btn" type="button" (click)="toggleUserMenu()" title="{{ cart.currentUser()!.name }}">
             <span class="xl-action-icon-wrap">
-              @if (cart.currentUser()!.avatar) {
-                <img [src]="cart.currentUser()!.avatar" class="xanhla-member-avatar-img" alt="Avatar" />
+              @if (cart.currentUserAvatar()) {
+                <img
+                  [src]="cart.currentUserAvatar()"
+                  referrerpolicy="no-referrer"
+                  class="xanhla-member-avatar-img"
+                  alt="Avatar"
+                  (error)="cart.markAvatarUrlFailed(cart.currentUserAvatar())"
+                />
               } @else {
                 <div class="xanhla-member-avatar">{{ cart.currentUser()!.name.charAt(0).toUpperCase() }}</div>
               }
@@ -221,8 +227,14 @@
           @if (userMenuOpen()) {
             <div class="xanhla-user-menu">
               <div class="xanhla-user-menu-header">
-                @if (cart.currentUser()!.avatar) {
-                  <img [src]="cart.currentUser()!.avatar" class="xanhla-user-menu-avatar" alt="Avatar" />
+                @if (cart.currentUserAvatar()) {
+                  <img
+                    [src]="cart.currentUserAvatar()"
+                    referrerpolicy="no-referrer"
+                    class="xanhla-user-menu-avatar"
+                    alt="Avatar"
+                    (error)="cart.markAvatarUrlFailed(cart.currentUserAvatar())"
+                  />
                 } @else {
                   <div class="xanhla-user-menu-avatar-placeholder">{{ cart.currentUser()!.name.charAt(0).toUpperCase() }}</div>
                 }

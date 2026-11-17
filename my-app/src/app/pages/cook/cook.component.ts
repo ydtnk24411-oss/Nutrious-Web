@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -67,6 +67,7 @@ interface RawRecipeIngredient {
   amountPer1Serving: number;
   unit: string;
   keywords?: string[];
+  categoryHint?: 'vegetables' | 'fruits' | 'meat' | 'seafood';
   productId?: string;
 }
 
@@ -99,10 +100,10 @@ const RECIPE_DB: RawRecipe[] = [
       'Cho phần cà chua còn lại vào, nêm nước mắm và gia vị vừa khẩu vị, rắc rau thơm rồi tắt bếp.'
     ],
     ingredients: [
-      { name: 'Cá hồi tươi', amountPer1Serving: 150, unit: 'g', keywords: ['ca hoi', 'phi le ca'] },
-      { name: 'Cà chua', amountPer1Serving: 1, unit: 'quả', keywords: ['ca chua'] },
-      { name: 'Dưa leo tươi', amountPer1Serving: 0.5, unit: 'quả', keywords: ['dua leo', 'dua chuot'] },
-      { name: 'Rau cải', amountPer1Serving: 80, unit: 'g', keywords: ['rau cai', 'cai thia', 'cai ngot'] }
+      { name: 'Cá hồi tươi', amountPer1Serving: 150, unit: 'g', categoryHint: 'seafood', keywords: ['cá hồi', 'phi lê cá hồi'] },
+      { name: 'Cà chua', amountPer1Serving: 1, unit: 'quả', categoryHint: 'vegetables', keywords: ['cà chua', 'cà chua bi'] },
+      { name: 'Dưa leo tươi', amountPer1Serving: 0.5, unit: 'quả', categoryHint: 'vegetables', keywords: ['dưa leo', 'dưa chuột'] },
+      { name: 'Rau cải', amountPer1Serving: 80, unit: 'g', categoryHint: 'vegetables', keywords: ['rau cải', 'cải ngọt', 'cải thìa', 'cải xanh'] }
     ]
   },
   {
@@ -121,9 +122,9 @@ const RECIPE_DB: RawRecipe[] = [
       'Rắc thêm chút tiêu đen xay rồi dọn ra đĩa thưởng thức nóng cùng cơm gạo lứt.'
     ],
     ingredients: [
-      { name: 'Gà ta thả vườn', amountPer1Serving: 160, unit: 'g', keywords: ['ga', 'thit ga', 'uc ga'] },
-      { name: 'Rau cải', amountPer1Serving: 150, unit: 'g', keywords: ['rau cai', 'cai thia', 'cai ngot'] },
-      { name: 'Cà rốt', amountPer1Serving: 0.5, unit: 'củ', keywords: ['ca rot'] }
+      { name: 'Gà ta thả vườn', amountPer1Serving: 160, unit: 'g', categoryHint: 'meat', keywords: ['gà ta', 'thịt gà', 'ức gà', 'đùi gà'] },
+      { name: 'Rau cải', amountPer1Serving: 150, unit: 'g', categoryHint: 'vegetables', keywords: ['rau cải', 'cải thìa', 'cải ngọt', 'cải xanh'] },
+      { name: 'Cà rốt', amountPer1Serving: 0.5, unit: 'củ', categoryHint: 'vegetables', keywords: ['cà rốt'] }
     ]
   },
   {
@@ -141,8 +142,8 @@ const RECIPE_DB: RawRecipe[] = [
       'Rót ra ly thưởng thức ngay để tận hưởng trọn vẹn vị béo ngậy ngọt ngào tự nhiên.'
     ],
     ingredients: [
-      { name: 'Quả bơ Hass', amountPer1Serving: 1, unit: 'quả', keywords: ['bo', 'bo hass', 'qua bo'] },
-      { name: 'Cà chua', amountPer1Serving: 0.5, unit: 'quả', keywords: ['ca chua'] }
+      { name: 'Quả bơ Hass', amountPer1Serving: 1, unit: 'quả', categoryHint: 'fruits', keywords: ['bơ', 'quả bơ', 'bơ sáp', 'bơ hass'] },
+      { name: 'Cà chua', amountPer1Serving: 0.5, unit: 'quả', categoryHint: 'vegetables', keywords: ['cà chua', 'cà chua bi'] }
     ]
   },
   {
@@ -161,9 +162,9 @@ const RECIPE_DB: RawRecipe[] = [
       'Trút lại thịt bò vào chảo đảo đều thêm 30 giây, nêm nếm vừa ăn rồi rắc hành ngò thơm.'
     ],
     ingredients: [
-      { name: 'Bò Mỹ thăn', amountPer1Serving: 130, unit: 'g', keywords: ['bo', 'thit bo', 'bo my'] },
-      { name: 'Cà rốt', amountPer1Serving: 1, unit: 'củ', keywords: ['ca rot'] },
-      { name: 'Rau cải', amountPer1Serving: 60, unit: 'g', keywords: ['rau cai', 'cai thia'] }
+      { name: 'Bò Mỹ thăn', amountPer1Serving: 130, unit: 'g', categoryHint: 'meat', keywords: ['thịt bò', 'bò mỹ', 'bò úc', 'bò'] },
+      { name: 'Cà rốt', amountPer1Serving: 1, unit: 'củ', categoryHint: 'vegetables', keywords: ['cà rốt'] },
+      { name: 'Rau cải', amountPer1Serving: 60, unit: 'g', categoryHint: 'vegetables', keywords: ['rau cải', 'cải ngọt', 'cải thìa'] }
     ]
   },
   {
@@ -182,9 +183,9 @@ const RECIPE_DB: RawRecipe[] = [
       'Đậy nắp chảo đun lửa nhỏ 2-3 phút đến khi lòng trắng vừa đông mà lòng đào vẫn sánh dẻo.'
     ],
     ingredients: [
-      { name: 'Cà chua', amountPer1Serving: 2, unit: 'quả', keywords: ['ca chua'] },
-      { name: 'Rau cải', amountPer1Serving: 50, unit: 'g', keywords: ['rau cai', 'cai thia'] },
-      { name: 'Dưa leo tươi', amountPer1Serving: 0.5, unit: 'quả', keywords: ['dua leo', 'dua chuot'] }
+      { name: 'Cà chua', amountPer1Serving: 2, unit: 'quả', categoryHint: 'vegetables', keywords: ['cà chua', 'cà chua bi'] },
+      { name: 'Rau cải', amountPer1Serving: 50, unit: 'g', categoryHint: 'vegetables', keywords: ['rau cải', 'cải ngọt', 'cải thìa'] },
+      { name: 'Dưa leo tươi', amountPer1Serving: 0.5, unit: 'quả', categoryHint: 'vegetables', keywords: ['dưa leo', 'dưa chuột'] }
     ]
   },
   {
@@ -203,10 +204,10 @@ const RECIPE_DB: RawRecipe[] = [
       'Bày ra đĩa sâu lòng và dùng ngay để cảm nhận độ tươi mát mọng nước của từng loại nông sản.'
     ],
     ingredients: [
-      { name: 'Rau cải', amountPer1Serving: 150, unit: 'g', keywords: ['rau cai', 'bap cai', 'xa lach'] },
-      { name: 'Cà chua', amountPer1Serving: 1, unit: 'quả', keywords: ['ca chua'] },
-      { name: 'Dưa leo tươi', amountPer1Serving: 1, unit: 'quả', keywords: ['dua leo', 'dua chuot'] },
-      { name: 'Cà rốt', amountPer1Serving: 0.5, unit: 'củ', keywords: ['ca rot'] }
+      { name: 'Rau cải', amountPer1Serving: 150, unit: 'g', categoryHint: 'vegetables', keywords: ['rau cải', 'bắp cải', 'xà lách', 'cải ngọt'] },
+      { name: 'Cà chua', amountPer1Serving: 1, unit: 'quả', categoryHint: 'vegetables', keywords: ['cà chua', 'cà chua bi'] },
+      { name: 'Dưa leo tươi', amountPer1Serving: 1, unit: 'quả', categoryHint: 'vegetables', keywords: ['dưa leo', 'dưa chuột'] },
+      { name: 'Cà rốt', amountPer1Serving: 0.5, unit: 'củ', categoryHint: 'vegetables', keywords: ['cà rốt'] }
     ]
   },
   {
@@ -225,10 +226,10 @@ const RECIPE_DB: RawRecipe[] = [
       'Cho cần tây và cà chua vào đảo nhanh 2 phút, trút thịt bò vào lại, đảo đều và tắt bếp.'
     ],
     ingredients: [
-      { name: 'Bò Mỹ thăn', amountPer1Serving: 140, unit: 'g', keywords: ['bo', 'thit bo'] },
-      { name: 'Rau Cần Tây', amountPer1Serving: 100, unit: 'g', keywords: ['can tay', 'rau can'] },
-      { name: 'Cà chua', amountPer1Serving: 1, unit: 'quả', keywords: ['ca chua'] },
-      { name: 'Cà rốt', amountPer1Serving: 0.5, unit: 'củ', keywords: ['ca rot'] }
+      { name: 'Bò Mỹ thăn', amountPer1Serving: 140, unit: 'g', categoryHint: 'meat', keywords: ['thịt bò', 'bò mỹ', 'bò úc', 'bò'] },
+      { name: 'Rau Cần Tây', amountPer1Serving: 100, unit: 'g', categoryHint: 'vegetables', keywords: ['cần tây', 'rau cần'] },
+      { name: 'Cà chua', amountPer1Serving: 1, unit: 'quả', categoryHint: 'vegetables', keywords: ['cà chua', 'cà chua bi'] },
+      { name: 'Cà rốt', amountPer1Serving: 0.5, unit: 'củ', categoryHint: 'vegetables', keywords: ['cà rốt'] }
     ]
   },
   {
@@ -247,9 +248,9 @@ const RECIPE_DB: RawRecipe[] = [
       'Thêm bí đỏ và cà rốt vào hầm thêm 10 phút đến khi bí chín mềm, nêm nếm gia vị và rắc hành ngò.'
     ],
     ingredients: [
-      { name: 'Gà ta thả vườn', amountPer1Serving: 180, unit: 'g', keywords: ['ga', 'thit ga'] },
-      { name: 'Cà rốt', amountPer1Serving: 0.5, unit: 'củ', keywords: ['ca rot'] },
-      { name: 'Rau cải', amountPer1Serving: 50, unit: 'g', keywords: ['rau cai', 'cai ngot'] }
+      { name: 'Gà ta thả vườn', amountPer1Serving: 180, unit: 'g', categoryHint: 'meat', keywords: ['gà ta', 'thịt gà', 'ức gà', 'đùi gà'] },
+      { name: 'Cà rốt', amountPer1Serving: 0.5, unit: 'củ', categoryHint: 'vegetables', keywords: ['cà rốt'] },
+      { name: 'Rau cải', amountPer1Serving: 50, unit: 'g', categoryHint: 'vegetables', keywords: ['rau cải', 'cải ngọt', 'cải thìa'] }
     ]
   },
   {
@@ -268,9 +269,9 @@ const RECIPE_DB: RawRecipe[] = [
       'Xào bông cải xanh và cà rốt với 2 thìa nước dùng trong 2 phút, cho thịt bò vào đảo nhanh tay rồi tắt bếp.'
     ],
     ingredients: [
-      { name: 'Bò Mỹ thăn', amountPer1Serving: 140, unit: 'g', keywords: ['bo', 'thit bo'] },
-      { name: 'Bông Cải Xanh (Súp Lơ Xanh)', amountPer1Serving: 150, unit: 'g', keywords: ['bong cai', 'sup lo', 'bong cai xanh'] },
-      { name: 'Cà rốt', amountPer1Serving: 0.5, unit: 'củ', keywords: ['ca rot'] }
+      { name: 'Bò Mỹ thăn', amountPer1Serving: 140, unit: 'g', categoryHint: 'meat', keywords: ['thịt bò', 'bò mỹ', 'bò úc', 'bò'] },
+      { name: 'Bông Cải Xanh (Súp Lơ Xanh)', amountPer1Serving: 150, unit: 'g', categoryHint: 'vegetables', keywords: ['bông cải xanh', 'súp lơ xanh', 'bông cải'] },
+      { name: 'Cà rốt', amountPer1Serving: 0.5, unit: 'củ', categoryHint: 'vegetables', keywords: ['cà rốt'] }
     ]
   },
   {
@@ -289,10 +290,10 @@ const RECIPE_DB: RawRecipe[] = [
       'Bày cá ra đĩa kèm dưa leo, cà chua và sốt bơ tỏi thơm ngậy.'
     ],
     ingredients: [
-      { name: 'Cá hồi tươi', amountPer1Serving: 180, unit: 'g', keywords: ['ca hoi', 'phi le ca'] },
-      { name: 'Quả bơ Hass', amountPer1Serving: 0.5, unit: 'quả', keywords: ['bo', 'bo hass'] },
-      { name: 'Cà chua', amountPer1Serving: 1, unit: 'quả', keywords: ['ca chua'] },
-      { name: 'Dưa leo tươi', amountPer1Serving: 1, unit: 'quả', keywords: ['dua leo'] }
+      { name: 'Cá hồi tươi', amountPer1Serving: 180, unit: 'g', categoryHint: 'seafood', keywords: ['cá hồi', 'phi lê cá hồi'] },
+      { name: 'Quả bơ Hass', amountPer1Serving: 0.5, unit: 'quả', categoryHint: 'fruits', keywords: ['bơ', 'quả bơ', 'bơ sáp', 'bơ hass'] },
+      { name: 'Cà chua', amountPer1Serving: 1, unit: 'quả', categoryHint: 'vegetables', keywords: ['cà chua', 'cà chua bi'] },
+      { name: 'Dưa leo tươi', amountPer1Serving: 1, unit: 'quả', categoryHint: 'vegetables', keywords: ['dưa leo', 'dưa chuột'] }
     ]
   }
 ];
@@ -307,13 +308,45 @@ function removeVietnameseTones(str: string): string {
     .trim();
 }
 
+function normalizeKeepTones(str: string): string {
+  return (str || '')
+    .normalize('NFC')
+    .toLowerCase()
+    .replace(/[()\-/,]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+const COOK_CATEGORY_HINTS: Record<string, string[]> = {
+  vegetables: ['vegetables', 'rau cu', 'rau xanh', 'cu qua', 'nam'],
+  fruits: ['fruits', 'trai cay'],
+  meat: ['meat', 'thit'],
+  seafood: ['seafood', 'hai san', 'ca'],
+};
+
+function matchesCookCategoryHint(prod: ApiProduct, hint?: string): boolean | null {
+  if (!hint) return null;
+  const hints = COOK_CATEGORY_HINTS[hint];
+  if (!hints) return null;
+  const prodCat = removeVietnameseTones(`${prod.category || ''} ${prod.categoryVi || ''}`);
+  if (!prodCat) return null;
+  return hints.some(h => prodCat.includes(h));
+}
+
+function containsWholePhrase(textNorm: string, phraseNorm: string): boolean {
+  if (!textNorm || !phraseNorm) return false;
+  if (textNorm === phraseNorm) return true;
+  const escaped = phraseNorm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?:^|\\s)${escaped}(?:$|\\s)`).test(textNorm);
+}
+
 function normalizeUnit(raw?: string): IngredientUnit {
   const s = removeVietnameseTones(raw || '');
   if (s === 'kg') return 'kg';
   if (s === 'qua' || s === 'trai') return 'quả';
   if (s === 'cu') return 'củ';
-  if (s === 'bo') return 'bó';
-  if (s === 'goi' || s === 'hop' || s === 'khay' || s === 'tui') return 'gói';
+  if (s === 'bo' || s === 'cay' || s === 'nhanh') return 'bó';
+  if (s === 'goi' || s === 'hop' || s === 'khay' || s === 'tui' || s === 'nai' || s === 'chum') return 'gói';
   if (s === 'phan' || s === 'suat') return 'phần';
   return 'g';
 }
@@ -451,7 +484,26 @@ export class CookComponent implements OnInit {
   expandedId = signal<string | null>(null);
   addedFeedback = signal<string | null>(null);
   catalogueProducts = signal<ApiProduct[]>([]);
+  catalogueLoading = signal(true);
+  failedProductImages = signal<Record<string, true>>({});
   hasSearched = signal(false);
+
+  unmatchedIngredients = computed(() => {
+    const catalogue = this.catalogueProducts();
+    return this.myIngredients().filter(userIng => {
+      return !RECIPE_DB.some(recipe =>
+        recipe.ingredients.some(ing => {
+          const matchedProd = this.resolveCatalogueProduct(ing, catalogue);
+          const resolvedProductId = matchedProd?._id || ing.productId || null;
+          return this.doesUserIngredientMatch(userIng, ing, resolvedProductId, matchedProd);
+        })
+      );
+    });
+  });
+
+  unmatchedIngredientNames = computed(() =>
+    this.unmatchedIngredients().map(i => i.name).join(', ')
+  );
 
   // ── Dual-Input Photo & Vision Signals ────────────────────
   selectedImageBase64 = signal<string | null>(null);
@@ -460,19 +512,31 @@ export class CookComponent implements OnInit {
   isDragging = signal(false);
   detectedFromImage = signal<UserIngredient[]>([]);
   visionMessage = signal<string | null>(null);
+  visionError = signal(false);
 
   // ── Lifecycle ───────────────────────────────────────────
   ngOnInit(): void {
-    this.productApi.getAll({ limit: 0 }).subscribe({
+    this.catalogueLoading.set(true);
+    this.productApi.getAll({ limit: 0, isCombo: 'false' }).subscribe({
       next: (res) => {
         if (res?.data && res.data.length > 0) {
           this.catalogueProducts.set(res.data);
         } else {
           this.catalogueProducts.set(onlineOrderProducts as unknown as ApiProduct[]);
         }
+        this.catalogueLoading.set(false);
+        if (this.hasSearched()) {
+          this.results.set(this.computeRecipeResults());
+          this.loading.set(false);
+        }
       },
       error: () => {
         this.catalogueProducts.set(onlineOrderProducts as unknown as ApiProduct[]);
+        this.catalogueLoading.set(false);
+        if (this.hasSearched()) {
+          this.results.set(this.computeRecipeResults());
+          this.loading.set(false);
+        }
       }
     });
   }
@@ -579,11 +643,14 @@ export class CookComponent implements OnInit {
     const raw = (isQuick ? customName : this.inputText()).trim();
     if (!raw) return;
 
-    const rawNorm = removeVietnameseTones(raw);
-    const matched = this.catalogueProducts().find(p => {
-      const pNorm = removeVietnameseTones(p.name);
-      return pNorm.includes(rawNorm) || rawNorm.includes(pNorm);
-    }) || null;
+    const catalogue = this.catalogueProducts();
+    const rawTone = normalizeKeepTones(raw);
+    const knownRecipeIng = RECIPE_DB.flatMap(r => r.ingredients).find(
+      ing => normalizeKeepTones(ing.name) === rawTone
+    );
+    const matched = knownRecipeIng
+      ? this.resolveCatalogueProduct(knownRecipeIng, catalogue)
+      : this.resolveCatalogueProduct({ name: raw, amountPer1Serving: 1, unit: 'g' }, catalogue);
 
     const def = inferDefaultQtyUnit(matched ? matched.name : raw, matched);
     const qty = !isQuick && this.manualQtyEdited ? this.inputQty() : def.qty;
@@ -694,6 +761,14 @@ export class CookComponent implements OnInit {
     this.selectedImageName.set(null);
     this.detectedFromImage.set([]);
     this.visionMessage.set(null);
+    this.visionError.set(false);
+  }
+
+  retryAnalyzeImage(): void {
+    const base64 = this.selectedImageBase64();
+    if (base64 && !this.isAnalyzingImage()) {
+      this.analyzeImage(base64);
+    }
   }
 
   private processImageFile(file: File): void {
@@ -714,29 +789,39 @@ export class CookComponent implements OnInit {
 
   private analyzeImage(imageBase64: string): void {
     this.isAnalyzingImage.set(true);
+    this.visionError.set(false);
+    this.detectedFromImage.set([]);
     this.visionMessage.set('Đang gửi ảnh tới Gemini AI để nhận diện nguyên liệu...');
 
-    this.api.post<{ success: boolean; ingredients: any[]; total?: number }>('/chatbot/detect-ingredients', {
+    this.api.post<{ success: boolean; ingredients?: any[]; message?: string; total?: number }>('/chatbot/detect-ingredients', {
       image: imageBase64
     }).subscribe({
       next: (res) => {
         this.isAnalyzingImage.set(false);
-        if (res?.success && Array.isArray(res.ingredients) && res.ingredients.length > 0) {
+        if (!res?.success) {
+          this.visionError.set(true);
+          this.detectedFromImage.set([]);
+          this.visionMessage.set(
+            res?.message ||
+              'Gemini hiện tại đang gặp vấn đề, không nhận diện được ảnh. Bạn đợi ít phút rồi thử lại hoặc thêm nguyên liệu thủ công nhé.'
+          );
+          return;
+        }
+
+        if (Array.isArray(res.ingredients) && res.ingredients.length > 0) {
           const newDetected: UserIngredient[] = [];
           const currentList = this.myIngredients();
 
           for (const item of res.ingredients) {
             const rawName = item.name || item.rawName;
-            const norm = removeVietnameseTones(rawName);
+            if (!rawName) continue;
 
-            // Find matching product in catalog or use matchedProduct
+            // Use backend scored product match; never fall back to naive substring matching across categories
             let prod: ApiProduct | null = null;
             if (item.product) {
               prod = item.product;
             } else if (item.productId) {
               prod = this.catalogueProducts().find(p => p._id === item.productId) || null;
-            } else {
-              prod = this.catalogueProducts().find(p => removeVietnameseTones(p.name).includes(norm)) || null;
             }
 
             const def = inferDefaultQtyUnit(prod ? prod.name : rawName, prod);
@@ -772,55 +857,30 @@ export class CookComponent implements OnInit {
             this.results.set(this.computeRecipeResults());
           }
         } else {
-          this.fallbackLocalVisionDetection();
+          this.detectedFromImage.set([]);
+          this.visionMessage.set('Gemini AI không phát hiện nguyên liệu nấu ăn rõ ràng trong ảnh này. Bạn có thể chọn ảnh khác hoặc thêm thủ công bên trên.');
         }
       },
-      error: () => {
+      error: (err) => {
         this.isAnalyzingImage.set(false);
-        this.fallbackLocalVisionDetection();
+        this.visionError.set(true);
+        this.detectedFromImage.set([]);
+        const serverMsg = err?.error?.message;
+        if (serverMsg) {
+          this.visionMessage.set(serverMsg);
+        } else if (err?.status === 0) {
+          this.visionMessage.set(
+            'Không kết nối được tới máy chủ backend để gọi Gemini AI. Bạn hãy kiểm tra server đã chạy (npm run dev trong service/) hoặc đợi ít phút rồi thử lại.'
+          );
+        } else if (err?.status === 413) {
+          this.visionMessage.set('Ảnh tải lên quá lớn (vượt giới hạn 10MB). Vui lòng chọn ảnh nhẹ hơn.');
+        } else {
+          this.visionMessage.set(
+            'Gemini hiện tại đang gặp vấn đề, không nhận diện được ảnh. Bạn đợi ít phút rồi thử lại hoặc thêm nguyên liệu thủ công nhé.'
+          );
+        }
       }
     });
-  }
-
-  private fallbackLocalVisionDetection(): void {
-    // Smart local fallback if backend or API is offline
-    const sampleItems = [
-      { name: 'Cà chua', cat: 'vegetables' },
-      { name: 'Rau cải', cat: 'vegetables' },
-      { name: 'Cà rốt', cat: 'vegetables' },
-      { name: 'Thịt bò', cat: 'meat' }
-    ];
-
-    const detected: UserIngredient[] = [];
-    for (const s of sampleItems) {
-      const prod = this.catalogueProducts().find(p =>
-        removeVietnameseTones(p.name).includes(removeVietnameseTones(s.name))
-      ) || null;
-      const def = inferDefaultQtyUnit(prod ? prod.name : s.name, prod);
-
-      const item: UserIngredient = {
-        name: prod ? prod.name : s.name,
-        productId: prod ? prod._id : null,
-        product: prod,
-        qty: def.qty,
-        unit: def.unit,
-        fromVision: true
-      };
-      detected.push(item);
-
-      const exists = this.myIngredients().some(i =>
-        removeVietnameseTones(i.name) === removeVietnameseTones(item.name)
-      );
-      if (!exists) {
-        this.myIngredients.update(list => [...list, item]);
-      }
-    }
-
-    this.detectedFromImage.set(detected);
-    this.visionMessage.set(`Đã nhận diện ${detected.length} nguyên liệu nấu ăn từ hình ảnh của bạn!`);
-    if (this.hasSearched()) {
-      this.results.set(this.computeRecipeResults());
-    }
   }
 
   // ── Method 3: Search & Recipe Priority Calculation ──────
@@ -828,10 +888,117 @@ export class CookComponent implements OnInit {
     this.loading.set(true);
     this.hasSearched.set(true);
 
+    if (this.catalogueLoading() && this.catalogueProducts().length === 0) {
+      return;
+    }
+
     setTimeout(() => {
       this.results.set(this.computeRecipeResults());
       this.loading.set(false);
-    }, 600);
+    }, 450);
+  }
+
+  private resolveCatalogueProduct(ing: RawRecipeIngredient, catalogue: ApiProduct[]): ApiProduct | null {
+    const baseName = ing.name.replace(/\([^)]*\)/g, '').trim();
+    const ingTone = normalizeKeepTones(baseName);
+    const ingNorm = removeVietnameseTones(baseName);
+    const kwsTone = (ing.keywords || []).map(normalizeKeepTones).filter(Boolean);
+    const kwsNorm = (ing.keywords || []).map(removeVietnameseTones).filter(Boolean);
+
+    let bestProd: ApiProduct | null = null;
+    let bestScore = 0;
+
+    for (const prod of catalogue) {
+      if (prod.isCombo) continue;
+
+      let score = 0;
+      if (ing.productId && prod._id === ing.productId) {
+        score = 500;
+      } else {
+        const prodTone = normalizeKeepTones(prod.name);
+        const prodNorm = removeVietnameseTones(prodTone);
+
+        let nameScore = 0;
+        if (containsWholePhrase(prodTone, ingTone)) {
+          nameScore = 150 + (prodTone.startsWith(ingTone) ? 30 : 0);
+        } else {
+          for (const kw of kwsTone) {
+            if (containsWholePhrase(prodTone, kw)) {
+              nameScore = Math.max(nameScore, 100 + kw.length * 2 + (prodTone.startsWith(kw) ? 25 : 0));
+            }
+          }
+        }
+
+        if (nameScore === 0) {
+          if (ingNorm.length >= 4 && containsWholePhrase(prodNorm, ingNorm)) {
+            nameScore = 65;
+          } else {
+            for (const kw of kwsNorm) {
+              if (kw.length >= 4 && containsWholePhrase(prodNorm, kw)) {
+                nameScore = Math.max(nameScore, 50 + kw.length);
+              }
+            }
+          }
+        }
+
+        if (nameScore === 0) continue;
+
+        score = nameScore;
+        const catMatch = matchesCookCategoryHint(prod, ing.categoryHint);
+        if (catMatch === true) score += 50;
+        else if (catMatch === false) score -= 120;
+
+        if (!isApiProductOutOfStock(prod)) score += 25;
+        if (prod.image) score += 10;
+      }
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestProd = prod;
+      }
+    }
+
+    return bestScore >= 60 ? bestProd : null;
+  }
+
+  private doesUserIngredientMatch(
+    u: UserIngredient,
+    ing: RawRecipeIngredient,
+    resolvedProductId: string | null,
+    matchedProd: ApiProduct | null
+  ): boolean {
+    const idMatch = Boolean(
+      (u.productId && resolvedProductId && u.productId === resolvedProductId) ||
+      (u.product && matchedProd && (u.product._id === matchedProd._id || (u.product as any).id === matchedProd._id))
+    );
+    if (idMatch) return true;
+
+    // Tránh ghép nhầm nếu sản phẩm user thuộc nhóm khác hẳn (vd: Bơ Sáp (fruits) với Bò Mỹ thăn (meat))
+    if (u.product) {
+      const userCatMatch = matchesCookCategoryHint(u.product, ing.categoryHint);
+      if (userCatMatch === false) return false;
+    }
+
+    const uTone = normalizeKeepTones(u.name);
+    const uNorm = removeVietnameseTones(uTone);
+    const baseName = ing.name.replace(/\([^)]*\)/g, '').trim();
+    const ingTone = normalizeKeepTones(baseName);
+    const ingNorm = removeVietnameseTones(baseName);
+    const kwsTone = (ing.keywords || []).map(normalizeKeepTones).filter(Boolean);
+    const kwsNorm = (ing.keywords || []).map(removeVietnameseTones).filter(Boolean);
+
+    if (
+      containsWholePhrase(uTone, ingTone) ||
+      containsWholePhrase(ingTone, uTone) ||
+      kwsTone.some(kw => containsWholePhrase(uTone, kw) || (kw.length >= 4 && containsWholePhrase(kw, uTone)))
+    ) {
+      return true;
+    }
+
+    return (
+      (uNorm.length >= 4 && (containsWholePhrase(uNorm, ingNorm) || containsWholePhrase(ingNorm, uNorm))) ||
+      kwsNorm.some(kw => kw.length >= 4 && (containsWholePhrase(uNorm, kw) || (uNorm.length >= 4 && containsWholePhrase(kw, uNorm))))
+    );
   }
 
   private computeRecipeResults(): CookResult[] {
@@ -840,6 +1007,10 @@ export class CookComponent implements OnInit {
     const maxT = this.maxTime();
     const catalogue = this.catalogueProducts();
     const matchedResults: CookResult[] = [];
+
+    if (userIngredients.length === 0) {
+      return [];
+    }
 
     for (const raw of RECIPE_DB) {
       const totalDuration = raw.prepTime + raw.cookTime;
@@ -857,17 +1028,7 @@ export class CookComponent implements OnInit {
 
       let coverageSum = 0;
       const ingredients: RecipeIngredient[] = raw.ingredients.map(ing => {
-        const normIng = removeVietnameseTones(ing.name);
-        const ingKeywords = (ing.keywords || []).map(k => removeVietnameseTones(k));
-
-        // Ưu tiên chọn sản phẩm còn hàng trong danh mục khớp nguyên liệu
-        const candidates = catalogue.filter(prod => {
-          if (ing.productId && prod._id === ing.productId) return true;
-          const normP = removeVietnameseTones(prod.name);
-          return normP.includes(normIng) || normIng.includes(normP) ||
-            ingKeywords.some(kw => normP.includes(kw));
-        });
-        const matchedProd = candidates.find(c => !isApiProductOutOfStock(c)) || candidates[0] || null;
+        const matchedProd = this.resolveCatalogueProduct(ing, catalogue);
         const resolvedProductId = matchedProd?._id || ing.productId || null;
 
         const requiredAmount = this.scaledAmount(ing.amountPer1Serving, raw.servingBase);
@@ -875,12 +1036,7 @@ export class CookComponent implements OnInit {
         // Cộng dồn tất cả nguyên liệu khớp trong tủ lạnh (quy đổi về đơn vị công thức)
         let availableAmount = 0;
         for (const u of userIngredients) {
-          const uNorm = removeVietnameseTones(u.name);
-          const idMatch = (u.productId && resolvedProductId && u.productId === resolvedProductId) ||
-            (u.product && matchedProd && (u.product._id === matchedProd._id || (u.product as any).id === matchedProd._id));
-          const nameMatch = uNorm.includes(normIng) || normIng.includes(uNorm) ||
-            ingKeywords.some(kw => uNorm.includes(kw) || kw.includes(uNorm));
-          if (!idMatch && !nameMatch) continue;
+          if (!this.doesUserIngredientMatch(u, ing, resolvedProductId, matchedProd)) continue;
 
           const uParsedPack = parseWeightString(u.product?.weight);
           const uPackGrams = uParsedPack ? convertQty(uParsedPack.qty, uParsedPack.unit, 'g', u.name) : 250;
@@ -936,6 +1092,11 @@ export class CookComponent implements OnInit {
 
       const total = ingredients.length;
       const matchPercentage = total > 0 ? Math.round((coverageSum / total) * 100) : 0;
+
+      // Chỉ hiển thị món ăn có mức khớp > 0%; mức đỏ chỉ áp dụng cho (0% < matchPercentage < 33%)
+      if (matchPercentage <= 0) {
+        continue;
+      }
 
       let priority: 'high' | 'medium' | 'low';
       if (matchPercentage >= 66) priority = 'high';
@@ -1097,5 +1258,16 @@ export class CookComponent implements OnInit {
   scaledAmount(amount: number, servingBase: number): number {
     const scaled = (amount * this.servings()) / (servingBase || 1);
     return Math.round(scaled * 10) / 10;
+  }
+
+  hasValidImage(url?: string): boolean {
+    const clean = (url || '').trim();
+    return Boolean(clean) && !this.failedProductImages()[clean];
+  }
+
+  onProductImgError(url?: string): void {
+    const clean = (url || '').trim();
+    if (!clean) return;
+    this.failedProductImages.update(map => ({ ...map, [clean]: true }));
   }
 }

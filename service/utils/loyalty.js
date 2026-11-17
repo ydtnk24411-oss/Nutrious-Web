@@ -1,25 +1,31 @@
 const User = require('../models/User');
 const Order = require('../models/Order');
 const PointTransaction = require('../models/PointTransaction');
+const LoyaltyConfig = require('../models/LoyaltyConfig');
 
-// Hạng thành viên: cần ĐỦ cả điểm lẫn tổng chi tiêu (giống chính sách hiển thị ở frontend)
-const TIERS = [
-  { tier: 'platinum', minPoints: 15000, minSpent: 30000000 },
-  { tier: 'gold',     minPoints: 5000,  minSpent: 10000000 },
-  { tier: 'silver',   minPoints: 1000,  minSpent: 2000000 },
-  { tier: 'bronze',   minPoints: 0,     minSpent: 0 },
-];
+const CONFIG_CACHE_TTL_MS = 60000;
+let cachedConfig = null;
+let cachedAt = 0;
 
-const tierFor = (points = 0, totalSpent = 0) =>
-  (TIERS.find((t) => points >= t.minPoints && totalSpent >= t.minSpent) || TIERS[TIERS.length - 1]).tier;
+/**
+ * Đọc cấu hình hạng thành viên & quà đổi điểm từ MongoDB (cache 60s).
+ */
+async function getLoyaltyConfig() {
+  if (cachedConfig && Date.now() - cachedAt < CONFIG_CACHE_TTL_MS) {
+    return cachedConfig;
+  }
+  const doc = await LoyaltyConfig.findOne({ key: 'main' }).lean();
+  cachedConfig = doc || { tiers: [], rewards: [] };
+  cachedAt = Date.now();
+  return cachedConfig;
+}
 
-// Quà đổi điểm – server quyết định số điểm cần thiết
-const REWARDS = [
-  { id: 'r1', name: 'Voucher 50.000đ',    pointsRequired: 500,  type: 'voucher',  value: 50000 },
-  { id: 'r2', name: 'Miễn phí giao hàng', pointsRequired: 300,  type: 'shipping', value: 25000 },
-  { id: 'r3', name: 'Voucher 100.000đ',   pointsRequired: 1000, type: 'voucher',  value: 100000 },
-  { id: 'r4', name: 'Giỏ quà sinh nhật',  pointsRequired: 2000, type: 'gift' },
-];
+const tierFor = (points = 0, totalSpent = 0, tiers = []) => {
+  if (!Array.isArray(tiers) || tiers.length === 0) return 'bronze';
+  const sorted = [...tiers].sort((a, b) => (b.minPoints || 0) - (a.minPoints || 0));
+  const matched = sorted.find((t) => points >= (t.minPoints || 0) && totalSpent >= (t.minSpent || 0));
+  return matched ? matched.tier : sorted[sorted.length - 1].tier;
+};
 
 /**
  * Cộng điểm cho chủ đơn hàng khi đơn được giao (delivered).
@@ -41,7 +47,8 @@ async function creditOrderPoints(orderId) {
   );
   if (!user) return null;
 
-  const tier = tierFor(user.points, user.totalSpent);
+  const { tiers } = await getLoyaltyConfig();
+  const tier = tierFor(user.points, user.totalSpent, tiers);
   if (tier !== user.tier) await User.updateOne({ _id: user._id }, { $set: { tier } });
 
   await PointTransaction.create({
@@ -63,7 +70,6 @@ async function syncUserLoyalty(userId) {
   const user = await User.findById(userId);
   if (!user) return null;
 
-  // 1. Tự động cộng điểm cho bất kỳ đơn hàng nào đã thanh toán hoặc đã giao mà chưa tích điểm
   const uncreditedOrders = await Order.find({
     user: user._id,
     status: { $ne: 'cancelled' },
@@ -78,7 +84,6 @@ async function syncUserLoyalty(userId) {
     await creditOrderPoints(ord._id);
   }
 
-  // 2. Thống kê chi tiêu thực tế từ các đơn hàng hợp lệ (không bị hủy), đồng nhất với phía Admin
   const orderStats = await Order.aggregate([
     { $match: { user: user._id, status: { $ne: 'cancelled' } } },
     {
@@ -91,11 +96,14 @@ async function syncUserLoyalty(userId) {
   ]);
 
   const actualSpent = orderStats[0]?.totalSpent || 0;
-  const freshUser = await User.findById(userId);
+  const [freshUser, loyaltyCfg] = await Promise.all([
+    User.findById(userId),
+    getLoyaltyConfig(),
+  ]);
   if (!freshUser) return null;
 
   const currentPoints = freshUser.points || 0;
-  const correctTier = tierFor(currentPoints, actualSpent);
+  const correctTier = tierFor(currentPoints, actualSpent, loyaltyCfg.tiers);
 
   if (freshUser.totalSpent !== actualSpent || freshUser.tier !== correctTier) {
     freshUser.totalSpent = actualSpent;
@@ -106,5 +114,4 @@ async function syncUserLoyalty(userId) {
   return freshUser;
 }
 
-module.exports = { TIERS, REWARDS, tierFor, creditOrderPoints, syncUserLoyalty };
-
+module.exports = { getLoyaltyConfig, tierFor, creditOrderPoints, syncUserLoyalty };

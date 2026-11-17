@@ -1064,13 +1064,20 @@ async function runSeed() {
     const totalRecipes = await Recipe.countDocuments();
     console.log(`✅ Recipes upserted: ${totalRecipes}`);
 
-    // 3. Upsert FooterConfig
+    // 3. Upsert FooterConfig & migrated DB configs (NutritionConfig, ChatbotKnowledge, LoyaltyConfig)
     await FooterConfig.findOneAndUpdate(
       { key: 'main' },
       { $set: footerConfigData },
       { upsert: true, new: true }
     );
     console.log('✅ FooterConfig upserted');
+
+    try {
+      const { syncConfigsToDb } = require('./scripts/sync-configs-to-db');
+      if (typeof syncConfigsToDb === 'function') await syncConfigsToDb();
+    } catch (syncErr) {
+      console.warn('ℹ️ Extended config sync note:', syncErr.message);
+    }
 
     // 3b. Upsert all 22 core recipe ingredient products in MongoDB with 100% accurate photos & fix any mismatched product images
     const Product = require('./models/Product');
@@ -1449,6 +1456,10 @@ async function runSeed() {
       'uservouchers',
       'recipes',
       'footerconfigs',
+      'nutritionconfigs',
+      'chatbotknowledges',
+      'loyaltyconfigs',
+      'shippingconfigs',
       'events',
       'services',
       'orders',

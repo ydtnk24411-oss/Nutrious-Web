@@ -167,8 +167,11 @@ router.get('/', optionalAuth, cacheMiddleware(20, (req) => !req.query.search && 
     const pageNum  = Math.max(1, Number(page) || 1);
     let query = Product.find(filter)
       .sort(sortObj)
-      .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
       .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
+
+    if (isCombo !== 'false') {
+      query = query.populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS);
+    }
 
     if (limitNum > 0) {
       const skip = (pageNum - 1) * limitNum;

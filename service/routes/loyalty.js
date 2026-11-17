@@ -2,27 +2,35 @@ const router = require('express').Router();
 const User = require('../models/User');
 const PointTransaction = require('../models/PointTransaction');
 const { protect } = require('../middleware/auth');
-const { REWARDS, tierFor, syncUserLoyalty } = require('../utils/loyalty');
+const { getLoyaltyConfig, tierFor, syncUserLoyalty } = require('../utils/loyalty');
 
-// GET /api/loyalty/rewards - danh sách quà đổi điểm (public)
-router.get('/rewards', (_req, res) => res.json({ success: true, data: REWARDS }));
+// GET /api/loyalty/rewards - danh sách quà đổi điểm đọc từ MongoDB (public)
+router.get('/rewards', async (_req, res, next) => {
+  try {
+    const config = await getLoyaltyConfig();
+    res.json({ success: true, data: config.rewards || [] });
+  } catch (err) {
+    next(err);
+  }
+});
 
-// GET /api/loyalty/my - điểm, hạng và lịch sử điểm của tài khoản đang đăng nhập (đồng bộ chi tiêu theo đơn hàng thực tế)
+// GET /api/loyalty/my - điểm, hạng và lịch sử điểm của tài khoản đang đăng nhập
 router.get('/my', protect, async (req, res, next) => {
   try {
-    const user = await syncUserLoyalty(req.user._id);
+    const [user, config, transactions] = await Promise.all([
+      syncUserLoyalty(req.user._id),
+      getLoyaltyConfig(),
+      PointTransaction.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(100),
+    ]);
     if (!user) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
     }
-    const transactions = await PointTransaction.find({ user: req.user._id })
-      .sort({ createdAt: -1 })
-      .limit(100);
     res.json({
       success: true,
       data: {
         points: user.points,
         totalSpent: user.totalSpent,
-        tier: tierFor(user.points, user.totalSpent),
+        tier: tierFor(user.points, user.totalSpent, config.tiers),
         transactions: transactions.map((t) => ({
           id: String(t._id),
           userId: String(t.user),
@@ -35,13 +43,16 @@ router.get('/my', protect, async (req, res, next) => {
         })),
       },
     });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 });
 
 // POST /api/loyalty/redeem - đổi điểm lấy quà { rewardId }
 router.post('/redeem', protect, async (req, res, next) => {
   try {
-    const reward = REWARDS.find((r) => r.id === req.body.rewardId);
+    const config = await getLoyaltyConfig();
+    const reward = (config.rewards || []).find((r) => r.id === req.body.rewardId);
     if (!reward) {
       return res.status(404).json({ success: false, message: 'Quà tặng không tồn tại.' });
     }
@@ -67,7 +78,9 @@ router.post('/redeem', protect, async (req, res, next) => {
       message: `Đổi ${reward.pointsRequired} điểm thành công.`,
       data: { points: user.points },
     });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;

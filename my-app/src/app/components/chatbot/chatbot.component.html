@@ -132,7 +132,7 @@
             @if (msg.sender === 'admin') {
               <div class="xanh-msg-avatar admin-avatar-circle">
                 @if (msg.senderAvatar) {
-                  <img [src]="msg.senderAvatar" [alt]="msg.senderName || 'Admin'" class="staff-photo-avatar" />
+                  <img [src]="msg.senderAvatar" referrerpolicy="no-referrer" [alt]="msg.senderName || 'Admin'" class="staff-photo-avatar" (error)="msg.senderAvatar = ''" />
                 } @else {
                   <i class="bi bi-person" style="font-size:14px" aria-hidden="true"></i>
                 }

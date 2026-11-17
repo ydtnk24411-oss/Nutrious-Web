@@ -10,7 +10,10 @@ if (fs.existsSync(envPath)) {
 
 const mongoose = require('mongoose');
 const Product = require('../models/Product');
-const nutritionFacts = require('./data/nutrition-facts');
+
+const DATA_DIR = path.join(__dirname, 'data');
+const NUTRITION_FACTS_PATH = path.join(DATA_DIR, 'nutrition-facts.js');
+const nutritionFacts = fs.existsSync(NUTRITION_FACTS_PATH) ? require(NUTRITION_FACTS_PATH) : null;
 
 const DATA_FILES = [
   'bakery',
@@ -116,6 +119,10 @@ async function updateMongoDB() {
 }
 
 async function main() {
+  if (!nutritionFacts) {
+    console.log('scripts/data/nutrition-facts.js đã được đồng bộ lên MongoDB và dọn sạch.');
+    return;
+  }
   updateDataFiles();
   await updateMongoDB();
 }

@@ -38,16 +38,28 @@ Nutrious-Web/
 
 ### 1. Backend Service (`service/`)
 
-Chạy API server tại cổng `http://localhost:3000`:
+Backend đã tích hợp sẵn **`nodemon`** trong `service/package.json` (`devDependencies`) để tự động restart server mỗi khi code thay đổi.
+
+1. Cài đặt dependencies (đã bao gồm `nodemon`):
 
 ```bash
 cd service
 npm install
-npm run start
 ```
-Hoặc chạy chế độ dev (nodemon tự reload):
+
+*(Khuyến nghị nếu muốn dùng lệnh `nodemon` trực tiếp ở mọi thư mục trên máy: `npm install -g nodemon`)*
+
+2. Tạo file `service/.env` từ `service/.env.example` và điền các biến môi trường cần thiết (`PORT`, `MONGODB_URI`, `JWT_SECRET`, `GEMINI_API_KEY`, `GOOGLE_CLIENT_ID`).
+
+3. Chạy API server tại cổng `http://localhost:3000` ở chế độ **dev với `nodemon`** (khuyến nghị khi phát triển & test):
+
 ```bash
 npm run dev
+```
+
+Hoặc chạy chế độ thường không tự reload (`node index.js`):
+```bash
+npm start
 ```
 
 ### 2. Frontend Người dùng (`my-app/`)
@@ -84,6 +96,6 @@ npm start
 
 | Ứng dụng | Thư mục | Lệnh khởi chạy | Cổng truy cập |
 |---|---|---|---|
-| **Backend REST API** | `service/` | `npm run start` | `http://localhost:3000` |
+| **Backend REST API** | `service/` | `npm run dev` (`nodemon`, khuyến nghị) / `npm start` | `http://localhost:3000` |
 | **Storefront (Khách hàng)** | `my-app/` | `ng serve` | `http://localhost:4200` |
 | **Admin Dashboard (Quản trị)** | `admin/` | `ng serve` | `http://localhost:4201` |

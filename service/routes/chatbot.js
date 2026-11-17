@@ -6,22 +6,29 @@ if (!process.env.GEMINI_API_KEY) {
   } catch {}
 }
 const Product = require('../models/Product');
-const Category = require('../models/Category');
 const Order = require('../models/Order');
 const Voucher = require('../models/Voucher');
 const Conversation = require('../models/Conversation');
 const User = require('../models/User');
+const ChatbotKnowledge = require('../models/ChatbotKnowledge');
 const { optionalAuth } = require('../middleware/auth');
 
-// Status dictionary for orders
-const ORDER_STATUS_MAP = {
-  pending:   'Chờ xử lý',
-  confirmed: 'Đã xác nhận',
-  preparing: 'Đang chuẩn bị hàng',
-  shipping:  'Đang giao hàng xe lạnh',
-  delivered: 'Đã giao thành công',
-  cancelled: 'Đã hủy',
-};
+const KNOWLEDGE_CACHE_TTL_MS = 60000;
+let cachedKnowledge = null;
+let cachedKnowledgeAt = 0;
+
+async function getChatbotKnowledge() {
+  if (cachedKnowledge && Date.now() - cachedKnowledgeAt < KNOWLEDGE_CACHE_TTL_MS) {
+    return cachedKnowledge;
+  }
+  const doc = await ChatbotKnowledge.findOne({ key: 'main' }).lean();
+  if (doc) {
+    cachedKnowledge = doc;
+    cachedKnowledgeAt = Date.now();
+    return doc;
+  }
+  return {};
+}
 
 // Helper: Normalize Vietnamese search
 function removeDiacritics(str) {
@@ -34,25 +41,12 @@ function removeDiacritics(str) {
     .toLowerCase();
 }
 
-// Build system prompt based on persona, user profile, and catalog
-function buildSystemPrompt(catalogSnippet, persona = 'nutribot', profile = null) {
-  let personaInstruction = '';
+// Build system prompt based on MongoDB personaPrompts, systemPromptMeta, user profile, and catalog
+function buildSystemPrompt(knowledge, catalogSnippet, persona = 'nutribot', profile = null) {
+  const prompts = knowledge?.personaPrompts || {};
+  const personaInstruction = prompts[persona] || prompts.default || '';
+  const meta = knowledge?.systemPromptMeta || {};
 
-  if (persona === 'nutribot') {
-    personaInstruction = `You are NutriBot, a helpful, respectful, honest and world-renowned nutritionist assistant.
-Bạn cung cấp lời khuyên chuyên sâu về thực phẩm, dinh dưỡng và lối sống lành mạnh (Eat-Clean, Giảm mỡ, Tăng cơ, Cắt nét, Huyết áp, Tiểu đường, Ăn chay).
-Bạn có khả năng nhận diện hình ảnh món ăn & đồ uống, bóc tách nguyên liệu, ước tính chính xác lượng Calo (kcal), Macro (Đạm, Tinh bột, Chất béo, Chất xơ) và đưa ra lời khuyên cá nhân hóa dựa trên thể trạng của người dùng.`;
-  } else if (persona === 'chef') {
-    personaInstruction = 'Bạn đóng vai trò Bếp trưởng Evergreen Mart, chuyên gia ẩm thực hữu cơ, hướng dẫn công thức nấu ăn sáng tạo, cách kết hợp rau củ thịt cá thành món ngon chuẩn vị gia đình.';
-  } else if (persona === 'nutritionist') {
-    personaInstruction = 'Bạn đóng vai trò Chuyên gia Dinh dưỡng Evergreen Mart, tư vấn thực phẩm giàu vitamin, thực đơn eat-clean, kiểm soát calo và lợi ích sức khỏe từ rau củ quả tươi.';
-  } else if (persona === 'support') {
-    personaInstruction = 'Bạn đóng vai trò Hỗ trợ viên chăm sóc khách hàng Evergreen Mart, giải đáp về vận chuyển xe lạnh, kiểm tra đơn hàng, chính sách 1 đổi 1 và voucher ưu đãi.';
-  } else {
-    personaInstruction = 'Bạn là Trợ lý AI Nông sản Evergreen Mart thông thái và thân thiện, hỗ trợ khách hàng tìm kiếm nông sản sạch, gợi ý thực đơn, tư vấn mua sắm và giải đáp thắc mắc.';
-  }
-
-  // Inject User Health Profile if provided (from NutriBot profile engine)
   let profileSnippet = '';
   if (profile && (profile.age || profile.weight || profile.height)) {
     const heightM = profile.height ? profile.height / 100 : null;
@@ -60,10 +54,9 @@ Bạn có khả năng nhận diện hình ảnh món ăn & đồ uống, bóc t�
     let bmiLabel = 'Bình thường';
     if (bmi) {
       const bNum = parseFloat(bmi);
-      if (bNum < 18.5) bmiLabel = 'Thiếu cân (Gầy)';
-      else if (bNum < 23) bmiLabel = 'Thể trạng Chuẩn (Lý tưởng)';
-      else if (bNum < 25) bmiLabel = 'Tiền béo phì (Thừa cân nhẹ)';
-      else bmiLabel = 'Béo phì';
+      const bands = knowledge?.bmiConfig?.bands || [];
+      const matchedBand = bands.find((b) => b.maxBmi === null || b.maxBmi === undefined || bNum < b.maxBmi);
+      if (matchedBand?.status) bmiLabel = matchedBand.status;
     }
 
     profileSnippet = `
@@ -79,19 +72,12 @@ Yêu cầu: Luôn dựa vào chỉ số BMI và mục tiêu này để cá nhân
   return `${personaInstruction}
 ${profileSnippet}
 
-THÔNG TIN HỆ SINH THÁI NÔNG SẢN EVERGREEN MART:
-- Nông sản 100% hữu cơ chuẩn VietGAP & GlobalGAP từ Đà Lạt và Ba Vì.
-- Thu hoạch sớm mỗi ngày, vận chuyển bằng xe lạnh chuyên dụng 0°C – 4°C.
-- Miễn phí giao hàng (0₫) cho đơn từ 300.000₫. Đơn dưới 300.000₫ đồng giá 25.000₫.
-- Đổi trả 1-1 trong 24 giờ nếu rau củ quả không đạt độ tươi giòn.
+${meta.ecosystemInfo || ''}
 
 DANH MỤC NÔNG SẢN TƯƠI SẠCH:
 ${catalogSnippet}
 
-YÊU CẦU PHẢN HỒI:
-- Trả lời bằng tiếng Việt lịch thiệp, khoa học, ấm áp, dùng các emoji tươi mát (🩺, 🥗, 🍎, 🥩, 🌿, ✨).
-- Định dạng Markdown rõ ràng (tiêu đề, in đậm, danh sách gạch đầu dòng).
-- Khi gợi ý món hoặc nguyên liệu thay thế lành mạnh, ưu tiên nhắc các sản phẩm sạch đang có tại Evergreen Mart.`;
+${meta.responseRules || ''}`;
 }
 
 async function logMessageToConv(conv, userMsg, botReply) {
@@ -119,13 +105,8 @@ async function logMessageToConv(conv, userMsg, botReply) {
 
 // Helper: Check if question involves internal operational/financial issues that AI cannot resolve
 function isInternalIssueRequiringHuman(cleanLower) {
-  // 1. Payment, Money transfer, Bank transaction issues
   const paymentIssues = /(da tru tien|bi tru tien|tru tien ma chua|chuyen khoan nham|sai cu phap|chuyen tien roi ma|loi thanh toan|treo tien|tien chua vao|sao ke ngan hang|chuyen sai so tai khoan)/i.test(cleanLower);
-
-  // 2. Refund, Compensation, Money return
   const refundIssues = /(yeu cau hoan tien|hoan lai tien|doi lai tien|tra lai tien|hoan tien vao tai khoan|boi thuong tien)/i.test(cleanLower);
-
-  // 3. Account security, Official corporate tax invoice disputes
   const accountIssues = /(khoa tai khoan|bi khoa nick|mat tai khoan|khoi phuc tai khoan|tranh chap hoa don|xuat hoa don vat doanh nghiep)/i.test(cleanLower);
 
   if (paymentIssues) {
@@ -149,7 +130,6 @@ function isInternalIssueRequiringHuman(cleanLower) {
   return null;
 }
 
-// Helper: Check if customer explicitly requested human agent
 function isExplicitHumanRequest(cleanLower, requestHumanFlag) {
   if (requestHumanFlag === true || requestHumanFlag === 'true') return true;
   return /^(gap nhan vien|gap tu van|nhan vien ho tro|tu van vien|gap nguoi|gap admin|chuyen nhan vien|gap cskh|nhan vien truc tiep)$/i.test(cleanLower) ||
@@ -173,10 +153,11 @@ router.post('/message', optionalAuth, async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Nội dung tin nhắn hoặc hình ảnh không hợp lệ.' });
     }
 
+    const knowledge = await getChatbotKnowledge();
+    const replies = knowledge?.cannedReplies || {};
     const trimmed = (message || '').trim();
     const cleanLower = removeDiacritics(trimmed);
 
-    // Resolve customer identity from auth token or request body
     const authUser = req.user;
     let customerId = authUser ? authUser._id : (req.body.customerId || req.body.customerInfo?.id || req.body.customerInfo?._id || null);
     let customerName = authUser ? authUser.name : (req.body.customerName || req.body.customerInfo?.name || '');
@@ -184,7 +165,6 @@ router.post('/message', optionalAuth, async (req, res, next) => {
     let customerPhone = authUser ? (authUser.phone || '') : (req.body.customerPhone || req.body.customerInfo?.phone || '');
     let customerAvatar = authUser ? (authUser.avatar || '') : (req.body.customerAvatar || req.body.customerInfo?.avatar || '');
 
-    // If no user found from token, try looking up User by email
     if (!customerId && customerEmail) {
       try {
         const u = await User.findOne({ email: customerEmail.toLowerCase().trim() });
@@ -200,14 +180,12 @@ router.post('/message', optionalAuth, async (req, res, next) => {
     const sessionId = req.body.sessionId || req.body.userId || 'guest_chat_session';
     let conv = null;
     try {
-      // 1. Tìm hội thoại của người dùng nếu đã đăng nhập hoặc có email (tránh tạo 2 khung chat cùng 1 người)
       if (customerId) {
         conv = await Conversation.findOne({ customer: customerId });
       }
       if (!conv && customerEmail) {
         conv = await Conversation.findOne({ customerEmail: customerEmail.toLowerCase().trim() });
       }
-      // 2. Nếu là khách vãng lai, tìm theo sessionId
       if (!conv && sessionId) {
         conv = await Conversation.findOne({ sessionId });
       }
@@ -223,7 +201,6 @@ router.post('/message', optionalAuth, async (req, res, next) => {
           messages: [],
         });
       } else {
-        // Luôn giữ sessionId mới nhất để đồng bộ mượt mà với browser
         if (sessionId && conv.sessionId !== sessionId) {
           conv.sessionId = sessionId;
         }
@@ -237,7 +214,7 @@ router.post('/message', optionalAuth, async (req, res, next) => {
       }
     } catch (_) {}
 
-    // 1. Kiểm tra nếu người dùng muốn quay lại hỏi Trợ lý AI
+    // 1. Quay lại hỏi Trợ lý AI
     const wantsAiReturn = req.body.switchToAi === true ||
       /^(tro ve ai|quay lai ai|hoi ai|gap ai|tro lai ai|quay ve ai|tro ve bot|quay lai bot)$/i.test(cleanLower) ||
       /(tro ve|quay lai|noi chuyen voi) (tro ly ai|nutribot|bot|ai)/i.test(cleanLower);
@@ -248,7 +225,7 @@ router.post('/message', optionalAuth, async (req, res, next) => {
         sender: 'ai',
         senderName: 'NutriBot',
         senderAvatar: 'https://api.iconify.design/lucide:bot.svg?color=%23176b3a',
-        content: 'NutriBot đã quay trở lại đồng hành cùng bạn 🌿! Bạn có câu hỏi gì về dinh dưỡng hoặc nông sản không?',
+        content: replies.switchToAiGreeting || 'NutriBot đã quay trở lại đồng hành cùng bạn!',
         timestamp: new Date(),
       };
       if (trimmed) {
@@ -274,9 +251,7 @@ router.post('/message', optionalAuth, async (req, res, next) => {
       });
     }
 
-    // 2. Chỉ chuyển nhân viên khi:
-    // (a) Khách hàng bấm nút chuyển / gửi yêu cầu chuyển rõ ràng (requestHuman hoặc gõ yêu cầu gặp người)
-    // (b) Hoặc AI không thể xử lý thông tin nội bộ (thanh toán, hoàn tiền, trừ tiền ngân hàng, bảo mật)
+    // 2. Chuyển nhân viên CSKH
     const isExplicitTransfer = isExplicitHumanRequest(cleanLower, req.body.requestHuman);
     const internalIssue = isInternalIssueRequiringHuman(cleanLower);
 
@@ -291,7 +266,7 @@ router.post('/message', optionalAuth, async (req, res, next) => {
       });
       const aiReply = internalIssue
         ? `⚠️ **NutriBot thông báo chuyển tiếp:** ${internalIssue.reason}\n\nNutriBot đã kết nối cuộc trò chuyện đến **Chuyên viên tư vấn & Chăm sóc khách hàng Evergreen Mart**. Nhân viên sẽ tiếp nhận và kiểm tra trực tiếp cho bạn ngay tại đây nhé! 🌿`
-        : 'NutriBot đã chuyển yêu cầu của bạn đến chuyên viên tư vấn Evergreen Mart. Bạn vui lòng đợi trong giây lát, chuyên viên sẽ tham gia hỗ trợ trực tiếp tại đây! 🌿';
+        : (replies.transferExplicitReply || 'NutriBot đã chuyển yêu cầu của bạn đến chuyên viên tư vấn Evergreen Mart.');
 
       conv.messages.push({
         sender: 'ai',
@@ -314,9 +289,7 @@ router.post('/message', optionalAuth, async (req, res, next) => {
       });
     }
 
-    // 3. NẾU ĐANG TRONG CHẾ ĐỘ NHÂN VIÊN (WAITING_FOR_ADMIN HOẶC ADMIN_PROCESSING):
-    // Khách hàng trò chuyện trực tiếp với nhân viên 1-1, TUYỆT ĐỐI KHÔNG GỌI GEMINI NỮA!
-    // Chỉ lưu tin nhắn vào hội thoại để nhân viên trả lời từ trang quản trị.
+    // 3. Chế độ chat trực tiếp với nhân viên
     if (conv && (conv.status === 'WAITING_FOR_ADMIN' || conv.status === 'ADMIN_PROCESSING')) {
       conv.messages.push({
         sender: 'customer',
@@ -335,7 +308,7 @@ router.post('/message', optionalAuth, async (req, res, next) => {
         liveChat: true,
         isHandedOver: true,
         status: conv.status,
-        reply: '', // Không gọi Gemini, giữ nguyên luồng chat trực tiếp với nhân viên
+        reply: '',
         messages: conv.messages,
       });
     }
@@ -345,12 +318,11 @@ router.post('/message', optionalAuth, async (req, res, next) => {
 
     // ── 1. Image Recognition & Multimodal Vision Analysis ────────────────
     if (image) {
-      // 1.1. Multimodal Vision via Google Gemini (Gemini 3.5 Flash Vision)
       if (effectiveGeminiKey && provider !== 'openai') {
         try {
-          const visionResult = await callGeminiVision(image, trimmed, effectiveGeminiKey, persona, profile);
+          const visionResult = await callGeminiVision(image, trimmed, effectiveGeminiKey, persona, profile, knowledge);
           if (visionResult && visionResult.text) {
-            const prods = await findRelatedProducts(removeDiacritics(visionResult.text + ' ' + trimmed));
+            const prods = await findRelatedProducts(removeDiacritics(visionResult.text + ' ' + trimmed), knowledge);
             await logMessageToConv(conv, trimmed || '[Ảnh món ăn]', visionResult.text);
             return res.json({ success: true, reply: visionResult.text, products: prods });
           }
@@ -359,12 +331,11 @@ router.post('/message', optionalAuth, async (req, res, next) => {
         }
       }
 
-      // 1.2. Multimodal Vision via OpenAI (GPT-4o-mini Vision)
       if (effectiveOpenAIKey && provider === 'openai') {
         try {
-          const visionResult = await callOpenAIVision(image, trimmed, effectiveOpenAIKey, persona, profile);
+          const visionResult = await callOpenAIVision(image, trimmed, effectiveOpenAIKey, persona, profile, knowledge);
           if (visionResult && visionResult.text) {
-            const prods = await findRelatedProducts(removeDiacritics(visionResult.text + ' ' + trimmed));
+            const prods = await findRelatedProducts(removeDiacritics(visionResult.text + ' ' + trimmed), knowledge);
             await logMessageToConv(conv, trimmed || '[Ảnh món ăn]', visionResult.text);
             return res.json({ success: true, reply: visionResult.text, products: prods });
           }
@@ -373,9 +344,8 @@ router.post('/message', optionalAuth, async (req, res, next) => {
         }
       }
 
-      // 1.3. Built-in Food & Beverage Vision Analyzer (Local Fallback)
-      const localAnalysis = await analyzeFoodImageLocal(image, trimmed, profile);
-      const prods = await findRelatedProducts(removeDiacritics(localAnalysis.keywords));
+      const localAnalysis = await analyzeFoodImageLocal(knowledge, image, trimmed, profile);
+      const prods = await findRelatedProducts(removeDiacritics(localAnalysis.keywords), knowledge);
       await logMessageToConv(conv, trimmed || '[Ảnh món ăn]', localAnalysis.reply);
       return res.json({
         success: true,
@@ -385,12 +355,11 @@ router.post('/message', optionalAuth, async (req, res, next) => {
     }
 
     // ── 2. External Text LLM Provider (Google Gemini / OpenAI) ───────────
-    // Always route to Gemini whenever GEMINI_API_KEY is configured
     if (effectiveGeminiKey && provider !== 'openai') {
       try {
-        const reply = await callGeminiAI(trimmed, history, effectiveGeminiKey, persona, profile);
+        const reply = await callGeminiAI(trimmed, history, effectiveGeminiKey, persona, profile, knowledge);
         if (reply && reply.text) {
-          const prods = await findRelatedProducts(cleanLower);
+          const prods = await findRelatedProducts(cleanLower, knowledge);
           await logMessageToConv(conv, trimmed, reply.text);
           return res.json({ success: true, reply: reply.text, products: prods });
         }
@@ -399,9 +368,9 @@ router.post('/message', optionalAuth, async (req, res, next) => {
       }
     } else if (effectiveOpenAIKey && provider === 'openai') {
       try {
-        const reply = await callOpenAIAI(trimmed, history, effectiveOpenAIKey, persona, profile);
+        const reply = await callOpenAIAI(trimmed, history, effectiveOpenAIKey, persona, profile, knowledge);
         if (reply && reply.text) {
-          const prods = await findRelatedProducts(cleanLower);
+          const prods = await findRelatedProducts(cleanLower, knowledge);
           await logMessageToConv(conv, trimmed, reply.text);
           return res.json({ success: true, reply: reply.text, products: prods });
         }
@@ -410,22 +379,23 @@ router.post('/message', optionalAuth, async (req, res, next) => {
       }
     }
 
-    // ── 3. NutriBot Smart Knowledge Engine (Built-in 24/7) ─────────────────
+    // ── 3. NutriBot Smart Knowledge Engine (MongoDB-backed) ──────────────
 
-    // 3.1. Tính toán BMI & Tư vấn chỉ số thể trạng
+    // 3.1. Tính toán BMI
     if (cleanLower.includes('bmi') || cleanLower.includes('chi so khoi') || cleanLower.includes('the trang') || cleanLower.includes('can nang ly tuong')) {
-      return res.json(handleBmiCalculation(trimmed, cleanLower, profile));
+      return res.json(handleBmiCalculation(knowledge, trimmed, cleanLower, profile));
     }
 
-    // 3.2. Macro & Phân chia Calo (Carb, Protein, Fat, Thâm hụt calo)
+    // 3.2. Macro & Phân chia Calo
     if (cleanLower.includes('macro') || cleanLower.includes('calorie deficit') || cleanLower.includes('tham hut calo') || cleanLower.includes('dam') || cleanLower.includes('protein') || cleanLower.includes('calo hang ngay')) {
-      return res.json(handleMacroAdvice(cleanLower, profile));
+      return res.json({ success: true, reply: replies.macroAdvice || '', products: [] });
     }
 
     // 3.3. Tra cứu đơn hàng
     const orderMatch = trimmed.match(/(?:XL-?[0-9]{6}|[a-zA-Z0-9]{6,24})/gi);
     const isOrderQuery = cleanLower.includes('don hang') || cleanLower.includes('kiem tra don') || cleanLower.includes('ma don') || cleanLower.includes('order');
     if (isOrderQuery && orderMatch) {
+      const orderStatusMap = knowledge?.orderStatusMap || {};
       for (const code of orderMatch) {
         const rawCode = String(code).trim();
         const normalizedCode = rawCode.replace(/^XL-?/i, 'XL-');
@@ -441,7 +411,7 @@ router.post('/message', optionalAuth, async (req, res, next) => {
         }).populate('items.product');
 
         if (order) {
-          const statusVi = ORDER_STATUS_MAP[order.status] || order.status;
+          const statusVi = orderStatusMap[order.status] || order.status;
           const itemsSummary = (order.items || [])
             .map(i => `- ${i.productName} (x${i.quantity}) - ${(i.priceNumber * i.quantity).toLocaleString('vi-VN')}₫`)
             .join('\n');
@@ -460,7 +430,7 @@ router.post('/message', optionalAuth, async (req, res, next) => {
       }
     }
 
-    // 3.4. Hỏi về Mã giảm giá / Voucher
+    // 3.4. Voucher
     if (cleanLower.includes('voucher') || cleanLower.includes('giam gia') || cleanLower.includes('khuyen mai') || cleanLower.includes('uu dai') || cleanLower.includes('ma code')) {
       const activeVouchers = await Voucher.find({
         isActive: { $ne: false },
@@ -481,49 +451,32 @@ router.post('/message', optionalAuth, async (req, res, next) => {
       } else {
         return res.json({
           success: true,
-          reply: `🌿 Hiện tại Evergreen Mart đang áp dụng chính sách **Miễn phí vận chuyển xe lạnh toàn thành phố cho đơn hàng từ 300.000₫** và tích điểm thành viên hạng Kim cương nhận chiết khấu đến 10%!`,
+          reply: replies.voucherFallback || '',
           products: []
         });
       }
     }
 
-    // 3.5. Hỏi về Chính sách giao hàng & Xe lạnh
+    // 3.5. Chính sách giao hàng & Xe lạnh
     if (cleanLower.includes('giao hang') || cleanLower.includes('phi ship') || cleanLower.includes('van chuyen') || cleanLower.includes('xe lanh') || cleanLower.includes('bao quan')) {
-      const replyText = `🚚 **Chính sách Giao nhận & Bảo quản tại Evergreen Mart:**\n\n` +
-        `1. **Giao hàng xe lạnh chuyên dụng:** Toàn bộ rau củ, quả, thịt cá tươi sống được vận chuyển ở nhiệt độ chuẩn 0°C – 4°C, cam kết độ giòn ngọt nguyên bản như vừa hái tại vườn.\n` +
-        `2. **Tốc độ giao hàng:** Giao hỏa tốc 2 giờ tại nội thành Hà Nội & TP. Hồ Chí Minh.\n` +
-        `3. **Phí vận chuyển:**\n` +
-        ` - **Miễn phí ship (0₫)** cho đơn hàng từ **300.000₫** trở lên.\n` +
-        ` - Đơn dưới 300.000₫: Đồng giá hỗ trợ 25.000₫ nội thành.\n` +
-        `4. **Bảo hành 1 đổi 1 trong 24 giờ:** Nếu sản phẩm bị dập hỏng hoặc không đạt cam kết tươi sạch, Evergreen Mart đổi mới ngay lập tức!`;
-
-      return res.json({ success: true, reply: replyText, products: [] });
+      return res.json({ success: true, reply: replies.shippingPolicy || '', products: [] });
     }
 
-    // 3.6. Hỏi về Thói quen ăn đêm, Cơn thèm ăn, Ăn vặt lành mạnh (NutriBot Q&A)
+    // 3.6. Ăn vặt lành mạnh / thèm ăn đêm
     if (cleanLower.includes('an dem') || cleanLower.includes('them an') || cleanLower.includes('an vat') || cleanLower.includes('snack') || cleanLower.includes('doi bung')) {
       const healthySnacks = await Product.find({
         isActive: { $ne: false },
         category: { $in: ['fruits', 'dry-food', 'dairy'] }
       }).limit(3);
 
-      const replyText = `🍎 **Giải pháp ăn vặt lành mạnh & kiểm soát cơn thèm ăn đêm từ NutriBot:**\n\n` +
-        `1. **Nguyên nhân thèm ăn đêm:** Thường do bữa tối thiếu đạm (protein) hoặc chất xơ, hoặc do căng thẳng, thiếu ngủ làm tăng hormone *ghrelin* gây đói.\n` +
-        `2. **Gợi ý món ăn vặt ít calo (< 150 kcal):**\n` +
-        ` - 1/2 quả táo giòn chấm 1 thìa bơ đậu phộng không đường.\n` +
-        ` - 1 hũ sữa chua Hy Lạp rắc vài hạt chia hoặc việt quất.\n` +
-        ` - Dưa chuột, cà rốt baby cắt thanh giòn ngọt, giàu nước và chất xơ.\n` +
-        ` - 1 ly nước ấm pha mật ong chanh hoặc trà hoa cúc giúp thư giãn thần kinh.\n\n` +
-        `*NutriBot gợi ý một số nông sản tươi giòn sẵn có tại nông trại giúp bạn xoa dịu dạ dày an toàn:*`;
-
       return res.json({
         success: true,
-        reply: replyText,
+        reply: replies.healthySnack || '',
         products: healthySnacks.map(formatProductForChat)
       });
     }
 
-    // 3.7. Gợi ý thực đơn, Eat-Clean, Ăn gì hôm nay
+    // 3.7. Gợi ý thực đơn, Eat-Clean
     if (cleanLower.includes('an gi') || cleanLower.includes('nau gi') || cleanLower.includes('thuc don') || cleanLower.includes('mon ngon') || cleanLower.includes('eat clean') || cleanLower.includes('giam can') || cleanLower.includes('tang co')) {
       const [freshVeggies, freshMeats] = await Promise.all([
         Product.find({ isActive: { $ne: false }, category: 'vegetables' }).limit(2),
@@ -531,24 +484,12 @@ router.post('/message', optionalAuth, async (req, res, next) => {
       ]);
 
       const recommended = [...freshVeggies, ...freshMeats].slice(0, 4);
-
       let targetNote = 'Dinh dưỡng cân bằng (Balanced Diet)';
       if (profile?.dietGoal || profile?.conditions) {
         targetNote = `Mục tiêu cá nhân: ${profile.dietGoal || profile.conditions}`;
       }
 
-      const replyText = `🩺 **NutriBot gợi ý thực đơn Eat-Clean tươi lành chuẩn khoa học:**\n` +
-        `*(Áp dụng cho: ${targetNote})*\n\n` +
-        `🍲 **Bữa trưa năng lượng:**\n` +
-        `- Đạm sạch: 150g Phi lê cá hồi áp chảo sốt bơ chanh hoặc Ức gà nướng thảo mộc.\n` +
-        `- Tinh bột chậm: 1 chén cơm gạo lứt Ba Vì hoặc khoai lang hấp.\n` +
-        `- Rau củ chất xơ: Salad xà lách Lô Tô xanh, cà chua bi sốt dầu giấm nguyên chất.\n\n` +
-        `🥗 **Bữa tối nhẹ bụng:**\n` +
-        `- Canh cải thìa baby non ngọt nấu thịt bằm.\n` +
-        `- Đậu phụ luộc chấm sốt tương mè đen.\n` +
-        `- 1 ly nước ép cần tây táo xanh thanh lọc cơ thể.\n\n` +
-        `*Bạn có thể bấm vào thẻ bên dưới để xem hoặc thêm nguyên liệu vào giỏ hàng ngay:*`;
-
+      const replyText = String(replies.eatCleanMenuTemplate || '').replace('{{targetNote}}', targetNote);
       return res.json({
         success: true,
         reply: replyText,
@@ -557,7 +498,7 @@ router.post('/message', optionalAuth, async (req, res, next) => {
     }
 
     // 3.8. Tìm kiếm sản phẩm theo từ khóa
-    const matchedProducts = await findRelatedProducts(cleanLower);
+    const matchedProducts = await findRelatedProducts(cleanLower, knowledge);
     if (matchedProducts.length > 0) {
       const productNames = matchedProducts.map(p => `- **${p.name}** - ${p.price}`).join('\n');
       const replyText = `🌿 **NutriBot tìm thấy các nông sản hữu cơ phù hợp nhất với câu hỏi của bạn:**\n\n` +
@@ -573,17 +514,9 @@ router.post('/message', optionalAuth, async (req, res, next) => {
 
     // 3.9. Phản hồi mặc định NutriBot
     const featured = await Product.find({ isActive: { $ne: false } }).sort({ stock: -1 }).limit(3);
-    const defaultReply = `Xin chào bạn! Tôi là **NutriBot — Chuyên gia Dinh dưỡng & Trợ lý Nông sản Xanh Lá** 🩺🌿\n\n` +
-      `Tôi có thể hỗ trợ bạn:\n` +
-      `- 📷 **Nhận diện món ăn qua ảnh:** Tải ảnh đĩa ăn hoặc đồ uống lên, tôi sẽ phân tích nguyên liệu, tính lượng Calo và đưa ra lời khuyên dinh dưỡng tức thì!\n` +
-      `- 🩺 **Cá nhân hóa thực đơn:** Tính toán chỉ số BMI, TDEE, thiết kế thực đơn Eat-Clean, giảm mỡ, tăng cơ hoặc ăn kiêng theo bệnh lý.\n` +
-      `- 🥗 **Nông sản hữu cơ:** Tìm kiếm rau củ quả, thịt cá chuẩn VietGAP & GlobalGAP từ nông trại Evergreen Mart.\n` +
-      `- 🚚 **Đơn hàng & Giao vận:** Tra cứu lộ trình xe lạnh bảo quản 0°C – 4°C.\n\n` +
-      `*Hôm nay bạn cần NutriBot phân tích món ăn hay tư vấn dinh dưỡng gì nào?*`;
-
     return res.json({
       success: true,
-      reply: defaultReply,
+      reply: replies.defaultWelcome || '',
       products: featured.map(formatProductForChat)
     });
 
@@ -592,91 +525,23 @@ router.post('/message', optionalAuth, async (req, res, next) => {
   }
 });
 
-// ── NutriBot Vision: Local Image Analyzer (Deterministic & Robust) ──────────
-async function analyzeFoodImageLocal(imageBase64, caption, profile) {
+// ── NutriBot Vision: Local Image Analyzer (MongoDB-backed Meal Profiles) ──────
+async function analyzeFoodImageLocal(knowledge, imageBase64, caption, profile) {
   const capLower = removeDiacritics(caption || '');
+  const mealProfiles = knowledge?.mealProfiles || [];
 
-  // Catalog of representative meals from NutriBot dataset + Xanh La Farm
-  const mealProfiles = [
-    {
-      keywords: ['salad', 'rau', 'uc ga', 'tron', 'dia rau'],
-      mealName: 'Salad Ức Gà Rau Củ Hữu Cơ Sốt Mè Rang',
-      ingredients: 'Ức gà phi lê áp chảo, xà lách Lô Tô xanh, cà chua bi, dưa leo Đà Lạt, ngô ngọt, sốt mè rang.',
-      calories: '280 - 350 kcal',
-      protein: '28g', carbs: '18g', fat: '10g', fiber: '6g',
-      isHealthy: true,
-      advice: 'Đây là một bữa ăn Eat-Clean lý tưởng! Giàu đạm nạc giúp no lâu, nhiều chất xơ hỗ trợ tiêu hóa. Lưu ý không dùng quá nhiều sốt mè để kiểm soát chất béo.',
-      searchKeywords: ['xa lach', 'uc ga', 'ca chua', 'dua leo']
-    },
-    {
-      keywords: ['pho', 'bun', 'mi', 'nuoc dung', 'pho bo', 'pho ga'],
-      mealName: 'Bát Phở Bò Tái Nước Dùng Thanh',
-      ingredients: 'Bánh phở tươi, thịt bò bắp nạc thái mỏng, nước dùng hầm xương quế hồi, hành hoa, rau mùi, chanh ớt.',
-      calories: '420 - 520 kcal',
-      protein: '26g', carbs: '65g', fat: '12g', fiber: '2.5g',
-      isHealthy: true,
-      advice: 'Món ăn truyền thống giàu năng lượng. Nếu bạn đang muốn giảm mỡ, nên vớt bớt lớp váng dầu, ăn kèm nhiều rau thơm giá đỗ và hạn chế húp hết nước dùng để giảm natri.',
-      searchKeywords: ['thit bo', 'hanh hoa', 'chanh']
-    },
-    {
-      keywords: ['burger', 'hamburger', 'banh mi kep'],
-      mealName: 'Bánh Hamburger Thịt Bò & Rau Củ',
-      ingredients: 'Vỏ bánh mì tròn mè, bò bằm nướng áp chảo, phô mai lát, cà chua, hành tây, xà lách.',
-      calories: '550 - 750 kcal',
-      protein: '32g', carbs: '52g', fat: '28g', fiber: '3g',
-      isHealthy: false,
-      advice: 'Bữa ăn giàu đạm nhưng có hàm lượng chất béo bão hòa và tinh bột nhanh khá cao. Nên ăn kèm một đĩa rau xà lách tươi Evergreen Mart không sốt để cân bằng vi chất.',
-      searchKeywords: ['thit bo', 'ca chua', 'xa lach']
-    },
-    {
-      keywords: ['pizza'],
-      mealName: 'Bánh Pizza Nướng Phô Mai Rau Củ',
-      ingredients: 'Đế bột mì nướng giòn, sốt cà chua cô đặc, phô mai mozzarella, ớt chuông, nấm rơm, thịt xông khói.',
-      calories: '700 - 950 kcal (cho 2-3 miếng)',
-      protein: '24g', carbs: '85g', fat: '32g', fiber: '4g',
-      isHealthy: false,
-      advice: 'Lượng calo và muối (natri) tương đối cao. Hãy thưởng thức điều độ, uống nhiều nước và bổ sung thêm rau xanh cho các bữa còn lại trong ngày.',
-      searchKeywords: ['ca chua', 'nam', 'ot chuong']
-    },
-    {
-      keywords: ['sinh to', 'nuoc ep', 'smoothie', 'tra', 'bo', 'chuoi'],
-      mealName: 'Sinh Tố Bơ Chuối Sữa Hạt Nguyên Chất',
-      ingredients: 'Bơ sáp Đắk Lắk, chuối chín Laba, sữa hạt điều không đường, hạt chia hữu cơ.',
-      calories: '220 - 320 kcal',
-      protein: '7g', carbs: '36g', fat: '14g', fiber: '8g',
-      isHealthy: true,
-      advice: 'Thức uống dinh dưỡng dồi dào chất béo tốt không bão hòa đơn, kali và chất chống oxy hóa, hỗ trợ tim mạch và làn da tươi trẻ.',
-      searchKeywords: ['bo', 'chuoi', 'sua hat']
-    },
-    {
-      keywords: ['ca hoi', 'ca', 'hai san', 'fish'],
-      mealName: 'Phi Lê Cá Hồi Áp Chảo Bơ Tỏi Kèm Măng Tây',
-      ingredients: 'Phi lê cá hồi tươi, măng tây xanh Đà Lạt, bơ lạt, tỏi băm, muối hồng, tiêu đen, chanh vàng.',
-      calories: '360 - 450 kcal',
-      protein: '34g', carbs: '8g', fat: '22g', fiber: '4.5g',
-      isHealthy: true,
-      advice: 'Cực kỳ tốt cho não bộ và cơ bắp! Nguồn Axit béo Omega-3 dồi dào giúp kháng viêm, rất thích hợp cho chế độ Keto hoặc Eat-Clean.',
-      searchKeywords: ['ca hoi', 'mang tay', 'bo']
-    },
-    {
-      keywords: ['com', 'com tam', 'com ga', 'rice'],
-      mealName: 'Cơm Gạo Lứt Kèm Đậu Phụ & Rau Củ Xào',
-      ingredients: 'Cơm gạo lứt Ba Vì dẻo ngọt, đậu phụ áp chảo vàng, nấm hương, ớt chuông, bông cải xanh.',
-      calories: '320 - 420 kcal',
-      protein: '16g', carbs: '56g', fat: '9g', fiber: '8.5g',
-      isHealthy: true,
-      advice: 'Bữa ăn thực dưỡng thanh đạm, chỉ số đường huyết (GI) thấp, giúp no lâu và không làm tăng đột ngột đường huyết sau ăn.',
-      searchKeywords: ['gao lut', 'bong cai', 'nam']
-    }
-  ];
-
-  // Pick best matching or default to healthy balanced bowl
-  let matched = mealProfiles.find(m => m.keywords.some(k => capLower.includes(k)));
+  let matched = mealProfiles.find(m => (m.keywords || []).some(k => capLower.includes(k)));
   if (!matched) {
-    matched = mealProfiles[0]; // Default to healthy salad bowl
+    matched = mealProfiles[0] || {
+      mealName: 'Bữa ăn cân bằng Evergreen Mart',
+      ingredients: 'Rau củ hữu cơ, đạm sạch tự nhiên.',
+      calories: '300 - 400 kcal',
+      protein: '25g', carbs: '30g', fat: '10g', fiber: '6g',
+      advice: 'Ưu tiên thực phẩm tươi sạch bảo quản lạnh.',
+      searchKeywords: ['xa lach', 'ca chua'],
+    };
   }
 
-  // Personalization based on user profile
   let personalNote = '';
   if (profile && (profile.age || profile.weight || profile.height)) {
     const heightM = profile.height ? profile.height / 100 : null;
@@ -699,56 +564,152 @@ async function analyzeFoodImageLocal(imageBase64, caption, profile) {
 
   return {
     reply,
-    keywords: matched.searchKeywords.join(' ')
+    keywords: (matched.searchKeywords || []).join(' ')
   };
 }
 
-// Dynamic detection & caching of available Gemini models for the provided API key
-let cachedGeminiModel = null;
-let lastModelCheck = 0;
+// Dynamic discovery & health-aware caching of working Gemini models (rules loaded from MongoDB)
+const MODEL_CACHE_TTL_MS = 1800000;
+let cachedApiKeySuffix = '';
+let cachedWorkingModel = null;
+let lastWorkingModelAt = 0;
+let cachedAvailableModels = [];
+let lastModelsListCheck = 0;
 
-async function getAvailableGeminiModel(apiKey) {
-  if (cachedGeminiModel && (Date.now() - lastModelCheck < 1800000)) {
-    return cachedGeminiModel;
+function isUsableGeminiModel(name, excludedTokens = []) {
+  if (!name || !name.includes('gemini')) return false;
+  return !excludedTokens.some(token => name.includes(token));
+}
+
+function resetModelCacheIfKeyChanged(apiKey) {
+  const suffix = String(apiKey || '').slice(-8);
+  if (suffix !== cachedApiKeySuffix) {
+    cachedApiKeySuffix = suffix;
+    cachedWorkingModel = null;
+    lastWorkingModelAt = 0;
+    cachedAvailableModels = [];
+    lastModelsListCheck = 0;
   }
-  try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-    if (res.ok) {
-      const data = await res.json();
-      const models = (data.models || [])
-        .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
-        .map(m => m.name.replace(/^models\//, ''));
+}
 
-      console.log('📋 Danh sách Gemini models khả dụng cho key này:', models);
+async function getCandidateGeminiModels(apiKey, knowledge) {
+  const preferredModels = knowledge?.preferredGeminiModels || [];
+  const excludedTokens = knowledge?.excludedGeminiModelTokens || [];
 
-      // Ưu tiên các model ổn định và nhanh nhất
-      const chosen = models.find(m => m === 'gemini-3.5-flash') ||
-                     models.find(m => m === 'gemini-3.5-flash-lite') ||
-                     models.find(m => m === 'gemini-flash-lite-latest') ||
-                     models.find(m => m === 'gemini-flash-latest') ||
-                     models.find(m => m === 'gemini-3.8-flash') ||
-                     models.find(m => m.includes('3.5-flash')) ||
-                     models.find(m => m.includes('flash') && !m.includes('2.5-flash') && !m.includes('image')) ||
-                     models[0];
-
-      if (chosen) {
-        cachedGeminiModel = chosen;
-        lastModelCheck = Date.now();
-        console.log(`✅ Đã tự động kết nối Gemini model: ${chosen}`);
-        return chosen;
+  resetModelCacheIfKeyChanged(apiKey);
+  if (!cachedAvailableModels.length || Date.now() - lastModelsListCheck >= MODEL_CACHE_TTL_MS) {
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`, {
+        signal: AbortSignal.timeout(8000),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        cachedAvailableModels = (data.models || [])
+          .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
+          .map(m => m.name.replace(/^models\//, ''))
+          .filter(m => isUsableGeminiModel(m, excludedTokens));
+        lastModelsListCheck = Date.now();
+      } else {
+        const errText = await res.text();
+        console.warn('Gemini ListModels error:', res.status, errText.slice(0, 200));
       }
-    } else {
-      const errText = await res.text();
-      console.warn('Gemini ListModels error:', errText);
+    } catch (e) {
+      console.warn('Không thể tự động lấy danh sách model Gemini:', e.message);
     }
-  } catch (e) {
-    console.warn('Không thể tự động lấy danh sách model Gemini:', e.message);
   }
-  return null;
+
+  const discovered = cachedAvailableModels;
+  const preferred = discovered.length
+    ? preferredModels.filter(m => discovered.includes(m))
+    : preferredModels;
+  const extraFlash = discovered.filter(m => !preferred.includes(m) && m.includes('flash'));
+  const cached =
+    cachedWorkingModel && Date.now() - lastWorkingModelAt < MODEL_CACHE_TTL_MS
+      ? [cachedWorkingModel]
+      : [];
+
+  return [...cached, ...preferred, ...extraFlash]
+    .filter((v, i, a) => Boolean(v) && a.indexOf(v) === i);
+}
+
+function parseBase64Image(imageBase64) {
+  const match = String(imageBase64 || '').match(/^data:(image\/[a-zA-Z0-9.+_-]+)(?:;[^,]*)?;base64,(.+)$/i);
+  return {
+    mimeType: match ? match[1] : 'image/jpeg',
+    cleanBase64: match ? match[2] : String(imageBase64 || ''),
+  };
+}
+
+function extractGeminiCandidateText(json) {
+  const parts = json?.candidates?.[0]?.content?.parts;
+  if (!Array.isArray(parts)) return '';
+  const nonThought = parts
+    .filter(p => !p.thought && typeof p.text === 'string')
+    .map(p => p.text)
+    .join('\n')
+    .trim();
+  if (nonThought) return nonThought;
+  const fallback = parts.find(p => typeof p.text === 'string')?.text;
+  return fallback ? fallback.trim() : '';
+}
+
+async function callGeminiGenerateContent(apiKey, contents, generationConfig, knowledge) {
+  if (!apiKey) {
+    return { ok: false, errorCode: 'NO_API_KEY', errorMessage: 'Chưa cấu hình GEMINI_API_KEY.' };
+  }
+
+  const candidateModels = await getCandidateGeminiModels(apiKey, knowledge);
+  let lastStatus = 0;
+  let lastError = '';
+
+  for (const model of candidateModels) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    try {
+      const payload = generationConfig ? { contents, generationConfig } : { contents };
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(20000),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        const text = extractGeminiCandidateText(json);
+        if (text) {
+          cachedWorkingModel = model;
+          lastWorkingModelAt = Date.now();
+          return { ok: true, text, model };
+        }
+      } else {
+        lastStatus = res.status;
+        lastError = (await res.text()).slice(0, 300);
+        console.warn(`Gemini (${model}, HTTP ${res.status}):`, lastError);
+        if (cachedWorkingModel === model) cachedWorkingModel = null;
+        if (res.status === 400 && /API_KEY_INVALID/i.test(lastError)) {
+          return {
+            ok: false,
+            errorCode: 'INVALID_API_KEY',
+            errorMessage: 'GEMINI_API_KEY không hợp lệ.',
+          };
+        }
+      }
+    } catch (err) {
+      lastError = err.message;
+      console.warn(`Gemini (${model}) failed:`, err.message);
+      if (cachedWorkingModel === model) cachedWorkingModel = null;
+    }
+  }
+
+  return {
+    ok: false,
+    errorCode: lastStatus === 429 ? 'QUOTA_EXCEEDED' : 'GEMINI_UNAVAILABLE',
+    errorMessage: lastError || 'Không thể kết nối tới Gemini API.',
+  };
 }
 
 // ── Gemini Vision API Call ───────────────────────────────────────────────────
-async function callGeminiVision(imageBase64, prompt, apiKey, persona, profile) {
+async function callGeminiVision(imageBase64, prompt, apiKey, persona, profile, knowledge) {
   if (!apiKey) return null;
   let catalogSnippet = '';
   try {
@@ -757,167 +718,106 @@ async function callGeminiVision(imageBase64, prompt, apiKey, persona, profile) {
   } catch (dbErr) {
     console.warn('Catalog snippet fetch skipped for Gemini Vision:', dbErr.message);
   }
-  const systemInstruction = buildSystemPrompt(catalogSnippet, persona, profile);
-
-  // Extract base64 and mime
-  const match = imageBase64.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
-  const mimeType = match ? match[1] : 'image/jpeg';
-  const cleanBase64 = match ? match[2] : imageBase64;
+  const systemInstruction = buildSystemPrompt(knowledge, catalogSnippet, persona, profile);
+  const { mimeType, cleanBase64 } = parseBase64Image(imageBase64);
 
   const userQuery = prompt
     ? `Khách hàng vừa tải ảnh lên với lời nhắn: "${prompt}". Hãy phân tích món ăn theo chuẩn NutriBot.`
-    : `Khách hàng vừa tải lên một hình ảnh đồ ăn/thức uống. Hãy phân tích chi tiết tên món, thành phần, calo và dinh dưỡng theo chuẩn NutriBot.`;
+    : (knowledge?.systemPromptMeta?.visionUserPromptDefault || '');
 
-  const autoModel = await getAvailableGeminiModel(apiKey);
-  const candidateModels = [
-    ...(autoModel ? [autoModel] : []),
-    'gemini-3.5-flash',
-    'gemini-3.5-flash-lite',
-    'gemini-flash-lite-latest',
-    'gemini-flash-latest',
-    'gemini-3.8-flash'
-  ].filter((v, i, a) => a.indexOf(v) === i);
-  for (const model of candidateModels) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                { text: systemInstruction + '\n\n' + userQuery },
-                {
-                  inline_data: {
-                    mime_type: mimeType,
-                    data: cleanBase64
-                  }
-                }
-              ]
-            }
-          ]
-        })
-      });
+  const result = await callGeminiGenerateContent(
+    apiKey,
+    [
+      {
+        role: 'user',
+        parts: [
+          { text: systemInstruction + '\n\n' + userQuery },
+          { inline_data: { mime_type: mimeType, data: cleanBase64 } },
+        ],
+      },
+    ],
+    undefined,
+    knowledge
+  );
 
-      if (res.ok) {
-        const json = await res.json();
-        const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) return { text };
-      }
-    } catch {}
-  }
-  return null;
+  return result.ok ? { text: result.text } : null;
 }
 
 // ── Gemini Vision Ingredient Detector for Cook Page ──────────────────────────
-async function detectIngredientsWithGemini(imageBase64, apiKey) {
-  const match = imageBase64.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
-  const mimeType = match ? match[1] : 'image/jpeg';
-  const cleanBase64 = match ? match[2] : imageBase64;
+async function detectIngredientsWithGemini(imageBase64, apiKey, knowledge) {
+  if (!apiKey) {
+    return { ok: false, errorCode: 'NO_API_KEY', message: 'Chưa cấu hình GEMINI_API_KEY.' };
+  }
 
-  const promptText = `You are a culinary AI for "Evergreen Mart" organic supermarket.
-Analyze this photo of a refrigerator, pantry, table, or food ingredients.
-Identify all individual cooking ingredients visible (e.g., vegetables, meats, seafood, eggs, fruits, roots, seasonings) along with estimated quantity and unit.
-Use only units from ["g", "kg", "quả", "củ", "bó", "gói", "phần"].
-Return ONLY a valid JSON array of objects with "name" (in Vietnamese), "category", "qty" (number), and "unit", for example:
-[
-  {"name": "Thịt bò", "category": "meat", "qty": 300, "unit": "g"},
-  {"name": "Cà chua", "category": "vegetables", "qty": 3, "unit": "quả"},
-  {"name": "Cà rốt", "category": "vegetables", "qty": 2, "unit": "củ"},
-  {"name": "Rau cải", "category": "vegetables", "qty": 1, "unit": "bó"}
-]
-Return purely the JSON array without markdown code fence or extra explanation.`;
+  const { mimeType, cleanBase64 } = parseBase64Image(imageBase64);
+  const promptText = knowledge?.systemPromptMeta?.detectIngredientsPrompt ||
+    'Identify real food ingredients visible in this image. Return JSON array [{"name","category","qty","unit"}].';
 
-  if (apiKey) {
-    const autoModel = await getAvailableGeminiModel(apiKey);
-    const candidateModels = [
-      ...(autoModel ? [autoModel] : []),
-      'gemini-3.8-flash',
-      'gemini-3.8-pro',
-      'gemini-2.0-flash'
-    ].filter((v, i, a) => a.indexOf(v) === i);
-    for (const model of candidateModels) {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      try {
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                role: 'user',
-                parts: [
-                  { text: promptText },
-                  {
-                    inline_data: {
-                      mime_type: mimeType,
-                      data: cleanBase64
-                    }
-                  }
-                ]
-              }
-            ],
-            generationConfig: {
-              temperature: 0.2
-            }
-          })
-        });
+  const result = await callGeminiGenerateContent(
+    apiKey,
+    [
+      {
+        role: 'user',
+        parts: [
+          { text: promptText },
+          { inline_data: { mime_type: mimeType, data: cleanBase64 } },
+        ],
+      },
+    ],
+    { temperature: 0.1 },
+    knowledge
+  );
 
-        if (res.ok) {
-          const json = await res.json();
-          let rawText = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          // Strip code fences if present
-          rawText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
-          try {
-            const parsed = JSON.parse(rawText);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              return parsed.map(item => {
-                if (typeof item === 'string') return { name: item, category: 'other' };
-                const qtyNum = Number(item.qty);
-                return {
-                  name: item.name || 'Nguyên liệu',
-                  category: item.category || 'other',
-                  qty: Number.isFinite(qtyNum) && qtyNum > 0 ? qtyNum : undefined,
-                  unit: typeof item.unit === 'string' && item.unit.trim() ? item.unit.trim() : undefined,
-                };
-              });
-            }
-          } catch (e) {
-            console.warn('Gemini JSON parse failed, extracting via regex:', e.message);
-            const matches = rawText.match(/"name"\s*:\s*"([^"]+)"/g);
-            if (matches && matches.length > 0) {
-              return matches.map(m => {
-                const val = m.replace(/"name"\s*:\s*"/, '').replace(/"/, '');
-                return { name: val, category: 'vegetables' };
-              });
-            }
-          }
-        }
-      } catch (err) {
-        console.warn(`Gemini Vision model ${model} failed:`, err.message);
-      }
+  if (!result.ok) {
+    return { ok: false, errorCode: result.errorCode, message: result.errorMessage };
+  }
+
+  let rawText = result.text.replace(/```json/gi, '').replace(/```/g, '').trim();
+  const arrayMatch = rawText.match(/\[[\s\S]*\]/);
+  if (arrayMatch) rawText = arrayMatch[0];
+
+  try {
+    const parsed = JSON.parse(rawText);
+    if (Array.isArray(parsed)) {
+      const items = parsed
+        .map(item => {
+          if (typeof item === 'string') return { name: item.trim(), category: 'other' };
+          const qtyNum = Number(item?.qty);
+          return {
+            name: String(item?.name || '').trim(),
+            category: item?.category || 'other',
+            qty: Number.isFinite(qtyNum) && qtyNum > 0 ? qtyNum : undefined,
+            unit: typeof item?.unit === 'string' && item.unit.trim() ? item.unit.trim() : undefined,
+          };
+        })
+        .filter(item => item.name);
+      return { ok: true, items, model: result.model };
+    }
+  } catch (e) {
+    console.warn('Gemini JSON parse failed, extracting via regex:', e.message);
+    const matches = rawText.match(/"name"\s*:\s*"([^"]+)"/g);
+    if (matches && matches.length > 0) {
+      const items = matches
+        .map(m => ({
+          name: m.replace(/"name"\s*:\s*"/, '').replace(/"$/, '').trim(),
+          category: 'other',
+        }))
+        .filter(item => item.name);
+      return { ok: true, items, model: result.model };
     }
   }
 
-  // Fallback heuristic if Gemini is not responding or no API key
-  return [
-    { name: 'Cà chua', category: 'vegetables' },
-    { name: 'Rau cải', category: 'vegetables' },
-    { name: 'Thịt bò', category: 'meat' },
-    { name: 'Cà rốt', category: 'vegetables' }
-  ];
+  return { ok: false, errorCode: 'PARSE_FAILED', message: 'Gemini trả về dữ liệu không đúng định dạng.' };
 }
 
 // ── OpenAI Vision API Call ───────────────────────────────────────────────────
-async function callOpenAIVision(imageBase64, prompt, apiKey, persona, profile) {
+async function callOpenAIVision(imageBase64, prompt, apiKey, persona, profile, knowledge) {
   if (!apiKey) return null;
   const products = await Product.find({ isActive: { $ne: false } }).limit(20).select('name price categoryVi');
   const catalogSnippet = products.map(p => `- ${p.name} (${p.price}, ${p.categoryVi})`).join('\n');
-  const systemInstruction = buildSystemPrompt(catalogSnippet, persona, profile);
+  const systemInstruction = buildSystemPrompt(knowledge, catalogSnippet, persona, profile);
 
-  const userQuery = prompt || 'Hãy nhận diện món ăn trong bức ảnh này, phân tích thành phần, tính calo và đánh giá dinh dưỡng.';
+  const userQuery = prompt || (knowledge?.systemPromptMeta?.visionUserPromptDefault || '');
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -947,9 +847,8 @@ async function callOpenAIVision(imageBase64, prompt, apiKey, persona, profile) {
   return { text };
 }
 
-// ── Helper: BMI Calculation ─────────────────────────────────────────────────
-function handleBmiCalculation(trimmed, cleanLower, profile) {
-  // Parse height e.g. "1m68", "1m7", "1.68m", "168cm", "168"
+// ── Helper: BMI Calculation (MongoDB-backed bands & guide) ───────────────────
+function handleBmiCalculation(knowledge, trimmed, cleanLower, profile) {
   const mCmMatch = trimmed.match(/cao\s*([12])\s*m\s*([0-9]{1,2})/i);
   const heightMatch = trimmed.match(/cao\s*([0-9.,]+)\s*(m|cm)?/i);
   const weightMatch = trimmed.match(/n[aặ]ng\s*([0-9.,]+)\s*(kg)?/i);
@@ -960,7 +859,7 @@ function handleBmiCalculation(trimmed, cleanLower, profile) {
   if (mCmMatch) {
     const meters = parseInt(mCmMatch[1], 10);
     let sub = mCmMatch[2];
-    if (sub.length === 1) sub = sub + '0'; // 1m7 -> 170cm
+    if (sub.length === 1) sub = sub + '0';
     height = meters * 100 + parseInt(sub, 10);
   } else if (heightMatch) {
     let hVal = parseFloat(heightMatch[1].replace(',', '.'));
@@ -972,16 +871,11 @@ function handleBmiCalculation(trimmed, cleanLower, profile) {
     weight = parseFloat(weightMatch[1].replace(',', '.'));
   }
 
+  const bmiConfig = knowledge?.bmiConfig || {};
   if (!height || !weight) {
     return {
       success: true,
-      reply: `🩺 **Cách tính chỉ số BMI & Nhu cầu Calo từ NutriBot:**\n\n` +
-        `Công thức chuẩn: **BMI = Cân nặng (kg) / [Chiều cao (m)]²**\n\n` +
-        `- **< 18.5:** Thiếu cân (Cần bổ sung đạm, chất béo tốt và tinh bột chậm)\n` +
-        `- **18.5 – 22.9:** Thể trạng Chuẩn lý tưởng cho người Châu Á\n` +
-        `- **23.0 – 24.9:** Tiền béo phì (Thừa cân nhẹ, nên áp dụng thâm hụt calo)\n` +
-        `- **≥ 25.0:** Béo phì (Cần chế độ Eat-Clean nghiêm ngặt & tập luyện)\n\n` +
-        `👉 *Bạn có thể nhập chiều cao và cân nặng (ví dụ: "Em cao 1m65 nặng 58kg") hoặc điền trực tiếp trong phần Cài đặt (⚙️) để NutriBot tính tự động nhé!*`,
+      reply: bmiConfig.guideReply || '',
       products: []
     };
   }
@@ -990,22 +884,10 @@ function handleBmiCalculation(trimmed, cleanLower, profile) {
   const bmi = (weight / (heightM * heightM)).toFixed(1);
   const bmiNum = parseFloat(bmi);
 
-  let status = '';
-  let advice = '';
-
-  if (bmiNum < 18.5) {
-    status = 'Thiếu cân (Gầy)';
-    advice = 'Bạn nên tăng nhẹ lượng calo nạp vào (+300 - 500 kcal/ngày). Ưu tiên các loại hạt giàu calo tốt (hạt điều, óc chó), sữa hạt, bơ sáp và thịt cá tươi từ Evergreen Mart.';
-  } else if (bmiNum < 23) {
-    status = 'Thể trạng Chuẩn (Lý tưởng)';
-    advice = 'Chúc mừng bạn! Chỉ số hình thể rất tuyệt vời. Hãy duy trì chế độ ăn Eat-Clean giàu rau xanh và uống đủ nước để giữ vững phong độ nhé.';
-  } else if (bmiNum < 25) {
-    status = 'Tiền béo phì (Thừa cân nhẹ)';
-    advice = 'Bạn nên tạo mức thâm hụt calo vừa phải (-300 kcal/ngày). Tăng cường rau họ cải (cải thìa, cải bó xôi) để no lâu và giảm tinh bột nhanh.';
-  } else {
-    status = 'Béo phì';
-    advice = 'NutriBot khuyên bạn nên kiểm soát khẩu phần chặt chẽ, cắt giảm hoàn toàn nước ngọt và đồ chiên rán, thay bằng 50% đĩa ăn là rau củ hữu cơ Evergreen Mart luộc/hấp.';
-  }
+  const bands = bmiConfig.bands || [];
+  const matchedBand = bands.find((b) => b.maxBmi === null || b.maxBmi === undefined || bmiNum < b.maxBmi);
+  const status = matchedBand?.status || 'Bình thường';
+  const advice = matchedBand?.advice || '';
 
   const minIdealWeight = (18.5 * heightM * heightM).toFixed(1);
   const maxIdealWeight = (22.9 * heightM * heightM).toFixed(1);
@@ -1020,24 +902,8 @@ function handleBmiCalculation(trimmed, cleanLower, profile) {
   return { success: true, reply, products: [] };
 }
 
-// ── Helper: Macro & Calorie Advice ──────────────────────────────────────────
-function handleMacroAdvice(cleanLower, profile) {
-  const reply = `📊 **Hướng dẫn chia tỷ lệ Macro (Dinh dưỡng đa lượng) chuẩn NutriBot:**\n\n` +
-    `Macro bao gồm 3 nhóm chất sinh năng lượng chính:\n` +
-    `1. **Protein (Chất đạm):** 1g = 4 kcal — Xây dựng cơ bắp, hỗ trợ trao đổi chất (Ức gà, cá hồi, thịt bò nạc, đậu phụ).\n` +
-    `2. **Carbohydrate (Tinh bột):** 1g = 4 kcal — Cung cấp năng lượng chính (Gạo lứt Ba Vì, khoai lang, yến mạch, hoa quả).\n` +
-    `3. **Fat (Chất béo tốt):** 1g = 9 kcal — Cân bằng hormone, hòa tan vitamin A, D, E, K (Bơ, dầu ô-liu, các loại hạt).\n\n` +
-    `🎯 **Tỷ lệ phân chia khuyến nghị theo mục tiêu:**\n` +
-    `- **Giảm mỡ & Cắt nét:** 40% Carb – 40% Protein – 20% Fat (Thâm hụt 300-500 kcal)\n` +
-    `- **Duy trì & Eat-Clean:** 50% Carb – 25% Protein – 25% Fat\n` +
-    `- **Tăng cơ nạc:** 45% Carb – 30% Protein – 25% Fat\n\n` +
-    `💡 *Nguyên tắc vàng: Luôn ưu tiên nguyên liệu hữu cơ tươi mới để cơ thể hấp thu tối đa dưỡng chất mà không bị nạp tạp chất độc hại.*`;
-
-  return { success: true, reply, products: [] };
-}
-
 // ── Text AI Providers (Gemini / OpenAI) ──────────────────────────────────────
-async function callGeminiAI(prompt, history, apiKey, persona, profile) {
+async function callGeminiAI(prompt, history, apiKey, persona, profile, knowledge) {
   if (!apiKey) return null;
   let catalogSnippet = '';
   try {
@@ -1046,50 +912,23 @@ async function callGeminiAI(prompt, history, apiKey, persona, profile) {
   } catch (dbErr) {
     console.warn('Catalog snippet fetch skipped for Gemini AI:', dbErr.message);
   }
-  const systemInstruction = buildSystemPrompt(catalogSnippet, persona, profile);
+  const systemInstruction = buildSystemPrompt(knowledge, catalogSnippet, persona, profile);
 
-  const autoModel = await getAvailableGeminiModel(apiKey);
-  const candidateModels = [
-    ...(autoModel ? [autoModel] : []),
-    'gemini-3.5-flash',
-    'gemini-3.5-flash-lite',
-    'gemini-flash-lite-latest',
-    'gemini-flash-latest',
-    'gemini-3.8-flash'
-  ].filter((v, i, a) => a.indexOf(v) === i);
-  for (const model of candidateModels) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            { role: 'user', parts: [{ text: systemInstruction + '\n\nKhách hàng hỏi: ' + prompt }] }
-          ]
-        })
-      });
+  const result = await callGeminiGenerateContent(
+    apiKey,
+    [{ role: 'user', parts: [{ text: systemInstruction + '\n\nKhách hàng hỏi: ' + prompt }] }],
+    undefined,
+    knowledge
+  );
 
-      if (res.ok) {
-        const json = await res.json();
-        const replyText = json.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (replyText) return { text: replyText };
-      } else {
-        const errText = await res.text();
-        console.warn(`Gemini AI (${model}, HTTP ${res.status}):`, errText);
-      }
-    } catch (fetchErr) {
-      console.warn(`Gemini AI fetch failed (${model}):`, fetchErr.message);
-    }
-  }
-  return null;
+  return result.ok ? { text: result.text } : null;
 }
 
-async function callOpenAIAI(prompt, history, apiKey, persona, profile) {
+async function callOpenAIAI(prompt, history, apiKey, persona, profile, knowledge) {
   if (!apiKey) return null;
   const products = await Product.find({ isActive: { $ne: false } }).limit(25).select('name price categoryVi slug');
   const catalogSnippet = products.map(p => `- ${p.name} (${p.price}, nhóm: ${p.categoryVi})`).join('\n');
-  const systemInstruction = buildSystemPrompt(catalogSnippet, persona, profile);
+  const systemInstruction = buildSystemPrompt(knowledge, catalogSnippet, persona, profile);
 
   const messages = [
     { role: 'system', content: systemInstruction },
@@ -1117,9 +956,9 @@ async function callOpenAIAI(prompt, history, apiKey, persona, profile) {
 }
 
 // ── Search & Helpers ────────────────────────────────────────────────────────
-async function findRelatedProducts(cleanLower) {
+async function findRelatedProducts(cleanLower, knowledge) {
   try {
-    const productKeywords = extractProductKeywords(cleanLower);
+    const productKeywords = extractProductKeywords(cleanLower, knowledge?.productKeywords || []);
     let matched = [];
 
     if (productKeywords.length > 0) {
@@ -1134,14 +973,13 @@ async function findRelatedProducts(cleanLower) {
     }
 
     if (!matched || matched.length === 0) {
-      if (cleanLower.includes('rau') || cleanLower.includes('cu') || cleanLower.includes('salad')) {
-        matched = await Product.find({ isActive: { $ne: false }, category: 'vegetables' }).limit(4).maxTimeMS(2500);
-      } else if (cleanLower.includes('trai cay') || cleanLower.includes('hoa qua') || cleanLower.includes('bo')) {
-        matched = await Product.find({ isActive: { $ne: false }, category: 'fruits' }).limit(4).maxTimeMS(2500);
-      } else if (cleanLower.includes('thit') || cleanLower.includes('bo') || cleanLower.includes('uc ga')) {
-        matched = await Product.find({ isActive: { $ne: false }, category: 'meat' }).limit(4).maxTimeMS(2500);
-      } else if (cleanLower.includes('ca') || cleanLower.includes('hai san') || cleanLower.includes('ca hoi')) {
-        matched = await Product.find({ isActive: { $ne: false }, category: 'seafood' }).limit(4).maxTimeMS(2500);
+      const fallbackRule = (knowledge?.categoryFallbackRules || []).find((rule) =>
+        (rule.keywords || []).some((kw) => cleanLower.includes(kw))
+      );
+      if (fallbackRule?.category) {
+        matched = await Product.find({ isActive: { $ne: false }, category: fallbackRule.category })
+          .limit(4)
+          .maxTimeMS(2500);
       }
     }
 
@@ -1167,20 +1005,59 @@ function formatProductForChat(p) {
   };
 }
 
-function extractProductKeywords(text) {
-  const words = [
-    'cai thia', 'cai ngot', 'cai cuc', 'mong toi', 'rau muong', 'bo xoi', 'xa lach', 'bap cai', 'ca chua', 'dua leo',
-    'khoai tay', 'ca rot', 'nam', 'bap', 'bi do', 'su hao', 'khoai lang', 'bong cai', 'mang tay',
-    'tao', 'chuoi', 'cam', 'nho', 'le', 'xoai', 'bo', 'buoi', 'dau tay', 'viet quat',
-    'thit bo', 'ba chi', 'than ngoai', 'thit heo', 'thit ga', 'uc ga', 'suon',
-    'ca hoi', 'phi le', 'tom', 'muc', 'ca thu', 'hai san',
-    'sua tuoi', 'sua hat', 'sua chua', 'pho mai', 'dau phu', 'gao lut'
-  ];
-  return words.filter(w => text.includes(w));
+function extractProductKeywords(text, keywordsList = []) {
+  return (keywordsList || []).filter(w => text.includes(w));
+}
+
+function matchesCategoryHint(product, detectedCat, categoryHints = {}) {
+  if (!detectedCat || detectedCat === 'other') return null;
+  const hints = categoryHints?.[String(detectedCat).toLowerCase()];
+  if (!hints) return null;
+  const pCat = removeDiacritics(`${product.category || ''} ${product.categoryVi || ''}`);
+  return hints.some(h => pCat.includes(h));
+}
+
+function findBestMatchingProduct(rawName, category, allProducts, categoryHints = {}) {
+  const normRaw = removeDiacritics(rawName).trim();
+  if (!normRaw) return null;
+
+  const escapeRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const wordRe = new RegExp(`(?:^|\\s)${escapeRe(normRaw)}(?:$|\\s)`);
+  const startRe = new RegExp(`^${escapeRe(normRaw)}(?:$|\\s)`);
+
+  let bestProduct = null;
+  let bestScore = 0;
+
+  for (const p of allProducts) {
+    const normP = removeDiacritics(p.name).trim();
+    let score = 0;
+
+    if (normP === normRaw) {
+      score += 120;
+    } else if (startRe.test(normP)) {
+      score += 80;
+    } else if (wordRe.test(normP)) {
+      score += 45;
+    } else if (normRaw.length >= 4 && (normP.includes(normRaw) || normRaw.includes(normP))) {
+      score += 25;
+    } else {
+      continue;
+    }
+
+    const catMatch = matchesCategoryHint(p, category, categoryHints);
+    if (catMatch === true) score += 30;
+    else if (catMatch === false) score -= 60;
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestProduct = p;
+    }
+  }
+
+  return bestScore >= 30 ? bestProduct : null;
 }
 
 // ── POST /api/chatbot/detect-ingredients ─────────────────────────────────────
-// Uses Gemini Vision to analyze fridge/ingredient photos and matches items with Product collection
 router.post('/detect-ingredients', async (req, res, next) => {
   try {
     const { image, apiKey } = req.body;
@@ -1188,15 +1065,31 @@ router.post('/detect-ingredients', async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Vui lòng tải lên hình ảnh nguyên liệu.' });
     }
 
+    const knowledge = await getChatbotKnowledge();
     const effectiveGeminiKey = apiKey || process.env.GEMINI_API_KEY;
-    const detectedItems = await detectIngredientsWithGemini(image, effectiveGeminiKey);
+    const detection = await detectIngredientsWithGemini(image, effectiveGeminiKey, knowledge);
+
+    if (!detection.ok) {
+      const errorMessages = knowledge?.cannedReplies?.detectIngredientErrors || {};
+      const message =
+        errorMessages[detection.errorCode] ||
+        errorMessages.DEFAULT ||
+        'Gemini hiện tại đang gặp vấn đề, không nhận diện được ảnh. Bạn đợi ít phút rồi thử lại hoặc thêm nguyên liệu thủ công bên trên nhé.';
+
+      return res.status(503).json({
+        success: false,
+        code: detection.errorCode,
+        message,
+      });
+    }
 
     const allProducts = await Product.find({ isActive: { $ne: false } }).select('name slug price priceNumber image category categoryVi stock');
 
     const results = [];
     const seenNames = new Set();
+    const categoryHints = knowledge?.ingredientCategoryHints || {};
 
-    for (const item of detectedItems) {
+    for (const item of detection.items) {
       const rawName = (item.name || '').trim();
       if (!rawName) continue;
       const normRaw = removeDiacritics(rawName);
@@ -1204,43 +1097,14 @@ router.post('/detect-ingredients', async (req, res, next) => {
       if (seenNames.has(normRaw)) continue;
       seenNames.add(normRaw);
 
-      // Find matching product in catalog
-      let matchedProd = null;
-
-      // Direct regex
-      try {
-        const reg = new RegExp(rawName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-        matchedProd = allProducts.find(p => reg.test(p.name));
-      } catch {}
-
-      // Normalized diacritics fuzzy match
-      if (!matchedProd) {
-        matchedProd = allProducts.find(p => {
-          const normP = removeDiacritics(p.name);
-          return normP.includes(normRaw) || normRaw.includes(normP);
-        });
-      }
-
-      // Keyword match fallback
-      if (!matchedProd) {
-        const keywords = extractProductKeywords(normRaw);
-        if (keywords.length > 0) {
-          matchedProd = allProducts.find(p => {
-            const normP = removeDiacritics(p.name);
-            return keywords.some(kw => normP.includes(kw));
-          });
-        }
-      }
-
-      // Category match fallback
-      if (!matchedProd && item.category) {
-        matchedProd = allProducts.find(p => p.category === item.category);
-      }
+      const matchedProd = findBestMatchingProduct(rawName, item.category, allProducts, categoryHints);
 
       results.push({
         name: matchedProd ? matchedProd.name : rawName,
         rawName,
         category: item.category || 'other',
+        qty: item.qty,
+        unit: item.unit,
         productId: matchedProd ? matchedProd._id.toString() : null,
         product: matchedProd ? formatProductForChat(matchedProd) : null
       });
@@ -1248,6 +1112,7 @@ router.post('/detect-ingredients', async (req, res, next) => {
 
     return res.json({
       success: true,
+      model: detection.model,
       ingredients: results,
       total: results.length
     });
@@ -1262,7 +1127,6 @@ router.get('/session/:sessionId', optionalAuth, async (req, res, next) => {
     const { sessionId } = req.params;
     let conv = null;
 
-    // Ưu tiên tìm hội thoại của user đã đăng nhập để gom về 1 khung chat duy nhất
     if (req.user) {
       conv = await Conversation.findOne({ customer: req.user._id })
         .populate('assignedTo', 'name email avatar')
@@ -1288,7 +1152,6 @@ router.get('/session/:sessionId', optionalAuth, async (req, res, next) => {
       });
     }
 
-    // Đánh dấu khách đã đọc các tin nhắn từ admin
     if (conv.unreadCustomerCount > 0) {
       conv.unreadCustomerCount = 0;
       await conv.save();
@@ -1312,6 +1175,7 @@ router.get('/session/:sessionId', optionalAuth, async (req, res, next) => {
 router.post('/switch-to-ai', optionalAuth, async (req, res, next) => {
   try {
     const { sessionId } = req.body;
+    const knowledge = await getChatbotKnowledge();
     let conv = null;
 
     if (req.user) {
@@ -1333,7 +1197,9 @@ router.post('/switch-to-ai', optionalAuth, async (req, res, next) => {
       sender: 'ai',
       senderName: 'NutriBot',
       senderAvatar: 'https://api.iconify.design/lucide:bot.svg?color=%23176b3a',
-      content: 'NutriBot đã quay trở lại đồng hành cùng bạn 🌿! Bạn có câu hỏi gì về dinh dưỡng hoặc nông sản không?',
+      content:
+        knowledge?.cannedReplies?.switchToAiGreeting ||
+        'NutriBot đã quay trở lại đồng hành cùng bạn!',
       timestamp: new Date(),
     };
     conv.messages.push(returnMsg);
