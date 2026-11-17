@@ -3141,14 +3141,9 @@ export class NutritionComponent implements OnInit {
       this.onboardingCompleted.set(true);
       this.nutritionView.set('result');
     } else {
-      // Khi vào trang /nutrition không kèm param view:
-      // - Nếu là lần đầu (chưa từng hoàn tất thiết lập): chỉ hiển thị landing (Hero + Gợi ý món ăn)
-      // - Nếu là lần sau (đã lưu thiết lập trên localStorage): tự động hiển thị lại thực đơn tối ưu
-      if (this.onboardingCompleted()) {
-        this.nutritionView.set('result');
-      } else {
-        this.nutritionView.set('landing');
-      }
+      // A saved plan keeps its settings, but must not open the results view by itself.
+      // Show personalized results only after the user completes setup or explicitly requests view=result.
+      this.nutritionView.set('landing');
     }
     this.computeRecipes();
 
@@ -3233,12 +3228,8 @@ export class NutritionComponent implements OnInit {
           } else if (viewParam === 'landing') {
             this.nutritionView.set('landing');
           } else {
-            // Khi không có param trên URL:
-            if (this.onboardingCompleted()) {
-              this.nutritionView.set('result');
-            } else {
-              this.nutritionView.set('landing');
-            }
+            // Returning to the plain /nutrition route always returns to the landing view.
+            this.nutritionView.set('landing');
           }
         }
       });
