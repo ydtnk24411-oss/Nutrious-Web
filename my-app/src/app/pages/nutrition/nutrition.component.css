@@ -6898,3 +6898,768 @@
   from { opacity: 0; transform: translateY(-50%) scale(0.92); }
   to { opacity: 1; transform: translateY(-50%) scale(1); }
 }
+
+/* ==========================================================================
+   SMART NUTRITION 5-STEP ONBOARDING (EVERGREENMART BRAND DESIGN SYSTEM)
+   ========================================================================== */
+.xl-ob-section {
+  padding: 8px 0 48px;
+}
+
+.xl-ob-layout {
+  display: grid;
+  grid-template-columns: 420px minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
+  max-width: 1080px;
+  margin: 0 auto;
+  background: #ffffff;
+  border: 1px solid #dce8dc;
+  border-radius: 16px;
+  padding: 32px;
+}
+
+/* Left Column: Fixed Lifestyle Image */
+.xl-ob-media {
+  position: sticky;
+  top: 96px;
+}
+
+.xl-ob-image-wrap {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  max-height: 540px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--green-50, #f2faf2);
+  border: 1px solid #dce8dc;
+}
+
+.xl-ob-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Right Column: Step Content & Navigation */
+.xl-ob-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 520px;
+  max-width: 560px;
+  width: 100%;
+}
+
+/* Progress Indicator */
+.xl-ob-progress {
+  margin-bottom: 24px;
+}
+
+.xl-ob-progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.xl-ob-step-indicator {
+  font-family: var(--font-text, 'Be Vietnam Pro', 'Segoe UI', sans-serif);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted, #5a7a5a);
+  letter-spacing: 0.2px;
+}
+
+.xl-ob-progress-track {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.xl-ob-progress-seg {
+  height: 4px;
+  border: none;
+  border-radius: 2px;
+  background: #dce8dc;
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.xl-ob-progress-seg:hover {
+  background: var(--green-300, #8ab88a);
+}
+
+.xl-ob-progress-seg.is-completed {
+  background: var(--green-500, #4a8f4a);
+}
+
+.xl-ob-progress-seg.is-active {
+  background: var(--green-700, #2d6a2d);
+}
+
+/* Step Body & Typography */
+.xl-ob-step-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.xl-ob-step-header {
+  margin-bottom: 20px;
+}
+
+.xl-ob-title {
+  font-family: var(--font-display, 'Playfair Display', Georgia, serif);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--green-900, #1b3d1b);
+  margin: 0 0 8px 0;
+}
+
+.xl-ob-subtitle {
+  font-family: var(--font-text, 'Be Vietnam Pro', 'Segoe UI', sans-serif);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--muted, #5a7a5a);
+  margin: 0;
+}
+
+/* Step 1: Uniform Horizontal Goal Selection Bars */
+.xl-ob-goal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.xl-ob-goal-item {
+  width: 100%;
+  min-height: 82px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  background: #ffffff;
+  border: 1.5px solid #dce8dc;
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.xl-ob-goal-item:hover {
+  border-color: var(--green-300, #8ab88a);
+  background: #fafdfa;
+}
+
+.xl-ob-goal-item:focus-visible {
+  outline: 2px solid var(--green-700, #2d6a2d);
+  outline-offset: 2px;
+}
+
+.xl-ob-goal-item.is-selected {
+  border-color: var(--green-700, #2d6a2d);
+  background: var(--green-50, #f2faf2);
+}
+
+.xl-ob-goal-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.xl-ob-goal-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.xl-ob-goal-name {
+  font-family: var(--font-text, 'Be Vietnam Pro', 'Segoe UI', sans-serif);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--green-900, #1b3d1b);
+}
+
+.xl-ob-goal-badge {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--green-700, #2d6a2d);
+  background: var(--green-100, #e8f5e8);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.xl-ob-goal-desc {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted, #5a7a5a);
+  margin: 0;
+}
+
+.xl-ob-goal-meta {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green-700, #2d6a2d);
+}
+
+.xl-ob-radio-mark {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid #bfd4bf;
+  background: #ffffff;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.xl-ob-goal-item.is-selected .xl-ob-radio-mark,
+.xl-ob-choice-card.is-selected .xl-ob-radio-mark {
+  border-color: var(--green-700, #2d6a2d);
+  background: var(--green-700, #2d6a2d);
+}
+
+/* Field Groups & Choice Grids (Steps 2, 3, 4, 5) */
+.xl-ob-fields-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.xl-ob-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.xl-ob-field-label {
+  font-family: var(--font-text, 'Be Vietnam Pro', 'Segoe UI', sans-serif);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--green-900, #1b3d1b);
+}
+
+.xl-ob-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.xl-ob-val-highlight {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--green-700, #2d6a2d);
+}
+
+.xl-ob-choice-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.xl-ob-choice-grid--2 {
+  grid-template-columns: 1fr;
+}
+
+.xl-ob-choice-grid--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.xl-ob-choice-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1.5px solid #dce8dc;
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.xl-ob-choice-card:hover {
+  border-color: var(--green-300, #8ab88a);
+  background: #fafdfa;
+}
+
+.xl-ob-choice-card:focus-visible {
+  outline: 2px solid var(--green-700, #2d6a2d);
+  outline-offset: 2px;
+}
+
+.xl-ob-choice-card.is-selected {
+  border-color: var(--green-700, #2d6a2d);
+  background: var(--green-50, #f2faf2);
+}
+
+.xl-ob-choice-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.xl-ob-choice-text strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--green-900, #1b3d1b);
+}
+
+.xl-ob-choice-text span {
+  font-size: 12.5px;
+  color: var(--muted, #5a7a5a);
+  line-height: 1.4;
+}
+
+/* Step 3: Servings Stepper & Kcal Slider */
+.xl-ob-stepper-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.xl-ob-number-stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1.5px solid #dce8dc;
+  border-radius: 8px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.xl-ob-step-btn {
+  width: 42px;
+  height: 42px;
+  border: none;
+  background: var(--green-50, #f2faf2);
+  color: var(--green-900, #1b3d1b);
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.xl-ob-step-btn:hover:not(:disabled) {
+  background: var(--green-100, #e8f5e8);
+}
+
+.xl-ob-step-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.xl-ob-stepper-input {
+  width: 64px;
+  height: 42px;
+  border: none;
+  border-left: 1px solid #dce8dc;
+  border-right: 1px solid #dce8dc;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--green-900, #1b3d1b);
+  background: #ffffff;
+}
+
+.xl-ob-stepper-input:focus {
+  outline: none;
+  background: var(--green-50, #f2faf2);
+}
+
+.xl-ob-unit-note {
+  font-size: 13px;
+  color: var(--muted, #5a7a5a);
+}
+
+.xl-ob-range {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #dce8dc;
+  accent-color: var(--green-700, #2d6a2d);
+  cursor: pointer;
+  margin: 4px 0;
+}
+
+.xl-ob-pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.xl-ob-pill-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1.5px solid #dce8dc;
+  background: #ffffff;
+  color: var(--green-900, #1b3d1b);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.xl-ob-pill-btn:hover {
+  border-color: var(--green-300, #8ab88a);
+  background: #fafdfa;
+}
+
+.xl-ob-pill-btn.is-selected {
+  border-color: var(--green-700, #2d6a2d);
+  background: var(--green-700, #2d6a2d);
+  color: #ffffff;
+}
+
+/* Step 4: Macro Inputs & Caloric Ratio */
+.xl-ob-macros-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.xl-ob-macro-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.xl-ob-input-unit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1.5px solid #dce8dc;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 0 12px;
+  height: 44px;
+}
+
+.xl-ob-input-unit:focus-within {
+  border-color: var(--green-700, #2d6a2d);
+}
+
+.xl-ob-input-unit input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--green-900, #1b3d1b);
+  outline: none;
+}
+
+.xl-ob-input-unit span {
+  font-size: 12px;
+  color: var(--muted, #5a7a5a);
+  white-space: nowrap;
+  margin-left: 6px;
+}
+
+.xl-ob-ratio-block {
+  border: 1px solid #dce8dc;
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: var(--green-50, #f2faf2);
+}
+
+.xl-ob-ratio-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.xl-ob-ratio-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--green-900, #1b3d1b);
+}
+
+.xl-ob-ratio-tag {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted, #5a7a5a);
+}
+
+.xl-ob-ratio-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #dce8dc;
+  margin-bottom: 10px;
+}
+
+.xl-ob-ratio-seg {
+  height: 100%;
+  transition: width 0.2s ease;
+}
+
+.xl-ob-ratio-seg--p {
+  background: var(--green-700, #2d6a2d);
+}
+
+.xl-ob-ratio-seg--c {
+  background: var(--green-500, #4a8f4a);
+}
+
+.xl-ob-ratio-seg--f {
+  background: var(--green-300, #8ab88a);
+}
+
+.xl-ob-ratio-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--green-900, #1b3d1b);
+}
+
+.xl-ob-leg-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.xl-ob-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.xl-ob-dot--p {
+  background: var(--green-700, #2d6a2d);
+}
+
+.xl-ob-dot--c {
+  background: var(--green-500, #4a8f4a);
+}
+
+.xl-ob-dot--f {
+  background: var(--green-300, #8ab88a);
+}
+
+.xl-ob-ratio-warn-row {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.xl-ob-ratio-warn {
+  margin: 0;
+  font-size: 12.5px;
+  color: #b45309;
+  font-weight: 500;
+}
+
+.xl-ob-rebalance-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--green-700, #2d6a2d);
+  background: #ffffff;
+  color: var(--green-700, #2d6a2d);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.xl-ob-rebalance-btn:hover {
+  background: var(--green-700, #2d6a2d);
+  color: #ffffff;
+}
+
+/* Step 5: Exclude Ingredients Input */
+.xl-ob-text-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid #dce8dc;
+  border-radius: 8px;
+  background: #ffffff;
+  font-family: var(--font-text, 'Be Vietnam Pro', 'Segoe UI', sans-serif);
+  font-size: 14px;
+  color: var(--green-900, #1b3d1b);
+  transition: border-color 0.15s ease;
+}
+
+.xl-ob-text-input:focus {
+  outline: none;
+  border-color: var(--green-700, #2d6a2d);
+}
+
+.xl-ob-exclude-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--muted, #5a7a5a);
+}
+
+.xl-ob-exclude-feedback strong {
+  color: var(--green-900, #1b3d1b);
+}
+
+.xl-ob-match-count {
+  font-weight: 600;
+  color: var(--green-700, #2d6a2d);
+}
+
+/* Footer Navigation Buttons */
+.xl-ob-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #e8f0e8;
+}
+
+.xl-ob-btn-back {
+  height: 46px;
+  padding: 0 18px;
+  border-radius: 8px;
+  border: 1.5px solid #dce8dc;
+  background: #ffffff;
+  color: var(--green-900, #1b3d1b);
+  font-family: var(--font-text, 'Be Vietnam Pro', 'Segoe UI', sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.xl-ob-btn-back:hover:not(:disabled) {
+  border-color: var(--green-300, #8ab88a);
+  background: var(--green-50, #f2faf2);
+}
+
+.xl-ob-btn-next {
+  flex: 1;
+  height: 46px;
+  padding: 0 24px;
+  border-radius: 8px;
+  border: none;
+  background: var(--green-700, #2d6a2d);
+  color: #ffffff;
+  font-family: var(--font-text, 'Be Vietnam Pro', 'Segoe UI', sans-serif);
+  font-size: 14.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.xl-ob-btn-next:hover:not(:disabled) {
+  background: var(--green-900, #1b3d1b);
+}
+
+.xl-ob-btn-next:disabled,
+.xl-ob-btn-back:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Edit Setup Button on Results Banner */
+.xl-ob-edit-plan-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--green-700, #2d6a2d);
+  background: #ffffff;
+  color: var(--green-700, #2d6a2d);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.xl-ob-edit-plan-btn:hover {
+  background: var(--green-700, #2d6a2d);
+  color: #ffffff;
+}
+
+.xl-ob-reset-plan-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #6b7280;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.xl-ob-reset-plan-btn:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 900px) {
+  .xl-ob-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 20px;
+  }
+
+  .xl-ob-media {
+    position: static;
+  }
+
+  .xl-ob-image-wrap {
+    aspect-ratio: 16 / 9;
+    max-height: 240px;
+  }
+
+  .xl-ob-panel {
+    min-height: auto;
+    max-width: 100%;
+  }
+
+  .xl-ob-title {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 576px) {
+  .xl-ob-choice-grid--3,
+  .xl-ob-macros-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .xl-ob-layout {
+    padding: 16px;
+  }
+
+  .xl-ob-title {
+    font-size: 21px;
+  }
+}

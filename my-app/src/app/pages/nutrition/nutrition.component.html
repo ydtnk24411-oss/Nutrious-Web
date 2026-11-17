@@ -470,7 +470,7 @@
         </article>
 
       <!-- =========================================================================
-           VIEW 3: TRANG CHÍNH DINH DƯỠNG THÔNG MINH (LẬP KẾ HOẠCH NGÀY/TUẦN & KHÁM PHÁ MÓN)
+           VIEW 3: TRANG CHÍNH DINH DƯỠNG THÔNG MINH (ONBOARDING & KẾT QUẢ THỰC ĐƠN)
            ========================================================================= -->
       } @else {
 
@@ -479,456 +479,513 @@
           <ol>
             <li><a routerLink="/">Trang chủ</a></li>
             <li aria-hidden="true" class="xanhla-breadcrumb-sep">/</li>
-            <li class="is-current" aria-current="page">Dinh dưỡng thông minh &amp; Lên thực đơn</li>
+            @if (nutritionView() === 'onboarding') {
+              <li><a href="#" (click)="$event.preventDefault(); prevOnboardingStep()">Dinh dưỡng thông minh</a></li>
+              <li aria-hidden="true" class="xanhla-breadcrumb-sep">/</li>
+              <li class="is-current" aria-current="page">Thiết lập thực đơn (Bước {{ onboardingStep() }}/{{ TOTAL_ONBOARDING_STEPS }})</li>
+            } @else {
+              <li class="is-current" aria-current="page">Dinh dưỡng thông minh &amp; Lên thực đơn</li>
+            }
           </ol>
         </nav>
 
-        <!-- ===== MODERN HERO BANNER ===== -->
-        <header class="xl-modern-hero">
-          <div class="xl-modern-hero-text">
-            <span class="xl-hero-kicker">{{ heroConfig().kicker }}</span>
-            <h1 class="xl-modern-hero-title">Lên thực đơn phù hợp với bạn</h1>
-            <p class="xl-modern-hero-sub">
-              Chọn mục tiêu, số bữa và ngân sách để tham khảo thực đơn theo ngày hoặc cả tuần. Bạn có thể điều chỉnh nguyên liệu và chỉ số dinh dưỡng theo nhu cầu.
-            </p>
-            <div class="xl-modern-hero-btns">
-              <button type="button" class="xl-hero-btn-primary" (click)="scrollToElement('meal-planner-section')">
-                 Bắt Đầu Lên Thực Đơn Ngay
-              </button>
-              <button type="button" class="xl-hero-btn-secondary" (click)="scrollToElement('nutrition-results-section')">
-                 Khám Phá {{ results().length }} Món Ăn
-              </button>
-              <a routerLink="/promotions" class="xl-hero-btn-accent">
-                 Săn Voucher Giảm 30%
-              </a>
-            </div>
-          </div>
-
-          <div class="xl-modern-hero-visual">
-            <img [src]="heroConfig().bannerImage" alt="Thực đơn dinh dưỡng lành mạnh Evergreen Mart" (error)="onImageError($event)" />
-            <div class="xl-hero-floating-card">
-              <span class="xl-floating-icon" aria-hidden="true"><i class="bi bi-heart-pulse"></i></span>
-              <div>
-                <strong>Thực đơn theo nhu cầu</strong>
-                <span>Tham khảo calo, đạm, chất xơ và chi phí nguyên liệu</span>
+        @if (nutritionView() === 'onboarding') {
+          <!-- =========================================================================
+               ONBOARDING THIẾT LẬP THỰC ĐƠN 5 BƯỚC (2 CỘT: ẢNH CỐ ĐỊNH TRÁI - NỘI DUNG PHẢI)
+               ========================================================================= -->
+          <section class="xl-ob-section" id="meal-planner-section" aria-label="Thiết lập thực đơn cá nhân">
+            <div class="xl-ob-layout">
+              <!-- Cột bên trái: Hình ảnh lifestyle cố định xuyên suốt toàn bộ quy trình onboarding -->
+              <div class="xl-ob-media">
+                <div class="xl-ob-image-wrap">
+                  <img
+                    src="images/nutrition-onboarding.jpg"
+                    alt="Dinh dưỡng lành mạnh và thực phẩm tươi sạch EvergreenMart"
+                    class="xl-ob-image"
+                    (error)="onImageError($event)"
+                  />
+                </div>
               </div>
-            </div>
-          </div>
-        </header>
 
-        <!-- =========================================================================
-             PHẦN 1: STUDIO LẬP KẾ HOẠCH THỰC ĐƠN CÁ NHÂN (THEO NGÀY / THEO TUẦN)
-             ========================================================================= -->
-        @if (results().length > 0) {
-          <section class="xl-planner-card" id="meal-planner-section" aria-label="Thiết lập thực đơn cá nhân">
-            <!-- Header -->
-            <div class="xl-planner-top">
-              <div>
-                <span class="xl-planner-kicker">LẬP THỰC ĐƠN</span>
-                <h2 class="xl-planner-heading">Thiết lập thực đơn</h2>
-                <p class="xl-planner-sub">Chọn mục tiêu, lịch ăn và mức chi tiêu. Bạn có thể thay đổi các lựa chọn bất cứ lúc nào.</p>
-              </div>
-            </div>
-
-            <!-- ===== TẦNG 1: BẢNG ĐIỀU KHIỂN TIẾN TRÌNH 3 BƯỚC (STEPPER) ===== -->
-            <div class="xl-stepper-container">
-              <!-- Stepper Navigation Bar -->
-              <nav class="xl-stepper-nav" aria-label="Tiến trình thiết lập thực đơn">
-                <button
-                  type="button"
-                  class="xl-stepper-tab"
-                  [class.active]="currentStep() === 1"
-                  [class.completed]="currentStep() > 1"
-                  (click)="setStep(1)"
-                >
-                  <span class="xl-step-circle">
-                    @if (currentStep() > 1) {
-                      <i class="bi bi-check-lg" style="font-size:14px"></i>
-                    } @else {
-                      1
+              <!-- Cột bên phải: Chỉ báo tiến trình, nội dung từng bước và điều hướng -->
+              <div class="xl-ob-panel">
+                <!-- Chỉ báo tiến trình -->
+                <div class="xl-ob-progress" aria-label="Tiến trình thiết lập">
+                  <div class="xl-ob-progress-meta">
+                    <span class="xl-ob-step-indicator">Bước {{ onboardingStep() }} / {{ TOTAL_ONBOARDING_STEPS }}</span>
+                  </div>
+                  <div class="xl-ob-progress-track" role="tablist" aria-label="Các bước thiết lập thực đơn">
+                    @for (s of ONBOARDING_STEPS_LIST; track s) {
+                      <button
+                        type="button"
+                        class="xl-ob-progress-seg"
+                        [class.is-active]="onboardingStep() === s"
+                        [class.is-completed]="onboardingStep() > s"
+                        (click)="goToOnboardingStep(s)"
+                        [attr.aria-label]="'Bước ' + s"
+                        [attr.aria-current]="onboardingStep() === s ? 'step' : null"
+                      ></button>
                     }
-                  </span>
-                  <div class="xl-step-meta">
-                    <span class="xl-stepper-tab-kicker">BƯỚC 1</span>
-                    <strong class="xl-step-name">Mục tiêu thể trạng</strong>
-                    <span class="xl-step-val">{{ getPresetLabel() }}</span>
-                  </div>
-                </button>
-
-                <div class="xl-stepper-connector" [class.filled]="currentStep() >= 2"></div>
-
-                <button
-                  type="button"
-                  class="xl-stepper-tab"
-                  [class.active]="currentStep() === 2"
-                  [class.completed]="currentStep() > 2"
-                  (click)="setStep(2)"
-                >
-                  <span class="xl-step-circle">
-                    @if (currentStep() > 2) {
-                      <i class="bi bi-check-lg" style="font-size:14px"></i>
-                    } @else {
-                      2
-                    }
-                  </span>
-                  <div class="xl-step-meta">
-                    <span class="xl-stepper-tab-kicker">BƯỚC 2</span>
-                    <strong class="xl-step-name">Lịch ăn &amp; Số bữa</strong>
-                    <span class="xl-step-val">{{ mealsPerDay() }} bữa - {{ plannerMode() === 'week' ? '7 Ngày' : 'Theo Ngày' }}</span>
-                  </div>
-                </button>
-
-                <div class="xl-stepper-connector" [class.filled]="currentStep() >= 3"></div>
-
-                <button
-                  type="button"
-                  class="xl-stepper-tab"
-                  [class.active]="currentStep() === 3"
-                  (click)="setStep(3)"
-                >
-                  <span class="xl-step-circle">3</span>
-                  <div class="xl-step-meta">
-                    <span class="xl-stepper-tab-kicker">BƯỚC 3</span>
-                    <strong class="xl-step-name">Khẩu phần &amp; Chỉ số</strong>
-                    <span class="xl-step-val">{{ servings() }} người - {{ targetDailyKcal() }} kcal</span>
-                  </div>
-                </button>
-              </nav>
-
-              <!-- Step 1 Content Pane -->
-              @if (currentStep() === 1) {
-                <div class="xl-step-pane">
-                  <div class="xl-step-pane-header">
-                    <div>
-                      <h3 class="xl-pane-title">Bước 1: Chọn mục tiêu thể trạng của bạn</h3>
-                      <p class="xl-pane-subtitle">Hệ thống tự động cân đối chỉ số Calo, Đạm, Xơ và gợi ý thực đơn phù hợp nhất ngay bên dưới.</p>
-                    </div>
-                  </div>
-
-                  <div class="xl-goal-cards-grid">
-                    <button
-                      type="button"
-                      class="xl-goal-select-card"
-                      [class.active]="plannerPreset() === 'protein'"
-                      (click)="applyPlannerPreset('protein')"
-                    >
-                      <div class="xl-gsc-badge-strip">35% Đạm</div>
-                      <div class="xl-gsc-main">
-                        <span class="xl-gsc-icon-wrap" aria-hidden="true">
-                          <i class="bi bi-lightning-charge" style="font-size:22px"></i>
-                        </span>
-                        <div class="xl-gsc-details">
-                          <h4 class="xl-gsc-name">Tập Gym &amp; Tăng Cơ</h4>
-                          <p class="xl-gsc-text">Tối ưu phục hồi &amp; xây dựng cơ bắp với ức gà, thăn bò, cá hồi Na Uy, trứng gà ta.</p>
-                          <div class="xl-gsc-foot-meta">~2.000 kcal - 145g Protein</div>
-                        </div>
-                      </div>
-                      <div class="xl-gsc-check-indicator"></div>
-                    </button>
-
-                    <button
-                      type="button"
-                      class="xl-goal-select-card"
-                      [class.active]="plannerPreset() === 'eatclean'"
-                      (click)="applyPlannerPreset('eatclean')"
-                    >
-                      <div class="xl-gsc-badge-strip">Thâm hụt nhẹ</div>
-                      <div class="xl-gsc-main">
-                        <span class="xl-gsc-icon-wrap" aria-hidden="true">
-                          <i class="bi bi-layers" style="font-size:22px"></i>
-                        </span>
-                        <div class="xl-gsc-details">
-                          <h4 class="xl-gsc-name">Giảm Cân &amp; Siết Mỡ (Eat Clean)</h4>
-                          <p class="xl-gsc-text">Thâm hụt calo lành mạnh, dồi dào chất xơ tự nhiên, loại bỏ đường tinh luyện.</p>
-                          <div class="xl-gsc-foot-meta">~1.350 kcal - 95g Protein</div>
-                        </div>
-                      </div>
-                      <div class="xl-gsc-check-indicator"></div>
-                    </button>
-
-                    <button
-                      type="button"
-                      class="xl-goal-select-card"
-                      [class.active]="plannerPreset() === 'family'"
-                      (click)="applyPlannerPreset('family')"
-                    >
-                      <div class="xl-gsc-badge-strip">4 nhóm chất</div>
-                      <div class="xl-gsc-main">
-                        <span class="xl-gsc-icon-wrap" aria-hidden="true">
-                          <i class="bi bi-house-heart" style="font-size:22px"></i>
-                        </span>
-                        <div class="xl-gsc-details">
-                          <h4 class="xl-gsc-name">Giữ Dáng &amp; Cơm Nhà Cân Bằng</h4>
-                          <p class="xl-gsc-text">Cân đối vi chất chuẩn tháp dinh dưỡng, thanh mát, thơm ngon, dễ chuẩn bị cho cả nhà.</p>
-                          <div class="xl-gsc-foot-meta">~1.750 kcal - Đủ 4 nhóm chất</div>
-                        </div>
-                      </div>
-                      <div class="xl-gsc-check-indicator"></div>
-                    </button>
-
-                    <button
-                      type="button"
-                      class="xl-goal-select-card"
-                      [class.active]="plannerPreset() === 'yogurt_detox'"
-                      (click)="applyPlannerPreset('yogurt_detox')"
-                    >
-                      <div class="xl-gsc-badge-strip">10 Tỷ Probiotics</div>
-                      <div class="xl-gsc-main">
-                        <span class="xl-gsc-icon-wrap" aria-hidden="true">
-                          <i class="bi bi-shield-check" style="font-size:22px"></i>
-                        </span>
-                        <div class="xl-gsc-details">
-                          <h4 class="xl-gsc-name">Thanh Lọc &amp; Tiêu Hóa Khỏe</h4>
-                          <p class="xl-gsc-text">Bổ sung sữa chua men sống, sinh tố hạt chia thanh mát, nhẹ bụng sáng da.</p>
-                          <div class="xl-gsc-foot-meta">~1.400 kcal - Lợi khuẩn đường ruột</div>
-                        </div>
-                      </div>
-                      <div class="xl-gsc-check-indicator"></div>
-                    </button>
-                  </div>
-
-                  <div class="xl-step-footer-actions">
-                    <span class="xl-selected-info-label">Đang chọn: <strong>{{ getPresetLabel() }}</strong> (thực đơn bên dưới đang tự động cập nhật)</span>
-                    <button type="button" class="xl-step-primary-btn" (click)="setStep(2)">
-                      Tiếp tục: Chọn lịch ăn →
-                    </button>
                   </div>
                 </div>
-              }
 
-              <!-- Step 2 Content Pane -->
-              @if (currentStep() === 2) {
-                <div class="xl-step-pane">
-                  <div class="xl-step-pane-header">
-                    <div>
-                      <h3 class="xl-pane-title">Bước 2: Chế độ Lịch ăn &amp; Số bữa mỗi ngày</h3>
-                      <p class="xl-pane-subtitle">Lên thực đơn linh hoạt theo từng ngày hoặc chuẩn bị sẵn lộ trình 7 ngày trong tuần.</p>
-                    </div>
-                  </div>
-
-                  <div class="xl-step2-content-grid">
-                    <!-- Khoảng thời gian -->
-                    <div class="xl-step2-box">
-                      <span class="xl-s2-box-kicker">1. Khoảng thời gian lên kế hoạch</span>
-                      <div class="xl-mode-toggle-grid">
-                        <button
-                          type="button"
-                          class="xl-mode-card-btn"
-                          [class.active]="plannerMode() === 'day'"
-                          (click)="plannerMode.set('day'); weeklyOverviewMode.set(false)"
-                        >
-                          <strong>Theo Từng Ngày</strong>
-                          <span>Tập trung hoàn thiện thực đơn 1 ngày cụ thể</span>
-                        </button>
-                        <button
-                          type="button"
-                          class="xl-mode-card-btn"
-                          [class.active]="plannerMode() === 'week'"
-                          (click)="plannerMode.set('week')"
-                        >
-                          <strong>Theo Tuần (7 Ngày)</strong>
-                          <span>Lên lịch trọn gói từ Thứ 2 đến Chủ Nhật</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- Số bữa ăn -->
-                    <div class="xl-step2-box">
-                      <span class="xl-s2-box-kicker">2. Mỗi ngày bạn ăn mấy bữa?</span>
-                      <div class="xl-meals-per-day-grid">
-                        <button
-                          type="button"
-                          class="xl-mpd-btn"
-                          [class.active]="mealsPerDay() === 2"
-                          (click)="setMealsPerDay(2)"
-                        >
-                          <strong>2 bữa / ngày</strong>
-                          <span>Trưa + Tối (16:8)</span>
-                        </button>
-                        <button
-                          type="button"
-                          class="xl-mpd-btn"
-                          [class.active]="mealsPerDay() === 3"
-                          (click)="setMealsPerDay(3)"
-                        >
-                          <strong>3 bữa / ngày</strong>
-                          <span>Sáng + Trưa + Tối</span>
-                        </button>
-                        <button
-                          type="button"
-                          class="xl-mpd-btn"
-                          [class.active]="mealsPerDay() === 4"
-                          (click)="setMealsPerDay(4)"
-                        >
-                          <strong>4 bữa / ngày</strong>
-                          <span>+ Bữa Phụ Sữa Chua</span>
-                        </button>
-                      </div>
-                      <div class="xl-studio-tip">
-                        <span class="xl-tip-icon"><i class="bi bi-lightbulb"></i></span>
-                        <span><strong>Mẹo dinh dưỡng:</strong> Phân bổ 3-4 bữa/ngày kết hợp bữa phụ Sữa chua hoặc Sinh tố giúp ổn định đường huyết và giữ năng lượng bền bỉ.</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="xl-step-footer-actions">
-                    <button type="button" class="xl-step-ghost-btn" (click)="setStep(1)">
-                      ← Quay lại
-                    </button>
-                    <button type="button" class="xl-step-primary-btn" (click)="setStep(3)">
-                      Tiếp tục: Khẩu phần &amp; Mục tiêu →
-                    </button>
-                  </div>
-                </div>
-              }
-
-              <!-- Step 3 Content Pane -->
-              @if (currentStep() === 3) {
-                <div class="xl-step-pane">
-                  <div class="xl-step-pane-header">
-                    <div>
-                      <h3 class="xl-pane-title">Bước 3: Khẩu phần, Chỉ số Calo &amp; Ngân sách</h3>
-                      <p class="xl-pane-subtitle">Tùy biến số lượng người ăn, mức năng lượng và ngân sách đi chợ phù hợp với nhu cầu.</p>
-                    </div>
-                  </div>
-
-                  <div class="xl-step3-content-grid">
-                    <!-- Cột trái: Khẩu phần & Kcal Slider -->
-                    <div class="xl-step3-left-col">
-                      <!-- Khẩu phần -->
-                      <div class="xl-studio-field-group">
-                        <label class="xl-studio-label">Khẩu phần (Số người ăn trong ngày):</label>
-                        <div class="xl-number-stepper" style="max-width: 220px;">
-                          <button type="button" class="xl-step-btn" (click)="updateServings(servings() - 1)" [disabled]="servings() <= 1">−</button>
-                          <input type="number" min="1" max="20" [ngModel]="servings()" (ngModelChange)="updateServings($event)" class="xl-input-field" aria-label="Số người ăn" />
-                          <button type="button" class="xl-step-btn" (click)="updateServings(servings() + 1)" [disabled]="servings() >= 20">+</button>
-                        </div>
+                <!-- Nội dung từng bước -->
+                <div class="xl-ob-step-body">
+                  @switch (onboardingStep()) {
+                    <!-- BƯỚC 1: MỤC TIÊU THỂ TRẠNG -->
+                    @case (1) {
+                      <div class="xl-ob-step-header">
+                        <h1 class="xl-ob-title">Mục tiêu dinh dưỡng chính của bạn là gì?</h1>
+                        <p class="xl-ob-subtitle">Hệ thống tự động cân đối chỉ số Calo, Đạm, Xơ và gợi ý thực đơn phù hợp nhất.</p>
                       </div>
 
-                      <!-- Calo slider -->
-                      <div class="xl-macro-slider-block">
-                        <div class="xl-ms-top">
-                          <span>Mục tiêu Calo mỗi ngày:</span>
-                          <strong class="xl-ms-val">{{ targetDailyKcal() }} kcal / ngày</strong>
-                        </div>
-                        <input
-                          type="range"
-                          min="1000"
-                          max="2800"
-                          step="50"
-                          [ngModel]="targetDailyKcal()"
-                          (ngModelChange)="setTargetDailyKcal($event)"
-                          class="xl-range-slider"
-                        />
-                        <div class="xl-kcal-quick-pills">
-                          @for (k of [1200, 1500, 1800, 2200, 2500]; track k) {
-                            <button type="button" class="xl-mini-pill" [class.active]="targetDailyKcal() === k" (click)="setTargetDailyKcal(k)">
-                              {{ k }} kcal
+                      <div class="xl-ob-goal-list" role="radiogroup" aria-label="Chọn mục tiêu thể trạng">
+                        @for (goal of HEALTH_GOALS; track goal.id) {
+                          <button
+                            type="button"
+                            class="xl-ob-goal-item"
+                            [class.is-selected]="plannerPreset() === goal.id"
+                            (click)="selectGoalOption(goal.id)"
+                            role="radio"
+                            [attr.aria-checked]="plannerPreset() === goal.id"
+                          >
+                            <div class="xl-ob-goal-main">
+                              <div class="xl-ob-goal-top">
+                                <strong class="xl-ob-goal-name">{{ goal.title }}</strong>
+                                <span class="xl-ob-goal-badge">{{ goal.badge }}</span>
+                              </div>
+                              <p class="xl-ob-goal-desc">{{ goal.subtitle }}</p>
+                              <span class="xl-ob-goal-meta">{{ goal.metrics }}</span>
+                            </div>
+                            <span class="xl-ob-radio-mark" aria-hidden="true">
+                              @if (plannerPreset() === goal.id) {
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                  <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                              }
+                            </span>
+                          </button>
+                        }
+                      </div>
+                    }
+
+                    <!-- BƯỚC 2: LỊCH ĂN & SỐ BỮA -->
+                    @case (2) {
+                      <div class="xl-ob-step-header">
+                        <h1 class="xl-ob-title">Chế độ lịch ăn và số bữa mỗi ngày</h1>
+                        <p class="xl-ob-subtitle">Lên thực đơn linh hoạt theo từng ngày hoặc chuẩn bị sẵn lộ trình 7 ngày trong tuần.</p>
+                      </div>
+
+                      <div class="xl-ob-fields-stack">
+                        <div class="xl-ob-field-group">
+                          <span class="xl-ob-field-label">Khoảng thời gian lên kế hoạch</span>
+                          <div class="xl-ob-choice-grid xl-ob-choice-grid--2">
+                            <button
+                              type="button"
+                              class="xl-ob-choice-card"
+                              [class.is-selected]="plannerMode() === 'day'"
+                              (click)="setPlannerMode('day')"
+                            >
+                              <div class="xl-ob-choice-text">
+                                <strong>Theo Từng Ngày</strong>
+                                <span>Tập trung hoàn thiện thực đơn 1 ngày cụ thể</span>
+                              </div>
+                              <span class="xl-ob-radio-mark" aria-hidden="true">
+                                @if (plannerMode() === 'day') {
+                                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                  </svg>
+                                }
+                              </span>
                             </button>
+
+                            <button
+                              type="button"
+                              class="xl-ob-choice-card"
+                              [class.is-selected]="plannerMode() === 'week'"
+                              (click)="setPlannerMode('week')"
+                            >
+                              <div class="xl-ob-choice-text">
+                                <strong>Theo Tuần (7 Ngày)</strong>
+                                <span>Lên lịch trọn gói từ Thứ 2 đến Chủ Nhật</span>
+                              </div>
+                              <span class="xl-ob-radio-mark" aria-hidden="true">
+                                @if (plannerMode() === 'week') {
+                                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                  </svg>
+                                }
+                              </span>
+                            </button>
+                          </div>
+                        </div>
+
+                        <div class="xl-ob-field-group">
+                          <span class="xl-ob-field-label">Mỗi ngày bạn ăn mấy bữa?</span>
+                          <div class="xl-ob-choice-grid xl-ob-choice-grid--3">
+                            <button
+                              type="button"
+                              class="xl-ob-choice-card"
+                              [class.is-selected]="mealsPerDay() === 2"
+                              (click)="setMealsPerDay(2)"
+                            >
+                              <div class="xl-ob-choice-text">
+                                <strong>2 bữa / ngày</strong>
+                                <span>Trưa + Tối (16:8)</span>
+                              </div>
+                            </button>
+
+                            <button
+                              type="button"
+                              class="xl-ob-choice-card"
+                              [class.is-selected]="mealsPerDay() === 3"
+                              (click)="setMealsPerDay(3)"
+                            >
+                              <div class="xl-ob-choice-text">
+                                <strong>3 bữa / ngày</strong>
+                                <span>Sáng + Trưa + Tối</span>
+                              </div>
+                            </button>
+
+                            <button
+                              type="button"
+                              class="xl-ob-choice-card"
+                              [class.is-selected]="mealsPerDay() === 4"
+                              (click)="setMealsPerDay(4)"
+                            >
+                              <div class="xl-ob-choice-text">
+                                <strong>4 bữa / ngày</strong>
+                                <span>+ Bữa Phụ Sữa Chua</span>
+                              </div>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    }
+
+                    <!-- BƯỚC 3: KHẨU PHẦN & MỨC NĂNG LƯỢNG -->
+                    @case (3) {
+                      <div class="xl-ob-step-header">
+                        <h1 class="xl-ob-title">Khẩu phần và mức năng lượng</h1>
+                        <p class="xl-ob-subtitle">Tùy biến số lượng người ăn trong ngày và mức Calo mục tiêu phù hợp với nhu cầu.</p>
+                      </div>
+
+                      <div class="xl-ob-fields-stack">
+                        <div class="xl-ob-field-group">
+                          <label class="xl-ob-field-label" for="obServingsInput">Khẩu phần (Số người ăn trong ngày)</label>
+                          <div class="xl-ob-stepper-row">
+                            <div class="xl-ob-number-stepper">
+                              <button
+                                type="button"
+                                class="xl-ob-step-btn"
+                                (click)="updateServings(servings() - 1)"
+                                [disabled]="servings() <= 1"
+                                aria-label="Giảm số người ăn"
+                              >−</button>
+                              <input
+                                id="obServingsInput"
+                                type="number"
+                                min="1"
+                                max="20"
+                                step="1"
+                                [value]="servings()"
+                                (change)="updateServings($any($event.target).value, $any($event.target))"
+                                (blur)="updateServings($any($event.target).value, $any($event.target))"
+                                class="xl-ob-stepper-input"
+                                aria-label="Số người ăn"
+                              />
+                              <button
+                                type="button"
+                                class="xl-ob-step-btn"
+                                (click)="updateServings(servings() + 1)"
+                                [disabled]="servings() >= 20"
+                                aria-label="Tăng số người ăn"
+                              >+</button>
+                            </div>
+                            <span class="xl-ob-unit-note">người / ngày (1 – 20)</span>
+                          </div>
+                        </div>
+
+                        <div class="xl-ob-field-group">
+                          <div class="xl-ob-label-row">
+                            <label class="xl-ob-field-label" for="obKcalRange">Mục tiêu Calo mỗi ngày</label>
+                            <strong class="xl-ob-val-highlight">{{ targetDailyKcal() }} kcal / ngày</strong>
+                          </div>
+                          <input
+                            id="obKcalRange"
+                            type="range"
+                            min="1000"
+                            max="2800"
+                            step="50"
+                            [ngModel]="targetDailyKcal()"
+                            (ngModelChange)="setTargetDailyKcal($event)"
+                            class="xl-ob-range"
+                          />
+                          <div class="xl-ob-pill-row">
+                            @for (k of [1200, 1500, 1800, 2200, 2500]; track k) {
+                              <button
+                                type="button"
+                                class="xl-ob-pill-btn"
+                                [class.is-selected]="targetDailyKcal() === k"
+                                (click)="setTargetDailyKcal(k)"
+                              >
+                                {{ k }} kcal
+                              </button>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+
+                    <!-- BƯỚC 4: CHỈ SỐ DINH DƯỠNG MỖI NGÀY -->
+                    @case (4) {
+                      <div class="xl-ob-step-header">
+                        <h1 class="xl-ob-title">Chỉ số dinh dưỡng mỗi ngày</h1>
+                        <p class="xl-ob-subtitle">Điều chỉnh mục tiêu Đạm, Chất xơ và Tinh bột theo chế độ dinh dưỡng của bạn.</p>
+                      </div>
+
+                      <div class="xl-ob-fields-stack">
+                        <div class="xl-ob-macros-grid">
+                          <div class="xl-ob-macro-field">
+                            <label class="xl-ob-field-label" for="obProteinInput">Đạm (20–240g)</label>
+                            <div class="xl-ob-input-unit">
+                              <input
+                                id="obProteinInput"
+                                type="number"
+                                min="20"
+                                max="240"
+                                step="1"
+                                [value]="targetProtein()"
+                                (input)="queueMacroTarget('protein', $any($event.target).value)"
+                                (change)="commitMacroTarget('protein', $any($event.target).value, $any($event.target))"
+                                (blur)="commitMacroTarget('protein', $any($event.target).value, $any($event.target))"
+                              />
+                              <span>g/ngày</span>
+                            </div>
+                          </div>
+
+                          <div class="xl-ob-macro-field">
+                            <label class="xl-ob-field-label" for="obFiberInput">Chất xơ (10–60g)</label>
+                            <div class="xl-ob-input-unit">
+                              <input
+                                id="obFiberInput"
+                                type="number"
+                                min="10"
+                                max="60"
+                                step="1"
+                                [value]="targetFiber()"
+                                (input)="queueMacroTarget('fiber', $any($event.target).value)"
+                                (change)="commitMacroTarget('fiber', $any($event.target).value, $any($event.target))"
+                                (blur)="commitMacroTarget('fiber', $any($event.target).value, $any($event.target))"
+                              />
+                              <span>g/ngày</span>
+                            </div>
+                          </div>
+
+                          <div class="xl-ob-macro-field">
+                            <label class="xl-ob-field-label" for="obCarbsInput">Tinh bột (40–300g)</label>
+                            <div class="xl-ob-input-unit">
+                              <input
+                                id="obCarbsInput"
+                                type="number"
+                                min="40"
+                                max="300"
+                                step="1"
+                                [value]="targetCarbs()"
+                                (input)="queueMacroTarget('carbs', $any($event.target).value)"
+                                (change)="commitMacroTarget('carbs', $any($event.target).value, $any($event.target))"
+                                (blur)="commitMacroTarget('carbs', $any($event.target).value, $any($event.target))"
+                              />
+                              <span>g/ngày</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Tỷ lệ phân bổ calo (chỉ đọc) -->
+                        <div class="xl-ob-ratio-block">
+                          <div class="xl-ob-ratio-head">
+                            <span class="xl-ob-ratio-title">Tỷ lệ phân bổ calo ({{ targetDailyKcal() }} kcal/ngày)</span>
+                            <span class="xl-ob-ratio-tag">Ước tính</span>
+                          </div>
+                          <div class="xl-ob-ratio-bar">
+                            <div class="xl-ob-ratio-seg xl-ob-ratio-seg--p" [style.width.%]="macroPercentages().pPct" [title]="'Đạm: ' + macroPercentages().pPct + '%'"></div>
+                            <div class="xl-ob-ratio-seg xl-ob-ratio-seg--c" [style.width.%]="macroPercentages().cPct" [title]="'Tinh bột: ' + macroPercentages().cPct + '%'"></div>
+                            <div class="xl-ob-ratio-seg xl-ob-ratio-seg--f" [style.width.%]="macroPercentages().fPct" [title]="'Chất béo: ' + macroPercentages().fPct + '%'"></div>
+                          </div>
+                          <div class="xl-ob-ratio-legend">
+                            <span class="xl-ob-leg-item"><i class="xl-ob-dot xl-ob-dot--p"></i>Đạm: {{ macroPercentages().pPct }}% ({{ targetProtein() * 4 }} kcal)</span>
+                            <span class="xl-ob-leg-item"><i class="xl-ob-dot xl-ob-dot--c"></i>Carbs: {{ macroPercentages().cPct }}% ({{ targetCarbs() * 4 }} kcal)</span>
+                            <span class="xl-ob-leg-item"><i class="xl-ob-dot xl-ob-dot--f"></i>Béo: {{ macroPercentages().fPct }}% (~{{ macroPercentages().fGrams }}g)</span>
+                          </div>
+                          @if (macroPercentages().overTarget) {
+                            <div class="xl-ob-ratio-warn-row">
+                              <p class="xl-ob-ratio-warn">
+                                Tổng Calo từ Đạm và Tinh bột đang vượt {{ macroPercentages().excessKcal }} kcal so với mục tiêu {{ targetDailyKcal() }} kcal/ngày.
+                              </p>
+                              <button type="button" class="xl-ob-rebalance-btn" (click)="rebalanceMacrosToCalories()">
+                                Tự động cân đối
+                              </button>
+                            </div>
                           }
                         </div>
                       </div>
+                    }
 
-                      <!-- 3 nhóm chất -->
-                      <div class="xl-three-macros-inputs">
-                        <div class="xl-mi-box">
-                          <label>Đạm (Protein)</label>
-                          <div class="xl-mi-val-row">
-                            <input type="number" min="20" max="240" step="1" [value]="targetProtein()" (input)="queueMacroTarget('protein', $any($event.target).value)" (change)="commitMacroTarget('protein', $any($event.target).value)" />
-                            <span>g/ngày</span>
-                          </div>
-                        </div>
-                        <div class="xl-mi-box">
-                          <label>Chất xơ (Fiber)</label>
-                          <div class="xl-mi-val-row">
-                            <input type="number" min="10" max="60" step="1" [value]="targetFiber()" (input)="queueMacroTarget('fiber', $any($event.target).value)" (change)="commitMacroTarget('fiber', $any($event.target).value)" />
-                            <span>g/ngày</span>
-                          </div>
-                        </div>
-                        <div class="xl-mi-box">
-                          <label>Tinh bột (Carbs)</label>
-                          <div class="xl-mi-val-row">
-                            <input type="number" min="40" max="300" step="1" [value]="targetCarbs()" (input)="queueMacroTarget('carbs', $any($event.target).value)" (change)="commitMacroTarget('carbs', $any($event.target).value)" />
-                            <span>g/ngày</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Cột phải: Phân bổ Caloric Ratio, Ngân sách & Dị ứng -->
-                    <div class="xl-step3-right-col">
-                      <!-- Caloric Ratio Preview -->
-                      <div class="xl-macro-dist-card">
-                        <div class="xl-md-header">
-                          <span class="xl-md-title">Tỷ lệ phân bổ calo:</span>
-                          <span class="xl-md-badge">Ước tính</span>
-                        </div>
-                        <div class="xl-md-bar-wrap">
-                          <div class="xl-md-segment xl-md-segment--p" [style.width.%]="macroPercentages().pPct" [title]="'Đạm: ' + macroPercentages().pPct + '%'"></div>
-                          <div class="xl-md-segment xl-md-segment--c" [style.width.%]="macroPercentages().cPct" [title]="'Tinh bột: ' + macroPercentages().cPct + '%'"></div>
-                          <div class="xl-md-segment xl-md-segment--f" [style.width.%]="macroPercentages().fPct" [title]="'Chất béo: ' + macroPercentages().fPct + '%'"></div>
-                        </div>
-                        <div class="xl-md-legend">
-                          <span class="xl-md-leg xl-md-leg--p">Đạm: {{ macroPercentages().pPct }}%</span>
-                          <span class="xl-md-leg xl-md-leg--c">Carbs: {{ macroPercentages().cPct }}%</span>
-                          <span class="xl-md-leg xl-md-leg--f">Béo: {{ macroPercentages().fPct }}%</span>
-                        </div>
-                        @if (macroPercentages().overTarget) {
-                          <p class="xl-macro-warning">Tổng Calo từ Đạm và Tinh bột đang cao hơn mục tiêu Calo/ngày.</p>
-                        }
+                    <!-- BƯỚC 5: NGÂN SÁCH & DỊ ỨNG / TRÁNH -->
+                    @case (5) {
+                      <div class="xl-ob-step-header">
+                        <h1 class="xl-ob-title">Ngân sách và thực phẩm cần tránh</h1>
+                        <p class="xl-ob-subtitle">Chọn mức ngân sách đi chợ (tính theo khẩu phần chuẩn) và nhập nguyên liệu bạn muốn loại trừ khỏi thực đơn.</p>
                       </div>
 
-                      <!-- Ngân sách & Tránh dị ứng -->
-                      <div class="xl-budget-exclude-row">
-                        <div class="xl-budget-col">
-                          <label class="xl-studio-label">Ngân sách đi chợ:</label>
-                          <div class="xl-budget-pills">
-                            <button type="button" class="xl-mini-pill" [class.active]="budgetLimit() === null" (click)="setBudgetQuick(null)">Tất cả</button>
-                            <button type="button" class="xl-mini-pill" [class.active]="budgetLimit() === 150000" (click)="setBudgetQuick(150000)">≤ 150k</button>
-                            <button type="button" class="xl-mini-pill" [class.active]="budgetLimit() === 250000" (click)="setBudgetQuick(250000)">≤ 250k</button>
-                            <button type="button" class="xl-mini-pill" [class.active]="budgetLimit() === 400000" (click)="setBudgetQuick(400000)">≤ 400k</button>
+                      <div class="xl-ob-fields-stack">
+                        <div class="xl-ob-field-group">
+                          <span class="xl-ob-field-label">Ngân sách đi chợ</span>
+                          <div class="xl-ob-pill-row">
+                            <button
+                              type="button"
+                              class="xl-ob-pill-btn"
+                              [class.is-selected]="budgetLimit() === null"
+                              (click)="setBudgetQuick(null)"
+                            >Tất cả</button>
+                            <button
+                              type="button"
+                              class="xl-ob-pill-btn"
+                              [class.is-selected]="budgetLimit() === 150000"
+                              (click)="setBudgetQuick(150000)"
+                            >≤ 150k</button>
+                            <button
+                              type="button"
+                              class="xl-ob-pill-btn"
+                              [class.is-selected]="budgetLimit() === 250000"
+                              (click)="setBudgetQuick(250000)"
+                            >≤ 250k</button>
+                            <button
+                              type="button"
+                              class="xl-ob-pill-btn"
+                              [class.is-selected]="budgetLimit() === 400000"
+                              (click)="setBudgetQuick(400000)"
+                            >≤ 400k</button>
+                          </div>
+                          <div class="xl-ob-exclude-feedback">
+                            <span>Mức lọc: <strong>{{ budgetLimit() ? '≤ ' + (budgetLimit()! / 1000) + 'k / món (' + servings() + ' người)' : 'Tất cả mức giá' }}</strong></span>
+                            <span class="xl-ob-match-count">Có {{ results().length }} / {{ allComputedRecipes().length }} món thỏa mãn</span>
                           </div>
                         </div>
-                        <div class="xl-exclude-col">
-                          <label class="xl-studio-label" for="studioExcludeInput">Dị ứng / Tránh:</label>
+
+                        <div class="xl-ob-field-group">
+                          <label class="xl-ob-field-label" for="studioExcludeInput">Dị ứng / Tránh (ngăn cách bằng dấu phẩy)</label>
                           <input
                             id="studioExcludeInput"
                             type="text"
-                            placeholder="VD: tôm, nấm..."
+                            placeholder="VD: cá hồi, tôm, nấm..."
                             [ngModel]="excludeIngredients()"
-                            (ngModelChange)="excludeIngredients.set($event); findRecipes()"
-                            class="xl-studio-text-input"
+                            (ngModelChange)="setExcludeIngredients($event)"
+                            class="xl-ob-text-input"
                           />
+                          @if (parsedExcludeTerms().length > 0) {
+                            <div class="xl-ob-exclude-feedback">
+                              <span>Đang loại trừ: <strong>{{ parsedExcludeTerms().join(', ') }}</strong></span>
+                              <span class="xl-ob-match-count">Còn {{ results().length }} món phù hợp</span>
+                            </div>
+                          }
                         </div>
                       </div>
-                    </div>
-                  </div>
-
-                  <div class="xl-step-footer-actions">
-                    <button type="button" class="xl-step-ghost-btn" (click)="setStep(2)">
-                      ← Quay lại
-                    </button>
-                    <button type="button" class="xl-step-primary-btn" (click)="generateSmartPlan(true)">
-                      Xem thực đơn tối ưu ↓
-                    </button>
-                  </div>
+                    }
+                  }
                 </div>
-              }
-            </div>
 
-            <!-- ===== TẦNG 2: KẾT QUẢ THỰC ĐƠN THỰC TẾ (LIVE MENU PREVIEW) ===== -->
-            <div class="xl-live-results-section" id="active-day-plan-preview">
-              <div class="xl-results-header-banner">
-                <div class="xl-rhb-title-col">
-                  <h3 class="xl-rhb-heading">Thực Đơn Tối Ưu Cho Bạn</h3>
-                </div>
-                <div class="xl-rhb-summary-tags">
-                  <span class="xl-rhb-pill"><span class="xl-pill-icon"><i class="bi bi-bullseye"></i></span> {{ getPresetLabel() }}</span>
-                  <span class="xl-rhb-pill"><span class="xl-pill-icon"><i class="bi bi-calendar3"></i></span> {{ plannerMode() === 'week' ? 'Kế hoạch 7 Ngày' : 'Kế hoạch 1 Ngày' }}</span>
-                  <span class="xl-rhb-pill"><span class="xl-pill-icon"><i class="bi bi-cup-hot"></i></span> {{ mealsPerDay() }} bữa / ngày</span>
-                  <span class="xl-rhb-pill"><span class="xl-pill-icon"><i class="bi bi-people"></i></span> {{ servings() }} khẩu phần</span>
+                <!-- Điều hướng chân bước -->
+                <div class="xl-ob-footer">
+                  <button
+                    type="button"
+                    class="xl-ob-btn-back"
+                    (click)="prevOnboardingStep()"
+                    aria-label="Quay lại bước trước"
+                  >
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <line x1="19" y1="12" x2="5" y2="12"></line>
+                      <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    <span>Quay lại</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="xl-ob-btn-next"
+                    (click)="nextOnboardingStep()"
+                    [disabled]="loading() || (onboardingStep() === TOTAL_ONBOARDING_STEPS && allComputedRecipes().length === 0)"
+                  >
+                    <span>{{ onboardingStep() < TOTAL_ONBOARDING_STEPS ? 'Tiếp tục' : 'Tạo thực đơn' }}</span>
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </button>
                 </div>
               </div>
+            </div>
+          </section>
+        } @else {
+          <!-- ===== MODERN HERO BANNER (KHÔI PHỤC TRÊN TRANG LANDING / RESULT) ===== -->
+          <header class="xl-modern-hero">
+            <div class="xl-modern-hero-text">
+              <span class="xl-hero-kicker">{{ heroConfig().kicker }}</span>
+              <h1 class="xl-modern-hero-title">Lên thực đơn phù hợp với bạn</h1>
+              <p class="xl-modern-hero-sub">
+                Chọn mục tiêu, số bữa và ngân sách để tham khảo thực đơn theo ngày hoặc cả tuần. Bạn có thể điều chỉnh nguyên liệu và chỉ số dinh dưỡng theo nhu cầu.
+              </p>
+              <div class="xl-modern-hero-btns">
+                <button type="button" class="xl-hero-btn-primary" (click)="startOnboarding(1)">
+                  {{ (nutritionView() === 'result' && onboardingCompleted()) ? 'Thiết Lập Lại Thực Đơn' : 'Bắt Đầu Lên Thực Đơn Ngay' }}
+                </button>
+                <button type="button" class="xl-hero-btn-secondary" (click)="scrollToElement('nutrition-results-section')">
+                  Khám Phá {{ results().length }} Món Ăn
+                </button>
+                <a routerLink="/promotions" class="xl-hero-btn-accent">
+                  Săn Voucher Giảm 30%
+                </a>
+              </div>
+            </div>
+
+            <div class="xl-modern-hero-visual">
+              <img [src]="heroConfig().bannerImage" alt="Thực đơn dinh dưỡng lành mạnh Evergreen Mart" (error)="onImageError($event)" />
+              <div class="xl-hero-floating-card">
+                <span class="xl-floating-icon" aria-hidden="true"><i class="bi bi-heart-pulse"></i></span>
+                <div>
+                  <strong>Thực đơn theo nhu cầu</strong>
+                  <span>Tham khảo calo, đạm, chất xơ và chi phí nguyên liệu</span>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <!-- =========================================================================
+               KẾT QUẢ THỰC ĐƠN TỐI ƯU (CHỈ HIỂN THỊ SAU KHI NGƯỜI DÙNG ĐÃ THIẾT LẬP MỤC TIÊU)
+               ========================================================================= -->
+          @if (nutritionView() === 'result' && onboardingCompleted() && (results().length > 0 || allComputedRecipes().length > 0)) {
+            <section class="xl-planner-card" id="meal-planner-section" aria-label="Kết quả thực đơn tối ưu">
+              <div class="xl-live-results-section" id="active-day-plan-preview">
+                <div class="xl-results-header-banner">
+                  <div class="xl-rhb-title-col">
+                    <h3 class="xl-rhb-heading">Thực Đơn Tối Ưu Cho Bạn</h3>
+                  </div>
+                  <div class="xl-rhb-summary-tags">
+                    <span class="xl-rhb-pill"><span class="xl-pill-icon"><i class="bi bi-bullseye"></i></span> {{ getPresetLabel() }}</span>
+                    <span class="xl-rhb-pill"><span class="xl-pill-icon"><i class="bi bi-calendar3"></i></span> {{ plannerMode() === 'week' ? 'Kế hoạch 7 Ngày' : 'Kế hoạch 1 Ngày' }}</span>
+                    <span class="xl-rhb-pill"><span class="xl-pill-icon"><i class="bi bi-cup-hot"></i></span> {{ mealsPerDay() }} bữa / ngày</span>
+                    <span class="xl-rhb-pill"><span class="xl-pill-icon"><i class="bi bi-people"></i></span> {{ servings() }} khẩu phần</span>
+                    @if (budgetLimit()) {
+                      <span class="xl-rhb-pill"><span class="xl-pill-icon"><i class="bi bi-wallet2"></i></span> Ngân sách ≤ {{ budgetLimit()! / 1000 }}k/món</span>
+                    }
+                    <button type="button" class="xl-ob-edit-plan-btn" (click)="startOnboarding(1)">
+                      Chỉnh sửa thiết lập
+                    </button>
+                    <button type="button" class="xl-ob-reset-plan-btn" (click)="resetOnboardingPlan()" title="Xóa thiết lập đã lưu và làm mới">
+                      Đặt lại
+                    </button>
+                  </div>
+                </div>
 
             <!-- ===== THANH CHỌN 7 NGÀY TRONG TUẦN (CHỈ HIỂN THỊ KHI CHỌN THEO TUẦN) ===== -->
             @if (plannerMode() === 'week') {
@@ -1326,7 +1383,7 @@
                       class="xl-planner-breakdown-toggle"
                       (click)="toggleDayPlanBreakdown()"
                     >
-                      @if (showDayPlanBreakdown()) { <i class="bi bi-chevron-up me-1"></i> Thu gọn chi phí } @else { <i class="bi bi-receipt me-1"></i> Chi tiết chi phí ({{ dayPlan.matchedProducts.length }} món) }
+                      @if (showDayPlanBreakdown()) { <i class="bi bi-chevron-up me-1"></i> Thu gọn chi phí } @else { <i class="bi bi-receipt me-1"></i> Chi tiết chi phí ({{ plannerMode() === 'day' ? dayPlan.matchedProducts.length : weeklyPlanSummary().matchedProducts.length }} món) }
                     </button>
 
                     @if (plannerMode() === 'day') {
@@ -1455,6 +1512,42 @@
                   </button>
                 }
               </div>
+
+              <div class="xl-quick-search-tags" style="margin-top:8px">
+                <span class="xl-quick-label">Ngân sách / món ({{ servings() }} người):</span>
+                <button
+                  type="button"
+                  class="xl-quick-chip"
+                  [class.active]="budgetLimit() === null"
+                  (click)="setBudgetQuick(null)"
+                >
+                  Tất cả ({{ allComputedRecipes().length }})
+                </button>
+                <button
+                  type="button"
+                  class="xl-quick-chip"
+                  [class.active]="budgetLimit() === 150000"
+                  (click)="setBudgetQuick(150000)"
+                >
+                  ≤ 150k
+                </button>
+                <button
+                  type="button"
+                  class="xl-quick-chip"
+                  [class.active]="budgetLimit() === 250000"
+                  (click)="setBudgetQuick(250000)"
+                >
+                  ≤ 250k
+                </button>
+                <button
+                  type="button"
+                  class="xl-quick-chip"
+                  [class.active]="budgetLimit() === 400000"
+                  (click)="setBudgetQuick(400000)"
+                >
+                  ≤ 400k
+                </button>
+              </div>
             </div>
 
             <!-- Sort Filter Row: Liên quan nhất | Món rẻ nhất | Món đắt nhất | Gần đây đã ăn -->
@@ -1518,8 +1611,8 @@
             <div class="xl-empty-state" style="padding:40px 20px">
               <h3 class="xl-empty-title">Chưa tìm thấy món ăn khớp với điều kiện lọc</h3>
               <p class="xl-empty-desc">Bạn hãy thử tìm bằng nguyên liệu khác (ví dụ: sữa chua, cá hồi, bơ, gà, dâu tây) hoặc đặt lại bộ lọc nhé!</p>
-              <button type="button" class="xl-reset-btn" (click)="searchQuery.set(''); categoryTab.set('all'); sortBy.set('relevant'); selectedGoals.set([]); budgetLimit.set(null); excludeIngredients.set(''); findRecipes()">
-                Đặt lại &amp; Xem tất cả {{ results().length }} món
+              <button type="button" class="xl-reset-btn" (click)="searchQuery.set(''); categoryTab.set('all'); sortBy.set('relevant'); selectedGoals.set([]); setBudgetQuick(null); excludeIngredients.set(''); findRecipes()">
+                Đặt lại &amp; Xem tất cả {{ allComputedRecipes().length || results().length }} món
               </button>
             </div>
           } @else {
@@ -1694,7 +1787,8 @@
               }
             </div>
           }
-        </section>
+          </section>
+          }
         }
       }
 
