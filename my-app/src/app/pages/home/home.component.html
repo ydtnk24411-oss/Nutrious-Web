@@ -3,29 +3,33 @@
     
 
     <section class="coop-hero coop-container" aria-label="Ưu đãi nổi bật">
+      <!-- Banner Chính: Slider Chạy Ảnh Thuần (Đã Xóa Toàn Bộ Chữ Text) -->
       <div class="coop-hero-main">
-        <img [src]="heroSlides[activeHero].image" [alt]="heroSlides[activeHero].title">
-        <div class="coop-hero-shade"></div>
-        <div class="coop-hero-copy">
-          <span class="coop-kicker">{{ heroSlides[activeHero].eyebrow }}</span>
-          <h1>{{ heroSlides[activeHero].title }}</h1>
-          <p>{{ heroSlides[activeHero].subtitle }}</p>
-          <a class="coop-btn coop-btn-yellow" routerLink="/online-ordering">{{ heroSlides[activeHero].cta }}</a>
-        </div>
-        <div class="coop-hero-controls">
-          <button type="button" aria-label="Banner trước" (click)="prevHero()">Trước</button>
-          <span>{{ activeHero + 1 | number:'2.0' }} / {{ heroSlides.length | number:'2.0' }}</span>
-          <button type="button" aria-label="Banner tiếp theo" (click)="nextHero()">Sau</button>
-        </div>
-      </div>
-      <div class="coop-hero-side">
-        <a class="coop-side-promo" routerLink="/online-ordering">
-          <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=85" alt="Rau củ quả tươi">
-          <div><span>FRESH MARKET</span><h2>Tươi ngon mỗi ngày</h2><p>Thêm sắc xanh cho bữa cơm nhà</p></div>
+        <a [routerLink]="heroBanners[activeHero].link || '/online-ordering'" class="coop-hero-slide-link">
+          <img
+            [src]="heroBanners[activeHero].image"
+            [alt]="heroBanners[activeHero].alt || ('Banner ' + (activeHero + 1))"
+            class="coop-hero-slide-img"
+          />
         </a>
-        <a class="coop-side-promo coop-side-promo-warm" routerLink="/nutrition">
-          <img src="https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=900&q=85" alt="Bữa ăn gia đình">
-          <div><span>GỢI Ý TỪ GIAN BẾP</span><h2>Hôm nay ăn gì?</h2><p>Khám phá nguyên liệu</p></div>
+
+        <!-- Nút Điều Hướng Slider (Trước / Sau & Số Thứ Tự) -->
+        @if (heroBanners.length > 1) {
+          <div class="coop-hero-controls">
+            <button type="button" aria-label="Banner trước" (click)="prevHero()">Trước</button>
+            <span>{{ activeHero + 1 | number:'2.0' }} / {{ heroBanners.length | number:'2.0' }}</span>
+            <button type="button" aria-label="Banner tiếp theo" (click)="nextHero()">Sau</button>
+          </div>
+        }
+      </div>
+
+      <!-- 2 Banner Phụ Bên Phải (Ảnh Thuần) -->
+      <div class="coop-hero-side">
+        <a class="coop-side-promo" [routerLink]="sideBanners.top.link">
+          <img [src]="sideBanners.top.image" [alt]="sideBanners.top.alt || 'Banner phụ trên'">
+        </a>
+        <a class="coop-side-promo coop-side-promo-warm" [routerLink]="sideBanners.bottom.link">
+          <img [src]="sideBanners.bottom.image" [alt]="sideBanners.bottom.alt || 'Banner phụ dưới'">
         </a>
       </div>
     </section>

@@ -11,29 +11,30 @@
       </div>
     </div>
 
-    <div class="coop-container cook-main-container">
-      <!-- Breadcrumb -->
+    <!-- Breadcrumb -->
+    <div class="coop-container cook-breadcrumb-wrap">
       <nav class="xanhla-breadcrumb" aria-label="Breadcrumb">
         <a routerLink="/">Trang chủ</a>
         <span class="xanhla-breadcrumb-sep">/</span>
-        <span class="xanhla-breadcrumb-current">Nấu gì hôm nay?</span>
+        <span class="xanhla-breadcrumb-current">Gợi ý món ngon</span>
       </nav>
+    </div>
 
-      <!-- Hero Section (Homepage Harmonized) -->
-      <section class="xanhla-cook-hero">
-        <div class="xanhla-hero-banner">
-          <div class="xanhla-hero-content">
-            <span class="coop-kicker">TRỢ LÝ ẨM THỰC THÔNG MINH GEMINI AI</span>
-            <h1 class="xanhla-hero-title">Nấu gì hôm nay?</h1>
-            <p class="xanhla-hero-desc">
-              Chỉ cần chụp ảnh tủ lạnh hoặc nhập nguyên liệu sẵn có, Evergreen Mart AI sẽ tự động phân tích, đối soát nông sản tươi sạch và gợi ý thực đơn gia đình trọn vị dinh dưỡng!
-            </p>
-          </div>
-          <div class="xanhla-hero-image-wrap">
-            <img src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=700&h=450&fit=crop" alt="Fresh cooking ingredients" />
-          </div>
-        </div>
-      </section>
+    <!-- Hero Section (Full Ngang Banner Gợi Ý Bữa Ngon) -->
+    <section class="xanhla-cook-hero-fullwidth" aria-label="Gợi ý món ngon từ nguyên liệu sẵn có">
+      <h1 class="visually-hidden">Từ nguyên liệu sẵn có - Gợi ý bữa ngon cùng Evergreen Mart</h1>
+      <div class="xanhla-banner-full-container" (click)="scrollToInput()" title="Bấm để cuộn xuống nhập nguyên liệu">
+        <img
+          src="/images/banner-goi-y-bua-ngon.jpg"
+          alt="Từ nguyên liệu sẵn có - Gợi ý bữa ngon Evergreen Mart"
+          class="xanhla-banner-full-img"
+          loading="eager"
+          fetchpriority="high"
+        />
+      </div>
+    </section>
+
+    <div class="coop-container cook-main-container">
 
       <!-- Toast Feedback -->
       @if (addedFeedback()) {

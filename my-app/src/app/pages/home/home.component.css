@@ -679,9 +679,12 @@
 .coop-home .coop-hero-controls { display: flex; align-items: center; gap: 10px; }
 .coop-home .coop-hero-controls button { border: 1px solid rgba(255,255,255,.7); background: rgba(20,47,5,.65); color: #fff; padding: 8px 13px; font-weight: 800; border-radius: 3px 10px 3px 10px; }
 .coop-home .coop-hero-controls span { color: #fff; font-size: 12px; font-weight: 800; }
+.coop-home .coop-hero-slide-link { display: block; width: 100%; height: 100%; position: absolute; inset: 0; text-decoration: none; }
+.coop-home .coop-hero-slide-img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
 .coop-home .coop-hero-side { gap: 16px; }
-.coop-home .coop-side-promo { min-height: 0; border: 2px solid var(--xl-forest); border-radius: 8px 24px 8px 24px !important; box-shadow: 5px 5px 0 #c4df64 !important; overflow: hidden; }
-.coop-home .coop-side-promo img { transition: transform .35s ease; }
+.coop-home .coop-side-promo { min-height: 0; border: 2px solid var(--xl-forest); border-radius: 8px 24px 8px 24px !important; box-shadow: 5px 5px 0 #c4df64 !important; overflow: hidden; position: relative; }
+.coop-home .coop-side-promo:after { display: none !important; }
+.coop-home .coop-side-promo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .35s ease; }
 .coop-home .coop-side-promo:hover img { transform: scale(1.04); }
 .coop-home .coop-side-promo > div { padding: 17px 18px !important; background: #f6fbdf; }
 .coop-home .coop-side-promo > div > span { display: inline-block; color: var(--xl-green); font-size: 9px; letter-spacing: .12em; font-weight: 900; }

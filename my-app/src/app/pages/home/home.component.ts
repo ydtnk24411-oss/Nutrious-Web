@@ -38,11 +38,61 @@ export class HomeComponent implements OnInit, OnDestroy {
   readonly originImage = originImage;
   readonly fallbackProductImage = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=700&q=80';
 
-  readonly heroSlides = [
-    { eyebrow: 'TƯƠI NGON MỖI NGÀY', title: 'Đi chợ thông minh, chăm nhà thật vui.', subtitle: 'Thực phẩm tươi, sản phẩm thiết yếu và ưu đãi dành cho cả gia đình.', cta: 'Mua sắm ngay', image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1600&q=90' },
-    { eyebrow: 'BỮA CƠM NHÀ THÊM ĐỦ ĐẦY', title: 'Chọn điều tươi lành mỗi ngày.', subtitle: 'Khám phá rau củ, trái cây và nguyên liệu cho những bữa ăn ngon.', cta: 'Khám phá gian hàng', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1600&q=90' },
-    { eyebrow: 'SĂN DEAL – NHẬN ƯU ĐÃI', title: 'Mua sắm tiết kiệm, vui trọn mỗi ngày.', subtitle: 'Đừng bỏ lỡ những sản phẩm nổi bật và mã ưu đãi dành riêng cho bạn.', cta: 'Xem ưu đãi', image: 'https://images.unsplash.com/photo-1543083477-4f785aeafaa9?auto=format&fit=crop&w=1600&q=90' },
+  // =========================================================================
+  // 1. DANH SÁCH BANNER CHÍNH (SLIDER) - BẠN CÓ THỂ THÊM BỚT BAO NHIÊU ẢNH TÙY THÍCH
+  // =========================================================================
+  heroBanners: Array<{ image: string; link?: string; alt?: string }> = [
+    {
+      // Cách 1: Dùng ảnh trong thư mục public: '/images/banners/ten-anh.jpg'
+      // Cách 2: Dán trực tiếp link ảnh online: 'https://...'
+      image: '/images/banners/banner1.jpg',
+      link: '/online-ordering',
+      alt: 'Banner 1'
+    },
+    {
+      image: '/images/banners/banner6.png',
+      link: '/promotions',
+      alt: 'Banner 2'
+    },
+    {
+      image: '/images/banners/banner8.png',
+      link: '/cook-with-what-you-have',
+      alt: 'Banner 3'
+    },
+    {
+      image: '/images/banners/banner9.png',
+      link: '/cook-with-what-you-have',
+      alt: 'Banner 9'
+    },
+    {
+      image: '/images/banners/banner4.png',
+      link: '/cook-with-what-you-have',
+      alt: 'Banner 4'
+    }
+
+    // => Muốn thêm ảnh mới, bạn chỉ cần copy thêm 1 dòng { image: '...', link: '...' } vào đây!
   ];
+
+  // =========================================================================
+  // 2. HAI BANNER PHỤ BÊN PHẢI (ẢNH THUẦN)
+  // =========================================================================
+  sideBanners = {
+    top: {
+      image: '/images/banners/banner9.png',
+      link: '/online-ordering',
+      alt: 'Banner phụ trên'
+    },
+    bottom: {
+      image: '/images/banners/banner4.png',
+      link: '/nutrition',
+      alt: 'Banner phụ dưới'
+    }
+  };
+
+  get heroSlides() {
+    return this.heroBanners;
+  }
+
   activeHero = 0;
   private heroTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -151,7 +201,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.liveProductMap = map;
         this.syncFlashSaleStock();
       },
-      error: () => {},
+      error: () => { },
     });
     this.heroTimer = setInterval(() => this.nextHero(), 6500);
     this.countdownTimer = setInterval(() => this.tickCountdown(), 1000);

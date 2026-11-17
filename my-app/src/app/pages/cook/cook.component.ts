@@ -477,6 +477,15 @@ export class CookComponent implements OnInit {
     });
   }
 
+  scrollToInput(): void {
+    if (typeof document !== 'undefined') {
+      const el = document.querySelector('.xanhla-dual-input-section');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }
+
   onInputTextChange(value: string): void {
     this.inputText.set(value);
     if (!this.manualQtyEdited && value.trim().length >= 2) {
