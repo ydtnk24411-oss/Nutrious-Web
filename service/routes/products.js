@@ -10,6 +10,7 @@ const { cacheMiddleware, clearCache } = require('../utils/cache');
 const { recordSearchLogSafely } = require('../utils/searchSanitizer');
 const {
   COMBO_ITEM_POPULATE_FIELDS,
+  normalizeProductImages,
   enrichComboDocument,
   enrichProductOrComboList,
 } = require('../utils/comboHelper');
@@ -332,7 +333,7 @@ router.get('/:slug', async (req, res, next) => {
         .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     }
     if (!product) return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
-    const responseData = product.isCombo ? enrichComboDocument(product) : product;
+    const responseData = enrichProductOrComboList([product])[0];
     res.json({ success: true, data: responseData });
   } catch (err) { next(err); }
 });
@@ -353,15 +354,19 @@ router.post('/', protect, adminOnly, productValidation, validate, async (req, re
         req.body.categoryVi = cat.name;
       }
     }
+    if (req.body.image || Array.isArray(req.body.images)) {
+      req.body.images = normalizeProductImages({ image: req.body.image, images: req.body.images });
+      if (!req.body.image && req.body.images.length) req.body.image = req.body.images[0];
+    }
     if (req.body.addOnDeals !== undefined) {
       req.body.addOnDeals = req.body.isCombo ? [] : sanitizeAddOnDeals(req.body.addOnDeals, null);
     }
     const created = await Product.create(req.body);
     clearCache();
     const product = await Product.findById(created._id)
-      .populate('comboItems.product', 'name slug image price priceNumber unit weight stock')
+      .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
       .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
-    res.status(201).json({ success: true, data: product });
+    res.status(201).json({ success: true, data: enrichProductOrComboList([product])[0] });
   } catch (err) { next(err); }
 });
 
@@ -386,15 +391,22 @@ router.put('/:id', protect, authorizeRoles('Manager', 'Admin', 'Sales'), async (
         req.body.categoryVi = cat.name;
       }
     }
+    if (Array.isArray(req.body.images)) {
+      const targetImage = req.body.image ?? (await Product.findById(req.params.id).select('image').lean())?.image;
+      req.body.images = normalizeProductImages({ image: targetImage, images: req.body.images });
+    } else if (typeof req.body.image === 'string' && req.body.image.trim()) {
+      const existing = await Product.findById(req.params.id).select('images').lean();
+      req.body.images = normalizeProductImages({ image: req.body.image, images: existing?.images || [] });
+    }
     if (req.body.addOnDeals !== undefined) {
       req.body.addOnDeals = req.body.isCombo ? [] : sanitizeAddOnDeals(req.body.addOnDeals, req.params.id);
     }
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
-      .populate('comboItems.product', 'name slug image price priceNumber unit weight stock')
+      .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
       .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     if (!product) return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
     clearCache();
-    res.json({ success: true, data: product });
+    res.json({ success: true, data: enrichProductOrComboList([product])[0] });
   } catch (err) { next(err); }
 });
 
