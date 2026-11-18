@@ -1028,6 +1028,49 @@ async function attachComboDetailsToOrders(orders) {
   const isArray = Array.isArray(orders);
   const list = isArray ? orders : [orders];
 
+  // Bù ảnh sản phẩm còn thiếu từ Product / Combo trong 1 lượt truy vấn hàng loạt
+  const missingImgIds = [];
+  const missingImgNames = [];
+  for (const o of list) {
+    if (!o || !Array.isArray(o.items)) continue;
+    for (const it of o.items) {
+      if (!it || it.productImage) continue;
+      if (it.product && mongoose.Types.ObjectId.isValid(it.product)) {
+        missingImgIds.push(it.product);
+      }
+      if (it.productName) {
+        missingImgNames.push(it.productName);
+      }
+    }
+  }
+  if (missingImgIds.length > 0 || missingImgNames.length > 0) {
+    const conds = [];
+    if (missingImgIds.length > 0) conds.push({ _id: { $in: missingImgIds } });
+    if (missingImgNames.length > 0) conds.push({ name: { $in: missingImgNames } });
+    const [prods, combos] = await Promise.all([
+      Product.find({ $or: conds }).select('_id name image images').lean(),
+      Combo.find({ $or: conds }).select('_id name image images').lean(),
+    ]);
+    const imgById = new Map();
+    const imgByName = new Map();
+    for (const doc of [...prods, ...combos]) {
+      const thumb = doc.image || (Array.isArray(doc.images) ? doc.images[0] : '') || '';
+      if (!thumb) continue;
+      imgById.set(String(doc._id), thumb);
+      if (doc.name) imgByName.set(doc.name, thumb);
+    }
+    for (const o of list) {
+      if (!o || !Array.isArray(o.items)) continue;
+      for (const it of o.items) {
+        if (!it || it.productImage) continue;
+        it.productImage =
+          (it.product && imgById.get(String(it.product))) ||
+          (it.productName && imgByName.get(it.productName)) ||
+          '';
+      }
+    }
+  }
+
   for (const o of list) {
     if (!o || !Array.isArray(o.items)) continue;
 
