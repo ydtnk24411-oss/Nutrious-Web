@@ -12,3 +12,4 @@ const BannerMediaSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model('BannerMedia', BannerMediaSchema);
+
