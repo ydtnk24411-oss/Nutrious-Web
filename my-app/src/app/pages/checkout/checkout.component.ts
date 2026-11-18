@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { CartService, formatPrice, getCartItemKey, CartPricingTotals, resolveProductMaxStock } from '../../shared/services/cart.service';
+import { API_BASE } from '../../shared/services/api.service';
 import { OrderApiService } from '../../shared/services/order-api.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { VoucherService } from '../../shared/services/voucher.service';
@@ -1307,7 +1308,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
           sessionId: sessionStorage.getItem('xanhla_session_id') || 'guest_checkout',
         });
         if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-          navigator.sendBeacon('http://localhost:3000/api/analytics/telemetry', payload);
+          navigator.sendBeacon(`${API_BASE}/analytics/telemetry`, payload);
         }
       }
     }

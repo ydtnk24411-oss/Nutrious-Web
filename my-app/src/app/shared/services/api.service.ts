@@ -1,8 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
-export const API_BASE = 'http://localhost:3000/api';
+const apiOrigin = environment.apiUrl.replace(/\/+$/, '').replace(/\/api$/, '');
+export const API_BASE = `${apiOrigin}/api`;
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {

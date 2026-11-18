@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { OrderApiService, ApiOrder } from '../../shared/services/order-api.service';
+import { API_BASE } from '../../shared/services/api.service';
 import { AdminAuthService } from '../../shared/services/admin-auth.service';
 
 @Component({
@@ -621,8 +622,8 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     const token = localStorage.getItem('xanhla_admin_token') || localStorage.getItem('xanhla_auth_token') || '';
     if (token) query.set('token', token);
 
-    // Kết nối trực tiếp đến backend API port 3000 để lấy file nhị phân Excel thật
-    const fullUrl = `http://localhost:3000/api/orders/export/excel?${query.toString()}`;
+    // Kết nối trực tiếp đến backend API để lấy file nhị phân Excel thật
+    const fullUrl = `${API_BASE}/orders/export/excel?${query.toString()}`;
 
     fetch(fullUrl, {
       method: 'GET',
