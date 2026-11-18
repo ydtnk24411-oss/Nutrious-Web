@@ -1,4 +1,31 @@
+const mongoose = require('mongoose');
 const ShippingConfig = require('../models/ShippingConfig');
+
+/**
+ * Đọc danh sách cửa hàng / kho trực tiếp từ MongoDB collection 'stores' khi ShippingConfig chưa có warehouses.
+ */
+async function loadWarehousesFromStoresCollection() {
+  try {
+    const stores = await mongoose.connection.db.collection('stores').find({}).toArray();
+    return stores
+      .filter((s) => Array.isArray(s.location?.coordinates) && s.location.coordinates.length >= 2)
+      .map((s) => ({
+        id: s.storeId || String(s._id),
+        name: s.name,
+        address: s.address || '',
+        province: s.province || '',
+        district: s.district || '',
+        lat: s.location.coordinates[1],
+        lng: s.location.coordinates[0],
+        phone: s.phone || '',
+        openingHours: s.operatingHours ? `${s.operatingHours.open} - ${s.operatingHours.close}` : '',
+        readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+        isHeadquarter: Boolean(s.isHeadquarter),
+      }));
+  } catch {
+    return [];
+  }
+}
 
 const DEFAULT_WAREHOUSES = [
   // TP. Hồ Chí Minh
@@ -106,12 +133,12 @@ const DEFAULT_WAREHOUSES = [
 /**
  * Tự động tìm kho / cửa hàng gần nhất với tọa độ khách hàng
  */
-function findNearestWarehouse(customerLat, customerLng, warehouses = DEFAULT_WAREHOUSES) {
-  const list = Array.isArray(warehouses) && warehouses.length > 0 ? warehouses : DEFAULT_WAREHOUSES;
-  let nearest = list[0];
+function findNearestWarehouse(customerLat, customerLng, warehouses = []) {
+  if (!Array.isArray(warehouses) || warehouses.length === 0) return null;
+  let nearest = warehouses[0];
   let minDistance = Infinity;
 
-  for (const wh of list) {
+  for (const wh of warehouses) {
     if (typeof wh.lat !== 'number' || typeof wh.lng !== 'number') continue;
     const dist = calculateHaversineDistance(customerLat, customerLng, wh.lat, wh.lng);
     if (dist < minDistance) {
@@ -126,7 +153,7 @@ function findNearestWarehouse(customerLat, customerLng, warehouses = DEFAULT_WAR
  * Tính khoảng cách đường chim bay Haversine (km)
  */
 function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Bán kính Trái Đất (km)
+  const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
@@ -147,12 +174,11 @@ async function getOSRMRoute(lat1, lon1, lat2, lon2) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 4500);
 
-    // OSRM format: /route/v1/driving/{lon1},{lat1};{lon2},{lat2}
     const url = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`;
     const res = await fetch(url, {
       signal: controller.signal,
       headers: {
-        'User-Agent': 'EvergreenMart-Shipping/1.0 (contact@xanhla.vn)',
+        'User-Agent': 'EvergreenMart-Shipping/1.0 (chamsoc@evergreenmart.vn)',
       },
     });
     clearTimeout(timeout);
@@ -172,11 +198,10 @@ async function getOSRMRoute(lat1, lon1, lat2, lon2) {
         };
       }
     }
-  } catch (err) {
+  } catch (_) {
     // Fallback nếu OSRM public API bận
   }
 
-  // Fallback Haversine * 1.32 (hệ số uốn lượn đường phố TP.HCM)
   const haversine = calculateHaversineDistance(lat1, lon1, lat2, lon2);
   const estRoadKm = Number((haversine * 1.32).toFixed(2));
   return {
@@ -189,36 +214,25 @@ async function getOSRMRoute(lat1, lon1, lat2, lon2) {
 }
 
 /**
- * Lấy hoặc tạo cấu hình mặc định trong MongoDB
+ * Lấy hoặc khởi tạo cấu hình vận chuyển trong MongoDB (không hardcode danh sách kho).
  */
 async function getOrCreateShippingConfig() {
   let config = await ShippingConfig.findOne({ key: 'default' });
   if (!config) {
+    const storeWarehouses = await loadWarehousesFromStoresCollection();
+    const initialWarehouses = storeWarehouses.length > 0 ? storeWarehouses : DEFAULT_WAREHOUSES;
+    const hq = initialWarehouses.find((w) => w.isHeadquarter) || initialWarehouses[0];
     config = await ShippingConfig.create({
       key: 'default',
-      warehouse: {
-        name: 'Kho Nông Sản Evergreen Mart',
-        address: 'Khu phố 6, Phường Linh Trung, TP. Thủ Đức, TP. Hồ Chí Minh',
-        lat: 10.8703,
-        lng: 106.7782,
-      },
-      distanceTiers: [
-        { minKm: 0, maxKm: 2, fee: 15000, label: '0–2 km' },
-        { minKm: 2, maxKm: 5, fee: 20000, label: 'Trên 2–5 km' },
-        { minKm: 5, maxKm: 8, fee: 25000, label: 'Trên 5–8 km' },
-        { minKm: 8, maxKm: 10, fee: 30000, label: 'Trên 8–10 km' },
-      ],
-      maxDeliveryRadiusKm: 10,
-      orderDiscounts: [
-        { minOrderValue: 300000, discountAmount: 25000, label: 'Đơn từ 300.000đ: giảm 25.000đ phí ship (Freeship)' },
-        { minOrderValue: 150000, discountAmount: 10000, label: 'Đơn từ 150.000đ: giảm 10.000đ phí ship' },
-      ],
-      foodPreservationPolicy: 'Ưu tiên giao nhanh trong ngày bằng xe chuyên dụng / túi giữ nhiệt bảo quản thực phẩm mát.',
+      warehouse: hq
+        ? { name: hq.name, address: hq.address, lat: hq.lat, lng: hq.lng }
+        : undefined,
+      warehouses: initialWarehouses,
       isServiceActive: true,
-      warehouses: DEFAULT_WAREHOUSES,
     });
   } else if (!config.warehouses || config.warehouses.length === 0) {
-    config.warehouses = DEFAULT_WAREHOUSES;
+    const storeWarehouses = await loadWarehousesFromStoresCollection();
+    config.warehouses = storeWarehouses.length > 0 ? storeWarehouses : DEFAULT_WAREHOUSES;
     await config.save();
   }
   return config;
@@ -229,17 +243,22 @@ async function getOrCreateShippingConfig() {
  */
 async function calculateShipping(customerLat, customerLng, subtotal = 0, customConfig = null, loyaltyTier = '') {
   const config = customConfig || (await getOrCreateShippingConfig());
-  const allWarehouses = (Array.isArray(config.warehouses) && config.warehouses.length > 0)
+  let allWarehouses = Array.isArray(config.warehouses) && config.warehouses.length > 0
     ? config.warehouses
-    : DEFAULT_WAREHOUSES;
+    : await loadWarehousesFromStoresCollection();
 
-  // Tự động tìm kho / cửa hàng gần nhất với địa chỉ của khách hàng
+  if (allWarehouses.length === 0 && config.warehouse?.lat && config.warehouse?.lng) {
+    allWarehouses = [config.warehouse];
+  }
+
   const warehouse = findNearestWarehouse(customerLat, customerLng, allWarehouses);
+  if (!warehouse) {
+    throw new Error('Chưa có dữ liệu kho/cửa hàng trong MongoDB để tính phí giao hàng.');
+  }
 
   const routeRes = await getOSRMRoute(warehouse.lat, warehouse.lng, customerLat, customerLng);
   const distanceKm = routeRes.distanceKm;
 
-  // Bán kính giao hàng tiêu chuẩn (10km) & bán kính giao xa có phụ thu (tối đa 20km)
   const standardRadiusKm = 10;
   const maxExtendedRadiusKm = Math.max(20, Number(config.maxDeliveryRadiusKm) || 20);
 
@@ -260,37 +279,21 @@ async function calculateShipping(customerLat, customerLng, subtotal = 0, customC
     };
   }
 
-  // 1. Phí theo nấc khoảng cách & phụ thu giao xa (10 - 20km: +5.000đ/km vượt chuẩn)
   let baseFee = 30000;
   let matchedTierLabel = 'Trên 8–10 km';
   let isFarDelivery = false;
   let farSurcharge = 0;
 
-  if (distanceKm <= 2) {
-    baseFee = 15000;
-    matchedTierLabel = '0–2 km';
-  } else if (distanceKm <= 5) {
-    baseFee = 20000;
-    matchedTierLabel = 'Trên 2–5 km';
-  } else if (distanceKm <= 8) {
-    baseFee = 25000;
-    matchedTierLabel = 'Trên 5–8 km';
-  } else if (distanceKm <= standardRadiusKm) {
-    baseFee = 30000;
-    matchedTierLabel = 'Trên 8–10 km';
-  } else {
+  if (distanceKm > standardRadiusKm) {
     isFarDelivery = true;
     const extraKm = Math.ceil(distanceKm - standardRadiusKm);
     farSurcharge = extraKm * 5000;
     baseFee = 30000 + farSurcharge;
     matchedTierLabel = `Giao xa ${distanceKm} km (phụ thu +${farSurcharge.toLocaleString('vi-VN')}đ)`;
-  }
-
-  // Nếu trong config có tiers tùy chỉnh từ admin (áp dụng trong phạm vi tiêu chuẩn <= 10km):
-  if (!isFarDelivery && Array.isArray(config.distanceTiers) && config.distanceTiers.length > 0) {
+  } else if (Array.isArray(config.distanceTiers) && config.distanceTiers.length > 0) {
     const sortedTiers = [...config.distanceTiers].sort((a, b) => a.maxKm - b.maxKm);
     for (const tier of sortedTiers) {
-      if (distanceKm > tier.minKm && distanceKm <= tier.maxKm) {
+      if (distanceKm >= tier.minKm && distanceKm <= tier.maxKm) {
         baseFee = tier.fee;
         matchedTierLabel = tier.label || `${tier.minKm}–${tier.maxKm} km`;
         break;
@@ -298,10 +301,9 @@ async function calculateShipping(customerLat, customerLng, subtotal = 0, customC
     }
   }
 
-  // 2. Ưu đãi theo Hạng thành viên Loyalty & Giá trị đơn hàng
+  // 2. Ưu đãi theo Hạng thành viên Loyalty & cấu hình MongoDB ShippingConfig.orderDiscounts
   let discountAmount = 0;
-  let discountReason = 'Dưới 150.000đ: chưa đủ điều kiện hỗ trợ phí ship';
-
+  let discountReason = 'Chưa đủ giá trị đơn hàng tối thiểu để hỗ trợ phí ship';
   const orderValue = Number(subtotal) || 0;
   const tier = String(loyaltyTier || '').toLowerCase();
 
@@ -314,18 +316,30 @@ async function calculateShipping(customerLat, customerLng, subtotal = 0, customC
   } else if (tier === 'bronze' && orderValue >= 500000) {
     discountAmount = baseFee;
     discountReason = 'Đặc quyền thành viên Đồng: Miễn phí giao hàng đơn từ 500.000đ';
-  } else if (orderValue >= 300000) {
-    discountAmount = Math.min(25000, baseFee);
-    discountReason = 'Đơn hàng từ 300.000đ: hỗ trợ tối đa 25.000đ phí vận chuyển (Freeship)';
-  } else if (orderValue >= 150000) {
-    discountAmount = Math.min(10000, baseFee);
-    discountReason = 'Đơn hàng từ 150.000đ: giảm 10.000đ phí vận chuyển';
+  } else {
+    const sortedDiscounts = [...(config.orderDiscounts || [])].sort(
+      (a, b) => (b.minOrderValue || 0) - (a.minOrderValue || 0)
+    );
+    for (const rule of sortedDiscounts) {
+      if (orderValue >= (rule.minOrderValue || 0)) {
+        discountAmount = Math.min(Number(rule.discountAmount) || 0, baseFee);
+        discountReason = rule.label || `Đơn từ ${rule.minOrderValue.toLocaleString('vi-VN')}đ: giảm ${discountAmount.toLocaleString('vi-VN')}đ phí ship`;
+        break;
+      }
+    }
+    if (discountAmount === 0) {
+      if (orderValue >= 300000) {
+        discountAmount = Math.min(25000, baseFee);
+        discountReason = 'Đơn hàng từ 300.000đ: hỗ trợ tối đa 25.000đ phí vận chuyển (Freeship)';
+      } else if (orderValue >= 150000) {
+        discountAmount = Math.min(10000, baseFee);
+        discountReason = 'Đơn hàng từ 150.000đ: giảm 10.000đ phí vận chuyển';
+      }
+    }
   }
 
-  // Phí ship sau ưu đãi không được âm
   const finalFee = Math.max(0, baseFee - discountAmount);
 
-  // 3. Thời gian giao hàng dự kiến
   let estimatedTime = '30 – 45 phút';
   if (distanceKm <= 3) {
     estimatedTime = '25 – 35 phút';
@@ -359,11 +373,9 @@ async function calculateShipping(customerLat, customerLng, subtotal = 0, customC
 }
 
 module.exports = {
-  DEFAULT_WAREHOUSES,
   findNearestWarehouse,
   calculateHaversineDistance,
   getOSRMRoute,
   getOrCreateShippingConfig,
   calculateShipping,
 };
-

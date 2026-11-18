@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="76" viewBox="0 0 150 76" fill="none">
+  <g stroke="#79a852" stroke-opacity=".32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- leafy sprig -->
+    <path d="M17 59c8-14 14-24 25-37m-16 26c-11 1-14-5-11-11 8-1 12 3 13 9m4-14c-2-9 2-14 9-15 4 7 1 12-7 17m-1 13c1-8 7-11 14-8-1 8-6 11-14 10"/>
+    <!-- tomato -->
+    <path d="M75 39c-8-10-21-4-20 8 1 11 10 17 19 13 10 4 19-3 19-13 0-11-12-18-18-8Z"/>
+    <path d="m74 39-2-8m3 8 8-6m-9 6-9-5"/>
+    <!-- carrot -->
+    <path d="m112 40 25 4-17 25-8-29Z"/>
+    <path d="m111 39-1-9m7 10 5-10m1 13 10-5m-18 13 8 2m-12 5 6 2"/>
+    <!-- small playful marks -->
+    <path d="m48 15 2-5 2 5 5 2-5 2-2 5-2-5-5-2 5-2Zm83-22 2-5 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z"/>
+    <circle cx="102" cy="17" r="2" fill="#e99c68" stroke="none"/>
+    <circle cx="35" cy="68" r="2" fill="#e99c68" stroke="none"/>
+  </g>
+</svg>

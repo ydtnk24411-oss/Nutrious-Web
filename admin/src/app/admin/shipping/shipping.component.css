@@ -124,10 +124,16 @@
 }
 
 .card-icon {
-  font-size: 24px;
-  background: #f8fafc;
-  padding: 6px;
-  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #dcfce7;
+  border-radius: 10px;
 }
 
 .card-title {

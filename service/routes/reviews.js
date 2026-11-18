@@ -5,9 +5,25 @@ const User = require('../models/User');
 const Review = require('../models/Review');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const Combo = require('../models/Combo');
 const { protect, optionalAuth, staffOnly, hasRole, adminOnly, authorizeRoles } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 
+
+async function findReviewedTarget(rawIdOrSlug) {
+  let target = null;
+  if (mongoose.Types.ObjectId.isValid(rawIdOrSlug)) {
+    target =
+      (await Product.findById(rawIdOrSlug)) ||
+      (await Combo.findById(rawIdOrSlug));
+  }
+  if (!target) {
+    target =
+      (await Product.findOne({ slug: rawIdOrSlug })) ||
+      (await Combo.findOne({ slug: rawIdOrSlug }));
+  }
+  return target;
+}
 
 async function syncProductRating(productId) {
   try {
@@ -28,7 +44,10 @@ async function syncProductRating(productId) {
     if (!mongoose.Types.ObjectId.isValid(productId)) {
       filter = { slug: productId };
     }
-    await Product.updateOne(filter, { $set: { averageRating: avg, reviewCount: count } });
+    await Promise.all([
+      Product.updateOne(filter, { $set: { averageRating: avg, reviewCount: count } }),
+      Combo.updateOne(filter, { $set: { averageRating: avg, reviewCount: count } }),
+    ]);
   } catch (err) {
     console.error('Error syncing product rating:', err);
   }
@@ -89,7 +108,9 @@ router.get('/product/:productId', optionalAuth, async (req, res, next) => {
     const needsProdImg = reviews.some((r) => !r.productImage);
     if (needsProdImg && req.params.productId) {
       try {
-        const prod = await Product.findById(req.params.productId).select('image name');
+        const prod =
+          (await Product.findById(req.params.productId).select('image name')) ||
+          (await Combo.findById(req.params.productId).select('image name'));
         if (prod) {
           defaultProductImage = prod.image || '';
         }
@@ -194,8 +215,14 @@ router.get('/admin', protect, authorizeRoles('admin', 'marketing', 'sales', 'sup
     let prodMap = {};
     if (missingProductIds.length > 0) {
       try {
-        const prods = await Product.find({ _id: { $in: missingProductIds } }).select('_id name image').lean();
-        prods.forEach((p) => {
+        const validObjIds = missingProductIds.filter((id) => mongoose.Types.ObjectId.isValid(id));
+        const [prods, combos] = validObjIds.length
+          ? await Promise.all([
+              Product.find({ _id: { $in: validObjIds } }).select('_id name image').lean(),
+              Combo.find({ _id: { $in: validObjIds } }).select('_id name image').lean(),
+            ])
+          : [[], []];
+        [...prods, ...combos].forEach((p) => {
           prodMap[String(p._id)] = p;
         });
       } catch (e) {}
@@ -286,14 +313,7 @@ router.delete('/:id', protect, adminOnly, async (req, res, next) => {
 router.get('/product/:productId/can-review', protect, async (req, res, next) => {
   try {
     const rawProductId = String(req.params.productId);
-
-    let prod = null;
-    if (mongoose.Types.ObjectId.isValid(rawProductId)) {
-      prod = await Product.findById(rawProductId);
-    }
-    if (!prod) {
-      prod = await Product.findOne({ slug: rawProductId });
-    }
+    const prod = await findReviewedTarget(rawProductId);
 
     const targetId = prod ? String(prod._id) : rawProductId;
     const targetSlug = prod?.slug || '';
@@ -382,14 +402,7 @@ router.post(
   async (req, res, next) => {
     try {
       const rawProductId = String(req.body.productId);
-
-      let prod = null;
-      if (mongoose.Types.ObjectId.isValid(rawProductId)) {
-        prod = await Product.findById(rawProductId);
-      }
-      if (!prod) {
-        prod = await Product.findOne({ slug: rawProductId });
-      }
+      const prod = await findReviewedTarget(rawProductId);
 
       const targetId = prod ? String(prod._id) : rawProductId;
       const targetSlug = prod?.slug || '';

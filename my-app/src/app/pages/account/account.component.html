@@ -1,663 +1,1023 @@
 <app-shell>
   @if (cart.currentUser(); as user) {
-    <div class="acc-page xanhla-container">
+    <div class="acc-shell-bg">
+      <div class="acc-layout xanhla-container">
 
-      <!-- ── Title ───────────────────────────────────── -->
-      <h1 class="acc-title">Tài khoản của tôi</h1>
+        <!-- ══════════════════════════════════════════════
+             LEFT SIDEBAR NAVIGATION
+        ══════════════════════════════════════════════ -->
+        <aside class="acc-sidebar" aria-label="Menu tài khoản">
+          <nav class="acc-sidebar-nav">
+            <button
+              type="button"
+              class="acc-side-link"
+              [class.is-active]="activeTab() === 'overview'"
+              (click)="selectTab('overview')"
+            >
+              <i class="bi bi-house-door"></i>
+              <span>Tài khoản của tôi</span>
+            </button>
 
-      <!-- ── Tab bar ─────────────────────────────────── -->
-      <div class="acc-tabs">
-        <button class="acc-tab" [class.is-active]="activeTab()==='overview'"  (click)="activeTab.set('overview')">Tổng quan</button>
-        <button class="acc-tab" [class.is-active]="activeTab()==='orders'"    (click)="activeTab.set('orders')">Đơn hàng của tôi</button>
-        <button class="acc-tab" [class.is-active]="activeTab()==='wishlist'"  (click)="activeTab.set('wishlist')">
-          <i class="bi bi-heart me-1" style="color:#e11d48"></i> Sản phẩm yêu thích ({{ wishlist.count() }})
-        </button>
-        <button class="acc-tab" [class.is-active]="activeTab()==='addresses'" (click)="activeTab.set('addresses')">Sổ địa chỉ</button>
-        <button class="acc-tab" [class.is-active]="activeTab()==='settings'"  (click)="activeTab.set('settings')">Thông tin và cài đặt</button>
-      </div>
-      <div class="acc-tab-divider"></div>
+            <button
+              type="button"
+              class="acc-side-link"
+              [class.is-active]="activeTab() === 'orders'"
+              (click)="selectTab('orders')"
+            >
+              <i class="bi bi-box-seam"></i>
+              <span>Đơn hàng</span>
+              @if (orders().length > 0) {
+                <span class="acc-side-count">{{ orders().length }}</span>
+              }
+            </button>
 
-      <!-- ══════════════════════════════════════════════
-           TAB: OVERVIEW
-      ══════════════════════════════════════════════ -->
-      @if (activeTab() === 'overview') {
-        <div class="acc-overview">
-          <!-- User Profile Card -->
-          <div class="acc-profile-card">
-            <div class="acc-profile-avatar-wrapper">
-              <div class="acc-profile-avatar">
-                @if (cart.currentUser()?.avatar) {
-                  <img [src]="cart.currentUser()!.avatar" alt="Avatar" />
-                } @else {
-                  <div class="acc-avatar-placeholder">{{ avatarChar() }}</div>
-                }
-              </div>
-              <button class="acc-avatar-edit-btn" type="button" (click)="toggleAvatarMenu()">
-                <i class="bi bi-pencil" style="font-size:15px" aria-hidden="true"></i>
-              </button>
-              @if (avatarMenuOpen()) {
-                <div class="acc-avatar-menu">
-                  <label class="acc-avatar-menu-item" style="cursor:pointer">
-                    <input type="file" id="avatarInputOverview" accept="image/*" (change)="onAvatarUpload($event)" style="display:none" />
-                    <i class="bi bi-upload" style="font-size:15px" aria-hidden="true"></i>
-                    Đổi ảnh đại diện
-                  </label>
-                  @if (cart.currentUser()?.avatar) {
-                    <button type="button" class="acc-avatar-menu-item acc-avatar-menu-danger" (click)="removeAvatar()">
-                      <i class="bi bi-trash3" style="font-size:15px" aria-hidden="true"></i>
-                      Xóa ảnh đại diện
+            <button
+              type="button"
+              class="acc-side-link"
+              [class.is-active]="activeTab() === 'addresses'"
+              (click)="selectTab('addresses')"
+            >
+              <i class="bi bi-geo-alt"></i>
+              <span>Sổ địa chỉ</span>
+            </button>
+
+            <button
+              type="button"
+              class="acc-side-link"
+              [class.is-active]="activeTab() === 'vouchers'"
+              (click)="selectTab('vouchers')"
+            >
+              <i class="bi bi-tag"></i>
+              <span>Ưu đãi hiện có</span>
+              @if (userVouchers().length > 0) {
+                <span class="acc-side-count">{{ userVouchers().length }}</span>
+              }
+            </button>
+
+            <button
+              type="button"
+              class="acc-side-link"
+              [class.is-active]="activeTab() === 'wishlist'"
+              (click)="selectTab('wishlist')"
+            >
+              <i class="bi bi-heart"></i>
+              <span>Sản phẩm yêu thích</span>
+              @if (wishlist.count() > 0) {
+                <span class="acc-side-count">{{ wishlist.count() }}</span>
+              }
+            </button>
+
+            <button
+              type="button"
+              class="acc-side-link"
+              [class.is-active]="activeTab() === 'settings'"
+              (click)="selectTab('settings')"
+            >
+              <i class="bi bi-gear"></i>
+              <span>Cài đặt tài khoản</span>
+            </button>
+          </nav>
+
+          <div class="acc-sidebar-divider"></div>
+
+          <button type="button" class="acc-side-link acc-side-logout" (click)="logout()">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Đăng xuất</span>
+          </button>
+        </aside>
+
+        <!-- ══════════════════════════════════════════════
+             RIGHT MAIN WORKSPACE
+        ══════════════════════════════════════════════ -->
+        <main class="acc-main-panel">
+
+          <!-- Mobile horizontal tab bar -->
+          <div class="acc-mobile-tabs">
+            <button type="button" class="acc-mobile-tab" [class.is-active]="activeTab() === 'overview'" (click)="selectTab('overview')">Tổng quan</button>
+            <button type="button" class="acc-mobile-tab" [class.is-active]="activeTab() === 'orders'" (click)="selectTab('orders')">Đơn hàng ({{ orders().length }})</button>
+            <button type="button" class="acc-mobile-tab" [class.is-active]="activeTab() === 'addresses'" (click)="selectTab('addresses')">Sổ địa chỉ</button>
+            <button type="button" class="acc-mobile-tab" [class.is-active]="activeTab() === 'vouchers'" (click)="selectTab('vouchers')">Ưu đãi ({{ userVouchers().length }})</button>
+            <button type="button" class="acc-mobile-tab" [class.is-active]="activeTab() === 'wishlist'" (click)="selectTab('wishlist')">Yêu thích ({{ wishlist.count() }})</button>
+            <button type="button" class="acc-mobile-tab" [class.is-active]="activeTab() === 'settings'" (click)="selectTab('settings')">Cài đặt</button>
+          </div>
+
+          <!-- ══════════════════════════════════════════════
+               TAB: OVERVIEW (TÀI KHOẢN CỦA TÔI)
+          ══════════════════════════════════════════════ -->
+          @if (activeTab() === 'overview') {
+            <div class="acc-overview-stack">
+
+              <!-- 1. Hero Greeting + 4 Pastel Stat Cards -->
+              <section class="acc-hero-card">
+                <div class="acc-hero-banner">
+                  <div class="acc-hero-user">
+                    <div class="acc-hero-avatar-wrap">
+                      <div class="acc-hero-avatar">
+                        @if (cart.currentUserAvatar()) {
+                          <img
+                            [src]="cart.currentUserAvatar()"
+                            referrerpolicy="no-referrer"
+                            [alt]="user.name"
+                            (error)="cart.markAvatarUrlFailed(cart.currentUserAvatar())"
+                          />
+                        } @else {
+                          <div class="acc-avatar-placeholder">{{ avatarChar() }}</div>
+                        }
+                      </div>
+                      <button
+                        class="acc-avatar-edit-btn"
+                        type="button"
+                        (click)="toggleAvatarMenu()"
+                        title="Đổi ảnh đại diện"
+                        aria-label="Đổi ảnh đại diện"
+                      >
+                        <i class="bi bi-camera"></i>
+                      </button>
+
+                      @if (avatarMenuOpen()) {
+                        <div class="acc-avatar-menu">
+                          <label class="acc-avatar-menu-item">
+                            <input type="file" id="avatarInputOverview" accept="image/*" (change)="onAvatarUpload($event)" style="display:none" />
+                            <i class="bi bi-upload"></i>
+                            Đổi ảnh đại diện
+                          </label>
+                          @if (cart.currentUser()?.avatar) {
+                            <button type="button" class="acc-avatar-menu-item acc-avatar-menu-danger" (click)="removeAvatar()">
+                              <i class="bi bi-trash3"></i>
+                              Xóa ảnh đại diện
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+
+                    <div class="acc-hero-meta">
+                      <span class="acc-hero-greet">Xin chào,</span>
+                      <h1 class="acc-hero-name">{{ user.name }}</h1>
+                      <span class="acc-hero-tier-lbl">Hạng thành viên</span>
+                      <span class="acc-tier-pill" (click)="router.navigate(['/loyalty'])" style="cursor:pointer" title="Xem quyền lợi thành viên">
+                        <i class="bi bi-award-fill"></i>
+                        <span>Thành viên {{ userTier().name }}</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="acc-hero-art" aria-hidden="true">
+                    <img
+                      [src]="bannerProduceImg()"
+                      alt=""
+                      (error)="onBannerImageError()"
+                    />
+                  </div>
+                </div>
+
+                <!-- 4 Pastel Stat Tiles -->
+                <div class="acc-stats-row">
+                  <button type="button" class="acc-stat-tile acc-stat-tile--green" (click)="selectTab('orders')">
+                    <div class="acc-stat-top">
+                      <span class="acc-stat-icon-circle"><i class="bi bi-box-seam"></i></span>
+                      <span class="acc-stat-title">Đơn hàng đã mua</span>
+                    </div>
+                    <div class="acc-stat-bottom">
+                      <strong class="acc-stat-num">{{ formatStatCount(orders().length) }}</strong>
+                      <i class="bi bi-chevron-right acc-stat-arrow"></i>
+                    </div>
+                  </button>
+
+                  <button type="button" class="acc-stat-tile acc-stat-tile--amber" (click)="selectTab('vouchers')">
+                    <div class="acc-stat-top">
+                      <span class="acc-stat-icon-circle"><i class="bi bi-tag"></i></span>
+                      <span class="acc-stat-title">Ưu đãi hiện có</span>
+                    </div>
+                    <div class="acc-stat-bottom">
+                      <strong class="acc-stat-num">{{ formatStatCount(userVouchers().length) }}</strong>
+                      <i class="bi bi-chevron-right acc-stat-arrow"></i>
+                    </div>
+                  </button>
+
+                  <button type="button" class="acc-stat-tile acc-stat-tile--rose" (click)="selectTab('wishlist')">
+                    <div class="acc-stat-top">
+                      <span class="acc-stat-icon-circle"><i class="bi bi-heart"></i></span>
+                      <span class="acc-stat-title">Sản phẩm yêu thích</span>
+                    </div>
+                    <div class="acc-stat-bottom">
+                      <strong class="acc-stat-num">{{ formatStatCount(wishlist.count()) }}</strong>
+                      <i class="bi bi-chevron-right acc-stat-arrow"></i>
+                    </div>
+                  </button>
+
+                  <button type="button" class="acc-stat-tile acc-stat-tile--mint" (click)="router.navigate(['/loyalty'])">
+                    <div class="acc-stat-top">
+                      <span class="acc-stat-icon-circle"><i class="bi bi-flower1"></i></span>
+                      <span class="acc-stat-title">Điểm tích lũy</span>
+                    </div>
+                    <div class="acc-stat-bottom">
+                      <strong class="acc-stat-num">{{ userPoints().toLocaleString('vi-VN') }}</strong>
+                      <i class="bi bi-chevron-right acc-stat-arrow"></i>
+                    </div>
+                  </button>
+                </div>
+              </section>
+
+              <!-- 2. Thông tin cá nhân (6 ô có icon + nút Chỉnh sửa) -->
+              <section class="acc-section-card">
+                <div class="acc-card-head">
+                  <div>
+                    <h2 class="acc-card-title">Thông tin cá nhân</h2>
+                    <p class="acc-card-sub">Quản lý thông tin tài khoản để trải nghiệm mua sắm thuận tiện hơn.</p>
+                  </div>
+                  @if (!editingOverviewProfile()) {
+                    <button type="button" class="acc-pill-btn" (click)="editingOverviewProfile.set(true)">
+                      <i class="bi bi-pencil"></i>
+                      <span>Chỉnh sửa</span>
+                    </button>
+                  } @else {
+                    <button type="button" class="acc-pill-btn" (click)="cancelAccount()">
+                      <span>Đóng</span>
                     </button>
                   }
                 </div>
-              }
-            </div>
-            <div class="acc-profile-info">
-              <h2 class="acc-profile-name">{{ user.name }}</h2>
-              <p class="acc-profile-email">{{ user.email || 'Chưa cập nhật email' }}</p>
-              @if (user.phone) {
-                <p class="acc-profile-phone">{{ user.phone }}</p>
-              }
-              <p class="acc-profile-tier">Hạng: {{ userTier().name }}</p>
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="acc-btn-outline" (click)="activeTab.set('settings')">Chỉnh sửa hồ sơ</button>
-              <button class="acc-btn-outline" style="color:#b91c1c;border-color:#fca5a5" (click)="logout()">Đăng xuất</button>
-            </div>
-          </div>
 
-          <!-- Stats Grid -->
-          <div class="acc-stats-grid">
-            <div class="acc-stat-card" style="cursor:pointer" (click)="activeTab.set('orders')">
-              <div class="acc-stat-icon">
-                <i class="bi bi-bag" style="font-size:22px" aria-hidden="true"></i>
-              </div>
-              <div class="acc-stat-value">{{ orders().length }}</div>
-              <div class="acc-stat-label">Đơn hàng của bạn</div>
-            </div>
-            <div class="acc-stat-card" style="cursor:pointer" (click)="router.navigate(['/vouchers'])">
-              <div class="acc-stat-icon">
-                <i class="bi bi-ticket-perforated" style="font-size:22px" aria-hidden="true"></i>
-              </div>
-              <div class="acc-stat-value">{{ userVouchers().length }}</div>
-              <div class="acc-stat-label">Voucher khả dụng</div>
-            </div>
-            <div class="acc-stat-card" style="cursor:pointer" (click)="router.navigate(['/loyalty'])">
-              <div class="acc-stat-icon">
-                <i class="bi bi-star" style="font-size:22px" aria-hidden="true"></i>
-              </div>
-              <div class="acc-stat-value">{{ userPoints().toLocaleString('vi-VN') }}</div>
-              <div class="acc-stat-label">Điểm tích lũy</div>
-            </div>
-            <div class="acc-stat-card" style="cursor:pointer" (click)="router.navigate(['/loyalty'])">
-              <div class="acc-stat-icon">
-                <i class="bi bi-award" style="font-size:22px" aria-hidden="true"></i>
-              </div>
-              <div class="acc-stat-value">{{ userTier().name }}</div>
-              <div class="acc-stat-label">Hạng thành viên</div>
-            </div>
-          </div>
-
-          <!-- Recent Orders -->
-          <div class="acc-recent-orders">
-            <div class="acc-section-header">
-              <h3 class="acc-section-title">Đơn hàng gần đây</h3>
-              <a (click)="activeTab.set('orders')" class="acc-link">Xem tất cả</a>
-            </div>
-            @if (loadingOrders()) {
-              <div class="acc-empty" style="padding:20px">Đang tải đơn hàng...</div>
-            } @else if (orders().length > 0) {
-              <div class="acc-order-list">
-                @for (order of orders().slice(0, 3); track order.id) {
-                  <div class="acc-order-item">
-                    <div class="acc-order-code">{{ order.orderCode }}</div>
-                    <div class="acc-order-date">{{ order.date }}</div>
-                    <div class="acc-order-total">{{ formatPrice(order.total) }}</div>
-                    <div class="acc-order-status {{ getOrderStatusClass(order.status) }}">
-                      {{ getOrderStatusText(order.status) }}
-                    </div>
+                @if (saved()) {
+                  <div class="acc-alert-success" style="margin-bottom:14px">
+                    <i class="bi bi-check-circle-fill"></i> Đã cập nhật thông tin tài khoản thành công!
                   </div>
                 }
-              </div>
-            } @else {
-              <div class="acc-empty">Chưa có đơn hàng nào</div>
-            }
-          </div>
-        </div>
-      }
 
-      <!-- ══════════════════════════════════════════════
-           TAB: SETTINGS
-      ══════════════════════════════════════════════ -->
-      @if (activeTab() === 'settings') {
-        <div class="acc-settings-container">
-          <!-- Section 1: Thông tin cá nhân -->
-          <div class="acc-settings-section">
-            <div class="acc-section-header">
-              <h2 class="acc-section-title">Thông tin cá nhân</h2>
-              <p class="acc-section-desc">Cập nhật thông tin hồ sơ của bạn</p>
-            </div>
-            <div class="acc-divider"></div>
+                @if (!editingOverviewProfile()) {
+                  <div class="acc-info-grid">
+                    <div class="acc-info-item">
+                      <span class="acc-info-icon"><i class="bi bi-person"></i></span>
+                      <div class="acc-info-text">
+                        <span class="acc-info-lbl">Họ và tên</span>
+                        <strong class="acc-info-val">{{ user.name || 'Chưa cập nhật' }}</strong>
+                      </div>
+                    </div>
 
-            @if (saved()) {
-              <div class="acc-alert-success"><i class="bi bi-check-circle-fill" aria-hidden="true"></i> Đã cập nhật thông tin thành công!</div>
-            }
+                    <div class="acc-info-item">
+                      <span class="acc-info-icon"><i class="bi bi-envelope"></i></span>
+                      <div class="acc-info-text">
+                        <span class="acc-info-lbl">Email</span>
+                        <strong class="acc-info-val">{{ user.email || 'Chưa cập nhật' }}</strong>
+                      </div>
+                    </div>
 
-            <!-- Avatar Upload Section -->
-            <div class="acc-avatar-section">
-              <div class="acc-avatar-upload">
-                <div class="acc-avatar-preview-wrapper">
-                  <div class="acc-avatar-preview">
-                    @if (cart.currentUser()?.avatar) {
-                      <img [src]="cart.currentUser()!.avatar" alt="Avatar preview" />
-                    } @else {
-                      <div class="acc-avatar-placeholder-large">{{ avatarChar() }}</div>
+                    <div class="acc-info-item">
+                      <span class="acc-info-icon"><i class="bi bi-telephone"></i></span>
+                      <div class="acc-info-text">
+                        <span class="acc-info-lbl">Số điện thoại</span>
+                        <strong class="acc-info-val">{{ user.phone || 'Chưa cập nhật' }}</strong>
+                      </div>
+                    </div>
+
+                    <div class="acc-info-item">
+                      <span class="acc-info-icon"><i class="bi bi-gender-ambiguous"></i></span>
+                      <div class="acc-info-text">
+                        <span class="acc-info-lbl">Giới tính</span>
+                        <strong class="acc-info-val">{{ user.gender || 'Chưa cập nhật' }}</strong>
+                      </div>
+                    </div>
+
+                    <div class="acc-info-item">
+                      <span class="acc-info-icon"><i class="bi bi-calendar4"></i></span>
+                      <div class="acc-info-text">
+                        <span class="acc-info-lbl">Ngày sinh</span>
+                        <strong class="acc-info-val">{{ formatBirthdayDisplay(user.birthday) || 'Chưa cập nhật' }}</strong>
+                      </div>
+                    </div>
+
+                    <div class="acc-info-item">
+                      <span class="acc-info-icon"><i class="bi bi-geo-alt"></i></span>
+                      <div class="acc-info-text">
+                        <span class="acc-info-lbl">Địa chỉ mặc định</span>
+                        <strong class="acc-info-val">{{ defaultAddressText() || 'Chưa có địa chỉ mặc định' }}</strong>
+                      </div>
+                    </div>
+                  </div>
+                } @else {
+                  <form class="acc-settings-form" (submit)="saveAccount($event)">
+                    <div class="acc-form-row">
+                      <div class="acc-field">
+                        <label>Họ và tên *</label>
+                        <input
+                          type="text"
+                          [value]="displayName()"
+                          (input)="displayName.set($any($event.target).value)"
+                          placeholder="Nhập họ và tên"
+                          required
+                        />
+                      </div>
+                      <div class="acc-field">
+                        <label>Giới tính</label>
+                        <select [value]="gender()" (change)="gender.set($any($event.target).value)">
+                          <option value="">Chọn giới tính</option>
+                          <option value="Nữ">Nữ</option>
+                          <option value="Nam">Nam</option>
+                          <option value="Khác">Khác</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="acc-form-row">
+                      <div class="acc-field">
+                        <label>Ngày sinh</label>
+                        <input
+                          type="date"
+                          [value]="birthday()"
+                          (input)="birthday.set($any($event.target).value)"
+                        />
+                      </div>
+                      <div class="acc-field">
+                        <label>Số điện thoại &amp; Bảo mật</label>
+                        <button type="button" class="acc-pill-btn" style="height:40px;justify-content:center" (click)="selectTab('settings')">
+                          <i class="bi bi-shield-lock"></i> Quản lý SĐT &amp; Google ở Cài đặt
+                        </button>
+                      </div>
+                    </div>
+                    <div class="acc-form-actions">
+                      <button type="button" class="acc-btn-outline" (click)="cancelAccount()">Hủy</button>
+                      <button type="submit" class="acc-btn-primary" [disabled]="saving()">
+                        @if (saving()) { Đang lưu... } @else { Lưu thay đổi }
+                      </button>
+                    </div>
+                  </form>
+                }
+              </section>
+
+              <!-- 3. Đơn hàng gần đây (Preview 3 đơn mới nhất kèm ảnh sản phẩm) -->
+              <section class="acc-section-card acc-section-plain">
+                <div class="acc-card-head">
+                  <h2 class="acc-card-title">Đơn hàng gần đây</h2>
+                  <button type="button" class="acc-view-all-link" (click)="selectTab('orders')">
+                    <span>Xem tất cả đơn hàng</span>
+                    <i class="bi bi-arrow-right"></i>
+                  </button>
+                </div>
+
+                @if (loadingOrders()) {
+                  <div class="acc-empty" style="padding:28px">Đang tải danh sách đơn hàng...</div>
+                } @else if (orders().length > 0) {
+                  <div class="acc-recent-cards">
+                    @for (order of orders().slice(0, 3); track order.id) {
+                      <article class="acc-recent-card">
+                        <div class="acc-recent-card-top">
+                          <div class="acc-recent-code-wrap">
+                            <span class="acc-code-badge">#{{ order.orderCode }}</span>
+                            <span class="acc-recent-time">Đặt lúc {{ order.dateTime || order.date }}</span>
+                          </div>
+                          <span class="acc-order-status {{ getOrderStatusClass(order.status) }}">
+                            {{ getOrderStatusText(order.status) }}
+                          </span>
+                        </div>
+
+                        <div class="acc-recent-card-body">
+                          <div class="acc-recent-prod">
+                            <div class="acc-recent-img-box">
+                              <img
+                                [src]="order.items?.[0]?.image || fallbackOrderImage"
+                                [alt]="order.items?.[0]?.name || order.orderCode"
+                                loading="lazy"
+                                (error)="onOrderImageError($event)"
+                              />
+                              @if ((order.items?.length || 0) > 1) {
+                                <span class="acc-recent-img-badge">+{{ order.items.length - 1 }}</span>
+                              }
+                            </div>
+                            <div class="acc-recent-prod-meta">
+                              <h3 class="acc-recent-prod-name">
+                                {{ order.items?.[0]?.name || 'Đơn hàng nông sản EvergreenMart' }}
+                                @if ((order.items?.length || 0) > 1) {
+                                  <span class="acc-recent-more-items">(và {{ order.items.length - 1 }} món khác)</span>
+                                }
+                              </h3>
+                              <span class="acc-recent-store">Cửa hàng: {{ order.storeName || 'EvergreenMart' }}</span>
+                            </div>
+                          </div>
+
+                          <div class="acc-recent-right">
+                            <div class="acc-recent-total-col">
+                              <span class="acc-recent-total-lbl">Tổng thanh toán</span>
+                              <strong class="acc-recent-total-val">{{ formatPrice(order.total) }}</strong>
+                            </div>
+                            <div class="acc-recent-actions">
+                              @if (isCompletedOrder(order.status)) {
+                                <button type="button" class="acc-pill-btn acc-pill-btn--outline" (click)="reorderOrder(order)">
+                                  <i class="bi bi-cart3"></i>
+                                  <span>Mua lại</span>
+                                </button>
+                              } @else if (isActiveOrder(order.status)) {
+                                <a [routerLink]="'/order/' + order.orderCode" class="acc-pill-btn acc-pill-btn--outline">
+                                  <i class="bi bi-truck"></i>
+                                  <span>Theo dõi đơn</span>
+                                </a>
+                              }
+                              <a [routerLink]="'/order/' + order.orderCode" class="acc-pill-btn acc-pill-btn--green">
+                                <span>Xem chi tiết</span>
+                                <i class="bi bi-arrow-right"></i>
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      </article>
                     }
                   </div>
-                  <button class="acc-avatar-edit-btn acc-avatar-edit-btn-large" type="button" (click)="toggleAvatarMenu()" title="Thay đổi ảnh đại diện">
-                    <i class="bi bi-pencil" style="font-size:15px" aria-hidden="true"></i>
+                } @else {
+                  <div class="acc-empty">Bạn chưa có đơn hàng nào. Hãy bắt đầu mua sắm nông sản tươi sạch nhé!</div>
+                }
+              </section>
+
+              <!-- 4. Sổ địa chỉ (Preview 2 cột + nút Thêm địa chỉ mới) -->
+              <section class="acc-section-card acc-section-plain">
+                <div class="acc-card-head">
+                  <div>
+                    <h2 class="acc-card-title">Sổ địa chỉ</h2>
+                    <p class="acc-card-sub">Quản lý các địa chỉ giao hàng của bạn.</p>
+                  </div>
+                  <button type="button" class="acc-pill-btn" (click)="openAddAddressModal()">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Thêm địa chỉ mới</span>
                   </button>
-                  @if (avatarMenuOpen()) {
-                    <div class="acc-avatar-menu acc-avatar-menu-large">
-                      <label class="acc-avatar-menu-item" style="cursor:pointer">
-                        <input type="file" id="avatarInputSettings" accept="image/*" (change)="onAvatarUpload($event)" style="display:none" />
-                        <i class="bi bi-upload" style="font-size:15px" aria-hidden="true"></i>
-                        Đổi ảnh đại diện
-                      </label>
-                      @if (cart.currentUser()?.avatar) {
-                        <button type="button" class="acc-avatar-menu-item acc-avatar-menu-danger" (click)="removeAvatar()">
-                          <i class="bi bi-trash3" style="font-size:15px" aria-hidden="true"></i>
-                          Xóa ảnh đại diện
-                        </button>
+                </div>
+
+                @if (!user.addresses || user.addresses.length === 0) {
+                  <div class="acc-empty">Chưa có địa chỉ giao hàng. Nhấn &ldquo;Thêm địa chỉ mới&rdquo; để thiết lập.</div>
+                } @else {
+                  <div class="acc-addr-grid">
+                    @for (addr of user.addresses; track addr.id) {
+                      <article class="acc-addr-card" [class.is-default]="addr.isDefault">
+                        <div class="acc-addr-top">
+                          <div class="acc-addr-label-group">
+                            <span class="acc-addr-home-icon"><i class="bi bi-house-door"></i></span>
+                            @if (addr.isDefault) {
+                              <span class="acc-badge-default">Địa chỉ mặc định</span>
+                            } @else {
+                              <strong class="acc-addr-label-text">{{ addr.label || 'Địa chỉ' }}</strong>
+                            }
+                          </div>
+                          <div class="acc-addr-icon-actions">
+                            <button type="button" class="acc-icon-btn" (click)="editAddress(addr.id)" title="Chỉnh sửa địa chỉ" aria-label="Chỉnh sửa địa chỉ">
+                              <i class="bi bi-pencil"></i>
+                            </button>
+                            <button type="button" class="acc-icon-btn acc-icon-btn--danger" (click)="removeAddress(addr.id)" title="Xóa địa chỉ" aria-label="Xóa địa chỉ">
+                              <i class="bi bi-trash3"></i>
+                            </button>
+                          </div>
+                        </div>
+                        <div class="acc-addr-person">
+                          <strong>{{ addr.fullName }}</strong>
+                          <span>|</span>
+                          <span>{{ addr.phone }}</span>
+                        </div>
+                        <p class="acc-addr-line">
+                          {{ addr.address }}@if (addr.city && !isCityIncludedInAddress(addr)) {, {{ addr.city }}}
+                        </p>
+                      </article>
+                    }
+                  </div>
+                }
+              </section>
+
+            </div>
+          }
+
+          <!-- ══════════════════════════════════════════════
+               TAB: ORDERS (ĐƠN HÀNG CỦA TÔI)
+          ══════════════════════════════════════════════ -->
+          @if (activeTab() === 'orders') {
+            <section class="acc-section-card">
+              <div class="acc-card-head">
+                <div>
+                  <h2 class="acc-card-title">Đơn hàng của tôi</h2>
+                  <p class="acc-card-sub">Theo dõi trạng thái, xem sản phẩm đã đặt hoặc mua lại nhanh chóng.</p>
+                </div>
+              </div>
+              <div class="acc-divider"></div>
+
+              <div class="acc-orders-filters">
+                <div class="acc-filter-group">
+                  <button class="acc-filter-btn" [class.is-active]="orderStatusFilter() === 'all'" (click)="orderStatusFilter.set('all'); onOrderFilterChange()">Tất cả</button>
+                  <button class="acc-filter-btn" [class.is-active]="orderStatusFilter() === 'pending'" (click)="orderStatusFilter.set('pending'); onOrderFilterChange()">Chờ xác nhận</button>
+                  <button class="acc-filter-btn" [class.is-active]="orderStatusFilter() === 'processing'" (click)="orderStatusFilter.set('processing'); onOrderFilterChange()">Đang xử lý</button>
+                  <button class="acc-filter-btn" [class.is-active]="orderStatusFilter() === 'delivering'" (click)="orderStatusFilter.set('delivering'); onOrderFilterChange()">Đang giao</button>
+                  <button class="acc-filter-btn" [class.is-active]="orderStatusFilter() === 'completed'" (click)="orderStatusFilter.set('completed'); onOrderFilterChange()">Đã giao</button>
+                  <button class="acc-filter-btn" [class.is-active]="orderStatusFilter() === 'cancelled'" (click)="orderStatusFilter.set('cancelled'); onOrderFilterChange()">Đã hủy</button>
+                </div>
+                <div class="acc-search-box">
+                  <i class="bi bi-search"></i>
+                  <input
+                    type="text"
+                    [value]="orderSearchQuery()"
+                    (input)="orderSearchQuery.set($any($event.target).value); onOrderFilterChange()"
+                    placeholder="Tìm kiếm theo mã đơn..."
+                  />
+                </div>
+              </div>
+
+              @if (loadingOrders()) {
+                <div class="acc-empty" style="padding:40px">Đang tải danh sách đơn hàng...</div>
+              } @else if (filteredOrders().length > 0) {
+                <div class="acc-order-list-full">
+                  @for (order of paginatedOrders(); track order.id) {
+                    <div class="acc-order-card">
+                      <div class="acc-order-header">
+                        <div class="acc-recent-code-wrap">
+                          <span class="acc-code-badge">#{{ order.orderCode }}</span>
+                          <span class="acc-recent-time">{{ order.dateTime || order.date }}</span>
+                        </div>
+                        <div class="acc-order-status {{ getOrderStatusClass(order.status) }}">
+                          {{ getOrderStatusText(order.status) }}
+                        </div>
+                      </div>
+
+                      <div class="acc-order-items">
+                        @for (item of order.items; track $index) {
+                          <div class="acc-order-item">
+                            <img
+                              [src]="item.image || fallbackOrderImage"
+                              [alt]="item.name"
+                              class="acc-item-thumb"
+                              loading="lazy"
+                              (error)="onOrderImageError($event)"
+                            />
+                            <div class="acc-item-info">
+                              <span class="acc-item-name">{{ item.name }}</span>
+                              <div class="acc-item-sub">
+                                @if (item.isCombo) {
+                                  <span class="acc-item-combo-badge">Combo</span>
+                                }
+                                @if (item.selectedOption) {
+                                  <span class="acc-item-option">{{ item.selectedOption }}</span>
+                                }
+                              </div>
+                            </div>
+                            <span class="acc-item-qty">x{{ item.quantity }}</span>
+                            <span class="acc-item-price">{{ formatPrice(item.price) }}</span>
+                          </div>
+                        }
+                      </div>
+
+                      <div class="acc-order-footer">
+                        <div class="acc-order-total">Tổng thanh toán: <span>{{ formatPrice(order.total) }}</span></div>
+                        <div class="acc-recent-actions">
+                          @if (isCompletedOrder(order.status)) {
+                            <button type="button" class="acc-pill-btn acc-pill-btn--outline" (click)="reorderOrder(order)">
+                              <i class="bi bi-cart3"></i> Mua lại
+                            </button>
+                          }
+                          <a [routerLink]="['/complaint']" [queryParams]="{ orderCode: order.orderCode }" class="acc-pill-btn acc-pill-btn--danger">
+                            Khiếu nại
+                          </a>
+                          <a [routerLink]="'/order/' + order.orderCode" class="acc-pill-btn acc-pill-btn--green">
+                            Xem chi tiết <i class="bi bi-arrow-right"></i>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                @if (orderTotalPages() > 1) {
+                  <nav class="acc-order-pagination" aria-label="Phân trang đơn hàng">
+                    <button type="button" class="acc-pill-btn" [disabled]="orderPage() <= 1" (click)="prevOrderPage()">
+                      ← Trang trước
+                    </button>
+                    <span>Trang {{ orderPage() }} / {{ orderTotalPages() }}</span>
+                    <button type="button" class="acc-pill-btn" [disabled]="orderPage() >= orderTotalPages()" (click)="nextOrderPage()">
+                      Trang sau →
+                    </button>
+                  </nav>
+                }
+              } @else {
+                <div class="acc-empty">Không tìm thấy đơn hàng nào</div>
+              }
+            </section>
+          }
+
+          <!-- ══════════════════════════════════════════════
+               TAB: ADDRESSES (SỔ ĐỊA CHỈ)
+          ══════════════════════════════════════════════ -->
+          @if (activeTab() === 'addresses') {
+            <section class="acc-section-card">
+              <div class="acc-card-head">
+                <div>
+                  <h2 class="acc-card-title">Sổ địa chỉ</h2>
+                  <p class="acc-card-sub">Quản lý danh sách địa chỉ nhận hàng của bạn.</p>
+                </div>
+                <button class="acc-pill-btn acc-pill-btn--green" type="button" (click)="openAddAddressModal()">
+                  <i class="bi bi-plus-lg"></i>
+                  <span>Thêm địa chỉ mới</span>
+                </button>
+              </div>
+              <div class="acc-divider"></div>
+
+              @if (!user.addresses || user.addresses.length === 0) {
+                <div class="acc-empty acc-empty-enhanced">
+                  <div class="acc-empty-icon"><i class="bi bi-geo-alt"></i></div>
+                  <h3 class="acc-empty-title">Chưa có địa chỉ giao hàng</h3>
+                  <p class="acc-empty-text">Thêm địa chỉ giao hàng để việc đặt hàng nhanh chóng và thuận tiện hơn.</p>
+                  <button class="acc-btn-primary" type="button" (click)="openAddAddressModal()">+ Thêm địa chỉ đầu tiên</button>
+                </div>
+              } @else {
+                <div class="acc-addr-grid">
+                  @for (addr of user.addresses; track addr.id) {
+                    <article class="acc-addr-card" [class.is-default]="addr.isDefault">
+                      <div class="acc-addr-top">
+                        <div class="acc-addr-label-group">
+                          <span class="acc-addr-home-icon"><i class="bi bi-house-door"></i></span>
+                          <strong class="acc-addr-label-text">{{ addr.label || 'Địa chỉ' }}</strong>
+                          @if (addr.isDefault) {
+                            <span class="acc-badge-default">Địa chỉ mặc định</span>
+                          }
+                          @if (addr.lat && addr.lng) {
+                            <span class="acc-badge-pin"><i class="bi bi-geo-alt-fill"></i> Đã ghim</span>
+                          }
+                        </div>
+                        <div class="acc-addr-icon-actions">
+                          <button type="button" class="acc-icon-btn" (click)="editAddress(addr.id)" title="Sửa địa chỉ"><i class="bi bi-pencil"></i></button>
+                          <button type="button" class="acc-icon-btn acc-icon-btn--danger" (click)="removeAddress(addr.id)" title="Xóa địa chỉ"><i class="bi bi-trash3"></i></button>
+                        </div>
+                      </div>
+                      <div class="acc-addr-person">
+                        <strong>{{ addr.fullName }}</strong>
+                        <span>|</span>
+                        <span>{{ addr.phone }}</span>
+                      </div>
+                      <p class="acc-addr-line">
+                        {{ addr.address }}@if (addr.city && !isCityIncludedInAddress(addr)) {, {{ addr.city }}}
+                      </p>
+                      @if (!addr.isDefault) {
+                        <div style="margin-top:10px">
+                          <button type="button" class="acc-link-btn" (click)="setDefault(addr.id)">Đặt làm mặc định</button>
+                        </div>
+                      }
+                    </article>
+                  }
+                </div>
+              }
+            </section>
+          }
+
+          <!-- ══════════════════════════════════════════════
+               TAB: VOUCHERS (ƯU ĐÃI HIỆN CÓ)
+          ══════════════════════════════════════════════ -->
+          @if (activeTab() === 'vouchers') {
+            <section class="acc-section-card">
+              <div class="acc-card-head">
+                <div>
+                  <h2 class="acc-card-title">Ưu đãi hiện có ({{ userVoucherViews().length }})</h2>
+                  <p class="acc-card-sub">Các mã giảm giá &amp; vận chuyển khả dụng đã lưu trong ví của bạn.</p>
+                </div>
+                <a routerLink="/vouchers" class="acc-pill-btn acc-pill-btn--green">
+                  <i class="bi bi-ticket-perforated"></i>
+                  <span>Mở Kho Mã giảm giá</span>
+                </a>
+              </div>
+              <div class="acc-divider"></div>
+
+              @if (userVoucherViews().length === 0) {
+                <div class="acc-empty acc-empty-enhanced">
+                  <div class="acc-empty-icon"><i class="bi bi-ticket-perforated"></i></div>
+                  <h3 class="acc-empty-title">Chưa có mã ưu đãi khả dụng trong ví</h3>
+                  <p class="acc-empty-text">Khám phá hàng loạt mã giảm giá đơn hàng và mã Freeship tại Kho Mã giảm giá.</p>
+                  <a routerLink="/vouchers" class="acc-btn-primary" style="display:inline-flex;text-decoration:none">Lấy mã ngay</a>
+                </div>
+              } @else {
+                <div class="acc-voucher-grid">
+                  @for (item of userVoucherViews(); track item.uv.voucherId) {
+                    <div class="acc-voucher-card">
+                      <div class="acc-voucher-stub" [attr.data-theme]="item.visual.themeKey">
+                        <div class="acc-voucher-logo-disk">
+                          <img src="/evergreen-logo.png" alt="Evergreen Mart" />
+                        </div>
+                        <strong>{{ item.visual.discountDisplay }}</strong>
+                      </div>
+                      <div class="acc-voucher-body">
+                        <span class="acc-voucher-cat">{{ item.visual.categoryLabel }}</span>
+                        <h4>{{ item.uv.voucher.name }}</h4>
+                        <div class="acc-voucher-meta">
+                          <span>{{ item.visual.minOrderShort }}</span>
+                          <span>HSD: {{ item.endDate }}</span>
+                        </div>
+                        <div class="acc-voucher-foot">
+                          <a [routerLink]="['/vouchers', item.uv.voucher.code]" class="acc-link-btn">Điều kiện</a>
+                          <a routerLink="/checkout" [queryParams]="{ voucher: item.uv.voucher.code }" class="acc-pill-btn acc-pill-btn--green">Dùng ngay →</a>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </section>
+          }
+
+          <!-- ══════════════════════════════════════════════
+               TAB: WISHLIST (SẢN PHẨM YÊU THÍCH)
+          ══════════════════════════════════════════════ -->
+          @if (activeTab() === 'wishlist') {
+            <section class="acc-section-card">
+              <div class="acc-card-head">
+                <div>
+                  <h2 class="acc-card-title">
+                    <i class="bi bi-heart-fill" style="color:#e11d48;margin-right:6px"></i>
+                    Sản phẩm yêu thích ({{ wishlist.count() }})
+                  </h2>
+                  <p class="acc-card-sub">Lưu lại các món nông sản bạn quan tâm để đặt hàng nhanh.</p>
+                </div>
+              </div>
+              <div class="acc-divider"></div>
+
+              @if (wishlist.loading()) {
+                <div class="acc-empty">Đang tải danh sách yêu thích...</div>
+              } @else if (wishlist.items().length === 0) {
+                <div class="acc-empty acc-empty-enhanced">
+                  <div class="acc-empty-icon" style="color:#e11d48"><i class="bi bi-heart"></i></div>
+                  <h3 class="acc-empty-title">Chưa có sản phẩm yêu thích</h3>
+                  <p class="acc-empty-text">Bấm biểu tượng trái tim trên sản phẩm để lưu và theo dõi tại đây.</p>
+                  <a routerLink="/online-ordering" class="acc-btn-primary" style="display:inline-flex;text-decoration:none">Khám phá sản phẩm ngay</a>
+                </div>
+              } @else {
+                <div class="acc-wishlist-grid">
+                  @for (item of wishlist.items(); track item._id) {
+                    <div class="acc-wishlist-card">
+                      <button type="button" class="acc-wishlist-remove" (click)="wishlist.toggleWishlist(item)" title="Bỏ khỏi yêu thích">
+                        <i class="bi bi-heart-fill"></i>
+                      </button>
+
+                      <a [routerLink]="['/product-page', item.slug || item._id]" class="acc-wishlist-img-link">
+                        <img
+                          [src]="item.image || fallbackOrderImage"
+                          [alt]="item.name"
+                          loading="lazy"
+                          (error)="onOrderImageError($event)"
+                        />
+                      </a>
+
+                      <div class="acc-wishlist-body">
+                        @if (item.category) {
+                          <span class="acc-wishlist-cat">{{ item.category }}</span>
+                        }
+                        <h3><a [routerLink]="['/product-page', item.slug || item._id]">{{ item.name }}</a></h3>
+                        <div class="acc-wishlist-price">
+                          {{ (item.price || 0).toLocaleString('vi-VN') }}đ
+                          @if (item.unit) {
+                            <small>/ {{ item.unit }}</small>
+                          }
+                        </div>
+                        <div class="acc-wishlist-stock" [class.is-out]="item.stock <= 0">
+                          {{ item.stock > 0 ? 'Còn hàng' : 'Tạm hết hàng' }}
+                        </div>
+                        <div class="acc-wishlist-actions">
+                          <button type="button" class="acc-btn-primary acc-btn-sm" [disabled]="item.stock <= 0" (click)="addWishlistItemToCart(item)">
+                            <i class="bi bi-cart-plus"></i> Thêm giỏ
+                          </button>
+                          <a [routerLink]="['/product-page', item.slug || item._id]" class="acc-btn-outline acc-btn-sm">Chi tiết</a>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </section>
+          }
+
+          <!-- ══════════════════════════════════════════════
+               TAB: SETTINGS (CÀI ĐẶT TÀI KHOẢN)
+          ══════════════════════════════════════════════ -->
+          @if (activeTab() === 'settings') {
+            <div class="acc-settings-container">
+              <section class="acc-section-card">
+                <div class="acc-card-head">
+                  <div>
+                    <h2 class="acc-card-title">Thông tin cá nhân</h2>
+                    <p class="acc-card-sub">Cập nhật thông tin hồ sơ, giới tính, ngày sinh của bạn.</p>
+                  </div>
+                </div>
+                <div class="acc-divider"></div>
+
+                @if (saved()) {
+                  <div class="acc-alert-success"><i class="bi bi-check-circle-fill"></i> Đã cập nhật thông tin thành công!</div>
+                }
+
+                <div class="acc-avatar-section">
+                  <div class="acc-avatar-upload">
+                    <div class="acc-avatar-preview-wrapper">
+                      <div class="acc-avatar-preview">
+                        @if (cart.currentUserAvatar()) {
+                          <img
+                            [src]="cart.currentUserAvatar()"
+                            referrerpolicy="no-referrer"
+                            alt="Avatar preview"
+                            (error)="cart.markAvatarUrlFailed(cart.currentUserAvatar())"
+                          />
+                        } @else {
+                          <div class="acc-avatar-placeholder-large">{{ avatarChar() }}</div>
+                        }
+                      </div>
+                      <button class="acc-avatar-edit-btn acc-avatar-edit-btn-large" type="button" (click)="toggleAvatarMenu()" title="Thay đổi ảnh đại diện">
+                        <i class="bi bi-camera"></i>
+                      </button>
+                      @if (avatarMenuOpen()) {
+                        <div class="acc-avatar-menu acc-avatar-menu-large">
+                          <label class="acc-avatar-menu-item">
+                            <input type="file" id="avatarInputSettings" accept="image/*" (change)="onAvatarUpload($event)" style="display:none" />
+                            <i class="bi bi-upload"></i> Đổi ảnh đại diện
+                          </label>
+                          @if (cart.currentUser()?.avatar) {
+                            <button type="button" class="acc-avatar-menu-item acc-avatar-menu-danger" (click)="removeAvatar()">
+                              <i class="bi bi-trash3"></i> Xóa ảnh đại diện
+                            </button>
+                          }
+                        </div>
                       }
                     </div>
-                  }
-                </div>
-                <div class="acc-avatar-meta">
-                  <span class="acc-avatar-label">Ảnh đại diện</span>
-                  <p class="acc-avatar-hint">Kích thước tối đa: 2MB. Định dạng: JPG, PNG, GIF.</p>
-                </div>
-              </div>
-            </div>
-
-            <form class="acc-settings-form" (submit)="saveAccount($event)">
-              <div class="acc-form-row">
-                <div class="acc-field">
-                  <label>Tên hiển thị *</label>
-                  <input type="text" [value]="displayName()"
-                         (input)="displayName.set($any($event.target).value)"
-                         placeholder="Tên hiển thị" />
-                </div>
-                <div class="acc-field">
-                  <label>Email</label>
-                  <input type="email" [value]="user.email || ''" disabled
-                         placeholder="Chưa liên kết email"
-                         style="background:#f8fafc;color:#64748b" />
-                </div>
-              </div>
-
-              <div class="acc-form-row">
-                <div class="acc-field">
-                  <label>Họ</label>
-                  <input type="text" [value]="firstName()"
-                         (input)="firstName.set($any($event.target).value)"
-                         placeholder="Họ" />
-                </div>
-                <div class="acc-field">
-                  <label>Tên</label>
-                  <input type="text" [value]="lastName()"
-                         (input)="lastName.set($any($event.target).value)"
-                         placeholder="Tên" />
-                </div>
-              </div>
-
-              <div class="acc-field">
-                <label>Số điện thoại (Định danh chính)</label>
-                <div class="phone-display-row">
-                  <div class="phone-value-box">
-                    <i class="bi bi-telephone" style="font-size:17px" aria-hidden="true"></i>
-                    <span class="phone-text">{{ user.phone || 'Chưa cập nhật' }}</span>
-                    @if (user.phone) {
-                      <span class="verified-tag"><i class="bi bi-check-lg" aria-hidden="true"></i> Đã xác thực</span>
-                    }
-                  </div>
-                  <button type="button" class="acc-btn-outline change-phone-btn" (click)="openChangePhoneModal()">
-                    Đổi số điện thoại
-                  </button>
-                </div>
-              </div>
-
-              <div class="acc-form-actions">
-                <button type="button" class="acc-btn-outline" (click)="cancelAccount()">Hủy</button>
-                <button type="submit" class="acc-btn-primary" [disabled]="saving()">
-                  @if (saving()) { Đang lưu... } @else { Cập nhật thông tin }
-                </button>
-              </div>
-            </form>
-          </div>
-
-          <!-- Section 2: Bảo mật & Phương thức đăng nhập -->
-          <div class="acc-settings-section">
-            <div class="acc-section-header">
-              <h2 class="acc-section-title">Bảo mật & Liên kết tài khoản</h2>
-              <p class="acc-section-desc">Quản lý mật khẩu và phương thức đăng nhập dự phòng</p>
-            </div>
-            <div class="acc-divider"></div>
-
-            @if (googleActionSuccess()) {
-              <div class="acc-alert-success">{{ googleActionSuccess() }}</div>
-            }
-            @if (googleActionError()) {
-              <div class="acc-alert-error">{{ googleActionError() }}</div>
-            }
-
-            <!-- Thẻ liên kết Google -->
-            <div class="acc-security-card google-linking-card">
-              <div class="acc-security-icon-col">
-                <svg width="28" height="28" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                </svg>
-              </div>
-              <div class="acc-security-info">
-                <div class="google-header-line">
-                  <h3 class="acc-security-title">Liên kết tài khoản Google</h3>
-                  @if (user.isGoogleLinked) {
-                    <span class="status-badge badge-linked"><i class="bi bi-check-lg" aria-hidden="true"></i> Đã liên kết</span>
-                  } @else {
-                    <span class="status-badge badge-unlinked">Chưa liên kết</span>
-                  }
-                </div>
-                <p class="acc-security-desc">
-                  @if (user.isGoogleLinked) {
-                    Đã liên kết với email: <strong>{{ user.googleEmail || 'Google Account' }}</strong>. Bạn có thể sử dụng Google để đăng nhập dự phòng.
-                  } @else {
-                    Liên kết tài khoản Google để đăng nhập thuận tiện hơn. Google chỉ đóng vai trò là phương thức đăng nhập bổ sung cho tài khoản của bạn.
-                  }
-                </p>
-              </div>
-              <div class="acc-security-action">
-                @if (user.isGoogleLinked) {
-                  <button type="button" class="btn-unlink-google" (click)="openUnlinkGoogleModal()">
-                    Hủy liên kết
-                  </button>
-                } @else {
-                  <button type="button" class="acc-btn-primary btn-link-google"
-                          [disabled]="googleLinkingLoading()"
-                          (click)="handleLinkGoogle()">
-                    @if (googleLinkingLoading()) { Đang kết nối... } @else { Liên kết Google }
-                  </button>
-                }
-              </div>
-            </div>
-
-            <!-- Thẻ đổi mật khẩu -->
-            <div class="acc-security-card">
-              <div class="acc-security-info">
-                <h3 class="acc-security-title">Đổi mật khẩu</h3>
-                <p class="acc-security-desc">Thay đổi mật khẩu định kỳ để bảo vệ tài khoản EvergreenMart</p>
-              </div>
-              <button class="acc-btn-outline">Đổi mật khẩu</button>
-            </div>
-
-            <div class="acc-security-info">
-              <p class="acc-security-note">
-                <i class="bi bi-info-circle" style="font-size:15px" aria-hidden="true"></i>
-                Lần cuối đổi mật khẩu: Chưa từng đổi
-              </p>
-            </div>
-          </div>
-
-          <!-- Section 3: Cài đặt thông báo -->
-          <div class="acc-settings-section">
-            <div class="acc-section-header">
-              <h2 class="acc-section-title">Cài đặt thông báo</h2>
-              <p class="acc-section-desc">Quản lý cách bạn nhận thông báo</p>
-            </div>
-            <div class="acc-divider"></div>
-
-            <div class="acc-notification-item">
-              <div class="acc-notification-info">
-                <h4 class="acc-notification-title">Thông báo khuyến mãi</h4>
-                <p class="acc-notification-desc">Nhận thông tin về voucher và ưu đãi mới</p>
-              </div>
-              <label class="acc-toggle">
-                <input type="checkbox" checked />
-                <span class="acc-toggle-slider"></span>
-              </label>
-            </div>
-
-            <div class="acc-notification-item">
-              <div class="acc-notification-info">
-                <h4 class="acc-notification-title">Thông báo đơn hàng</h4>
-                <p class="acc-notification-desc">Nhận cập nhật về trạng thái đơn hàng</p>
-              </div>
-              <label class="acc-toggle">
-                <input type="checkbox" checked />
-                <span class="acc-toggle-slider"></span>
-              </label>
-            </div>
-
-            <div class="acc-notification-item">
-              <div class="acc-notification-info">
-                <h4 class="acc-notification-title">Thông báo tin tức</h4>
-                <p class="acc-notification-desc">Nhận tin tức và bài viết mới từ Evergreen Mart</p>
-              </div>
-              <label class="acc-toggle">
-                <input type="checkbox" />
-                <span class="acc-toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Nút Đăng xuất tiện lợi ở cuối Cài đặt -->
-          <div style="margin-top:32px;padding-top:20px;border-top:1px solid var(--xanh-line,#e5e7eb);display:flex;justify-content:flex-end">
-            <button type="button" class="acc-btn-outline" style="color:#b91c1c;border-color:#fca5a5" (click)="logout()">
-              Đăng xuất tài khoản
-            </button>
-          </div>
-        </div>
-      }
-
-      <!-- ══════════════════════════════════════════════
-           TAB: ADDRESSES
-      ══════════════════════════════════════════════ -->
-      @if (activeTab() === 'addresses') {
-        <div class="acc-section-header">
-          <h2 class="acc-section-title">Sổ địa chỉ</h2>
-          <button class="acc-btn-primary" (click)="openAddAddressModal()">+ Thêm địa chỉ mới</button>
-        </div>
-        <div class="acc-divider"></div>
-
-        @if (!cart.currentUser()?.addresses || cart.currentUser()!.addresses!.length === 0) {
-          <div class="acc-empty acc-empty-enhanced">
-            <div class="acc-empty-icon">
-              <i class="bi bi-geo-alt" style="font-size:52px" aria-hidden="true"></i>
-            </div>
-            <h3 class="acc-empty-title">Chưa có địa chỉ giao hàng</h3>
-            <p class="acc-empty-text">
-              Thêm địa chỉ giao hàng để việc đặt hàng nhanh chóng và thuận tiện hơn.
-            </p>
-            <button class="acc-btn-primary" (click)="openAddAddressModal()">
-              + Thêm địa chỉ đầu tiên
-            </button>
-          </div>
-        } @else {
-          <div class="acc-address-list">
-            @for (addr of cart.currentUser()!.addresses!; track addr.id) {
-              <div class="acc-address-card" [class.is-default]="addr.isDefault">
-                <div class="acc-address-top">
-                  <span class="acc-address-label">{{ addr.label }}</span>
-                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                    @if (addr.lat && addr.lng) {
-                      <span class="acc-badge-pin"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> Đã ghim bản đồ</span>
-                    }
-                    @if (addr.isDefault) {
-                      <span class="acc-badge-default">Mặc định</span>
-                    }
-                  </div>
-                </div>
-                <div class="acc-address-name">{{ addr.fullName }}</div>
-                <div class="acc-address-detail">{{ addr.phone }}</div>
-                <div class="acc-address-detail">{{ addr.address }}</div>
-                @if (addr.city && !isCityIncludedInAddress(addr)) {
-                  <div class="acc-address-detail">{{ addr.city }}</div>
-                }
-                <div class="acc-address-actions">
-                  <button class="acc-link-btn" (click)="editAddress(addr.id)">Sửa</button>
-                  @if (!addr.isDefault) {
-                    <button class="acc-link-btn" (click)="setDefault(addr.id)">Đặt làm mặc định</button>
-                  }
-                  <button class="acc-link-btn acc-link-danger" (click)="removeAddress(addr.id)">Xóa</button>
-                </div>
-              </div>
-            }
-          </div>
-        }
-
-        <app-address-picker-modal
-          [open]="showAddressModal()"
-          mode="addressBook"
-          [defaultReceiverName]="cart.currentUser()?.name || ''"
-          [defaultReceiverPhone]="cart.currentUser()?.phone || ''"
-          [initialAddress]="editingAddress()"
-          [forceDefaultOnNew]="(cart.currentUser()?.addresses?.length ?? 0) === 0"
-          (closed)="closeAddressModal()"
-          (confirmed)="onAddressPickerConfirmed($event)"
-        ></app-address-picker-modal>
-      }
-
-      <!-- ══════════════════════════════════════════════
-           TAB: ORDERS
-      ══════════════════════════════════════════════ -->
-      @if (activeTab() === 'orders') {
-        <div class="acc-section-header">
-          <h2 class="acc-section-title">Đơn hàng của tôi</h2>
-        </div>
-        <div class="acc-divider"></div>
-
-        <!-- Filters and Search -->
-        <div class="acc-orders-filters">
-          <div class="acc-filter-group">
-            <button
-              class="acc-filter-btn"
-              [class.is-active]="orderStatusFilter() === 'all'"
-              (click)="orderStatusFilter.set('all'); onOrderFilterChange()"
-            >
-              Tất cả
-            </button>
-            <button
-              class="acc-filter-btn"
-              [class.is-active]="orderStatusFilter() === 'pending'"
-              (click)="orderStatusFilter.set('pending'); onOrderFilterChange()"
-            >
-              Chờ xác nhận
-            </button>
-            <button
-              class="acc-filter-btn"
-              [class.is-active]="orderStatusFilter() === 'processing'"
-              (click)="orderStatusFilter.set('processing'); onOrderFilterChange()"
-            >
-              Đang xử lý
-            </button>
-            <button
-              class="acc-filter-btn"
-              [class.is-active]="orderStatusFilter() === 'delivering'"
-              (click)="orderStatusFilter.set('delivering'); onOrderFilterChange()"
-            >
-              Đang giao
-            </button>
-            <button
-              class="acc-filter-btn"
-              [class.is-active]="orderStatusFilter() === 'completed'"
-              (click)="orderStatusFilter.set('completed'); onOrderFilterChange()"
-            >
-              Đã giao
-            </button>
-            <button
-              class="acc-filter-btn"
-              [class.is-active]="orderStatusFilter() === 'cancelled'"
-              (click)="orderStatusFilter.set('cancelled'); onOrderFilterChange()"
-            >
-              Đã hủy
-            </button>
-          </div>
-          <div class="acc-search-box">
-            <i class="bi bi-search" style="font-size:15px" aria-hidden="true"></i>
-            <input
-              type="text"
-              [value]="orderSearchQuery()"
-              (input)="orderSearchQuery.set($any($event.target).value); onOrderFilterChange()"
-              placeholder="Tìm kiếm theo mã đơn..."
-            />
-          </div>
-        </div>
-
-        @if (loadingOrders()) {
-          <div class="acc-empty" style="padding:40px">Đang tải danh sách đơn hàng...</div>
-        } @else if (filteredOrders().length > 0) {
-          <div class="acc-order-list-full">
-            @for (order of paginatedOrders(); track order.id) {
-              <div class="acc-order-card">
-                <div class="acc-order-header">
-                  <div class="acc-order-code">{{ order.orderCode }}</div>
-                  <div class="acc-order-date">{{ order.date }}</div>
-                  <div class="acc-order-status {{ getOrderStatusClass(order.status) }}">
-                    {{ getOrderStatusText(order.status) }}
-                  </div>
-                </div>
-                <div class="acc-order-items">
-                  @for (item of order.items; track item.name) {
-                    <div class="acc-order-item">
-                      <span class="acc-item-name">{{ item.name }}</span>
-                      <span class="acc-item-qty">x{{ item.quantity }}</span>
-                      <span class="acc-item-price">{{ formatPrice(item.price) }}</span>
+                    <div class="acc-avatar-meta">
+                      <span class="acc-avatar-label">Ảnh đại diện</span>
+                      <p class="acc-avatar-hint">Kích thước tối đa: 2MB. Định dạng: JPG, PNG, GIF.</p>
                     </div>
-                  }
-                </div>
-                <div class="acc-order-footer">
-                  <div class="acc-order-total">Tổng: {{ formatPrice(order.total) }}</div>
-                  <div style="display:flex;gap:8px">
-                    <a [routerLink]="['/complaint']" [queryParams]="{ orderCode: order.orderCode }" class="acc-btn-outline acc-btn-sm" style="color:#b91c1c;border-color:#fca5a5" title="Báo cáo sự cố hoặc khiếu nại đơn hàng này">Khiếu nại</a>
-                    <a [routerLink]="'/order/' + order.orderCode" class="acc-btn-outline acc-btn-sm">Chi tiết</a>
                   </div>
                 </div>
-              </div>
-            }
-          </div>
 
-          @if (orderTotalPages() > 1) {
-            <nav class="acc-order-pagination" style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:24px" aria-label="Phân trang đơn hàng">
-              <button type="button" class="acc-btn-outline acc-btn-sm" [disabled]="orderPage() <= 1" (click)="prevOrderPage()">
-                ← Trang trước
-              </button>
-              <span style="font-size:13px;font-weight:600">Trang {{ orderPage() }} / {{ orderTotalPages() }}</span>
-              <button type="button" class="acc-btn-outline acc-btn-sm" [disabled]="orderPage() >= orderTotalPages()" (click)="nextOrderPage()">
-                Trang sau →
-              </button>
-            </nav>
+                <form class="acc-settings-form" (submit)="saveAccount($event)">
+                  <div class="acc-form-row">
+                    <div class="acc-field">
+                      <label>Tên hiển thị *</label>
+                      <input type="text" [value]="displayName()" (input)="displayName.set($any($event.target).value)" placeholder="Tên hiển thị" />
+                    </div>
+                    <div class="acc-field">
+                      <label>Email</label>
+                      <input type="email" [value]="user.email || ''" disabled placeholder="Chưa liên kết email" style="background:#f8fafc;color:#64748b" />
+                    </div>
+                  </div>
+
+                  <div class="acc-form-row">
+                    <div class="acc-field">
+                      <label>Họ</label>
+                      <input type="text" [value]="firstName()" (input)="firstName.set($any($event.target).value)" placeholder="Họ" />
+                    </div>
+                    <div class="acc-field">
+                      <label>Tên</label>
+                      <input type="text" [value]="lastName()" (input)="lastName.set($any($event.target).value)" placeholder="Tên" />
+                    </div>
+                  </div>
+
+                  <div class="acc-form-row">
+                    <div class="acc-field">
+                      <label>Giới tính</label>
+                      <select [value]="gender()" (change)="gender.set($any($event.target).value)">
+                        <option value="">Chọn giới tính</option>
+                        <option value="Nữ">Nữ</option>
+                        <option value="Nam">Nam</option>
+                        <option value="Khác">Khác</option>
+                      </select>
+                    </div>
+                    <div class="acc-field">
+                      <label>Ngày sinh</label>
+                      <input type="date" [value]="birthday()" (input)="birthday.set($any($event.target).value)" />
+                    </div>
+                  </div>
+
+                  <div class="acc-field">
+                    <label>Số điện thoại (Định danh chính)</label>
+                    <div class="phone-display-row">
+                      <div class="phone-value-box">
+                        <i class="bi bi-telephone"></i>
+                        <span class="phone-text">{{ user.phone || 'Chưa cập nhật' }}</span>
+                        @if (user.phone) {
+                          <span class="verified-tag"><i class="bi bi-check-lg"></i> Đã xác thực</span>
+                        }
+                      </div>
+                      <button type="button" class="acc-btn-outline change-phone-btn" (click)="openChangePhoneModal()">
+                        Đổi số điện thoại
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="acc-form-actions">
+                    <button type="button" class="acc-btn-outline" (click)="cancelAccount()">Hủy</button>
+                    <button type="submit" class="acc-btn-primary" [disabled]="saving()">
+                      @if (saving()) { Đang lưu... } @else { Cập nhật thông tin }
+                    </button>
+                  </div>
+                </form>
+              </section>
+
+              <section class="acc-section-card">
+                <div class="acc-card-head">
+                  <div>
+                    <h2 class="acc-card-title">Bảo mật &amp; Liên kết tài khoản</h2>
+                    <p class="acc-card-sub">Quản lý mật khẩu và phương thức đăng nhập dự phòng.</p>
+                  </div>
+                </div>
+                <div class="acc-divider"></div>
+
+                @if (googleActionSuccess()) {
+                  <div class="acc-alert-success">{{ googleActionSuccess() }}</div>
+                }
+                @if (googleActionError()) {
+                  <div class="acc-alert-error">{{ googleActionError() }}</div>
+                }
+
+                <div class="acc-security-card google-linking-card">
+                  <div class="acc-security-icon-col">
+                    <svg width="28" height="28" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                    </svg>
+                  </div>
+                  <div class="acc-security-info">
+                    <div class="google-header-line">
+                      <h3 class="acc-security-title">Liên kết tài khoản Google</h3>
+                      @if (user.isGoogleLinked) {
+                        <span class="status-badge badge-linked"><i class="bi bi-check-lg"></i> Đã liên kết</span>
+                      } @else {
+                        <span class="status-badge badge-unlinked">Chưa liên kết</span>
+                      }
+                    </div>
+                    <p class="acc-security-desc">
+                      @if (user.isGoogleLinked) {
+                        Đã liên kết với email: <strong>{{ user.googleEmail || 'Google Account' }}</strong>. Bạn có thể sử dụng Google để đăng nhập dự phòng.
+                      } @else {
+                        Liên kết tài khoản Google để đăng nhập thuận tiện hơn.
+                      }
+                    </p>
+                  </div>
+                  <div class="acc-security-action">
+                    @if (user.isGoogleLinked) {
+                      <button type="button" class="btn-unlink-google" (click)="openUnlinkGoogleModal()">Hủy liên kết</button>
+                    } @else {
+                      <button type="button" class="acc-btn-primary btn-link-google" [disabled]="googleLinkingLoading()" (click)="handleLinkGoogle()">
+                        @if (googleLinkingLoading()) { Đang kết nối... } @else { Liên kết Google }
+                      </button>
+                    }
+                  </div>
+                </div>
+
+                <div class="acc-security-card">
+                  <div class="acc-security-info">
+                    <h3 class="acc-security-title">Đổi mật khẩu &amp; Khôi phục</h3>
+                    <p class="acc-security-desc">Thay đổi mật khẩu định kỳ hoặc khôi phục mật khẩu tài khoản EvergreenMart.</p>
+                  </div>
+                  <button type="button" class="acc-btn-outline" (click)="openForgotPasswordModal()">Quên mật khẩu?</button>
+                </div>
+              </section>
+
+              <section class="acc-section-card">
+                <div class="acc-card-head">
+                  <div>
+                    <h2 class="acc-card-title">Cài đặt thông báo</h2>
+                    <p class="acc-card-sub">Quản lý cách bạn nhận thông báo ưu đãi và đơn hàng.</p>
+                  </div>
+                </div>
+                <div class="acc-divider"></div>
+
+                <div class="acc-notification-item">
+                  <div class="acc-notification-info">
+                    <h4 class="acc-notification-title">Thông báo khuyến mãi</h4>
+                    <p class="acc-notification-desc">Nhận thông tin về voucher và ưu đãi mới</p>
+                  </div>
+                  <label class="acc-toggle"><input type="checkbox" checked /><span class="acc-toggle-slider"></span></label>
+                </div>
+
+                <div class="acc-notification-item">
+                  <div class="acc-notification-info">
+                    <h4 class="acc-notification-title">Thông báo đơn hàng</h4>
+                    <p class="acc-notification-desc">Nhận cập nhật về trạng thái đơn hàng</p>
+                  </div>
+                  <label class="acc-toggle"><input type="checkbox" checked /><span class="acc-toggle-slider"></span></label>
+                </div>
+
+                <div class="acc-notification-item">
+                  <div class="acc-notification-info">
+                    <h4 class="acc-notification-title">Thông báo tin tức</h4>
+                    <p class="acc-notification-desc">Nhận tin tức và bài viết mới từ Evergreen Mart</p>
+                  </div>
+                  <label class="acc-toggle"><input type="checkbox" /><span class="acc-toggle-slider"></span></label>
+                </div>
+              </section>
+            </div>
           }
-        } @else {
-          <div class="acc-empty">Không tìm thấy đơn hàng nào</div>
-        }
-      }
 
-      <!-- ══════════════════════════════════════════════
-           TAB: WISHLIST (Sản phẩm yêu thích)
-      ══════════════════════════════════════════════ -->
-      @if (activeTab() === 'wishlist') {
-        <div class="acc-section-header">
-          <h2 class="acc-section-title">
-            <i class="bi bi-heart-fill me-2" style="color:#e11d48"></i>
-            Danh sách sản phẩm yêu thích ({{ wishlist.count() }})
-          </h2>
-          <span style="font-size:13.5px;color:var(--xanh-muted)">
-            Lưu lại các món nông sản bạn quan tâm để dễ dàng theo dõi và đặt hàng nhanh
-          </span>
-        </div>
-
-        @if (wishlist.loading()) {
-          <div style="text-align:center;padding:48px 0;color:var(--xanh-muted)">
-            <i class="bi bi-arrow-repeat spin" style="font-size:24px;display:inline-block"></i>
-            <p style="margin-top:8px;font-size:14px">Đang tải danh sách yêu thích...</p>
-          </div>
-        } @else if (wishlist.items().length === 0) {
-          <div class="acc-empty" style="text-align:center;padding:64px 20px;background:#fff;border-radius:var(--xanh-radius-md);border:1px solid var(--xanh-line)">
-            <div style="width:64px;height:64px;border-radius:50%;background:#ffe4e6;color:#e11d48;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
-              <i class="bi bi-heart" style="font-size:30px"></i>
-            </div>
-            <h3 style="font-family:var(--xanh-font-display);font-size:18px;margin-bottom:8px">Chưa có sản phẩm yêu thích</h3>
-            <p style="font-size:14px;color:var(--xanh-muted);max-width:400px;margin:0 auto 20px">
-              Hãy bấm biểu tượng trái tim trên các sản phẩm bạn quan tâm để lưu và theo dõi giá tại đây.
-            </p>
-            <a routerLink="/ordering" class="acc-btn-primary" style="display:inline-block;text-decoration:none">
-              Khám phá sản phẩm ngay
-            </a>
-          </div>
-        } @else {
-          <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));gap:20px;margin-top:20px">
-            @for (item of wishlist.items(); track item._id) {
-              <div style="background:#fff;border:1px solid var(--xanh-line);border-radius:12px;padding:16px;display:flex;flex-direction:column;position:relative;transition:all 0.2s ease;box-shadow:0 1px 4px rgba(0,0,0,0.04)">
-                <!-- Nút bỏ thích -->
-                <button
-                  type="button"
-                  (click)="wishlist.toggleWishlist(item)"
-                  title="Bỏ khỏi yêu thích"
-                  style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;background:#fff;border:1px solid #fee2e2;color:#e11d48;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.08);z-index:2">
-                  <i class="bi bi-heart-fill" style="font-size:14px"></i>
-                </button>
-
-                <!-- Ảnh sản phẩm -->
-                <a [routerLink]="['/product', item.slug || item._id]" style="display:block;text-decoration:none;margin-bottom:12px;overflow:hidden;border-radius:8px">
-                  <img
-                    [src]="item.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=300&q=80'"
-                    [alt]="item.name"
-                    style="width:100%;height:160px;object-fit:cover;border-radius:8px;background:#f8faf7"
-                    loading="lazy"
-                  />
-                </a>
-
-                <!-- Tên & Danh mục -->
-                <div style="flex:1">
-                  @if (item.category) {
-                    <span style="font-size:11px;font-weight:600;color:#15803d;background:#ecfdf5;padding:2px 8px;border-radius:4px;display:inline-block;margin-bottom:6px">
-                      {{ item.category }}
-                    </span>
-                  }
-                  <h3 style="font-size:15px;font-weight:700;line-height:1.3;margin:0 0 8px">
-                    <a [routerLink]="['/product', item.slug || item._id]" style="color:#0f381e;text-decoration:none">
-                      {{ item.name }}
-                    </a>
-                  </h3>
-                  <div style="font-size:16px;font-weight:800;color:#15803d;margin-bottom:8px">
-                    {{ (item.price || 0).toLocaleString('vi-VN') }}đ
-                    @if (item.unit) {
-                      <span style="font-size:12px;color:#64748b;font-weight:400">/ {{ item.unit }}</span>
-                    }
-                  </div>
-                  @if (item.stock > 0) {
-                    <div style="font-size:12px;color:#16a34a;margin-bottom:12px">
-                      <i class="bi bi-check-circle-fill me-1"></i> Còn hàng
-                    </div>
-                  } @else {
-                    <div style="font-size:12px;color:#dc2626;margin-bottom:12px">
-                      <i class="bi bi-x-circle-fill me-1"></i> Tạm hết hàng
-                    </div>
-                  }
-                </div>
-
-                <!-- Thao tác mua hàng -->
-                <div style="display:flex;gap:8px;margin-top:auto">
-                  <button
-                    type="button"
-                    (click)="addWishlistItemToCart(item)"
-                    [disabled]="item.stock <= 0"
-                    class="acc-btn-primary acc-btn-sm"
-                    style="flex:1;justify-content:center">
-                    <i class="bi bi-cart-plus me-1"></i> Thêm giỏ
-                  </button>
-                  <a [routerLink]="['/product', item.slug || item._id]" class="acc-btn-outline acc-btn-sm">
-                    Chi tiết
-                  </a>
-                </div>
-              </div>
-            }
-          </div>
-        }
-      }
-
+        </main>
+      </div>
     </div>
+
+    <!-- Modal Địa chỉ dùng chung cho cả Tổng quan & Tab Sổ địa chỉ -->
+    <app-address-picker-modal
+      [open]="showAddressModal()"
+      mode="addressBook"
+      [defaultReceiverName]="cart.currentUser()?.name || ''"
+      [defaultReceiverPhone]="cart.currentUser()?.phone || ''"
+      [initialAddress]="editingAddress()"
+      [forceDefaultOnNew]="(cart.currentUser()?.addresses?.length ?? 0) === 0"
+      (closed)="closeAddressModal()"
+      (confirmed)="onAddressPickerConfirmed($event)"
+    ></app-address-picker-modal>
   } @else {
-    <!-- Chưa đăng nhập -->
     <div style="text-align:center;padding:80px 24px">
-      <div style="font-size:46px;color:#1b4332;margin-bottom:16px"><i class="bi bi-lock" aria-hidden="true"></i></div>
-      <h2 style="font-family:var(--xanh-font-display);font-size:24px;margin-bottom:12px">
-        Bạn chưa đăng nhập
-      </h2>
-      <p style="color:var(--xanh-muted);margin-bottom:24px">
-        Vui lòng đăng nhập hoặc đăng ký tài khoản mới để quản lý đơn hàng và ưu đãi.
-      </p>
+      <div style="font-size:46px;color:#1b4332;margin-bottom:16px"><i class="bi bi-lock"></i></div>
+      <h2 style="font-family:var(--xanh-font-display);font-size:24px;margin-bottom:12px">Bạn chưa đăng nhập</h2>
+      <p style="color:var(--xanh-muted);margin-bottom:24px">Vui lòng đăng nhập hoặc đăng ký tài khoản mới để quản lý đơn hàng và ưu đãi.</p>
       <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
         <button class="xanhla-btn-primary" type="button" (click)="cart.openAuthModal('login')">Đăng nhập</button>
         <button class="xanhla-btn-secondary" type="button" (click)="cart.openAuthModal('signup')">Đăng ký tài khoản</button>
@@ -665,50 +1025,54 @@
     </div>
   }
 
-  <!-- ══════════════════════════════════════════════════════════
-       MODAL 1: ĐỔI SỐ ĐIỆN THOẠI (Change Phone Modal)
-  ══════════════════════════════════════════════════════════ -->
+  <!-- MODAL 1: ĐỔI SỐ ĐIỆN THOẠI -->
   @if (showChangePhoneModal()) {
     <div class="xanhla-modal-backdrop" (click)="closeChangePhoneModal()">
       <div class="acc-dialog-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
         <div class="acc-dialog-header">
           <h3 class="acc-dialog-title">Đổi số điện thoại tài khoản</h3>
           <button type="button" class="acc-dialog-close" (click)="closeChangePhoneModal()" aria-label="Đóng">
-            <i class="bi bi-x-lg" style="font-size:15px" aria-hidden="true"></i>
+            <i class="bi bi-x-lg"></i>
           </button>
         </div>
 
         <div class="acc-dialog-body">
-          @if (changePhoneSuccess()) {
-            <div class="acc-alert-success">{{ changePhoneSuccess() }}</div>
-          }
-          @if (changePhoneError()) {
-            <div class="acc-alert-error">{{ changePhoneError() }}</div>
-          }
+          @if (changePhoneSuccess()) { <div class="acc-alert-success">{{ changePhoneSuccess() }}</div> }
+          @if (changePhoneError()) { <div class="acc-alert-error">{{ changePhoneError() }}</div> }
 
-          <!-- Bước 1: Nhập số mới và mật khẩu -->
           @if (changePhoneStep() === 'input') {
-            <p class="acc-dialog-desc">
-              Sau khi đổi số, bạn sẽ đăng nhập bằng số điện thoại mới. Toàn bộ lịch sử đơn hàng, địa chỉ và thông tin tài khoản được giữ nguyên vẹn.
-            </p>
-
-            <form (submit)="submitChangePhoneRequest($event)">
+            <p class="acc-dialog-desc">Sau khi đổi số, bạn sẽ đăng nhập bằng số điện thoại mới. Toàn bộ lịch sử đơn hàng và địa chỉ được giữ nguyên.</p>
+            <form (submit)="submitChangePhoneRequest($event)" autocomplete="off">
               <div class="acc-dialog-field">
                 <label>Số điện thoại mới *</label>
-                <input type="tel" placeholder="Ví dụ: 0912345678"
-                       [value]="newPhoneInput()"
-                       (input)="newPhoneInput.set($any($event.target).value)"
-                       required />
+                <input
+                  type="tel"
+                  name="evergreen_new_phone_input"
+                  autocomplete="off"
+                  [readonly]="!changePhoneInputsUnlocked()"
+                  (pointerdown)="changePhoneInputsUnlocked.set(true)"
+                  (focus)="changePhoneInputsUnlocked.set(true)"
+                  placeholder="Ví dụ: 0912345678"
+                  [value]="newPhoneInput()"
+                  (input)="newPhoneInput.set($any($event.target).value)"
+                  required
+                />
               </div>
-
               <div class="acc-dialog-field">
-                <label>Mật khẩu tài khoản hiện tại (Xác thực danh tính) *</label>
-                <input type="password" placeholder="Nhập mật khẩu để tiếp tục"
-                       [value]="changePhonePassword()"
-                       (input)="changePhonePassword.set($any($event.target).value)"
-                       required />
+                <label>Mật khẩu tài khoản hiện tại *</label>
+                <input
+                  type="password"
+                  name="evergreen_verify_pwd_input"
+                  autocomplete="new-password"
+                  [readonly]="!changePhoneInputsUnlocked()"
+                  (pointerdown)="changePhoneInputsUnlocked.set(true)"
+                  (focus)="changePhoneInputsUnlocked.set(true)"
+                  placeholder="Nhập mật khẩu để tiếp tục"
+                  [value]="changePhonePassword()"
+                  (input)="changePhonePassword.set($any($event.target).value)"
+                  required
+                />
               </div>
-
               <div class="acc-dialog-actions">
                 <button type="button" class="acc-btn-outline" (click)="closeChangePhoneModal()">Hủy</button>
                 <button type="submit" class="acc-btn-primary" [disabled]="changePhoneLoading()">
@@ -718,13 +1082,9 @@
             </form>
           }
 
-          <!-- Bước 2: Nhập OTP gửi về số mới -->
           @if (changePhoneStep() === 'otp') {
             <div class="otp-view-container">
-              <p class="acc-dialog-desc">
-                Mã xác thực gồm 6 số đã được gửi đến: <strong>{{ newPhoneInput() }}</strong>
-              </p>
-
+              <p class="acc-dialog-desc">Mã xác thực gồm 6 số đã được gửi đến: <strong>{{ newPhoneInput() }}</strong></p>
               <div class="otp-boxes-grid" (paste)="onPhoneOtpPaste($event)">
                 @for (digit of changePhoneOtpDigits(); track $index) {
                   <input
@@ -732,6 +1092,7 @@
                     class="otp-digit-box"
                     type="text"
                     inputmode="numeric"
+                    size="1"
                     maxlength="1"
                     pattern="[0-9]*"
                     [value]="digit"
@@ -740,25 +1101,20 @@
                   />
                 }
               </div>
-
               <div class="otp-demo-badge">
-                <span><i class="bi bi-lightning-charge-fill" style="color:#eab308" aria-hidden="true"></i> Môi trường thử nghiệm: Mã OTP là <strong>{{ changePhoneDemoOtp() }}</strong></span>
+                <span><i class="bi bi-lightning-charge-fill" style="color:#eab308"></i> Môi trường thử nghiệm: Mã OTP là <strong>{{ changePhoneDemoOtp() }}</strong></span>
               </div>
-
               <div class="acc-dialog-actions" style="margin-top:16px">
                 <button type="button" class="acc-btn-outline" (click)="changePhoneStep.set('input')">Quay lại</button>
                 <button type="button" class="acc-btn-primary" [disabled]="changePhoneLoading()" (click)="submitChangePhoneVerify()">
                   @if (changePhoneLoading()) { Đang kiểm tra... } @else { Xác nhận đổi số }
                 </button>
               </div>
-
               <div class="otp-resend-row" style="margin-top:12px">
                 @if (!changePhoneCanResend()) {
                   <span class="resend-timer">Gửi lại mã sau <strong>{{ changePhoneCountdown() }}s</strong></span>
                 } @else {
-                  <button type="button" class="resend-action-btn" (click)="resendChangePhoneOtp()">
-                    Gửi lại mã OTP
-                  </button>
+                  <button type="button" class="resend-action-btn" (click)="resendChangePhoneOtp()">Gửi lại mã OTP</button>
                 }
               </div>
             </div>
@@ -768,37 +1124,33 @@
     </div>
   }
 
-  <!-- ══════════════════════════════════════════════════════════
-       MODAL 2: HỦY LIÊN KẾT GOOGLE (Unlink Google Modal)
-  ══════════════════════════════════════════════════════════ -->
+  <!-- MODAL 2: HỦY LIÊN KẾT GOOGLE -->
   @if (showUnlinkModal()) {
     <div class="xanhla-modal-backdrop" (click)="closeUnlinkGoogleModal()">
       <div class="acc-dialog-modal" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
         <div class="acc-dialog-header">
           <h3 class="acc-dialog-title">Hủy liên kết tài khoản Google</h3>
           <button type="button" class="acc-dialog-close" (click)="closeUnlinkGoogleModal()" aria-label="Đóng">
-            <i class="bi bi-x-lg" style="font-size:15px" aria-hidden="true"></i>
+            <i class="bi bi-x-lg"></i>
           </button>
         </div>
 
         <div class="acc-dialog-body">
-          @if (unlinkError()) {
-            <div class="acc-alert-error">{{ unlinkError() }}</div>
-          }
-
-          <p class="acc-dialog-desc">
-            Bạn đang yêu cầu hủy liên kết tài khoản Google. Sau khi hủy, bạn sẽ không thể sử dụng tài khoản Google này để đăng nhập nhanh. Vui lòng nhập mật khẩu tài khoản EvergreenMart để xác nhận:
-          </p>
-
-          <form (submit)="submitUnlinkGoogle($event)">
+          @if (unlinkError()) { <div class="acc-alert-error">{{ unlinkError() }}</div> }
+          <p class="acc-dialog-desc">Vui lòng nhập mật khẩu tài khoản EvergreenMart để xác nhận hủy liên kết Google:</p>
+          <form (submit)="submitUnlinkGoogle($event)" autocomplete="off">
             <div class="acc-dialog-field">
               <label>Mật khẩu tài khoản của bạn *</label>
-              <input type="password" placeholder="Nhập mật khẩu tài khoản"
-                     [value]="unlinkPassword()"
-                     (input)="unlinkPassword.set($any($event.target).value)"
-                     required />
+              <input
+                type="password"
+                name="evergreen_unlink_pwd"
+                autocomplete="new-password"
+                placeholder="Nhập mật khẩu tài khoản"
+                [value]="unlinkPassword()"
+                (input)="unlinkPassword.set($any($event.target).value)"
+                required
+              />
             </div>
-
             <div class="acc-dialog-actions">
               <button type="button" class="acc-btn-outline" (click)="closeUnlinkGoogleModal()">Hủy bỏ</button>
               <button type="submit" class="btn-unlink-confirm" [disabled]="unlinkLoading()">

@@ -45,6 +45,7 @@ export interface XanhLaProduct {
   price: string;
   priceNumber: number;
   image: string;
+  images?: string[];
   category: string;
   categoryVi: string;
   container: string;
@@ -112,6 +113,8 @@ export interface XanhLaUser {
   phone?: string;
   avatar?: string;
   title?: string;
+  gender?: string;
+  birthday?: string;
   addresses?: XanhLaAddress[];
   loyaltyTier?: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
   points?: number;
@@ -223,6 +226,7 @@ export interface Voucher {
   usedCount: number;
   maxUsagePerUser?: number;
   isFirstOrderOnly?: boolean;
+  pointsRequired?: number;
   description: string;
   isPublic: boolean;
 }

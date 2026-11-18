@@ -1,0 +1,245 @@
+<app-shell>
+  <div class="vd-page-wrap">
+    <div class="vd-page xanhla-container">
+
+      <!-- Breadcrumb & Back -->
+      <div class="vd-topbar">
+        <nav class="vd-breadcrumb" aria-label="Breadcrumb">
+          <a routerLink="/">Trang chủ</a>
+          <span>/</span>
+          <a routerLink="/vouchers">Mã giảm giá</a>
+          @if (voucher(); as v) {
+            <span>/</span>
+            <strong>{{ v.code }}</strong>
+          }
+        </nav>
+
+        <a routerLink="/vouchers" class="vd-back-link">
+          <i class="bi bi-arrow-left"></i>
+          <span>Quay lại Kho Mã giảm giá</span>
+        </a>
+      </div>
+
+      @if (toastMessage()) {
+        <div class="vd-toast" [class.is-error]="toastType() === 'error'" role="status">
+          <div class="vd-toast-msg">
+            <i class="bi" [class.bi-check-circle-fill]="toastType() === 'success'" [class.bi-exclamation-triangle-fill]="toastType() === 'error'"></i>
+            <span>{{ toastMessage() }}</span>
+          </div>
+          <a routerLink="/checkout" [queryParams]="voucher() ? { voucher: voucher()!.code } : null" class="vd-toast-cta">
+            Đến Thanh toán <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+      }
+
+      @if (loading()) {
+        <div class="vd-state-card">
+          <i class="bi bi-arrow-repeat vd-spin"></i>
+          <p>Đang tải chi tiết điều kiện mã giảm giá...</p>
+        </div>
+      } @else if (notFound() || !voucher()) {
+        <div class="vd-state-card">
+          <div class="vd-state-icon"><i class="bi bi-ticket-perforated"></i></div>
+          <h2>Không tìm thấy mã ưu đãi này</h2>
+          <p>Mã có thể đã hết hạn, ngừng phát hành hoặc không nằm trong danh sách ưu đãi công khai.</p>
+          <a routerLink="/vouchers" class="vd-btn vd-btn--primary">Xem tất cả Mã giảm giá</a>
+        </div>
+      } @else {
+        @let v = voucher()!;
+        @let vis = visual()!;
+        @let st = statusInfo();
+        @let tw = timeWindow();
+
+        <!-- HERO TICKET CARD -->
+        <section class="vd-hero-ticket" [ngClass]="'voucher-theme--' + vis.themeKey">
+          <div class="vd-hero-stub">
+            <div class="vd-logo-halo">
+              <div class="vd-logo-disk">
+                <img src="/evergreen-logo.png" alt="Evergreen Mart" class="vd-logo-img" />
+              </div>
+            </div>
+
+            <div class="vd-stub-mid">
+              <span class="vd-stub-kicker">EVERGREEN VOUCHER</span>
+              <strong class="vd-stub-value">{{ vis.discountDisplay }}</strong>
+            </div>
+
+            <span class="vd-stub-pill">{{ vis.stubTag }}</span>
+          </div>
+
+          <div class="vd-hero-body">
+            <div class="vd-badges-row">
+              <span class="vd-cat-pill">{{ vis.categoryLabel }}</span>
+
+              @if (st.type === 'available') {
+                <span class="vd-status-pill is-saved"><i class="bi bi-check-circle-fill"></i> {{ st.label }}</span>
+              } @else if (st.type === 'used') {
+                <span class="vd-status-pill is-muted"><i class="bi bi-check2-all"></i> {{ st.label }}</span>
+              } @else if (st.type === 'expired') {
+                <span class="vd-status-pill is-danger"><i class="bi bi-x-circle-fill"></i> {{ st.label }}</span>
+              } @else {
+                <span class="vd-status-pill is-neutral">{{ st.label }}</span>
+              }
+
+              @if (!tw.valid) {
+                <span class="vd-status-pill is-warn"><i class="bi bi-clock-history"></i> {{ tw.statusLabel }}</span>
+              }
+            </div>
+
+            <h1 class="vd-title">{{ v.name }}</h1>
+            <p class="vd-desc">{{ v.description || 'Ưu đãi mua sắm thực phẩm sạch & nông sản tươi tại Evergreen Mart.' }}</p>
+
+            <div class="vd-quick-facts">
+              <div class="vd-fact">
+                <span class="vd-fact-lbl">Đơn tối thiểu</span>
+                <strong>{{ (v.minValue || 0) > 0 ? (v.minValue || 0).toLocaleString('vi-VN') + 'đ' : 'Từ 0đ' }}</strong>
+              </div>
+              <div class="vd-fact">
+                <span class="vd-fact-lbl">Giảm tối đa</span>
+                <strong>{{ v.maxValue ? v.maxValue.toLocaleString('vi-VN') + 'đ' : 'Theo tỷ lệ ưu đãi' }}</strong>
+              </div>
+              <div class="vd-fact">
+                <span class="vd-fact-lbl">Hiệu lực</span>
+                <strong>{{ startDateFormatted() }} – {{ endDateFormatted() }}</strong>
+              </div>
+            </div>
+
+            @if (usageStats(); as usage) {
+              <div class="vd-usage-bar-wrap">
+                <div class="vd-usage-bar-head">
+                  <span>Số lượng mã đã phát hành</span>
+                  <strong>Còn {{ usage.remaining.toLocaleString('vi-VN') }} / {{ usage.limit.toLocaleString('vi-VN') }} lượt</strong>
+                </div>
+                <div class="vd-usage-track">
+                  <div class="vd-usage-fill" [style.width.%]="usage.percent"></div>
+                </div>
+              </div>
+            }
+
+            <div class="vd-cta-bar">
+              <div class="vd-code-box" [class.is-copied]="voucherService.isCopied(v.code)">
+                <span class="vd-code-lbl">MÃ ƯU ĐÃI</span>
+                <strong class="vd-code-val">{{ v.code }}</strong>
+                <button type="button" class="vd-copy-btn" (click)="copyCode(v.code)">
+                  @if (voucherService.isCopied(v.code)) {
+                    <i class="bi bi-check2"></i> Đã chép
+                  } @else {
+                    <i class="bi bi-copy"></i> Sao chép
+                  }
+                </button>
+              </div>
+
+              <div class="vd-cta-btns">
+                @if (st.type === 'used' || st.type === 'expired') {
+                  <button type="button" class="vd-btn vd-btn--disabled" disabled>{{ st.label }}</button>
+                } @else if (voucherService.isSaved(v.id)) {
+                  <button type="button" class="vd-btn vd-btn--saved" disabled>
+                    <i class="bi bi-check-circle-fill"></i> Đã lưu trong ví
+                  </button>
+                } @else {
+                  <button type="button" class="vd-btn vd-btn--accent" (click)="collectVoucher(v.id)">
+                    <i class="bi bi-wallet2"></i> Lưu vào ví
+                  </button>
+                }
+
+                @if (st.type !== 'used' && st.type !== 'expired') {
+                  <a routerLink="/checkout" [queryParams]="{ voucher: v.code }" class="vd-btn vd-btn--dark">
+                    Dùng ngay tại Thanh toán <i class="bi bi-arrow-right"></i>
+                  </a>
+                }
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- DETAILED CONDITION CARDS -->
+        <section class="vd-conditions-section">
+          <div class="vd-section-head">
+            <h2><i class="bi bi-file-earmark-check"></i> Chi tiết Điều kiện &amp; Quy định áp dụng</h2>
+            <p>Vui lòng kiểm tra đầy đủ các điều kiện dưới đây trước khi áp dụng mã tại bước thanh toán.</p>
+          </div>
+
+          <div class="vd-conditions-grid">
+            @for (section of conditionSections(); track section.id) {
+              <article class="vd-cond-card">
+                <header class="vd-cond-card-head">
+                  <span class="vd-cond-icon"><i class="bi" [ngClass]="section.icon"></i></span>
+                  <h3>{{ section.title }}</h3>
+                </header>
+                <dl class="vd-cond-list">
+                  @for (row of section.rows; track row.label) {
+                    <div class="vd-cond-row" [class.is-highlight]="row.highlight">
+                      <dt>{{ row.label }}</dt>
+                      <dd>{{ row.value }}</dd>
+                    </div>
+                  }
+                </dl>
+              </article>
+            }
+          </div>
+        </section>
+
+        <!-- HOW TO USE STEPS -->
+        <section class="vd-steps-card">
+          <h2><i class="bi bi-lightbulb"></i> Cách sử dụng mã {{ v.code }}</h2>
+          <div class="vd-steps-grid">
+            <div class="vd-step">
+              <span class="vd-step-num">1</span>
+              <div>
+                <strong>Lưu hoặc Sao chép mã</strong>
+                <p>Bấm &ldquo;Lưu vào ví&rdquo; để lưu vào tài khoản hoặc &ldquo;Sao chép&rdquo; mã <strong>{{ v.code }}</strong>.</p>
+              </div>
+            </div>
+            <div class="vd-step">
+              <span class="vd-step-num">2</span>
+              <div>
+                <strong>Chọn nông sản đủ điều kiện</strong>
+                <p>Thêm sản phẩm thuộc nhóm <strong>{{ vis.categoriesLabel }}</strong> đạt giá trị tối thiểu.</p>
+              </div>
+            </div>
+            <div class="vd-step">
+              <span class="vd-step-num">3</span>
+              <div>
+                <strong>Áp dụng lúc Thanh toán</strong>
+                <p>Chọn mã trong Ví Voucher hoặc dán mã vào ô ưu đãi, hệ thống tự động khấu trừ tức thì.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- RELATED VOUCHERS -->
+        @if (relatedVouchers().length > 0) {
+          <section class="vd-related-section">
+            <div class="vd-related-head">
+              <h2>Ưu đãi khác tại Evergreen Mart</h2>
+              <a routerLink="/vouchers" class="vd-related-all">Xem tất cả <i class="bi bi-arrow-right"></i></a>
+            </div>
+
+            <div class="vd-related-grid">
+              @for (rel of relatedVouchers(); track rel.voucher.id) {
+                <a [routerLink]="['/vouchers', rel.voucher.code]" class="vd-rel-card" [ngClass]="'voucher-theme--' + rel.visual.themeKey">
+                  <div class="vd-rel-stub">
+                    <div class="vd-rel-logo-disk">
+                      <img src="/evergreen-logo.png" alt="Evergreen Mart" class="vd-logo-img" />
+                    </div>
+                    <strong>{{ rel.visual.discountDisplay }}</strong>
+                  </div>
+                  <div class="vd-rel-body">
+                    <span class="vd-rel-cat">{{ rel.visual.categoryLabel }}</span>
+                    <h4>{{ rel.voucher.name }}</h4>
+                    <div class="vd-rel-foot">
+                      <span>{{ rel.visual.minOrderShort }}</span>
+                      <span class="vd-rel-link">Xem điều kiện →</span>
+                    </div>
+                  </div>
+                </a>
+              }
+            </div>
+          </section>
+        }
+      }
+
+    </div>
+  </div>
+</app-shell>
+

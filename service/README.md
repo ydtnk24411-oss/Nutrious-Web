@@ -4,14 +4,18 @@ REST API cho siêu thị Xanh Lá - Node.js + Express + MongoDB
 
 ## Cài đặt
 
+Dependencies đã bao gồm sẵn **`nodemon`** trong `devDependencies` của `service/package.json`:
+
 ```bash
-cd server
+cd service
 npm install
 ```
 
+*(Tùy chọn cài global nếu muốn gõ trực tiếp `nodemon index.js`: `npm install -g nodemon`)*
+
 ## Cấu hình
 
-Copy hoặc tạo file `.env`:
+Copy hoặc tạo file `.env` từ `.env.example`:
 
 ```env
 PORT=3000
@@ -51,13 +55,13 @@ Dữ liệu bao gồm:
 
 ## Chạy server
 
-Development mode (tự động restart khi code thay đổi):
+Development mode với **`nodemon`** (khuyến nghị — tự động restart khi code thay đổi):
 
 ```bash
 npm run dev
 ```
 
-Production mode:
+Production / không tự reload (`node index.js`):
 
 ```bash
 npm start

@@ -104,6 +104,12 @@ export const adminRoutes: Routes = [
           import('./staff/staff.component').then((m) => m.AdminStaffComponent),
         canActivate: [roleGuard(['Manager', 'Admin'])],
       },
+      {
+        path: 'audit-log',
+        loadComponent: () =>
+          import('./audit-log/audit-log.component').then((m) => m.AdminAuditLogComponent),
+        canActivate: [roleGuard(['Admin'])],
+      },
     ],
   },
   { path: '**', redirectTo: 'admin' },

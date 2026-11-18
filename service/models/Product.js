@@ -31,6 +31,7 @@ const productSchema = new mongoose.Schema(
     priceNumber: { type: Number, required: true, min: 0 },
     costPrice: { type: Number, default: 0, min: 0, comment: 'Đơn giá vốn nhập hàng cơ sở (VNĐ)' },
     image: { type: String, default: '' },
+    images: { type: [String], default: [] },
     categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', default: null, index: true },
     category: { type: String, default: '' },
     categoryVi: { type: String, default: '' },
@@ -60,7 +61,6 @@ const productSchema = new mongoose.Schema(
     reservedStock: { type: Number, default: 0, min: 0 },
     safetyBuffer: { type: Number, default: 2, min: 0 },
     maxPurchaseQuotaPerDay: { type: Number, default: 0, min: 0, comment: 'Định mức tối đa mỗi khách được mua/ngày (Anti-Hoarding)' },
-    // Combo mua kèm tiết kiệm: combo là một sản phẩm riêng có giá ưu đãi
     isCombo: { type: Boolean, default: false },
     comboStatus: {
       type: String,
@@ -68,7 +68,7 @@ const productSchema = new mongoose.Schema(
       default: 'active',
     },
     comboItems: [comboItemSchema],
-    originalPriceNumber: { type: Number, default: 0, min: 0 }, // tổng giá mua lẻ
+    originalPriceNumber: { type: Number, default: 0, min: 0 },
     // Mua kèm tiết kiệm hơn: danh sách sản phẩm đề xuất mua kèm độc lập với Combo
     addOnDeals: { type: [addOnDealSchema], default: [] },
     averageRating: { type: Number, default: 5, min: 1, max: 5 },

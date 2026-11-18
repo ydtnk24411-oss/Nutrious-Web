@@ -10,8 +10,45 @@
       </div>
 
       <div class="xanhla-product-detail-layout">
-        <div class="xanhla-product-gallery-main">
-          <img [src]="p.image" [alt]="p.name" />
+        <div class="xanhla-product-gallery-col">
+          <div class="xanhla-product-gallery-main" (click)="openImagePreview(activeGalleryImage())" title="Bấm để phóng to ảnh">
+            <img [src]="activeGalleryImage()" [alt]="p.name" />
+            @if (galleryImages().length > 1) {
+              <button
+                type="button"
+                class="xanhla-gallery-arrow prev"
+                aria-label="Ảnh trước"
+                (click)="$event.stopPropagation(); stepGalleryImage(-1)"
+              >
+                <i class="bi bi-chevron-left"></i>
+              </button>
+              <button
+                type="button"
+                class="xanhla-gallery-arrow next"
+                aria-label="Ảnh tiếp theo"
+                (click)="$event.stopPropagation(); stepGalleryImage(1)"
+              >
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            }
+          </div>
+
+          @if (galleryImages().length > 1) {
+            <div class="xanhla-product-thumbs" role="list" aria-label="Thư viện ảnh sản phẩm">
+              @for (imgUrl of galleryImages(); track imgUrl) {
+                <button
+                  type="button"
+                  class="xanhla-product-thumb"
+                  [class.is-active]="activeImageIndex() === $index"
+                  (click)="selectGalleryImage($index)"
+                  [attr.aria-label]="'Xem ảnh ' + ($index + 1) + ' của ' + p.name"
+                  [attr.aria-pressed]="activeImageIndex() === $index"
+                >
+                  <img [src]="imgUrl" [alt]="p.name + ' ảnh ' + ($index + 1)" loading="lazy" />
+                </button>
+              }
+            </div>
+          }
         </div>
 
         <div class="xanhla-product-info-panel">
@@ -32,7 +69,7 @@
 
           @if (p.isCombo) {
             <div class="pd-combo-hero-pricing">
-              <span class="pd-combo-hero-price">{{ formatPrice(p.priceNumber || p.price) }}</span>
+              <span class="pd-combo-hero-price">{{ money(resolveUnitPrice(p)) }}</span>
               @if (comboSaving(p) > 0) {
                 <span class="pd-combo-hero-orig">{{ money(comboRetail(p)) }}</span>
                 <span class="pd-combo-hero-save">
@@ -63,7 +100,7 @@
                       <div class="pd-combo-detail-meta">
                         <div class="pd-combo-detail-name">{{ ci.product.name }}</div>
                         <div class="pd-combo-detail-sub">
-                          Giá tham khảo: {{ ci.product.price || money(ci.product.priceNumber) }}
+                          Giá tham khảo: {{ money(resolveUnitPrice(ci.product)) }}
                           @if (ci.product.weight || ci.product.unit) {
                             <span>- {{ ci.product.weight || ci.product.unit }}</span>
                           }
@@ -83,7 +120,7 @@
               </div>
             }
           } @else {
-            <div class="xanhla-product-info-price">Giá {{ formatPrice(p.priceNumber || p.price) }}</div>
+            <div class="xanhla-product-info-price">Giá {{ money(resolveUnitPrice(p)) }}</div>
 
             @if (p.options && p.options.length > 0) {
               <div class="xanhla-option-group">
@@ -199,7 +236,7 @@
                 </tr>
                 <tr>
                   <th>Giá bán Combo</th>
-                  <td><strong style="color:#e94d3b">{{ formatPrice(p.priceNumber || p.price) }}</strong></td>
+                  <td><strong style="color:#e94d3b">{{ money(resolveUnitPrice(p)) }}</strong></td>
                 </tr>
                 @if (comboSaving(p) > 0) {
                   <tr>
@@ -288,7 +325,7 @@
             <div class="pd-addon-main-info">
               <div class="pd-addon-main-name">{{ p.name }}</div>
               <div class="pd-addon-main-price">
-                Đơn giá: <strong>{{ formatPrice(p.priceNumber || p.price) }}</strong> × {{ quantity() }}
+                Đơn giá: <strong>{{ money(resolveUnitPrice(p)) }}</strong> × {{ quantity() }}
               </div>
             </div>
           </div>
@@ -455,7 +492,7 @@
                       </div>
                       <div class="pd-combo-item-name">{{ it.product.name }}</div>
                       <div class="pd-combo-item-price">
-                        {{ it.product.price || money(it.product.priceNumber) }} - SL: {{ it.quantity }}
+                        {{ money(resolveUnitPrice(it.product)) }} - SL: {{ it.quantity }}
                       </div>
                     </a>
                     @if (!last) {
@@ -475,7 +512,7 @@
                     <div class="pd-combo-desc">{{ combo.description }}</div>
                   }
                   <div class="pd-combo-prices">
-                    <span class="pd-combo-price">{{ combo.price }}</span>
+                    <span class="pd-combo-price">{{ money(resolveUnitPrice(combo)) }}</span>
                     @if (comboSaving(combo) > 0) {
                       <span class="pd-combo-original">{{ money(comboRetail(combo)) }}</span>
                     }
@@ -526,7 +563,7 @@
               <div style="min-width:0;flex:1">
                 <div style="font-size:11px;font-weight:600;color:#15803d">Sản phẩm này</div>
                 <div style="font-size:13.5px;font-weight:700;color:#0f381e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" [title]="p.name">{{ p.name }}</div>
-                <div style="font-size:14px;font-weight:800;color:#047857">{{ (p.price || 0).toLocaleString('vi-VN') }}đ</div>
+                <div style="font-size:14px;font-weight:800;color:#047857">{{ money(resolveUnitPrice(p)) }}</div>
               </div>
             </div>
 
@@ -539,7 +576,7 @@
               <div style="min-width:0;flex:1">
                 <div style="font-size:11px;font-weight:600;color:#64748b">Thường mua kèm</div>
                 <div style="font-size:13.5px;font-weight:700;color:#0f381e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" [title]="companion.name">{{ companion.name }}</div>
-                <div style="font-size:14px;font-weight:800;color:#047857">{{ (companion.price || 0).toLocaleString('vi-VN') }}đ</div>
+                <div style="font-size:14px;font-weight:800;color:#047857">{{ money(resolveUnitPrice(companion)) }}</div>
               </div>
             </div>
 
@@ -610,7 +647,7 @@
                   }
 
                   <div class="xanhla-prod-card-price-row">
-                    <span class="xanhla-prod-card-price">{{ formatPrice(prod.priceNumber || prod.price) }}</span>
+                    <span class="xanhla-prod-card-price">{{ money(resolveUnitPrice(prod)) }}</span>
 
                     @if (prod.weight || prod.packSize) {
                       <span class="xanhla-prod-card-unit">/ {{ prod.weight || prod.packSize }}</span>
@@ -682,7 +719,7 @@
                 <div class="pd-viewed-body">
                   <div class="pd-viewed-name">{{ vp.name }}</div>
                   <div class="pd-viewed-row">
-                    <span class="pd-viewed-price">{{ vp.price || money(vp.priceNumber) }}</span>
+                    <span class="pd-viewed-price">{{ money(resolveUnitPrice(vp)) }}</span>
                     @if (vp.viewedAt) {
                       <span class="pd-viewed-time">{{ formatViewedTime(vp.viewedAt) }}</span>
                     }

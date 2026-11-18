@@ -121,9 +121,9 @@ const DEFAULT_POLICIES_MAP: Record<string, PolicyContent> = {
       {
         heading: '2. Cam kết chất lượng 3 Không',
         content: [
-          'Không hóa chất bảo quản độc hại - kiểm định VietGAP / GlobalGAP định kỳ.',
-          'Không thực phẩm tồn kho qua ngày - thu hoạch sáng sớm, giao nhanh trong 2 giờ.',
-          'Không rủi ro mua sắm - đồng kiểm khi nhận hàng và hoàn tiền 100% nếu không hài lòng.',
+          'Không hóa chất bảo quản độc hại — kiểm định VietGAP / GlobalGAP định kỳ.',
+          'Không thực phẩm tồn kho qua ngày — thu hoạch sáng sớm, giao nhanh trong 2 giờ.',
+          'Không rủi ro mua sắm — đồng kiểm khi nhận hàng và hoàn tiền 100% nếu không hài lòng.',
         ],
       },
     ],
@@ -286,7 +286,7 @@ export class FooterComponent implements OnInit {
   protected newsletterTitle = signal(DEFAULT_NEWSLETTER_TITLE);
   protected newsletterDesc = signal(DEFAULT_NEWSLETTER_DESC);
   protected copyrightText = signal(
-    ` 2026 ${DEFAULT_BRAND_NAME} - Nông Nghiệp Hữu Cơ & Dinh Dưỡng Thông Minh. Bảo lưu mọi quyền.`
+    `© 2026 ${DEFAULT_BRAND_NAME} — Nông Nghiệp Hữu Cơ & Dinh Dưỡng Thông Minh. Bảo lưu mọi quyền.`
   );
   protected contactInfo = signal(DEFAULT_CONTACT_INFO);
   protected trustItems = signal<FooterTrustItem[]>(DEFAULT_TRUST_ITEMS);

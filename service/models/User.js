@@ -39,7 +39,11 @@ const viewedProductSchema = new mongoose.Schema(
 const userSchema = new mongoose.Schema(
   {
     name:      { type: String, required: true, trim: true },
+    firstName: { type: String, default: '' },
+    lastName:  { type: String, default: '' },
     title:     { type: String, default: '' },
+    gender:    { type: String, default: '' },
+    birthday:  { type: String, default: '' },
     email:     { type: String, default: '', lowercase: true, trim: true },
     password:  { type: String, required: false, minlength: 8, select: false },
     phone:     { type: String, default: '', trim: true },

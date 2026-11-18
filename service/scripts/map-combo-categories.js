@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 require('dotenv').config({ path: __dirname + '/../.env' });
-const Product = require('../models/Product');
+const Combo = require('../models/Combo');
 const Category = require('../models/Category');
 
 async function main() {
@@ -19,7 +19,7 @@ async function main() {
     'Gia vị & Thực phẩm khô': cats.find(c => c.name === 'Gia vị & Thực phẩm khô')?._id,
   };
 
-  const combos = await Product.find({ isCombo: true }).lean();
+  const combos = await Combo.find({}).lean();
   let updated = 0;
   for (const c of combos) {
     let targetCatId = null;
@@ -45,7 +45,7 @@ async function main() {
     }
 
     if (targetCatId && (!c.categoryId || c.categoryId.toString() !== targetCatId.toString())) {
-      await Product.updateOne(
+      await Combo.updateOne(
         { _id: c._id },
         { $set: { categoryId: targetCatId, category: targetCatSlug, categoryVi: targetCatVi } }
       );

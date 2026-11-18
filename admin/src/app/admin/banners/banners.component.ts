@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BannerApiService, HeroSlide, PromoPopup, BannerConfigData } from '../../shared/services/banner-api.service';
 import { AdminAuthService } from '../../shared/services/admin-auth.service';
+import { API_BASE } from '../../shared/services/api.service';
 
 @Component({
   selector: 'app-admin-banners',
@@ -14,6 +15,14 @@ import { AdminAuthService } from '../../shared/services/admin-auth.service';
 export class AdminBannersComponent implements OnInit {
   private bannerApi = inject(BannerApiService);
   protected auth = inject(AdminAuthService);
+  private readonly backendOrigin = API_BASE.replace(/\/api\/?$/, '');
+
+  resolveBannerImage(raw?: string): string {
+    const clean = (raw || '').trim();
+    if (!clean) return '';
+    if (clean.startsWith('/')) return `${this.backendOrigin}${clean}`;
+    return clean;
+  }
 
   activeTab = signal<'hero' | 'popup'>('hero');
   loading = signal(false);
@@ -41,6 +50,10 @@ export class AdminBannersComponent implements OnInit {
   modalOpen = signal(false);
   isEditingSlide = signal(false);
   editIndex = signal(-1);
+  slideImageMode = signal<'file' | 'url'>('file');
+  popupImageMode = signal<'file' | 'url'>('file');
+  uploadingTarget = signal<'slide' | 'popup' | null>(null);
+  uploadErrorMsg = signal('');
   slideForm = signal<HeroSlide>({
     title: '',
     subtitle: '',
@@ -64,6 +77,9 @@ export class AdminBannersComponent implements OnInit {
           this.slides.set(res.data.heroSlides || []);
           if (res.data.promoPopup) {
             this.popup.set(res.data.promoPopup);
+            this.popupImageMode.set(
+              res.data.promoPopup.image?.startsWith('/api/banners/media/') || !res.data.promoPopup.image ? 'file' : 'url'
+            );
           }
         }
         this.loading.set(false);
@@ -83,13 +99,15 @@ export class AdminBannersComponent implements OnInit {
   openAddSlide(): void {
     this.isEditingSlide.set(false);
     this.editIndex.set(-1);
+    this.uploadErrorMsg.set('');
+    this.slideImageMode.set('file');
     this.slideForm.set({
       title: '',
       subtitle: '',
       eyebrow: 'TƯƠI SẠCH MỖI NGÀY - GIAO NHANH 2H',
       cta: 'Mua sắm ngay',
       link: '/online-ordering',
-      image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1600&q=90',
+      image: '',
       active: true,
       sortOrder: (this.slides().length + 1),
     });
@@ -99,9 +117,86 @@ export class AdminBannersComponent implements OnInit {
   openEditSlide(index: number): void {
     this.isEditingSlide.set(true);
     this.editIndex.set(index);
+    this.uploadErrorMsg.set('');
     const item = this.slides()[index];
+    this.slideImageMode.set(item?.image?.startsWith('/api/banners/media/') || !item?.image ? 'file' : 'url');
     this.slideForm.set({ ...item });
     this.modalOpen.set(true);
+  }
+
+  onImageFileSelected(event: Event, target: 'slide' | 'popup'): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (file) {
+      this.uploadImageFile(file, target);
+    }
+  }
+
+  onImageDrop(event: DragEvent, target: 'slide' | 'popup'): void {
+    event.preventDefault();
+    const file = event.dataTransfer?.files?.[0];
+    if (file) {
+      this.uploadImageFile(file, target);
+    }
+  }
+
+  clearImage(target: 'slide' | 'popup'): void {
+    this.uploadErrorMsg.set('');
+    if (target === 'slide') {
+      this.slideForm.update((f) => ({ ...f, image: '' }));
+    } else {
+      this.popup.update((p) => ({ ...p, image: '' }));
+    }
+  }
+
+  private uploadImageFile(file: File, target: 'slide' | 'popup'): void {
+    this.uploadErrorMsg.set('');
+    if (!file.type.startsWith('image/')) {
+      this.uploadErrorMsg.set('Vui lòng chọn tệp hình ảnh hợp lệ (JPG, PNG, WEBP, GIF, AVIF).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.uploadErrorMsg.set('Kích thước ảnh tối đa là 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = typeof reader.result === 'string' ? reader.result : '';
+      if (!dataUrl) {
+        this.uploadErrorMsg.set('Không thể đọc dữ liệu ảnh đã chọn.');
+        return;
+      }
+      this.uploadingTarget.set(target);
+      this.bannerApi.uploadImage(dataUrl, file.name).subscribe({
+        next: (res) => {
+          this.uploadingTarget.set(null);
+          const url = res?.data?.url || '';
+          if (res.success && url) {
+            if (target === 'slide') {
+              this.slideForm.update((f) => ({ ...f, image: url }));
+            } else {
+              this.popup.update((p) => ({ ...p, image: url }));
+            }
+            const saveHint = target === 'slide'
+              ? 'Đã tải ảnh lên MongoDB. Hãy bấm "Lưu Banner" để cập nhật lên trang chủ!'
+              : 'Đã tải ảnh lên MongoDB. Hãy bấm "Lưu cấu hình Pop-up" để cập nhật lên trang chủ!';
+            this.showSuccess(saveHint);
+          } else {
+            this.uploadErrorMsg.set('Tải ảnh thất bại. Vui lòng thử lại.');
+          }
+        },
+        error: (err) => {
+          this.uploadingTarget.set(null);
+          this.uploadErrorMsg.set(err?.error?.message || 'Lỗi khi tải ảnh lên MongoDB.');
+        },
+      });
+    };
+    reader.onerror = () => {
+      this.uploadErrorMsg.set('Không thể đọc tệp ảnh từ thiết bị.');
+    };
+    reader.readAsDataURL(file);
   }
 
   closeModal(): void {
@@ -111,7 +206,7 @@ export class AdminBannersComponent implements OnInit {
   saveSlide(): void {
     const form = this.slideForm();
     if (!form.title.trim() || !form.image.trim()) {
-      alert('Vui lòng nhập tiêu đề và link ảnh banner.');
+      alert('Vui lòng nhập tiêu đề và tải ảnh hoặc gắn link ảnh banner.');
       return;
     }
 

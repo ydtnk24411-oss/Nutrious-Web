@@ -20,6 +20,7 @@ if (fs.existsSync(envPath)) {
 
 const mongoose = require('mongoose');
 const Product = require('../models/Product');
+const Combo = require('../models/Combo');
 const Review = require('../models/Review');
 
 // 60 hồ sơ khách hàng Việt Nam tự nhiên với ObjectId cố định (prefix 6b0000...)
@@ -745,8 +746,12 @@ async function seedDatabase(uri, label) {
   await mongoose.connect(uri, { serverSelectionTimeoutMS: 12000 });
   console.log(` Connected to ${label}`);
 
-  const products = await Product.find({}).lean();
-  console.log(`   Found ${products.length} products in ${label}`);
+  const [rawProducts, rawCombos] = await Promise.all([
+    Product.find({ isCombo: { $ne: true } }).lean(),
+    Combo.find({}).lean(),
+  ]);
+  const products = [...rawProducts, ...rawCombos.map(c => ({ ...c, isCombo: true }))];
+  console.log(`   Found ${rawProducts.length} products and ${rawCombos.length} combos in ${label}`);
 
   const productMap = new Map(products.map(p => [String(p._id), p]));
   const seededUserIds = CUSTOMER_PERSONAS.map(c => new mongoose.Types.ObjectId(c.id));

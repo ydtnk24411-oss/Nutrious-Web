@@ -29,6 +29,7 @@ const inventoryRoutes = require('./routes/inventory');
 const supportRoutes = require('./routes/support');
 const complaintRoutes = require('./routes/complaints');
 const nutritionRoutes = require('./routes/nutrition');
+const recipeRoutes = require('./routes/recipes');
 const footerRoutes = require('./routes/footer');
 const flashSaleRoutes = require('./routes/flashSales');
 const shippingRoutes = require('./routes/shipping');
@@ -85,6 +86,12 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Serve static images from frontend public/images directly as fallback/live disk source
+const frontendImagesDir = path.join(__dirname, '..', 'my-app', 'public', 'images');
+if (fs.existsSync(frontendImagesDir)) {
+  app.use('/images', express.static(frontendImagesDir));
+}
+
 // Fail API requests clearly while MongoDB is disconnected instead of leaving
 // Mongoose queries buffered until they time out.
 app.use('/api', (req, res, next) => {
@@ -113,6 +120,7 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/nutrition', nutritionRoutes);
+app.use('/api/recipes', recipeRoutes);
 app.use('/api/footer', footerRoutes);
 app.use('/api/flash-sales', flashSaleRoutes);
 app.use('/api/shipping', shippingRoutes);

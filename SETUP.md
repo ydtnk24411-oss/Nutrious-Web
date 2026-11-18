@@ -64,23 +64,25 @@ git pull origin main
 
 ## 4. Cấu hình Backend
 
-### 4.1. Cài đặt dependencies
+### 4.1. Cài đặt dependencies (bao gồm `nodemon`)
 
-Di chuyển vào thư mục `server`:
+Di chuyển vào thư mục `service`:
 
 ```bash
-cd server
+cd service
 ```
 
-Cài đặt các thư viện cần thiết:
+Cài đặt các thư viện cần thiết (đã khai báo sẵn `nodemon` trong `service/package.json`):
 
 ```bash
 npm install
 ```
 
+*(Tùy chọn nếu muốn dùng lệnh `nodemon` global trên máy: `npm install -g nodemon`)*
+
 ### 4.2. Tạo file môi trường `.env`
 
-Tạo file `.env` trong thư mục `server`, cùng cấp với file `package.json`.
+Tạo file `.env` trong thư mục `service` (tham khảo mẫu tại `service/.env.example`), cùng cấp với file `package.json`.
 
 Cấu trúc file:
 
@@ -112,7 +114,13 @@ Không cần chạy seed vì MongoDB Atlas đã có dữ liệu của dự án.
 
 ### 4.3. Khởi động Backend
 
-Chạy lệnh:
+Chạy với **`nodemon`** (khuyến nghị khi phát triển để tự động reload khi sửa code):
+
+```bash
+npm run dev
+```
+
+Hoặc chạy chế độ thường (`node index.js`):
 
 ```bash
 npm start

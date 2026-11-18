@@ -7,6 +7,7 @@ const Order  = require('../models/Order');
 const User   = require('../models/User');
 const Cart   = require('../models/Cart');
 const Product = require('../models/Product');
+const Combo   = require('../models/Combo');
 const FlashSale = require('../models/FlashSale');
 const InventoryLog = require('../models/InventoryLog');
 const StoreInventory = require('../models/StoreInventory');
@@ -320,19 +321,39 @@ router.post(
         }
         item.quantity = qty;
 
-        // Tìm sản phẩm trong DB bằng ObjectId, slug hoặc tên
+        // Tìm sản phẩm trong Product hoặc Combo bằng ObjectId, slug hoặc tên
         let prod = null;
-        if (item.product && mongoose.Types.ObjectId.isValid(item.product)) {
-          prod = await Product.findById(item.product);
-        }
-        if (!prod && item.product) {
-          prod = await Product.findOne({ slug: item.product });
-        }
-        if (!prod && item.productName) {
-          prod = await Product.findOne({ name: item.productName });
+        let isComboEntity = Boolean(item.isCombo || item.itemType === 'combo');
+
+        const findInModel = async (Model) => {
+          let doc = null;
+          if (item.product && mongoose.Types.ObjectId.isValid(item.product)) {
+            doc = await Model.findById(item.product);
+          }
+          if (!doc && item.product) {
+            doc = await Model.findOne({ slug: item.product });
+          }
+          if (!doc && item.productName) {
+            doc = await Model.findOne({ name: item.productName });
+          }
+          return doc;
+        };
+
+        if (isComboEntity) {
+          prod = await findInModel(Combo);
+          if (!prod) {
+            prod = await findInModel(Product);
+            isComboEntity = Boolean(prod?.isCombo);
+          }
+        } else {
+          prod = await findInModel(Product);
+          if (!prod) {
+            prod = await findInModel(Combo);
+            if (prod) isComboEntity = true;
+          }
         }
 
-        if (!prod || prod.isActive === false || (prod.isCombo && (prod.comboStatus === 'paused' || prod.comboStatus === 'hidden'))) {
+        if (!prod || prod.isActive === false || (isComboEntity && (prod.comboStatus === 'paused' || prod.comboStatus === 'hidden'))) {
           return res.status(400).json({
             success: false,
             message: `Sản phẩm "${item.productName || item.product || 'trong đơn hàng'}" không tồn tại hoặc đã ngừng kinh doanh.`
@@ -342,11 +363,11 @@ router.post(
         // Lấy giá chuẩn từ database (trường số priceNumber, KHÔNG parse chuỗi)
         const priceNum = typeof prod.priceNumber === 'number' ? prod.priceNumber : Number(prod.priceNumber || 0);
 
-        if (prod.isCombo) {
-          const popProd = await Product.findById(prod._id).populate(
-            'comboItems.product',
-            'name price priceNumber image weight unit slug stock isActive'
-          );
+        if (isComboEntity) {
+          const comboPopFields = 'name price priceNumber image weight unit slug stock isActive';
+          const popProd =
+            (await Combo.findById(prod._id).populate('comboItems.product', comboPopFields)) ||
+            (await Product.findById(prod._id).populate('comboItems.product', comboPopFields));
           if (!popProd || !Array.isArray(popProd.comboItems) || popProd.comboItems.length === 0) {
             return res.status(400).json({
               success: false,
@@ -1372,6 +1393,49 @@ async function attachComboDetailsToOrders(orders) {
   const isArray = Array.isArray(orders);
   const list = isArray ? orders : [orders];
 
+  // Bù ảnh sản phẩm còn thiếu từ Product / Combo trong 1 lượt truy vấn hàng loạt
+  const missingImgIds = [];
+  const missingImgNames = [];
+  for (const o of list) {
+    if (!o || !Array.isArray(o.items)) continue;
+    for (const it of o.items) {
+      if (!it || it.productImage) continue;
+      if (it.product && mongoose.Types.ObjectId.isValid(it.product)) {
+        missingImgIds.push(it.product);
+      }
+      if (it.productName) {
+        missingImgNames.push(it.productName);
+      }
+    }
+  }
+  if (missingImgIds.length > 0 || missingImgNames.length > 0) {
+    const conds = [];
+    if (missingImgIds.length > 0) conds.push({ _id: { $in: missingImgIds } });
+    if (missingImgNames.length > 0) conds.push({ name: { $in: missingImgNames } });
+    const [prods, combos] = await Promise.all([
+      Product.find({ $or: conds }).select('_id name image images').lean(),
+      Combo.find({ $or: conds }).select('_id name image images').lean(),
+    ]);
+    const imgById = new Map();
+    const imgByName = new Map();
+    for (const doc of [...prods, ...combos]) {
+      const thumb = doc.image || (Array.isArray(doc.images) ? doc.images[0] : '') || '';
+      if (!thumb) continue;
+      imgById.set(String(doc._id), thumb);
+      if (doc.name) imgByName.set(doc.name, thumb);
+    }
+    for (const o of list) {
+      if (!o || !Array.isArray(o.items)) continue;
+      for (const it of o.items) {
+        if (!it || it.productImage) continue;
+        it.productImage =
+          (it.product && imgById.get(String(it.product))) ||
+          (it.productName && imgByName.get(it.productName)) ||
+          '';
+      }
+    }
+  }
+
   for (const o of list) {
     if (!o || !Array.isArray(o.items)) continue;
 
@@ -1395,22 +1459,25 @@ async function attachComboDetailsToOrders(orders) {
         continue;
       }
 
-      // Chỉ fallback truy vấn Product đối với các đơn hàng cũ trước khi có snapshot comboItems
+      // Chỉ fallback truy vấn Combo / Product đối với các đơn hàng cũ trước khi có snapshot comboItems
       if (!it.isCombo) continue;
 
       let prod = null;
+      const comboPopFields = 'name price priceNumber image weight unit slug';
+      const findPopulatedCombo = async (query) =>
+        (await Combo.findOne(query).populate('comboItems.product', comboPopFields).lean()) ||
+        (await Product.findOne({ ...query, isCombo: true }).populate('comboItems.product', comboPopFields).lean());
       if (it.product && mongoose.Types.ObjectId.isValid(it.product)) {
-        prod = await Product.findById(it.product)
-          .populate('comboItems.product', 'name price priceNumber image weight unit slug')
-          .lean();
+        prod = await findPopulatedCombo({ _id: it.product });
+      }
+      if (!prod && it.product) {
+        prod = await findPopulatedCombo({ slug: it.product });
       }
       if (!prod && it.productName) {
-        prod = await Product.findOne({ name: it.productName })
-          .populate('comboItems.product', 'name price priceNumber image weight unit slug')
-          .lean();
+        prod = await findPopulatedCombo({ name: it.productName });
       }
 
-      if (prod && prod.isCombo && Array.isArray(prod.comboItems) && prod.comboItems.length > 0) {
+      if (prod && Array.isArray(prod.comboItems) && prod.comboItems.length > 0) {
         const comboSubItems = [];
         let subSum = 0;
         for (const ci of prod.comboItems) {

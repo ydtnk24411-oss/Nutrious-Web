@@ -55,6 +55,8 @@ interface Order {
   bankInfo?: { bankId: string; accountNo: string; accountName: string } | null;
   status: 'pending' | 'confirmed' | 'preparing' | 'shipping' | 'delivered' | 'cancelled';
   hasNonRefundableItems?: boolean;
+  nonRefundableAccepted?: boolean;
+  nonRefundableItems?: Array<{ name: string; categoryName: string; isCombo?: boolean }>;
   estimatedPoints?: number;
   createdAt: string;
   updatedAt: string;
@@ -244,6 +246,10 @@ export class OrderDetailComponent implements OnInit {
     return sub?.name || sub?.product?.name || 'Sản phẩm thành phần';
   }
 
+  getComboItemQty(sub: any): number {
+    return Math.max(1, Number(sub?.quantity) || 1);
+  }
+
   getComboItemPrice(sub: any): string {
     if (sub?.price) return String(sub.price);
     if (sub?.product?.price) return String(sub.product.price);
@@ -302,7 +308,7 @@ export class OrderDetailComponent implements OnInit {
     }
 
     this.cancelling.set(true);
-    const fullReason = `${mainReason} - Chi tiết: ${detail}`;
+    const fullReason = `${mainReason} — Chi tiết: ${detail}`;
     const targetId = currentOrder.orderCode || currentOrder._id;
 
     this.orderApi.cancel(targetId, fullReason).subscribe({
@@ -570,7 +576,7 @@ export class OrderDetailComponent implements OnInit {
       <div>
         <div class="store-name">Evergreen Mart</div>
         <div class="store-info">Nông sản sạch VietGAP &amp; Thực phẩm dinh dưỡng</div>
-        <div class="store-info">Hotline CSKH: 1800 6999 (Miễn phí) - www.evergreenmart.vn</div>
+        <div class="store-info">Hotline CSKH: 1800 6999 (Miễn phí) — www.evergreenmart.vn</div>
       </div>
       <div>
         <div class="invoice-title">PHIẾU GIAO HÀNG &amp; ĐỐI SOÁT</div>

@@ -30,7 +30,7 @@ function toCartProduct(p: ApiProduct): XanhLaProduct {
   const effStock = typeof p.availableStock === 'number' ? p.availableStock : p.stock;
   return {
     id: p._id, name: p.name, slug: p.slug, price: formatPrice(p.priceNumber || p.price),
-    priceNumber: p.priceNumber, image: p.image,
+    priceNumber: p.priceNumber, image: p.image, images: p.images,
     category: p.categoryId,
     categoryVi: p.categoryVi || '',
     description: p.description,
@@ -70,7 +70,47 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   protected error         = signal('');
   protected quantity      = signal(1);
   protected selectedRipeness = signal('Ready to Eat');
+  protected activeImageIndex = signal(0);
   protected openAccordions   = signal({ info: true, refund: false, shipping: false });
+
+  protected galleryImages = computed<string[]>(() => {
+    const p = this.product();
+    if (!p) return [];
+    const candidates: string[] = [];
+    if (p.image) candidates.push(p.image);
+    if (Array.isArray(p.images)) {
+      for (const u of p.images) {
+        if (u) candidates.push(u);
+      }
+    }
+    if (p.isCombo && Array.isArray(p.comboItems)) {
+      for (const ci of p.comboItems) {
+        if (ci?.product?.image) candidates.push(ci.product.image);
+      }
+    }
+    return Array.from(new Set(candidates.map((u) => String(u).trim()).filter(Boolean)));
+  });
+
+  protected activeGalleryImage = computed<string>(() => {
+    const list = this.galleryImages();
+    if (!list.length) return this.product()?.image || '';
+    const idx = Math.min(Math.max(0, this.activeImageIndex()), list.length - 1);
+    return list[idx];
+  });
+
+  selectGalleryImage(index: number): void {
+    const len = this.galleryImages().length;
+    if (index >= 0 && index < len) {
+      this.activeImageIndex.set(index);
+    }
+  }
+
+  stepGalleryImage(delta: number): void {
+    const len = this.galleryImages().length;
+    if (len <= 1) return;
+    const next = (this.activeImageIndex() + delta + len) % len;
+    this.activeImageIndex.set(next);
+  }
 
   // Frequently Bought Together (Thường được mua cùng nhau)
   protected frequentlyBoughtProducts = signal<ApiProduct[]>([]);
@@ -339,6 +379,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     this.loading.set(true);
     this.error.set('');
     this.quantity.set(1);
+    this.activeImageIndex.set(0);
     this.selectedRipeness.set('Ready to Eat');
     this.selectedAddOnIds.set(new Set());
     this.addOnQuantities.set({});
@@ -751,10 +792,17 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     setTimeout(() => this.addedSuccess.set(false), 2500);
   }
 
+  resolveUnitPrice(item: any): number {
+    const num = Number(item?.priceNumber);
+    if (Number.isFinite(num) && num > 0) return num;
+    const rawNum = Number(item?.price);
+    if (Number.isFinite(rawNum) && rawNum > 0) return rawNum;
+    const digits = String(item?.price || '').replace(/\D/g, '');
+    return digits ? Number(digits) : 0;
+  }
+
   getBundleTotal(p: any, companion: any): number {
-    const p1 = Number(p?.priceNumber) || Number(p?.price) || 0;
-    const p2 = Number(companion?.priceNumber) || Number(companion?.price) || 0;
-    return p1 + p2;
+    return this.resolveUnitPrice(p) + this.resolveUnitPrice(companion);
   }
 
   // ── Review Methods ───────────────────────────────

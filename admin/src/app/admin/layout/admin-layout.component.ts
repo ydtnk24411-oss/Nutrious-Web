@@ -454,6 +454,11 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
           id: 'staff',
           label: 'Tài khoản & Phân quyền',
           path: '/admin/staff',
+        },
+        {
+          id: 'audit-log',
+          label: 'Nhật ký hệ thống',
+          path: '/admin/audit-log',
         }
       ]
     }

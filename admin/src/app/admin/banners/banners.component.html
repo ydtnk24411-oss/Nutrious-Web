@@ -79,7 +79,7 @@
             </div>
           </div>
           <div class="preview-hero-box">
-            <img [src]="slides()[activePreviewIndex()].image" [alt]="slides()[activePreviewIndex()].title" class="preview-img" />
+            <img [src]="resolveBannerImage(slides()[activePreviewIndex()].image)" [alt]="slides()[activePreviewIndex()].title" class="preview-img" />
             <div class="preview-hero-shade"></div>
             <div class="preview-hero-copy">
               <span class="preview-kicker">{{ slides()[activePreviewIndex()].eyebrow }}</span>
@@ -109,7 +109,7 @@
               <tr [class.is-inactive]="!slide.active">
                 <td style="font-weight: 700; text-align: center;">{{ slide.sortOrder || ($index + 1) }}</td>
                 <td>
-                  <img [src]="slide.image" [alt]="slide.title" class="slide-thumb" />
+                  <img [src]="resolveBannerImage(slide.image)" [alt]="slide.title" class="slide-thumb" />
                 </td>
                 <td>
                   <div class="slide-info-col">
@@ -179,15 +179,82 @@
             <textarea [(ngModel)]="popup().description" name="popDesc" rows="3" class="form-textarea" placeholder="Nhập thể lệ ngắn gọn, điều kiện áp dụng..."></textarea>
           </div>
 
-          <div class="form-grid-2">
-            <div class="form-row">
-              <label class="form-label">Mã Voucher đính kèm (nếu có)</label>
-              <input type="text" [(ngModel)]="popup().voucherCode" name="popVoucher" class="form-input" placeholder="Ví dụ: EVG20K" />
+          <div class="form-row">
+            <label class="form-label">Mã Voucher đính kèm (nếu có)</label>
+            <input type="text" [(ngModel)]="popup().voucherCode" name="popVoucher" class="form-input" placeholder="Ví dụ: EVG20K" />
+          </div>
+
+          <div class="form-row">
+            <div class="image-field-head">
+              <label class="form-label">Hình ảnh Pop-up</label>
+              <div class="image-mode-tabs">
+                <button
+                  type="button"
+                  class="mode-btn"
+                  [class.active]="popupImageMode() === 'file'"
+                  (click)="popupImageMode.set('file')"
+                >
+                  Tải ảnh từ máy
+                </button>
+                <button
+                  type="button"
+                  class="mode-btn"
+                  [class.active]="popupImageMode() === 'url'"
+                  (click)="popupImageMode.set('url')"
+                >
+                  Nhập link URL
+                </button>
+              </div>
             </div>
-            <div class="form-row">
-              <label class="form-label">Link ảnh minh họa Pop-up</label>
-              <input type="text" [(ngModel)]="popup().image" name="popImg" class="form-input" placeholder="URL hình ảnh banner popup" />
-            </div>
+
+            @if (popupImageMode() === 'file') {
+              <div
+                class="banner-upload-zone"
+                (dragover)="$event.preventDefault()"
+                (drop)="onImageDrop($event, 'popup')"
+              >
+                <input
+                  #popupFileInput
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
+                  style="display:none"
+                  (change)="onImageFileSelected($event, 'popup')"
+                />
+                @if (uploadingTarget() === 'popup') {
+                  <div class="upload-dropzone-inner">
+                    <span class="upload-text-main">Đang tải ảnh lên MongoDB...</span>
+                    <span class="upload-text-sub">Vui lòng đợi trong giây lát</span>
+                  </div>
+                } @else if (popup().image) {
+                  <div class="image-preview-card">
+                    <img [src]="resolveBannerImage(popup().image)" alt="Pop-up preview" class="preview-thumb-img" />
+                    <div class="preview-info">
+                      <div class="preview-title">Ảnh Pop-up đã sẵn sàng</div>
+                      <div class="preview-sub">{{ popup().image.startsWith('/api/banners/media/') ? 'Đã lưu trong MongoDB' : 'Đang dùng đường dẫn ảnh hiện tại' }}</div>
+                      <div class="preview-actions">
+                        <button type="button" class="btn-preview-change" (click)="popupFileInput.click()">
+                          Đổi ảnh khác
+                        </button>
+                        <button type="button" class="btn-preview-remove" (click)="clearImage('popup')">
+                          Xóa ảnh
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="upload-dropzone-inner" (click)="popupFileInput.click()">
+                    <span class="upload-text-main">Kéo thả ảnh hoặc <span>chọn tệp từ máy</span></span>
+                    <span class="upload-text-sub">PNG, JPG, WEBP tối đa 5MB - tự động lưu vào MongoDB</span>
+                  </div>
+                }
+              </div>
+            } @else {
+              <input type="text" [(ngModel)]="popup().image" name="popImg" class="form-input" placeholder="URL hình ảnh hoặc /api/banners/media/..." />
+            }
+
+            @if (uploadErrorMsg() && activeTab() === 'popup') {
+              <div class="upload-error-text">{{ uploadErrorMsg() }}</div>
+            }
           </div>
 
           <div class="form-grid-2">
@@ -202,7 +269,7 @@
           </div>
 
           <div class="form-submit-row">
-            <button type="submit" class="admin-btn admin-btn-primary" [disabled]="saving()">
+            <button type="submit" class="admin-btn admin-btn-primary" [disabled]="saving() || uploadingTarget() === 'popup'">
               {{ saving() ? 'Đang lưu...' : 'Lưu cấu hình Pop-up' }}
             </button>
           </div>
@@ -217,7 +284,7 @@
             <div class="mockup-popup-box">
               <div class="mockup-popup-badge">{{ popup().badge || 'KHUYẾN MÃI' }}</div>
               @if (popup().image) {
-                <img [src]="popup().image" alt="Pop-up" class="mockup-popup-img" />
+                <img [src]="resolveBannerImage(popup().image)" alt="Pop-up" class="mockup-popup-img" />
               }
               <div class="mockup-popup-body">
                 <h4>{{ popup().title || 'Tiêu đề khuyến mãi' }}</h4>
@@ -261,8 +328,76 @@
           </div>
 
           <div class="form-row">
-            <label class="form-label">Link ảnh banner *</label>
-            <input type="text" [(ngModel)]="slideForm().image" name="slideImg" class="form-input" placeholder="https://images.unsplash.com/..." required />
+            <div class="image-field-head">
+              <label class="form-label">Hình ảnh Banner *</label>
+              <div class="image-mode-tabs">
+                <button
+                  type="button"
+                  class="mode-btn"
+                  [class.active]="slideImageMode() === 'file'"
+                  (click)="slideImageMode.set('file')"
+                >
+                  Tải ảnh từ máy
+                </button>
+                <button
+                  type="button"
+                  class="mode-btn"
+                  [class.active]="slideImageMode() === 'url'"
+                  (click)="slideImageMode.set('url')"
+                >
+                  Nhập link URL
+                </button>
+              </div>
+            </div>
+
+            @if (slideImageMode() === 'file') {
+              <div
+                class="banner-upload-zone"
+                (dragover)="$event.preventDefault()"
+                (drop)="onImageDrop($event, 'slide')"
+              >
+                <input
+                  #slideFileInput
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
+                  style="display:none"
+                  (change)="onImageFileSelected($event, 'slide')"
+                />
+                @if (uploadingTarget() === 'slide') {
+                  <div class="upload-dropzone-inner">
+                    <span class="upload-text-main">Đang tải ảnh lên MongoDB...</span>
+                    <span class="upload-text-sub">Vui lòng đợi trong giây lát</span>
+                  </div>
+                } @else if (slideForm().image) {
+                  <div class="image-preview-card">
+                    <img [src]="resolveBannerImage(slideForm().image)" alt="Banner preview" class="preview-thumb-img" />
+                    <div class="preview-info">
+                      <div class="preview-title">Ảnh Banner đã sẵn sàng</div>
+                      <div class="preview-sub">{{ slideForm().image.startsWith('/api/banners/media/') ? 'Đã tải lên MongoDB (bấm Lưu Banner để áp dụng)' : 'Đang dùng đường dẫn ảnh hiện tại' }}</div>
+                      <div class="preview-actions">
+                        <button type="button" class="btn-preview-change" (click)="slideFileInput.click()">
+                          Đổi ảnh khác
+                        </button>
+                        <button type="button" class="btn-preview-remove" (click)="clearImage('slide')">
+                          Xóa ảnh
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="upload-dropzone-inner" (click)="slideFileInput.click()">
+                    <span class="upload-text-main">Kéo thả ảnh hoặc <span>chọn tệp từ máy</span></span>
+                    <span class="upload-text-sub">PNG, JPG, WEBP tối đa 5MB - tự động lưu vào MongoDB</span>
+                  </div>
+                }
+              </div>
+            } @else {
+              <input type="text" [(ngModel)]="slideForm().image" name="slideImg" class="form-input" placeholder="https://... hoặc /images/banners/..." required />
+            }
+
+            @if (uploadErrorMsg() && modalOpen()) {
+              <div class="upload-error-text">{{ uploadErrorMsg() }}</div>
+            }
           </div>
 
           <div class="form-grid-2">
@@ -291,7 +426,7 @@
 
           <div class="modal-footer">
             <button type="button" class="btn-cancel" (click)="closeModal()">Hủy</button>
-            <button type="submit" class="admin-btn admin-btn-primary" [disabled]="saving()">
+            <button type="submit" class="admin-btn admin-btn-primary" [disabled]="saving() || uploadingTarget() === 'slide'">
               {{ saving() ? 'Đang lưu...' : 'Lưu Banner' }}
             </button>
           </div>

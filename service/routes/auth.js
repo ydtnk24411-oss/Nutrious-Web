@@ -639,6 +639,24 @@ router.post('/google', async (req, res, next) => {
       });
     }
 
+    if (googleUser.picture) {
+      let changed = false;
+      if (user.googleAvatar !== googleUser.picture) {
+        user.googleAvatar = googleUser.picture;
+        changed = true;
+      }
+      // Làm mới avatar nếu chưa có ảnh tùy chỉnh hoặc đang dùng ảnh Google cũ
+      if (!user.avatar || user.avatar.includes('googleusercontent.com')) {
+        if (user.avatar !== googleUser.picture) {
+          user.avatar = googleUser.picture;
+          changed = true;
+        }
+      }
+      if (changed) {
+        await user.save();
+      }
+    }
+
     const token = signToken(user);
     return res.json({
       success: true,

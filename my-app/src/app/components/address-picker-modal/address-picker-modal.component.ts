@@ -390,7 +390,7 @@ export class AddressPickerModalComponent implements OnChanges, OnDestroy {
   }
 
   getCurrentLocation(): void {
-    if (!navigator.geolocation) {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
       this.locationError.set('Trình duyệt của bạn không hỗ trợ định vị GPS.');
       return;
     }
@@ -398,47 +398,33 @@ export class AddressPickerModalComponent implements OnChanges, OnDestroy {
     this.isLocating.set(true);
     this.locationError.set('');
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
+    this.shippingApi.getCurrentBrowserPosition(
+      ({ lat, lng }) => {
+        this.isLocating.set(false);
+        const coordLabel = `Vị trí tọa độ (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
         this.mapConfirmLat.set(lat);
         this.mapConfirmLng.set(lng);
-
-        this.shippingApi.reverseGeocodeNominatim(lat, lng).subscribe({
-          next: (resolved) => {
-            this.isLocating.set(false);
-            const addressString = resolved || `Vị trí tọa độ (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
-            this.userEnteredAddress.set(addressString);
-            this.referenceAddress.set(addressString);
-            this.matchQuality.set('gps');
-            this.view.set('map');
-            this.initConfirmMap();
-          },
-          error: () => {
-            this.isLocating.set(false);
-            const addressString = `Vị trí tọa độ (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
-            this.userEnteredAddress.set(addressString);
-            this.referenceAddress.set(addressString);
-            this.matchQuality.set('gps');
-            this.view.set('map');
-            this.initConfirmMap();
-          },
-        });
+        this.userEnteredAddress.set(coordLabel);
+        this.referenceAddress.set(coordLabel);
+        this.matchQuality.set('gps');
+        this.view.set('map');
+        this.initConfirmMap();
+        this.resolveReferenceAddress(lat, lng, true);
       },
       (err) => {
         this.isLocating.set(false);
+        const code = typeof (err as GeolocationPositionError)?.code === 'number' ? (err as GeolocationPositionError).code : 0;
         let msg = 'Không thể lấy vị trí hiện tại.';
-        if (err.code === 1) {
+        if (code === 1) {
           msg = 'Bạn đã từ chối cấp quyền vị trí. Vui lòng bật vị trí hoặc chọn Tỉnh/Thành bên dưới.';
-        } else if (err.code === 2) {
-          msg = 'Không tìm thấy tín hiệu vị trí.';
-        } else if (err.code === 3) {
-          msg = 'Quá thời gian lấy vị trí GPS. Vui lòng thử lại.';
+        } else if (code === 2) {
+          msg = 'Không tìm thấy tín hiệu vị trí. Bạn có thể chọn Tỉnh/Thành bên dưới.';
+        } else if (code === 3) {
+          msg = 'Trình duyệt phản hồi vị trí quá lâu. Bạn hãy chọn nhanh Tỉnh/Thành bên dưới hoặc thử lại.';
         }
         this.locationError.set(msg);
       },
-      { timeout: 12000, enableHighAccuracy: true }
+      4000
     );
   }
 
@@ -853,12 +839,16 @@ export class AddressPickerModalComponent implements OnChanges, OnDestroy {
     }, 150);
   }
 
-  private resolveReferenceAddress(lat: number, lng: number): void {
+  private resolveReferenceAddress(lat: number, lng: number, syncEnteredForGps = false): void {
     this.isMapResolving.set(true);
     this.shippingApi.reverseGeocodeNominatim(lat, lng).subscribe({
       next: (addr) => {
         this.isMapResolving.set(false);
-        this.referenceAddress.set(addr || `Tọa độ (${lat.toFixed(5)}, ${lng.toFixed(5)})`);
+        const resolved = addr || `Tọa độ (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+        this.referenceAddress.set(resolved);
+        if (syncEnteredForGps && addr && this.matchQuality() === 'gps') {
+          this.userEnteredAddress.set(addr);
+        }
       },
       error: () => {
         this.isMapResolving.set(false);

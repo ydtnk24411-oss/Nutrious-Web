@@ -506,6 +506,29 @@ export class CartService {
   // ── Auth ────────────────────────────────────────────────
   private _currentUser = signal<XanhLaUser | null>(this._loadUser());
   readonly currentUser = this._currentUser.asReadonly();
+  private _failedAvatarUrls = signal<Set<string>>(new Set());
+
+  /** Trả về ảnh đại diện hợp lệ (ưu tiên avatar -> googleAvatar), bỏ qua URL lỗi. */
+  readonly currentUserAvatar = computed(() => {
+    const u = this._currentUser();
+    if (!u) return '';
+    const failed = this._failedAvatarUrls();
+    const candidates = [u.avatar, u.googleAvatar]
+      .map(v => (v || '').trim())
+      .filter(Boolean);
+    return candidates.find(url => !failed.has(url)) || '';
+  });
+
+  markAvatarUrlFailed(url?: string | null): void {
+    const clean = (url || '').trim();
+    if (!clean) return;
+    this._failedAvatarUrls.update(prev => {
+      if (prev.has(clean)) return prev;
+      const next = new Set(prev);
+      next.add(clean);
+      return next;
+    });
+  }
 
   private _authModalOpen = signal(false);
   readonly authModalOpen = this._authModalOpen.asReadonly();
@@ -1883,6 +1906,7 @@ export class CartService {
   }
 
   private applyUserSession(user: XanhLaUser, token: string): void {
+    this._failedAvatarUrls.set(new Set());
     this._currentUser.set(user);
     localStorage.setItem(USER_KEY, JSON.stringify(user));
     localStorage.setItem(TOKEN_KEY, token);
@@ -1960,6 +1984,9 @@ export class CartService {
     const current = this._currentUser();
     if (!current) return;
 
+    if ('avatar' in patch || 'googleAvatar' in patch) {
+      this._failedAvatarUrls.set(new Set());
+    }
     const updated = { ...current, ...patch };
     this._currentUser.set(updated);
     localStorage.setItem(USER_KEY, JSON.stringify(updated));

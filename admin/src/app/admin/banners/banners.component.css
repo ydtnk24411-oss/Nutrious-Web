@@ -559,8 +559,11 @@ input:checked + .slider:before {
 .modal-box {
   background: #ffffff;
   border-radius: 12px;
-  width: 540px;
+  width: 560px;
   max-width: 95vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
   overflow: hidden;
 }
@@ -593,6 +596,7 @@ input:checked + .slider:before {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  overflow-y: auto;
 }
 
 .modal-footer {
@@ -632,4 +636,151 @@ input:checked + .slider:before {
 
 .admin-btn-primary:hover {
   background: #14532d;
+}
+
+.admin-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Upload Image Control */
+.image-field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.image-mode-tabs {
+  display: inline-flex;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  gap: 3px;
+}
+
+.mode-btn {
+  border: none;
+  background: transparent;
+  color: #475569;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mode-btn.active {
+  background: #166534;
+  color: #ffffff;
+}
+
+.banner-upload-zone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.banner-upload-zone:hover {
+  border-color: #166534;
+  background: #f0fdf4;
+}
+
+.upload-dropzone-inner {
+  padding: 18px 16px;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.upload-text-main {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.upload-text-main span {
+  color: #166534;
+  text-decoration: underline;
+}
+
+.upload-text-sub {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.image-preview-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: #ffffff;
+}
+
+.preview-thumb-img {
+  width: 92px;
+  height: 58px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.preview-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.preview-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.preview-sub {
+  font-size: 11px;
+  color: #16a34a;
+  font-weight: 600;
+  margin: 2px 0 8px;
+}
+
+.preview-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-preview-change {
+  padding: 4px 10px;
+  border: 1px solid #166534;
+  border-radius: 6px;
+  background: #166534;
+  color: #ffffff;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-preview-remove {
+  padding: 4px 10px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fff1f2;
+  color: #dc2626;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.upload-error-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #dc2626;
 }

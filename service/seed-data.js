@@ -1065,6 +1065,13 @@ async function runSeed() {
 
     // 3. Footer configuration is now decoupled into static file service/data/footer-config.json
 
+    try {
+      const { syncConfigsToDb } = require('./scripts/sync-configs-to-db');
+      if (typeof syncConfigsToDb === 'function') await syncConfigsToDb();
+    } catch (syncErr) {
+      console.warn('ℹ️ Extended config sync note:', syncErr.message);
+    }
+
     // 3b. Upsert all 22 core recipe ingredient products in MongoDB with 100% accurate photos & fix any mismatched product images
     const Product = require('./models/Product');
     const coreIngredientProducts = [
@@ -1437,12 +1444,15 @@ async function runSeed() {
     const collectionsToSync = [
       'categories',
       'products',
+      'combos',
       'users',
       'vouchers',
       'uservouchers',
       'recipes',
-      'events',
-      'services',
+      'nutritionconfigs',
+      'chatbotknowledges',
+      'loyaltyconfigs',
+      'shippingconfigs',
       'orders',
       'reviews',
       'bookings',

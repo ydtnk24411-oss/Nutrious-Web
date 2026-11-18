@@ -1001,7 +1001,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     return prepMinutes + travelMinutes + bufferMinutes;
   });
 
-  // Thông tin Giao ngay  (Khả dụng từ 07:00 đến 21:15 do cửa hàng hoạt động 07:00 - 22:00)
+  // Thông tin Giao ngay 🛵 (Khả dụng từ 07:00 đến 21:15 do cửa hàng hoạt động 07:00 - 22:00)
   readonly instantDeliveryInfo = computed(() => {
     const now = new Date();
     const currentHour = now.getHours() + now.getMinutes() / 60;
@@ -1791,7 +1791,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     this.submitting.set(true);
     this.errorMsg.set('');
 
-    // Build order payload - product field là MongoDB _id nếu có (từ API),
+    // Build order payload — product field là MongoDB _id nếu có (từ API),
     // hoặc bỏ qua nếu là static data (slug string)
     const items = currentItems.map(i => {
       const prod = i.product as any;

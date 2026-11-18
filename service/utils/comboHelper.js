@@ -1,8 +1,26 @@
 const mongoose = require('mongoose');
 const Product = require('../models/Product');
+const Combo = require('../models/Combo');
 
 const COMBO_ITEM_POPULATE_FIELDS =
-  'name slug image price priceNumber unit weight stock isActive isCombo categoryVi category';
+  'name slug image images price priceNumber unit weight stock isActive categoryVi category';
+
+function normalizeProductImages(doc, extraImages = []) {
+  const candidates = [
+    doc?.image,
+    ...(Array.isArray(doc?.images) ? doc.images : []),
+    ...(Array.isArray(extraImages) ? extraImages : []),
+  ];
+  const seen = new Set();
+  const result = [];
+  for (const raw of candidates) {
+    const url = typeof raw === 'string' ? raw.trim() : '';
+    if (!url || seen.has(url)) continue;
+    seen.add(url);
+    result.push(url);
+  }
+  return result;
+}
 
 function slugifyVietnamese(raw) {
   const base = String(raw || '')
@@ -35,10 +53,19 @@ function resolveComboStatus(doc) {
   return 'active';
 }
 
-function enrichComboDocument(doc) {
+function isComboDocument(doc) {
+  if (!doc) return false;
+  if (doc.isCombo === true) return true;
+  if (doc.isCombo === false) return false;
+  if (doc.constructor?.modelName === 'Combo') return true;
+  return Array.isArray(doc.comboItems) && doc.comboItems.length > 0;
+}
+
+function enrichComboDocument(doc, options = {}) {
   if (!doc) return doc;
   const obj = typeof doc.toObject === 'function' ? doc.toObject() : { ...doc };
-  if (!obj.isCombo) return obj;
+  const isComboEntity = Boolean(options.assumeCombo) || isComboDocument(doc) || isComboDocument(obj);
+  if (!isComboEntity) return obj;
 
   const status = resolveComboStatus(obj);
   const rawItems = Array.isArray(obj.comboItems) ? obj.comboItems : [];
@@ -104,9 +131,19 @@ function enrichComboDocument(doc) {
   const savingPercent =
     retailTotal > 0 ? Math.round((savingAmount / retailTotal) * 100) : 0;
 
+  const comboItemImgs = enrichedItems.flatMap((ci) => {
+    const prod = ci?.product;
+    if (!prod || typeof prod !== 'object') return [];
+    return [prod.image, ...(Array.isArray(prod.images) ? prod.images.slice(0, 1) : [])];
+  });
+  const normalizedImages = normalizeProductImages(obj, comboItemImgs);
+
   return {
     ...obj,
+    isCombo: true,
     price: formatPriceString(obj.priceNumber, obj.price),
+    image: normalizedImages[0] || obj.image || '',
+    images: normalizedImages,
     comboStatus: status,
     isActive: status === 'active',
     comboItems: enrichedItems,
@@ -123,8 +160,8 @@ function enrichComboDocument(doc) {
 function enrichProductOrComboList(docs) {
   if (!Array.isArray(docs)) return [];
   return docs.map((d) => {
-    const isCombo = d && d.isCombo === true;
-    if (isCombo) return enrichComboDocument(d);
+    const isCombo = isComboDocument(d);
+    if (isCombo) return enrichComboDocument(d, { assumeCombo: true });
     const obj = typeof d?.toObject === 'function' ? d.toObject({ virtuals: true }) : { ...d };
     if (obj) {
       obj.price = formatPriceString(obj.priceNumber, obj.price);
@@ -134,6 +171,8 @@ function enrichProductOrComboList(docs) {
         const buffer = obj.safetyBuffer ?? 2;
         obj.availableOnlineStock = Math.max(0, stock - reserved - buffer);
       }
+      obj.images = normalizeProductImages(obj);
+      if (!obj.image && obj.images.length) obj.image = obj.images[0];
     }
     return obj;
   });
@@ -245,12 +284,15 @@ async function generateUniqueComboSlug(name, requestedSlug, excludeId = null) {
   let candidate = baseSlug;
   let suffix = 1;
   while (true) {
-    const query = { slug: candidate };
+    const comboQuery = { slug: candidate };
     if (excludeId && mongoose.Types.ObjectId.isValid(excludeId)) {
-      query._id = { $ne: new mongoose.Types.ObjectId(excludeId) };
+      comboQuery._id = { $ne: new mongoose.Types.ObjectId(excludeId) };
     }
-    const exists = await Product.exists(query);
-    if (!exists) return candidate;
+    const [existsInCombos, existsInProducts] = await Promise.all([
+      Combo.exists(comboQuery),
+      Product.exists({ slug: candidate }),
+    ]);
+    if (!existsInCombos && !existsInProducts) return candidate;
     suffix += 1;
     candidate = `${baseSlug}-${suffix}`;
   }
@@ -258,6 +300,8 @@ async function generateUniqueComboSlug(name, requestedSlug, excludeId = null) {
 
 module.exports = {
   COMBO_ITEM_POPULATE_FIELDS,
+  normalizeProductImages,
+  isComboDocument,
   slugifyVietnamese,
   resolveComboStatus,
   enrichComboDocument,

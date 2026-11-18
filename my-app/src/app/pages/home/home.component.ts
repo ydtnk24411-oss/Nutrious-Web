@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Component, HostListener, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { CartService, formatPrice } from '../../shared/services/cart.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { heroImage, originImage } from '../../shared/data/xanh-la.data';
 import { Voucher as ApiVoucher, XanhLaProduct } from '../../shared/models/xanh-la.models';
+import { API_BASE } from '../../shared/services/api.service';
 import { CategoryApiService, ApiCategory } from '../../shared/services/category-api.service';
 import { VoucherService } from '../../shared/services/voucher.service';
 import { FlashSaleApiService, FlashSaleItem } from '../../shared/services/flash-sale-api.service';
@@ -40,41 +41,144 @@ export class HomeComponent implements OnInit, OnDestroy {
   readonly originImage = originImage;
   readonly fallbackProductImage = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=700&q=80';
 
-  heroSlides: Array<{ eyebrow: string; title: string; subtitle: string; cta: string; image: string; link?: string }> = [
-    { eyebrow: 'TƯƠI SẠCH MỖI NGÀY - GIAO NHANH 2H', title: 'Đi chợ thông minh - Nông sản tươi sạch giao nhanh 2 giờ.', subtitle: 'Thực phẩm tươi VietGAP, rau củ hữu cơ và hàng tiêu dùng thiết yếu cho cả gia đình.', cta: 'Mua sắm ngay', image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1600&q=90', link: '/online-ordering' },
-    { eyebrow: 'CHUẨN NGUỒN GỐC - VÌ SỨC KHỎE GIA ĐÌNH', title: 'Thực phẩm tươi sạch mỗi ngày - An tâm cho cả gia đình.', subtitle: 'Khám phá rau củ hữu cơ, trái cây đặc sản và nguyên liệu tươi ngon chuẩn chất lượng.', cta: 'Khám phá gian hàng', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1600&q=90', link: '/online-ordering' },
-    { eyebrow: 'SĂN DEAL HÔM NAY - NHẬN ƯU ĐÃI TỐT', title: 'Săn deal giá tốt - Mua sắm tiết kiệm cùng Evergreen Mart.', subtitle: 'Đừng bỏ lỡ Flash Sale hôm nay, mã giảm giá độc quyền và điểm thưởng tích lũy mỗi đơn hàng.', cta: 'Xem ưu đãi', image: 'https://images.unsplash.com/photo-1543083477-4f785aeafaa9?auto=format&fit=crop&w=1600&q=90', link: '/promotions' },
+  // =========================================================================
+  // 1. DANH SÁCH BANNER CHÍNH (SLIDER) - MẶC ĐỊNH TRƯỚC KHI LOAD TỪ MONGODB
+  // =========================================================================
+  private readonly defaultHeroBanners: Array<{ image: string; link?: string; alt?: string }> = [
+    {
+      image: '/images/banners/banner1.jpg',
+      link: '/online-ordering',
+      alt: 'Banner 1'
+    },
+    {
+      image: '/images/banners/banner6.png',
+      link: '/promotions',
+      alt: 'Banner 2'
+    },
+    {
+      image: '/images/banners/banner8.png',
+      link: '/cook-with-what-you-have',
+      alt: 'Banner 3'
+    },
+    {
+      image: '/images/banners/banner9.png',
+      link: '/cook-with-what-you-have',
+      alt: 'Banner 9'
+    },
+    {
+      image: '/images/banners/banner4.png',
+      link: '/cook-with-what-you-have',
+      alt: 'Banner 4'
+    }
   ];
+
+  private readonly heroBannersSignal = signal<Array<{ image: string; link?: string; alt?: string }>>(
+    [...this.defaultHeroBanners]
+  );
+  private readonly activeHeroSignal = signal(0);
+
+  get heroBanners(): Array<{ image: string; link?: string; alt?: string }> {
+    return this.heroBannersSignal();
+  }
+
+  set heroBanners(slides: Array<{ image: string; link?: string; alt?: string }>) {
+    this.heroBannersSignal.set(slides);
+  }
+
+  // =========================================================================
+  // 2. HAI BANNER PHỤ BÊN PHẢI (ẢNH THUẦN)
+  // =========================================================================
+  sideBanners = {
+    top: {
+      image: '/images/banners/banner9.png',
+      link: '/online-ordering',
+      alt: 'Banner phụ trên'
+    },
+    bottom: {
+      image: '/images/banners/banner4.png',
+      link: '/nutrition',
+      alt: 'Banner phụ dưới'
+    }
+  };
+
+  get heroSlides() {
+    return this.heroBanners;
+  }
+
+  get activeHero(): number {
+    return this.activeHeroSignal();
+  }
+
+  set activeHero(index: number) {
+    this.activeHeroSignal.set(index);
+  }
+
+  private heroTimer: ReturnType<typeof setInterval> | null = null;
+  private lastBannerSyncAt = 0;
+
   promoPopup = signal<any | null>(null);
   showPromoPopup = signal(false);
 
   closePromoPopup(): void {
     this.showPromoPopup.set(false);
-    sessionStorage.setItem('dismiss_promo_popup', 'true');
+    try {
+      sessionStorage.setItem('dismiss_promo_popup', 'true');
+    } catch { }
   }
-  activeHero = 0;
-  private heroTimer: ReturnType<typeof setInterval> | null = null;
 
-  readonly quickCategories = [
-    { name: 'Rau củ', icon: 'bi-basket' },
-    { name: 'Trái cây', icon: 'bi-brightness-high' },
-    { name: 'Thịt', icon: 'bi-award' },
-    { name: 'Cá & Hải sản', icon: 'bi-water' },
-    { name: 'Sữa & Thực phẩm mát', icon: 'bi-cup-straw' },
-    { name: 'Thức uống', icon: 'bi-cup-hot' },
-    { name: 'Bánh & Đồ ăn vặt', icon: 'bi-cookie' },
-    { name: 'Gia vị & Thực phẩm khô', icon: 'bi-box-seam' },
-  ];
-  readonly visualCategories = [
-    { name: 'Rau củ', icon: 'bi-basket', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Trái cây', icon: 'bi-brightness-high', image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Thịt', icon: 'bi-award', image: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Cá & Hải sản', icon: 'bi-water', image: 'https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Sữa & Thực phẩm mát', icon: 'bi-cup-straw', image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Thức uống', icon: 'bi-cup-hot', image: 'https://images.unsplash.com/photo-1544145945-f90425340c7e?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Bánh & Đồ ăn vặt', icon: 'bi-cookie', image: 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=700&q=85' },
-    { name: 'Gia vị & Thực phẩm khô', icon: 'bi-box-seam', image: 'https://images.unsplash.com/photo-1532336414038-cf19250c5757?auto=format&fit=crop&w=700&q=85' },
-  ];
+  // =========================================================================
+  // 3. DANH MỤC SẢN PHẨM: LOAD 100% ĐỘNG TỪ MONGODB (KHÔNG HARDCODE)
+  // =========================================================================
+  private readonly backendOrigin = API_BASE.replace(/\/api\/?$/, '');
+  categories: ApiCategory[] = [];
+  loadingCategories = true;
+  fallbackCategoryImage = '/images/categories/cat-rau-cu-trai-cay.png';
+
+  resolveMediaUrl(raw?: string): string {
+    const clean = (raw || '').trim();
+    if (!clean) return '';
+    if (clean.startsWith('/api/')) return `${this.backendOrigin}${clean}`;
+    if (clean.startsWith('api/')) return `${this.backendOrigin}/${clean}`;
+    return clean;
+  }
+
+  onHeroImageError(event: Event): void {
+    const imgEl = event.target as HTMLImageElement;
+    if (!imgEl) return;
+
+    const currentSrc = imgEl.getAttribute('src') || imgEl.src || '';
+    if (currentSrc.includes('/api/banners/media/') && !imgEl.dataset['retriedMedia']) {
+      imgEl.dataset['retriedMedia'] = '1';
+      const separator = currentSrc.includes('?') ? '&' : '?';
+      imgEl.src = `${currentSrc}${separator}_r=${Date.now()}`;
+      return;
+    }
+
+    const fallback = this.defaultHeroBanners[0].image;
+    if (!currentSrc.includes(fallback)) {
+      imgEl.src = fallback;
+    }
+  }
+
+  onCatImageError(event: Event, rawImage?: string) {
+    const imgEl = event.target as HTMLImageElement;
+    if (!imgEl) return;
+
+    const clean = (rawImage || '').trim();
+    if (clean.startsWith('/') && !imgEl.dataset['triedBackend']) {
+      imgEl.dataset['triedBackend'] = '1';
+      imgEl.src = `${this.backendOrigin}${clean}`;
+      return;
+    }
+
+    if (!imgEl.src.includes(this.fallbackCategoryImage)) {
+      imgEl.src = this.fallbackCategoryImage;
+    }
+  }
+
+  trackByCatId(_index: number, cat: ApiCategory): string {
+    return cat._id;
+  }
   readonly vouchers = computed<Voucher[]>(() => this.voucherService.publicVouchers().slice(0, 6).map((voucher, index) => ({
     id: voucher.id,
     code: voucher.code,
@@ -97,7 +201,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   ];
 
   apiProducts: ApiProduct[] = [];
-  categories: ApiCategory[] = [];
   loadingProducts = true;
   productOffset = 0;
   countdown = { hours: '05', minutes: '42', seconds: '18' };
@@ -117,22 +220,80 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   get visibleProducts(): ApiProduct[] { return this.apiProducts.slice(this.productOffset, this.productOffset + 4); }
 
-  ngOnInit(): void {
-    this.http.get<any>('http://localhost:3000/api/banners').subscribe({
+  @HostListener('window:focus')
+  onWindowFocus(): void {
+    this.loadBanners(true);
+  }
+
+  @HostListener('document:visibilitychange')
+  onVisibilityChange(): void {
+    if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+      this.loadBanners(true);
+    }
+  }
+
+  loadBanners(isRefresh = false): void {
+    const now = Date.now();
+    if (isRefresh && now - this.lastBannerSyncAt < 1500) {
+      return;
+    }
+    this.lastBannerSyncAt = now;
+
+    this.http.get<any>(`${API_BASE}/banners`, { params: { _t: String(now) } }).subscribe({
       next: (res) => {
         if (res && res.success && res.data) {
-          const activeSlides = (res.data.heroSlides || []).filter((s: any) => s.active !== false);
-          if (activeSlides.length > 0) {
-            this.heroSlides = activeSlides;
+          const activeSlides = (res.data.heroSlides || [])
+            .map((s: any, idx: number) => ({ s, idx }))
+            .filter(({ s }: { s: any }) => s && s.active !== false && String(s.image || '').trim().length > 0)
+            .sort((a: { s: any; idx: number }, b: { s: any; idx: number }) => {
+              const orderDiff = (Number(a.s?.sortOrder) || 999) - (Number(b.s?.sortOrder) || 999);
+              return orderDiff !== 0 ? orderDiff : a.idx - b.idx;
+            })
+            .map(({ s }: { s: any }) => s);
+
+          const isCustomized = Boolean(
+            (res.data.updatedBy && res.data.updatedBy !== 'system')
+            || activeSlides.some((s: any) => String(s.image || '').includes('/api/banners/media/'))
+          );
+
+          if (activeSlides.length > 0 && isCustomized) {
+            const mapped = activeSlides.map((s: any, idx: number) => ({
+              image: this.resolveMediaUrl(s.image),
+              link: s.link || '/online-ordering',
+              alt: s.title || s.eyebrow || `Banner ${idx + 1}`,
+            }));
+            const nextSig = mapped.map((b: any) => `${b.image}|${b.link}|${b.alt}`).join(';;');
+            const curSig = this.heroBanners.map((b) => `${b.image}|${b.link}|${b.alt}`).join(';;');
+            if (nextSig !== curSig) {
+              this.heroBanners = mapped;
+              this.activeHero = 0;
+            }
           }
-          if (res.data.promoPopup?.enabled && !sessionStorage.getItem('dismiss_promo_popup')) {
+
+          if (res.data.promoPopup) {
             this.promoPopup.set(res.data.promoPopup);
-            this.showPromoPopup.set(true);
+            const dismissed = (() => {
+              try {
+                return Boolean(sessionStorage.getItem('dismiss_promo_popup'));
+              } catch {
+                return false;
+              }
+            })();
+            if (res.data.promoPopup.enabled && !dismissed && !isRefresh) {
+              this.showPromoPopup.set(true);
+            } else if (!res.data.promoPopup.enabled) {
+              this.showPromoPopup.set(false);
+            }
           }
         }
       },
-      error: () => {}
+      error: () => { },
     });
+  }
+
+  ngOnInit(): void {
+    // Nối banner chính động (giữ layout ảnh thuần của main/admin) & Pop-up khuyến mãi từ Admin Banners
+    this.loadBanners(false);
 
     this.voucherService.loadPublic();
     this.voucherService.refreshMine();
@@ -143,9 +304,11 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.categoryApi.getAll().subscribe({
       next: res => {
         this.categories = res.data || [];
+        this.loadingCategories = false;
       },
       error: err => {
-        console.error('Failed to load categories:', err);
+        console.error('Failed to load categories from MongoDB:', err);
+        this.loadingCategories = false;
       },
     });
     this.flashSaleApi.getActive().subscribe({
@@ -176,7 +339,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.liveProductMap = map;
         this.syncFlashSaleStock();
       },
-      error: () => {},
+      error: () => { },
     });
     this.heroTimer = setInterval(() => this.nextHero(), 6500);
     this.countdownTimer = setInterval(() => this.tickCountdown(), 1000);

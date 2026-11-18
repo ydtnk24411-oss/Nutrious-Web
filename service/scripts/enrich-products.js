@@ -1,30 +1,33 @@
+const fs = require('fs');
+const path = require('path');
 const mongoose = require('mongoose');
 require('dotenv').config({ path: __dirname + '/../.env' });
 const Product = require('../models/Product');
 
-const bakery = require('./data/bakery');
-const dairy = require('./data/dairy');
-const beverages = require('./data/beverages');
-const pantry = require('./data/pantry');
-const vegetables = require('./data/vegetables');
-const fruits = require('./data/fruits');
-const meat = require('./data/meat');
-const seafood = require('./data/seafood');
-
-const allData = {
-  ...bakery,
-  ...dairy,
-  ...beverages,
-  ...pantry,
-  ...vegetables,
-  ...fruits,
-  ...meat,
-  ...seafood
-};
+function loadAllDataFromDisk() {
+  const dataDir = path.join(__dirname, 'data');
+  if (!fs.existsSync(dataDir)) {
+    return null;
+  }
+  const names = ['bakery', 'dairy', 'beverages', 'pantry', 'vegetables', 'fruits', 'meat', 'seafood'];
+  return Object.assign({}, ...names.map((n) => require(`./data/${n}`)));
+}
 
 async function main() {
   await mongoose.connect(process.env.MONGODB_URI);
   console.log('Connected to MongoDB.');
+
+  const allData = loadAllDataFromDisk();
+  if (!allData) {
+    console.log('scripts/data/*.js đã được đồng bộ lên MongoDB và dọn sạch. Tiến hành kiểm tra thống kê MongoDB...');
+    const total = await Product.countDocuments({ isCombo: { $ne: true } });
+    const missingBrand = await Product.countDocuments({ isCombo: { $ne: true }, $or: [{ brand: { $exists: false } }, { brand: '' }] });
+    const missingOrigin = await Product.countDocuments({ isCombo: { $ne: true }, $or: [{ origin: { $exists: false } }, { origin: '' }] });
+    const missingDesc = await Product.countDocuments({ isCombo: { $ne: true }, $or: [{ description: { $exists: false } }, { description: '' }] });
+    console.log({ total, missingBrand, missingOrigin, missingDesc });
+    await mongoose.disconnect();
+    return;
+  }
 
   const products = await Product.find({}, '_id slug name').lean();
   console.log(`Found ${products.length} products in MongoDB.`);

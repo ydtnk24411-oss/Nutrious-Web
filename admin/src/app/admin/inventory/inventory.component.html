@@ -54,6 +54,17 @@
     </div>
   }
 
+  @if (error()) {
+    <div class="alert-error">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span>{{ error() }}</span>
+    </div>
+  }
+
   @if (activeTab() === 'list') {
     <!-- KPI Cards for Product Stock (Interactive Click-to-Filter) -->
     <div class="kpi-grid">
@@ -330,8 +341,9 @@
                 @if (showThumbnails()) {
                   <th style="width: 60px; text-align: center;">Ảnh</th>
                 }
-                <th style="min-width: 240px;">Sản phẩm</th>
-                <th style="min-width: 150px; white-space: nowrap;">Danh mục</th>
+                <th style="width: 110px; white-space: nowrap;">Mã sản phẩm</th>
+                <th style="min-width: 220px;">Sản phẩm</th>
+                <th style="min-width: 140px; white-space: nowrap;">Danh mục</th>
                 <th>Đơn vị tính</th>
                 <th style="text-align: right;">Số lượng tồn</th>
                 <th style="text-align: right;">Mức tối thiểu</th>
@@ -348,19 +360,21 @@
                   @if (showThumbnails()) {
                     <td style="width: 60px; text-align: center;">
                       <img
-                        [src]="item.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&q=80'"
+                        [src]="item.image || fallbackThumb"
                         [alt]="item.name"
                         class="product-thumb"
                         loading="lazy"
                         decoding="async"
-                        (error)="$any($event.target).src = 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&q=80'"
+                        (error)="onThumbError($event)"
                       />
                     </td>
                   }
+                  <td style="white-space: nowrap;">
+                    <span class="product-code-badge" [title]="item._id">{{ getProductCode(item._id) }}</span>
+                  </td>
                   <td>
                     <div class="product-info-col">
                       <span class="product-name">{{ item.name }}</span>
-                      <span class="product-code">Mã: {{ item._id.slice(-6).toUpperCase() }}</span>
                     </div>
                   </td>
                   <td style="white-space: nowrap;">
@@ -536,6 +550,7 @@
             <button type="button" class="log-pill-btn" [class.is-active]="logTimeFilter() === '7d'" (click)="onLogTimeFilterChange('7d')">7 ngày</button>
             <button type="button" class="log-pill-btn" [class.is-active]="logTimeFilter() === '30d'" (click)="onLogTimeFilterChange('30d')">30 ngày</button>
             <button type="button" class="log-pill-btn" [class.is-active]="logTimeFilter() === '90d'" (click)="onLogTimeFilterChange('90d')">90 ngày</button>
+            <button type="button" class="log-pill-btn" [class.is-active]="logTimeFilter() === 'all'" (click)="onLogTimeFilterChange('all')">Tất cả</button>
             <button type="button" class="log-pill-btn" [class.is-active]="logTimeFilter() === 'custom'" (click)="onLogTimeFilterChange('custom')">Tùy chọn</button>
           </div>
 
@@ -596,7 +611,8 @@
                 @if (getEffectiveStoreId() === 'all') {
                 <th style="min-width: 180px; white-space: nowrap;">Chi nhánh / Kho</th>
               }
-              <th style="min-width: 200px;">Sản phẩm</th>
+                <th style="width: 110px; white-space: nowrap;">Mã sản phẩm</th>
+                <th style="min-width: 210px;">Sản phẩm</th>
                 <th style="min-width: 130px; white-space: nowrap;">Loại thay đổi</th>
                 <th style="text-align: right; min-width: 110px; white-space: nowrap;">Biến động</th>
                 <th style="text-align: right; min-width: 100px; white-space: nowrap;">Tồn trước</th>
@@ -618,8 +634,21 @@
                       </span>
                     </td>
                   }
+                  <td style="white-space: nowrap;">
+                    <span class="product-code-badge">{{ getLogProductCode(log) }}</span>
+                  </td>
                   <td>
-                    <span class="product-name">{{ log.productName }}</span>
+                    <div class="log-product-cell">
+                      <img
+                        [src]="getLogProductImage(log)"
+                        [alt]="log.productName"
+                        class="product-thumb log-product-thumb"
+                        loading="lazy"
+                        decoding="async"
+                        (error)="onThumbError($event)"
+                      />
+                      <span class="product-name">{{ log.productName }}</span>
+                    </div>
                   </td>
                   <td>
                     <span class="log-type-tag" [class.bg-import]="log.delta > 0" [class.bg-export]="log.delta < 0">
@@ -649,7 +678,7 @@
             </tbody>
             <tfoot class="sticky-table-footer">
               <tr class="summary-total-row">
-                <td [attr.colspan]="getEffectiveStoreId() === 'all' ? 4 : 3" style="font-weight:700;color:#1e3a24;background:#f8fafc;">
+                <td [attr.colspan]="getEffectiveStoreId() === 'all' ? 5 : 4" style="font-weight:700;color:#1e3a24;background:#f8fafc;">
                   <span class="badge-total-pill">TỔNG CỘNG TRANG NÀY ({{ logs().length }} BIẾN ĐỘNG):</span>
                 </td>
                 <td style="text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; background:#f8fafc;">

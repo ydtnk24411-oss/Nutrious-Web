@@ -1,38 +1,43 @@
 <!-- ── Floating Chatbot Widget (Luxury Minimalist Design) ────────── -->
 <div class="xanh-chatbot-container">
 
-  <!-- ── Floating Launcher Button (Chỉ hiện khi đóng Chatbot) ─────── -->
-  @if (!chat.isOpen()) {
-    <div class="xanh-chat-launcher-wrap">
-      @if (chat.hasUnread()) {
-        <div class="xanh-chat-tooltip" (click)="chat.open()">
-          <div class="tooltip-sparkle-dot"></div>
-          <div class="tooltip-text-content">
-            <span class="tooltip-badge">NutriBot AI</span>
-            <span class="tooltip-message">Chào bạn, cần tư vấn nông sản sạch hoặc phân tích món ăn hôm nay?</span>
-          </div>
-          <button class="xanh-tooltip-close" (click)="$event.stopPropagation(); chat.hasUnread.set(false)" aria-label="Đóng gợi ý">
-            <i class="bi bi-dash-lg" style="font-size:14px" aria-hidden="true"></i>
-          </button>
+  <!-- ── Floating Launcher Button ──────────────────────────────────── -->
+  <div class="xanh-chat-launcher-wrap">
+    @if (!chat.isOpen() && chat.hasUnread()) {
+      <div class="xanh-chat-tooltip" (click)="chat.open()">
+        <div class="tooltip-sparkle-dot"></div>
+        <div class="tooltip-text-content">
+          <span class="tooltip-badge">NutriBot AI</span>
+          <span class="tooltip-message">Chào bạn, cần tư vấn nông sản sạch hoặc phân tích món ăn hôm nay?</span>
         </div>
-      }
+        <button class="xanh-tooltip-close" (click)="$event.stopPropagation(); chat.hasUnread.set(false)" aria-label="Đóng gợi ý">
+          <i class="bi bi-dash-lg" style="font-size:14px" aria-hidden="true"></i>
+        </button>
+      </div>
+    }
 
-      <button
-        class="xanh-chat-launcher"
-        (click)="chat.open()"
-        title="Trợ lý AI Nông sản Evergreen Mart - Kết nối Google Gemini"
-        aria-label="Mở cửa sổ chat với AI Evergreen Mart"
-      >
-        <div class="launcher-glow-ring"></div>
+    <button
+      class="xanh-chat-launcher"
+      [class.is-open]="chat.isOpen()"
+      (click)="chat.toggle()"
+      title="Trợ lý AI Nông sản Evergreen Mart - Kết nối Google Gemini"
+      aria-label="Mở cửa sổ chat với AI Evergreen Mart"
+    >
+      <div class="launcher-glow-ring"></div>
+      @if (!chat.isOpen()) {
         <div class="launcher-icon-wrap">
           <img src="/avatars/nutribot.png" alt="AI Evergreen Mart" class="launcher-nutribot-avatar" />
           @if (chat.hasUnread()) {
             <span class="launcher-unread-dot"></span>
           }
         </div>
-      </button>
-    </div>
-  }
+      } @else {
+        <div class="launcher-close-icon">
+          <i class="bi bi-dash-lg" style="font-size:20px" aria-hidden="true"></i>
+        </div>
+      }
+    </button>
+  </div>
 
   <!-- ── Chat Window (Ultra-Premium Frosted Glass) ──────────────────── -->
   @if (chat.isOpen()) {
@@ -60,9 +65,12 @@
 
           <div class="header-titles">
             <div class="header-title-row">
-              <h3 class="xanh-chat-title" [title]="chat.isStaffMode() ? 'Admin Evergreen Mart' : 'NutriBot AI'">
-                {{ chat.isStaffMode() ? 'Admin Evergreen Mart' : 'NutriBot AI' }}
+              <h3 class="xanh-chat-title" [title]="chat.isStaffMode() ? (chat.assignedStaffName() || 'Nhân viên tư vấn Evergreen Mart') : 'NutriBot AI'">
+                {{ chat.isStaffMode() ? (chat.assignedStaffName() || 'Nhân viên tư vấn Evergreen Mart') : 'NutriBot AI' }}
               </h3>
+              <span class="header-status-pill" [class.pill-live]="chat.isStaffMode()">
+                {{ chat.isStaffMode() ? 'Live' : 'Gemini 3.5' }}
+              </span>
             </div>
             <span class="xanh-chat-status">
               {{ chat.isStaffMode() ? 'Chuyên viên đang hỗ trợ trực tiếp' : 'Trợ lý Nông sản & Dinh dưỡng 24/7' }}
@@ -98,9 +106,9 @@
             <div class="banner-top-line">
               <span class="banner-live-beacon"></span>
               <span class="banner-badge">HỖ TRỢ 1-1</span>
-              <span class="banner-title">Đang trò chuyện cùng <strong>Admin Evergreen Mart</strong></span>
+              <span class="banner-title">Đang trò chuyện cùng <strong>{{ chat.assignedStaffName() || 'Chuyên viên Evergreen Mart' }}</strong></span>
             </div>
-            <p class="banner-desc">Mọi câu hỏi của bạn sẽ được nhân viên hỗ trợ phản hồi trực tiếp tại đây.</p>
+            <p class="banner-desc">Mọi câu hỏi của bạn sẽ được nhân viên phản hồi trực tiếp tại đây.</p>
             <button type="button" class="banner-switch-ai-btn" (click)="chat.returnToAi()" title="Chuyển về hỏi Trợ lý AI NutriBot">
               <i class="bi bi-robot" style="font-size:13px" aria-hidden="true"></i>
               <span>Trở về hỏi Trợ lý AI</span>
@@ -122,8 +130,12 @@
           >
             <!-- Avatar Left (Bot & Admin) -->
             @if (msg.sender === 'admin') {
-              <div class="xanh-msg-avatar admin-avatar-circle" title="Admin Evergreen Mart">
-                <i class="bi bi-shield-check" style="font-size:14px" aria-hidden="true"></i>
+              <div class="xanh-msg-avatar admin-avatar-circle">
+                @if (msg.senderAvatar) {
+                  <img [src]="msg.senderAvatar" referrerpolicy="no-referrer" [alt]="msg.senderName || 'Admin'" class="staff-photo-avatar" (error)="msg.senderAvatar = ''" />
+                } @else {
+                  <i class="bi bi-person" style="font-size:14px" aria-hidden="true"></i>
+                }
               </div>
             } @else if (msg.sender === 'bot') {
               <div class="xanh-msg-avatar bot-avatar-circle">
@@ -134,8 +146,8 @@
             <div class="xanh-msg-content-wrap">
               @if (msg.sender === 'admin') {
                 <div class="xanh-admin-sender-badge">
-                  <i class="bi bi-shield-check" style="font-size:12px" aria-hidden="true"></i>
-                  <span>Admin</span>
+                  <i class="bi bi-check-circle-fill" style="font-size:12px" aria-hidden="true"></i>
+                  <span>{{ msg.senderName || 'Chuyên viên hỗ trợ Evergreen Mart' }}</span>
                 </div>
               }
 
@@ -268,6 +280,26 @@
           style="display: none"
         />
 
+        <!-- Luxury Quick Image Upload Strip (Always Visible) -->
+        <div class="xanh-quick-upload-strip">
+          <button
+            type="button"
+            class="xanh-upload-strip-btn"
+            (click)="triggerImagePicker()"
+            title="Bấm để chọn ảnh món ăn từ máy hoặc điện thoại"
+          >
+            <div class="strip-left">
+              <span class="strip-icon-circle">
+                <i class="bi bi-camera" style="font-size:14px" aria-hidden="true"></i>
+              </span>
+              <span class="xanh-strip-text">Tải ảnh nhận diện nguyên liệu & món ăn</span>
+            </div>
+            <span class="xanh-strip-badge">
+              <span>Gemini Vision</span>
+            </span>
+          </button>
+        </div>
+
         <!-- Image Preview Bar (if user selected photo) -->
         @if (selectedImageBase64()) {
           <div class="xanh-image-preview-bar animate-scale-up">
@@ -300,7 +332,7 @@
           <textarea
             class="xanh-chat-input"
             rows="1"
-            [placeholder]="chat.isStaffMode() ? 'Nhắn tin cho nhân viên...' : 'Hỏi nông sản, dán ảnh (Ctrl+V)...'"
+            [placeholder]="chat.isStaffMode() ? 'Nhắn tin trực tiếp cho nhân viên hỗ trợ...' : 'Hỏi về nông sản, món ăn, dán ảnh (Ctrl+V)...'"
             [value]="inputText()"
             (input)="inputText.set($any($event.target).value)"
             (keydown)="onKeyDown($event)"
@@ -314,9 +346,13 @@
             [disabled]="(!inputText().trim() && !selectedImageBase64()) || chat.loading()"
             aria-label="Gửi tin nhắn"
           >
-            <i class="bi bi-send-fill" style="font-size:13px" aria-hidden="true"></i>
+            <i class="bi bi-send-fill" style="font-size:14px" aria-hidden="true"></i>
           </button>
         </form>
+
+        <div class="xanh-chat-footer-note">
+          <span class="footer-note-text">NutriBot AI - Nền tảng Nông sản hữu cơ Evergreen Mart</span>
+        </div>
       </footer>
 
     </div>
