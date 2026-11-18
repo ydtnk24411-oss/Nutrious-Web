@@ -566,11 +566,9 @@
                       </button>
                     } @else {
                       <button type="button" class="xanhla-prod-card-add" (click)="addCombo(combo)" [attr.aria-label]="'Thêm ' + combo.name + ' vào giỏ'">
-                        <i class="bi bi-cart-plus"></i>
-                        <span>{{ addedComboId() === combo._id ? 'Đã thêm giỏ' : 'Thêm giỏ' }}</span>
+                        <span>{{ addedComboId() === combo._id ? 'Đã thêm vào giỏ' : 'Thêm vào giỏ hàng' }}</span>
                       </button>
                       <button type="button" class="xanhla-prod-card-buynow" (click)="openBuyNowFromRelated(combo, $event)" [attr.aria-label]="'Mua ngay ' + combo.name">
-                        <i class="bi bi-lightning-charge-fill"></i>
                         <span>Mua ngay</span>
                       </button>
                     }
@@ -703,8 +701,7 @@
                         class="xanhla-prod-card-add"
                         (click)="addOne(prod, $event)"
                         [attr.aria-label]="'Thêm ' + prod.name + ' vào giỏ'">
-                        <i class="bi bi-cart-plus"></i>
-                        <span>Thêm giỏ</span>
+                        <span>Thêm vào giỏ hàng</span>
                       </button>
 
                       <button
@@ -712,7 +709,6 @@
                         class="xanhla-prod-card-buynow"
                         (click)="openBuyNowFromRelated(prod, $event)"
                         [attr.aria-label]="'Mua ngay ' + prod.name">
-                        <i class="bi bi-lightning-charge-fill"></i>
                         <span>Mua ngay</span>
                       </button>
                     }

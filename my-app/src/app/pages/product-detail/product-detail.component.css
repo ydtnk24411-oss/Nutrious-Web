@@ -2419,22 +2419,21 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #ffffff;
-  border: 2px solid #008848;
-  color: #008848;
-  font-size: 14px;
+  background: #205c2e;
+  border: 2px solid #205c2e;
+  color: #ffffff;
+  font-size: 14.5px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  border-radius: 6px;
+  border-radius: 9999px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .acfc-btn-add-cart:hover:not(:disabled) {
-  background: #F1F8F4;
-  border-color: #006837;
-  color: #006837;
-  box-shadow: 0 2px 8px rgba(0, 136, 72, 0.15);
+  background: #174723;
+  border-color: #174723;
+  box-shadow: 0 4px 14px rgba(32, 92, 46, 0.3);
   transform: translateY(-1px);
 }
 
@@ -2453,29 +2452,30 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #FF6B00;
-  border: 2px solid #FF6B00;
-  color: #ffffff;
-  font-size: 14px;
+  background: #ffffff;
+  border: 2px solid #205c2e;
+  color: #205c2e;
+  font-size: 14.5px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  border-radius: 6px;
+  border-radius: 9999px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .acfc-btn-buy-now:hover {
-  background: #E05D00;
-  border-color: #E05D00;
-  box-shadow: 0 4px 14px rgba(255, 107, 0, 0.3);
+  background: #f0f7f2;
+  border-color: #174723;
+  color: #174723;
+  box-shadow: 0 4px 14px rgba(32, 92, 46, 0.15);
   transform: translateY(-1px);
 }
 
 .acfc-btn-wishlist {
   width: 48px;
   height: 48px;
-  border-radius: 6px;
-  border: 1px solid #EAEAEA;
+  border-radius: 9999px;
+  border: 1.5px solid #EAEAEA;
   background: #ffffff;
   color: #64748B;
   display: flex;

@@ -56,11 +56,9 @@
                       </button>
                     } @else {
                       <button class="xanhla-prod-card-add" type="button" (click)="addToCart(prod)" [attr.aria-label]="'Thêm ' + prod.name + ' vào giỏ'">
-                        <i class="bi bi-cart-plus"></i>
-                        <span>Thêm giỏ</span>
+                        <span>Thêm vào giỏ hàng</span>
                       </button>
                       <button class="xanhla-prod-card-buynow" type="button" (click)="openBuyNow(prod)" [attr.aria-label]="'Mua ngay ' + prod.name">
-                        <i class="bi bi-lightning-charge-fill"></i>
                         <span>Mua ngay</span>
                       </button>
                     }

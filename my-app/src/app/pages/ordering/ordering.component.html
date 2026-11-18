@@ -441,9 +441,6 @@
                       [style.opacity]="isProdUnavailable(prod) || itemQty(prod.slug) >= getProdStock(prod) ? '0.5' : '1'"
                       [style.cursor]="isProdUnavailable(prod) || itemQty(prod.slug) >= getProdStock(prod) ? 'not-allowed' : 'pointer'"
                       (click)="addOne(prod, $event)" [attr.aria-label]="'Thêm ' + prod.name + ' vào giỏ'">
-                      @if (!isProdUnavailable(prod)) {
-                      <i class="bi bi-cart-plus" style="font-size:14px"></i>
-                      }
                       @if (prod.isCombo && prod.comboStatus === 'paused') {
                       <span>Tạm ngừng</span>
                       } @else if (isProdUnavailable(prod)) {
@@ -451,14 +448,13 @@
                       } @else if (itemQty(prod.slug) >= getProdStock(prod)) {
                       <span>Đã đạt tối đa</span>
                       } @else {
-                      <span>Thêm giỏ</span>
+                      <span>Thêm vào giỏ hàng</span>
                       }
                     </button>
 
                     @if (!isProdUnavailable(prod)) {
                     <button type="button" class="xanhla-prod-card-buynow" (click)="openBuyNow(prod)"
                       [attr.aria-label]="'Mua ngay ' + prod.name">
-                      <i class="bi bi-lightning-charge-fill" style="font-size:13px"></i>
                       <span>Mua ngay</span>
                     </button>
                     }

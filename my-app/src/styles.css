@@ -550,7 +550,24 @@ app-header {
   margin-top: 10px !important;
 }
 
-/* Button 1: Thêm giỏ (Outline / Clean White with Supermarket Green Accent) */
+/* ==========================================================================
+   UNIFIED PRODUCT CARD ACTIONS (MATCHING USER REFERENCE DESIGN)
+   Nút 1: Pill đặc xanh lá đậm #205c2e, chữ trắng "Thêm vào giỏ hàng", bo góc 9999px
+   Nút 2: Pill viền mảnh xanh lá đậm #205c2e, nền trắng, chữ xanh "Mua ngay", bo góc 9999px
+   Tuyệt đối không sử dụng icon trong nút bấm
+   ========================================================================== */
+.eg-card-btn-row,
+.ord-card-btn-row,
+.coop-card-btn-row,
+.fs-card-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  margin-top: 10px !important;
+}
+
+/* Button 1: Thêm vào giỏ hàng (Solid Forest Green Pill) */
 .eg-card-btn-add,
 .xanhla-prod-card-add,
 .coop-add-btn,
@@ -560,17 +577,16 @@ app-header {
   height: 36px !important;
   min-height: 36px !important;
   max-height: 36px !important;
-  padding: 0 6px !important;
+  padding: 0 8px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 5px !important;
-  background: #ffffff !important;
-  border: 1.5px solid #008848 !important;
-  border-radius: 6px !important;
-  color: #008848 !important;
+  background: #205c2e !important;
+  border: 1.5px solid #205c2e !important;
+  border-radius: 9999px !important;
+  color: #ffffff !important;
   font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-  font-size: 12px !important;
+  font-size: 11.5px !important;
   font-weight: 700 !important;
   cursor: pointer !important;
   transition: all 0.18s ease !important;
@@ -584,14 +600,13 @@ app-header {
 .xanhla-prod-card-add:hover:not(:disabled),
 .coop-add-btn:hover:not(:disabled),
 .fs-add-btn:hover:not(:disabled) {
-  background: #F1F8F4 !important;
-  border-color: #006837 !important;
-  color: #006837 !important;
-  box-shadow: 0 2px 6px rgba(0, 136, 72, 0.15) !important;
+  background: #174723 !important;
+  border-color: #174723 !important;
+  box-shadow: 0 3px 10px rgba(32, 92, 46, 0.3) !important;
   transform: translateY(-1px) !important;
 }
 
-/* Button 2: Mua ngay (High-Conversion Supermarket Retail Orange #FF6B00) */
+/* Button 2: Mua ngay (Outline Pill Green) */
 .eg-card-btn-buynow,
 .xanhla-prod-card-buynow,
 .coop-buynow-btn,
@@ -601,17 +616,16 @@ app-header {
   height: 36px !important;
   min-height: 36px !important;
   max-height: 36px !important;
-  padding: 0 6px !important;
+  padding: 0 8px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 5px !important;
-  background: #FF6B00 !important;
-  border: 1.5px solid #FF6B00 !important;
-  border-radius: 6px !important;
-  color: #ffffff !important;
+  background: #ffffff !important;
+  border: 1.5px solid #205c2e !important;
+  border-radius: 9999px !important;
+  color: #205c2e !important;
   font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-  font-size: 12px !important;
+  font-size: 11.5px !important;
   font-weight: 700 !important;
   cursor: pointer !important;
   transition: all 0.18s ease !important;
@@ -625,9 +639,10 @@ app-header {
 .xanhla-prod-card-buynow:hover:not(:disabled),
 .coop-buynow-btn:hover:not(:disabled),
 .fs-buynow-btn:hover:not(:disabled) {
-  background: #E05D00 !important;
-  border-color: #E05D00 !important;
-  box-shadow: 0 2px 8px rgba(255, 107, 0, 0.28) !important;
+  background: #f0f7f2 !important;
+  border-color: #174723 !important;
+  color: #174723 !important;
+  box-shadow: 0 3px 10px rgba(32, 92, 46, 0.15) !important;
   transform: translateY(-1px) !important;
 }
 
@@ -644,7 +659,7 @@ app-header {
   height: 36px !important;
   min-height: 36px !important;
   max-height: 36px !important;
-  border-radius: 6px !important;
+  border-radius: 9999px !important;
   background: #f1f5f9 !important;
   border: 1px solid #e2e8f0 !important;
   color: #94a3b8 !important;
