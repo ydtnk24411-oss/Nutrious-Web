@@ -51,6 +51,9 @@ const allowedOrigins = new Set([
   'http://localhost:4201',
   'http://127.0.0.1:4201',
   'http://[::1]:4201',
+    'https://evergreen-client.pages.dev',
+  'https://evergreen-admin.pages.dev',
+
 ]);
 
 // ── Middleware ────────────────────────────────────────────
