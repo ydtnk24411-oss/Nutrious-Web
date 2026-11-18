@@ -42,19 +42,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   readonly fallbackProductImage = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=700&q=80';
 
   // =========================================================================
-  // 1. DANH SÁCH BANNER CHÍNH (SLIDER) - BỘ SƯU TẬP BANNER ĐẦY ĐỦ, ĐA DẠNG CÀNG NHIỀU CÀNG TỐT
+  // 1. DANH SÁCH BANNER CHÍNH (SLIDER) - 100% ẢNH NÔNG SẢN & THỰC PHẨM SẮC NÉT
   // =========================================================================
   private readonly defaultHeroBanners: Array<{ image: string; link?: string; alt?: string }> = [
-    {
-      image: '/images/banners/banner-9-9-thuc-pham-sach.jpg',
-      link: '/online-ordering',
-      alt: '9.9 Thực phẩm sạch - Đại tiệc nông sản tươi ngon'
-    },
-    {
-      image: '/images/banners/banner-uu-dai-hoi-vien.jpg',
-      link: '/loyalty',
-      alt: 'Ưu đãi hội viên cực sốc - Giảm 10% tất cả hóa đơn'
-    },
     {
       image: '/images/banners/banner-fresh-vegetables.jpg',
       link: '/online-ordering',
@@ -84,6 +74,16 @@ export class HomeComponent implements OnInit, OnDestroy {
       image: '/images/banners/banner-seafood-ice.jpg',
       link: '/online-ordering',
       alt: 'Tôm cá tươi ngon ướp đá giao hàng lạnh nội thành'
+    },
+    {
+      image: '/images/banners/banner-salmon-dish.jpg',
+      link: '/nutrition',
+      alt: 'Cá hồi áp chảo cùng rau củ thanh mát đủ chất'
+    },
+    {
+      image: '/images/banners/banner-spices-bowls.jpg',
+      link: '/cook-with-what-you-have',
+      alt: 'Gia vị nấu nướng thượng hạng cho gia đình'
     }
   ];
 
@@ -257,9 +257,11 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.http.get<any>(`${API_BASE}/banners`, { params: { _t: String(now) } }).subscribe({
       next: (res) => {
         if (res && res.success && res.data) {
+          const legacyBlacklist = ['9-9', 'hoi-vien', 'thuc-pham-sach'];
           const activeSlides = (res.data.heroSlides || [])
             .map((s: any, idx: number) => ({ s, idx }))
             .filter(({ s }: { s: any }) => s && s.active !== false && String(s.image || '').trim().length > 0)
+            .filter(({ s }: { s: any }) => !legacyBlacklist.some(k => String(s.image || '').toLowerCase().includes(k)))
             .sort((a: { s: any; idx: number }, b: { s: any; idx: number }) => {
               const orderDiff = (Number(a.s?.sortOrder) || 999) - (Number(b.s?.sortOrder) || 999);
               return orderDiff !== 0 ? orderDiff : a.idx - b.idx;
@@ -267,8 +269,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             .map(({ s }: { s: any }) => s);
 
           const isCustomized = Boolean(
-            (res.data.updatedBy && res.data.updatedBy !== 'system')
-            || activeSlides.some((s: any) => String(s.image || '').includes('/api/banners/media/'))
+            activeSlides.some((s: any) => String(s.image || '').includes('/api/banners/media/'))
           );
 
           if (activeSlides.length > 0 && isCustomized) {
