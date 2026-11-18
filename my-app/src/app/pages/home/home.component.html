@@ -170,9 +170,11 @@
                 </ng-container>
                 <ng-template #activeDealBtns>
                   <button type="button" class="coop-add-btn" (click)="addDealToCart(deal, $event)" [attr.aria-label]="'Thêm ' + deal.name + ' vào giỏ'">
-                    <span>Thêm vào giỏ hàng</span>
+                    <i class="bi bi-cart-plus"></i>
+                    <span>THÊM GIỎ</span>
                   </button>
                   <button type="button" class="coop-buynow-btn" (click)="openBuyNowDeal(deal)" [attr.aria-label]="'Mua ngay ' + deal.name">
+                    <i class="bi bi-lightning-charge-fill"></i>
                     <span>Mua ngay</span>
                   </button>
                 </ng-template>
@@ -201,7 +203,7 @@
       <div class="coop-product-grid coop-api-grid" *ngIf="!loadingProducts && apiProducts.length">
         <article *ngFor="let product of visibleProducts" class="coop-product-card">
           <a class="coop-product-photo" [routerLink]="productSlug(product)"><img [src]="product.image || fallbackProductImage" [alt]="product.name" loading="lazy"><span class="coop-product-tag">{{ getCategoryName(product.categoryId) }}</span></a>
-          <div class="coop-product-info"><small>{{ getCategoryName(product.categoryId) }}</small><h3><a [routerLink]="productSlug(product)">{{ product.name }}</a></h3><p>{{ product.description || 'Lựa chọn tiện lợi cho gia đình bạn.' }}</p><div class="coop-price-row"><strong>{{ formatPrice(product.priceNumber || product.price) }}</strong></div><div class="coop-card-btn-row"><ng-container *ngIf="isProductUnavailable(product); else availableProductBtns"><button type="button" class="coop-add-btn" disabled><span>{{ product.isCombo && product.comboStatus === 'paused' ? 'Tạm ngừng kinh doanh' : 'Tạm hết hàng' }}</span></button></ng-container><ng-template #availableProductBtns><button type="button" class="coop-add-btn" (click)="addToCart(product, $event)" [attr.aria-label]="'Thêm ' + product.name + ' vào giỏ'"><span>Thêm vào giỏ hàng</span></button><button type="button" class="coop-buynow-btn" (click)="openBuyNow(product)" [attr.aria-label]="'Mua ngay ' + product.name"><span>Mua ngay</span></button></ng-template></div></div>
+          <div class="coop-product-info"><small>{{ getCategoryName(product.categoryId) }}</small><h3><a [routerLink]="productSlug(product)">{{ product.name }}</a></h3><p>{{ product.description || 'Lựa chọn tiện lợi cho gia đình bạn.' }}</p><div class="coop-price-row"><strong>{{ formatPrice(product.priceNumber || product.price) }}</strong></div><div class="coop-card-btn-row"><ng-container *ngIf="isProductUnavailable(product); else availableProductBtns"><button type="button" class="coop-add-btn" disabled><span>{{ product.isCombo && product.comboStatus === 'paused' ? 'Tạm ngừng kinh doanh' : 'Tạm hết hàng' }}</span></button></ng-container><ng-template #availableProductBtns><button type="button" class="coop-add-btn" (click)="addToCart(product, $event)" [attr.aria-label]="'Thêm ' + product.name + ' vào giỏ'"><i class="bi bi-cart-plus"></i><span>THÊM GIỎ</span></button><button type="button" class="coop-buynow-btn" (click)="openBuyNow(product)" [attr.aria-label]="'Mua ngay ' + product.name"><i class="bi bi-lightning-charge-fill"></i><span>Mua ngay</span></button></ng-template></div></div>
         </article>
       </div>
     </section>

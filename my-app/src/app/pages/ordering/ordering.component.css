@@ -893,19 +893,20 @@
   font-weight: 900;
 }
 
-/* ADD TO CART & BUY NOW BUTTONS (PILL SHAPE TO MATCH USER REFERENCE) */
+/* ADD TO CART & BUY NOW BUTTONS (MATCHING EXACT SCREENSHOT) */
 .ord-page .xanhla-prod-card-add,
 .ord-page .xanhla-prod-card button {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 5px;
   width: 100%;
   min-height: 36px;
-  padding: 6px 10px;
-  border: 1.5px solid #205c2e;
-  border-radius: 9999px;
-  background: #205c2e;
-  color: #ffffff;
+  padding: 6px 8px;
+  border: 1.5px solid #16a34a;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #16a34a;
   font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 11.5px;
   font-weight: 700;
@@ -914,8 +915,9 @@
 }
 
 .ord-page .xanhla-prod-card-add:hover {
-  background: #174723;
-  border-color: #174723;
+  background: #f0fdf4;
+  border-color: #15803d;
+  color: #15803d;
 }
 
 .ord-page .ord-qty-picker--full {

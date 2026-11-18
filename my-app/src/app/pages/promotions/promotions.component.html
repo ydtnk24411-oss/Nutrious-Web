@@ -152,9 +152,11 @@
                     </button>
                   } @else {
                     <button type="button" class="fs-add-btn" (click)="addDealToCart(deal, $event)" [attr.aria-label]="'Thêm ' + deal.name + ' vào giỏ'">
-                      <span>Thêm vào giỏ hàng</span>
+                      <i class="bi bi-cart-plus"></i>
+                      <span>THÊM GIỎ</span>
                     </button>
                     <button type="button" class="fs-buynow-btn" (click)="openBuyNowDeal(deal)" [attr.aria-label]="'Mua ngay ' + deal.name">
+                      <i class="bi bi-lightning-charge-fill"></i>
                       <span>Mua ngay</span>
                     </button>
                   }

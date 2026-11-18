@@ -448,13 +448,15 @@
                       } @else if (itemQty(prod.slug) >= getProdStock(prod)) {
                       <span>Đã đạt tối đa</span>
                       } @else {
-                      <span>Thêm vào giỏ hàng</span>
+                      <i class="bi bi-cart-plus"></i>
+                      <span>THÊM GIỎ</span>
                       }
                     </button>
 
                     @if (!isProdUnavailable(prod)) {
                     <button type="button" class="xanhla-prod-card-buynow" (click)="openBuyNow(prod)"
                       [attr.aria-label]="'Mua ngay ' + prod.name">
+                      <i class="bi bi-lightning-charge-fill"></i>
                       <span>Mua ngay</span>
                     </button>
                     }
