@@ -113,6 +113,8 @@ export interface XanhLaUser {
   phone?: string;
   avatar?: string;
   title?: string;
+  gender?: string;
+  birthday?: string;
   addresses?: XanhLaAddress[];
   loyaltyTier?: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
   points?: number;

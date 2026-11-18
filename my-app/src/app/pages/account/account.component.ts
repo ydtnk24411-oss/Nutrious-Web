@@ -8,15 +8,15 @@ import { CartService } from '../../shared/services/cart.service';
 import { GoogleAuthService } from '../../shared/services/google-auth.service';
 import { LoyaltyService } from '../../shared/services/loyalty.service';
 import { VoucherService } from '../../shared/services/voucher.service';
-import { XanhLaAddress } from '../../shared/models/xanh-la.models';
+import { XanhLaAddress, XanhLaProduct } from '../../shared/models/xanh-la.models';
 import {
   AddressPickerModalComponent,
   AddressPickerResult,
 } from '../../components/address-picker-modal/address-picker-modal.component';
-
 import { WishlistService } from '../../shared/services/wishlist.service';
+import { buildVoucherVisual, formatVoucherDateVi } from '../../shared/utils/voucher-visual.util';
 
-type Tab = 'overview' | 'orders' | 'wishlist' | 'addresses' | 'settings';
+type Tab = 'overview' | 'orders' | 'addresses' | 'vouchers' | 'wishlist' | 'settings';
 
 @Component({
   selector: 'app-account',
@@ -30,8 +30,8 @@ export class AccountComponent implements OnInit, OnDestroy {
   protected wishlist   = inject(WishlistService);
   protected googleAuth = inject(GoogleAuthService);
   protected router     = inject(Router);
+  protected voucher    = inject(VoucherService);
   private loyalty      = inject(LoyaltyService);
-  private voucher      = inject(VoucherService);
   private route        = inject(ActivatedRoute);
   private orderApi     = inject(OrderApiService);
 
@@ -44,12 +44,15 @@ export class AccountComponent implements OnInit, OnDestroy {
         this.lastName.set(u.lastName ?? '');
         this.phone.set(u.phone ?? '');
         this.title.set(u.title ?? '');
+        this.gender.set(u.gender ?? '');
+        this.birthday.set(u.birthday ?? '');
       }
     });
   }
 
-  // ── Tab ──────────────────────────────────────
+  // ── Tab & Inline Edit ────────────────────────
   activeTab = signal<Tab>('overview');
+  editingOverviewProfile = signal(false);
 
   // ── My Account form ──────────────────────────
   displayName = signal('');
@@ -57,6 +60,8 @@ export class AccountComponent implements OnInit, OnDestroy {
   lastName    = signal('');
   phone       = signal('');
   title       = signal('');
+  gender      = signal('');
+  birthday    = signal('');
   avatar      = signal('');
   saved       = signal(false);
   saving      = signal(false);
@@ -67,7 +72,7 @@ export class AccountComponent implements OnInit, OnDestroy {
   showAddressModal = signal(false);
   editingAddress = signal<Partial<XanhLaAddress> | null>(null);
 
-  // ── Order History ───────────────
+  // ── Order History ────────────────────────────
   orders = signal<any[]>([]);
   loadingOrders = signal(false);
 
@@ -140,24 +145,43 @@ export class AccountComponent implements OnInit, OnDestroy {
 
   readonly userVouchers = this.voucher.availableVouchers;
 
+  readonly userVoucherViews = computed(() =>
+    this.userVouchers().map((uv, idx) => ({
+      uv,
+      visual: buildVoucherVisual(uv.voucher, idx),
+      endDate: formatVoucherDateVi(uv.voucher.endDate),
+    }))
+  );
+
   readonly availableRewards = computed(() => {
     return this.loyalty.getAvailableRewards();
   });
 
+  readonly defaultAddressText = computed(() => {
+    const addrs = this.cart.currentUser()?.addresses ?? [];
+    if (addrs.length === 0) return '';
+    const addr = addrs.find(a => a.isDefault) || addrs[0];
+    if (!addr) return '';
+    const cityNeeded = addr.city && !this.isCityIncludedInAddress(addr);
+    return cityNeeded ? `${addr.address}, ${addr.city}` : addr.address;
+  });
+
+  readonly bannerProduceImg = signal<string>('/account-banner-produce.jpg');
+
+  onBannerImageError(): void {
+    if (this.bannerProduceImg() !== 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&q=80') {
+      this.bannerProduceImg.set('https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&q=80');
+    }
+  }
+
   ngOnInit(): void {
     const u = this.cart.currentUser();
     if (!u) { this.router.navigate(['/']); return; }
-    this.displayName.set(u.name ?? '');
-    this.firstName.set(u.firstName ?? '');
-    this.lastName.set(u.lastName ?? '');
-    this.phone.set(u.phone ?? '');
-    this.title.set(u.title ?? '');
-    // avatar lay truc tiep tu cart.currentUser() de luon dong bo
+    this.syncProfileSignals(u);
 
-    // Fetch moi nhat tu backend de dam bao avatar luon dung sau login
     this.route.queryParams.subscribe(params => {
       const tab = params['tab'];
-      if (tab && ['overview', 'orders', 'wishlist', 'addresses', 'settings'].includes(tab)) {
+      if (tab && ['overview', 'orders', 'addresses', 'vouchers', 'wishlist', 'settings'].includes(tab)) {
         this.activeTab.set(tab as Tab);
       }
     });
@@ -168,6 +192,24 @@ export class AccountComponent implements OnInit, OnDestroy {
     this.loadOrders();
   }
 
+  private syncProfileSignals(u: any): void {
+    this.displayName.set(u.name ?? '');
+    this.firstName.set(u.firstName ?? '');
+    this.lastName.set(u.lastName ?? '');
+    this.phone.set(u.phone ?? '');
+    this.title.set(u.title ?? '');
+    this.gender.set(u.gender ?? '');
+    this.birthday.set(u.birthday ?? '');
+  }
+
+  selectTab(tab: Tab): void {
+    this.activeTab.set(tab);
+    this.editingOverviewProfile.set(false);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
   // ── Load Orders ──────────────────────────────
   loadOrders(): void {
     this.loadingOrders.set(true);
@@ -175,21 +217,36 @@ export class AccountComponent implements OnInit, OnDestroy {
       next: (res) => {
         this.loadingOrders.set(false);
         if (res?.data) {
-          this.orders.set(res.data.map((order: any) => ({
-            id: order._id,
-            _id: order._id,
-            orderCode: order.orderCode,
-            date: order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : '',
-            createdAt: order.createdAt,
-            total: order.total,
-            status: order.status,
-            items: (order.items || []).map((item: any) => ({
-              name: item.productName || item.name || 'Sản phẩm',
-              productName: item.productName || item.name || 'Sản phẩm',
-              quantity: item.quantity,
-              price: item.priceNumber ?? (typeof item.productPrice === 'number' ? item.productPrice : Number(String(item.productPrice || 0).replace(/[^\d]/g, ''))),
-            })),
-          })));
+          this.orders.set(res.data.map((order: any) => {
+            const dt = order.createdAt ? new Date(order.createdAt) : null;
+            const dateStr = dt ? dt.toLocaleDateString('vi-VN') : '';
+            const timeStr = dt
+              ? `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`
+              : '';
+            const dateTime = timeStr && dateStr ? `${timeStr} - ${dateStr}` : dateStr;
+
+            return {
+              id: order._id,
+              _id: order._id,
+              orderCode: order.orderCode,
+              date: dateStr,
+              dateTime,
+              createdAt: order.createdAt,
+              total: order.total,
+              status: order.status,
+              storeName: order.storeName || 'EvergreenMart',
+              items: (order.items || []).map((item: any) => ({
+                productId: typeof item.product === 'string' ? item.product : (item.product?._id || ''),
+                name: item.productName || item.name || 'Sản phẩm',
+                productName: item.productName || item.name || 'Sản phẩm',
+                image: item.productImage || item.image || item.product?.image || '',
+                selectedOption: item.selectedOption || '',
+                isCombo: Boolean(item.isCombo || (Array.isArray(item.comboItems) && item.comboItems.length > 0)),
+                quantity: item.quantity || 1,
+                price: item.priceNumber ?? (typeof item.productPrice === 'number' ? item.productPrice : Number(String(item.productPrice || 0).replace(/[^\d]/g, ''))),
+              })),
+            };
+          }));
         }
       },
       error: (err) => {
@@ -197,6 +254,64 @@ export class AccountComponent implements OnInit, OnDestroy {
         console.error('Failed to load user orders:', err);
       }
     });
+  }
+
+  readonly fallbackOrderImage = '/evergreen-logo.png';
+
+  onOrderImageError(event: Event): void {
+    const img = event.target as HTMLImageElement | null;
+    if (img && !img.dataset['fallbackApplied']) {
+      img.dataset['fallbackApplied'] = '1';
+      img.src = this.fallbackOrderImage;
+    }
+  }
+
+  reorderOrder(order: any): void {
+    if (!order?.items?.length) return;
+    for (const item of order.items) {
+      const prod: XanhLaProduct = {
+        id: item.productId || item.name,
+        name: item.name,
+        slug: item.productId || item.name,
+        price: this.formatPrice(item.price || 0),
+        priceNumber: item.price || 0,
+        image: item.image || this.fallbackOrderImage,
+        category: '',
+        categoryVi: '',
+        description: '',
+        container: '',
+        cutType: '',
+        cutting: '',
+        packSize: '',
+        packaging: '',
+        preparation: '',
+        quantity: '',
+        ripeness: '',
+        sizeGroup: '',
+        thickness: '',
+        type: '',
+        weight: '',
+        isCombo: Boolean(item.isCombo),
+      };
+      this.cart.addItem(prod, item.quantity || 1, item.selectedOption || undefined);
+    }
+    this.cart.openCartDrawer();
+  }
+
+  formatStatCount(n: number): string {
+    const val = Number(n) || 0;
+    if (val >= 0 && val < 10) return `0${val}`;
+    return val.toLocaleString('vi-VN');
+  }
+
+  formatBirthdayDisplay(raw?: string): string {
+    const text = String(raw || '').trim();
+    if (!text) return '';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+      const [y, m, d] = text.split('-');
+      return `${d}/${m}/${y}`;
+    }
+    return text;
   }
 
   addWishlistItemToCart(item: any): void {
@@ -214,112 +329,71 @@ export class AccountComponent implements OnInit, OnDestroy {
   saveAccount(e: Event): void {
     e.preventDefault();
     this.saving.set(true);
-    // Build full display name từ firstName + lastName nếu có
     const fullName = this.displayName().trim() || [this.firstName(), this.lastName()].filter(Boolean).join(' ').trim();
     const updateData = {
       name:      fullName,
       firstName: this.firstName(),
       lastName:  this.lastName(),
-
       title:     this.title(),
+      gender:    this.gender(),
+      birthday:  this.birthday(),
       avatar:    this.cart.currentUser()?.avatar ?? '',
     };
-    console.log('Saving account with data:', updateData);
     this.cart.updateUser(updateData);
     setTimeout(() => {
       this.saving.set(false);
       this.saved.set(true);
+      this.editingOverviewProfile.set(false);
       setTimeout(() => this.saved.set(false), 3000);
-    }, 400);
+    }, 350);
   }
 
   // ── Upload Avatar ────────────────────────────
   onAvatarUpload(event: Event): void {
-    console.log('onAvatarUpload triggered');
     const input = event.target as HTMLInputElement;
-    console.log('Input element:', input);
-    console.log('Input files:', input.files);
-    console.log('Input files length:', input.files?.length);
-
     const file = input.files?.[0];
-    if (!file) {
-      console.log('No file selected');
-      return;
-    }
+    if (!file) return;
 
-    console.log('Avatar upload started:', file.name, file.size, file.type);
-
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       alert('Kích thước ảnh không được vượt quá 2MB');
       return;
     }
-
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       alert('Vui lòng chọn file ảnh');
       return;
     }
 
     this.uploadingAvatar.set(true);
-
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = reader.result as string;
       this.uploadingAvatar.set(false);
-
-      // Auto-save avatar to backend
-      console.log('Saving avatar to backend...');
+      this.avatarMenuOpen.set(false);
       this.cart.updateUser({ avatar: base64 });
     };
     reader.onerror = () => {
-      console.error('FileReader error');
       alert('Không thể đọc file ảnh');
       this.uploadingAvatar.set(false);
     };
     reader.readAsDataURL(file);
   }
 
-  triggerAvatarInput(inputId: string): void {
-    console.log('triggerAvatarInput called with ID:', inputId);
-    const input = document.getElementById(inputId) as HTMLInputElement;
-    console.log('Input element found:', !!input);
-    if (input) {
-      console.log('Clicking input...');
-      input.click();
-    } else {
-      console.error('Input element not found');
-    }
-  }
-
   removeAvatar(): void {
     if (confirm('Bạn có chắc muốn xóa ảnh đại diện?')) {
       this.avatarMenuOpen.set(false);
-
-      // Auto-save empty avatar to backend
       this.cart.updateUser({ avatar: '' });
     }
   }
 
   toggleAvatarMenu(): void {
-    console.log('toggleAvatarMenu called, current state:', this.avatarMenuOpen());
     this.avatarMenuOpen.update(v => !v);
-    console.log('toggleAvatarMenu new state:', this.avatarMenuOpen());
-  }
-
-  closeAvatarMenu(): void {
-    console.log('closeAvatarMenu called');
-    this.avatarMenuOpen.set(false);
   }
 
   cancelAccount(): void {
     const u = this.cart.currentUser();
     if (!u) return;
-    this.displayName.set(u.name ?? '');
-    this.firstName.set(u.firstName ?? '');
-    this.lastName.set(u.lastName ?? '');
-    this.phone.set(u.phone ?? '');
-    this.title.set(u.title ?? '');
+    this.syncProfileSignals(u);
+    this.editingOverviewProfile.set(false);
   }
 
   // ── Addresses ────────────────────────────────
@@ -390,10 +464,10 @@ export class AccountComponent implements OnInit, OnDestroy {
       confirmed: 'Đã xác nhận',
       processing: 'Đang xử lý',
       preparing: 'Đang chuẩn bị',
-      shipping: 'Đang giao',
-      delivering: 'Đang giao',
-      delivered: 'Đã giao',
-      completed: 'Đã giao',
+      shipping: 'Đang giao hàng',
+      delivering: 'Đang giao hàng',
+      delivered: 'Đã giao hàng',
+      completed: 'Đã giao hàng',
       cancelled: 'Đã hủy',
       returned: 'Đã hoàn trả',
     };
@@ -404,34 +478,24 @@ export class AccountComponent implements OnInit, OnDestroy {
     const classMap: Record<string, string> = {
       pending: 'status-pending',
       confirmed: 'status-confirmed',
+      processing: 'status-preparing',
       preparing: 'status-preparing',
       shipping: 'status-shipping',
+      delivering: 'status-shipping',
       delivered: 'status-delivered',
+      completed: 'status-delivered',
       cancelled: 'status-cancelled',
       returned: 'status-returned',
     };
     return classMap[status] || '';
   }
 
-  // ── Vouchers ────────────────────────────────
-  collectVoucher(voucherId: string): void {
-    this.voucher.collectVoucher(voucherId).subscribe((res) => {
-      alert(res.success ? 'Đã thu thập voucher thành công!' : (res.message || 'Không thể thu thập voucher.'));
-    });
+  isCompletedOrder(status: string): boolean {
+    return ['completed', 'delivered'].includes(status);
   }
 
-  // ── Points & Rewards ────────────────────────
-  redeemReward(rewardId: string): void {
-    const user = this.cart.currentUser();
-    if (!user) return;
-
-    this.loyalty.redeemReward(user.email, rewardId).subscribe((result) => {
-      if (result.success) {
-        alert('Đổi quà thành công!');
-      } else {
-        alert(result.message || 'Không thể đổi quà');
-      }
-    });
+  isActiveOrder(status: string): boolean {
+    return ['pending', 'confirmed', 'processing', 'preparing', 'shipping', 'delivering'].includes(status);
   }
 
   // ── Logout ───────────────────────────────────
@@ -445,14 +509,12 @@ export class AccountComponent implements OnInit, OnDestroy {
     return (this.cart.currentUser()?.name ?? 'U').charAt(0).toUpperCase();
   }
 
-  maskPassword(): string { return '*******'; }
-
   openForgotPasswordModal(): void {
     this.cart.openAuthModal('forgot');
   }
 
   formatPrice(value: number): string {
-    return value.toLocaleString('vi-VN') + 'đ';
+    return (value || 0).toLocaleString('vi-VN') + 'đ';
   }
 
   @HostListener('document:click', ['$event'])
@@ -607,10 +669,8 @@ export class AccountComponent implements OnInit, OnDestroy {
       this.changePhoneOtpDigits.set(current);
       if (index < 5) {
         this.focusPhoneOtp(index + 1);
-      } else {
-        if (current.join('').length === 6) {
-          this.submitChangePhoneVerify();
-        }
+      } else if (current.join('').length === 6) {
+        this.submitChangePhoneVerify();
       }
     } else {
       current[index] = '';
