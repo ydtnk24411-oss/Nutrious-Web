@@ -893,16 +893,20 @@
   font-weight: 900;
 }
 
-/* ADD TO CART & BUY NOW BUTTONS (MATCHING EXACT SCREENSHOT) */
-.ord-page .xanhla-prod-card-add,
-.ord-page .xanhla-prod-card button {
-  display: flex;
+/* ADD TO CART & BUY NOW BUTTONS (STANDARDIZED DUAL ACTION BUTTON ROW) */
+.ord-page .xanhla-prod-card-add {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  width: 100%;
+  gap: 4px;
+  flex: 1 1 0%;
+  width: 50%;
+  min-width: 0;
+  max-width: 50%;
+  height: 36px;
   min-height: 36px;
-  padding: 6px 8px;
+  max-height: 36px;
+  padding: 0 4px;
   border: 1.5px solid #16a34a;
   border-radius: 6px;
   background: #ffffff;
@@ -912,12 +916,50 @@
   font-weight: 700;
   cursor: pointer;
   transition: all 0.18s ease;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
-.ord-page .xanhla-prod-card-add:hover {
+.ord-page .xanhla-prod-card-add:hover:not(:disabled) {
   background: #f0fdf4;
   border-color: #15803d;
   color: #15803d;
+}
+
+.ord-page .xanhla-prod-card-buynow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: 1 1 0%;
+  width: 50%;
+  min-width: 0;
+  max-width: 50%;
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  padding: 0 4px;
+  border: 1.5px solid #16a34a;
+  border-radius: 6px;
+  background: #16a34a;
+  color: #ffffff;
+  font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.ord-page .xanhla-prod-card-buynow i {
+  color: #fde047;
+  font-size: 12px;
+}
+
+.ord-page .xanhla-prod-card-buynow:hover:not(:disabled) {
+  background: #15803d;
+  border-color: #15803d;
 }
 
 .ord-page .ord-qty-picker--full {

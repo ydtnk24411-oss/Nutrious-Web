@@ -198,6 +198,7 @@
             @if (!isProductUnavailable(p)) {
               <button
                 class="acfc-btn-buy-now"
+                [class.is-flash-sale]="activeFlashSale() !== null"
                 type="button"
                 (click)="buyNow()"
               >

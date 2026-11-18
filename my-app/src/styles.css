@@ -537,37 +537,114 @@ app-header {
 }
 
 /* ==========================================================================
-   UNIFIED PRODUCT CARD ACTIONS (MATCHING EXACT TEAMMATE DESIGN & SCREENSHOT)
-   Nút 1: Viền xanh #16a34a, nền trắng, icon Bootstrap bi-cart-plus, chữ "THÊM GIỎ"
-   Nút 2: Nền cam đậm #FF6600, chữ trắng, icon Bootstrap bi-lightning-charge-fill, chữ "Mua ngay"
-   Bo góc chuẩn 6px, chỉ dùng Bootstrap Icons
+   ENTERPRISE PRODUCT CARD & ACTION BUTTON SYSTEM
+   - Tông màu chủ đạo: Xanh lá cây (#16a34a) - Vàng (#fde047 / #f59e0b)
+   - Sắc đỏ/cam (#FF6600 / #dc2626) DÀNH RIÊNG cho khối Flash Sale và nhãn giá
+   - Độ rộng 2 nút bằng nhau 50% - 50%, thẳng hàng tăm tắp trên cùng một hàng
+   - Căn chỉnh tự động đẩy nút xuống đáy thẻ (margin-top: auto)
+   - 100% Bootstrap Icons (bi bi-cart-plus, bi bi-lightning-charge-fill)
    ========================================================================== */
+
+/* 1. Chuẩn hóa Grid & Cột thẻ sản phẩm để thẳng hàng 100% */
+.coop-product-card,
+.xanhla-prod-card {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  background: #ffffff !important;
+  border: 1px solid #EAEAEA !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+.coop-product-card:hover,
+.xanhla-prod-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08) !important;
+  border-color: #16a34a !important;
+}
+
+.coop-product-info,
+.xanhla-prod-card-body {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  padding: 12px 14px !important;
+}
+
+.coop-product-info h3,
+.xanhla-prod-card-name,
+.xanhla-prod-card-title {
+  height: 38px !important;
+  max-height: 38px !important;
+  line-height: 19px !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  margin: 4px 0 6px !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: #1E293B !important;
+}
+
+.coop-product-info p,
+.xanhla-prod-card-desc {
+  height: 32px !important;
+  max-height: 32px !important;
+  line-height: 16px !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  margin: 0 0 6px !important;
+  font-size: 11.5px !important;
+  color: #64748B !important;
+}
+
+.coop-price-row,
+.xanhla-prod-card-price-row {
+  margin-top: auto !important;
+  margin-bottom: 8px !important;
+  min-height: 26px !important;
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 6px !important;
+}
+
+/* 2. Khung hàng chứa 2 nút (Row container) */
 .eg-card-btn-row,
 .ord-card-btn-row,
 .coop-card-btn-row,
 .fs-card-actions {
   display: flex !important;
+  flex-direction: row !important;
   align-items: center !important;
   gap: 8px !important;
   width: 100% !important;
-  margin-top: 10px !important;
+  margin-top: 0 !important;
+  padding-top: 4px !important;
+  box-sizing: border-box !important;
 }
 
-/* Button 1: THÊM GIỎ (Outline Green with Bootstrap Cart Icon) */
+/* 3. Nút 1: THÊM GIỎ (Outline Green, nền trắng, chữ xanh, icon cart) */
 .eg-card-btn-add,
 .xanhla-prod-card-add,
 .coop-add-btn,
 .fs-add-btn {
   flex: 1 1 0% !important;
+  width: 50% !important;
   min-width: 0 !important;
+  max-width: 50% !important;
   height: 36px !important;
   min-height: 36px !important;
   max-height: 36px !important;
-  padding: 0 6px !important;
+  padding: 0 4px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 5px !important;
+  gap: 4px !important;
   background: #ffffff !important;
   border: 1.5px solid #16a34a !important;
   border-radius: 6px !important;
@@ -581,6 +658,7 @@ app-header {
   text-decoration: none !important;
   box-sizing: border-box !important;
   line-height: 1 !important;
+  overflow: hidden !important;
 }
 
 .eg-card-btn-add i,
@@ -591,12 +669,12 @@ app-header {
   color: #16a34a !important;
   display: inline-block !important;
   line-height: 1 !important;
+  flex-shrink: 0 !important;
 }
 
 .eg-card-btn-add:hover:not(:disabled),
 .xanhla-prod-card-add:hover:not(:disabled),
-.coop-add-btn:hover:not(:disabled),
-.fs-add-btn:hover:not(:disabled) {
+.coop-add-btn:hover:not(:disabled) {
   background: #f0fdf4 !important;
   border-color: #15803d !important;
   color: #15803d !important;
@@ -604,23 +682,24 @@ app-header {
   transform: translateY(-1px) !important;
 }
 
-/* Button 2: Mua ngay (Solid Vibrant Orange with Bootstrap Lightning Icon) */
+/* 4. Nút 2: Mua ngay - SẢN PHẨM THƯỜNG (Xanh lá thương hiệu #16a34a, icon tia chớp vàng #fde047) */
 .eg-card-btn-buynow,
 .xanhla-prod-card-buynow,
-.coop-buynow-btn,
-.fs-buynow-btn {
+.coop-buynow-btn {
   flex: 1 1 0% !important;
+  width: 50% !important;
   min-width: 0 !important;
+  max-width: 50% !important;
   height: 36px !important;
   min-height: 36px !important;
   max-height: 36px !important;
-  padding: 0 6px !important;
+  padding: 0 4px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 5px !important;
-  background: #FF6600 !important;
-  border: 1.5px solid #FF6600 !important;
+  gap: 4px !important;
+  background: #16a34a !important;
+  border: 1.5px solid #16a34a !important;
   border-radius: 6px !important;
   color: #ffffff !important;
   font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
@@ -632,29 +711,52 @@ app-header {
   text-decoration: none !important;
   box-sizing: border-box !important;
   line-height: 1 !important;
+  overflow: hidden !important;
 }
 
 .eg-card-btn-buynow i,
 .xanhla-prod-card-buynow i,
-.coop-buynow-btn i,
-.fs-buynow-btn i {
+.coop-buynow-btn i {
   font-size: 12px !important;
-  color: #ffffff !important;
+  color: #fde047 !important; /* Tia chớp vàng tươi thương hiệu trên nền xanh lá */
   display: inline-block !important;
   line-height: 1 !important;
+  flex-shrink: 0 !important;
 }
 
 .eg-card-btn-buynow:hover:not(:disabled),
 .xanhla-prod-card-buynow:hover:not(:disabled),
-.coop-buynow-btn:hover:not(:disabled),
-.fs-buynow-btn:hover:not(:disabled) {
-  background: #e65c00 !important;
-  border-color: #e65c00 !important;
-  box-shadow: 0 2px 8px rgba(255, 102, 0, 0.3) !important;
+.coop-buynow-btn:hover:not(:disabled) {
+  background: #15803d !important;
+  border-color: #15803d !important;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3) !important;
   transform: translateY(-1px) !important;
 }
 
-/* Disabled State when Out of Stock */
+/* 5. Nút 2: Mua ngay - KHỐI FLASH SALE (Cam rực rỡ #FF6600, sắc đỏ/cam đặc trưng tạo cảm giác cấp bách) */
+.fs-buynow-btn,
+.coop-flash-panel .coop-buynow-btn,
+.promo-flash-deal .coop-buynow-btn {
+  background: #FF6600 !important;
+  border: 1.5px solid #FF6600 !important;
+  color: #ffffff !important;
+}
+
+.fs-buynow-btn i,
+.coop-flash-panel .coop-buynow-btn i,
+.promo-flash-deal .coop-buynow-btn i {
+  color: #ffffff !important;
+}
+
+.fs-buynow-btn:hover:not(:disabled),
+.coop-flash-panel .coop-buynow-btn:hover:not(:disabled),
+.promo-flash-deal .coop-buynow-btn:hover:not(:disabled) {
+  background: #e65c00 !important;
+  border-color: #e65c00 !important;
+  box-shadow: 0 2px 8px rgba(255, 102, 0, 0.3) !important;
+}
+
+/* 6. Trạng thái hết hàng (Disabled State) */
 .eg-card-btn-disabled,
 .xanhla-prod-card-add:disabled,
 .coop-add-btn:disabled,
@@ -663,6 +765,7 @@ app-header {
 .coop-buynow-btn:disabled,
 .fs-buynow-btn:disabled {
   width: 100% !important;
+  max-width: 100% !important;
   flex: 1 1 100% !important;
   height: 36px !important;
   min-height: 36px !important;

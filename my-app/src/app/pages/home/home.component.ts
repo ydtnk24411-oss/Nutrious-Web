@@ -42,33 +42,28 @@ export class HomeComponent implements OnInit, OnDestroy {
   readonly fallbackProductImage = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=700&q=80';
 
   // =========================================================================
-  // 1. DANH SÁCH BANNER CHÍNH (SLIDER) - MẶC ĐỊNH TRƯỚC KHI LOAD TỪ MONGODB
+  // 1. DANH SÁCH BANNER CHÍNH (SLIDER) - NÔNG SẢN TƯƠI SẠCH HIỆN ĐẠI TỪ PINTEREST
   // =========================================================================
   private readonly defaultHeroBanners: Array<{ image: string; link?: string; alt?: string }> = [
     {
-      image: '/images/banners/banner1.jpg',
+      image: 'https://i.pinimg.com/1200x/51/08/ac/5108ac35883574a4c50e9acd0e8123ba.jpg',
       link: '/online-ordering',
-      alt: 'Banner 1'
+      alt: 'Nông sản hữu cơ tươi sạch giao nhanh 2h'
     },
     {
-      image: '/images/banners/banner6.png',
+      image: 'https://i.pinimg.com/1200x/68/2f/ee/682fee6f3a630b2883f051fbad567c18.jpg',
       link: '/promotions',
-      alt: 'Banner 2'
+      alt: 'Ưu đãi nông sản tươi ngon mỗi ngày'
     },
     {
-      image: '/images/banners/banner8.png',
+      image: 'https://i.pinimg.com/1200x/6a/26/aa/6a26aabb2d338bcca1215f28626d2b34.jpg',
       link: '/cook-with-what-you-have',
-      alt: 'Banner 3'
+      alt: 'Gợi ý món ngon từ nông sản sạch'
     },
     {
-      image: '/images/banners/banner9.png',
-      link: '/cook-with-what-you-have',
-      alt: 'Banner 9'
-    },
-    {
-      image: '/images/banners/banner4.png',
-      link: '/cook-with-what-you-have',
-      alt: 'Banner 4'
+      image: '/images/banners/banner_fresh_produce.jpg',
+      link: '/nutrition',
+      alt: 'Thực phẩm dinh dưỡng thông minh'
     }
   ];
 
@@ -86,18 +81,18 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   // =========================================================================
-  // 2. HAI BANNER PHỤ BÊN PHẢI (ẢNH THUẦN)
+  // 2. HAI BANNER PHỤ BÊN PHẢI (ẢNH THUẦN PINTEREST ĐỒNG BỘ THƯƠNG HIỆU)
   // =========================================================================
   sideBanners = {
     top: {
-      image: '/images/banners/banner9.png',
+      image: 'https://i.pinimg.com/736x/ba/93/26/ba932662f9cfacf169b410e32a105b2a.jpg',
       link: '/online-ordering',
-      alt: 'Banner phụ trên'
+      alt: 'Nông sản tươi sạch mỗi ngày'
     },
     bottom: {
-      image: '/images/banners/banner4.png',
+      image: '/images/banners/banner_fresh_produce.jpg',
       link: '/nutrition',
-      alt: 'Banner phụ dưới'
+      alt: 'Dinh dưỡng thông minh cho cả gia đình'
     }
   };
 

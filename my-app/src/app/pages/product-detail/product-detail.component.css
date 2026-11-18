@@ -2458,8 +2458,8 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #FF6600;
-  border: 1.5px solid #FF6600;
+  background: #16a34a;
+  border: 1.5px solid #16a34a;
   color: #ffffff;
   font-size: 14px;
   font-weight: 700;
@@ -2471,14 +2471,30 @@
 
 .acfc-btn-buy-now i {
   font-size: 15px;
-  color: #ffffff;
+  color: #fde047;
 }
 
 .acfc-btn-buy-now:hover {
+  background: #15803d;
+  border-color: #15803d;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3);
+  transform: translateY(-1px);
+}
+
+.acfc-btn-buy-now.is-flash-sale {
+  background: #FF6600;
+  border-color: #FF6600;
+  color: #ffffff;
+}
+
+.acfc-btn-buy-now.is-flash-sale i {
+  color: #ffffff;
+}
+
+.acfc-btn-buy-now.is-flash-sale:hover {
   background: #e65c00;
   border-color: #e65c00;
   box-shadow: 0 4px 14px rgba(255, 102, 0, 0.3);
-  transform: translateY(-1px);
 }
 
 .acfc-btn-wishlist {
