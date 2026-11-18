@@ -537,20 +537,6 @@ app-header {
 }
 
 /* ==========================================================================
-   UNIFIED PRODUCT CARD ACTIONS (ENTERPRISE E-COMMERCE STANDARD)
-   ========================================================================== */
-.eg-card-btn-row,
-.ord-card-btn-row,
-.coop-card-btn-row,
-.fs-card-actions {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  width: 100% !important;
-  margin-top: 10px !important;
-}
-
-/* ==========================================================================
    UNIFIED PRODUCT CARD ACTIONS (MATCHING EXACT TEAMMATE DESIGN & SCREENSHOT)
    Nút 1: Viền xanh #16a34a, nền trắng, icon Bootstrap bi-cart-plus, chữ "THÊM GIỎ"
    Nút 2: Nền cam đậm #FF6600, chữ trắng, icon Bootstrap bi-lightning-charge-fill, chữ "Mua ngay"
