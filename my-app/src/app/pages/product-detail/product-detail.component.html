@@ -10,8 +10,45 @@
       </div>
 
       <div class="xanhla-product-detail-layout">
-        <div class="xanhla-product-gallery-main">
-          <img [src]="p.image" [alt]="p.name" />
+        <div class="xanhla-product-gallery-col">
+          <div class="xanhla-product-gallery-main" (click)="openImagePreview(activeGalleryImage())" title="Bấm để phóng to ảnh">
+            <img [src]="activeGalleryImage()" [alt]="p.name" />
+            @if (galleryImages().length > 1) {
+              <button
+                type="button"
+                class="xanhla-gallery-arrow prev"
+                aria-label="Ảnh trước"
+                (click)="$event.stopPropagation(); stepGalleryImage(-1)"
+              >
+                <i class="bi bi-chevron-left"></i>
+              </button>
+              <button
+                type="button"
+                class="xanhla-gallery-arrow next"
+                aria-label="Ảnh tiếp theo"
+                (click)="$event.stopPropagation(); stepGalleryImage(1)"
+              >
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            }
+          </div>
+
+          @if (galleryImages().length > 1) {
+            <div class="xanhla-product-thumbs" role="list" aria-label="Thư viện ảnh sản phẩm">
+              @for (imgUrl of galleryImages(); track imgUrl) {
+                <button
+                  type="button"
+                  class="xanhla-product-thumb"
+                  [class.is-active]="activeImageIndex() === $index"
+                  (click)="selectGalleryImage($index)"
+                  [attr.aria-label]="'Xem ảnh ' + ($index + 1) + ' của ' + p.name"
+                  [attr.aria-pressed]="activeImageIndex() === $index"
+                >
+                  <img [src]="imgUrl" [alt]="p.name + ' ảnh ' + ($index + 1)" loading="lazy" />
+                </button>
+              }
+            </div>
+          }
         </div>
 
         <div class="xanhla-product-info-panel">

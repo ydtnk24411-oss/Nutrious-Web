@@ -1107,9 +1107,21 @@ app-header {
 .xanhla-breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); margin-bottom: 24px; }
 .xanhla-breadcrumb a:hover { color: var(--green-700); }
 
-.xanhla-product-detail-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 52px; margin-bottom: 52px; }
-.xanhla-product-gallery-main { border-radius: var(--r-xl); overflow: hidden; background: var(--green-100); aspect-ratio: 1/1; }
-.xanhla-product-gallery-main img { width: 100%; height: 100%; object-fit: cover; }
+.xanhla-product-detail-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 52px; margin-bottom: 52px; align-items: start; }
+.xanhla-product-gallery-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.xanhla-product-gallery-main {
+  position: relative;
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e5ece5;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-in;
+}
+.xanhla-product-gallery-main img { width: 100%; height: 100%; object-fit: contain; padding: 12px; display: block; transition: opacity .18s ease; }
 
 .xanhla-product-info-panel h1 { font-family: var(--font-display); font-size: 32px; font-weight: 700; margin: 0 0 8px; color: var(--ink); }
 .xanhla-product-info-price { font-size: 26px; font-weight: 800; color: var(--green-700); margin-bottom: 18px; }

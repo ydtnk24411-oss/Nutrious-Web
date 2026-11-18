@@ -2,7 +2,24 @@ const mongoose = require('mongoose');
 const Product = require('../models/Product');
 
 const COMBO_ITEM_POPULATE_FIELDS =
-  'name slug image price priceNumber unit weight stock isActive isCombo categoryVi category';
+  'name slug image images price priceNumber unit weight stock isActive isCombo categoryVi category';
+
+function normalizeProductImages(doc, extraImages = []) {
+  const candidates = [
+    doc?.image,
+    ...(Array.isArray(doc?.images) ? doc.images : []),
+    ...(Array.isArray(extraImages) ? extraImages : []),
+  ];
+  const seen = new Set();
+  const result = [];
+  for (const raw of candidates) {
+    const url = typeof raw === 'string' ? raw.trim() : '';
+    if (!url || seen.has(url)) continue;
+    seen.add(url);
+    result.push(url);
+  }
+  return result;
+}
 
 function slugifyVietnamese(raw) {
   const base = String(raw || '')
@@ -93,8 +110,17 @@ function enrichComboDocument(doc) {
   const savingPercent =
     retailTotal > 0 ? Math.round((savingAmount / retailTotal) * 100) : 0;
 
+  const comboItemImgs = enrichedItems.flatMap((ci) => {
+    const prod = ci?.product;
+    if (!prod || typeof prod !== 'object') return [];
+    return [prod.image, ...(Array.isArray(prod.images) ? prod.images.slice(0, 1) : [])];
+  });
+  const normalizedImages = normalizeProductImages(obj, comboItemImgs);
+
   return {
     ...obj,
+    image: normalizedImages[0] || obj.image || '',
+    images: normalizedImages,
     comboStatus: status,
     isActive: status === 'active',
     comboItems: enrichedItems,
@@ -114,11 +140,15 @@ function enrichProductOrComboList(docs) {
     const isCombo = d && d.isCombo === true;
     if (isCombo) return enrichComboDocument(d);
     const obj = typeof d?.toObject === 'function' ? d.toObject({ virtuals: true }) : { ...d };
-    if (obj && obj.availableOnlineStock === undefined) {
-      const stock = obj.stock ?? 0;
-      const reserved = obj.reservedStock ?? 0;
-      const buffer = obj.safetyBuffer ?? 2;
-      obj.availableOnlineStock = Math.max(0, stock - reserved - buffer);
+    if (obj) {
+      if (obj.availableOnlineStock === undefined) {
+        const stock = obj.stock ?? 0;
+        const reserved = obj.reservedStock ?? 0;
+        const buffer = obj.safetyBuffer ?? 2;
+        obj.availableOnlineStock = Math.max(0, stock - reserved - buffer);
+      }
+      obj.images = normalizeProductImages(obj);
+      if (!obj.image && obj.images.length) obj.image = obj.images[0];
     }
     return obj;
   });
@@ -243,6 +273,7 @@ async function generateUniqueComboSlug(name, requestedSlug, excludeId = null) {
 
 module.exports = {
   COMBO_ITEM_POPULATE_FIELDS,
+  normalizeProductImages,
   slugifyVietnamese,
   resolveComboStatus,
   enrichComboDocument,

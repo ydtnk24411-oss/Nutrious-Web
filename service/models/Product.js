@@ -30,6 +30,7 @@ const productSchema = new mongoose.Schema(
     price: { type: String, required: true },           // display string "25 ₫"
     priceNumber: { type: Number, required: true, min: 0 },
     image: { type: String, default: '' },
+    images: { type: [String], default: [] },
     category: { type: String, default: '' },
     categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', default: null },
     categoryVi: { type: String, default: '' },

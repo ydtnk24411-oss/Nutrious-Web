@@ -45,6 +45,7 @@ export interface XanhLaProduct {
   price: string;
   priceNumber: number;
   image: string;
+  images?: string[];
   category: string;
   categoryVi: string;
   container: string;

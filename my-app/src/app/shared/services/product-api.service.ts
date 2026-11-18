@@ -30,6 +30,7 @@ export interface ApiProduct {
   price: string;
   priceNumber: number;
   image: string;
+  images?: string[];
   categoryId: string;
   category?: string;
   categoryVi?: string;
