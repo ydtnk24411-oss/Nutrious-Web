@@ -213,82 +213,172 @@
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
-  min-width: 260px;
+  min-width: 275px;
   width: max-content;
-  max-width: 320px;
+  max-width: 330px;
   background: #ffffff;
   z-index: 1100;
   border: 1px solid #e2e8f0;
-  border-top: 3px solid var(--green-700);
-  box-shadow: 0 16px 44px rgba(28, 52, 26, .18);
-  border-radius: var(--r-md);
-  padding: 6px 0;
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.14), 0 4px 12px rgba(15, 23, 42, 0.05);
+  padding: 0 0 6px 0;
+  overflow: hidden;
 }
 
 .xanhla-user-menu-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px;
-  border-bottom: 1px solid #eef2e8;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .xanhla-user-menu-avatar {
-  width: 48px;
-  height: 48px;
+  width: 46px;
+  height: 46px;
   border-radius: 50% !important;
   overflow: hidden;
   object-fit: cover;
-  background: var(--green-700);
+  background: #16a34a;
   flex-shrink: 0;
   display: block;
+  border: 2px solid #bbf7d0;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.15);
 }
 
 .xanhla-user-menu-avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 50%;
 }
 
 .xanhla-user-menu-avatar-placeholder {
-  width: 100%;
-  height: 100%;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #16a34a, #15803d);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: #fff;
-  font-family: 'Georgia', serif;
+  border: 2px solid #bbf7d0;
+  flex-shrink: 0;
 }
 
 .xanhla-user-menu-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .xanhla-user-menu-info strong {
-  font-size: 14px;
-  color: var(--ink);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .xanhla-user-menu-info span {
   font-size: 12px;
-  color: var(--muted);
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.xanhla-user-menu a {
-  display: flex;
+.xanhla-user-menu-points {
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 4px;
+  margin-top: 5px;
+  padding: 2px 8px;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #b45309;
+  width: fit-content;
 }
 
-.xanhla-user-menu button {
+.xanhla-user-menu-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 11px;
   width: 100%;
+  padding: 9.5px 18px;
+  font-size: 13.5px;
+  font-weight: 550;
+  color: #334155;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.xanhla-user-menu-item:hover {
+  background: #f0fdf4;
+  color: #166534;
+  padding-left: 22px;
+}
+
+.xanhla-user-menu-item i {
+  font-size: 16px;
+  color: #64748b;
+  transition: color 0.15s ease;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.xanhla-user-menu-item:hover i {
+  color: #16a34a;
+}
+
+.xanhla-user-menu-badge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  background: #ffe4e6;
+  color: #e11d48;
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+
+.xanhla-user-menu-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 5px 0;
+}
+
+.xanhla-user-menu-item.xl-logout-btn {
+  color: #dc2626;
+  margin-top: 1px;
+}
+
+.xanhla-user-menu-item.xl-logout-btn i {
+  color: #dc2626;
+}
+
+.xanhla-user-menu-item.xl-logout-btn:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+  padding-left: 22px;
+}
+
+.xanhla-user-menu-item.xl-logout-btn:hover i {
+  color: #b91c1c;
 }
 
 /* Mobile toggle (Only on mobile <= 960px) */
@@ -1284,27 +1374,40 @@
 .xl-subnav-store-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 12px;
-  border: 1px solid #bbf7d0;
-  border-radius: 8px;
-  background: #f0fdf4;
-  color: #15803d;
+  gap: 7px;
+  height: 33px;
+  padding: 0 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 20px;
+  background: #ffffff;
+  color: #1f2937;
   font-size: 12.5px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.15s;
+  transition: all 0.18s ease;
 }
 
 .xl-subnav-store-btn:hover {
-  background: #dcfce7;
+  background: #f0fdf4;
   border-color: #86efac;
+  color: #15803d;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.12);
+}
+
+.xl-store-pin-icon {
+  color: #16a34a;
+  font-size: 13.5px;
+}
+
+.xl-store-chevron {
+  font-size: 10px;
+  color: #64748b;
+  margin-left: 2px;
 }
 
 .xl-subnav-store-label {
-  max-width: 210px;
+  max-width: 190px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1321,8 +1424,8 @@
   flex-direction: column;
   background: #fff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.15);
+  border-radius: 14px;
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.15);
   overflow: hidden;
 }
 
@@ -1697,7 +1800,7 @@
   font-size: 13px;
   font-weight: 750;
   color: #164219;
-  max-width: 110px;
+  max-width: 150px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1903,25 +2006,54 @@
 .xl-subnav-utilities {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
   flex-shrink: 0;
 }
 .xl-subnav-util-item {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12.5px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 650;
   color: #2d452f;
   text-decoration: none;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: background 0.15s;
+  padding: 5px 10px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
   white-space: nowrap;
 }
-.xl-subnav-util-item:hover {
-  background: #f4f8f1;
-  color: #164219;
+.xl-subnav-flashsale {
+  color: #c2410c;
+}
+.xl-subnav-flashsale:hover {
+  background: #fff7ed;
+  color: #9a3412;
+}
+.xl-flash-icon {
+  color: #f59e0b;
+  font-size: 13.5px;
+}
+.xl-flash-tag {
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1.5px 5.5px;
+  border-radius: 999px;
+  letter-spacing: 0.3px;
+  line-height: 1.2;
+}
+
+.xl-subnav-voucher {
+  color: #15803d;
+}
+.xl-subnav-voucher:hover {
+  background: #f0fdf4;
+  color: #166534;
+}
+.xl-voucher-icon {
+  color: #16a34a;
+  font-size: 13.5px;
 }
 .xl-subnav-util-badge {
   display: inline-flex;
