@@ -26,6 +26,8 @@
 
 /* ── Main header ── */
 .xanhla-header {
+  position: relative;
+  z-index: 1000;
   height: 72px;
   padding-inline: clamp(16px, 4.5vw, 72px); background: rgba(255, 255, 255, 0.98) !important; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   background: #fff;
@@ -208,15 +210,19 @@
 
 /* User dropdown menu */
 .xanhla-user-menu {
-  top: calc(100% + 8px);
+  position: absolute;
+  top: calc(100% + 10px);
   right: 0;
-  min-width: 245px;
+  min-width: 260px;
   width: max-content;
-  max-width: 300px;
-  z-index: 200;
-  border-top: 2.5px solid var(--green-700);
-  box-shadow: 0 14px 44px rgba(28, 52, 26, .14);
+  max-width: 320px;
+  background: #ffffff;
+  z-index: 1100;
+  border: 1px solid #e2e8f0;
+  border-top: 3px solid var(--green-700);
+  box-shadow: 0 16px 44px rgba(28, 52, 26, .18);
   border-radius: var(--r-md);
+  padding: 6px 0;
 }
 
 .xanhla-user-menu-header {
@@ -1185,9 +1191,9 @@
 
 .xl-notif-dropdown {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 10px);
   right: 0;
-  z-index: 80;
+  z-index: 1100;
   width: 350px;
   max-height: 480px;
   display: flex;
@@ -1537,6 +1543,8 @@
 
 /* Main header container */
 .xanhla-header {
+  position: relative;
+  z-index: 1000;
   height: 76px;
   display: flex;
   align-items: center;
@@ -1811,6 +1819,8 @@
 
 /* ── SECONDARY NAV BAR (ROW 2: BALANCED) ── */
 .xl-subnav {
+  position: relative;
+  z-index: 100;
   height: 48px;
   background: #ffffff;
   border-bottom: 1.5px solid #eef2e8;
