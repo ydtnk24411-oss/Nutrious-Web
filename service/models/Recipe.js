@@ -9,6 +9,8 @@ const recipeSchema = new mongoose.Schema(
     description: { type: String, required: true },
     prepTime: { type: String, required: true },
     cookTime: { type: String, default: '15 phút' },
+    prepMinutes: { type: Number },
+    cookMinutes: { type: Number },
     difficulty: { type: String, default: 'Dễ nấu' },
     calories: { type: Number, default: 420 },
     macros: {
@@ -19,7 +21,7 @@ const recipeSchema = new mongoose.Schema(
       vitamins: { type: String, default: 'Vitamin A, C, B6, Omega-3, Sắt, Canxi' },
     },
     servingBase: { type: Number, default: 1 },
-    nutritionNote: { type: String, required: true },
+    nutritionNote: { type: String, default: '' },
     chefTips: { type: String },
     steps: [
       {
@@ -29,11 +31,15 @@ const recipeSchema = new mongoose.Schema(
       },
     ],
     goalsTags: [{ type: String }],
+    sources: [{ type: String }],
     ingredients: [
       {
         name: { type: String, required: true },
         amountPer1Serving: { type: Number, required: true },
         unit: { type: String, required: true },
+        keywords: [{ type: String }],
+        categoryHint: { type: String, default: '' },
+        productId: { type: String, default: null },
       },
     ],
     isActive: { type: Boolean, default: true },

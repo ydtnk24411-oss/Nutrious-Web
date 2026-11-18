@@ -173,6 +173,33 @@ const NUTRITION_CONFIG_DATA = {
       },
     ],
   },
+  cookConfig: {
+    unitOptions: [
+      { value: 'g', label: 'g' },
+      { value: 'kg', label: 'kg' },
+      { value: 'quả', label: 'quả' },
+      { value: 'củ', label: 'củ' },
+      { value: 'bó', label: 'bó' },
+      { value: 'gói', label: 'gói' },
+      { value: 'phần', label: 'phần' },
+    ],
+    categoryHints: {
+      vegetables: ['vegetables', 'rau cu', 'rau xanh', 'cu qua', 'nam'],
+      fruits: ['fruits', 'trai cay'],
+      meat: ['meat', 'thit'],
+      seafood: ['seafood', 'hai san', 'ca'],
+      dairy: ['dairy', 'sua', 'sua chua', 'che pham sua', 'bo pho mai'],
+    },
+    quickIngredients: [
+      { query: 'Cà chua', label: '+ Cà chua' },
+      { query: 'Bò Mỹ thăn', label: '+ Thịt bò' },
+      { query: 'Cá hồi tươi', label: '+ Cá hồi' },
+      { query: 'Gà ta thả vườn', label: '+ Thịt gà' },
+      { query: 'Rau cải', label: '+ Cải thìa' },
+      { query: 'Cà rốt', label: '+ Cà rốt' },
+      { query: 'Quả bơ Hass', label: '+ Bơ Hass' },
+    ],
+  },
 };
 
 const CHATBOT_KNOWLEDGE_DATA = {

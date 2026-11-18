@@ -36,6 +36,99 @@ function makeProduct(overrides: Partial<ApiProduct>): ApiProduct {
   };
 }
 
+const MOCK_RECIPES_RESPONSE = {
+  success: true,
+  total: 4,
+  data: [
+    {
+      id: 'canh-chua-ca-hoi',
+      name: 'Canh chua cá hồi thanh mát',
+      image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=600&q=80',
+      description: 'Vị chua thanh của me và cà chua chín mọng.',
+      prepTime: 15,
+      cookTime: 20,
+      servingBase: 2,
+      steps: ['Sơ chế cá hồi và cà chua.', 'Nấu canh chín vừa ăn.'],
+      ingredients: [
+        { name: 'Cá hồi tươi', amountPer1Serving: 150, unit: 'g', categoryHint: 'seafood', keywords: ['cá hồi', 'phi lê cá hồi'] },
+        { name: 'Cà chua', amountPer1Serving: 1, unit: 'quả', categoryHint: 'vegetables', keywords: ['cà chua', 'cà chua bi'] },
+        { name: 'Dưa leo tươi', amountPer1Serving: 0.5, unit: 'quả', categoryHint: 'vegetables', keywords: ['dưa leo', 'dưa chuột'] },
+        { name: 'Rau cải', amountPer1Serving: 80, unit: 'g', categoryHint: 'vegetables', keywords: ['rau cải', 'cải ngọt', 'cải thìa', 'cải xanh'] },
+      ],
+    },
+    {
+      id: 'bo-xay-mat-ong',
+      name: 'Sinh tố bơ Hass mật ong',
+      image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&q=80',
+      description: 'Thức uống bổ dưỡng từ bơ sáp Hass.',
+      prepTime: 5,
+      cookTime: 5,
+      servingBase: 1,
+      steps: ['Xay nhuyễn bơ Hass cùng mật ong.'],
+      ingredients: [
+        { name: 'Quả bơ Hass', amountPer1Serving: 1, unit: 'quả', categoryHint: 'fruits', keywords: ['bơ', 'quả bơ', 'bơ sáp', 'bơ hass'] },
+        { name: 'Cà chua', amountPer1Serving: 0.5, unit: 'quả', categoryHint: 'vegetables', keywords: ['cà chua', 'cà chua bi'] },
+      ],
+    },
+    {
+      id: 'canh-ga-ham-bi-do',
+      name: 'Canh gà ta hầm bí đỏ ngọt lành',
+      image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=600&q=80',
+      description: 'Thịt gà ta hầm mềm ngọt cùng bí đỏ.',
+      prepTime: 15,
+      cookTime: 25,
+      servingBase: 3,
+      steps: ['Hầm gà ta và bí đỏ đến khi chín mềm.'],
+      ingredients: [
+        { name: 'Gà ta thả vườn', amountPer1Serving: 180, unit: 'g', categoryHint: 'meat', keywords: ['gà ta', 'thịt gà', 'ức gà', 'đùi gà'] },
+        { name: 'Cà rốt', amountPer1Serving: 0.5, unit: 'củ', categoryHint: 'vegetables', keywords: ['cà rốt'] },
+      ],
+    },
+    {
+      id: 'bo-xao-bong-cai-xanh',
+      name: 'Thịt bò xào bông cải xanh giòn ngọt',
+      image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&q=80',
+      description: 'Bông cải xanh mướt kết hợp thịt bò thăn.',
+      prepTime: 12,
+      cookTime: 12,
+      servingBase: 2,
+      steps: ['Xào nhanh thịt bò và bông cải xanh.'],
+      ingredients: [
+        { name: 'Bò Mỹ thăn', amountPer1Serving: 140, unit: 'g', categoryHint: 'meat', keywords: ['thịt bò', 'bò mỹ', 'bò úc', 'bò'] },
+        { name: 'Bông Cải Xanh (Súp Lơ Xanh)', amountPer1Serving: 150, unit: 'g', categoryHint: 'vegetables', keywords: ['bông cải xanh', 'súp lơ xanh', 'bông cải'] },
+        { name: 'Cà rốt', amountPer1Serving: 0.5, unit: 'củ', categoryHint: 'vegetables', keywords: ['cà rốt'] },
+      ],
+    },
+  ],
+  config: {
+    unitOptions: [
+      { value: 'g', label: 'g' },
+      { value: 'kg', label: 'kg' },
+      { value: 'quả', label: 'quả' },
+      { value: 'củ', label: 'củ' },
+      { value: 'bó', label: 'bó' },
+      { value: 'gói', label: 'gói' },
+      { value: 'phần', label: 'phần' },
+    ],
+    categoryHints: {
+      vegetables: ['vegetables', 'rau cu', 'rau xanh', 'cu qua', 'nam'],
+      fruits: ['fruits', 'trai cay'],
+      meat: ['meat', 'thit'],
+      seafood: ['seafood', 'hai san', 'ca'],
+    },
+    quickIngredients: [
+      { query: 'Cà chua', label: '+ Cà chua' },
+      { query: 'Bò Mỹ thăn', label: '+ Thịt bò' },
+    ],
+  },
+};
+
+function flushRecipesRequest(httpMock: HttpTestingController): void {
+  const req = httpMock.expectOne(`${API_BASE}/recipes`);
+  expect(req.request.method).toBe('GET');
+  req.flush(MOCK_RECIPES_RESPONSE);
+}
+
 describe('CookComponent', () => {
   let httpMock: HttpTestingController;
 
@@ -69,6 +162,7 @@ describe('CookComponent', () => {
     const fixture = TestBed.createComponent(CookComponent);
     const component = fixture.componentInstance;
     fixture.detectChanges();
+    flushRecipesRequest(httpMock);
 
     (component as any).selectedImageBase64.set('data:image/webp;base64,AAAA');
     (component as any).analyzeImage('data:image/webp;base64,AAAA');
@@ -106,6 +200,7 @@ describe('CookComponent', () => {
     const fixture = TestBed.createComponent(CookComponent);
     const component = fixture.componentInstance;
     fixture.detectChanges();
+    flushRecipesRequest(httpMock);
 
     (component as any).selectedImageBase64.set('data:image/webp;base64,AAAA');
     (component as any).analyzeImage('data:image/webp;base64,AAAA');
@@ -169,6 +264,7 @@ describe('CookComponent', () => {
     const fixture = TestBed.createComponent(CookComponent);
     const component = fixture.componentInstance;
     fixture.detectChanges();
+    flushRecipesRequest(httpMock);
 
     (component as any).myIngredients.set([
       {
@@ -200,6 +296,11 @@ describe('CookComponent', () => {
     const fixture = TestBed.createComponent(CookComponent);
     const component = fixture.componentInstance;
     fixture.detectChanges();
+    flushRecipesRequest(httpMock);
+    fixture.detectChanges();
+
+    expect((component as any).unitOptions().length).toBe(7);
+    expect((component as any).quickIngredients().length).toBe(2);
 
     (component as any).myIngredients.set([
       {
@@ -233,6 +334,7 @@ describe('CookComponent', () => {
     const fixture = TestBed.createComponent(CookComponent);
     const component = fixture.componentInstance;
     fixture.detectChanges();
+    flushRecipesRequest(httpMock);
 
     (component as any).catalogueProducts.set([
       makeProduct({
@@ -271,6 +373,7 @@ describe('CookComponent', () => {
     const fixture = TestBed.createComponent(CookComponent);
     const component = fixture.componentInstance;
     fixture.detectChanges();
+    flushRecipesRequest(httpMock);
 
     (component as any).catalogueProducts.set([
       makeProduct({ _id: 'avocado-1', name: 'Bơ Sáp', category: 'fruits', categoryVi: 'Trái cây', priceNumber: 48000, image: '/a.jpg' }),
@@ -301,6 +404,7 @@ describe('CookComponent', () => {
     const fixture = TestBed.createComponent(CookComponent);
     const component = fixture.componentInstance;
     fixture.detectChanges();
+    flushRecipesRequest(httpMock);
 
     (component as any).myIngredients.set([
       { name: 'Gà ta thả vườn', productId: null, product: null, qty: 200, unit: 'g' },
