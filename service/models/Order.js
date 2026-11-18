@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const orderItemSchema = new mongoose.Schema(
   {
-    product:        { type: String, default: '' },  // MongoDB _id hoặc slug — optional snapshot
+    product:        { type: String, default: '' },  // MongoDB _id hoặc slug - optional snapshot
     productName:    { type: String, required: true },
     categoryName:   { type: String, default: '' },   // Lưu cứng phi chuẩn hóa danh mục tại thời điểm mua
     productImage:   { type: String, default: '' },
@@ -51,6 +51,9 @@ const orderSchema = new mongoose.Schema(
     estimatedDeliveryTime: { type: String, default: '' },
     shippingDetails: { type: Object },
     pickupStore: { type: Object, default: null },
+    warehouseId: { type: String, default: 'store-thuduc', index: true },
+    isBopis: { type: Boolean, default: false },
+    pickupExpiresAt: { type: Date, default: null }, // Khóa giữ hàng tại quầy tối đa 24h cho đơn BOPIS
     deliveryTimeSlot: { type: String, default: '' },
     deliveryType: { type: String, default: '' },
     total:       { type: Number, required: true, min: 0 },
@@ -74,8 +77,22 @@ const orderSchema = new mongoose.Schema(
       enum: ['pending', 'confirmed', 'preparing', 'shipping', 'delivered', 'cancelled'],
       default: 'pending',
     },
+    orderSource: {
+      type: String,
+      enum: ['online', 'pos', 'telesales'],
+      default: 'online',
+    },
+    createdByStaff: {
+      type: String,
+      default: '',
+    },
     estimatedPoints: { type: Number, default: 0 },
     pointsAwarded:   { type: Boolean, default: false }, // đã cộng điểm cho chủ đơn chưa
+    codSettled:      { type: Boolean, default: false, index: true }, // đối soát nộp tiền COD của tài xế vào két
+    codSettledAt:    { type: Date, default: null },
+    codSettledBy:    { type: String, default: '' },
+    shipperName:     { type: String, default: '' },
+    shipperPhone:    { type: String, default: '' },
     inventoryDeducted: { type: Boolean, default: true },
     inventoryRestored: { type: Boolean, default: false }, // đảm bảo hoàn kho đúng 1 lần khi hủy
     // Quy chế không hủy/đổi/trả cho hàng tươi sống (rau củ, trái cây, thịt, cá & hải sản)
@@ -97,6 +114,10 @@ const orderSchema = new mongoose.Schema(
 );
 
 orderSchema.index({ status: 1, createdAt: -1 });
+orderSchema.index({ createdAt: -1 });
+orderSchema.index({ warehouseId: 1, createdAt: -1 });
+orderSchema.index({ user: 1, createdAt: -1 });
+orderSchema.index({ paymentStatus: 1 });
 
 // Tự động sinh orderCode dạng chữ + số có dấu gạch ngang (ví dụ 'XL-394737')
 orderSchema.pre('save', function (next) {

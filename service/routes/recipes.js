@@ -59,14 +59,26 @@ router.get('/', cacheMiddleware(60), async (req, res, next) => {
     ]);
 
     const mapped = recipes.map(mapCookRecipe);
+    const unitOptions = config?.cookConfig?.unitOptions || [];
+    const quickIngredients = config?.cookConfig?.quickIngredients || [];
     res.json({
       success: true,
       total: mapped.length,
       data: mapped,
       config: {
-        unitOptions: config?.cookConfig?.unitOptions || [],
+        unitOptions: unitOptions.length > 0
+          ? unitOptions
+          : [
+              { value: 'g', label: 'g' },
+              { value: 'kg', label: 'kg' },
+              { value: 'quả', label: 'quả' },
+              { value: 'củ', label: 'củ' },
+              { value: 'bó', label: 'bó' },
+              { value: 'gói', label: 'gói' },
+              { value: 'phần', label: 'phần' },
+            ],
         categoryHints: config?.cookConfig?.categoryHints || {},
-        quickIngredients: config?.cookConfig?.quickIngredients || [],
+        quickIngredients,
       },
     });
   } catch (err) {

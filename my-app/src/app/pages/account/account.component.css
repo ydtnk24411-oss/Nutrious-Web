@@ -147,24 +147,26 @@
   background: #ffffff;
   border: 1px solid #e3ebdc;
   border-radius: 18px;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 6px 22px rgba(24, 58, 32, 0.05);
 }
 
 .acc-hero-banner {
   position: relative;
+  z-index: 5;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
   padding: 24px 28px;
   background: linear-gradient(125deg, #f8fbf4 0%, #e7f3dc 56%, #d9eac6 100%);
-  overflow: hidden;
+  border-radius: 17px 17px 0 0;
+  overflow: visible;
 }
 
 .acc-hero-user {
   position: relative;
-  z-index: 2;
+  z-index: 10;
   display: flex;
   align-items: center;
   gap: 20px;
@@ -246,7 +248,7 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   padding: 6px;
   min-width: 185px;
-  z-index: 40;
+  z-index: 60;
 }
 
 .acc-avatar-menu-item {
@@ -328,6 +330,7 @@
   bottom: 0;
   width: 310px;
   pointer-events: none;
+  border-radius: 0 17px 0 0;
   overflow: hidden;
   display: flex;
   justify-content: flex-end;
@@ -344,11 +347,14 @@
 
 /* 4 Pastel Stat Tiles */
 .acc-stats-row {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   padding: 16px 18px 18px;
   background: #ffffff;
+  border-radius: 0 0 17px 17px;
 }
 
 .acc-stat-tile {

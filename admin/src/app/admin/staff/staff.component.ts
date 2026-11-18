@@ -32,35 +32,35 @@ export class AdminStaffComponent implements OnInit {
     {
       key: 'admin',
       label: 'Quản trị viên (Admin)',
-      desc: 'Toàn quyền cấu hình và quản trị toàn bộ hệ thống Evergreen Mart',
+      desc: '',
       color: '#b91c1c',
       bg: '#fee2e2',
     },
     {
-      key: 'sales',
-      label: 'Nhân viên bán hàng',
-      desc: 'Quản lý, xác nhận và cập nhật trạng thái đơn hàng',
-      color: '#1d4ed8',
-      bg: '#dbeafe',
+      key: 'manager',
+      label: 'Cửa hàng trưởng (Store Manager)',
+      desc: '',
+      color: '#047857',
+      bg: '#d1fae5',
     },
     {
       key: 'warehouse',
-      label: 'Nhân viên kho',
-      desc: 'Quản lý số lượng tồn kho, kiểm kê và cảnh báo hết hàng',
+      label: 'Nhân viên kho (Warehouse)',
+      desc: '',
       color: '#d97706',
       bg: '#fef3c7',
     },
     {
-      key: 'support',
-      label: 'Chăm sóc khách hàng',
-      desc: 'Tiếp nhận Live Chat, xử lý đánh giá và khiếu nại khách hàng',
-      color: '#15803d',
-      bg: '#dcfce7',
+      key: 'sales',
+      label: 'Nhân viên bán hàng (Sales)',
+      desc: '',
+      color: '#1d4ed8',
+      bg: '#dbeafe',
     },
     {
-      key: 'content',
-      label: 'Nhân viên nội dung',
-      desc: 'Quản lý danh sách sản phẩm, hình ảnh và danh mục nông sản',
+      key: 'marketing',
+      label: 'Nhân viên Marketing',
+      desc: '',
       color: '#7e22ce',
       bg: '#f3e8ff',
     },
@@ -73,7 +73,7 @@ export class AdminStaffComponent implements OnInit {
   formEmail = signal('');
   formPhone = signal('');
   formPassword = signal('');
-  formRole = signal<UserRole>('support');
+  formRole = signal<UserRole>('manager');
   formIsActive = signal(true);
   submitting = signal(false);
 
@@ -98,11 +98,15 @@ export class AdminStaffComponent implements OnInit {
   }
 
   filteredStaff(): ApiUser[] {
+    const q = this.searchQuery().toLowerCase().trim();
     return this.staffList().filter((u) => {
       const matchSearch =
-        !this.searchQuery() ||
-        u.name.toLowerCase().includes(this.searchQuery().toLowerCase()) ||
-        u.email.toLowerCase().includes(this.searchQuery().toLowerCase());
+        !q ||
+        u.name.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q) ||
+        (u.employeeCode && u.employeeCode.toLowerCase().includes(q)) ||
+        (u.phone && u.phone.includes(q)) ||
+        (u.storeName && u.storeName.toLowerCase().includes(q));
 
       const matchRole =
         this.selectedRole() === 'all' || u.role === this.selectedRole();
@@ -117,7 +121,7 @@ export class AdminStaffComponent implements OnInit {
     this.formEmail.set('');
     this.formPhone.set('');
     this.formPassword.set('');
-    this.formRole.set('support');
+    this.formRole.set('manager');
     this.formIsActive.set(true);
     this.modalOpen.set(true);
   }
@@ -128,7 +132,11 @@ export class AdminStaffComponent implements OnInit {
     this.formEmail.set(user.email);
     this.formPhone.set(user.phone || '');
     this.formPassword.set('');
-    this.formRole.set(user.role);
+    let r: UserRole = user.role;
+    if ((r as string) === 'support') r = 'sales';
+    if ((r as string) === 'content') r = 'marketing';
+    if (!['admin', 'manager', 'warehouse', 'sales', 'marketing'].includes(r)) r = 'manager';
+    this.formRole.set(r);
     this.formIsActive.set(user.isActive);
     this.modalOpen.set(true);
   }

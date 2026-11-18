@@ -114,4 +114,41 @@ async function syncUserLoyalty(userId) {
   return freshUser;
 }
 
-module.exports = { getLoyaltyConfig, tierFor, creditOrderPoints, syncUserLoyalty };
+/**
+ * Thu hồi điểm và khấu trừ chi tiêu khi đơn hàng bị hủy hoặc hoàn trả (BORIS / Refund).
+ */
+async function rollbackOrderPoints(orderId, reason = 'Hủy/hoàn trả đơn hàng') {
+  const order = await Order.findOneAndUpdate(
+    { _id: orderId, user: { $ne: null }, pointsAwarded: true, pointsRollbacked: { $ne: true } },
+    { $set: { pointsRollbacked: true } },
+    { new: true }
+  );
+  if (!order) return null;
+
+  const points = order.estimatedPoints || Math.floor((order.subtotal || order.total) / 1000);
+  const user = await User.findById(order.user);
+  if (!user) return null;
+
+  const newPoints = Math.max(0, (user.points || 0) - points);
+  const newSpent = Math.max(0, (user.totalSpent || 0) - (order.total || 0));
+  const { tiers } = await getLoyaltyConfig();
+  const newTier = tierFor(newPoints, newSpent, tiers);
+
+  user.points = newPoints;
+  user.totalSpent = newSpent;
+  user.tier = newTier;
+  await user.save();
+
+  await PointTransaction.create({
+    user: user._id,
+    type: 'redeemed',
+    amount: -points,
+    description: `Thu hồi điểm do ${reason} #${order.orderCode}`,
+    order: order.orderCode,
+    balanceAfter: user.points,
+  });
+
+  return { pointsDeducted: points, newBalance: user.points, newTier };
+}
+
+module.exports = { getLoyaltyConfig, tierFor, creditOrderPoints, syncUserLoyalty, rollbackOrderPoints };

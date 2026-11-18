@@ -1,7 +1,7 @@
 <!-- Header -->
 <div class="admin-page-header">
   <div>
-    <h2 class="admin-page-title">Quản lý Combo Tiết Kiệm</h2>
+    <h2 class="admin-page-title">{{ isSales() ? 'Tra cứu Gói Combo Ưu đãi' : 'Quản lý Combo Tiết Kiệm' }}</h2>
     <span class="admin-stat-label">
       Gói sản phẩm thiết lập cố định - Tồn kho &amp; giá mua lẻ đồng bộ trực tiếp từ sản phẩm thành phần
     </span>
@@ -9,7 +9,7 @@
 
   <div class="combo-header-actions">
     <a routerLink="/admin/products" class="admin-btn-secondary combo-link-btn">
-      <span>Quản lý Sản phẩm lẻ</span>
+      <span>{{ isSales() ? 'Tra cứu Sản phẩm lẻ' : 'Quản lý Sản phẩm lẻ' }}</span>
     </a>
 
     <div class="prod-view-toggle">
@@ -47,13 +47,15 @@
       </button>
     </div>
 
-    <button type="button" class="admin-btn-primary" (click)="openCreate()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-      </svg>
-      <span>Thêm Combo mới</span>
-    </button>
+    @if (!isSales()) {
+      <button type="button" class="admin-btn-primary" (click)="openCreate()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Thêm Combo mới</span>
+      </button>
+    }
   </div>
 </div>
 
@@ -132,7 +134,7 @@
   </div>
 } @else if (combos().length === 0) {
   <div class="admin-card admin-empty">
-    <div class="admin-empty-icon">🎁</div>
+    <div class="admin-empty-icon"></div>
     <h3>Chưa tìm thấy gói Combo phù hợp</h3>
     <p>Thử thay đổi bộ lọc hoặc tạo gói Combo tiết kiệm mới từ kho sản phẩm.</p>
   </div>
@@ -150,7 +152,7 @@
             <th style="text-align:right">Tiết kiệm</th>
             <th style="text-align:center">Combo có thể bán</th>
             <th>Trạng thái</th>
-            <th style="width:210px;text-align:right">Thao tác</th>
+            <th style="width:220px;text-align:right">Thao tác</th>
           </tr>
         </thead>
         <tbody>
@@ -218,18 +220,29 @@
                 </div>
               </td>
               <td>
-                <select
-                  class="combo-status-select"
-                  [class.st-active]="st === 'active'"
-                  [class.st-paused]="st === 'paused'"
-                  [class.st-hidden]="st === 'hidden'"
-                  [value]="st"
-                  (change)="changeComboStatusQuick(c, $any($event.target).value)"
-                >
-                  <option value="active">Đang kinh doanh</option>
-                  <option value="paused">Tạm ngừng</option>
-                  <option value="hidden">Ẩn</option>
-                </select>
+                @if (isSales()) {
+                  <span
+                    class="combo-status-badge"
+                    [class.st-active]="st === 'active'"
+                    [class.st-paused]="st === 'paused'"
+                    [class.st-hidden]="st === 'hidden'"
+                  >
+                    {{ st === 'active' ? 'Đang kinh doanh' : (st === 'paused' ? 'Tạm ngừng' : 'Ẩn') }}
+                  </span>
+                } @else {
+                  <select
+                    class="combo-status-select"
+                    [class.st-active]="st === 'active'"
+                    [class.st-paused]="st === 'paused'"
+                    [class.st-hidden]="st === 'hidden'"
+                    [value]="st"
+                    (change)="changeComboStatusQuick(c, $any($event.target).value)"
+                  >
+                    <option value="active">Đang kinh doanh</option>
+                    <option value="paused">Tạm ngừng</option>
+                    <option value="hidden">Ẩn</option>
+                  </select>
+                }
               </td>
               <td style="text-align:right">
                 <div class="combo-row-actions">
@@ -241,32 +254,34 @@
                   >
                     Chi tiết
                   </button>
-                  <button
-                    type="button"
-                    class="combo-act-btn edit"
-                    (click)="openEdit(c)"
-                    title="Chỉnh sửa Combo"
-                  >
-                    Sửa
-                  </button>
-                  @if (st !== 'hidden') {
+                  @if (!isSales()) {
                     <button
                       type="button"
-                      class="combo-act-btn hide"
-                      (click)="changeComboStatusQuick(c, 'hidden')"
-                      title="Ẩn Combo"
+                      class="combo-act-btn edit"
+                      (click)="openEdit(c)"
+                      title="Chỉnh sửa Combo"
                     >
-                      Ẩn
+                      Sửa
                     </button>
-                  } @else {
-                    <button
-                      type="button"
-                      class="combo-act-btn activate"
-                      (click)="changeComboStatusQuick(c, 'active')"
-                      title="Mở kinh doanh lại"
-                    >
-                      Mở bán
-                    </button>
+                    @if (st !== 'hidden') {
+                      <button
+                        type="button"
+                        class="combo-act-btn hide"
+                        (click)="changeComboStatusQuick(c, 'hidden')"
+                        title="Ẩn Combo"
+                      >
+                        Ẩn
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        class="combo-act-btn activate"
+                        (click)="changeComboStatusQuick(c, 'active')"
+                        title="Mở kinh doanh lại"
+                      >
+                        Mở bán
+                      </button>
+                    }
                   }
                 </div>
               </td>
@@ -338,7 +353,9 @@
 
           <div class="combo-card-actions">
             <button type="button" class="combo-act-btn view" (click)="openDetail(c)">Chi tiết</button>
-            <button type="button" class="xanhla-prod-card-btn-edit" (click)="openEdit(c)">Chỉnh sửa</button>
+            @if (!isSales()) {
+              <button type="button" class="combo-act-btn edit" (click)="openEdit(c)">Chỉnh sửa</button>
+            }
           </div>
         </div>
       </div>
@@ -515,9 +532,11 @@
 
       <div class="admin-modal-footer">
         <button type="button" class="admin-btn-secondary" (click)="closeDetail()">Đóng</button>
-        <button type="button" class="admin-btn-primary" (click)="editFromDetail()">
-          Chỉnh sửa Combo này
-        </button>
+        @if (!isSales()) {
+          <button type="button" class="admin-btn-primary" (click)="editFromDetail()">
+            Chỉnh sửa Combo này
+          </button>
+        }
       </div>
     </div>
   </div>

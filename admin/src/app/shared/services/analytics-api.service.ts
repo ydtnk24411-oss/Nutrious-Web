@@ -13,6 +13,8 @@ export interface AnalyticsOverview {
     avgPagesPerSession: number;
     sources: { _id: string; count: number }[];
     devices: { _id: string; count: number }[];
+    dailyTraffic?: { date: string; pageviews: number; sessions: number }[];
+    hourlyActivity?: { hour: number; count: number }[];
   };
   searchDiscovery: {
     totalSearches: number;

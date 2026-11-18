@@ -3,7 +3,7 @@
   <div class="xl-topbar-inner">
     <div class="xl-topbar-left">
       <i class="bi bi-shield-check" style="color:#a3e635;font-size:13px"></i>
-      <span>Nông sản &amp; thực phẩm lành mạnh — Giao nhanh 2 giờ nội thành</span>
+      <span>Nông sản &amp; thực phẩm lành mạnh - Giao nhanh 2 giờ nội thành</span>
     </div>
     <div class="xl-topbar-right">
       <span class="xl-topbar-item">
@@ -188,14 +188,16 @@
             @if (notifications().length === 0) {
               <div style="padding:16px;text-align:center;font-size:13px;color:var(--xanh-muted)">Không có thông báo nào</div>
             } @else {
-              @for (n of notifications(); track n.id) {
-                <a class="xl-notif-item" [class.is-unread]="n.unread" [routerLink]="n.path" (click)="closeNotifMenu()">
-                  <span>
-                    <strong>{{ n.title }}</strong>
-                    <small>{{ n.body }}</small>
-                  </span>
-                </a>
-              }
+              <div class="xl-notif-list">
+                @for (n of notifications(); track n.id) {
+                  <a class="xl-notif-item" [class.is-unread]="n.unread" [routerLink]="n.path" (click)="closeNotifMenu()">
+                    <span>
+                      <strong>{{ n.title }}</strong>
+                      <small>{{ n.body }}</small>
+                    </span>
+                  </a>
+                }
+              </div>
             }
           </div>
         }
@@ -364,8 +366,69 @@
       }
     </div>
 
-    <!-- Right: Quick Promotion Utilities -->
+    <!-- Right: Quick Promotion & Store Utilities -->
     <div class="xl-subnav-utilities">
+
+      <!-- Store / Warehouse Selector (8 Chi nhánh & GPS định vị tồn kho) -->
+      <div class="xl-subnav-store-wrapper" style="position:relative">
+        <button
+          class="xl-subnav-store-btn"
+          type="button"
+          (click)="toggleAreaMenu()"
+          title="Chọn chi nhánh siêu thị phục vụ & kiểm tra tồn kho gần nhất"
+          aria-label="Chọn cửa hàng"
+        >
+          <i class="bi bi-geo-alt-fill" style="color:#16a34a;font-size:14px"></i>
+          <span class="xl-subnav-store-label">{{ storeLoc.selectedStore().name }}</span>
+          <i class="bi bi-chevron-down" style="font-size:10px;color:#64748b;margin-left:4px"></i>
+        </button>
+
+        @if (areaMenuOpen()) {
+          <div class="xl-store-dropdown">
+            <div class="xl-store-drop-header">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <span class="xl-store-drop-title">Chọn cửa hàng phục vụ</span>
+                <button
+                  type="button"
+                  class="xl-store-gps-action"
+                  (click)="locateGps()"
+                  [disabled]="isLocatingGps()"
+                  title="Tự động định vị GPS tìm kho/chi nhánh gần nhất"
+                >
+                  <i class="bi bi-crosshair" [class.spin-anim]="isLocatingGps()" style="color:#16a34a"></i>
+                  <span>{{ isLocatingGps() ? 'Đang dò GPS...' : 'Định vị kho gần nhất (GPS)' }}</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="xl-store-drop-list">
+              @for (wh of storeLoc.warehouses(); track wh.id) {
+                <button
+                  type="button"
+                  class="xl-store-drop-item"
+                  [class.is-selected]="wh.id === storeLoc.selectedStore().id"
+                  (click)="selectWarehouse(wh)"
+                >
+                  <div class="xl-store-item-main">
+                    <div class="xl-store-item-name">
+                      <i class="bi bi-shop" style="color:#16a34a;margin-right:6px"></i>
+                      <strong>{{ wh.name }}</strong>
+                      @if (wh.isHeadquarter) {
+                        <span class="xl-store-hq-badge">Trụ sở chính</span>
+                      }
+                    </div>
+                    <div class="xl-store-item-addr">{{ wh.address }}</div>
+                  </div>
+                  @if (wh.id === storeLoc.selectedStore().id) {
+                    <i class="bi bi-check-circle-fill" style="color:#16a34a;font-size:18px;margin-left:8px"></i>
+                  }
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
       <a routerLink="/promotions" class="xl-subnav-util-item">
         <i class="bi bi-lightning-charge-fill" style="color:#eab308"></i>
         <span>Flash Sale</span>

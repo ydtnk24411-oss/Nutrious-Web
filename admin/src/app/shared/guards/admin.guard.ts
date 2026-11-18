@@ -40,13 +40,13 @@ export const roleGuard = (allowedRoles: string[]): CanActivateFn => {
     const role = (auth.user()?.role || '').toLowerCase();
     const normalized = allowedRoles.map(r => r.toLowerCase());
 
-    if (role === 'admin' || role === 'manager' || normalized.includes(role)) {
+    if (role === 'admin' || normalized.includes(role)) {
       return true;
     }
 
-    router.navigate(['/admin/orders'], {
-      queryParams: { error: 'permission_denied', message: 'Chỉ Quản lý (Manager) mới có quyền truy cập chức năng này.' }
-    });
+    // Điều hướng an toàn về phân hệ mặc định mà vai trò đó có quyền truy cập
+    const defaultRoute = role === 'warehouse' ? '/admin/inventory' : (role === 'marketing' ? '/admin/analytics' : '/admin/dashboard');
+    router.navigate([defaultRoute]);
     return false;
   };
 };

@@ -2,7 +2,6 @@ require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 const mongoose = require('mongoose');
 const Voucher = require('./models/Voucher');
 const Recipe = require('./models/Recipe');
-const FooterConfig = require('./models/FooterConfig');
 
 const START_DATE = new Date('2025-01-01T00:00:00.000Z');
 const END_DATE = new Date('2027-12-31T23:59:59.000Z');
@@ -750,11 +749,11 @@ const recipesData = [
 
 const footerConfigData = {
   key: 'main',
-  brandName: 'Evergreen Mart',
+  brandName: 'Xanh Lá',
   brandDesc: 'Tự hào mang nông sản Việt đạt chuẩn VietGAP, GlobalGAP và Organic từ các nông trại xanh đến tận bàn ăn gia đình bạn mỗi ngày.',
-  newsletterTitle: 'Bản tin dinh dưỡng & Ưu đãi Evergreen Mart',
+  newsletterTitle: 'Bản tin dinh dưỡng & Ưu đãi xanh',
   newsletterDesc: 'Đăng ký email để nhận ngay mã giảm giá 20%, gợi ý thực đơn dinh dưỡng mỗi tuần và thông báo Flash Sale nông sản mới thu hoạch.',
-  copyrightText: '© 2026 Evergreen Mart — Nông Nghiệp Hữu Cơ & Dinh Dưỡng Thông Minh. Bảo lưu mọi quyền.',
+  copyrightText: ' 2026 Xanh Lá - Nông Nghiệp Hữu Cơ & Dinh Dưỡng Thông Minh. Bảo lưu mọi quyền.',
   contactInfo: {
     hotline: '1900 6789 (07:00 – 21:00)',
     email: 'chamsoc@xanhla.vn',
@@ -774,15 +773,15 @@ const footerConfigData = {
     { label: 'Sự kiện & Workshop', route: '/event-list' },
   ],
   utilityLinks: [
-    { label: '🥗 Dinh dưỡng thông minh', route: '/nutrition' },
-    { label: '🍳 Nấu gì với đồ sẵn có?', route: '/cook-with-what-you-have' },
-    { label: '📦 Theo dõi đơn hàng', route: '/tracker-page' },
-    { label: '👤 Tài khoản của tôi', route: '/account' },
-    { label: '⭐ Tích điểm Evergreen Mart Club', route: '/loyalty' },
-    { label: '🎟️ Ví Voucher của tôi', route: '/vouchers' },
+    { label: ' Dinh dưỡng thông minh', route: '/nutrition' },
+    { label: ' Nấu gì với đồ sẵn có?', route: '/cook-with-what-you-have' },
+    { label: ' Theo dõi đơn hàng', route: '/tracker-page' },
+    { label: ' Tài khoản của tôi', route: '/account' },
+    { label: ' Tích điểm Xanh Lá Club', route: '/loyalty' },
+    { label: '️ Ví Voucher của tôi', route: '/vouchers' },
   ],
   aboutLinks: [
-    { label: 'Giới thiệu về Evergreen Mart (About)', policyKey: 'about' },
+    { label: 'Giới thiệu về Xanh Lá (About)', policyKey: 'about' },
     { label: 'Cẩm nang sống xanh', route: '/cam-nang' },
     { label: 'Câu hỏi thường gặp (FAQ)', policyKey: 'faq' },
     { label: 'Trung tâm hỗ trợ (Help)', policyKey: 'help' },
@@ -797,10 +796,10 @@ const footerConfigData = {
     { label: 'Hướng dẫn đặt hàng & Thanh toán', policyKey: 'help', icon: 'info' },
   ],
   socialLinks: [
-    { platform: 'facebook', label: 'Facebook Evergreen Mart', url: 'https://facebook.com' },
-    { platform: 'instagram', label: 'Instagram Evergreen Mart', url: 'https://instagram.com' },
-    { platform: 'youtube', label: 'YouTube Evergreen Mart', url: 'https://youtube.com' },
-    { platform: 'zalo', label: 'Zalo OA Evergreen Mart', url: 'https://zalo.me' },
+    { platform: 'facebook', label: 'Facebook Xanh Lá', url: 'https://facebook.com' },
+    { platform: 'instagram', label: 'Instagram Xanh Lá', url: 'https://instagram.com' },
+    { platform: 'youtube', label: 'YouTube Xanh Lá', url: 'https://youtube.com' },
+    { platform: 'zalo', label: 'Zalo OA Xanh Lá', url: 'https://zalo.me' },
   ],
   paymentMethods: ['COD', 'VietQR', 'MoMo', 'VNPay', 'ZaloPay', 'Visa/Master'],
   policies: [
@@ -868,7 +867,7 @@ const footerConfigData = {
     {
       key: 'returns',
       title: 'Chính Sách Đổi Trả & Hoàn Tiền 100%',
-      subtitle: 'Bảo hành chất lượng tươi sạch — An tâm tuyệt đối khi mua sắm',
+      subtitle: 'Bảo hành chất lượng tươi sạch - An tâm tuyệt đối khi mua sắm',
       updatedAt: '01/10/2026',
       sections: [
         {
@@ -941,9 +940,9 @@ const footerConfigData = {
         {
           heading: '2. Cam kết chất lượng 3 Không',
           content: [
-            'Không hóa chất bảo quản độc hại — kiểm định VietGAP / GlobalGAP định kỳ.',
-            'Không thực phẩm tồn kho qua ngày — thu hoạch sáng sớm, giao nhanh trong 2 giờ.',
-            'Không rủi ro mua sắm — đồng kiểm khi nhận hàng và hoàn tiền 100% nếu không hài lòng.',
+            'Không hóa chất bảo quản độc hại - kiểm định VietGAP / GlobalGAP định kỳ.',
+            'Không thực phẩm tồn kho qua ngày - thu hoạch sáng sớm, giao nhanh trong 2 giờ.',
+            'Không rủi ro mua sắm - đồng kiểm khi nhận hàng và hoàn tiền 100% nếu không hài lòng.',
           ],
         },
       ],
@@ -1030,11 +1029,11 @@ async function runSeed() {
     try {
       await mongoose.connect(process.env.MONGODB_URI, { serverSelectionTimeoutMS: 15000 });
       connectedToAtlas = true;
-      console.log('✅ Connected to MongoDB Atlas for seeding');
+      console.log(' Connected to MongoDB Atlas for seeding');
     } catch (atlasErr) {
-      console.log('ℹ️ Atlas connection timed out or unavailable, falling back to Local MongoDB (127.0.0.1:27017/xanh-la)...');
+      console.log('️ Atlas connection timed out or unavailable, falling back to Local MongoDB (127.0.0.1:27017/xanh-la)...');
       await mongoose.connect('mongodb://127.0.0.1:27017/xanh-la', { serverSelectionTimeoutMS: 5000 });
-      console.log('✅ Connected to Local MongoDB for seeding');
+      console.log(' Connected to Local MongoDB for seeding');
     }
 
     // 1. Upsert Vouchers
@@ -1050,7 +1049,7 @@ async function runSeed() {
       { $set: { startDate: START_DATE, endDate: END_DATE, isActive: true } }
     );
     const totalVouchers = await Voucher.countDocuments();
-    console.log(`✅ Vouchers upserted & active: ${totalVouchers}`);
+    console.log(` Vouchers upserted & active: ${totalVouchers}`);
 
     // 2. Upsert Recipes (and remove any legacy docs missing recipeId)
     await Recipe.deleteMany({ $or: [{ recipeId: null }, { recipeId: { $exists: false } }] });
@@ -1062,15 +1061,9 @@ async function runSeed() {
       );
     }
     const totalRecipes = await Recipe.countDocuments();
-    console.log(`✅ Recipes upserted: ${totalRecipes}`);
+    console.log(` Recipes upserted: ${totalRecipes}`);
 
-    // 3. Upsert FooterConfig & migrated DB configs (NutritionConfig, ChatbotKnowledge, LoyaltyConfig)
-    await FooterConfig.findOneAndUpdate(
-      { key: 'main' },
-      { $set: footerConfigData },
-      { upsert: true, new: true }
-    );
-    console.log('✅ FooterConfig upserted');
+    // 3. Footer configuration is now decoupled into static file service/data/footer-config.json
 
     try {
       const { syncConfigsToDb } = require('./scripts/sync-configs-to-db');
@@ -1425,7 +1418,7 @@ async function runSeed() {
       }
     }
     if (fixedCount > 0) {
-      console.log(`✅ Fixed ${fixedCount} broken product image URLs`);
+      console.log(` Fixed ${fixedCount} broken product image URLs`);
     }
 
     // 4. Ensure UserVouchers exist for customer users in Atlas
@@ -1456,13 +1449,10 @@ async function runSeed() {
       'vouchers',
       'uservouchers',
       'recipes',
-      'footerconfigs',
       'nutritionconfigs',
       'chatbotknowledges',
       'loyaltyconfigs',
       'shippingconfigs',
-      'events',
-      'services',
       'orders',
       'reviews',
       'bookings',
@@ -1484,7 +1474,7 @@ async function runSeed() {
       try {
         const localUri = 'mongodb://127.0.0.1:27017/xanh-la';
         await mongoose.connect(localUri, { serverSelectionTimeoutMS: 3000 });
-        console.log('✅ Connected to Local MongoDB (127.0.0.1:27017/xanh-la) — syncing data...');
+        console.log(' Connected to Local MongoDB (127.0.0.1:27017/xanh-la) - syncing data...');
         for (const colName of collectionsToSync) {
           const docs = atlasData[colName] || [];
           if (docs.length > 0) {
@@ -1495,16 +1485,16 @@ async function runSeed() {
           }
         }
         await mongoose.disconnect();
-        console.log('✅ Local MongoDB sync completed!');
+        console.log(' Local MongoDB sync completed!');
       } catch (localErr) {
-        console.log('ℹ️ Local MongoDB not reachable or skipped:', localErr.message);
+        console.log('️ Local MongoDB not reachable or skipped:', localErr.message);
       }
     }
 
-    console.log('🎉 Seed completed successfully!');
+    console.log(' Seed completed successfully!');
     process.exit(0);
   } catch (err) {
-    console.error('❌ Seed error:', err);
+    console.error(' Seed error:', err);
     process.exit(1);
   }
 }

@@ -1,8 +1,10 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AdminAuthService } from '../../shared/services/admin-auth.service';
 import {
   DashboardApiService,
+  FinanceDailyTrend,
   FinanceReportData,
   FinanceTransaction,
   StoreFinanceItem,
@@ -17,6 +19,18 @@ import {
 })
 export class AdminFinanceComponent implements OnInit {
   private dashApi = inject(DashboardApiService);
+  protected auth    = inject(AdminAuthService);
+
+  isManager = computed(() => (this.auth.user()?.role || '').toLowerCase() === 'manager');
+  isAdmin   = computed(() => (this.auth.user()?.role || '').toLowerCase() === 'admin');
+
+  managerStoreName = computed(() => {
+    const u = this.auth.user();
+    if (u?.storeName && !u.storeName.includes('Toàn hệ thống') && !u.storeName.includes('Tất cả')) {
+      return u.storeName;
+    }
+    return 'Cửa hàng Evergreen Mart Quận 1';
+  });
 
   report = signal<FinanceReportData | null>(null);
   loading = signal(true);
@@ -30,7 +44,14 @@ export class AdminFinanceComponent implements OnInit {
   txFilter = signal<'all' | 'collected' | 'pending' | 'cancelled'>('all');
   txSearch = signal('');
 
+  // Pagination for Financial Ledger
+  page = signal(1);
+  pageSize = signal(10);
+
   ngOnInit(): void {
+    if (this.isManager()) {
+      this.selectedStore.set(this.managerStoreName());
+    }
     this.loadFinance();
   }
 
@@ -82,6 +103,7 @@ export class AdminFinanceComponent implements OnInit {
 
   onTimeFilterChange(filter: '7d' | '30d' | '90d' | 'custom'): void {
     this.timeFilter.set(filter);
+    this.page.set(1);
     if (filter !== 'custom') {
       this.loadFinance();
     }
@@ -90,19 +112,32 @@ export class AdminFinanceComponent implements OnInit {
   onCustomDateChange(type: 'start' | 'end', value: string): void {
     if (type === 'start') this.customStartDate.set(value);
     else this.customEndDate.set(value);
+    this.page.set(1);
     if (this.customStartDate() && this.customEndDate()) {
       this.loadFinance();
     }
   }
 
   onStoreChange(storeName: string): void {
+    if (this.isManager()) return;
     this.selectedStore.set(storeName);
+    this.page.set(1);
     this.loadFinance();
   }
 
   toggleStoreRow(store: StoreFinanceItem): void {
     const next = this.selectedStore() === store.storeName ? '' : store.storeName;
     this.onStoreChange(next);
+  }
+
+  onTxFilterChange(mode: 'all' | 'collected' | 'pending' | 'cancelled'): void {
+    this.txFilter.set(mode);
+    this.page.set(1);
+  }
+
+  onTxSearchChange(val: string): void {
+    this.txSearch.set(val);
+    this.page.set(1);
   }
 
   filteredTransactions = computed<FinanceTransaction[]>(() => {
@@ -120,6 +155,151 @@ export class AdminFinanceComponent implements OnInit {
       }
       return true;
     });
+  });
+
+  totalPages = computed<number>(() => {
+    const total = this.filteredTransactions().length;
+    return Math.max(1, Math.ceil(total / this.pageSize()));
+  });
+
+  pagedTransactions = computed<FinanceTransaction[]>(() => {
+    const all = this.filteredTransactions();
+    const p = this.page();
+    const sz = this.pageSize();
+    const start = (p - 1) * sz;
+    return all.slice(start, start + sz);
+  });
+
+  ledgerTotals = computed(() => {
+    const all = this.filteredTransactions();
+    let subtotal = 0;
+    let discount = 0;
+    let shipping = 0;
+    let total = 0;
+    let profit = 0;
+    for (const tx of all) {
+      if (tx.status !== 'cancelled') {
+        subtotal += tx.subtotal || 0;
+        discount += tx.totalDiscount || 0;
+        shipping += tx.shippingFee || 0;
+        total += tx.total || 0;
+        profit += tx.estimatedProfit || 0;
+      }
+    }
+    return {
+      count: all.length,
+      subtotal,
+      discount,
+      shipping,
+      total,
+      profit,
+    };
+  });
+
+  setPage(p: number): void {
+    if (p >= 1 && p <= this.totalPages()) {
+      this.page.set(p);
+    }
+  }
+
+  setPageSize(sz: number): void {
+    this.pageSize.set(Number(sz) || 10);
+    this.page.set(1);
+  }
+
+  mathMin = Math.min;
+
+  // ── Financial Daily Trend Chart Computeds & Helpers ───────────────
+  hoveredTrendIndex = signal<number | null>(null);
+
+  trendData = computed<FinanceDailyTrend[]>(() => {
+    return this.report()?.dailyTrends ?? [];
+  });
+
+  maxTrendVal = computed<number>(() => {
+    const list = this.trendData();
+    if (list.length === 0) return 100000;
+    const maxRev = Math.max(...list.map((d) => d.netRevenue || 0));
+    return Math.max(100000, Math.round(maxRev * 1.15));
+  });
+
+  trendYAxisTicks = computed<string[]>(() => {
+    const max = this.maxTrendVal();
+    const formatTick = (val: number) => {
+      if (val >= 1000000) return (val / 1000000).toFixed(1).replace('.0', '') + 'Tr';
+      if (val >= 1000) return Math.round(val / 1000) + 'k';
+      return String(val);
+    };
+    return [formatTick(max), formatTick(Math.round(max * 0.5)), '0đ'];
+  });
+
+  trendPointX(index: number): number {
+    const total = this.trendData().length;
+    if (total <= 1) return 300;
+    return Math.round((index / (total - 1)) * 580) + 10;
+  }
+
+  trendPointRevY(pt: FinanceDailyTrend): number {
+    const max = this.maxTrendVal();
+    const r = Math.max(0, pt.netRevenue || 0);
+    return Math.round(150 - (r / max) * 125);
+  }
+
+  trendPointProfY(pt: FinanceDailyTrend): number {
+    const max = this.maxTrendVal();
+    const p = Math.max(0, pt.estimatedProfit || 0);
+    return Math.round(150 - (p / max) * 125);
+  }
+
+  trendHoverHitX(index: number): number {
+    const total = this.trendData().length;
+    if (total <= 1) return 0;
+    const w = 600 / total;
+    return Math.max(0, this.trendPointX(index) - w / 2);
+  }
+
+  trendHoverHitW(): number {
+    const total = this.trendData().length;
+    return total > 0 ? 600 / total : 600;
+  }
+
+  trendPoints = computed(() => {
+    const list = this.trendData();
+    if (list.length === 0) return { lineRev: '', lineProf: '', areaRev: '' };
+    const revPts = list.map((pt, i) => `${this.trendPointX(i)},${this.trendPointRevY(pt)}`).join(' ');
+    const profPts = list.map((pt, i) => `${this.trendPointX(i)},${this.trendPointProfY(pt)}`).join(' ');
+    const firstX = this.trendPointX(0);
+    const lastX = this.trendPointX(list.length - 1);
+    const area = `${firstX},150 ${revPts} ${lastX},150`;
+    return { lineRev: revPts, lineProf: profPts, areaRev: area };
+  });
+
+  hoveredTrendPoint = computed(() => {
+    const idx = this.hoveredTrendIndex();
+    if (idx === null) return null;
+    const list = this.trendData();
+    const pt = list[idx];
+    if (!pt) return null;
+    const margin = pt.netRevenue > 0 ? ((pt.estimatedProfit / pt.netRevenue) * 100).toFixed(1) : '0';
+    return { ...pt, margin };
+  });
+
+  trendXAxisLabels = computed<string[]>(() => {
+    const list = this.trendData();
+    if (list.length === 0) return [];
+    if (list.length <= 8) {
+      return list.map((d) => {
+        const parts = d.date.split('-');
+        return parts.length >= 3 ? `${parts[2]}/${parts[1]}` : d.date;
+      });
+    }
+    const step = Math.ceil(list.length / 6);
+    const labels: string[] = [];
+    for (let i = 0; i < list.length; i += step) {
+      const parts = list[i].date.split('-');
+      labels.push(parts.length >= 3 ? `${parts[2]}/${parts[1]}` : list[i].date);
+    }
+    return labels;
   });
 
   formatPrice(v: number): string {

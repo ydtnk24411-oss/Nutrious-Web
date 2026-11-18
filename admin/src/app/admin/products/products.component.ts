@@ -1,10 +1,11 @@
 import { Component, signal, inject, OnInit, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { CategoryApiService, ApiCategory } from '../../shared/services/category-api.service';
 import { calcAddOnUnitDiscount, formatPrice } from '../../shared/services/cart.service';
+import { AdminAuthService } from '../../shared/services/admin-auth.service';
 
 type ModalMode = 'create' | 'edit';
 
@@ -68,11 +69,14 @@ const EMPTY_FORM = (): Partial<ApiProduct> => ({
 @Component({
   selector: 'app-admin-products',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   templateUrl: './products.component.html',
   styleUrl: './products.component.css',
 })
 export class AdminProductsComponent implements OnInit {
+  protected auth = inject(AdminAuthService);
+  canManageProducts = computed(() => ['admin', 'manager', 'marketing'].includes((this.auth.user()?.role || '').toLowerCase()));
+  isSales = computed(() => (this.auth.user()?.role || '').toLowerCase() === 'sales');
   private productApi = inject(ProductApiService);
   private categoryApi = inject(CategoryApiService);
   private route = inject(ActivatedRoute);
@@ -133,15 +137,12 @@ export class AdminProductsComponent implements OnInit {
   filteredAddOnCandidates = computed(() => {
     const q = this.addonSearch().trim().toLowerCase();
     const selfId = this.editId();
-    const currentPrice = Number(this.form().priceNumber) || 0;
     const chosenIds = new Set(this.formAddOnDeals().map((r) => r.productId));
     return this.allCandidateProducts()
       .filter((p) => {
         if (!p || !p._id || p.isCombo || p.isActive === false) return false;
         if (selfId && p._id === selfId) return false;
         if (chosenIds.has(p._id)) return false;
-        // Bắt buộc về giá: Chỉ cho phép chọn sản phẩm mua kèm có giá THẤP HƠN sản phẩm chính
-        if (currentPrice > 0 && (Number(p.priceNumber) || 0) >= currentPrice) return false;
         if (!q) return true;
         return (
           p.name.toLowerCase().includes(q) ||
@@ -259,7 +260,6 @@ export class AdminProductsComponent implements OnInit {
       page: this.page(),
       limit: this.limit(),
       sort: this.sort(),
-      isCombo: 'false',
     };
 
     if (this.search()) {
@@ -366,10 +366,6 @@ export class AdminProductsComponent implements OnInit {
   }
 
   openEdit(p: ApiProduct): void {
-    if (p.isCombo) {
-      this.router.navigate(['/admin/combos']);
-      return;
-    }
     const catId = typeof p.categoryId === 'object' && (p.categoryId as any)?._id
       ? (p.categoryId as any)._id.toString()
       : (p.categoryId ? p.categoryId.toString() : '');
@@ -453,16 +449,16 @@ export class AdminProductsComponent implements OnInit {
   previewAddOnRow(row: AdminAddOnDealRow): string {
     const mainPrice = Number(this.form().priceNumber) || 0;
     const addonPrice = Number(row.productPriceNumber) || 0;
-    const mainName = this.form().name || 'Sản phẩm đang chọn';
+    const mainName = this.form().name || 'SP chính';
     if (Number(row.discountValue) <= 0) {
       return 'Nhập mức giảm > 0 để kích hoạt ưu đãi';
     }
     if (addonPrice <= mainPrice) {
       const disc = calcAddOnUnitDiscount(addonPrice, row.discountType, row.discountValue);
-      return `Giảm ${formatPrice(disc)} trên "${row.productName}" (còn ${formatPrice(addonPrice - disc)})`;
+      return `Giảm ${formatPrice(disc)} trên "${row.productName}" (còn ${formatPrice(addonPrice - disc)}) vì có giá thấp hơn`;
     } else {
       const disc = calcAddOnUnitDiscount(mainPrice, row.discountType, row.discountValue);
-      return `Giảm ${formatPrice(disc)} trên "${mainName}" (còn ${formatPrice(mainPrice - disc)})`;
+      return `Giảm ${formatPrice(disc)} trên "${mainName}" (còn ${formatPrice(mainPrice - disc)}) vì SP chính có giá thấp hơn`;
     }
   }
 

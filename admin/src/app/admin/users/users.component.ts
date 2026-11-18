@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserApiService, ApiUser, ApiUserWithStats, UserRole } from '../../shared/services/user-api.service';
 import { OrderApiService, ApiOrder } from '../../shared/services/order-api.service';
+import { AdminAuthService } from '../../shared/services/admin-auth.service';
 
 @Component({
   selector: 'app-admin-users',
@@ -12,8 +13,14 @@ import { OrderApiService, ApiOrder } from '../../shared/services/order-api.servi
   styleUrl: './users.component.css',
 })
 export class AdminUsersComponent implements OnInit {
+  protected auth = inject(AdminAuthService);
   private userApi = inject(UserApiService);
   private orderApi = inject(OrderApiService);
+
+  canManageAccount = computed(() => ['admin', 'manager'].includes((this.auth.user()?.role || '').toLowerCase()));
+  isSales = computed(() => (this.auth.user()?.role || '').toLowerCase() === 'sales');
+  isManager = computed(() => (this.auth.user()?.role || '').toLowerCase() === 'manager');
+  isMarketing = computed(() => (this.auth.user()?.role || '').toLowerCase() === 'marketing');
 
   users    = signal<ApiUserWithStats[]>([]);
   total    = signal(0);
@@ -240,20 +247,31 @@ export class AdminUsersComponent implements OnInit {
     });
   }
 
+  setSegment(seg: string): void {
+    this.segmentFilter.set(seg);
+    this.page.set(1);
+    this.load();
+  }
+
   // Behavioral segmentation
   getCustomerSegment(user: ApiUserWithStats): string {
     if (user.orderCount === 0) return 'Mới';
     if (user.totalSpent >= 1000000) return 'VIP';
+    if (user.lastPurchaseDate) {
+      const daysSinceLast = (Date.now() - new Date(user.lastPurchaseDate).getTime()) / (1000 * 60 * 60 * 24);
+      if (daysSinceLast >= 30) return 'Lâu chưa quay lại';
+    }
     if (user.orderCount >= 5) return 'Thân thiết';
     return 'Trung bình';
   }
 
   getSegmentColor(segment: string): string {
     const colors: Record<string, string> = {
-      'Mới': '#9ca3af',
+      'Mới': '#10b981',
       'Trung bình': '#3b82f6',
       'Thân thiết': '#f59e0b',
-      'VIP': '#ef4444',
+      'VIP': '#8b5cf6',
+      'Lâu chưa quay lại': '#ef4444',
     };
     return colors[segment] || '#6b7280';
   }
@@ -263,7 +281,7 @@ export class AdminUsersComponent implements OnInit {
   }
 
   formatDate(dateStr: string | null): string {
-    if (!dateStr) return '—';
+    if (!dateStr) return '-';
     const date = new Date(dateStr);
     return date.toLocaleDateString('vi-VN');
   }

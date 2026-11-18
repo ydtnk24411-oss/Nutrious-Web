@@ -2,7 +2,7 @@ const router = require('express').Router();
 const Cart = require('../models/Cart');
 const { optionalAuth, protect, staffOnly, authorizeRoles } = require('../middleware/auth');
 
-// POST /api/cart/sync — Đồng bộ giỏ hàng từ Storefront lên Server (Bắt buộc đăng nhập tài khoản)
+// POST /api/cart/sync - Đồng bộ giỏ hàng từ Storefront lên Server (Bắt buộc đăng nhập tài khoản)
 router.post('/sync', protect, async (req, res, next) => {
   try {
     const { items = [], totalAmount = 0, customerName = '', customerEmail = '', customerPhone = '' } = req.body;
@@ -58,7 +58,7 @@ router.post('/sync', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/cart — Lấy giỏ hàng đang lưu trên server
+// GET /api/cart - Lấy giỏ hàng đang lưu trên server
 router.get('/', optionalAuth, async (req, res, next) => {
   try {
     const sessionId = req.sessionID || req.headers['x-session-id'] || req.cookies?.sessionId || '';
@@ -73,7 +73,7 @@ router.get('/', optionalAuth, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/cart/admin/abandoned — Danh sách giỏ hàng bị bỏ rơi & Báo cáo phục hồi cho Sales
+// GET /api/cart/admin/abandoned - Danh sách giỏ hàng bị bỏ rơi & Báo cáo phục hồi cho Sales
 router.get('/admin/abandoned', protect, staffOnly, async (req, res, next) => {
   try {
     const { page = 1, limit = 20, minAmount = 0 } = req.query;

@@ -32,7 +32,7 @@
         </div>
       </div>
 
-      <!-- Current Tier -->
+      <!-- Current Tier & Progress -->
       <div class="loyalty-tier-section">
         <h2 class="loyalty-section-title">Hạng thành viên hiện tại</h2>
         <div class="loyalty-tier-card">
@@ -43,16 +43,34 @@
             ></i>
           </div>
           <div class="loyalty-tier-details">
-            <h3 class="loyalty-tier-name">{{ userTier().name }}</h3>
-            <p class="loyalty-tier-requirement">Yêu cầu chi tiêu: {{ formatPrice(userTier().minSpent) }} (Đã tích lũy: {{ formatPrice(loyalty.totalSpent()) }})</p>
-            <div class="loyalty-tier-benefits">
-              <h4>Quyền lợi hạng {{ userTier().name }}:</h4>
-              <ul>
-                @for (benefit of userTier().benefits; track benefit) {
-                  <li>{{ benefit }}</li>
-                }
-              </ul>
+            <div class="loyalty-tier-head-row">
+              <h3 class="loyalty-tier-name">{{ userTier().name }}</h3>
+              <span class="loyalty-spent-pill">Đã tích lũy: <strong>{{ formatPrice(spent()) }}</strong></span>
             </div>
+
+            @if (nextTier(); as next) {
+              <div class="loyalty-tier-prog-wrap">
+                <div class="loyalty-tier-prog-head">
+                  <span>Tiến độ lên hạng <strong>{{ next.name }}</strong></span>
+                  <span class="prog-pct-txt"><strong>{{ progressPercent() }}%</strong></span>
+                </div>
+                <div class="loyalty-tier-prog-bar">
+                  <div class="loyalty-tier-prog-fill" [style.width.%]="progressPercent()"></div>
+                </div>
+                <div class="loyalty-tier-prog-foot">
+                  <span>{{ formatPrice(spent()) }}</span>
+                  <span>Mục tiêu: {{ formatPrice(next.minSpent) }}</span>
+                </div>
+                <p class="loyalty-tier-prog-hint">
+                  Chi tiêu thêm <strong>{{ formatPrice(neededSpent()) }}</strong> để nâng cấp hạng <strong>{{ next.name }}</strong>.
+                </p>
+              </div>
+            } @else {
+              <div class="loyalty-tier-max-badge">
+                <i class="bi bi-patch-check-fill" style="color:#0284c7"></i>
+                <span>Bạn đang sở hữu hạng Thành viên cao cấp nhất (Bạch kim) với mọi quyền lợi VIP!</span>
+              </div>
+            }
           </div>
         </div>
       </div>
@@ -60,17 +78,59 @@
       <!-- Tier Progress -->
       <div class="loyalty-progress-section">
         <h2 class="loyalty-section-title">Hệ thống cấp bậc thành viên</h2>
+        <p style="font-size:14px;color:var(--xanh-muted);margin:-8px 0 20px">
+          Tích lũy chi tiêu trên mỗi đơn hàng tại Evergreen Mart để tự động nâng cấp bậc và hưởng đặc quyền riêng biệt.
+        </p>
         <div class="loyalty-tiers-grid">
           @for (tier of tierConfigs; track tier.name) {
-            <div class="loyalty-tier-item" [class.current]="tier.name === userTier().name" [class.completed]="tier.minSpent < userTier().minSpent">
-              <div class="loyalty-tier-emoji">
-                <i
-                  [class]="'bi ' + tier.icon"
-                  [style.color]="tier.tier === 'Platinum' ? '#0284c7' : tier.tier === 'Gold' ? '#d97706' : tier.tier === 'Silver' ? '#64748b' : '#b45309'"
-                ></i>
+            <div
+              class="loyalty-tier-item"
+              [class.current]="tier.name === userTier().name"
+              [class.completed]="tier.minSpent < userTier().minSpent"
+            >
+              <div class="loyalty-tier-card-header">
+                <div class="loyalty-tier-emoji">
+                  <i
+                    [class]="'bi ' + tier.icon"
+                    [style.color]="tier.tier === 'Platinum' ? '#0284c7' : tier.tier === 'Gold' ? '#d97706' : tier.tier === 'Silver' ? '#64748b' : '#b45309'"
+                  ></i>
+                </div>
+                <div style="flex:1;text-align:left">
+                  <div class="loyalty-tier-title">{{ tier.name }}</div>
+                  @if (tier.name === userTier().name) {
+                    <span class="loyalty-badge-current">Hạng hiện tại</span>
+                  } @else if (tier.minSpent < userTier().minSpent) {
+                    <span class="loyalty-badge-done">Đã hoàn thành</span>
+                  } @else {
+                    <span class="loyalty-badge-target">Mục tiêu</span>
+                  }
+                </div>
               </div>
-              <div class="loyalty-tier-title">{{ tier.name }}</div>
-              <div class="loyalty-tier-min">{{ formatPrice(tier.minSpent) }}</div>
+
+              <div class="loyalty-tier-criteria">
+                <div class="loyalty-criteria-row">
+                  <span class="crit-label">Chi tiêu yêu cầu:</span>
+                  <strong class="crit-value">{{ tier.minSpent === 0 ? 'Mặc định (0đ)' : 'Từ ' + formatPrice(tier.minSpent) }}</strong>
+                </div>
+                <div class="loyalty-criteria-row">
+                  <span class="crit-label">Tỷ lệ tích điểm:</span>
+                  <strong class="crit-value" style="color:#15803d">
+                    {{ tier.tier === 'Bronze' ? '1đ' : tier.tier === 'Silver' ? '1.2đ' : tier.tier === 'Gold' ? '1.5đ' : '2đ' }} / 10.000đ
+                  </strong>
+                </div>
+              </div>
+
+              <div class="loyalty-tier-benefits-list">
+                <span class="benefits-heading">Quyền lợi:</span>
+                <ul>
+                  @for (benefit of tier.benefits; track benefit) {
+                    <li>
+                      <i class="bi bi-check2 text-success" style="font-weight:bold;font-size:13px;flex-shrink:0"></i>
+                      <span>{{ benefit }}</span>
+                    </li>
+                  }
+                </ul>
+              </div>
             </div>
           }
         </div>

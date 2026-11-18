@@ -1,11 +1,12 @@
 const router = require('express').Router();
 const mongoose = require('mongoose');
 const { body } = require('express-validator');
+const User = require('../models/User');
 const Review = require('../models/Review');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Combo = require('../models/Combo');
-const { protect, optionalAuth, staffOnly, hasRole, adminOnly } = require('../middleware/auth');
+const { protect, optionalAuth, staffOnly, hasRole, adminOnly, authorizeRoles } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 
 
@@ -71,10 +72,10 @@ const toDto = (r, viewerId) => {
     helpfulCount: r.likeCount !== undefined ? r.likeCount : ((r.likedBy || r.helpfulBy || []).length),
     likeCount: r.likeCount !== undefined ? r.likeCount : ((r.likedBy || r.helpfulBy || []).length),
     isLiked: viewerId ? ((r.likedBy || r.helpfulBy || []).some((u) => String(u) === String(viewerId))) : false,
-    sellerReply: r.sellerReply?.text ? r.sellerReply : (r.adminReply ? { text: r.adminReply, repliedBy: 'Cửa hàng Evergreen Mart', role: 'Sales', repliedAt: r.adminReplyAt } : null),
+    sellerReply: r.sellerReply?.text ? r.sellerReply : null,
     isHelpful: viewerId ? (r.helpfulBy || []).some((u) => String(u) === String(viewerId)) : false,
-    adminReply: r.adminReply || '',
-    adminReplyAt: r.adminReplyAt || null,
+    adminReply: r.sellerReply?.text || '',
+    adminReplyAt: r.sellerReply?.repliedAt || null,
     isHidden: r.isHidden,
     createdAt: r.createdAt,
     verifiedPurchase: r.verifiedPurchase,
@@ -129,34 +130,80 @@ router.get('/product/:productId', optionalAuth, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/reviews/admin — list all reviews for admin
-router.get('/admin', protect, staffOnly, async (req, res, next) => {
+// GET /api/reviews/admin - list all reviews for admin / marketing / sales / support
+router.get('/admin', protect, authorizeRoles('admin', 'marketing', 'sales', 'support'), async (req, res, next) => {
   try {
-    const { rating, status, search, sort = 'newest', page = 1, limit = 50 } = req.query;
+    const { rating, status, replyStatus, search, sort = 'newest', page = 1, limit = 50 } = req.query;
     const filter = {};
 
     if (rating && rating !== 'all') filter.rating = Number(rating);
     if (status === 'visible') filter.isHidden = { $ne: true };
     if (status === 'hidden') filter.isHidden = true;
-    if (search) {
-      filter.$or = [
-        { productName: { $regex: search, $options: 'i' } },
-        { userName: { $regex: search, $options: 'i' } },
-        { content: { $regex: search, $options: 'i' } },
-      ];
+
+    const andConditions = [];
+    if (replyStatus === 'unreplied') {
+      andConditions.push({
+        $or: [
+          { 'sellerReply.text': '' },
+          { 'sellerReply.text': null },
+          { 'sellerReply.text': { $exists: false } },
+        ],
+      });
+    } else if (replyStatus === 'replied') {
+      filter['sellerReply.text'] = { $exists: true, $nin: ['', null] };
     }
 
-    const sortOption = sort === 'oldest' ? { createdAt: 1 } : { createdAt: -1 };
+    if (search) {
+      andConditions.push({
+        $or: [
+          { productName: { $regex: search, $options: 'i' } },
+          { userName: { $regex: search, $options: 'i' } },
+          { content: { $regex: search, $options: 'i' } },
+        ],
+      });
+    }
 
-    const [allReviews, reviews, total] = await Promise.all([
-      Review.find({}), // for global stats
+    if (andConditions.length > 0) {
+      filter.$and = andConditions;
+    }
+
+    const sortOption = sort === 'oldest' ? { _id: 1 } : { _id: -1 };
+
+    const [statsAgg, pendingCount, reviews, total] = await Promise.all([
+      Review.aggregate([
+        {
+          $group: {
+            _id: '$rating',
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+      Review.countDocuments({
+        $or: [
+          { 'sellerReply.text': '' },
+          { 'sellerReply.text': null },
+          { 'sellerReply.text': { $exists: false } },
+        ],
+      }),
       Review.find(filter)
         .sort(sortOption)
         .skip((Number(page) - 1) * Number(limit))
         .limit(Number(limit))
-        .populate('user', 'name email avatar'),
+        .lean(),
       Review.countDocuments(filter),
     ]);
+
+    const ratingDistribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    let totalReviews = 0;
+    let sumRating = 0;
+    (statsAgg || []).forEach((s) => {
+      if (s._id >= 1 && s._id <= 5) {
+        ratingDistribution[s._id] = s.count;
+        totalReviews += s.count;
+        sumRating += s._id * s.count;
+      }
+    });
+    const averageRating = totalReviews > 0 ? Math.round((sumRating / totalReviews) * 10) / 10 : 4.8;
 
     const missingProductIds = [
       ...new Set(
@@ -171,8 +218,8 @@ router.get('/admin', protect, staffOnly, async (req, res, next) => {
         const validObjIds = missingProductIds.filter((id) => mongoose.Types.ObjectId.isValid(id));
         const [prods, combos] = validObjIds.length
           ? await Promise.all([
-              Product.find({ _id: { $in: validObjIds } }).select('_id name image'),
-              Combo.find({ _id: { $in: validObjIds } }).select('_id name image'),
+              Product.find({ _id: { $in: validObjIds } }).select('_id name image').lean(),
+              Combo.find({ _id: { $in: validObjIds } }).select('_id name image').lean(),
             ])
           : [[], []];
         [...prods, ...combos].forEach((p) => {
@@ -182,7 +229,7 @@ router.get('/admin', protect, staffOnly, async (req, res, next) => {
     }
 
     const data = reviews.map((r) => {
-      const obj = r.toObject ? r.toObject() : { ...r };
+      const obj = { ...r };
       if (!obj.productImage && prodMap[String(r.product)]) {
         obj.productImage = prodMap[String(r.product)].image || '';
         if (!obj.productName) obj.productName = prodMap[String(r.product)].name || '';
@@ -193,25 +240,22 @@ router.get('/admin', protect, staffOnly, async (req, res, next) => {
       return obj;
     });
 
-    const globalStats = buildStats(allReviews);
-    const pendingReplyCount = allReviews.filter((r) => !r.adminReply).length;
-
     res.json({
       success: true,
       data,
       stats: {
-        total: allReviews.length,
-        averageRating: globalStats.averageRating,
-        ratingDistribution: globalStats.ratingDistribution,
-        pendingReplyCount,
+        total: totalReviews,
+        averageRating,
+        ratingDistribution,
+        pendingReplyCount: pendingCount,
       },
       total,
     });
   } catch (err) { next(err); }
 });
 
-// PUT /api/reviews/:id/reply — admin reply
-router.put('/:id/reply', protect, hasRole('sales', 'manager', 'admin', 'support'), async (req, res, next) => {
+// PUT /api/reviews/:id/reply - admin / marketing / sales / support reply
+router.put('/:id/reply', protect, authorizeRoles('admin', 'marketing', 'sales', 'support'), async (req, res, next) => {
   try {
     const { reply } = req.body;
     const review = await Review.findById(req.params.id);
@@ -222,8 +266,6 @@ router.put('/:id/reply', protect, hasRole('sales', 'manager', 'admin', 'support'
     const responder = req.user?.name || req.session?.employee?.name || 'Nhân viên kinh doanh';
     const responderRole = req.user?.role || req.session?.employee?.role || 'Sales';
 
-    review.adminReply = (reply || '').trim();
-    review.adminReplyAt = new Date();
     review.sellerReply = {
       text: (reply || '').trim(),
       repliedBy: responder,
@@ -237,8 +279,8 @@ router.put('/:id/reply', protect, hasRole('sales', 'manager', 'admin', 'support'
   } catch (err) { next(err); }
 });
 
-// PUT /api/reviews/:id/hide — toggle isHidden
-router.put('/:id/hide', protect, hasRole('support', 'admin'), async (req, res, next) => {
+// PUT /api/reviews/:id/hide - toggle isHidden
+router.put('/:id/hide', protect, hasRole('admin', 'support', 'cskh', 'sales', 'manager'), async (req, res, next) => {
   try {
     const { isHidden } = req.body;
     const review = await Review.findById(req.params.id);
@@ -254,7 +296,7 @@ router.put('/:id/hide', protect, hasRole('support', 'admin'), async (req, res, n
   } catch (err) { next(err); }
 });
 
-// DELETE /api/reviews/:id — admin remove
+// DELETE /api/reviews/:id - admin remove
 router.delete('/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const review = await Review.findByIdAndDelete(req.params.id);
@@ -451,7 +493,7 @@ router.post(
 
 // POST /api/reviews/:id/helpful (Cho phép cả thành viên đã đăng nhập và khách vãng lai)
 
-// POST /api/reviews/:id/like — Toggle Helpful Vote (Chỉ cho thành viên đăng nhập, chặn khách vãng lai, chặn tự like)
+// POST /api/reviews/:id/like - Toggle Helpful Vote (Chỉ cho thành viên đăng nhập, chặn khách vãng lai, chặn tự like)
 router.post('/:id/like', protect, async (req, res, next) => {
   try {
     const review = await Review.findById(req.params.id);

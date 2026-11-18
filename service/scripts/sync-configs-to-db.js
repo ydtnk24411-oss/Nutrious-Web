@@ -11,7 +11,6 @@ const mongoose = require('mongoose');
 const NutritionConfig = require('../models/NutritionConfig');
 const ChatbotKnowledge = require('../models/ChatbotKnowledge');
 const LoyaltyConfig = require('../models/LoyaltyConfig');
-const FooterConfig = require('../models/FooterConfig');
 const ShippingConfig = require('../models/ShippingConfig');
 const Conversation = require('../models/Conversation');
 
@@ -524,73 +523,6 @@ async function syncConfigsToDb() {
   );
   console.log('Upserted loyaltyconfigs (main).');
 
-  const existingFooter = await FooterConfig.findOne({ key: 'main' }).lean();
-  const cleanFooter = {
-    key: 'main',
-    brandName: 'Evergreen Mart',
-    brandDesc: sanitizeBrandText(existingFooter?.brandDesc) ||
-      'Tự hào mang nông sản Việt đạt chuẩn VietGAP, GlobalGAP và Organic từ các nông trại xanh đến tận bàn ăn gia đình bạn mỗi ngày.',
-    newsletterTitle: sanitizeBrandText(existingFooter?.newsletterTitle) ||
-      'Bản tin dinh dưỡng & Ưu đãi Evergreen Mart',
-    newsletterDesc: sanitizeBrandText(existingFooter?.newsletterDesc) ||
-      'Đăng ký email để nhận ngay voucher giảm 20%, gợi ý thực đơn dinh dưỡng mỗi tuần và ưu đãi Flash Sale nông sản thu hoạch trong ngày.',
-    copyrightText: sanitizeBrandText(existingFooter?.copyrightText) ||
-      '© 2026 Evergreen Mart - Nông Nghiệp Hữu Cơ & Dinh Dưỡng Thông Minh. Bảo lưu mọi quyền.',
-    contactInfo: {
-      hotline: '1800 6999 (07:00 – 21:00)',
-      email: 'chamsoc@evergreenmart.vn',
-      address: existingFooter?.contactInfo?.address || 'Khu phố 6, Phường Linh Trung, TP. Thủ Đức, TP. Hồ Chí Minh',
-    },
-    trustItems: (existingFooter?.trustItems || []).map((t) => ({
-      iconKey: t.iconKey,
-      title: sanitizeBrandText(t.title),
-      subtitle: sanitizeBrandText(t.subtitle),
-    })),
-    serviceLinks: [
-      { label: 'Đặt hàng trực tuyến', route: '/online-ordering' },
-      { label: 'Khuyến mãi & Deal nông sản', route: '/promotions' },
-      { label: 'Kho Voucher giảm giá', route: '/vouchers' },
-      { label: 'Dinh dưỡng thông minh', route: '/nutrition' },
-      { label: 'Nấu gì với đồ sẵn có?', route: '/cook-with-what-you-have' },
-    ],
-    utilityLinks: (existingFooter?.utilityLinks || []).map((l) => ({
-      ...l,
-      label: sanitizeBrandText(l.label),
-    })),
-    aboutLinks: (existingFooter?.aboutLinks || []).map((l) => ({
-      ...l,
-      label: sanitizeBrandText(l.label),
-    })),
-    policyLinks: (existingFooter?.policyLinks || []).map((l) => ({
-      ...l,
-      label: sanitizeBrandText(l.label),
-    })),
-    socialLinks: (existingFooter?.socialLinks || []).map((s) => ({
-      ...s,
-      label: sanitizeBrandText(s.label),
-    })),
-    paymentMethods: existingFooter?.paymentMethods?.length
-      ? existingFooter.paymentMethods
-      : ['COD', 'VietQR', 'MoMo', 'VNPay', 'ZaloPay', 'Visa/Master'],
-    policies: (existingFooter?.policies || []).map((p) => ({
-      key: p.key,
-      title: sanitizeBrandText(p.title),
-      subtitle: sanitizeBrandText(p.subtitle),
-      updatedAt: p.updatedAt,
-      sections: (p.sections || []).map((sec) => ({
-        heading: sanitizeBrandText(sec.heading),
-        content: (sec.content || []).map((line) => sanitizeBrandText(line)),
-      })),
-    })),
-  };
-
-  await FooterConfig.findOneAndUpdate(
-    { key: 'main' },
-    { $set: cleanFooter },
-    { upsert: true, new: true }
-  );
-  console.log('Updated footerconfigs (main) with clean Evergreen Mart data.');
-
   const shipCfg = await ShippingConfig.findOne({ key: 'default' });
   if (shipCfg) {
     shipCfg.warehouses = (shipCfg.warehouses || []).map((w) => {
@@ -605,10 +537,12 @@ async function syncConfigsToDb() {
         readyTime: obj.readyTime || extra.readyTime,
       };
     });
-    shipCfg.orderDiscounts = [
-      { minOrderValue: 300000, discountAmount: 25000, label: 'Đơn từ 300.000đ: giảm 25.000đ phí ship (Freeship)' },
-      { minOrderValue: 150000, discountAmount: 10000, label: 'Đơn từ 150.000đ: giảm 10.000đ phí ship' },
-    ];
+    if (!Array.isArray(shipCfg.orderDiscounts) || shipCfg.orderDiscounts.length === 0) {
+      shipCfg.orderDiscounts = [
+        { minOrderValue: 300000, discountAmount: 25000, label: 'Đơn từ 300.000đ: giảm 25.000đ phí ship (Freeship)' },
+        { minOrderValue: 150000, discountAmount: 10000, label: 'Đơn từ 150.000đ: giảm 10.000đ phí ship' },
+      ];
+    }
     await shipCfg.save();
     console.log('Updated shippingconfigs (default) with warehouse hours & orderDiscounts.');
   }

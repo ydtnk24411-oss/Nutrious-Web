@@ -20,9 +20,9 @@ export class AdminLoginComponent implements OnInit {
   private route  = inject(ActivatedRoute);
   private cookieService = inject(CookieService);
 
-  email      = signal('admin@xanhla.farm');
-  password   = signal('admin123');
-  rememberMe = signal(true);
+  email      = signal('');
+  password   = signal('');
+  rememberMe = signal(false);
   loading    = signal(false);
   googleLoading = signal(false);
   error      = signal('');
@@ -57,16 +57,26 @@ export class AdminLoginComponent implements OnInit {
       next: (res) => {
         this.loading.set(false);
         const role = (res.user?.role || '').toLowerCase();
-        if (res.success && (role === 'sales' || role === 'admin')) {
+        const allowedRoles = ['admin', 'manager', 'sales', 'warehouse', 'marketing', 'support', 'content'];
+
+        if (res.success && allowedRoles.includes(role)) {
           // Ghi nhớ tên đăng nhập bằng cookie
           if (this.rememberMe()) {
             this.cookieService.set('admin_remembered_username', this.email().trim(), 30, '/');
           } else {
             this.cookieService.delete('admin_remembered_username', '/');
           }
-          this.router.navigate(['/admin/dashboard']);
+
+          // Điều hướng về phân hệ mặc định tương ứng với vai trò
+          if (role === 'warehouse') {
+            this.router.navigate(['/admin/inventory']);
+          } else if (role === 'marketing') {
+            this.router.navigate(['/admin/analytics']);
+          } else {
+            this.router.navigate(['/admin/dashboard']);
+          }
         } else {
-          const errMsg = 'Tài khoản không có quyền nhân viên bán hàng (Sales/Admin).';
+          const errMsg = 'Tài khoản không có quyền nhân viên hợp lệ để truy cập hệ thống quản trị.';
           this.error.set(errMsg);
           this.router.navigate(['/admin/login-failed'], {
             queryParams: { reason: 'unauthorized', message: errMsg },
@@ -92,8 +102,16 @@ export class AdminLoginComponent implements OnInit {
         this.auth.loginWithGoogle(data).subscribe({
           next: (res) => {
             this.googleLoading.set(false);
-            if (res.success && ['admin', 'sales', 'warehouse', 'support', 'content'].includes(res.user.role)) {
-              this.router.navigate(['/admin/dashboard']);
+            const role = (res.user?.role || '').toLowerCase();
+            const allowedRoles = ['admin', 'manager', 'sales', 'warehouse', 'marketing', 'support', 'content'];
+            if (res.success && allowedRoles.includes(role)) {
+              if (role === 'warehouse') {
+                this.router.navigate(['/admin/inventory']);
+              } else if (role === 'marketing') {
+                this.router.navigate(['/admin/analytics']);
+              } else {
+                this.router.navigate(['/admin/dashboard']);
+              }
             } else {
               this.error.set('Tài khoản Google này không có quyền truy cập trang quản trị.');
             }

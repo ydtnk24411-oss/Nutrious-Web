@@ -11,6 +11,8 @@ import { searchProducts, highlightMatch } from '../../shared/utils/search.util';
 import { NotificationService, InAppNotification } from '../../shared/services/notification.service';
 import { WishlistService } from '../../shared/services/wishlist.service';
 import { AnalyticsTrackerService } from '../../shared/services/analytics-tracker.service';
+import { StoreLocationService } from '../../shared/services/store-location.service';
+import { WarehouseLocation } from '../../shared/services/shipping-api.service';
 
 const CATEGORIES = [
   { label: 'Rau củ', path: '/online-ordering', category: 'Rau củ' },
@@ -23,7 +25,7 @@ const CATEGORIES = [
   { label: 'Gia vị & Thực phẩm khô', path: '/online-ordering', category: 'Gia vị & Thực phẩm khô' },
 ];
 
-const AREAS = ['TP. Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Cần Thơ', 'Biên Hòa'];
+const AREAS = ['TP. Hồ Chí Minh', 'Dĩ An (Bình Dương)'];
 
 export interface HeaderNotification {
   id: string;
@@ -51,6 +53,8 @@ export class HeaderComponent implements OnDestroy {
   protected notifService = inject(NotificationService);
   protected wishlist = inject(WishlistService);
   private analytics = inject(AnalyticsTrackerService);
+  protected storeLoc = inject(StoreLocationService);
+  protected isLocatingGps = signal(false);
 
   protected readonly navItems    = navItems;
   protected readonly logoImage   = logoImage;
@@ -159,7 +163,15 @@ export class HeaderComponent implements OnDestroy {
   toggleCatMenu(): void    { this.catMenuOpen.update(v => !v); }
   closeCatMenu(): void     { this.catMenuOpen.set(false); }
   toggleAreaMenu(): void   { this.areaMenuOpen.update(v => !v); this.userMenuOpen.set(false); this.notifMenuOpen.set(false); }
-  toggleNotifMenu(): void  { this.notifMenuOpen.update(v => !v); this.userMenuOpen.set(false); this.areaMenuOpen.set(false); }
+  toggleNotifMenu(): void  {
+    const next = !this.notifMenuOpen();
+    this.notifMenuOpen.set(next);
+    this.userMenuOpen.set(false);
+    this.areaMenuOpen.set(false);
+    if (next) {
+      this.notifService.loadHistory();
+    }
+  }
   closeNotifMenu(): void   { this.notifMenuOpen.set(false); }
 
   onSearchInput(e: Event): void {
@@ -286,6 +298,33 @@ export class HeaderComponent implements OnDestroy {
     this.areaMenuOpen.set(false);
   }
 
+  selectWarehouse(wh: WarehouseLocation): void {
+    this.storeLoc.selectStore(wh);
+    this.selectedArea.set(wh.name);
+    this.areaMenuOpen.set(false);
+  }
+
+  locateGps(): void {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      alert('Trình duyệt của bạn không hỗ trợ định vị vị trí GPS.');
+      return;
+    }
+    this.isLocatingGps.set(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        this.isLocatingGps.set(false);
+        const wh = this.storeLoc.selectNearestByCoords(pos.coords.latitude, pos.coords.longitude);
+        this.selectedArea.set(wh.name);
+        this.areaMenuOpen.set(false);
+      },
+      (err) => {
+        this.isLocatingGps.set(false);
+        alert('Không thể xác định tọa độ GPS tự động. Vui lòng bấm chọn chi nhánh từ danh sách bên dưới.');
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  }
+
   logout(): void {
     this.cart.logout();
     this.userMenuOpen.set(false);
@@ -301,7 +340,7 @@ export class HeaderComponent implements OnDestroy {
     const t = e.target as HTMLElement;
     if (!t.closest('.xl-header-search-wrapper')) this.showSuggestions.set(false);
     if (!t.closest('.xl-cat-menu-wrapper'))  this.catMenuOpen.set(false);
-    if (!t.closest('.xl-area-wrapper'))      this.areaMenuOpen.set(false);
+    if (!t.closest('.xl-subnav-store-wrapper') && !t.closest('.xl-area-wrapper')) this.areaMenuOpen.set(false);
     if (!t.closest('.xl-notif-wrapper'))     this.notifMenuOpen.set(false);
     if (
       !t.closest('.xanhla-user-menu') &&

@@ -273,5 +273,31 @@
           </a></div>
       </div>
     </section>
+    <!-- Pop-up Khuyến mãi Lễ / Tết động cấu hình từ Marketing -->
+    @if (showPromoPopup() && promoPopup()) {
+      <div class="coop-promo-modal-backdrop" (click)="closePromoPopup()">
+        <div class="coop-promo-modal-card" (click)="$event.stopPropagation()">
+          <button type="button" class="coop-promo-close-btn" (click)="closePromoPopup()" aria-label="Đóng popup">✕</button>
+          @if (promoPopup()?.badge) {
+            <span class="coop-promo-modal-badge">{{ promoPopup().badge }}</span>
+          }
+          @if (promoPopup()?.image) {
+            <img [src]="resolveMediaUrl(promoPopup().image)" [alt]="promoPopup().title" class="coop-promo-modal-img" />
+          }
+          <div class="coop-promo-modal-body">
+            <h3>{{ promoPopup().title }}</h3>
+            <p>{{ promoPopup().description }}</p>
+            @if (promoPopup()?.voucherCode) {
+              <div class="coop-promo-modal-code">
+                <span>Mã ưu đãi: <strong>{{ promoPopup().voucherCode }}</strong></span>
+              </div>
+            }
+            <a [routerLink]="promoPopup().buttonLink || '/vouchers'" class="coop-btn coop-btn-yellow coop-promo-cta-btn" (click)="closePromoPopup()">
+              {{ promoPopup().buttonText || 'Khám phá ngay' }}
+            </a>
+          </div>
+        </div>
+      </div>
+    }
   </main>
 </app-shell>

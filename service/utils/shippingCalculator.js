@@ -10,7 +10,7 @@ async function loadWarehousesFromStoresCollection() {
     return stores
       .filter((s) => Array.isArray(s.location?.coordinates) && s.location.coordinates.length >= 2)
       .map((s) => ({
-        id: String(s._id),
+        id: s.storeId || String(s._id),
         name: s.name,
         address: s.address || '',
         province: s.province || '',
@@ -26,6 +26,109 @@ async function loadWarehousesFromStoresCollection() {
     return [];
   }
 }
+
+const DEFAULT_WAREHOUSES = [
+  // TP. Hồ Chí Minh
+  {
+    id: 'store-thuduc',
+    name: 'Tổng kho Evergreen Mart Thủ Đức (Trụ sở chính)',
+    address: 'Khu phố 6, Phường Linh Trung, TP. Thủ Đức, TP. Hồ Chí Minh',
+    province: 'Thành phố Hồ Chí Minh',
+    district: 'TP. Thủ Đức',
+    lat: 10.8703,
+    lng: 106.7782,
+    phone: '0962 299 122',
+    openingHours: '07:00 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+    isHeadquarter: true,
+  },
+  {
+    id: 'store-q1',
+    name: 'Cửa hàng Evergreen Mart Quận 1',
+    address: '128 Hai Bà Trưng, Phường Đa Kao, Quận 1, TP. Hồ Chí Minh',
+    province: 'Thành phố Hồ Chí Minh',
+    district: 'Quận 1',
+    lat: 10.7865,
+    lng: 106.6998,
+    phone: '028 3822 5588',
+    openingHours: '07:30 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+  {
+    id: 'store-binhthanh',
+    name: 'Cửa hàng Evergreen Mart Bình Thạnh',
+    address: '45 Điện Biên Phủ, Phường 15, Quận Bình Thạnh, TP. Hồ Chí Minh',
+    province: 'Thành phố Hồ Chí Minh',
+    district: 'Quận Bình Thạnh',
+    lat: 10.7981,
+    lng: 106.7058,
+    phone: '028 3514 6677',
+    openingHours: '07:00 - 21:00',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+  {
+    id: 'store-q7',
+    name: 'Cửa hàng Evergreen Mart Quận 7',
+    address: '105 Nguyễn Thị Thập, Phường Tân Phú, Quận 7, TP. Hồ Chí Minh',
+    province: 'Thành phố Hồ Chí Minh',
+    district: 'Quận 7',
+    lat: 10.7382,
+    lng: 106.7196,
+    phone: '028 5410 8899',
+    openingHours: '07:30 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+  {
+    id: 'store-tanbinh',
+    name: 'Cửa hàng Evergreen Mart Tân Bình',
+    address: '32 Phổ Quang, Phường 2, Quận Tân Bình, TP. Hồ Chí Minh',
+    province: 'Thành phố Hồ Chí Minh',
+    district: 'Quận Tân Bình',
+    lat: 10.8038,
+    lng: 106.6662,
+    phone: '028 3844 1122',
+    openingHours: '07:00 - 21:00',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+  {
+    id: 'store-govap',
+    name: 'Cửa hàng Evergreen Mart Gò Vấp',
+    address: '366 Phan Văn Trị, Phường 5, Quận Gò Vấp, TP. Hồ Chí Minh',
+    province: 'Thành phố Hồ Chí Minh',
+    district: 'Quận Gò Vấp',
+    lat: 10.8228,
+    lng: 106.6908,
+    phone: '028 3894 3355',
+    openingHours: '07:00 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+  {
+    id: 'store-binhtan',
+    name: 'Cửa hàng Evergreen Mart Bình Tân',
+    address: 'Số 1 Đường Số 17A, Phường Bình Trị Đông B, Quận Bình Tân, TP. Hồ Chí Minh',
+    province: 'Thành phố Hồ Chí Minh',
+    district: 'Quận Bình Tân',
+    lat: 10.7516,
+    lng: 106.6083,
+    phone: '028 3752 9988',
+    openingHours: '07:00 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+
+  // Dĩ An (Bình Dương - cửa ngõ Thủ Đức)
+  {
+    id: 'store-dian',
+    name: 'Kho Evergreen Mart Dĩ An',
+    address: '01/08 Quốc Lộ 1K, Phường Tân Hòa, TP. Dĩ An, Bình Dương',
+    province: 'Tỉnh Bình Dương',
+    district: 'TP. Dĩ An',
+    lat: 10.8986,
+    lng: 106.7865,
+    phone: '0274 377 8899',
+    openingHours: '07:00 - 21:30',
+    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
+  },
+];
 
 /**
  * Tự động tìm kho / cửa hàng gần nhất với tọa độ khách hàng
@@ -117,23 +220,28 @@ async function getOrCreateShippingConfig() {
   let config = await ShippingConfig.findOne({ key: 'default' });
   if (!config) {
     const storeWarehouses = await loadWarehousesFromStoresCollection();
-    const hq = storeWarehouses.find((w) => w.isHeadquarter) || storeWarehouses[0];
+    const initialWarehouses = storeWarehouses.length > 0 ? storeWarehouses : DEFAULT_WAREHOUSES;
+    const hq = initialWarehouses.find((w) => w.isHeadquarter) || initialWarehouses[0];
     config = await ShippingConfig.create({
       key: 'default',
       warehouse: hq
         ? { name: hq.name, address: hq.address, lat: hq.lat, lng: hq.lng }
         : undefined,
-      warehouses: storeWarehouses,
+      warehouses: initialWarehouses,
       isServiceActive: true,
     });
+  } else if (!config.warehouses || config.warehouses.length === 0) {
+    const storeWarehouses = await loadWarehousesFromStoresCollection();
+    config.warehouses = storeWarehouses.length > 0 ? storeWarehouses : DEFAULT_WAREHOUSES;
+    await config.save();
   }
   return config;
 }
 
 /**
- * Tính toán phí vận chuyển hoàn chỉnh theo khoảng cách & cấu hình MongoDB
+ * Tính toán phí vận chuyển hoàn chỉnh theo khoảng cách, giá trị đơn hàng & đặc quyền hạng thành viên
  */
-async function calculateShipping(customerLat, customerLng, subtotal = 0, customConfig = null) {
+async function calculateShipping(customerLat, customerLng, subtotal = 0, customConfig = null, loyaltyTier = '') {
   const config = customConfig || (await getOrCreateShippingConfig());
   let allWarehouses = Array.isArray(config.warehouses) && config.warehouses.length > 0
     ? config.warehouses
@@ -193,18 +301,40 @@ async function calculateShipping(customerLat, customerLng, subtotal = 0, customC
     }
   }
 
-  // Đọc bậc ưu đãi phí vận chuyển từ MongoDB ShippingConfig.orderDiscounts
+  // 2. Ưu đãi theo Hạng thành viên Loyalty & cấu hình MongoDB ShippingConfig.orderDiscounts
   let discountAmount = 0;
   let discountReason = 'Chưa đủ giá trị đơn hàng tối thiểu để hỗ trợ phí ship';
   const orderValue = Number(subtotal) || 0;
-  const sortedDiscounts = [...(config.orderDiscounts || [])].sort(
-    (a, b) => (b.minOrderValue || 0) - (a.minOrderValue || 0)
-  );
-  for (const rule of sortedDiscounts) {
-    if (orderValue >= (rule.minOrderValue || 0)) {
-      discountAmount = Number(rule.discountAmount) || 0;
-      discountReason = rule.label || `Đơn từ ${rule.minOrderValue.toLocaleString('vi-VN')}đ: giảm ${discountAmount.toLocaleString('vi-VN')}đ phí ship`;
-      break;
+  const tier = String(loyaltyTier || '').toLowerCase();
+
+  if (tier === 'platinum' || tier === 'gold') {
+    discountAmount = baseFee;
+    discountReason = `Đặc quyền thành viên ${tier === 'platinum' ? 'Bạch kim' : 'Vàng'}: Miễn phí giao hàng`;
+  } else if (tier === 'silver' && orderValue >= 300000) {
+    discountAmount = baseFee;
+    discountReason = 'Đặc quyền thành viên Bạc: Miễn phí giao hàng đơn từ 300.000đ';
+  } else if (tier === 'bronze' && orderValue >= 500000) {
+    discountAmount = baseFee;
+    discountReason = 'Đặc quyền thành viên Đồng: Miễn phí giao hàng đơn từ 500.000đ';
+  } else {
+    const sortedDiscounts = [...(config.orderDiscounts || [])].sort(
+      (a, b) => (b.minOrderValue || 0) - (a.minOrderValue || 0)
+    );
+    for (const rule of sortedDiscounts) {
+      if (orderValue >= (rule.minOrderValue || 0)) {
+        discountAmount = Math.min(Number(rule.discountAmount) || 0, baseFee);
+        discountReason = rule.label || `Đơn từ ${rule.minOrderValue.toLocaleString('vi-VN')}đ: giảm ${discountAmount.toLocaleString('vi-VN')}đ phí ship`;
+        break;
+      }
+    }
+    if (discountAmount === 0) {
+      if (orderValue >= 300000) {
+        discountAmount = Math.min(25000, baseFee);
+        discountReason = 'Đơn hàng từ 300.000đ: hỗ trợ tối đa 25.000đ phí vận chuyển (Freeship)';
+      } else if (orderValue >= 150000) {
+        discountAmount = Math.min(10000, baseFee);
+        discountReason = 'Đơn hàng từ 150.000đ: giảm 10.000đ phí vận chuyển';
+      }
     }
   }
 

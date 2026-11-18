@@ -1,8 +1,8 @@
-// Lightweight in-memory TTL cache for high-frequency public reads
-// Giúp giảm tải 95% số lượng truy vấn lặp đi lặp lại đến cụm MongoDB Atlas Free Tier
+// Lightweight in-memory TTL cache for high-frequency reads
+// Giúp giảm tải 95% số lượng truy vấn lặp đi lặp lại đến cụm MongoDB Atlas
 const memoryCache = new Map();
 
-function cacheMiddleware(durationSeconds = 20, shouldCacheFn = null) {
+function cacheMiddleware(durationSeconds = 15, shouldCacheFn = null, isPublicScope = false) {
   return (req, res, next) => {
     if (req.method !== 'GET') return next();
 
@@ -10,7 +10,10 @@ function cacheMiddleware(durationSeconds = 20, shouldCacheFn = null) {
       return next();
     }
 
-    const cacheKey = req.originalUrl || req.url;
+    const userScope = (isPublicScope || !req.user)
+      ? 'public'
+      : `${req.user._id}_${req.user.assignedStore || ''}_${req.user.role || ''}`;
+    const cacheKey = `${userScope}::${req.originalUrl || req.url}`;
     const cached = memoryCache.get(cacheKey);
     const now = Date.now();
 
@@ -34,8 +37,16 @@ function cacheMiddleware(durationSeconds = 20, shouldCacheFn = null) {
   };
 }
 
-function clearCache() {
-  memoryCache.clear();
+function clearCache(prefix = null) {
+  if (!prefix) {
+    memoryCache.clear();
+    return;
+  }
+  for (const key of memoryCache.keys()) {
+    if (key.includes(prefix)) {
+      memoryCache.delete(key);
+    }
+  }
 }
 
 module.exports = { cacheMiddleware, clearCache };

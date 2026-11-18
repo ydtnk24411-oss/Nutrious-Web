@@ -1,6 +1,7 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AdminAuthService } from '../../shared/services/admin-auth.service';
 import {
   VoucherAdminApiService,
   AdminVoucher,
@@ -16,6 +17,19 @@ import {
 })
 export class AdminVouchersComponent implements OnInit {
   private voucherApi = inject(VoucherAdminApiService);
+  private auth = inject(AdminAuthService);
+
+  canManage = computed(() => {
+    const role = (this.auth.user()?.role || '').toLowerCase();
+    return ['admin', 'manager', 'marketing'].includes(role);
+  });
+
+  copyCode(code: string): void {
+    if (!code) return;
+    navigator.clipboard.writeText(code);
+    this.successMsg.set(`Đã sao chép mã "${code}" vào clipboard để tư vấn khách hàng.`);
+    setTimeout(() => this.successMsg.set(''), 3000);
+  }
 
   vouchers = signal<AdminVoucher[]>([]);
   stats = signal<VoucherStats>({

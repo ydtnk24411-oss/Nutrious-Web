@@ -8,6 +8,7 @@ const complaintSchema = new mongoose.Schema(
     customerPhone: { type: String, default: '' },
     customerEmail: { type: String, default: '' },
     order: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', default: null },
+    warehouseId: { type: String, default: 'store-thuduc', index: true },
     type: {
       type: String,
       enum: ['product', 'delivery', 'order', 'payment', 'other'],
@@ -35,6 +36,9 @@ complaintSchema.pre('save', function (next) {
   }
   next();
 });
+
+complaintSchema.index({ createdAt: -1 });
+complaintSchema.index({ status: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Complaint', complaintSchema);
 

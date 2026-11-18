@@ -23,8 +23,6 @@ const reviewSchema = new mongoose.Schema(
       role:      { type: String, default: 'Sales' },
       repliedAt: { type: Date, default: null },
     },
-    adminReply:       { type: String, default: '' },
-    adminReplyAt:     { type: Date, default: null },
     isHidden:         { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
@@ -32,5 +30,9 @@ const reviewSchema = new mongoose.Schema(
 
 // Mỗi tài khoản chỉ đánh giá 1 lần cho 1 sản phẩm
 reviewSchema.index({ product: 1, user: 1 }, { unique: true });
+reviewSchema.index({ createdAt: -1 });
+reviewSchema.index({ rating: 1 });
+reviewSchema.index({ isHidden: 1, createdAt: -1 });
+reviewSchema.index({ 'sellerReply.text': 1 });
 
 module.exports = mongoose.model('Review', reviewSchema);
