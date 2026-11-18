@@ -53,6 +53,7 @@ const allowedOrigins = new Set([
   'http://[::1]:4201',
     'https://evergreen-client.pages.dev',
   'https://nutrious-admin.pages.dev/',
+  'https://nutrious-admin.pages.dev/admin/login'
 
 ]);
 
