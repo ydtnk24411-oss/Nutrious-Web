@@ -42,9 +42,19 @@ export class HomeComponent implements OnInit, OnDestroy {
   readonly fallbackProductImage = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=700&q=80';
 
   // =========================================================================
-  // 1. DANH SÁCH BANNER CHÍNH (SLIDER) - NÔNG SẢN TƯƠI SẠCH & THỰC PHẨM CHUẨN SIÊU THỊ
+  // 1. DANH SÁCH BANNER CHÍNH (SLIDER) - BỘ SƯU TẬP BANNER ĐẦY ĐỦ, ĐA DẠNG CÀNG NHIỀU CÀNG TỐT
   // =========================================================================
   private readonly defaultHeroBanners: Array<{ image: string; link?: string; alt?: string }> = [
+    {
+      image: '/images/banners/banner-9-9-thuc-pham-sach.jpg',
+      link: '/online-ordering',
+      alt: '9.9 Thực phẩm sạch - Đại tiệc nông sản tươi ngon'
+    },
+    {
+      image: '/images/banners/banner-uu-dai-hoi-vien.jpg',
+      link: '/loyalty',
+      alt: 'Ưu đãi hội viên cực sốc - Giảm 10% tất cả hóa đơn'
+    },
     {
       image: '/images/banners/banner-fresh-vegetables.jpg',
       link: '/online-ordering',
@@ -69,6 +79,11 @@ export class HomeComponent implements OnInit, OnDestroy {
       image: '/images/banners/banner-nam-o-sauce.jpg',
       link: '/category/all-products',
       alt: 'Nước mắm Nam Ô truyền thống nồng đượm vị biển mẹ'
+    },
+    {
+      image: '/images/banners/banner-seafood-ice.jpg',
+      link: '/online-ordering',
+      alt: 'Tôm cá tươi ngon ướp đá giao hàng lạnh nội thành'
     }
   ];
 
