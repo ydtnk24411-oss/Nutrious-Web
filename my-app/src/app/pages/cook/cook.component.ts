@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
-import { CartService } from '../../shared/services/cart.service';
+import { CartService, formatPrice } from '../../shared/services/cart.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { ApiService } from '../../shared/services/api.service';
 import { onlineOrderProducts } from '../../shared/data/xanh-la.data';
@@ -434,6 +434,7 @@ export class CookComponent implements OnInit {
   protected cart = inject(CartService);
   private productApi = inject(ProductApiService);
   private api = inject(ApiService);
+  protected formatPrice = formatPrice;
   readonly unitOptions = COOK_INGREDIENT_UNITS;
 
   // ── Signals ──────────────────────────────────────────────
@@ -758,60 +759,29 @@ export class CookComponent implements OnInit {
           }
 
           this.detectedFromImage.set(newDetected);
-          this.visionMessage.set(`Gemini Vision đã nhận diện thành công ${newDetected.length} nguyên liệu trong ảnh!`);
+          this.visionMessage.set(`Gemini Vision đã nhận diện được ${newDetected.length} nguyên liệu từ ảnh!`);
           if (this.hasSearched()) {
             this.results.set(this.computeRecipeResults());
           }
         } else {
-          this.fallbackLocalVisionDetection();
+          this.handleVisionError('Không phát hiện thấy nguyên liệu nấu ăn rõ ràng trong ảnh, hoặc dịch vụ AI chưa phản hồi. Vui lòng thêm nguyên liệu thủ công bằng ô tìm kiếm.');
         }
       },
-      error: () => {
+      error: (err) => {
         this.isAnalyzingImage.set(false);
-        this.fallbackLocalVisionDetection();
+        this.handleVisionError('Không thể kết nối Gemini Vision (API Key chưa hợp lệ hoặc lỗi mạng). Vui lòng chọn nguyên liệu từ danh mục bên trên.');
       }
     });
   }
 
+  private handleVisionError(msg: string): void {
+    this.detectedFromImage.set([]);
+    this.visionMessage.set(msg);
+  }
+
   private fallbackLocalVisionDetection(): void {
-    // Smart local fallback if backend or API is offline
-    const sampleItems = [
-      { name: 'Cà chua', cat: 'vegetables' },
-      { name: 'Rau cải', cat: 'vegetables' },
-      { name: 'Cà rốt', cat: 'vegetables' },
-      { name: 'Thịt bò', cat: 'meat' }
-    ];
-
-    const detected: UserIngredient[] = [];
-    for (const s of sampleItems) {
-      const prod = this.catalogueProducts().find(p =>
-        removeVietnameseTones(p.name).includes(removeVietnameseTones(s.name))
-      ) || null;
-      const def = inferDefaultQtyUnit(prod ? prod.name : s.name, prod);
-
-      const item: UserIngredient = {
-        name: prod ? prod.name : s.name,
-        productId: prod ? prod._id : null,
-        product: prod,
-        qty: def.qty,
-        unit: def.unit,
-        fromVision: true
-      };
-      detected.push(item);
-
-      const exists = this.myIngredients().some(i =>
-        removeVietnameseTones(i.name) === removeVietnameseTones(item.name)
-      );
-      if (!exists) {
-        this.myIngredients.update(list => [...list, item]);
-      }
-    }
-
-    this.detectedFromImage.set(detected);
-    this.visionMessage.set(`Đã nhận diện ${detected.length} nguyên liệu nấu ăn từ hình ảnh của bạn!`);
-    if (this.hasSearched()) {
-      this.results.set(this.computeRecipeResults());
-    }
+    this.handleVisionError('Không thể nhận diện hình ảnh lúc này. Vui lòng thêm nguyên liệu thủ công.');
+  }
   }
 
   // ── Method 3: Search & Recipe Priority Calculation ──────

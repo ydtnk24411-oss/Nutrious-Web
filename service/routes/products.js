@@ -303,7 +303,7 @@ router.get('/:slug/related', async (req, res, next) => {
       related = [...related, ...fallbackProducts];
     }
 
-    res.json({ success: true, data: related });
+    res.json({ success: true, data: enrichProductOrComboList(related) });
   } catch (err) { next(err); }
 });
 
@@ -330,7 +330,7 @@ router.get('/:slug/frequently-bought', async (req, res, next) => {
       .limit(2)
       .lean();
 
-    res.json({ success: true, data: companionProducts });
+    res.json({ success: true, data: enrichProductOrComboList(companionProducts) });
   } catch (err) { next(err); }
 });
 
@@ -522,7 +522,7 @@ router.get('/:slug', async (req, res, next) => {
         .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     }
     if (!product) return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
-    let responseData = product.isCombo ? enrichComboDocument(product) : (product.toObject ? product.toObject() : { ...product });
+    let responseData = product.isCombo ? enrichComboDocument(product) : enrichProductOrComboList([product])[0];
 
     if (storeId && storeId !== 'all') {
       const inv = await StoreInventory.findOne({ storeId, productId: product._id }).lean();

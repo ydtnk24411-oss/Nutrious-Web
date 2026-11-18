@@ -190,7 +190,7 @@
                         <a [routerLink]="['/product-page', prod.slug]" (click)="chat.close()" class="xanh-chat-prod-title">
                           {{ prod.name }}
                         </a>
-                        <div class="xanh-chat-prod-price">{{ prod.price }}</div>
+                        <div class="xanh-chat-prod-price">{{ formatPrice(prod.priceNumber || prod.price) }}</div>
                         <div class="xanh-chat-prod-actions">
                           <button
                             type="button"

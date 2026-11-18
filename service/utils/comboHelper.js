@@ -16,6 +16,17 @@ function slugifyVietnamese(raw) {
   return base || `combo-${Date.now()}`;
 }
 
+function formatPriceString(priceNumber, rawPrice) {
+  const str = String(rawPrice || '').trim();
+  if (str.includes('.') && (str.endsWith('đ') || str.endsWith('₫'))) {
+    return str;
+  }
+  const num = typeof priceNumber === 'number' && !isNaN(priceNumber)
+    ? priceNumber
+    : (Number(str.replace(/[^\d]/g, '')) || 0);
+  return `${num.toLocaleString('vi-VN')}đ`;
+}
+
 function resolveComboStatus(doc) {
   if (!doc) return 'hidden';
   if (doc.comboStatus === 'paused') return 'paused';
@@ -95,6 +106,7 @@ function enrichComboDocument(doc) {
 
   return {
     ...obj,
+    price: formatPriceString(obj.priceNumber, obj.price),
     comboStatus: status,
     isActive: status === 'active',
     comboItems: enrichedItems,
@@ -114,11 +126,14 @@ function enrichProductOrComboList(docs) {
     const isCombo = d && d.isCombo === true;
     if (isCombo) return enrichComboDocument(d);
     const obj = typeof d?.toObject === 'function' ? d.toObject({ virtuals: true }) : { ...d };
-    if (obj && obj.availableOnlineStock === undefined) {
-      const stock = obj.stock ?? 0;
-      const reserved = obj.reservedStock ?? 0;
-      const buffer = obj.safetyBuffer ?? 2;
-      obj.availableOnlineStock = Math.max(0, stock - reserved - buffer);
+    if (obj) {
+      obj.price = formatPriceString(obj.priceNumber, obj.price);
+      if (obj.availableOnlineStock === undefined) {
+        const stock = obj.stock ?? 0;
+        const reserved = obj.reservedStock ?? 0;
+        const buffer = obj.safetyBuffer ?? 2;
+        obj.availableOnlineStock = Math.max(0, stock - reserved - buffer);
+      }
     }
     return obj;
   });

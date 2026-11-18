@@ -29,7 +29,7 @@ function toCartProduct(p: ApiProduct): XanhLaProduct {
     : p.originalPriceNumber;
   const effStock = typeof p.availableStock === 'number' ? p.availableStock : p.stock;
   return {
-    id: p._id, name: p.name, slug: p.slug, price: p.price,
+    id: p._id, name: p.name, slug: p.slug, price: formatPrice(p.priceNumber || p.price),
     priceNumber: p.priceNumber, image: p.image,
     category: p.categoryId,
     categoryVi: p.categoryVi || '',
@@ -506,9 +506,10 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     return original > 0 ? Math.round((this.comboSaving(combo) / original) * 100) : 0;
   }
 
-  money(value: number): string {
+  money(value: any): string {
     return formatPrice(value);
   }
+  protected formatPrice = formatPrice;
 
   addCombo(combo: ApiProduct): void {
     if (this.isComboUnavailable(combo)) return;
@@ -647,6 +648,13 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     this.cart.addItem(toCartProduct(prod), 1, prod.ripeness || 'Fresh');
   }
 
+  openBuyNowFromRelated(prod: ApiProduct, event?: Event): void {
+    event?.stopPropagation();
+    event?.preventDefault();
+    if (this.isProductUnavailable(prod)) return;
+    this.cart.openBuyNowModal(toCartProduct(prod));
+  }
+
   removeOne(prod: ApiProduct, event?: Event): void {
     event?.stopPropagation();
     event?.preventDefault();
@@ -744,8 +752,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   }
 
   getBundleTotal(p: any, companion: any): number {
-    const p1 = Number(p?.price) || 0;
-    const p2 = Number(companion?.price) || 0;
+    const p1 = Number(p?.priceNumber) || Number(p?.price) || 0;
+    const p2 = Number(companion?.priceNumber) || Number(companion?.price) || 0;
     return p1 + p2;
   }
 

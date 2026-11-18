@@ -2,7 +2,7 @@ import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ShellComponent } from '../../components/shell/shell.component';
-import { CartService } from '../../shared/services/cart.service';
+import { CartService, formatPrice } from '../../shared/services/cart.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { FILTER_FACETS } from '../../shared/data/xanh-la.data';
 import { XanhLaProduct } from '../../shared/models/xanh-la.models';
@@ -12,7 +12,7 @@ type FacetKey = keyof typeof FILTER_FACETS;
 // Map ApiProduct → XanhLaProduct để CartService dùng
 function toCartProduct(p: ApiProduct): XanhLaProduct {
   return {
-    id: p._id, name: p.name, slug: p.slug, price: p.price,
+    id: p._id, name: p.name, slug: p.slug, price: formatPrice(p.priceNumber || p.price),
     priceNumber: p.priceNumber, image: p.image,
     category: p.category as 'Vegetables' | 'Fruits' | 'Meat',
     categoryVi: p.categoryVi ?? p.category ?? '', description: p.description,
@@ -40,6 +40,7 @@ export class CatalogComponent implements OnInit {
   protected cart       = inject(CartService);
   private route        = inject(ActivatedRoute);
   private productApi   = inject(ProductApiService);
+  protected formatPrice = formatPrice;
 
   protected readonly facets    = FILTER_FACETS;
   protected readonly facetKeys = Object.keys(FILTER_FACETS) as FacetKey[];

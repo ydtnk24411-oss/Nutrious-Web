@@ -44,7 +44,7 @@
                     <div class="xanhla-prod-card-desc">{{ prod.description }}</div>
                   }
                   <div class="xanhla-prod-card-price-row">
-                    <span class="xanhla-prod-card-price">{{ prod.price }}</span>
+                    <span class="xanhla-prod-card-price">{{ formatPrice(prod.priceNumber || prod.price) }}</span>
                     @if (prod.weight) {
                       <span class="xanhla-prod-card-unit">/ {{ prod.weight }}</span>
                     }

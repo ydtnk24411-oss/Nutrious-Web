@@ -7,6 +7,7 @@ import { CartService, formatPrice, getCartItemKey, CartPricingTotals, resolvePro
 import { OrderApiService } from '../../shared/services/order-api.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { VoucherService } from '../../shared/services/voucher.service';
+import { LoyaltyService } from '../../shared/services/loyalty.service';
 import { Voucher, XanhLaCartItem, EvaluatedCartItemPricing, XanhLaAddress } from '../../shared/models/xanh-la.models';
 import {
   ShippingApiService,
@@ -129,6 +130,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   private router     = inject(Router);
   private route      = inject(ActivatedRoute);
   protected voucher  = inject(VoucherService);
+  protected loyalty  = inject(LoyaltyService);
   private shippingApi = inject(ShippingApiService);
   protected formatPrice = formatPrice;
 
@@ -938,10 +940,54 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     return this.comboDiscount() + this.addonDiscount();
   });
 
-  // Tổng thanh toán: (Tiền hàng - Voucher đơn hàng) + Phí ship thực trả
-  readonly finalTotal = computed(() => {
+  // Quy đổi Điểm Thưởng Tích Lũy (100 điểm = 1 VNĐ)
+  readonly POINTS_PER_VND = 100;
+  protected usePoints = signal<boolean>(false);
+
+  readonly userPoints = computed<number>(() => {
+    const u = this.cart.currentUser();
+    if (!u) return 0;
+    return this.loyalty.balance() || (u as any).points || 0;
+  });
+
+  readonly maxPointsDiscountVnd = computed<number>(() => {
+    const pts = this.userPoints();
+    return Math.floor(pts / this.POINTS_PER_VND);
+  });
+
+  readonly basePayableBeforePoints = computed<number>(() => {
     const goodsAfterVoucher = Math.max(0, this.checkoutSubtotal() - this.orderVoucherDiscount());
     return goodsAfterVoucher + this.shippingFee();
+  });
+
+  readonly pointDiscount = computed<number>(() => {
+    if (!this.usePoints() || !this.cart.currentUser()) return 0;
+    const maxVnd = this.maxPointsDiscountVnd();
+    const payable = this.basePayableBeforePoints();
+    return Math.min(maxVnd, payable);
+  });
+
+  readonly actualPointsToRedeem = computed<number>(() => {
+    return this.pointDiscount() * this.POINTS_PER_VND;
+  });
+
+  readonly potentialPointsDiscountVnd = computed<number>(() => {
+    return Math.min(this.maxPointsDiscountVnd(), this.basePayableBeforePoints());
+  });
+
+  readonly potentialPointsToRedeem = computed<number>(() => {
+    return this.potentialPointsDiscountVnd() * this.POINTS_PER_VND;
+  });
+
+  toggleUsePoints(): void {
+    if (this.userPoints() < this.POINTS_PER_VND) return;
+    this.usePoints.update(v => !v);
+  }
+
+  // Tổng thanh toán: (Tiền hàng - Voucher đơn hàng) + Phí ship thực trả - Giảm giá điểm thưởng
+  readonly finalTotal = computed(() => {
+    const totalBeforePoints = this.basePayableBeforePoints();
+    return Math.max(0, totalBeforePoints - this.pointDiscount());
   });
 
   // Thời gian chuẩn bị hàng + vận chuyển dự kiến (phút)
@@ -1802,6 +1848,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       estimatedDeliveryTime: this.selectedDeliveryTimeString(),
       paymentMethod:       this.paymentMethod(),
       estimatedPoints:     this.estimatedPoints(),
+      pointsToRedeem:      this.usePoints() ? this.actualPointsToRedeem() : 0,
+      pointDiscount:       this.pointDiscount(),
       hasNonRefundableItems: this.nonRefundablePolicy().hasNonRefundableItems,
       nonRefundableAccepted: this.nonRefundableConfirmed(),
       nonRefundableItems:    this.nonRefundablePolicy().items,
@@ -1838,6 +1886,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
           this.scrollToTop(0);
 
           this.cart.loadUserData();
+          this.loyalty.refresh();
           this.voucher.refreshMine();
           this.voucher.loadPublic();
           if (pStatus === 'paid') {
@@ -1852,6 +1901,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         this.completed.set(true);
         this.scrollToTop(0);
         this.cart.loadUserData();
+        this.loyalty.refresh();
         this.voucher.refreshMine();
         this.voucher.loadPublic();
         if (this.isBuyNowMode()) {

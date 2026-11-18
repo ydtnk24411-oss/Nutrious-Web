@@ -400,7 +400,7 @@
                   <div class="ord-viewed-body">
                     <div class="ord-viewed-name">{{ vp.name }}</div>
                     <div class="ord-viewed-meta">
-                      <span class="ord-viewed-price">{{ vp.price || formatPrice(vp.priceNumber) }}</span>
+                      <span class="ord-viewed-price">{{ formatPrice(vp.priceNumber || vp.price) }}</span>
                       @if (vp.viewedAt) {
                         <span class="ord-viewed-time">{{ formatViewedTime(vp.viewedAt) }}</span>
                       }
@@ -456,7 +456,7 @@
                     }
 
                     <div class="xanhla-prod-card-price-row">
-                      <span class="xanhla-prod-card-price">{{ prod.price }}</span>
+                      <span class="xanhla-prod-card-price">{{ formatPrice(prod.priceNumber || prod.price) }}</span>
 
                       @if (prod.weight) {
                         <span class="xanhla-prod-card-unit">/ {{ prod.weight }}</span>

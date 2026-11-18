@@ -171,7 +171,7 @@
                       <img [src]="prod.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&q=80'" [alt]="prod.name" class="item-thumb" />
                       <div class="item-info">
                         <strong class="item-name">{{ prod.name }}</strong>
-                        <span class="item-meta">{{ prod.categoryVi || 'Nông sản sạch' }} - {{ prod.price }}</span>
+                        <span class="item-meta">{{ prod.categoryVi || 'Nông sản sạch' }} - {{ formatPrice(prod.priceNumber || prod.price) }}</span>
                       </div>
                       <span class="item-badge">+ Chọn</span>
                     </button>
@@ -653,7 +653,7 @@
                                           <div class="xanhla-product-match">
                                             <span class="xanhla-badge-source">Nông sản sạch:</span>
                                             <span class="xanhla-prod-name">{{ ing.product.name }}</span>
-                                            <span class="xanhla-prod-price">{{ ing.product.price }}</span>
+                                            <span class="xanhla-prod-price">{{ formatPrice(ing.product.priceNumber || ing.product.price) }}</span>
                                             <span class="xanhla-pack-hint">- Quy cách ~{{ ing.packLabel }}</span>
                                             @if (ing.isOutOfStock) {
                                               <span class="xanhla-outofstock-tag">Tạm hết hàng</span>

@@ -460,7 +460,7 @@
                   </a>
                   <div class="xl-plan-prod-info">
                     <a [routerLink]="getProductLink(prod)" class="xl-prod-name-link">{{ prod.name }}</a>
-                    <span class="xl-prod-price">{{ prod.price }}</span>
+                    <span class="xl-prod-price">{{ formatPrice(prod.priceNumber || prod.price) }}</span>
                   </div>
                   <button type="button" class="xl-add-single-btn" (click)="addSingleToCart(prod)">+ Giỏ</button>
                 </div>

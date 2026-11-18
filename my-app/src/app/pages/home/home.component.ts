@@ -3,7 +3,7 @@ import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '
 import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
-import { CartService } from '../../shared/services/cart.service';
+import { CartService, formatPrice } from '../../shared/services/cart.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { heroImage, originImage } from '../../shared/data/xanh-la.data';
 import { Voucher as ApiVoucher, XanhLaProduct } from '../../shared/models/xanh-la.models';
@@ -301,15 +301,21 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.cart.openBuyNowModal(this.buildDealCartProduct(deal));
   }
 
-  formatPrice(val: number): string {
-    return (val || 0).toLocaleString('vi-VN') + 'đ';
+  formatPrice(val: any): string {
+    return formatPrice(val);
+  }
+
+  onHeroImgError(index: number): void {
+    if (this.heroSlides[index]) {
+      this.heroSlides[index].image = this.fallbackProductImage;
+    }
   }
   private toCartProduct(p: ApiProduct): XanhLaProduct {
     return {
       id: p._id,
       name: p.name,
       slug: p.slug,
-      price: p.price,
+      price: formatPrice(p.priceNumber || p.price),
       priceNumber: p.priceNumber,
       image: p.image,
       category: p.categoryId,
