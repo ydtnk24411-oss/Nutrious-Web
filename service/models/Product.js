@@ -5,14 +5,6 @@ const optionSchema = new mongoose.Schema(
   { _id: false }
 );
 
-const comboItemSchema = new mongoose.Schema(
-  {
-    product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
-    quantity: { type: Number, default: 1, min: 1 },
-  },
-  { _id: false }
-);
-
 const addOnDealSchema = new mongoose.Schema(
   {
     product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
@@ -59,15 +51,7 @@ const productSchema = new mongoose.Schema(
     stock: { type: Number, default: 100, min: 0 },
     reservedStock: { type: Number, default: 0, min: 0 },
     safetyBuffer: { type: Number, default: 2, min: 0 },
-    // Combo mua kèm tiết kiệm: combo là một sản phẩm riêng có giá ưu đãi
-    isCombo: { type: Boolean, default: false },
-    comboStatus: {
-      type: String,
-      enum: ['active', 'paused', 'hidden'],
-      default: 'active',
-    },
-    comboItems: [comboItemSchema],
-    originalPriceNumber: { type: Number, default: 0, min: 0 }, // tổng giá mua lẻ
+    originalPriceNumber: { type: Number, default: 0, min: 0 },
     // Mua kèm tiết kiệm hơn: danh sách sản phẩm đề xuất mua kèm độc lập với Combo
     addOnDeals: { type: [addOnDealSchema], default: [] },
     averageRating: { type: Number, default: 5, min: 1, max: 5 },

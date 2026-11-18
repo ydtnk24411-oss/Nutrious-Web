@@ -2,6 +2,7 @@ const router = require('express').Router();
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const Product = require('../models/Product');
+const Combo = require('../models/Combo');
 const { protect } = require('../middleware/auth');
 
 const MAX_VIEWED_PRODUCTS = 24;
@@ -247,6 +248,17 @@ router.post('/viewed-products', protect, async (req, res, next) => {
       prod = await Product.findOne({ slug: cleanSlug, isActive: { $ne: false } }).lean();
     }
     if (!prod) {
+      let comboDoc = null;
+      if (productId && mongoose.Types.ObjectId.isValid(productId)) {
+        comboDoc = await Combo.findById(productId).select('_id').lean();
+      }
+      if (!comboDoc && slug) {
+        const cleanSlug = String(slug).replace(/^\/product-page\//, '').trim();
+        comboDoc = await Combo.findOne({ slug: cleanSlug }).select('_id').lean();
+      }
+      if (comboDoc) {
+        return res.json({ success: true, data: [] });
+      }
       return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
     }
     if (prod.isCombo) {

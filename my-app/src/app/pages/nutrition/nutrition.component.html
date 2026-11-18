@@ -192,143 +192,220 @@
             </div>
           </div>
 
-          <!-- Middle Grid: Ingredients with Images + Step-by-Step Cooking Instructions -->
-          <div class="xl-detail-content-grid">
-            <!-- Left: Ingredients with Product Images -->
-            <section class="xl-detail-section-card">
-              <div class="xl-detail-sec-head">
-                <h2> Nguyên liệu tươi sạch cần chuẩn bị</h2>
-                <span>Định lượng cho {{ detail.servings }} người ăn</span>
-              </div>
+          <!-- Middle Grid: Cook-style Ingredients List + Clean Step-by-Step Guide -->
+          <div class="xl-detail-content-grid xl-detail-cook-grid">
+            <!-- Left Column: Ready / Missing Ingredients -->
+            <div class="xl-detail-ing-col">
+              <h4 class="xl-subhead">1. Danh mục nguyên liệu (Cân đối cho {{ detail.servings }} người)</h4>
 
-              <div class="xl-detail-ing-list" style="display:flex; flex-direction:column; align-items:stretch; width:100%; gap:14px; margin:0; padding:0;">
-                @for (item of detail.ingredients; track item.name) {
-                  <div class="xl-detail-ing-card" [class.is-owned]="item.owned" style="display:flex; flex-direction:column; align-items:stretch; width:100%; box-sizing:border-box; text-align:left; margin:0;">
-                    <!-- Top section: Visual + Product info + Price & Badge -->
-                    <div class="xl-detail-ing-header" style="display:flex; flex-direction:row; align-items:flex-start; justify-content:flex-start; width:100%; gap:16px; margin:0; text-align:left;">
-                      <div class="xl-detail-ing-visual" style="width:68px; min-width:68px; max-width:68px; height:68px; flex:0 0 68px; margin:0; border-radius:12px; overflow:hidden;">
-                        <img
-                          [src]="item.product?.image || detail.image"
-                          [alt]="item.name"
-                          (error)="onImageError($event)"
-                          class="xl-detail-ing-img"
-                        />
-                        @if (item.owned) {
-                          <span class="xl-ing-owned-overlay">Đã có</span>
-                        }
-                      </div>
+              <!-- Box 1: Already Owned or Fulfilled in Cart -->
+              <div class="xl-fridge-box">
+                <div class="xl-box-title xl-text-green">
+                  <svg class="xl-box-svg" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                  </svg>
+                  <span>Đã sẵn sàng trong bếp / giỏ hàng ({{ getReadyDetailIngredients(detail).length }})</span>
+                </div>
 
-                      <div class="xl-detail-ing-info" style="flex:1 1 auto; min-width:0; text-align:left;">
-                        <h4 class="xl-detail-ing-name">{{ item.name }}</h4>
-                        <div class="xl-detail-ing-badges-row">
-                          <span class="xl-detail-ing-qty-badge">Cần: {{ item.amount }} {{ item.unit }}</span>
-                          @if (getCartQty(item.product) > 0) {
-                            @if (getIngredientMissingQty(item, detail.servings, detail.meals) > 0) {
-                              <span class="xl-in-cart-badge is-warning"><i class="bi bi-cart3 me-1"></i> Đã có {{ getCartQty(item.product) }} {{ getProductUnit(item) }} - Cần thêm {{ getIngredientMissingQty(item, detail.servings, detail.meals) }} {{ getProductUnit(item) }} nữa</span>
-                            } @else {
-                              <span class="xl-in-cart-badge is-full"><i class="bi bi-check-lg me-1"></i> Đã đủ {{ getIngredientNeededPacks(item, detail.servings, detail.meals) }} {{ getProductUnit(item) }} trong giỏ</span>
-                            }
-                          } @else if (getIngredientNeededPacks(item, detail.servings, detail.meals) > 1) {
-                            <span class="xl-detail-ing-packs-badge">Cần mua: {{ getIngredientNeededPacks(item, detail.servings, detail.meals) }} {{ getProductUnit(item) }}</span>
-                          }
+                @if (getReadyDetailIngredients(detail).length === 0) {
+                  <p class="xl-empty-hint">Chưa có nguyên liệu nào sẵn sàng trong giỏ hàng hoặc tại nhà cho món này.</p>
+                } @else {
+                  <ul class="xl-ing-ready-list">
+                    @for (item of getReadyDetailIngredients(detail); track item.name) {
+                      <li class="xl-ing-ready-item">
+                        <span class="xl-ing-ready-check" aria-hidden="true">
+                          <svg viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
+                          </svg>
+                        </span>
+                        <div class="xl-ing-thumb-wrap">
+                          <img
+                            [src]="item.product?.image || detail.image"
+                            [alt]="item.product?.name || item.name"
+                            (error)="onImageError($event)"
+                            class="xl-ing-thumb-img"
+                            loading="lazy"
+                          />
                         </div>
-
                         @if (item.product) {
-                          <div class="xl-detail-ing-store-line">
-                            <span class="xl-store-tag">Evergreen Mart</span>
-                            <a [routerLink]="getProductLink(item.product)" class="xl-prod-name-link" title="Xem chi tiết sản phẩm">
-                              {{ item.product.name }}
-                              <span class="xl-prod-weight">({{ item.product.weight || item.product.packSize || 'Gói chuẩn' }})</span>
-                            </a>
-                          </div>
+                          <a [routerLink]="getProductLink(item.product)" class="xl-ing-ready-title is-link">{{ item.name }}</a>
+                        } @else {
+                          <span class="xl-ing-ready-title">{{ item.name }}</span>
+                        }
+                        <span class="xl-ing-ready-scale">
+                          @if (item.owned) {
+                            Đã có ở nhà · Cần {{ item.amount }} {{ item.unit }}
+                          } @else {
+                            Đã đủ {{ getIngredientNeededPacks(item, detail.servings, detail.meals) }} {{ getProductUnit(item) }} trong giỏ · Cần {{ item.amount }} {{ item.unit }}
+                          }
+                        </span>
+                        @if (item.owned) {
+                          <button type="button" class="xl-ready-mini-btn" (click)="toggleOwned(detail.id, item.name)">
+                            Cần mua
+                          </button>
+                        } @else if (item.product) {
+                          <button type="button" class="xl-ready-mini-btn" (click)="addSingleToCart(item.product)">
+                            +1
+                          </button>
+                        }
+                      </li>
+                    }
+                  </ul>
+                }
+              </div>
 
-                          <div class="xl-detail-ing-price-row">
-                            @if (getCartQty(item.product) > 0 && getIngredientMissingQty(item, detail.servings, detail.meals) > 0) {
-                              <span class="xl-detail-ing-price">{{ formatPrice(getIngredientRemainingPrice(item, detail.servings, detail.meals)) }}</span>
-                              <span class="xl-detail-unit-breakdown">
-                                (Giá {{ getIngredientMissingQty(item, detail.servings, detail.meals) }} {{ getProductUnit(item) }} còn thiếu - Đã có sẵn {{ getCartQty(item.product) }} trong giỏ)
+              <!-- Box 2: Missing Ingredients to Buy -->
+              <div class="xl-missing-box">
+                <div class="xl-box-title xl-text-amber">
+                  <svg class="xl-box-svg" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    <path d="M5.757 1.071a.5.5 0 0 1 .172.686L3.383 6h9.234L10.07 1.757a.5.5 0 1 1 .858-.514L13.783 6H15a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1v4.5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 1 13.5V9a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h1.217L5.07 1.243a.5.5 0 0 1 .686-.172zM2 9v4.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5V9zM1 7v1h14V7zm3 3a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0v-3A.5.5 0 0 1 4 10m2 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0v-3A.5.5 0 0 1 6 10m2 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0v-3A.5.5 0 0 1 8 10m2 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 1 .5-.5m2 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 1 .5-.5"/>
+                  </svg>
+                  <span>Cần mua thêm từ Evergreen Mart ({{ getMissingDetailIngredients(detail).length }})</span>
+                </div>
+
+                @if (getMissingDetailIngredients(detail).length === 0) {
+                  <div class="xl-ready-celebrate">
+                    <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                    </svg>
+                    <span>Tuyệt vời! Bạn đã có đủ tất cả nguyên liệu để nấu ngay món ăn này.</span>
+                  </div>
+                } @else {
+                  <div class="xl-missing-items">
+                    @for (item of getMissingDetailIngredients(detail); track item.name) {
+                      <div class="xl-missing-card-row" [class.is-deselected]="!item.selected">
+                        <label class="xl-missing-row">
+                          <input
+                            type="checkbox"
+                            class="xl-missing-checkbox"
+                            [checked]="item.selected"
+                            [disabled]="!item.product"
+                            (change)="toggleIngredient(detail.id, item.name)"
+                          />
+                          <div class="xl-missing-thumb-wrap">
+                            <img
+                              [src]="item.product?.image || detail.image"
+                              [alt]="item.product?.name || item.name"
+                              (error)="onImageError($event)"
+                              class="xl-missing-thumb-img"
+                              loading="lazy"
+                            />
+                          </div>
+                          <div class="xl-missing-info">
+                            <div class="xl-missing-name">
+                              {{ item.name }}
+                              <span class="xl-missing-scale">
+                                @if (item.product && getCartQty(item.product) > 0) {
+                                  (Thiếu {{ getDisplayBuyPacks(item, detail) }} {{ getProductUnit(item) }} — cần {{ item.amount }} {{ item.unit }})
+                                } @else {
+                                  (Cần {{ item.amount }} {{ item.unit }})
+                                }
                               </span>
-                            } @else if (getCartQty(item.product) > 0 && isIngredientFullyInCart(item, detail.servings, detail.meals)) {
-                              <span class="xl-detail-ing-price" style="color: #15803d;">0đ</span>
-                              <span class="xl-detail-unit-breakdown" style="color: #15803d;">
-                                (Đã có đủ {{ getIngredientNeededPacks(item, detail.servings, detail.meals) }} {{ getProductUnit(item) }} trong giỏ hàng)
-                              </span>
-                            } @else if (getIngredientNeededPacks(item, detail.servings, detail.meals) > 1) {
-                              <span class="xl-detail-ing-price">{{ formatPrice((item.product.priceNumber || 0) * getIngredientNeededPacks(item, detail.servings, detail.meals)) }}</span>
-                              <span class="xl-detail-unit-breakdown">({{ item.product.price }} × {{ getIngredientNeededPacks(item, detail.servings, detail.meals) }} {{ getProductUnit(item) }})</span>
+                            </div>
+
+                            @if (item.product) {
+                              <div class="xl-product-match">
+                                <span class="xl-badge-source">Nông sản sạch:</span>
+                                <a [routerLink]="getProductLink(item.product)" class="xl-prod-name" (click)="$event.stopPropagation()">
+                                  {{ item.product.name }}
+                                </a>
+                                <span class="xl-prod-price">{{ formatPrice((item.product.priceNumber || 0) * getDisplayBuyPacks(item, detail)) }}</span>
+                                <span class="xl-pack-hint">- Quy cách ~{{ getDetailPackLabel(item) }}</span>
+                              </div>
+
+                              <div class="xl-buy-qty-row" (click)="$event.stopPropagation()">
+                                <span class="xl-buy-qty-label">Số phần mua:</span>
+                                <button
+                                  type="button"
+                                  class="xl-buy-qty-btn"
+                                  (click)="adjustIngredientPacks(detail.id, item.name, -1)"
+                                  [disabled]="getDisplayBuyPacks(item, detail) <= 1"
+                                >−</button>
+                                <strong class="xl-buy-qty-num">{{ getDisplayBuyPacks(item, detail) }}</strong>
+                                <button
+                                  type="button"
+                                  class="xl-buy-qty-btn"
+                                  (click)="adjustIngredientPacks(detail.id, item.name, 1)"
+                                >+</button>
+                              </div>
                             } @else {
-                              <span class="xl-detail-ing-price">{{ item.product.price }}</span>
+                              <span class="xl-self-prep">Gia vị cơ bản / Cần tự chuẩn bị</span>
                             }
                           </div>
-                        } @else {
-                          <div class="xl-detail-ing-store-line is-pantry">
-                            <span>Gia vị / Nguyên liệu gia đình tự chuẩn bị</span>
-                          </div>
+                        </label>
+
+                        <button
+                          type="button"
+                          class="xl-btn-already-have"
+                          (click)="toggleOwned(detail.id, item.name)"
+                          title="Nhấn nếu bạn đã có sẵn nguyên liệu này tại nhà"
+                        >
+                          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                            <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0"/>
+                          </svg>
+                          <span>Tôi đã có đủ</span>
+                        </button>
+                      </div>
+                    }
+                  </div>
+
+                  <div class="xl-missing-order-panel">
+                    <div class="xl-order-total-row">
+                      <span>Tạm tính nguyên liệu thiếu đã chọn (giảm 10% combo):</span>
+                      <div class="xl-order-price-group">
+                        @if (getRemainingOrigCost(detail) > getRemainingToPayCost(detail)) {
+                          <span class="xl-order-orig-price">{{ getRemainingOrigCost(detail).toLocaleString('vi-VN') }}đ</span>
                         }
+                        <strong class="xl-total-price">{{ getRemainingToPayCost(detail).toLocaleString('vi-VN') }}đ</strong>
                       </div>
                     </div>
-
-                    <!-- Bottom action bar: Separated cleanly from text -->
-                    <div class="xl-detail-ing-actions-bar">
-                      <button
-                        type="button"
-                        class="xl-owned-btn"
-                        [class.is-active]="item.owned"
-                        (click)="toggleOwned(detail.id, item.name)"
-                        [title]="item.owned ? 'Bỏ đánh dấu đã có' : 'Nhấn nếu bạn đã có sẵn nguyên liệu này tại nhà để không cần mua thêm'"
-                      >
-                        @if (item.owned) { <i class="bi bi-check-lg"></i> Đã có tại nhà } @else { Đã có ở nhà }
-                      </button>
-
-                      @if (item.product && !item.owned) {
-                        <div class="xl-detail-ing-buy-group">
-                          <a [routerLink]="getProductLink(item.product)" class="xl-view-prod-link">
-                            Xem sản phẩm →
-                          </a>
-                          <button
-                            type="button"
-                            class="xl-add-single-btn"
-                            [class.is-more]="getCartQty(item.product) > 0"
-                            (click)="addMissingPacksToCart(item, detail.servings, detail.meals)"
-                          >
-                            @if (getIngredientMissingQty(item, detail.servings, detail.meals) > 0) {
-                              {{ getCartQty(item.product) > 0 ? '+ Mua thêm (' + getIngredientMissingQty(item, detail.servings, detail.meals) + ' ' + getProductUnit(item) + ')' : '+ Thêm giỏ' }}
-                            } @else {
-                              + Thêm tiếp (+1)
-                            }
-                          </button>
-                        </div>
-                      }
-                    </div>
+                    <button
+                      type="button"
+                      class="xl-btn-add-missing-cart"
+                      [disabled]="getRemainingToPayCost(detail) === 0"
+                      (click)="addAllToCart(detail)"
+                    >
+                      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                        <path d="M9 5.5a.5.5 0 0 0-1 0V7H6.5a.5.5 0 0 0 0 1H8v1.5a.5.5 0 0 0 1 0V8h1.5a.5.5 0 0 0 0-1H9z"/>
+                        <path d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1zm3.915 10L3.102 4h10.796l-1.313 7zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0m7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                      </svg>
+                      <span>Thêm nguyên liệu còn thiếu vào giỏ hàng</span>
+                    </button>
+                    <p class="xl-cart-guarantee">
+                      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                        <path d="M8 16a.5.5 0 0 1-.5-.5v-1.293l-.646.647a.5.5 0 0 1-.707-.708L7.5 12.793V8.866l-3.4 1.963-.496 1.85a.5.5 0 1 1-.966-.26l.237-.882-1.12.646a.5.5 0 0 1-.5-.866l1.12-.646-.884-.237a.5.5 0 1 1 .26-.966l1.848.495L7 8 3.6 6.037l-1.85.495a.5.5 0 0 1-.258-.966l.883-.237-1.12-.646a.5.5 0 1 1 .5-.866l1.12.646-.237-.883a.5.5 0 1 1 .966-.258l.495 1.849L7.5 7.134V3.207L6.147 1.854a.5.5 0 1 1 .707-.708l.646.647V.5a.5.5 0 1 1 1 0v1.293l.647-.647a.5.5 0 1 1 .707.708L8.5 3.207v3.927l3.4-1.963.496-1.85a.5.5 0 1 1 .966.26l-.236.882 1.12-.646a.5.5 0 0 1 .5.866l-1.12.646.883.237a.5.5 0 1 1-.26.966l-1.848-.495L9 8l3.4 1.963 1.849-.495a.5.5 0 0 1 .259.966l-.883.237 1.12.646a.5.5 0 0 1-.5.866l-1.12-.646.236.883a.5.5 0 1 1-.966.258l-.495-1.849-3.4-1.963v3.927l1.353 1.353a.5.5 0 0 1-.707.708l-.647-.647V15.5a.5.5 0 0 1-.5.5z"/>
+                      </svg>
+                      <span>Giao hàng xe lạnh chuyên dụng 0°C – 4°C, bảo toàn độ tươi giòn như vừa hái.</span>
+                    </p>
                   </div>
                 }
               </div>
-            </section>
+            </div>
 
-            <!-- Right: Step-by-Step Cooking Guide & Chef Tips -->
-            <section class="xl-detail-section-card">
-              <div class="xl-detail-sec-head">
-                <h2> Hướng dẫn chế biến giữ trọn dinh dưỡng</h2>
-                <span>{{ detail.steps.length }} bước thực hiện</span>
-              </div>
-
-              <div class="xl-steps-timeline">
+            <!-- Right Column: Step-by-Step Cooking Instructions & Chef Tip -->
+            <div class="xl-detail-steps-col">
+              <h4 class="xl-subhead">2. Các bước thực hiện chi tiết</h4>
+              <ol class="xl-steps-list">
                 @for (step of detail.steps; track step.stepNumber) {
-                  <div class="xl-step-card">
-                    <div class="xl-step-num-circle">Bước {{ step.stepNumber }}</div>
-                    <div class="xl-step-body">
-                      <h4>{{ step.title }}</h4>
-                      <p>{{ step.detail }}</p>
+                  <li class="xl-step-item">
+                    <span class="xl-step-num">{{ step.stepNumber }}</span>
+                    <div class="xl-step-text">
+                      <strong>{{ step.title }}:</strong> {{ step.detail }}
                     </div>
-                  </div>
+                  </li>
                 }
-              </div>
+              </ol>
 
-              <div class="xl-chef-tips-box">
-                <div class="xl-chef-tips-title"> Bí quyết từ Đầu bếp &amp; Chuyên gia Dinh dưỡng Evergreen Mart</div>
+              <div class="xl-chef-tip">
+                <strong>
+                  <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    <path d="M2 6a6 6 0 1 1 10.174 4.31c-.203.196-.359.4-.453.619l-.762 1.769A.5.5 0 0 1 10.5 13a.5.5 0 0 1 0 1 .5.5 0 0 1 0 1l-.224.447a1 1 0 0 1-.894.553H6.618a1 1 0 0 1-.894-.553L5.5 15a.5.5 0 0 1 0-1 .5.5 0 0 1 0-1 .5.5 0 0 1-.46-.302l-.761-1.77a2 2 0 0 0-.453-.618A5.98 5.98 0 0 1 2 6m6-5a5 5 0 0 0-3.479 8.592c.263.254.514.564.676.941L5.83 12h4.342l.632-1.467c.162-.377.413-.687.676-.941A5 5 0 0 0 8 1"/>
+                  </svg>
+                  Mẹo đầu bếp Evergreen Mart:
+                </strong>
                 <p>{{ detail.chefTips }}</p>
               </div>
-            </section>
+            </div>
           </div>
 
           <!-- Related Recipes -->
@@ -949,7 +1026,9 @@
             </div>
 
             <div class="xl-modern-hero-visual">
-              <img [src]="heroConfig().bannerImage" alt="Thực đơn dinh dưỡng lành mạnh Evergreen Mart" (error)="onImageError($event)" />
+              @if (heroConfig().bannerImage) {
+                <img [src]="heroConfig().bannerImage" alt="Thực đơn dinh dưỡng lành mạnh Evergreen Mart" (error)="onImageError($event)" />
+              }
               <div class="xl-hero-floating-card">
                 <span class="xl-floating-icon" aria-hidden="true"><i class="bi bi-heart-pulse"></i></span>
                 <div>

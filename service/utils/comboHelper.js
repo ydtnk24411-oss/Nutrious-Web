@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
 const Product = require('../models/Product');
+const Combo = require('../models/Combo');
 
 const COMBO_ITEM_POPULATE_FIELDS =
-  'name slug image images price priceNumber unit weight stock isActive isCombo categoryVi category';
+  'name slug image images price priceNumber unit weight stock isActive categoryVi category';
 
 function normalizeProductImages(doc, extraImages = []) {
   const candidates = [
@@ -44,7 +45,10 @@ function resolveComboStatus(doc) {
 function enrichComboDocument(doc) {
   if (!doc) return doc;
   const obj = typeof doc.toObject === 'function' ? doc.toObject() : { ...doc };
-  if (!obj.isCombo) return obj;
+  const isComboEntity = Boolean(
+    obj.isCombo || obj.comboStatus !== undefined || Array.isArray(obj.comboItems)
+  );
+  if (!isComboEntity) return obj;
 
   const status = resolveComboStatus(obj);
   const rawItems = Array.isArray(obj.comboItems) ? obj.comboItems : [];
@@ -119,6 +123,7 @@ function enrichComboDocument(doc) {
 
   return {
     ...obj,
+    isCombo: true,
     image: normalizedImages[0] || obj.image || '',
     images: normalizedImages,
     comboStatus: status,
@@ -137,7 +142,9 @@ function enrichComboDocument(doc) {
 function enrichProductOrComboList(docs) {
   if (!Array.isArray(docs)) return [];
   return docs.map((d) => {
-    const isCombo = d && d.isCombo === true;
+    const isCombo = Boolean(
+      d && (d.isCombo === true || d.comboStatus !== undefined || (Array.isArray(d.comboItems) && d.comboItems.length > 0))
+    );
     if (isCombo) return enrichComboDocument(d);
     const obj = typeof d?.toObject === 'function' ? d.toObject({ virtuals: true }) : { ...d };
     if (obj) {
@@ -260,12 +267,15 @@ async function generateUniqueComboSlug(name, requestedSlug, excludeId = null) {
   let candidate = baseSlug;
   let suffix = 1;
   while (true) {
-    const query = { slug: candidate };
+    const comboQuery = { slug: candidate };
     if (excludeId && mongoose.Types.ObjectId.isValid(excludeId)) {
-      query._id = { $ne: new mongoose.Types.ObjectId(excludeId) };
+      comboQuery._id = { $ne: new mongoose.Types.ObjectId(excludeId) };
     }
-    const exists = await Product.exists(query);
-    if (!exists) return candidate;
+    const [existsInCombos, existsInProducts] = await Promise.all([
+      Combo.exists(comboQuery),
+      Product.exists({ slug: candidate }),
+    ]);
+    if (!existsInCombos && !existsInProducts) return candidate;
     suffix += 1;
     candidate = `${baseSlug}-${suffix}`;
   }

@@ -1451,6 +1451,7 @@ async function runSeed() {
     const collectionsToSync = [
       'categories',
       'products',
+      'combos',
       'users',
       'vouchers',
       'uservouchers',
