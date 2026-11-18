@@ -3,18 +3,19 @@
   <!-- Header -->
   <div class="page-header">
     <div>
-      <h1 class="page-title">Quản lý Voucher & Khuyến mãi</h1>
-      <p class="page-subtitle">Thiết lập mã giảm giá, mức chiết khấu và theo dõi lượt sử dụng thực tế</p>
+      <h1 class="page-title">{{ canManage() ? 'Quản lý Voucher & Khuyến mãi' : 'Tra cứu Voucher & Mã Giảm Giá' }}</h1>
     </div>
-    <div>
-      <button type="button" class="btn-create" (click)="openCreateModal()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19"/>
-          <line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-        <span>Tạo Voucher mới</span>
-      </button>
-    </div>
+    @if (canManage()) {
+      <div>
+        <button type="button" class="btn-create" (click)="openCreateModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          <span>Tạo Voucher mới</span>
+        </button>
+      </div>
+    }
   </div>
 
   @if (successMsg()) {
@@ -192,32 +193,44 @@
                 </span>
               </td>
               <td style="text-align: right;">
-                <div class="actions-group">
+                @if (canManage()) {
+                  <div class="actions-group">
+                    <button
+                      type="button"
+                      class="btn-sm-action"
+                      (click)="openEditModal(item)"
+                      title="Chỉnh sửa voucher"
+                    >
+                      Sửa
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-sm-action"
+                      (click)="toggleActive(item)"
+                      [title]="item.isActive ? 'Tạm dừng' : 'Kích hoạt'"
+                    >
+                      {{ item.isActive ? 'Tắt' : 'Bật' }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-sm-action btn-danger-action"
+                      (click)="deleteVoucher(item)"
+                      title="Xóa voucher"
+                    >
+                      Xóa
+                    </button>
+                  </div>
+                } @else {
                   <button
                     type="button"
                     class="btn-sm-action"
-                    (click)="openEditModal(item)"
-                    title="Chỉnh sửa voucher"
+                    style="background:#f0fdf4;color:#166534;border-color:#bbf7d0;font-weight:600;padding:5px 12px;border-radius:6px;cursor:pointer;"
+                    (click)="copyCode(item.code)"
+                    title="Bấm để sao chép mã gửi cho khách hàng"
                   >
-                    Sửa
+                    Sao chép mã
                   </button>
-                  <button
-                    type="button"
-                    class="btn-sm-action"
-                    (click)="toggleActive(item)"
-                    [title]="item.isActive ? 'Tạm dừng' : 'Kích hoạt'"
-                  >
-                    {{ item.isActive ? 'Tắt' : 'Bật' }}
-                  </button>
-                  <button
-                    type="button"
-                    class="btn-sm-action btn-danger-action"
-                    (click)="deleteVoucher(item)"
-                    title="Xóa voucher"
-                  >
-                    &times;
-                  </button>
-                </div>
+                }
               </td>
             </tr>
           }

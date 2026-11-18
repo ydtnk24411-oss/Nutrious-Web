@@ -474,11 +474,17 @@
 
 .admin-select, .admin-filter-group select {
   height: 42px;
-  padding: 0 16px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding: 0 38px 0 16px;
+  background-color: #fcfdfb;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%232c4230' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
   border: 1.5px solid #d4e3cb;
   border-radius: 10px;
   font-size: 13.5px;
-  background: #fcfdfb;
   color: #10321c;
   outline: none;
   cursor: pointer;
@@ -490,7 +496,7 @@
 .admin-select:focus, .admin-filter-group select:focus {
   border-color: #176b3a;
   box-shadow: 0 0 0 3px rgba(114, 195, 67, 0.25);
-  background: #ffffff;
+  background-color: #ffffff;
 }
 
 .admin-filter-group {

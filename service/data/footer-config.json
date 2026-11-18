@@ -1,0 +1,48 @@
+{
+  "key": "main",
+  "brandName": "Evergreen Mart",
+  "brandDesc": "Tự hào mang nông sản Việt đạt chuẩn VietGAP, GlobalGAP và Organic từ các nông trại xanh đến tận bàn ăn gia đình bạn mỗi ngày.",
+  "newsletterTitle": "Bản tin dinh dưỡng & Ưu đãi Evergreen Mart",
+  "newsletterDesc": "Đăng ký email để nhận ngay voucher giảm 20%, gợi ý thực đơn dinh dưỡng mỗi tuần và ưu đãi Flash Sale nông sản thu hoạch trong ngày.",
+  "copyrightText": "(c) 2026 Evergreen Mart - Nông Nghiệp Hữu Cơ & Dinh Dưỡng Thông Minh. Bảo lưu mọi quyền.",
+  "contactInfo": {
+    "hotline": "1800 6999 (07:00 – 21:00)",
+    "email": "chamsoc@evergreenmart.vn",
+    "address": "Khu phố 6, Phường Linh Trung, TP. Thủ Đức, TP. Hồ Chí Minh"
+  },
+  "trustItems": [
+    { "iconKey": "leaf", "title": "100% Hữu Cơ & VietGAP", "subtitle": "Nguồn gốc rõ ràng từ nông trại" },
+    { "iconKey": "truck", "title": "Giao Nhanh Trong 2 Giờ", "subtitle": "Giữ trọn độ tươi ngon mỗi ngày" },
+    { "iconKey": "shield", "title": "Đồng Kiểm Khi Nhận Hàng", "subtitle": "Đổi trả miễn phí trong 24 giờ" },
+    { "iconKey": "headset", "title": "Hỗ Trợ Tận Tâm 24/7", "subtitle": "Hotline tư vấn: 1800 6999" }
+  ],
+  "utilityLinks": [
+    { "label": "Dinh dưỡng thông minh", "route": "/nutrition" },
+    { "label": "Nấu gì với đồ sẵn có?", "route": "/cook-with-what-you-have" },
+    { "label": "Theo dõi đơn hàng", "route": "/tracker-page" },
+    { "label": "Ví Voucher của tôi", "route": "/vouchers" },
+    { "label": "Điểm thưởng & Hạng thành viên", "route": "/loyalty" }
+  ],
+  "aboutLinks": [
+    { "label": "Giới thiệu về Evergreen Mart", "policyKey": "about" },
+    { "label": "Nông trại & Vùng trồng hữu cơ", "route": "/online-ordering" },
+    { "label": "Tiêu chuẩn chất lượng VietGAP", "policyKey": "shipping" },
+    { "label": "Cẩm nang dinh dưỡng thông minh", "route": "/nutrition" },
+    { "label": "Liên hệ & Hệ thống phân phối", "policyKey": "contact" }
+  ],
+  "policyLinks": [
+    { "label": "Chính sách giao hàng & Đồng kiểm", "policyKey": "shipping", "icon": "truck" },
+    { "label": "Chính sách đổi trả & Hoàn tiền", "policyKey": "returns", "icon": "refresh" },
+    { "label": "Chính sách bảo mật thông tin", "policyKey": "privacy", "icon": "shield" },
+    { "label": "Điều khoản sử dụng dịch vụ", "policyKey": "terms", "icon": "doc" },
+    { "label": "Câu hỏi thường gặp (FAQ)", "policyKey": "faq", "icon": "help" },
+    { "label": "Hướng dẫn đặt hàng & Thanh toán", "policyKey": "help", "icon": "info" }
+  ],
+  "socialLinks": [
+    { "platform": "facebook", "label": "Facebook Evergreen Mart", "url": "https://facebook.com" },
+    { "platform": "instagram", "label": "Instagram Evergreen Mart", "url": "https://instagram.com" },
+    { "platform": "youtube", "label": "YouTube Evergreen Mart", "url": "https://youtube.com" },
+    { "platform": "zalo", "label": "Zalo OA Evergreen Mart", "url": "https://zalo.me" }
+  ],
+  "paymentMethods": ["COD", "VietQR", "MoMo", "VNPay", "ZaloPay", "Visa/Master"]
+}

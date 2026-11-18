@@ -3,10 +3,15 @@
   <!-- Header -->
   <div class="page-header">
     <div>
-      <h1 class="page-title">Quản lý Đánh giá sản phẩm</h1>
-      <p class="page-subtitle">Theo dõi nhận xét, sao đánh giá và phản hồi của khách hàng Evergreen Mart</p>
+      <h1 class="page-title">Quản lý Đánh giá &amp; Phản hồi sản phẩm</h1>
     </div>
   </div>
+
+  @if (copyToast()) {
+    <div class="social-proof-toast" role="status">
+      ✓ {{ copyToast() }}
+    </div>
+  }
 
   <!-- KPI Cards -->
   <div class="kpi-grid">
@@ -34,7 +39,7 @@
       </div>
     </div>
 
-    <div class="kpi-card">
+    <div class="kpi-card" style="cursor:pointer;" (click)="filterUnreplied()" [class.is-filtered]="selectedReplyStatus() === 'pending'" title="Bấm để lọc nhanh đánh giá chưa phản hồi">
       <div class="kpi-icon bg-blue">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/>
@@ -43,7 +48,7 @@
         </svg>
       </div>
       <div class="kpi-info">
-        <span class="kpi-label">Chưa phản hồi</span>
+        <span class="kpi-label">Chưa phản hồi (Bấm để lọc)</span>
         <span class="kpi-value text-warning">{{ stats().pendingReplyCount }}</span>
       </div>
     </div>
@@ -76,16 +81,27 @@
       </select>
 
       <select
+        [ngModel]="selectedReplyStatus()"
+        (ngModelChange)="selectedReplyStatus.set($event); onFilterChange()"
+        class="filter-select"
+        aria-label="Lọc phản hồi"
+      >
+        <option value="all">Tất cả phản hồi</option>
+        <option value="pending">Chưa phản hồi</option>
+        <option value="replied">Đã phản hồi</option>
+      </select>
+
+      <select
         [ngModel]="selectedRating()"
         (ngModelChange)="selectedRating.set($event); onFilterChange()"
         class="filter-select"
       >
         <option value="all">Tất cả số sao</option>
-        <option value="5">5 sao ⭐⭐⭐⭐⭐</option>
-        <option value="4">4 sao ⭐⭐⭐⭐</option>
-        <option value="3">3 sao ⭐⭐⭐</option>
-        <option value="2">2 sao ⭐⭐</option>
-        <option value="1">1 sao ⭐</option>
+        <option value="5">5 sao</option>
+        <option value="4">4 sao</option>
+        <option value="3">3 sao</option>
+        <option value="2">2 sao</option>
+        <option value="1">1 sao</option>
       </select>
 
       <select
@@ -99,6 +115,42 @@
       </select>
     </div>
   </div>
+
+  <!-- Dấu hiệu nhận biết đang lọc đánh giá -->
+  @if (selectedRating() !== 'all' || selectedStatus() !== 'all' || selectedReplyStatus() !== 'all' || searchQuery()) {
+    <div class="admin-active-filter-bar">
+      <div class="admin-active-filter-tags">
+        <span style="font-weight:700">Đang lọc theo:</span>
+        @if (selectedReplyStatus() !== 'all') {
+          <span class="admin-filter-chip">
+            Phản hồi: <strong>{{ selectedReplyStatus() === 'pending' ? 'Chưa phản hồi' : 'Đã phản hồi' }}</strong>
+            <button type="button" class="admin-chip-remove" (click)="selectedReplyStatus.set('all'); onFilterChange()" title="Xóa lọc phản hồi">✕</button>
+          </span>
+        }
+        @if (selectedRating() !== 'all') {
+          <span class="admin-filter-chip">
+            Số sao: <strong>{{ selectedRating() }} sao</strong>
+            <button type="button" class="admin-chip-remove" (click)="selectedRating.set('all'); onFilterChange()" title="Xóa lọc số sao">✕</button>
+          </span>
+        }
+        @if (selectedStatus() !== 'all') {
+          <span class="admin-filter-chip">
+            Trạng thái: <strong>{{ selectedStatus() === 'visible' ? 'Đang hiển thị' : 'Đã ẩn' }}</strong>
+            <button type="button" class="admin-chip-remove" (click)="selectedStatus.set('all'); onFilterChange()" title="Xóa lọc trạng thái">✕</button>
+          </span>
+        }
+        @if (searchQuery()) {
+          <span class="admin-filter-chip">
+            Từ khóa: <strong>"{{ searchQuery() }}"</strong>
+            <button type="button" class="admin-chip-remove" (click)="searchQuery.set(''); onFilterChange()" title="Xóa tìm kiếm">✕</button>
+          </span>
+        }
+      </div>
+      <button type="button" class="admin-btn-clear-filters" (click)="resetFilters()">
+        Xóa tất cả bộ lọc
+      </button>
+    </div>
+  }
 
   <!-- Table -->
   <div class="table-card">

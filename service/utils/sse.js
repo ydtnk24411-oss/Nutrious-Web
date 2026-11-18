@@ -46,22 +46,30 @@ async function sendRealtimeNotification({ recipient, recipientRole, title, body,
     });
 
     // 2. Gửi SSE cho các client đang kết nối trực tuyến
-    const targetUserId = recipient ? String(recipient) : null;
+    const targetUserId = recipient ? String(recipient._id || recipient) : null;
 
     for (const [clientId, client] of clients.entries()) {
+      // Khách hàng không nhận thông báo nội bộ kho vận hoặc dẫn đến trang quản trị
+      if (client.role === 'customer' && (type === 'inventory' || (path && path.startsWith('/admin')))) {
+        continue;
+      }
+
       let isMatch = false;
 
       // Khớp theo tài khoản người nhận cụ thể
-      if (targetUserId && client.userId === targetUserId) {
+      if (targetUserId && String(client.userId) === String(targetUserId)) {
         isMatch = true;
       }
       // Hoặc khớp theo vai trò người nhận (vd: nhân viên Sales / Quản trị viên / Thủ kho)
       else if (recipientRole) {
         if (recipientRole === 'all') {
-          isMatch = true;
+          // 'all' nội bộ dành cho nhân viên / quản lý
+          isMatch = client.role !== 'customer' || (type !== 'inventory' && !path?.startsWith('/admin'));
         } else if (recipientRole === client.role || (recipientRole === 'sales' && ['admin', 'sales'].includes(client.role))) {
           isMatch = true;
         } else if (recipientRole === 'warehouse' && ['admin', 'warehouse'].includes(client.role)) {
+          isMatch = true;
+        } else if (recipientRole === 'manager' && ['admin', 'manager'].includes(client.role)) {
           isMatch = true;
         }
       }

@@ -22,6 +22,7 @@ export interface ChatMessage {
   sender: 'user' | 'bot' | 'admin';
   senderRole?: 'customer' | 'ai' | 'admin';
   senderName?: string;
+  staffName?: string;
   senderAvatar?: string;
   text: string;
   timestamp: Date;
@@ -35,7 +36,7 @@ const INITIAL_WELCOME_MESSAGE: ChatMessage = {
   sender: 'bot',
   senderRole: 'ai',
   senderName: 'NutriBot AI',
-  text: `Xin chào, tôi là **NutriBot AI** — Trợ lý Nông sản & Dinh dưỡng Evergreen Mart.\n\nTôi có thể hỗ trợ bạn tìm kiếm nông sản hữu cơ, tư vấn thực đơn khoa học và phân tích thành phần dinh dưỡng. Bạn cũng có thể **tải ảnh nguyên liệu hoặc món ăn lên** để nhận diện chi tiết.\n\nBạn đang quan tâm đến sản phẩm hoặc thực đơn nào hôm nay?`,
+  text: `Xin chào, tôi là **NutriBot AI** - Trợ lý Nông sản & Dinh dưỡng Evergreen Mart.\n\nTôi có thể hỗ trợ bạn tìm kiếm nông sản hữu cơ, tư vấn thực đơn khoa học và phân tích thành phần dinh dưỡng. Bạn cũng có thể **tải ảnh nguyên liệu hoặc món ăn lên** để nhận diện chi tiết.\n\nBạn đang quan tâm đến sản phẩm hoặc thực đơn nào hôm nay?`,
   timestamp: new Date(),
 };
 
@@ -67,10 +68,12 @@ export class ChatbotService {
       localStorage.setItem('xanhla_chatbot_provider', 'gemini');
     } catch {}
 
-    // Polling session every 2.5s for real-time 2-way live sync with Admin Support
+    // Polling session: Chỉ poll khi khung chat đang mở hoặc đang chờ nhân viên phản hồi
     this.pollTimer = setInterval(() => {
-      this.syncSession();
-    }, 2500);
+      if (this.isOpen() || this.isStaffMode()) {
+        this.syncSession();
+      }
+    }, 3500);
 
     // Initial check
     setTimeout(() => this.syncSession(), 600);
@@ -220,6 +223,7 @@ export class ChatbotService {
         _id?: string;
         sender: 'customer' | 'ai' | 'admin';
         senderName?: string;
+        staffName?: string;
         senderAvatar?: string;
         content: string;
         timestamp: string | Date;
@@ -233,10 +237,7 @@ export class ChatbotService {
         }
 
         if (res.assignedTo?.name) {
-          this.assignedStaffName.set(res.assignedTo.name);
-          if (res.assignedTo.avatar) {
-            this.assignedStaffAvatar.set(res.assignedTo.avatar);
-          }
+          this.assignedStaffName.set('Admin Evergreen Mart');
         }
 
         if (Array.isArray(res.messages) && res.messages.length > 0) {
@@ -255,8 +256,9 @@ export class ChatbotService {
               id: m._id || `srv_${idx}_${new Date(m.timestamp).getTime()}`,
               sender: m.sender === 'customer' ? 'user' : (m.sender === 'admin' ? 'admin' : 'bot'),
               senderRole: m.sender,
-              senderName: m.senderName,
-              senderAvatar: m.senderAvatar,
+              senderName: m.sender === 'admin' ? 'Admin' : m.senderName,
+              staffName: '',
+              senderAvatar: '',
               text: m.content,
               timestamp: new Date(m.timestamp),
               isHandedOver: m.sender === 'ai' && /chuyên viên tư vấn|chuyển yêu cầu|tiếp nhận/i.test(m.content),

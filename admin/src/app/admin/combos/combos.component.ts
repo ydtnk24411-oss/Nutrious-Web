@@ -13,6 +13,7 @@ import {
   ProductApiService,
 } from '../../shared/services/product-api.service';
 import { formatPrice } from '../../shared/services/cart.service';
+import { AdminAuthService } from '../../shared/services/admin-auth.service';
 
 export interface ComboFormItemRow {
   productId: string;
@@ -36,7 +37,9 @@ export interface ComboFormItemRow {
 export class AdminCombosComponent implements OnInit {
   private comboApi = inject(ComboApiService);
   private productApi = inject(ProductApiService);
+  protected auth = inject(AdminAuthService);
 
+  isSales = computed(() => (this.auth.user()?.role || '').toLowerCase() === 'sales');
   protected formatPrice = formatPrice;
 
   // Danh sách Combo & bộ lọc

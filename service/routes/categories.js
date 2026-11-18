@@ -6,7 +6,7 @@ const { protect, adminOnly, staffOnly, hasRole } = require('../middleware/auth')
 const { validate }           = require('../middleware/validate');
 const { cacheMiddleware, clearCache } = require('../utils/cache');
 
-// GET /api/categories — public (cache in-memory 60 giây)
+// GET /api/categories - public (cache in-memory 60 giây)
 router.get('/', cacheMiddleware(60), async (req, res, next) => {
   try {
     const cats = await Category.find({ isActive: { $ne: false } }).sort({ order: 1, createdAt: 1 });
@@ -14,7 +14,7 @@ router.get('/', cacheMiddleware(60), async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/categories/with-counts — for admin product & category management
+// GET /api/categories/with-counts - for admin product & category management
 router.get('/with-counts', protect, staffOnly, async (req, res, next) => {
   try {
     const cats = await Category.find({ isActive: { $ne: false } }).sort({ order: 1, createdAt: 1 });
@@ -40,7 +40,7 @@ router.get('/with-counts', protect, staffOnly, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// POST /api/categories — admin
+// POST /api/categories - admin
 router.post('/', protect, hasRole('content', 'admin'),
   [
     body('name').notEmpty().withMessage('Tên danh mục không được để trống.'),
@@ -56,7 +56,7 @@ router.post('/', protect, hasRole('content', 'admin'),
   }
 );
 
-// PUT /api/categories/:id — admin
+// PUT /api/categories/:id - admin
 router.put('/:id', protect, hasRole('content', 'admin'), async (req, res, next) => {
   try {
     const cat = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
@@ -66,7 +66,7 @@ router.put('/:id', protect, hasRole('content', 'admin'), async (req, res, next) 
   } catch (err) { next(err); }
 });
 
-// DELETE /api/categories/:id — admin with relation check
+// DELETE /api/categories/:id - admin with relation check
 router.delete('/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const cat = await Category.findById(req.params.id);

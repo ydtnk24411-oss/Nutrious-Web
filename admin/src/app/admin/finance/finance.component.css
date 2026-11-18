@@ -145,7 +145,8 @@
   padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  justify-content: space-between;
+  min-height: 124px;
   box-shadow: 0 1px 4px rgba(20, 83, 45, 0.03);
 }
 
@@ -158,6 +159,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-height: 24px;
 }
 
 .fin-kpi-label {
@@ -166,15 +168,20 @@
   color: #526a5b;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  white-space: nowrap;
 }
 
 .fin-kpi-badge {
   font-size: 11px;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 999px;
   background: #eef6f0;
   color: #14532d;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
 }
 
 .fin-kpi-badge.is-lime {
@@ -193,6 +200,8 @@
   color: #0f291e;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 6px 0 4px;
 }
 
 .fin-kpi-val.is-green { color: #166534; }
@@ -201,6 +210,11 @@
 .fin-kpi-sub {
   font-size: 12px;
   color: #647b6c;
+  min-height: 18px;
+  line-height: 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Mid Grid */
@@ -544,4 +558,278 @@
   background: #fef2f2;
   color: #dc2626;
   border-color: #fecaca;
+}
+
+/* Active Store Header Strip */
+.fin-active-store-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.fin-active-store-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fin-store-chip-tag {
+  background: #14532d;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.fin-active-store-sub {
+  font-size: 12.5px;
+  color: #166534;
+  font-weight: 500;
+}
+
+.fin-active-store-reset {
+  background: #ffffff;
+  color: #14532d;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.fin-active-store-reset:hover {
+  background: #14532d;
+  color: #ffffff;
+  border-color: #14532d;
+}
+
+/* Ledger Total Row */
+.fin-ledger-total-row {
+  background: #f8fafc;
+  border-top: 2px solid #cbd5e1;
+  font-weight: 700;
+}
+
+.fin-ledger-total-row td {
+  padding: 12px 14px;
+  color: #0f172a;
+}
+
+.fin-total-title {
+  color: #14532d !important;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+}
+
+/* Ledger Pagination Bar */
+.fin-pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+  flex-wrap: wrap;
+}
+
+.fin-page-info {
+  font-size: 12.5px;
+  color: #64748b;
+}
+
+.fin-page-info strong {
+  color: #0f172a;
+}
+
+.fin-page-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.fin-page-size-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.fin-page-size-select {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #1e293b;
+  outline: none;
+  background: #f8fafc;
+}
+
+.fin-page-size-select:focus {
+  border-color: #14532d;
+}
+
+.fin-page-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fin-page-btn {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.fin-page-btn:hover:not(:disabled) {
+  background: #eef6f0;
+  border-color: #14532d;
+  color: #14532d;
+}
+
+.fin-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #f8fafc;
+}
+
+.fin-page-cur {
+  font-size: 12px;
+  color: #475569;
+  padding: 0 6px;
+}
+
+/* ── Financial Trend Chart Styles ──────────────────────────────────── */
+.fin-trend-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.fin-trend-readout {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.fin-readout-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 12.5px;
+  color: #0f172a;
+}
+
+.fin-readout-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.fin-readout-dot.is-revenue {
+  background: #14532d;
+}
+
+.fin-readout-dot.is-profit {
+  background: #16a34a;
+}
+
+.fin-readout-margin {
+  background: #14532d;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  margin-left: 4px;
+}
+
+.fin-trend-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 12.5px;
+  color: #475569;
+  flex-wrap: wrap;
+}
+
+.fin-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.fin-trend-hint {
+  font-size: 11.5px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.fin-chart-wrap {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+  position: relative;
+}
+
+.fin-chart-y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 150px;
+  font-size: 11px;
+  color: #64748b;
+  text-align: right;
+  min-width: 42px;
+  padding-bottom: 2px;
+  user-select: none;
+}
+
+.fin-svg-box {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.fin-chart-x-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 6px;
+  padding: 0 4px;
+  user-select: none;
 }

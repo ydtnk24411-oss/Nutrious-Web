@@ -11,6 +11,7 @@ export interface ChatMessage {
   _id?: string;
   sender: 'customer' | 'ai' | 'admin';
   senderName?: string;
+  staffName?: string;
   senderAvatar?: string;
   content: string;
   timestamp: string;

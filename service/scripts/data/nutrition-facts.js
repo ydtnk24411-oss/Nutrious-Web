@@ -775,7 +775,7 @@ module.exports = {
     'Chất đạm (Protein)': 'Axit Glutamic tự nhiên (78%)',
     'Chất béo (Lipid)': '0g / 100g',
     'Carbohydrate': '0g / 100g',
-    'Khoáng chất': 'Natri (12.3g / 100g — bằng 1/3 lượng Natri trong muối ăn)'
+    'Khoáng chất': 'Natri (12.3g / 100g - bằng 1/3 lượng Natri trong muối ăn)'
   },
   'duong-cat-trang-bien-hoa-1kg': {
     'Năng lượng': '399 kcal / 100g',
@@ -1706,7 +1706,7 @@ module.exports = {
     'Chất đạm (Protein)': '19.5g / 100g',
     'Chất béo (Lipid)': '13.6g / 100g (Mỡ vịt giàu axit béo không bão hòa đơn)',
     'Carbohydrate': '0g / 100g',
-    'Vitamin & Khoáng chất': 'Sắt (4.5mg — cao hơn cả thịt bò), Vitamin B3, B12, Selen, Kẽm'
+    'Vitamin & Khoáng chất': 'Sắt (4.5mg - cao hơn cả thịt bò), Vitamin B3, B12, Selen, Kẽm'
   },
   'me-ga-lam-sach-tuoi': {
     'Năng lượng': '94 kcal / 100g',

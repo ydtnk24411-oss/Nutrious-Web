@@ -10,6 +10,8 @@ export interface AdminUser {
   role: string;
   avatar?: string;
   phone?: string;
+  assignedStore?: string;
+  storeName?: string;
   points?: number;
   tier?: string;
   totalSpent?: number;
@@ -33,6 +35,23 @@ export class AdminAuthService {
   readonly user      = this._user.asReadonly();
   readonly token     = this._token.asReadonly();
   readonly isLoggedIn = () => !!this._token();
+
+  constructor() {
+    this.refreshProfile();
+  }
+
+  refreshProfile(): void {
+    if (!this._token()) return;
+    this.api.get<{ success: boolean; user: AdminUser }>('/auth/me').subscribe({
+      next: (res) => {
+        if (res.success && res.user) {
+          localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+          this._user.set(res.user);
+        }
+      },
+      error: () => {}
+    });
+  }
 
   login(email: string, password: string) {
     return this.api.post<{ success: boolean; token: string; user: AdminUser }>(
@@ -81,8 +100,24 @@ export class AdminAuthService {
 
   private _loadUser(): AdminUser | null {
     try {
-      const raw = localStorage.getItem(USER_KEY);  // ← đọc đúng key
-      return raw ? JSON.parse(raw) : null;
+      const raw = localStorage.getItem(USER_KEY);
+      if (!raw) return null;
+      const u = JSON.parse(raw);
+      if (u) {
+        const role = (u.role || '').toLowerCase();
+        if (role === 'marketing' && (/marketing/i.test(u.name) || !u.name)) {
+          u.name = 'Phạm Thị Hồng Hạnh';
+        } else if (role === 'sales' && (/bán hàng|sales/i.test(u.name) || !u.name)) {
+          u.name = 'Lê Thị Thu Thảo';
+        } else if (role === 'warehouse' && (/kho|warehouse/i.test(u.name) || !u.name)) {
+          u.name = 'Nguyễn Văn Khoa';
+        }
+        if (u.name) {
+          u.name = u.name.replace(/\s*\([^)]*\)$/, '').trim();
+        }
+        localStorage.setItem(USER_KEY, JSON.stringify(u));
+      }
+      return u;
     } catch { return null; }
   }
 }

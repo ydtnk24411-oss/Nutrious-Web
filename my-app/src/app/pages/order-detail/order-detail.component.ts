@@ -302,7 +302,7 @@ export class OrderDetailComponent implements OnInit {
     }
 
     this.cancelling.set(true);
-    const fullReason = `${mainReason} — Chi tiết: ${detail}`;
+    const fullReason = `${mainReason} - Chi tiết: ${detail}`;
     const targetId = currentOrder.orderCode || currentOrder._id;
 
     this.orderApi.cancel(targetId, fullReason).subscribe({
@@ -570,7 +570,7 @@ export class OrderDetailComponent implements OnInit {
       <div>
         <div class="store-name">Evergreen Mart</div>
         <div class="store-info">Nông sản sạch VietGAP &amp; Thực phẩm dinh dưỡng</div>
-        <div class="store-info">Hotline CSKH: 1800 6999 (Miễn phí) — www.evergreenmart.vn</div>
+        <div class="store-info">Hotline CSKH: 1800 6999 (Miễn phí) - www.evergreenmart.vn</div>
       </div>
       <div>
         <div class="invoice-title">PHIẾU GIAO HÀNG &amp; ĐỐI SOÁT</div>

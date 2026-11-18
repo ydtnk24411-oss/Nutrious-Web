@@ -45,20 +45,57 @@ const stockAdjustmentTicketSchema = new mongoose.Schema(
       type: String,
       required: true,
       index: true,
-      comment: 'Mã chi nhánh phát sinh nghiệp vụ kho',
+      comment: 'Mã chi nhánh phát sinh nghiệp vụ kho (hoặc kho xuất)',
     },
     storeName: {
       type: String,
       default: 'Kho Nông Sản Evergreen Mart',
     },
+    targetStoreId: {
+      type: String,
+      default: '',
+      index: true,
+      comment: 'Mã chi nhánh nhận khi điều chuyển liên kho (store_transfer)',
+    },
+    targetStoreName: {
+      type: String,
+      default: '',
+    },
+    supplierId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Supplier',
+      default: null,
+    },
+    supplierName: {
+      type: String,
+      default: '',
+    },
     type: {
       type: String,
-      enum: ['goods_receipt', 'spoilage_writeoff', 'cycle_count', 'boris_return'],
+      enum: ['goods_receipt', 'spoilage_writeoff', 'cycle_count', 'boris_return', 'store_transfer'],
       required: true,
       comment:
-        'goods_receipt: Nhập từ kho tổng/NCC | spoilage_writeoff: Xuất hủy hàng dập nát/hết hạn | cycle_count: Kiểm kê thực tế | boris_return: Tái nhập hàng đổi trả tại quầy',
+        'goods_receipt: Nhập từ NCC | spoilage_writeoff: Xuất hủy hàng dập nát | cycle_count: Kiểm kê thực tế | boris_return: Tái nhập đổi trả | store_transfer: Điều chuyển liên kho',
     },
     items: [ticketItemSchema],
+    totalAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+      comment: 'Tổng giá trị nhập kho từ NCC hoặc giá trị hàng điều chuyển',
+    },
+    paidAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+      comment: 'Số tiền đã thanh toán cho NCC trong đợt nhập này',
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['unpaid', 'partial', 'paid'],
+      default: 'unpaid',
+      comment: 'Tình trạng công nợ NCC: Chưa thanh toán / Một phần / Đã thanh toán đủ',
+    },
     totalLossValue: {
       type: Number,
       default: 0,
@@ -79,7 +116,7 @@ const stockAdjustmentTicketSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending_approval', 'approved', 'rejected'],
+      enum: ['pending_approval', 'approved', 'rejected', 'in_transit', 'completed', 'cancelled'],
       default: 'approved',
       index: true,
     },

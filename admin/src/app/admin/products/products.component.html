@@ -1,9 +1,9 @@
 <!-- Header -->
 <div class="admin-page-header">
   <div>
-    <h2 class="admin-page-title">Quản lý Sản phẩm & Danh mục</h2>
+    <h2 class="admin-page-title">{{ isSales() ? 'Tra cứu Sản phẩm & Bảng giá' : 'Quản lý Sản phẩm & Danh mục' }}</h2>
     <span class="admin-stat-label">
-      {{ activeTab() === 'list' ? 'Tổng cộng: ' + total() + ' sản phẩm' : 'Danh mục thực phẩm Evergreen Mart' }}
+      {{ activeTab() === 'list' ? (isSales() ? 'Tra cứu bảng giá và độ tươi ngon từng mặt hàng nông sản' : 'Tổng cộng: ' + total() + ' sản phẩm') : 'Danh mục thực phẩm Evergreen Mart' }}
     </span>
   </div>
 
@@ -50,21 +50,25 @@
         </button>
       </div>
 
-      <button class="admin-btn-primary" (click)="openCreate()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-        <span>Thêm sản phẩm</span>
-      </button>
+      @if (canManageProducts()) {
+        <button class="admin-btn-primary" (click)="openCreate()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Thêm sản phẩm</span>
+        </button>
+      }
     } @else {
-      <button class="admin-btn-primary" (click)="openCreateCategory()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-        <span>Thêm danh mục mới</span>
-      </button>
+      @if (canManageProducts()) {
+        <button class="admin-btn-primary" (click)="openCreateCategory()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Thêm danh mục mới</span>
+        </button>
+      }
     }
   </div>
 </div>
@@ -134,7 +138,7 @@
   <!-- Empty State -->
   @if (!loading() && products().length === 0) {
     <div class="admin-card admin-empty">
-      <div class="admin-empty-icon">🥬</div>
+      <div class="admin-empty-icon"></div>
       <h3>Không tìm thấy sản phẩm</h3>
       <p>Thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc.</p>
     </div>
@@ -200,20 +204,30 @@
             </div>
 
             <div class="prod-card-actions">
-              <button type="button" class="xanhla-prod-card-btn-edit" (click)="openEdit(p)" title="Chỉnh sửa sản phẩm">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 20h9"></path>
-                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                </svg>
-                <span>Chỉnh sửa</span>
-              </button>
+              @if (canManageProducts()) {
+                <button type="button" class="xanhla-prod-card-btn-edit" (click)="openEdit(p)" title="Chỉnh sửa sản phẩm">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                  </svg>
+                  <span>Chỉnh sửa</span>
+                </button>
 
-              <button type="button" class="xanhla-prod-card-btn-del" (click)="remove(p)" title="Xóa">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                </svg>
-              </button>
+                <button type="button" class="xanhla-prod-card-btn-del" (click)="remove(p)" title="Xóa">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+              } @else {
+                <button type="button" class="xanhla-prod-card-btn-edit" (click)="openEdit(p)" title="Xem chi tiết sản phẩm" style="width:100%;justify-content:center">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                  <span>Xem chi tiết</span>
+                </button>
+              }
             </div>
           </div>
         </div>
@@ -290,18 +304,27 @@
                 </td>
                 <td style="text-align:right">
                   <div class="prod-table-actions">
-                    <button class="prod-btn-icon edit" (click)="openEdit(p)" title="Sửa">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 20h9"></path>
-                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                      </svg>
-                    </button>
-                    <button class="prod-btn-icon del" (click)="remove(p)" title="Xóa">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                      </svg>
-                    </button>
+                    @if (canManageProducts()) {
+                      <button class="prod-btn-icon edit" (click)="openEdit(p)" title="Sửa">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M12 20h9"></path>
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                        </svg>
+                      </button>
+                      <button class="prod-btn-icon del" (click)="remove(p)" title="Xóa">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
+                    } @else {
+                      <button class="prod-btn-icon edit" (click)="openEdit(p)" title="Xem chi tiết">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      </button>
+                    }
                   </div>
                 </td>
               </tr>
@@ -368,7 +391,9 @@
               <th style="text-align: right;">Thứ tự</th>
               <th style="text-align: right;">Số lượng sản phẩm</th>
               <th>Trạng thái</th>
-              <th style="width: 140px; text-align: right;">Thao tác</th>
+              @if (canManageProducts()) {
+                <th style="width: 140px; text-align: right;">Thao tác</th>
+              }
             </tr>
           </thead>
           <tbody>
@@ -379,6 +404,7 @@
                     [src]="cat.image || 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=120&q=80'"
                     [alt]="cat.name"
                     class="prod-table-thumb"
+                    (error)="$any($event.target).src = 'https://images.unsplash.com/photo-1610348725531-843dff563e2c?w=120&q=80'"
                   />
                 </td>
                 <td>
@@ -394,26 +420,28 @@
                 <td>
                   <span class="admin-badge badge-active">Đang áp dụng</span>
                 </td>
-                <td style="text-align: right;">
-                  <div class="prod-table-actions">
-                    <button class="prod-btn-icon edit" (click)="openEditCategory(cat)" title="Chỉnh sửa danh mục">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 20h9"></path>
-                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                      </svg>
-                    </button>
-                    <button
-                      class="prod-btn-icon del"
-                      (click)="removeCategory(cat)"
-                      [title]="(cat.productCount || 0) > 0 ? 'Không thể xóa khi còn sản phẩm liên kết' : 'Xóa danh mục'"
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                      </svg>
-                    </button>
-                  </div>
-                </td>
+                @if (canManageProducts()) {
+                  <td style="text-align: right;">
+                    <div class="prod-table-actions">
+                      <button class="prod-btn-icon edit" (click)="openEditCategory(cat)" title="Chỉnh sửa danh mục">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M12 20h9"></path>
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                        </svg>
+                      </button>
+                      <button
+                        class="prod-btn-icon del"
+                        (click)="removeCategory(cat)"
+                        [title]="(cat.productCount || 0) > 0 ? 'Không thể xóa khi còn sản phẩm liên kết' : 'Xóa danh mục'"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                }
               </tr>
             }
           </tbody>
@@ -430,12 +458,12 @@
 
       <div class="admin-modal-header">
         <h3 class="admin-modal-title">
-          {{ modalMode() === 'create' ? 'Thêm nông sản mới' : 'Cập nhật thông tin sản phẩm' }}
+          {{ !canManageProducts() ? 'Thông tin chi tiết sản phẩm' : (modalMode() === 'create' ? 'Thêm nông sản mới' : 'Cập nhật thông tin sản phẩm') }}
         </h3>
-        <button class="admin-btn-icon" (click)="closeModal()" aria-label="Đóng">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-
+        <button class="admin-btn-icon" (click)="closeModal()" aria-label="Đóng" title="Đóng">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
       </div>
@@ -639,7 +667,7 @@
           <div class="admin-field" style="grid-column:1/-1;margin-top:10px;padding:16px;background:#f8faf6;border:1.5px solid #d4e7c5;border-radius:12px">
             <div style="margin-bottom:14px;border-bottom:1px solid #e2ebd8;padding-bottom:10px">
               <strong style="font-size:15px;color:#1c4217;display:flex;align-items:center;gap:6px">
-                🌿 Thông số nguồn gốc & Hướng dẫn sử dụng
+                Thông số nguồn gốc & Hướng dẫn sử dụng
               </strong>
               <div style="font-size:12px;color:#5c715e;margin-top:2px">
                 Hiển thị trong bảng thông số kỹ thuật, xuất xứ và hướng dẫn trên trang chi tiết sản phẩm.
@@ -699,7 +727,7 @@
             <!-- Bảng Dinh dưỡng & Tiêu chuẩn kỹ thuật -->
             <div style="margin-top:16px;padding-top:14px;border-top:1px dashed #c9dcbd">
               <strong style="font-size:13.5px;color:#1c4217;display:block;margin-bottom:6px">
-                🥗 Bảng dinh dưỡng & Tiêu chuẩn chất lượng (Specifications)
+                Bảng dinh dưỡng & Tiêu chuẩn chất lượng (Specifications)
               </strong>
               <div style="font-size:11.5px;color:#64748b;margin-bottom:12px">
                 Các chỉ số này sẽ tự động hiển thị trong bảng dinh dưỡng chi tiết ngoài trang sản phẩm.
@@ -925,11 +953,13 @@
       </div>
 
       <div class="admin-modal-footer">
-        <button class="admin-btn-secondary" (click)="closeModal()">Hủy bỏ</button>
-        <button class="admin-btn-primary" [disabled]="saving()" (click)="save()">
-          @if (saving()) { <span class="admin-spinner" style="border-top-color:#fff;border-color:rgba(255,255,255,0.2)"></span> Đang lưu... }
-          @else { {{ modalMode() === 'create' ? 'Tạo sản phẩm' : 'Lưu thay đổi' }} }
-        </button>
+        <button class="admin-btn-secondary" (click)="closeModal()">{{ canManageProducts() ? 'Hủy bỏ' : 'Đóng' }}</button>
+        @if (canManageProducts()) {
+          <button class="admin-btn-primary" [disabled]="saving()" (click)="save()">
+            @if (saving()) { <span class="admin-spinner" style="border-top-color:#fff;border-color:rgba(255,255,255,0.2)"></span> Đang lưu... }
+            @else { {{ modalMode() === 'create' ? 'Tạo sản phẩm' : 'Lưu thay đổi' }} }
+          </button>
+        }
       </div>
 
     </div>
@@ -942,10 +972,10 @@
     <div class="admin-modal" (click)="$event.stopPropagation()" style="max-width:520px">
       <div class="admin-modal-header">
         <h3 class="admin-modal-title">{{ editingCat() ? 'Chỉnh sửa Danh mục' : 'Thêm Danh mục mới' }}</h3>
-        <button class="admin-btn-icon" (click)="closeCatModal()" aria-label="Đóng">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-
+        <button class="admin-btn-icon" (click)="closeCatModal()" aria-label="Đóng" title="Đóng">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
       </div>

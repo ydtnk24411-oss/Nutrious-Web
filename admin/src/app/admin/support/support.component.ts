@@ -8,6 +8,7 @@ import {
   SupportConversation,
   ConversationStatus,
   SupportStats,
+  ChatMessage,
 } from '../../shared/services/support-api.service';
 import { AdminAuthService } from '../../shared/services/admin-auth.service';
 
@@ -220,6 +221,25 @@ export class AdminSupportComponent implements OnInit, OnDestroy {
         alert(err.error?.message || 'Không thể gửi tin nhắn. Vui lòng thử lại.');
       },
     });
+  }
+
+  getSenderName(msg: ChatMessage): string {
+    if (msg.sender === 'customer') {
+      return this.activeConversation()?.customerName || msg.senderName || 'Khách hàng';
+    }
+    if (msg.sender === 'ai') {
+      return 'NutriBot AI';
+    }
+    const staff = msg.staffName || (msg.senderName && msg.senderName !== 'Admin' ? msg.senderName : '') || (this.activeConversation() as any)?.assignedTo?.name || '';
+    if (staff && staff !== 'Admin') {
+      return `Admin (${staff})`;
+    }
+    return 'Admin';
+  }
+
+  getStaffAttribution(msg: ChatMessage): string {
+    if (msg.sender !== 'admin') return '';
+    return msg.staffName || (msg.senderName && msg.senderName !== 'Admin' ? msg.senderName : '') || (this.activeConversation() as any)?.assignedTo?.name || 'Admin';
   }
 
   getCustomerAvatar(conv: SupportConversation | null | undefined): string {

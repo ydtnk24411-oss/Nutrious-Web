@@ -4,19 +4,22 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const { body } = require('express-validator');
 const Order  = require('../models/Order');
+const User   = require('../models/User');
 const Cart   = require('../models/Cart');
 const Product = require('../models/Product');
 const FlashSale = require('../models/FlashSale');
 const InventoryLog = require('../models/InventoryLog');
 const StoreInventory = require('../models/StoreInventory');
-const { protect, optionalAuth, adminOnly, staffOnly, hasRole } = require('../middleware/auth');
+const AuditLog = require('../models/AuditLog');
+const { protect, optionalAuth, adminOnly, staffOnly, hasRole, verifyStoreAccess, getScopedStoreId } = require('../middleware/auth');
 const { validate }           = require('../middleware/validate');
 const { evaluateVoucher, consumeVoucher, restoreOrderVoucherOnce } = require('../utils/voucher');
-const { creditOrderPoints }   = require('../utils/loyalty');
+const { creditOrderPoints, rollbackOrderPoints, tierFor }   = require('../utils/loyalty');
 const { calculateShipping }   = require('../utils/shippingCalculator');
 const { sendRealtimeNotification } = require('../utils/sse');
 const { sendOrderConfirmationEmail } = require('../utils/email');
 const { clearDashboardCache } = require('./dashboard');
+const { cacheMiddleware, clearCache } = require('../utils/cache');
 const ExcelJS = require('exceljs');
 
 const QR_PAYMENT_TTL_MS = 15 * 60 * 1000; // 15 phút giữ đơn chờ chuyển khoản VietQR
@@ -52,12 +55,17 @@ function buildOrderLookupQuery(rawCodeOrId) {
 
 async function expireUnpaidQrOrderIfNeeded(order) {
   if (!order) return order;
+  const createdAtMs = order.createdAt ? new Date(order.createdAt).getTime() : 0;
+  const expiresAtMs = order.paymentExpiresAt
+    ? new Date(order.paymentExpiresAt).getTime()
+    : (createdAtMs ? createdAtMs + 15 * 60 * 1000 : 0);
+
   const isUnpaidQrPending =
     order.paymentMethod === 'bank_transfer' &&
-    (order.paymentStatus || 'unpaid') === 'unpaid' &&
+    (order.paymentStatus || 'unpaid') !== 'paid' &&
     order.status === 'pending' &&
-    order.paymentExpiresAt &&
-    Date.now() > new Date(order.paymentExpiresAt).getTime();
+    expiresAtMs > 0 &&
+    Date.now() > expiresAtMs;
 
   if (!isUnpaidQrPending) return order;
 
@@ -66,7 +74,7 @@ async function expireUnpaidQrOrderIfNeeded(order) {
     : 'Tự động hủy do quá thời gian thanh toán VietQR (15 phút)';
 
   const updated = await Order.findOneAndUpdate(
-    { _id: order._id, paymentStatus: 'unpaid', status: 'pending' },
+    { _id: order._id, status: 'pending' },
     { $set: { paymentStatus: 'expired', status: 'cancelled', note: expiredNote } },
     { new: true }
   ).lean();
@@ -80,9 +88,9 @@ async function expireUnpaidQrOrderIfNeeded(order) {
     if (!order.statusHistory) order.statusHistory = [];
     order.statusHistory.push({
       status: 'cancelled',
-      updatedBy: req.user ? (req.user.name || req.user.email) : 'Khách hàng',
-      role: req.user?.role || 'Customer',
-      note: reason || 'Khách hàng yêu cầu hủy đơn',
+      updatedBy: 'Hệ thống tự động',
+      role: 'System',
+      note: 'Tự động hủy do quá thời gian thanh toán VietQR (15 phút)',
       updatedAt: new Date(),
     });
     order.note = updated.note;
@@ -129,6 +137,12 @@ async function markQrOrderAsPaid(order, { reference = '', autoConfirm = true } =
   // Khi đơn VietQR đã xác nhận thanh toán thành công, lập tức cộng điểm và cập nhật chi tiêu cho khách hàng
   if (updated.paymentStatus === 'paid') {
     await creditOrderPoints(updated._id);
+  }
+  if (typeof clearDashboardCache === 'function') {
+    clearDashboardCache();
+  }
+  if (typeof clearCache === 'function') {
+    clearCache();
   }
   return updated;
 }
@@ -668,6 +682,22 @@ router.post(
         orderData.guestName  = orderData.guestName  || req.user.name;
         orderData.guestEmail = orderData.guestEmail || req.user.email;
         orderData.guestPhone = orderData.guestPhone || req.user.phone || '';
+      } else {
+        // Tự động liên kết tài khoản khách hàng nếu SĐT hoặc Email đã tồn tại
+        const lookupOr = [];
+        if (orderData.guestPhone) lookupOr.push({ phone: orderData.guestPhone.trim() });
+        if (orderData.guestEmail) lookupOr.push({ email: orderData.guestEmail.trim().toLowerCase() });
+        if (lookupOr.length > 0) {
+          try {
+            const matchedCustomer = await User.findOne({ $or: lookupOr, role: 'customer' });
+            if (matchedCustomer) {
+              orderData.user = matchedCustomer._id;
+              if (!orderData.guestName && matchedCustomer.name) {
+                orderData.guestName = matchedCustomer.name;
+              }
+            }
+          } catch (_) {}
+        }
       }
 
       // 3. Tính toán và xác thực phí vận chuyển từ server (theo nấc khoảng cách + giá trị đơn hàng thực tế)
@@ -679,7 +709,13 @@ router.post(
       if (orderData.shippingMethod === 'delivery') {
         const coords = orderData.shippingCoordinates;
         if (coords && typeof coords.lat === 'number' && typeof coords.lng === 'number') {
-          const shipRes = await calculateShipping(coords.lat, coords.lng, serverSubtotal);
+          // Xác định hạng thành viên để áp dụng quyền lợi Freeship
+          let userLoyaltyTier = orderData.loyaltyTier || '';
+          if (req.user) {
+            userLoyaltyTier = req.user.tier || (tierFor ? tierFor(req.user.points, req.user.totalSpent) : '') || 'bronze';
+          }
+
+          const shipRes = await calculateShipping(coords.lat, coords.lng, serverSubtotal, null, userLoyaltyTier);
           if (!shipRes.supported) {
             return res.status(400).json({
               success: false,
@@ -693,16 +729,17 @@ router.post(
 
           // Điều chỉnh theo loại hình giao hàng
           if (orderData.deliveryType === 'instant') {
-            // Giao ngay 🛵: Phí cơ bản theo khoảng cách (đã gồm phụ thu giao xa nếu >10km) + 10.000đ hỏa tốc
+            // Giao ngay : Phí cơ bản theo khoảng cách + 10.000đ hỏa tốc
             finalShippingFee += 10000;
           } else if (orderData.deliveryType === 'standard') {
-            // Giao tiết kiệm (trong 24h): Giá gốc 15.000đ (+ phụ thu giao xa nếu >10km), áp dụng hỗ trợ ship theo đơn hàng
+            // Giao tiết kiệm (trong 24h): Giá gốc 15.000đ (+ phụ thu giao xa nếu >10km)
             const stdBase = 15000 + (shipRes.farSurcharge || 0);
-            const autoDisc = serverSubtotal >= 300000
-              ? Math.min(25000, stdBase)
-              : (serverSubtotal >= 150000 ? Math.min(10000, stdBase) : 0);
-            finalShippingFee = Math.max(0, stdBase - autoDisc);
-            shippingDiscount = autoDisc;
+            if (shippingDiscount >= shipRes.baseFee) {
+              finalShippingFee = 0;
+              shippingDiscount = stdBase;
+            } else {
+              finalShippingFee = Math.max(0, stdBase - shippingDiscount);
+            }
           }
 
           orderData.shippingDetails = {
@@ -710,12 +747,20 @@ router.post(
             farSurcharge: shipRes.farSurcharge || 0,
             isFarDelivery: Boolean(shipRes.isFarDelivery),
             discount: shippingDiscount,
+            discountReason: shipRes.discountReason,
             finalFee: finalShippingFee,
             distanceKm: shipRes.distanceKm,
+            loyaltyTier: userLoyaltyTier,
             durationMin: shipRes.durationMin,
             tierLabel: shipRes.tierLabel,
             discountReason: shipRes.discountReason,
           };
+
+          // Tự động gán kho/chi nhánh gần nhất phụ trách soạn hàng & xuất kho (O2O Smart Routing)
+          if (shipRes.warehouse?.id && (!orderData.warehouseId || orderData.warehouseId === 'store-thuduc')) {
+            orderData.warehouseId = shipRes.warehouse.id;
+            orderData.storeId = shipRes.warehouse.id;
+          }
         } else {
           // Fallback nếu không có tọa độ GPS: tính phí chuẩn 20.000đ và xét bậc thang
           const baseFee = orderData.deliveryType === 'instant' ? 30000 : (orderData.deliveryType === 'standard' ? 15000 : 20000);
@@ -723,6 +768,19 @@ router.post(
           finalShippingFee = Math.max(0, baseFee - autoDisc);
           shippingDiscount = autoDisc;
           estimatedDeliveryTime = orderData.deliveryTimeSlot || orderData.estimatedDeliveryTime || 'Trong ngày (xe bảo quản lạnh)';
+
+          // Tự động phân bổ kho phụ trách theo tên Quận / Huyện trong địa chỉ nhận hàng
+          if (!orderData.warehouseId || orderData.warehouseId === 'store-thuduc') {
+            const addrLower = (orderData.shippingAddress || '').toLowerCase();
+            if (addrLower.includes('tân bình')) orderData.warehouseId = 'store-tanbinh';
+            else if (addrLower.includes('quận 1') || addrLower.includes('q1') || addrLower.includes('q.1')) orderData.warehouseId = 'store-q1';
+            else if (addrLower.includes('quận 7') || addrLower.includes('q7') || addrLower.includes('q.7')) orderData.warehouseId = 'store-q7';
+            else if (addrLower.includes('bình thạnh')) orderData.warehouseId = 'store-binhthanh';
+            else if (addrLower.includes('gò vấp')) orderData.warehouseId = 'store-govap';
+            else if (addrLower.includes('bình tân')) orderData.warehouseId = 'store-binhtan';
+            else if (addrLower.includes('dĩ an')) orderData.warehouseId = 'store-dian';
+            else orderData.warehouseId = 'store-thuduc';
+          }
         }
       } else if (orderData.shippingMethod === 'pickup') {
         finalShippingFee = 0;
@@ -794,8 +852,29 @@ router.post(
       orderData.shippingFee = finalShippingFee;
       orderData.shippingDiscount = shippingDiscount;
 
+      // Hỗ trợ BOPIS (Buy Online, Pick-up In-Store): Miễn phí ship, khóa giữ hàng tối đa 24h tại quầy
+      const isBopis = req.body.shippingMethod === 'pickup' || req.body.isBopis === true;
+      if (isBopis) {
+        orderData.shippingMethod = 'pickup';
+        orderData.isBopis = true;
+        orderData.shippingFee = 0;
+        orderData.shippingDiscount = 0;
+        orderData.pickupExpiresAt = new Date(Date.now() + 24 * 3600 * 1000);
+        const pickupTarget = req.body.pickupStoreId || req.body.pickupStore?.id || req.body.storeId || orderData.warehouseId || 'store-thuduc';
+        orderData.warehouseId = pickupTarget;
+        orderData.storeId = pickupTarget;
+        orderData.pickupStoreId = pickupTarget;
+        if (!orderData.pickupStore || !orderData.pickupStore.name) {
+          orderData.pickupStore = req.body.pickupStore || { id: pickupTarget, name: 'Chi nhánh Evergreen Mart' };
+        }
+      } else {
+        const shipTarget = req.body.warehouseId || req.body.storeId || orderData.warehouseId || 'store-thuduc';
+        orderData.warehouseId = shipTarget;
+        orderData.storeId = shipTarget;
+      }
+
       // 5. Server tự tính lại total: total = subtotal - discount + finalShippingFee
-      orderData.total = Math.max(0, payableGoods - orderData.discount + finalShippingFee);
+      orderData.total = Math.max(0, payableGoods - orderData.discount + (isBopis ? 0 : finalShippingFee));
       orderData.paymentStatus = 'unpaid';
       orderData.paymentExpiresAt = orderData.paymentMethod === 'bank_transfer'
         ? new Date(Date.now() + QR_PAYMENT_TTL_MS)
@@ -805,13 +884,40 @@ router.post(
       orderData.inventoryDeducted = true;
       orderData.inventoryRestored = false;
       orderData.hasNonRefundableItems = detectedNonRefundableItems.length > 0;
+
+      // Xử lý đơn Telesales / Tạo tại quầy bởi Nhân viên
+      const isStaffUser = req.user && ['admin', 'manager', 'staff', 'sales', 'cskh', 'warehouse'].includes(req.user.role);
+      const isTelesales = isStaffUser && (req.body.orderSource === 'telesales' || req.body.orderSource === 'pos');
+      if (isTelesales) {
+        orderData.orderSource = req.body.orderSource;
+        orderData.createdByStaff = `${req.user.name || req.user.username} (${req.user.role})`;
+        if (req.body.warehouseId || req.body.storeId) {
+          orderData.warehouseId = req.body.warehouseId || req.body.storeId;
+        }
+        if (req.body.paymentStatus === 'paid') {
+          orderData.paymentStatus = 'paid';
+          orderData.paidAt = new Date();
+        }
+        if (req.body.status && ['pending', 'confirmed', 'delivered'].includes(req.body.status)) {
+          orderData.status = req.body.status;
+        }
+      } else {
+        orderData.orderSource = 'online';
+      }
       orderData.nonRefundableAccepted = Boolean(orderData.nonRefundableAccepted || req.body.nonRefundableAccepted);
       orderData.nonRefundableItems = detectedNonRefundableItems;
 
       // 6. Kiểm tra & khấu trừ tồn kho nguyên tử (atomic) trên các sản phẩm vật lý để chống bán vượt khi nhiều khách đặt cùng lúc
-      // Gom tổng số lượng cần dùng theo từng Product ID (bao gồm cả sản phẩm lẻ/mua kèm và thành phần của mọi Combo trong giỏ)
+      // Gom tổng số lượng cần dùng theo từng Product ID (bao gồm cả sản phẩm lẻ/mua kèm, gói combo và thành phần của mọi Combo trong giỏ)
       const requiredStockMap = new Map(); // prodId -> { totalQty, productName, reasons: string[] }
       for (const item of orderData.items) {
+        if (item.product && mongoose.Types.ObjectId.isValid(item.product)) {
+          const pid = String(item.product);
+          const prev = requiredStockMap.get(pid) || { totalQty: 0, productName: item.productName, reasons: [] };
+          prev.totalQty += item.quantity;
+          prev.reasons.push(item.isCombo ? `Gói combo "${item.productName}"` : (item.itemType === 'addon' ? 'SP mua kèm' : 'SP mua lẻ'));
+          requiredStockMap.set(pid, prev);
+        }
         if (item.isCombo && Array.isArray(item.comboItems)) {
           for (const ci of item.comboItems) {
             if (!ci.product || !mongoose.Types.ObjectId.isValid(ci.product)) continue;
@@ -819,28 +925,91 @@ router.post(
             const need = Math.max(1, Number(ci.quantity) || 1) * item.quantity;
             const prev = requiredStockMap.get(pid) || { totalQty: 0, productName: ci.name, reasons: [] };
             prev.totalQty += need;
-            prev.reasons.push(`Combo "${item.productName}" x${item.quantity}`);
+            prev.reasons.push(`Thành phần combo "${item.productName}" x${item.quantity}`);
             requiredStockMap.set(pid, prev);
           }
-        } else if (item.product && mongoose.Types.ObjectId.isValid(item.product)) {
-          const pid = String(item.product);
-          const prev = requiredStockMap.get(pid) || { totalQty: 0, productName: item.productName, reasons: [] };
-          prev.totalQty += item.quantity;
-          prev.reasons.push(item.itemType === 'addon' ? 'SP mua kèm' : 'SP mua lẻ');
-          requiredStockMap.set(pid, prev);
         }
       }
 
       const sortedRequiredEntries = Array.from(requiredStockMap.entries()).sort((a, b) =>
         a[0].localeCompare(b[0])
       );
+
+      // 5.5 Kiểm tra định mức chống đầu cơ gom hàng số lượng lớn (Anti-Hoarding Quota)
+      const userPhone = req.user?.phone || orderData.guestPhone || '';
+      const userId = req.user?._id;
+      const oneDayAgo = new Date(Date.now() - 24 * 3600 * 1000);
+
+      for (const [pid, reqInfo] of sortedRequiredEntries) {
+        const prod = await Product.findById(pid).select('name maxPurchaseQuotaPerDay').lean();
+        if (prod && prod.maxPurchaseQuotaPerDay > 0) {
+          const quota = prod.maxPurchaseQuotaPerDay;
+          if (reqInfo.totalQty > quota) {
+            return res.status(400).json({
+              success: false,
+              message: `Sản phẩm "${prod.name}" đang trợ giá sốc, giới hạn mỗi khách tối đa ${quota} phần/ngày. Bạn đang đặt ${reqInfo.totalQty} phần, vượt quá định mức cho phép!`,
+            });
+          }
+
+          const pastFilter = {
+            createdAt: { $gte: oneDayAgo },
+            status: { $ne: 'cancelled' },
+            $or: [
+              ...(userId ? [{ user: userId }] : []),
+              ...(userPhone ? [{ guestPhone: userPhone }] : []),
+            ],
+          };
+
+          if (pastFilter.$or.length > 0) {
+            const pastOrders = await Order.find(pastFilter).select('items').lean();
+            let pastQty = 0;
+            for (const po of pastOrders) {
+              for (const it of po.items || []) {
+                if (String(it.product) === pid) {
+                  pastQty += it.quantity;
+                }
+              }
+            }
+            if (pastQty + reqInfo.totalQty > quota) {
+              return res.status(400).json({
+                success: false,
+                message: `Sản phẩm "${prod.name}" giới hạn tối đa ${quota} phần/ngày. Bạn đã mua ${pastQty} phần trong 24h qua, không thể mua thêm ${reqInfo.totalQty} phần!`,
+              });
+            }
+          }
+        }
+      }
+
+      // 5.6 Kiểm tra tồn kho khả dụng tại Chi nhánh được chỉ định (O2O Store Check)
+      const targetStoreId = orderData.warehouseId || orderData.pickupStoreId || orderData.storeId || req.body.warehouseId || req.body.pickupStoreId || null;
+      const isStoreSpecific = Boolean(targetStoreId && targetStoreId !== 'all' && targetStoreId !== 'ALL');
+
+      if (isStoreSpecific) {
+        for (const [pid, reqInfo] of sortedRequiredEntries) {
+          const storeInv = await StoreInventory.findOne({ storeId: targetStoreId, productId: pid }).lean();
+          if (storeInv) {
+            const phys = storeInv.physicalStock ?? 0;
+            const resv = storeInv.reservedStock ?? 0;
+            const buff = storeInv.safetyBuffer ?? 0;
+            const availInStore = Math.max(0, phys - resv - buff);
+            if (availInStore < reqInfo.totalQty) {
+              const storeName = storeInv.storeName || targetStoreId;
+              const prodLabel = reqInfo.productName || 'Sản phẩm';
+              return res.status(400).json({
+                success: false,
+                message: `Chi nhánh [${storeName}] hiện chỉ còn ${availInStore} "${prodLabel}" khả dụng cho kênh Online (yêu cầu ${reqInfo.totalQty}, đệm an toàn quầy POS: ${buff}). Vui lòng chọn chi nhánh khác hoặc giảm số lượng.`
+              });
+            }
+          }
+        }
+      }
+
       const deductedReservations = []; // Array<{ pid, qty, oldStock, newStock, productName, reasons }>
 
       for (const [pid, reqInfo] of sortedRequiredEntries) {
         const prevDoc = await Product.findOneAndUpdate(
           {
             _id: new mongoose.Types.ObjectId(pid),
-            isCombo: { $ne: true },
             isActive: { $ne: false },
             $expr: {
               $gte: [
@@ -889,22 +1058,75 @@ router.post(
       let order = null;
       try {
         orderData.statusHistory = [{
-          status: 'pending',
-          updatedBy: orderData.guestName || (req.user ? req.user.name : 'Khách hàng'),
+          status: orderData.status || 'pending',
+          updatedBy: isStaffUser ? `${req.user.name || req.user.username} (${req.user.role})` : (orderData.guestName || (req.user ? req.user.name : 'Khách hàng')),
           role: req.user?.role || 'Customer',
-          note: 'Đặt hàng thành công trên hệ thống',
+          note: isTelesales ? `Nhân viên tạo đơn ${orderData.orderSource === 'telesales' ? 'Telesales' : 'tại quầy'}` : 'Đặt hàng thành công trên hệ thống',
           updatedAt: new Date(),
         }];
         order = await Order.create(orderData);
         // O2O: Tự động tăng reservedStock (tồn kho tạm giữ) tại cửa hàng được giao đơn
-        const assignedStoreId = order.warehouseId || order.storeId || 'default';
+        const assignedStoreId = order.warehouseId || order.pickupStore?.id || order.pickupStoreId || order.storeId || req.body.warehouseId || req.body.pickupStore?.id || req.body.pickupStoreId || req.body.storeId || 'store-thuduc';
         for (const r of deductedReservations) {
           await StoreInventory.findOneAndUpdate(
             { storeId: assignedStoreId, productId: r.pid },
-            { $inc: { reservedStock: r.qty } },
+            { $inc: { physicalStock: -r.qty, reservedStock: r.qty } },
             { upsert: false }
           );
           await Product.findByIdAndUpdate(r.pid, { $inc: { reservedStock: r.qty } });
+
+          // Kế toán: Ghi nhận nhật ký giữ hàng cho đơn đặt online
+          InventoryLog.create({
+            product: r.pid,
+            productName: r.productName,
+            type: 'order_confirmed',
+            storeId: assignedStoreId,
+            referenceId: order.orderCode || String(order._id),
+            delta: -r.qty,
+            oldStock: r.oldStock,
+            newStock: r.newStock,
+            reason: `Đơn hàng [${order.orderCode || order._id}]: Tạm giữ ${r.qty} sản phẩm tại kho để đóng gói giao hàng`,
+            note: r.reasons ? r.reasons.join(', ') : '',
+          }).catch(() => {});
+        }
+
+        // Tự động đồng bộ địa chỉ giao hàng vào Sổ địa chỉ (User.addresses) của khách hàng
+        if (order.user) {
+          try {
+            const customer = await User.findById(order.user);
+            if (customer) {
+              const addrText = String(order.shippingAddress || '').trim();
+              if (addrText && order.shippingMethod !== 'pickup') {
+                if (!Array.isArray(customer.addresses)) customer.addresses = [];
+                const coords = order.shippingCoordinates || {};
+                const exists = customer.addresses.some(
+                  (a) => a.address && (a.address === addrText || addrText.includes(a.address))
+                );
+                if (!exists) {
+                  // Đặt địa chỉ vừa mua hàng làm mặc định trong Sổ địa chỉ
+                  customer.addresses = customer.addresses.map((a) => ({
+                    ...a.toObject(),
+                    isDefault: false,
+                  }));
+                  customer.addresses.push({
+                    label: 'Địa chỉ nhận hàng',
+                    fullName: order.guestName || customer.name || 'Khách hàng',
+                    phone: order.guestPhone || customer.phone || '',
+                    address: addrText,
+                    city: 'TP. Hồ Chí Minh',
+                    province: '',
+                    ward: '',
+                    lat: typeof coords.lat === 'number' ? coords.lat : null,
+                    lng: typeof coords.lng === 'number' ? coords.lng : null,
+                    isDefault: true,
+                  });
+                  await customer.save();
+                }
+              }
+            }
+          } catch (addrErr) {
+            console.error('Lỗi tự động lưu sổ địa chỉ từ đơn hàng:', addrErr);
+          }
         }
         // Đánh dấu giỏ hàng đã chuyển đổi thành công (Converted)
         const sessId = req.sessionID || req.headers['x-session-id'];
@@ -934,6 +1156,8 @@ router.post(
           product: new mongoose.Types.ObjectId(r.pid),
           productName: r.productName,
           type: 'order_confirmed',
+          storeId: assignedStoreId,
+          referenceId: order.orderCode || String(order._id),
           delta: -r.qty,
           oldStock: r.oldStock,
           newStock: r.newStock,
@@ -975,6 +1199,9 @@ router.post(
       const vietQr = order.paymentMethod === 'bank_transfer'
         ? buildVietQrPayload(order)
         : { qrUrl: null, bankInfo: null };
+
+      if (typeof clearDashboardCache === 'function') clearDashboardCache();
+      if (typeof clearCache === 'function') clearCache();
 
       res.status(201).json({
         success: true,
@@ -1077,12 +1304,21 @@ async function attachComboDetailsToOrders(orders) {
 }
 
 
-// ── O2O: GIẢI PHÓNG RESERVED STOCK VÀ TRỪ TỒN KHO CHI NHÁNH KHI GIAO HÀNG THÀNH CÔNG ──
+// ── O2O: GIẢI PHÓNG RESERVED STOCK VÀ HOÀN TẤT XUẤT KHO KHI GIAO HÀNG THÀNH CÔNG ──
 async function releaseAndDeductStoreInventory(order) {
   if (!order || !Array.isArray(order.items)) return;
-  const storeId = order.warehouseId || order.storeId || 'default';
+  const storeId = order.warehouseId || order.pickupStore?.id || order.pickupStoreId || order.storeId || 'store-thuduc';
 
   for (const item of order.items) {
+    if (item.product) {
+      const pid = String(item.product);
+      const qty = item.quantity;
+      await StoreInventory.findOneAndUpdate(
+        { storeId, productId: pid },
+        { $inc: { reservedStock: -qty } }
+      );
+      await Product.findByIdAndUpdate(pid, { $inc: { reservedStock: -qty } });
+    }
     if (item.isCombo && Array.isArray(item.comboItems) && item.comboItems.length > 0) {
       for (const ci of item.comboItems) {
         const pid = ci.product ? String(ci.product) : '';
@@ -1090,18 +1326,10 @@ async function releaseAndDeductStoreInventory(order) {
         const qty = Math.max(1, Number(ci.quantity) || 1) * item.quantity;
         await StoreInventory.findOneAndUpdate(
           { storeId, productId: pid },
-          { $inc: { reservedStock: -qty, physicalStock: -qty } }
+          { $inc: { reservedStock: -qty } }
         );
         await Product.findByIdAndUpdate(pid, { $inc: { reservedStock: -qty } });
       }
-    } else if (item.product) {
-      const pid = String(item.product);
-      const qty = item.quantity;
-      await StoreInventory.findOneAndUpdate(
-        { storeId, productId: pid },
-        { $inc: { reservedStock: -qty, physicalStock: -qty } }
-      );
-      await Product.findByIdAndUpdate(pid, { $inc: { reservedStock: -qty } });
     }
   }
 }
@@ -1118,6 +1346,12 @@ async function restoreOrderInventoryOnce(orderId, updatedBy = null) {
 
   const restoreMap = new Map(); // prodId -> { totalQty, productName, reasons: string[] }
   for (const item of lockedOrder.items) {
+    if (item.product && mongoose.Types.ObjectId.isValid(item.product)) {
+      const pid = String(item.product);
+      const prev = restoreMap.get(pid) || { totalQty: 0, productName: item.productName, reasons: [] };
+      prev.totalQty += item.quantity;
+      restoreMap.set(pid, prev);
+    }
     if (item.isCombo && Array.isArray(item.comboItems) && item.comboItems.length > 0) {
       for (const ci of item.comboItems) {
         const pid = ci.product ? String(ci.product) : '';
@@ -1128,17 +1362,12 @@ async function restoreOrderInventoryOnce(orderId, updatedBy = null) {
         prev.reasons.push(`Combo "${item.productName}" x${item.quantity}`);
         restoreMap.set(pid, prev);
       }
-    } else if (item.product && mongoose.Types.ObjectId.isValid(item.product)) {
-      const pid = String(item.product);
-      const prev = restoreMap.get(pid) || { totalQty: 0, productName: item.productName, reasons: [] };
-      prev.totalQty += item.quantity;
-      restoreMap.set(pid, prev);
     }
   }
 
   for (const [pid, info] of restoreMap.entries()) {
     const prevDoc = await Product.findOneAndUpdate(
-      { _id: new mongoose.Types.ObjectId(pid), isCombo: { $ne: true } },
+      { _id: new mongoose.Types.ObjectId(pid) },
       { $inc: { stock: info.totalQty } },
       { new: false }
     );
@@ -1170,43 +1399,70 @@ async function restoreOrderInventoryOnce(orderId, updatedBy = null) {
   return true;
 }
 
-// GET /api/orders — admin & sales & support: all orders with filters
-router.get('/', protect, staffOnly, async (req, res, next) => {
+// GET /api/orders - admin & sales & support: all orders with filters
+router.get('/', protect, staffOnly, cacheMiddleware(10), async (req, res, next) => {
   try {
-    const { status, paymentMethod, page = 1, limit = 20, search, startDate, endDate, user, userId } = req.query;
-    const filter = {};
-    if (user || userId) filter.user = user || userId;
-    if (status && status !== 'all') filter.status = status;
-    if (paymentMethod && paymentMethod !== 'all') filter.paymentMethod = paymentMethod;
+    const { status, paymentMethod, paymentStatus, shippingMethod, page = 1, limit = 20, search, startDate, endDate, user, userId, warehouseId, storeId } = req.query;
+    const filterConditions = [];
+    if (user || userId) filterConditions.push({ user: user || userId });
+    if (status && status !== 'all') filterConditions.push({ status });
+    if (paymentMethod && paymentMethod !== 'all') filterConditions.push({ paymentMethod });
+    if (paymentStatus && paymentStatus !== 'all') {
+      if (paymentStatus === 'unpaid') {
+        filterConditions.push({ paymentStatus: { $in: ['pending', 'unpaid'] } });
+      } else {
+        filterConditions.push({ paymentStatus });
+      }
+    }
+    if (shippingMethod && shippingMethod !== 'all') filterConditions.push({ shippingMethod });
+
+    // Scope đơn hàng theo đúng chi nhánh của Store Manager
+    const scopedStore = getScopedStoreId(req) || warehouseId || storeId;
+    let storeScopeFilter = {};
+    if (scopedStore && scopedStore !== 'all' && scopedStore !== 'ALL') {
+      storeScopeFilter = { warehouseId: scopedStore };
+      filterConditions.push(storeScopeFilter);
+    }
 
     if (search) {
-      filter.$or = [
-        { orderCode: { $regex: search, $options: 'i' } },
-        { guestName:  { $regex: search, $options: 'i' } },
-        { guestEmail: { $regex: search, $options: 'i' } },
-        { guestPhone: { $regex: search, $options: 'i' } },
-      ];
+      filterConditions.push({
+        $or: [
+          { orderCode: { $regex: search, $options: 'i' } },
+          { guestName:  { $regex: search, $options: 'i' } },
+          { guestEmail: { $regex: search, $options: 'i' } },
+          { guestPhone: { $regex: search, $options: 'i' } },
+        ]
+      });
     }
 
     if (startDate && endDate) {
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
-      filter.createdAt = { $gte: start, $lte: end };
+      filterConditions.push({ createdAt: { $gte: start, $lte: end } });
     }
 
+    const finalFilter = filterConditions.length > 0 ? { $and: filterConditions } : {};
+
     const skip = (Number(page) - 1) * Number(limit);
-    const [orders, total, statusAgg, allTotal] = await Promise.all([
-      Order.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit))
+    const [orders, total, statusAgg, allTotal, pendingQrTotal] = await Promise.all([
+      Order.find(finalFilter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit))
         .populate('user', 'name email phone').lean(),
-      Order.countDocuments(filter),
+      Order.countDocuments(finalFilter),
       Order.aggregate([
+        ...(Object.keys(storeScopeFilter).length > 0 ? [{ $match: storeScopeFilter }] : []),
         { $group: { _id: '$status', count: { $sum: 1 } } }
       ]),
-      Order.countDocuments(),
+      Order.countDocuments(storeScopeFilter),
+      Order.countDocuments({
+        ...storeScopeFilter,
+        paymentMethod: 'bank_transfer',
+        paymentStatus: { $in: ['pending', 'unpaid'] },
+        status: { $nin: ['cancelled', 'delivered'] },
+      }),
     ]);
 
-    const statusCounts = { all: allTotal };
+    const statusCounts = { all: allTotal, pendingQr: pendingQrTotal };
     for (const item of statusAgg) {
       if (item._id) {
         statusCounts[item._id] = item.count;
@@ -1215,11 +1471,55 @@ router.get('/', protect, staffOnly, async (req, res, next) => {
 
     await Promise.all(orders.map((o) => expireUnpaidQrOrderIfNeeded(o)));
     await attachComboDetailsToOrders(orders);
-    res.json({ success: true, total, page: Number(page), data: orders, statusCounts });
+    res.json({
+      success: true,
+      total,
+      page: Number(page),
+      data: orders,
+      statusCounts,
+      scopedStore: scopedStore || 'all'
+    });
   } catch (err) { next(err); }
 });
 
-// GET /api/orders/track/:code — public order tracking
+// GET /api/orders/pending-qr - Lấy danh sách các đơn hàng VietQR đang chờ duyệt thanh toán khẩn cấp (thông báo tức thì cho nhân viên)
+router.get('/pending-qr', protect, staffOnly, async (req, res, next) => {
+  try {
+    const filter = {
+      paymentMethod: 'bank_transfer',
+      paymentStatus: { $in: ['pending', 'unpaid'] },
+      status: 'pending',
+    };
+    if (req.user && req.user.role !== 'admin' && req.user.assignedStore && req.user.assignedStore !== 'all') {
+      filter.$or = [
+        { warehouseId: req.user.assignedStore },
+        { pickupStoreId: req.user.assignedStore },
+      ];
+    }
+    const orders = await Order.find(filter)
+      .select('orderCode guestName guestPhone total paymentMethod paymentStatus status paymentExpiresAt createdAt warehouseId pickupStoreId items shippingAddress shippingMethod')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const validOrders = [];
+    for (const ord of orders) {
+      await expireUnpaidQrOrderIfNeeded(ord);
+      if (ord.status === 'pending' && (ord.paymentStatus || 'unpaid') === 'unpaid') {
+        validOrders.push(ord);
+      }
+    }
+
+    res.json({
+      success: true,
+      count: validOrders.length,
+      data: validOrders,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/orders/track/:code - public order tracking
 router.get('/track/:code', async (req, res, next) => {
   try {
     const order = await Order.findOne(buildOrderLookupQuery(req.params.code))
@@ -1233,7 +1533,7 @@ router.get('/track/:code', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/orders/:code/payment-status — kiểm tra trạng thái thanh toán VietQR (dùng cho polling màn hình QR)
+// GET /api/orders/:code/payment-status - kiểm tra trạng thái thanh toán VietQR (dùng cho polling màn hình QR)
 router.get('/:code/payment-status', async (req, res, next) => {
   try {
     const order = await Order.findOne(buildOrderLookupQuery(req.params.code)).lean();
@@ -1265,9 +1565,9 @@ router.get('/:code/payment-status', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// POST /api/orders/webhook/vietqr — Webhook nhận biến động giao dịch từ SePay / Casso
+// POST /api/orders/webhook/vietqr - Webhook nhận biến động giao dịch từ SePay / Casso
 
-// POST /api/orders/webhook/vnpay — Webhook tiếp nhận IPN từ cổng VNPay (Kiểm tra HMAC-SHA512)
+// POST /api/orders/webhook/vnpay - Webhook tiếp nhận IPN từ cổng VNPay (Kiểm tra HMAC-SHA512)
 router.post('/webhook/vnpay', async (req, res, next) => {
   try {
     const vnpParams = { ...req.body, ...req.query };
@@ -1331,7 +1631,7 @@ router.post('/webhook/vnpay', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// POST /api/orders/webhook/momo — Webhook tiếp nhận IPN từ ví MoMo (Kiểm tra HMAC-SHA256)
+// POST /api/orders/webhook/momo - Webhook tiếp nhận IPN từ ví MoMo (Kiểm tra HMAC-SHA256)
 router.post('/webhook/momo', async (req, res, next) => {
   try {
     const { partnerCode, orderId, requestId, amount, orderInfo, orderType, transId, resultCode, message, payType, responseTime, extraData, signature } = req.body;
@@ -1428,9 +1728,17 @@ router.post('/webhook/vietqr', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// POST /api/orders/:code/confirm-payment — Admin/nhân viên xác nhận đã nhận tiền chuyển khoản VietQR
+// POST /api/orders/:code/confirm-payment - Admin/nhân viên xác nhận đã nhận tiền chuyển khoản VietQR
 router.post('/:code/confirm-payment', protect, staffOnly, async (req, res, next) => {
   try {
+    const userRole = (req.user?.role || req.session?.employee?.role || '').toLowerCase();
+    if (userRole === 'warehouse') {
+      return res.status(403).json({
+        success: false,
+        message: 'Nhân viên kho không có thẩm quyền đối soát và duyệt thanh toán ngân hàng VietQR.'
+      });
+    }
+
     const order = await Order.findOne(buildOrderLookupQuery(req.params.code));
     if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng.' });
 
@@ -1452,7 +1760,7 @@ router.post('/:code/confirm-payment', protect, staffOnly, async (req, res, next)
   } catch (err) { next(err); }
 });
 
-// GET /api/orders/my-orders & GET /api/orders/my — get current user's orders
+// GET /api/orders/my-orders & GET /api/orders/my - get current user's orders
 const handleMyOrders = async (req, res, next) => {
   try {
     const { status, page = 1, limit = 20, search } = req.query;
@@ -1495,11 +1803,16 @@ const handleMyOrders = async (req, res, next) => {
 router.get('/my-orders', protect, handleMyOrders);
 router.get('/my', protect, handleMyOrders);
 
-// GET /api/orders/export/excel — Xuất báo cáo đơn hàng Excel (.xlsx) cho kế toán đối soát
+// GET /api/orders/export/excel - Xuất báo cáo đơn hàng Excel (.xlsx) cho kế toán đối soát
 router.get('/export/excel', protect, staffOnly, async (req, res, next) => {
   try {
     const { startDate, endDate, status, paymentMethod, search } = req.query;
     const filter = {};
+
+    const scopedStore = getScopedStoreId(req);
+    if (scopedStore && scopedStore !== 'all' && scopedStore !== 'ALL') {
+      filter.warehouseId = scopedStore;
+    }
 
     if (status && status !== 'all') {
       filter.status = status;
@@ -1628,11 +1941,17 @@ router.get('/export/excel', protect, staffOnly, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/orders/export/csv — Xuất tệp CSV UTF-8 with BOM
+// GET /api/orders/export/csv - Xuất tệp CSV UTF-8 with BOM
 router.get('/export/csv', protect, staffOnly, async (req, res, next) => {
   try {
     const { startDate, endDate, status, paymentMethod, search } = req.query;
     const filter = {};
+
+    const scopedStore = getScopedStoreId(req);
+    if (scopedStore && scopedStore !== 'all' && scopedStore !== 'ALL') {
+      filter.warehouseId = scopedStore;
+    }
+
     if (status && status !== 'all') filter.status = status;
     if (paymentMethod && paymentMethod !== 'all') filter.paymentMethod = paymentMethod;
     if (startDate || endDate) {
@@ -1676,7 +1995,7 @@ router.get('/export/csv', protect, staffOnly, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/orders/:code — get order by code (authenticated)
+// GET /api/orders/:code - get order by code (authenticated)
 router.get('/:code', protect, async (req, res, next) => {
   try {
     const order = await Order.findOne(buildOrderLookupQuery(req.params.code)).populate('user', 'name email phone').lean();
@@ -1687,24 +2006,45 @@ router.get('/:code', protect, async (req, res, next) => {
     
     const isOwner = (order.user && (order.user._id?.toString() === req.user.id || order.user.toString() === req.user.id)) ||
                     (!order.user && order.guestEmail === req.user.email);
-    if (!isOwner && req.user.role !== 'admin' && req.user.role !== 'sales') {
+    const userRole = (req.user?.role || '').toLowerCase();
+    const isStaff = ['admin', 'manager', 'sales', 'warehouse'].includes(userRole);
+
+    if (!isOwner && !isStaff) {
       return res.status(403).json({ success: false, message: 'Bạn không có quyền xem đơn hàng này.' });
     }
+
+    const scopedStore = getScopedStoreId(req);
+    if (!isOwner && scopedStore && scopedStore !== 'all' && order.warehouseId !== scopedStore) {
+      return res.status(403).json({
+        success: false,
+        message: `Bạn chỉ có quyền xem đơn hàng thuộc chi nhánh [${scopedStore}].`
+      });
+    }
+
     res.json({ success: true, data: order });
   } catch (err) { next(err); }
 });
 
-// GET /api/orders/:id — admin
-router.get('/:id', protect, adminOnly, async (req, res, next) => {
+// GET /api/orders/:id - admin / manager / staff
+router.get('/:id', protect, staffOnly, async (req, res, next) => {
   try {
     const order = await Order.findById(req.params.id).populate('user', 'name email').lean();
     if (!order) return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng.' });
+
+    const scopedStore = getScopedStoreId(req);
+    if (scopedStore && scopedStore !== 'all' && order.warehouseId !== scopedStore) {
+      return res.status(403).json({
+        success: false,
+        message: `Bạn chỉ có quyền xem đơn hàng thuộc chi nhánh [${scopedStore}].`
+      });
+    }
+
     await attachComboDetailsToOrders(order);
     res.json({ success: true, data: order });
   } catch (err) { next(err); }
 });
 
-// PUT/POST /api/orders/:id/cancel — cancel order (customer or admin)
+// PUT/POST /api/orders/:id/cancel - cancel order (customer or admin)
 const handleCancelOrder = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -1809,8 +2149,8 @@ const handleCancelOrder = async (req, res, next) => {
 router.put('/:id/cancel', optionalAuth, handleCancelOrder);
 router.post('/:id/cancel', optionalAuth, handleCancelOrder);
 
-// PUT /api/orders/:id/status — admin
-router.put('/:id/status', protect, adminOnly, async (req, res, next) => {
+// PUT /api/orders/:id/status - admin / manager / staff
+router.put('/:id/status', protect, staffOnly, async (req, res, next) => {
   try {
     const { status } = req.body;
     const validStatuses = ['pending','confirmed','preparing','shipping','delivered','cancelled'];
@@ -1821,6 +2161,30 @@ router.put('/:id/status', protect, adminOnly, async (req, res, next) => {
     const currentOrder = await Order.findById(req.params.id);
     if (!currentOrder) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng.' });
+    }
+
+    const scopedStore = getScopedStoreId(req);
+    if (scopedStore && scopedStore !== 'all' && currentOrder.warehouseId !== scopedStore) {
+      return res.status(403).json({
+        success: false,
+        message: `Bạn chỉ có quyền quản lý đơn hàng thuộc chi nhánh [${scopedStore}]. Đơn hàng này thuộc kho [${currentOrder.warehouseId}].`
+      });
+    }
+
+    // Phân quyền theo vai trò: Nhân viên kho (warehouse) chỉ được tiếp nhận đóng gói và giao hàng
+    const userRole = (req.user?.role || req.session?.employee?.role || '').toLowerCase();
+    if (userRole === 'warehouse') {
+      const validWarehouseTransitions = [
+        { from: 'confirmed', to: 'preparing' }, // Tiếp nhận đóng gói
+        { from: 'preparing', to: 'shipping' },  // Bàn giao xuất kho cho shipper
+      ];
+      const isAllowed = validWarehouseTransitions.some(t => t.from === currentOrder.status && t.to === status);
+      if (!isAllowed) {
+        return res.status(403).json({
+          success: false,
+          message: 'Nhân viên kho chỉ có quyền thao tác "Chuẩn bị hàng" (từ Đã xác nhận) hoặc "Bắt đầu giao" (từ Đang chuẩn bị). Nghiệp vụ Xác nhận đơn, Hoàn tất và Hủy đơn thuộc thẩm quyền của Nhân viên Bán hàng (Sales) hoặc Quản lý.'
+        });
+      }
     }
 
     // Chặn nghiêm ngặt: Đơn thanh toán VietQR bắt buộc phải xác nhận thanh toán (Duyệt QR) trước khi xử lý
@@ -1864,6 +2228,9 @@ router.put('/:id/status', protect, adminOnly, async (req, res, next) => {
     if (status === 'cancelled' && previousStatus !== 'cancelled') {
       await restoreOrderInventoryOnce(currentOrder._id, req.user?._id || null);
       await restoreOrderVoucherOnce(currentOrder);
+      if (currentOrder.pointsAwarded) {
+        await rollbackOrderPoints(currentOrder._id, 'hủy đơn hàng');
+      }
     }
 
     if (status === 'delivered') {
@@ -1877,7 +2244,18 @@ router.put('/:id/status', protect, adminOnly, async (req, res, next) => {
     }
 
     // Bắn thông báo thời gian thực cho Khách hàng khi trạng thái đơn hàng thay đổi
-    if (currentOrder.user) {
+    let targetRecipient = currentOrder.user;
+    if (!targetRecipient && (currentOrder.guestPhone || currentOrder.guestEmail)) {
+      const foundUser = await User.findOne({
+        $or: [
+          currentOrder.guestPhone ? { phone: currentOrder.guestPhone } : null,
+          currentOrder.guestEmail ? { email: currentOrder.guestEmail } : null,
+        ].filter(Boolean)
+      }).select('_id');
+      if (foundUser) targetRecipient = foundUser._id;
+    }
+
+    if (targetRecipient) {
       const statusLabels = {
         pending: 'Chờ xử lý',
         confirmed: 'Đã xác nhận',
@@ -1887,7 +2265,7 @@ router.put('/:id/status', protect, adminOnly, async (req, res, next) => {
         cancelled: 'Đã hủy',
       };
       sendRealtimeNotification({
-        recipient: currentOrder.user,
+        recipient: targetRecipient,
         title: `Cập nhật đơn hàng #${currentOrder.orderCode}`,
         body: `Đơn hàng của bạn đã chuyển sang trạng thái: "${statusLabels[status] || status}".`,
         type: 'order',
@@ -1897,6 +2275,218 @@ router.put('/:id/status', protect, adminOnly, async (req, res, next) => {
     }
 
     res.json({ success: true, data: currentOrder });
+  } catch (err) { next(err); }
+});
+
+// POST /api/orders/:id/boris-return - Buy Online, Return In-Store (Khách đổi trả tại quầy siêu thị)
+router.post('/:id/boris-return', protect, staffOnly, verifyStoreAccess, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { storeId = 'store-thuduc', items = [], refundAmount = 0, note = '' } = req.body;
+
+    const order = await Order.findById(id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: 'Danh sách sản phẩm đổi trả không được để trống' });
+    }
+
+    const processedReturns = [];
+    for (const item of items) {
+      const pid = item.productId || item.product;
+      const qty = Number(item.quantity) || 1;
+      const condition = item.condition || 'intact'; // 'intact' = còn nguyên tem mác, 'damaged' = lỗi/hỏng
+
+      let storeInv = await StoreInventory.findOne({ storeId, productId: pid });
+      const prod = await Product.findById(pid).select('name slug priceNumber');
+
+      if (!storeInv && prod) {
+        storeInv = new StoreInventory({
+          storeId,
+          productId: pid,
+          sku: prod.slug,
+          physicalStock: 0,
+          safetyBuffer: 2,
+        });
+      }
+
+      if (storeInv) {
+        if (condition === 'intact') {
+          storeInv.physicalStock += qty;
+          await storeInv.save();
+          await Product.findByIdAndUpdate(pid, { $inc: { stock: qty } });
+
+          await InventoryLog.create({
+            product: pid,
+            productName: prod?.name || 'Sản phẩm',
+            type: 'import',
+            storeId,
+            referenceId: order.orderCode || String(order._id),
+            delta: qty,
+            oldStock: storeInv.physicalStock - qty,
+            newStock: storeInv.physicalStock,
+            reason: `BORIS - Khách đổi trả tại quầy [Đơn ${order.orderCode}]. Hàng nguyên tem, tái nhập bán tiếp`,
+            note,
+            updatedBy: req.user._id,
+          });
+        } else {
+          storeInv.damagedStock = (storeInv.damagedStock || 0) + qty;
+          await storeInv.save();
+
+          await InventoryLog.create({
+            product: pid,
+            productName: prod?.name || 'Sản phẩm',
+            type: 'adjustment',
+            storeId,
+            referenceId: order.orderCode || String(order._id),
+            delta: 0,
+            oldStock: storeInv.physicalStock,
+            newStock: storeInv.physicalStock,
+            reason: `BORIS - Khách đổi trả hàng lỗi/hỏng tại quầy [Đơn ${order.orderCode}]. Nhập kho hàng hỏng`,
+            note,
+            updatedBy: req.user._id,
+          });
+        }
+
+        processedReturns.push({
+          productId: pid,
+          productName: prod?.name,
+          quantity: qty,
+          condition,
+          storePhysicalStock: storeInv.physicalStock,
+        });
+      }
+    }
+
+    order.statusHistory.push({
+      status: 'boris_returned',
+      updatedBy: req.user.name || 'Nhân viên cửa hàng',
+      role: req.user.role || 'Staff',
+      note: `Khách đổi trả tại chi nhánh [${storeId}]. Hoàn tiền: ${Number(refundAmount).toLocaleString('vi-VN')}đ. ${note}`,
+      updatedAt: new Date(),
+    });
+    await order.save();
+
+    // Thu hồi điểm tích lũy tương ứng nếu đơn hàng này đã từng được cộng điểm
+    if (order.user && order.pointsAwarded) {
+      await rollbackOrderPoints(order._id, 'đổi trả hàng tại quầy (BORIS)');
+    }
+
+    AuditLog.create({
+      actor: req.user._id,
+      actorName: req.user.name || 'Staff',
+      actorEmail: req.user.email || '',
+      actorRole: req.user.role || 'staff',
+      action: 'BORIS_RETURN_PROCESSED',
+      category: 'ORDER',
+      targetType: 'Order',
+      targetId: order.orderCode || String(order._id),
+      details: `Xử lý đổi trả hàng tại quầy [${storeId}] cho đơn hàng ${order.orderCode}. Số mặt hàng: ${processedReturns.length}`,
+    }).catch(() => {});
+
+    res.json({
+      success: true,
+      message: `Đã xử lý đổi trả tại chi nhánh [${storeId}] thành công.`,
+      orderCode: order.orderCode,
+      returns: processedReturns,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/orders/cod-settlement - Bảng kê đối soát nộp tiền COD của Tài xế xe lạnh
+router.get('/cod-settlement', protect, staffOnly, async (req, res, next) => {
+  try {
+    const scopedStore = getScopedStoreId(req);
+    const filter = {
+      paymentMethod: 'cod',
+      status: 'delivered',
+    };
+    if (scopedStore && scopedStore !== 'all') {
+      filter.$or = [{ warehouseId: scopedStore }, { pickupStoreId: scopedStore }];
+    }
+
+    const [unsettledOrders, settledTodayOrders] = await Promise.all([
+      Order.find({ ...filter, codSettled: { $ne: true } })
+        .select('orderCode guestName guestPhone total shippingAddress warehouseId updatedAt shipperName shipperPhone')
+        .sort({ updatedAt: -1 })
+        .lean(),
+      Order.find({
+        ...filter,
+        codSettled: true,
+        codSettledAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+      })
+        .select('orderCode guestName total codSettledAt codSettledBy warehouseId')
+        .sort({ codSettledAt: -1 })
+        .lean(),
+    ]);
+
+    const totalUnsettledAmount = unsettledOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+    const totalSettledToday = settledTodayOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+
+    res.json({
+      success: true,
+      data: {
+        totalUnsettledAmount,
+        unsettledCount: unsettledOrders.length,
+        unsettledOrders,
+        totalSettledToday,
+        settledTodayCount: settledTodayOrders.length,
+        settledTodayOrders,
+      },
+    });
+  } catch (err) { next(err); }
+});
+
+// POST /api/orders/cod-settle - Thủ quỹ / Quản lý xác nhận tài xế đã nộp đủ tiền mặt COD vào két
+router.post('/cod-settle', protect, staffOnly, async (req, res, next) => {
+  try {
+    const { orderIds = [] } = req.body;
+    if (!Array.isArray(orderIds) || orderIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'Vui lòng chọn ít nhất 1 đơn hàng để chốt nộp tiền.' });
+    }
+
+    const updater = req.user?.name || req.user?.email || 'Thu quỹ chi nhánh';
+    const now = new Date();
+
+    const result = await Order.updateMany(
+      {
+        _id: { $in: orderIds },
+        paymentMethod: 'cod',
+        status: 'delivered',
+        codSettled: { $ne: true },
+      },
+      {
+        $set: {
+          codSettled: true,
+          codSettledAt: now,
+          codSettledBy: updater,
+          paymentStatus: 'paid',
+          paidAt: now,
+        },
+      }
+    );
+
+    AuditLog.create({
+      actor: req.user._id,
+      actorName: updater,
+      actorEmail: req.user.email || '',
+      actorRole: req.user.role || 'staff',
+      action: 'COD_CASH_SETTLED',
+      category: 'FINANCE',
+      targetType: 'Order',
+      targetId: orderIds.join(','),
+      details: `Chốt đối soát thu tiền COD vào két thành công cho ${result.modifiedCount} đơn hàng`,
+    }).catch(() => {});
+
+    res.json({
+      success: true,
+      message: `Đã đối soát và xác nhận nộp đủ tiền mặt cho ${result.modifiedCount} đơn hàng vào két.`,
+      modifiedCount: result.modifiedCount,
+    });
   } catch (err) { next(err); }
 });
 

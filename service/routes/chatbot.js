@@ -82,14 +82,14 @@ ${profileSnippet}
 THÔNG TIN HỆ SINH THÁI NÔNG SẢN EVERGREEN MART:
 - Nông sản 100% hữu cơ chuẩn VietGAP & GlobalGAP từ Đà Lạt và Ba Vì.
 - Thu hoạch sớm mỗi ngày, vận chuyển bằng xe lạnh chuyên dụng 0°C – 4°C.
-- Miễn phí giao hàng (0₫) cho đơn từ 300.000₫. Đơn dưới 300.000₫ đồng giá 25.000₫.
+- Phí giao hàng tính theo khoảng cách từ chi nhánh gần nhất (xe máy/ô tô lạnh); thành viên có quyền lợi miễn phí giao hàng theo chính sách hội viên.
 - Đổi trả 1-1 trong 24 giờ nếu rau củ quả không đạt độ tươi giòn.
 
 DANH MỤC NÔNG SẢN TƯƠI SẠCH:
 ${catalogSnippet}
 
 YÊU CẦU PHẢN HỒI:
-- Trả lời bằng tiếng Việt lịch thiệp, khoa học, ấm áp, dùng các emoji tươi mát (🩺, 🥗, 🍎, 🥩, 🌿, ✨).
+- Trả lời bằng tiếng Việt lịch thiệp, khoa học, ấm áp, dùng các emoji tươi mát .
 - Định dạng Markdown rõ ràng (tiêu đề, in đậm, danh sách gạch đầu dòng).
 - Khi gợi ý món hoặc nguyên liệu thay thế lành mạnh, ưu tiên nhắc các sản phẩm sạch đang có tại Evergreen Mart.`;
 }
@@ -248,7 +248,7 @@ router.post('/message', optionalAuth, async (req, res, next) => {
         sender: 'ai',
         senderName: 'NutriBot',
         senderAvatar: 'https://api.iconify.design/lucide:bot.svg?color=%23176b3a',
-        content: 'NutriBot đã quay trở lại đồng hành cùng bạn 🌿! Bạn có câu hỏi gì về dinh dưỡng hoặc nông sản không?',
+        content: 'NutriBot đã quay trở lại đồng hành cùng bạn ! Bạn có câu hỏi gì về dinh dưỡng hoặc nông sản không?',
         timestamp: new Date(),
       };
       if (trimmed) {
@@ -290,8 +290,8 @@ router.post('/message', optionalAuth, async (req, res, next) => {
         timestamp: new Date(),
       });
       const aiReply = internalIssue
-        ? `⚠️ **NutriBot thông báo chuyển tiếp:** ${internalIssue.reason}\n\nNutriBot đã kết nối cuộc trò chuyện đến **Chuyên viên tư vấn & Chăm sóc khách hàng Evergreen Mart**. Nhân viên sẽ tiếp nhận và kiểm tra trực tiếp cho bạn ngay tại đây nhé! 🌿`
-        : 'NutriBot đã chuyển yêu cầu của bạn đến chuyên viên tư vấn Evergreen Mart. Bạn vui lòng đợi trong giây lát, chuyên viên sẽ tham gia hỗ trợ trực tiếp tại đây! 🌿';
+        ? `**NutriBot thông báo chuyển tiếp:** ${internalIssue.reason}\n\nNutriBot đã kết nối cuộc trò chuyện đến **Chuyên viên tư vấn & Chăm sóc khách hàng Evergreen Mart**. Nhân viên sẽ tiếp nhận và kiểm tra trực tiếp cho bạn ngay tại đây nhé! `
+        : 'NutriBot đã chuyển yêu cầu của bạn đến chuyên viên tư vấn Evergreen Mart. Bạn vui lòng đợi trong giây lát, chuyên viên sẽ tham gia hỗ trợ trực tiếp tại đây! ';
 
       conv.messages.push({
         sender: 'ai',
@@ -446,14 +446,14 @@ router.post('/message', optionalAuth, async (req, res, next) => {
             .map(i => `- ${i.productName} (x${i.quantity}) - ${(i.priceNumber * i.quantity).toLocaleString('vi-VN')}₫`)
             .join('\n');
 
-          const replyText = `📦 **Thông tin đơn hàng #${order.orderCode}**\n\n` +
+          const replyText = `**Thông tin đơn hàng #${order.orderCode}**\n\n` +
             `- **Trạng thái:** ${statusVi}\n` +
             `- **Khách hàng:** ${order.guestName || 'Quý khách'}\n` +
             `- **Tổng thanh toán:** ${order.total.toLocaleString('vi-VN')}₫\n` +
             `- **Hình thức:** ${order.paymentMethod === 'cod' ? 'Thanh toán khi nhận hàng (COD)' : 'Chuyển khoản / Đã thanh toán'}\n` +
             `- **Thời gian đặt:** ${new Date(order.createdAt).toLocaleString('vi-VN')}\n\n` +
             `**Danh sách món trong đơn:**\n${itemsSummary}\n\n` +
-            `🚛 *Evergreen Mart cam kết bảo quản bằng xe lạnh chuyên dụng từ nông trại đến tận cửa nhà bạn.*`;
+            ` *Evergreen Mart cam kết bảo quản bằng xe lạnh chuyên dụng từ nông trại đến tận cửa nhà bạn.*`;
 
           return res.json({ success: true, reply: replyText, products: [] });
         }
@@ -471,17 +471,17 @@ router.post('/message', optionalAuth, async (req, res, next) => {
         const voucherList = activeVouchers.map(v => {
           const val = v.discountType === 'percentage' ? `${v.discountValue}%` : `${v.discountValue.toLocaleString('vi-VN')}₫`;
           const minVal = v.minOrderValue ? `(Đơn từ ${v.minOrderValue.toLocaleString('vi-VN')}₫)` : '';
-          return `🎟️ Mã: **${v.code}** — Giảm **${val}** ${minVal} - *${v.name}*`;
+          return `️ Mã: **${v.code}** - Giảm **${val}** ${minVal} - *${v.name}*`;
         }).join('\n');
 
-        const replyText = `🎉 **Evergreen Mart hiện đang có các ưu đãi hấp dẫn dành riêng cho bạn:**\n\n${voucherList}\n\n` +
-          `💡 *Bạn có thể nhập mã này tại bước Thanh toán (Checkout) hoặc xem thêm ở trang [Ưu đãi / Vouchers](/vouchers).*`;
+        const replyText = ` **Evergreen Mart hiện đang có các ưu đãi hấp dẫn dành riêng cho bạn:**\n\n${voucherList}\n\n` +
+          ` *Bạn có thể nhập mã này tại bước Thanh toán (Checkout) hoặc xem thêm ở trang [Ưu đãi / Vouchers](/vouchers).*`;
 
         return res.json({ success: true, reply: replyText, products: [] });
       } else {
         return res.json({
           success: true,
-          reply: `🌿 Hiện tại Evergreen Mart đang áp dụng chính sách **Miễn phí vận chuyển xe lạnh toàn thành phố cho đơn hàng từ 300.000₫** và tích điểm thành viên hạng Kim cương nhận chiết khấu đến 10%!`,
+          reply: ` Hiện tại Evergreen Mart đang áp dụng chính sách **Miễn phí vận chuyển xe lạnh toàn thành phố cho đơn hàng từ 300.000₫** và tích điểm thành viên hạng Kim cương nhận chiết khấu đến 10%!`,
           products: []
         });
       }
@@ -489,7 +489,7 @@ router.post('/message', optionalAuth, async (req, res, next) => {
 
     // 3.5. Hỏi về Chính sách giao hàng & Xe lạnh
     if (cleanLower.includes('giao hang') || cleanLower.includes('phi ship') || cleanLower.includes('van chuyen') || cleanLower.includes('xe lanh') || cleanLower.includes('bao quan')) {
-      const replyText = `🚚 **Chính sách Giao nhận & Bảo quản tại Evergreen Mart:**\n\n` +
+      const replyText = ` **Chính sách Giao nhận & Bảo quản tại Evergreen Mart:**\n\n` +
         `1. **Giao hàng xe lạnh chuyên dụng:** Toàn bộ rau củ, quả, thịt cá tươi sống được vận chuyển ở nhiệt độ chuẩn 0°C – 4°C, cam kết độ giòn ngọt nguyên bản như vừa hái tại vườn.\n` +
         `2. **Tốc độ giao hàng:** Giao hỏa tốc 2 giờ tại nội thành Hà Nội & TP. Hồ Chí Minh.\n` +
         `3. **Phí vận chuyển:**\n` +
@@ -507,7 +507,7 @@ router.post('/message', optionalAuth, async (req, res, next) => {
         category: { $in: ['fruits', 'dry-food', 'dairy'] }
       }).limit(3);
 
-      const replyText = `🍎 **Giải pháp ăn vặt lành mạnh & kiểm soát cơn thèm ăn đêm từ NutriBot:**\n\n` +
+      const replyText = ` **Giải pháp ăn vặt lành mạnh & kiểm soát cơn thèm ăn đêm từ NutriBot:**\n\n` +
         `1. **Nguyên nhân thèm ăn đêm:** Thường do bữa tối thiếu đạm (protein) hoặc chất xơ, hoặc do căng thẳng, thiếu ngủ làm tăng hormone *ghrelin* gây đói.\n` +
         `2. **Gợi ý món ăn vặt ít calo (< 150 kcal):**\n` +
         ` - 1/2 quả táo giòn chấm 1 thìa bơ đậu phộng không đường.\n` +
@@ -537,13 +537,13 @@ router.post('/message', optionalAuth, async (req, res, next) => {
         targetNote = `Mục tiêu cá nhân: ${profile.dietGoal || profile.conditions}`;
       }
 
-      const replyText = `🩺 **NutriBot gợi ý thực đơn Eat-Clean tươi lành chuẩn khoa học:**\n` +
+      const replyText = ` **NutriBot gợi ý thực đơn Eat-Clean tươi lành chuẩn khoa học:**\n` +
         `*(Áp dụng cho: ${targetNote})*\n\n` +
-        `🍲 **Bữa trưa năng lượng:**\n` +
+        ` **Bữa trưa năng lượng:**\n` +
         `- Đạm sạch: 150g Phi lê cá hồi áp chảo sốt bơ chanh hoặc Ức gà nướng thảo mộc.\n` +
         `- Tinh bột chậm: 1 chén cơm gạo lứt Ba Vì hoặc khoai lang hấp.\n` +
         `- Rau củ chất xơ: Salad xà lách Lô Tô xanh, cà chua bi sốt dầu giấm nguyên chất.\n\n` +
-        `🥗 **Bữa tối nhẹ bụng:**\n` +
+        ` **Bữa tối nhẹ bụng:**\n` +
         `- Canh cải thìa baby non ngọt nấu thịt bằm.\n` +
         `- Đậu phụ luộc chấm sốt tương mè đen.\n` +
         `- 1 ly nước ép cần tây táo xanh thanh lọc cơ thể.\n\n` +
@@ -560,7 +560,7 @@ router.post('/message', optionalAuth, async (req, res, next) => {
     const matchedProducts = await findRelatedProducts(cleanLower);
     if (matchedProducts.length > 0) {
       const productNames = matchedProducts.map(p => `- **${p.name}** - ${p.price}`).join('\n');
-      const replyText = `🌿 **NutriBot tìm thấy các nông sản hữu cơ phù hợp nhất với câu hỏi của bạn:**\n\n` +
+      const replyText = ` **NutriBot tìm thấy các nông sản hữu cơ phù hợp nhất với câu hỏi của bạn:**\n\n` +
         `${productNames}\n\n` +
         `*Tất cả đều được kiểm định dư lượng, bảo quản trong chuỗi lạnh 0°C – 4°C. Bạn có thể bấm để xem hoặc thêm ngay vào giỏ hàng!*`;
 
@@ -573,12 +573,12 @@ router.post('/message', optionalAuth, async (req, res, next) => {
 
     // 3.9. Phản hồi mặc định NutriBot
     const featured = await Product.find({ isActive: { $ne: false } }).sort({ stock: -1 }).limit(3);
-    const defaultReply = `Xin chào bạn! Tôi là **NutriBot — Chuyên gia Dinh dưỡng & Trợ lý Nông sản Xanh Lá** 🩺🌿\n\n` +
+    const defaultReply = `Xin chào bạn! Tôi là **NutriBot - Chuyên gia Dinh dưỡng & Trợ lý Nông sản Xanh Lá** \n\n` +
       `Tôi có thể hỗ trợ bạn:\n` +
-      `- 📷 **Nhận diện món ăn qua ảnh:** Tải ảnh đĩa ăn hoặc đồ uống lên, tôi sẽ phân tích nguyên liệu, tính lượng Calo và đưa ra lời khuyên dinh dưỡng tức thì!\n` +
-      `- 🩺 **Cá nhân hóa thực đơn:** Tính toán chỉ số BMI, TDEE, thiết kế thực đơn Eat-Clean, giảm mỡ, tăng cơ hoặc ăn kiêng theo bệnh lý.\n` +
-      `- 🥗 **Nông sản hữu cơ:** Tìm kiếm rau củ quả, thịt cá chuẩn VietGAP & GlobalGAP từ nông trại Evergreen Mart.\n` +
-      `- 🚚 **Đơn hàng & Giao vận:** Tra cứu lộ trình xe lạnh bảo quản 0°C – 4°C.\n\n` +
+      `-  **Nhận diện món ăn qua ảnh:** Tải ảnh đĩa ăn hoặc đồ uống lên, tôi sẽ phân tích nguyên liệu, tính lượng Calo và đưa ra lời khuyên dinh dưỡng tức thì!\n` +
+      `-  **Cá nhân hóa thực đơn:** Tính toán chỉ số BMI, TDEE, thiết kế thực đơn Eat-Clean, giảm mỡ, tăng cơ hoặc ăn kiêng theo bệnh lý.\n` +
+      `-  **Nông sản hữu cơ:** Tìm kiếm rau củ quả, thịt cá chuẩn VietGAP & GlobalGAP từ nông trại Evergreen Mart.\n` +
+      `-  **Đơn hàng & Giao vận:** Tra cứu lộ trình xe lạnh bảo quản 0°C – 4°C.\n\n` +
       `*Hôm nay bạn cần NutriBot phân tích món ăn hay tư vấn dinh dưỡng gì nào?*`;
 
     return res.json({
@@ -681,21 +681,21 @@ async function analyzeFoodImageLocal(imageBase64, caption, profile) {
   if (profile && (profile.age || profile.weight || profile.height)) {
     const heightM = profile.height ? profile.height / 100 : null;
     const bmi = (heightM && profile.weight) ? (profile.weight / (heightM * heightM)).toFixed(1) : null;
-    personalNote = `\n\n🎯 **Lời khuyên cá nhân hóa cho bạn (BMI: ${bmi || '--'} - Mục tiêu: ${profile.conditions || profile.dietGoal || 'Sức khỏe dẻo dai'}):**\n` +
+    personalNote = `\n\n **Lời khuyên cá nhân hóa cho bạn (BMI: ${bmi || '--'} - Mục tiêu: ${profile.conditions || profile.dietGoal || 'Sức khỏe dẻo dai'}):**\n` +
       `Bữa ăn này cung cấp khoảng **${matched.calories}**, phù hợp với mục tiêu của bạn. Hãy đảm bảo uống đủ 2 - 2.5 lít nước trong ngày để tối ưu chuyển hóa!`;
   }
 
-  const reply = `📸 **NutriBot đã nhận diện thành công hình ảnh món ăn của bạn!** 🥗✨\n\n` +
-    `🍽️ **Tên món:** **${matched.mealName}**\n` +
-    `📋 **Thành phần nhận diện:** ${matched.ingredients}\n\n` +
-    `🔥 **Ước tính Năng lượng:** **${matched.calories}**\n` +
-    `📊 **Thành phần dinh dưỡng (Macro):**\n` +
-    `- 🥩 **Chất đạm (Protein):** ${matched.protein}\n` +
-    `- 🌾 **Tinh bột (Carb):** ${matched.carbs}\n` +
-    `- 🥑 **Chất béo (Fat):** ${matched.fat}\n` +
-    `- 🥦 **Chất xơ (Fiber):** ${matched.fiber}\n\n` +
-    `🩺 **Đánh giá chuyên gia NutriBot:**\n${matched.advice}${personalNote}\n\n` +
-    `🌿 *Evergreen Mart hiện đang có sẵn các nguyên liệu tươi sạch thu hoạch trong ngày để bạn tự tay chế biến món ngon này:*`;
+  const reply = ` **NutriBot đã nhận diện thành công hình ảnh món ăn của bạn!** \n\n` +
+    `️ **Tên món:** **${matched.mealName}**\n` +
+    ` **Thành phần nhận diện:** ${matched.ingredients}\n\n` +
+    ` **Ước tính Năng lượng:** **${matched.calories}**\n` +
+    ` **Thành phần dinh dưỡng (Macro):**\n` +
+    `-  **Chất đạm (Protein):** ${matched.protein}\n` +
+    `-  **Tinh bột (Carb):** ${matched.carbs}\n` +
+    `-  **Chất béo (Fat):** ${matched.fat}\n` +
+    `-  **Chất xơ (Fiber):** ${matched.fiber}\n\n` +
+    ` **Đánh giá chuyên gia NutriBot:**\n${matched.advice}${personalNote}\n\n` +
+    ` *Evergreen Mart hiện đang có sẵn các nguyên liệu tươi sạch thu hoạch trong ngày để bạn tự tay chế biến món ngon này:*`;
 
   return {
     reply,
@@ -719,7 +719,7 @@ async function getAvailableGeminiModel(apiKey) {
         .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
         .map(m => m.name.replace(/^models\//, ''));
 
-      console.log('📋 Danh sách Gemini models khả dụng cho key này:', models);
+      console.log(' Danh sách Gemini models khả dụng cho key này:', models);
 
       // Ưu tiên các model ổn định và nhanh nhất
       const chosen = models.find(m => m === 'gemini-3.5-flash') ||
@@ -734,7 +734,7 @@ async function getAvailableGeminiModel(apiKey) {
       if (chosen) {
         cachedGeminiModel = chosen;
         lastModelCheck = Date.now();
-        console.log(`✅ Đã tự động kết nối Gemini model: ${chosen}`);
+        console.log(` Đã tự động kết nối Gemini model: ${chosen}`);
         return chosen;
       }
     } else {
@@ -975,13 +975,13 @@ function handleBmiCalculation(trimmed, cleanLower, profile) {
   if (!height || !weight) {
     return {
       success: true,
-      reply: `🩺 **Cách tính chỉ số BMI & Nhu cầu Calo từ NutriBot:**\n\n` +
+      reply: ` **Cách tính chỉ số BMI & Nhu cầu Calo từ NutriBot:**\n\n` +
         `Công thức chuẩn: **BMI = Cân nặng (kg) / [Chiều cao (m)]²**\n\n` +
         `- **< 18.5:** Thiếu cân (Cần bổ sung đạm, chất béo tốt và tinh bột chậm)\n` +
         `- **18.5 – 22.9:** Thể trạng Chuẩn lý tưởng cho người Châu Á\n` +
         `- **23.0 – 24.9:** Tiền béo phì (Thừa cân nhẹ, nên áp dụng thâm hụt calo)\n` +
         `- **≥ 25.0:** Béo phì (Cần chế độ Eat-Clean nghiêm ngặt & tập luyện)\n\n` +
-        `👉 *Bạn có thể nhập chiều cao và cân nặng (ví dụ: "Em cao 1m65 nặng 58kg") hoặc điền trực tiếp trong phần Cài đặt (⚙️) để NutriBot tính tự động nhé!*`,
+        ` *Bạn có thể nhập chiều cao và cân nặng (ví dụ: "Em cao 1m65 nặng 58kg") hoặc điền trực tiếp trong phần Cài đặt (️) để NutriBot tính tự động nhé!*`,
       products: []
     };
   }
@@ -1010,11 +1010,11 @@ function handleBmiCalculation(trimmed, cleanLower, profile) {
   const minIdealWeight = (18.5 * heightM * heightM).toFixed(1);
   const maxIdealWeight = (22.9 * heightM * heightM).toFixed(1);
 
-  const reply = `🩺 **Kết quả phân tích thể trạng từ Chuyên gia NutriBot:**\n\n` +
+  const reply = ` **Kết quả phân tích thể trạng từ Chuyên gia NutriBot:**\n\n` +
     `- **Chiều cao:** ${height} cm | **Cân nặng:** ${weight} kg\n` +
-    `- **Chỉ số BMI:** **${bmi}** — Đánh giá: **${status}**\n` +
+    `- **Chỉ số BMI:** **${bmi}** - Đánh giá: **${status}**\n` +
     `- **Cân nặng lý tưởng khuyến nghị:** **${minIdealWeight} kg – ${maxIdealWeight} kg**\n\n` +
-    `💡 **Lời khuyên dinh dưỡng từ NutriBot:**\n${advice}\n\n` +
+    ` **Lời khuyên dinh dưỡng từ NutriBot:**\n${advice}\n\n` +
     `*Bạn có muốn NutriBot lên thực đơn 7 ngày phù hợp với chỉ số này không?*`;
 
   return { success: true, reply, products: [] };
@@ -1022,16 +1022,16 @@ function handleBmiCalculation(trimmed, cleanLower, profile) {
 
 // ── Helper: Macro & Calorie Advice ──────────────────────────────────────────
 function handleMacroAdvice(cleanLower, profile) {
-  const reply = `📊 **Hướng dẫn chia tỷ lệ Macro (Dinh dưỡng đa lượng) chuẩn NutriBot:**\n\n` +
+  const reply = ` **Hướng dẫn chia tỷ lệ Macro (Dinh dưỡng đa lượng) chuẩn NutriBot:**\n\n` +
     `Macro bao gồm 3 nhóm chất sinh năng lượng chính:\n` +
-    `1. **Protein (Chất đạm):** 1g = 4 kcal — Xây dựng cơ bắp, hỗ trợ trao đổi chất (Ức gà, cá hồi, thịt bò nạc, đậu phụ).\n` +
-    `2. **Carbohydrate (Tinh bột):** 1g = 4 kcal — Cung cấp năng lượng chính (Gạo lứt Ba Vì, khoai lang, yến mạch, hoa quả).\n` +
-    `3. **Fat (Chất béo tốt):** 1g = 9 kcal — Cân bằng hormone, hòa tan vitamin A, D, E, K (Bơ, dầu ô-liu, các loại hạt).\n\n` +
-    `🎯 **Tỷ lệ phân chia khuyến nghị theo mục tiêu:**\n` +
+    `1. **Protein (Chất đạm):** 1g = 4 kcal - Xây dựng cơ bắp, hỗ trợ trao đổi chất (Ức gà, cá hồi, thịt bò nạc, đậu phụ).\n` +
+    `2. **Carbohydrate (Tinh bột):** 1g = 4 kcal - Cung cấp năng lượng chính (Gạo lứt Ba Vì, khoai lang, yến mạch, hoa quả).\n` +
+    `3. **Fat (Chất béo tốt):** 1g = 9 kcal - Cân bằng hormone, hòa tan vitamin A, D, E, K (Bơ, dầu ô-liu, các loại hạt).\n\n` +
+    ` **Tỷ lệ phân chia khuyến nghị theo mục tiêu:**\n` +
     `- **Giảm mỡ & Cắt nét:** 40% Carb – 40% Protein – 20% Fat (Thâm hụt 300-500 kcal)\n` +
     `- **Duy trì & Eat-Clean:** 50% Carb – 25% Protein – 25% Fat\n` +
     `- **Tăng cơ nạc:** 45% Carb – 30% Protein – 25% Fat\n\n` +
-    `💡 *Nguyên tắc vàng: Luôn ưu tiên nguyên liệu hữu cơ tươi mới để cơ thể hấp thu tối đa dưỡng chất mà không bị nạp tạp chất độc hại.*`;
+    ` *Nguyên tắc vàng: Luôn ưu tiên nguyên liệu hữu cơ tươi mới để cơ thể hấp thu tối đa dưỡng chất mà không bị nạp tạp chất độc hại.*`;
 
   return { success: true, reply, products: [] };
 }
@@ -1256,7 +1256,7 @@ router.post('/detect-ingredients', async (req, res, next) => {
   }
 });
 
-// GET /api/chatbot/session/:sessionId — đồng bộ tin nhắn 2 chiều giữa khách hàng và admin
+// GET /api/chatbot/session/:sessionId - đồng bộ tin nhắn 2 chiều giữa khách hàng và admin
 router.get('/session/:sessionId', optionalAuth, async (req, res, next) => {
   try {
     const { sessionId } = req.params;
@@ -1308,7 +1308,7 @@ router.get('/session/:sessionId', optionalAuth, async (req, res, next) => {
   }
 });
 
-// POST /api/chatbot/switch-to-ai — khách bấm nút "Trở về hỏi Trợ lý AI"
+// POST /api/chatbot/switch-to-ai - khách bấm nút "Trở về hỏi Trợ lý AI"
 router.post('/switch-to-ai', optionalAuth, async (req, res, next) => {
   try {
     const { sessionId } = req.body;
@@ -1333,7 +1333,7 @@ router.post('/switch-to-ai', optionalAuth, async (req, res, next) => {
       sender: 'ai',
       senderName: 'NutriBot',
       senderAvatar: 'https://api.iconify.design/lucide:bot.svg?color=%23176b3a',
-      content: 'NutriBot đã quay trở lại đồng hành cùng bạn 🌿! Bạn có câu hỏi gì về dinh dưỡng hoặc nông sản không?',
+      content: 'NutriBot đã quay trở lại đồng hành cùng bạn ! Bạn có câu hỏi gì về dinh dưỡng hoặc nông sản không?',
       timestamp: new Date(),
     };
     conv.messages.push(returnMsg);

@@ -36,7 +36,7 @@ export const adminRoutes: Routes = [
         path: 'analytics',
         loadComponent: () =>
           import('./analytics/analytics.component').then((m) => m.AdminAnalyticsComponent),
-        canActivate: [roleGuard(['Manager', 'Admin'])],
+        canActivate: [roleGuard(['Marketing', 'Admin'])],
       },
       {
         path: 'orders',
@@ -62,6 +62,7 @@ export const adminRoutes: Routes = [
         path: 'shipping',
         loadComponent: () =>
           import('./shipping/shipping.component').then((m) => m.AdminShippingComponent),
+        canActivate: [roleGuard(['Warehouse', 'Admin'])],
       },
       {
         path: 'users',
@@ -89,7 +90,13 @@ export const adminRoutes: Routes = [
         path: 'vouchers',
         loadComponent: () =>
           import('./vouchers/vouchers.component').then((m) => m.AdminVouchersComponent),
-        canActivate: [roleGuard(['Manager', 'Admin'])],
+        canActivate: [roleGuard(['Manager', 'Admin', 'Marketing', 'Sales'])],
+      },
+      {
+        path: 'banners',
+        loadComponent: () =>
+          import('./banners/banners.component').then((m) => m.AdminBannersComponent),
+        canActivate: [roleGuard(['Manager', 'Admin', 'Marketing'])],
       },
       {
         path: 'staff',

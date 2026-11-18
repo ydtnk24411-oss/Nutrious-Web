@@ -86,7 +86,7 @@ module.exports = {
     unit: 'Gói (450g)',
     storageInstructions: 'Bảo quản nơi khô ráo, đựng trong hũ kín tránh kiến và ẩm.',
     usageInstructions: 'Dùng nêm nếm một lượng vừa phải vào các món canh, xào, kho, ướp thịt cá.',
-    specifications: { 'Khối lượng tịnh': '450g', 'Độ tinh khiết': 'Monosodium Glutamate 99% từ mật mía đường và tinh bột sắn', 'Năng lượng': '288 kcal / 100g', 'Chất đạm (Protein)': 'Axit Glutamic tự nhiên (78%)', 'Chất béo (Lipid)': '0g / 100g', 'Carbohydrate': '0g / 100g', 'Khoáng chất': 'Natri (12.3g / 100g — bằng 1/3 lượng Natri trong muối ăn)' },
+    specifications: { 'Khối lượng tịnh': '450g', 'Độ tinh khiết': 'Monosodium Glutamate 99% từ mật mía đường và tinh bột sắn', 'Năng lượng': '288 kcal / 100g', 'Chất đạm (Protein)': 'Axit Glutamic tự nhiên (78%)', 'Chất béo (Lipid)': '0g / 100g', 'Carbohydrate': '0g / 100g', 'Khoáng chất': 'Natri (12.3g / 100g - bằng 1/3 lượng Natri trong muối ăn)' },
     description: 'Bột ngọt Ajinomoto hạt lớn sản xuất theo công nghệ lên men tự nhiên từ mật mía đường và tinh bột khoai mì của tập đoàn Ajinomoto Nhật Bản, tạo vị umami ngọt đậm hài hòa cho món ăn.'
   },
   'duong-cat-trang-bien-hoa-1kg': {

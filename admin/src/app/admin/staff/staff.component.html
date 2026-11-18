@@ -26,20 +26,6 @@
     </div>
   }
 
-  <!-- Role Overview Cards -->
-  <div class="role-grid">
-    @for (r of roleDefs; track r.key) {
-      <div class="role-card">
-        <div class="role-card-header">
-          <span class="role-badge" [style.color]="r.color" [style.background]="r.bg">
-            {{ r.label }}
-          </span>
-        </div>
-        <p class="role-desc">{{ r.desc }}</p>
-      </div>
-    }
-  </div>
-
   <!-- Filter Toolbar -->
   <div class="filter-card">
     <div class="search-input-wrapper">
@@ -53,19 +39,6 @@
         [ngModel]="searchQuery()"
         (ngModelChange)="searchQuery.set($event)"
       />
-    </div>
-
-    <div class="filter-controls">
-      <select
-        [ngModel]="selectedRole()"
-        (ngModelChange)="selectedRole.set($event)"
-        class="filter-select"
-      >
-        <option value="all">Tất cả vai trò</option>
-        @for (r of roleDefs; track r.key) {
-          <option [value]="r.key">{{ r.label }}</option>
-        }
-      </select>
     </div>
   </div>
 
@@ -81,73 +54,72 @@
         <p>Không có tài khoản nhân viên nào phù hợp.</p>
       </div>
     } @else {
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>Nhân viên</th>
-            <th>Email</th>
-            <th>Số điện thoại</th>
-            <th>Vai trò (Role)</th>
-            <th>Trạng thái</th>
-            <th>Ngày tạo</th>
-            <th style="width: 140px; text-align: right;">Thao tác</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (user of filteredStaff(); track user._id) {
-            @let r = getRoleDef(user.role);
+      <div class="table-responsive">
+        <table class="admin-table">
+          <thead>
             <tr>
-              <td>
-                <div class="staff-col">
-                  <div class="staff-avatar">
-                    {{ user.name.charAt(0).toUpperCase() }}
-                  </div>
-                  <span class="staff-name">{{ user.name }}</span>
-                </div>
-              </td>
-              <td>
-                <span class="text-muted">{{ user.email }}</span>
-              </td>
-              <td>
-                <span>{{ user.phone || '—' }}</span>
-              </td>
-              <td>
-                <span class="role-badge" [style.color]="r.color" [style.background]="r.bg">
-                  {{ r.label }}
-                </span>
-              </td>
-              <td>
-                <span class="status-badge" [class.badge-success]="user.isActive" [class.badge-danger]="!user.isActive">
-                  {{ user.isActive ? 'Đang hoạt động' : 'Đã khóa' }}
-                </span>
-              </td>
-              <td class="text-muted" style="white-space: nowrap;">
-                {{ user.createdAt | date: 'dd/MM/yyyy' }}
-              </td>
-              <td style="text-align: right;">
-                <div class="actions-group">
-                  <button
-                    type="button"
-                    class="btn-sm-action"
-                    (click)="openEditModal(user)"
-                    title="Chỉnh sửa thông tin và vai trò"
-                  >
-                    Sửa
-                  </button>
-                  <button
-                    type="button"
-                    class="btn-sm-action"
-                    (click)="toggleActive(user)"
-                    [title]="user.isActive ? 'Khóa tài khoản' : 'Mở khóa'"
-                  >
-                    {{ user.isActive ? 'Khóa' : 'Mở' }}
-                  </button>
-                </div>
-              </td>
+              <th style="width: 110px;">Mã NV</th>
+              <th>Nhân viên</th>
+              <th>Chi nhánh / Bộ phận</th>
+              <th>Email</th>
+              <th>Số điện thoại</th>
+              <th>Trạng thái</th>
+              <th style="width: 140px; text-align: right;">Thao tác</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (user of filteredStaff(); track user._id) {
+              <tr>
+                <td>
+                  <span class="emp-code-pill">{{ user.employeeCode || '-' }}</span>
+                </td>
+                <td>
+                  <div class="staff-col">
+                    <div class="staff-avatar">
+                      {{ user.name.charAt(0).toUpperCase() }}
+                    </div>
+                    <span class="staff-name">{{ user.name }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="store-badge">{{ user.storeName || user.assignedStore || '-' }}</span>
+                </td>
+                <td>
+                  <span class="text-muted">{{ user.email }}</span>
+                </td>
+                <td>
+                  <span>{{ user.phone || '-' }}</span>
+                </td>
+                <td>
+                  <span class="status-badge" [class.badge-success]="user.isActive" [class.badge-danger]="!user.isActive">
+                    {{ user.isActive ? 'Đang hoạt động' : 'Đã khóa' }}
+                  </span>
+                </td>
+                <td style="text-align: right;">
+                  <div class="actions-group">
+                    <button
+                      type="button"
+                      class="btn-sm-action"
+                      (click)="openEditModal(user)"
+                      title="Chỉnh sửa thông tin và vai trò"
+                    >
+                      Sửa
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-sm-action"
+                      (click)="toggleActive(user)"
+                      [title]="user.isActive ? 'Khóa tài khoản' : 'Mở khóa'"
+                    >
+                      {{ user.isActive ? 'Khóa' : 'Mở' }}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     }
   </div>
 

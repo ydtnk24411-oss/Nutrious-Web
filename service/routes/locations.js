@@ -30,7 +30,7 @@ async function fetchJsonCached(key, url) {
   }
 }
 
-// GET /api/locations/provinces — Danh sách 34 Tỉnh/Thành phố
+// GET /api/locations/provinces - Danh sách 34 Tỉnh/Thành phố
 router.get('/provinces', async (req, res, next) => {
   try {
     const raw = await fetchJsonCached('provinces', `${PROVINCES_API}/p/`);
@@ -48,7 +48,7 @@ router.get('/provinces', async (req, res, next) => {
   }
 });
 
-// GET /api/locations/provinces/:code/wards — Danh sách Phường/Xã của một Tỉnh/Thành
+// GET /api/locations/provinces/:code/wards - Danh sách Phường/Xã của một Tỉnh/Thành
 router.get('/provinces/:code/wards', async (req, res, next) => {
   try {
     const code = Number(req.params.code);

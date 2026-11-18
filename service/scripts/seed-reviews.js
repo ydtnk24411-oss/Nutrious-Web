@@ -743,7 +743,7 @@ function buildProductReviews(p, productMap) {
 
 async function seedDatabase(uri, label) {
   await mongoose.connect(uri, { serverSelectionTimeoutMS: 12000 });
-  console.log(`✅ Connected to ${label}`);
+  console.log(` Connected to ${label}`);
 
   const products = await Product.find({}).lean();
   console.log(`   Found ${products.length} products in ${label}`);
@@ -771,7 +771,7 @@ async function seedDatabase(uri, label) {
   }
 
   const finalCount = await Review.countDocuments();
-  console.log(`   🎉 Inserted ${inserted} reviews across ${products.length} products in ${label} (Total reviews in DB: ${finalCount}).`);
+  console.log(`    Inserted ${inserted} reviews across ${products.length} products in ${label} (Total reviews in DB: ${finalCount}).`);
   await mongoose.disconnect();
 }
 
@@ -784,13 +784,13 @@ async function main() {
     try {
       await seedDatabase(localUri, 'Local MongoDB (127.0.0.1:27017/xanh-la)');
     } catch (e) {
-      console.log('ℹ️ Local MongoDB not running or skipped:', e.message);
+      console.log('️ Local MongoDB not running or skipped:', e.message);
     }
   }
 }
 
 main().catch(err => {
-  console.error('❌ Error seeding reviews:', err);
+  console.error(' Error seeding reviews:', err);
   process.exit(1);
 });
 

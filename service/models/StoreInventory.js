@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const batchSchema = new mongoose.Schema(
   {
     batchCode: { type: String, required: true, trim: true },
+    costPrice: { type: Number, default: 0, min: 0 },
     expDate: { type: Date, required: true },
     quantity: { type: Number, required: true, min: 0 },
     receivedDate: { type: Date, default: Date.now },
@@ -28,6 +29,12 @@ const storeInventorySchema = new mongoose.Schema(
       ref: 'Product',
       required: true,
       index: true,
+    },
+    productName: {
+      type: String,
+      default: '',
+      trim: true,
+      comment: 'Tên hiển thị tiếng Việt của sản phẩm để dễ tra cứu trực tiếp trong database',
     },
     sku: {
       type: String,
@@ -58,6 +65,16 @@ const storeInventorySchema = new mongoose.Schema(
       default: 0,
       min: 0,
       comment: 'Số lượng hàng dập nát, hỏng, hết hạn đã hủy bỏ khỏi kệ',
+    },
+    costPrice: {
+      type: Number,
+      default: null,
+      comment: 'Giá vốn nhập hàng tại chi nhánh (VNĐ)',
+    },
+    basePrice: {
+      type: Number,
+      default: null,
+      comment: 'Giá bán chuẩn tại chi nhánh',
     },
     storePrice: {
       type: Number,

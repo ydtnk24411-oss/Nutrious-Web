@@ -2,7 +2,7 @@ const router = require('express').Router();
 const Conversation = require('../models/Conversation');
 const User = require('../models/User');
 const Order = require('../models/Order');
-const { protect, staffOnly, hasRole, optionalAuth } = require('../middleware/auth');
+const { protect, staffOnly, hasRole, optionalAuth, authorizeRoles } = require('../middleware/auth');
 
 const FALLBACK_AVATARS = {
   'Nguyễn Thị Mai': 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80',
@@ -45,6 +45,10 @@ function enrichConversation(convDoc) {
       } else if (msg.sender === 'ai') {
         msg.senderName = 'NutriBot AI';
         msg.senderAvatar = 'https://api.iconify.design/lucide:bot.svg?color=%23176b3a';
+      } else if (msg.sender === 'admin') {
+        const staff = msg.staffName || (m.senderName && m.senderName !== 'Admin' ? m.senderName : '');
+        msg.senderName = 'Admin';
+        msg.staffName = staff;
       }
       return msg;
     });
@@ -53,8 +57,8 @@ function enrichConversation(convDoc) {
   return conv;
 }
 
-// GET /api/support/conversations — list for admin
-router.get('/conversations', protect, staffOnly, async (req, res, next) => {
+// GET /api/support/conversations - list for admin / support / sales / manager
+router.get('/conversations', protect, authorizeRoles('admin', 'support', 'cskh', 'sales', 'manager'), async (req, res, next) => {
   try {
     const { status, search, page = 1, limit = 50 } = req.query;
     const filter = {};
@@ -143,8 +147,8 @@ router.get('/conversations', protect, staffOnly, async (req, res, next) => {
   }
 });
 
-// GET /api/support/conversations/:id — detail
-router.get('/conversations/:id', protect, staffOnly, async (req, res, next) => {
+// GET /api/support/conversations/:id - detail
+router.get('/conversations/:id', protect, authorizeRoles('admin', 'support', 'cskh', 'sales', 'manager'), async (req, res, next) => {
   try {
     const conv = await Conversation.findById(req.params.id)
       .populate('customer', 'name email phone avatar')
@@ -168,8 +172,8 @@ router.get('/conversations/:id', protect, staffOnly, async (req, res, next) => {
   }
 });
 
-// POST /api/support/conversations/:id/assign — take over conversation
-router.post('/conversations/:id/assign', protect, hasRole('support', 'admin'), async (req, res, next) => {
+// POST /api/support/conversations/:id/assign - take over conversation
+router.post('/conversations/:id/assign', protect, hasRole('admin', 'support', 'cskh', 'sales', 'manager'), async (req, res, next) => {
   try {
     const conv = await Conversation.findById(req.params.id)
       .populate('customer', 'name email phone avatar')
@@ -191,8 +195,8 @@ router.post('/conversations/:id/assign', protect, hasRole('support', 'admin'), a
   }
 });
 
-// POST /api/support/conversations/:id/reply — admin reply
-router.post('/conversations/:id/reply', protect, hasRole('support', 'admin'), async (req, res, next) => {
+// POST /api/support/conversations/:id/reply - staff reply
+router.post('/conversations/:id/reply', protect, hasRole('admin', 'support', 'cskh', 'sales', 'manager'), async (req, res, next) => {
   try {
     const { content } = req.body;
     if (!content || !content.trim()) {
@@ -207,9 +211,11 @@ router.post('/conversations/:id/reply', protect, hasRole('support', 'admin'), as
       return res.status(404).json({ success: false, message: 'Hội thoại không tồn tại' });
     }
 
+    const staffName = req.user.name || 'Admin';
     const msg = {
       sender: 'admin',
-      senderName: req.user.name || 'Nhân viên hỗ trợ',
+      senderName: 'Admin', // Phía khách hàng chỉ thấy duy nhất tên là Admin
+      staffName: staffName, // Phân biệt người gửi thực tế
       senderAvatar: req.user.avatar || '',
       content: content.trim(),
       timestamp: new Date(),
@@ -234,8 +240,8 @@ router.post('/conversations/:id/reply', protect, hasRole('support', 'admin'), as
   }
 });
 
-// PUT /api/support/conversations/:id/status — update status
-router.put('/conversations/:id/status', protect, hasRole('support', 'admin'), async (req, res, next) => {
+// PUT /api/support/conversations/:id/status - update status
+router.put('/conversations/:id/status', protect, hasRole('admin', 'support', 'cskh', 'sales', 'manager'), async (req, res, next) => {
   try {
     const { status } = req.body;
     const allowed = ['AI_PROCESSING', 'WAITING_FOR_ADMIN', 'ADMIN_PROCESSING', 'RESOLVED'];
@@ -262,7 +268,7 @@ router.put('/conversations/:id/status', protect, hasRole('support', 'admin'), as
   }
 });
 
-// POST /api/support/request-human — customer requests human support
+// POST /api/support/request-human - customer requests human support
 router.post('/request-human', optionalAuth, async (req, res, next) => {
   try {
     const { sessionId, customerInfo } = req.body;
@@ -304,7 +310,7 @@ router.post('/request-human', optionalAuth, async (req, res, next) => {
     conv.messages.push({
       sender: 'ai',
       senderName: 'NutriBot',
-      content: 'NutriBot đã chuyển yêu cầu của bạn đến chuyên viên tư vấn Evergreen Mart. Nhân viên sẽ phản hồi trực tiếp cho bạn tại đây trong giây lát! 🌿',
+      content: 'NutriBot đã chuyển yêu cầu của bạn đến chuyên viên tư vấn Evergreen Mart. Nhân viên sẽ phản hồi trực tiếp cho bạn tại đây trong giây lát! ',
       timestamp: new Date(),
     });
     conv.lastMessage = 'Yêu cầu gặp nhân viên tư vấn';

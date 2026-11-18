@@ -1,4 +1,4 @@
-/* ===== Promotions Page — Xanh Lá ===== */
+/* ===== Promotions Page - Xanh Lá ===== */
 
 /* ── Breadcrumb ── */
 .promo-breadcrumb {
@@ -338,7 +338,7 @@
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
 }
 
-/* Card color variants — top accent bar */
+/* Card color variants - top accent bar */
 .promo-card--green::before {
   content: '';
   display: block;

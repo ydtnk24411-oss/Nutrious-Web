@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { CategoryApiService, ApiCategory } from '../../shared/services/category-api.service';
 import { calcAddOnUnitDiscount, formatPrice } from '../../shared/services/cart.service';
+import { AdminAuthService } from '../../shared/services/admin-auth.service';
 
 type ModalMode = 'create' | 'edit';
 
@@ -73,6 +74,9 @@ const EMPTY_FORM = (): Partial<ApiProduct> => ({
   styleUrl: './products.component.css',
 })
 export class AdminProductsComponent implements OnInit {
+  protected auth = inject(AdminAuthService);
+  canManageProducts = computed(() => ['admin', 'manager', 'marketing'].includes((this.auth.user()?.role || '').toLowerCase()));
+  isSales = computed(() => (this.auth.user()?.role || '').toLowerCase() === 'sales');
   private productApi = inject(ProductApiService);
   private categoryApi = inject(CategoryApiService);
   private route = inject(ActivatedRoute);

@@ -1,3 +1,4 @@
+// Evergreen Mart API Service
 const path = require('path');
 const fs = require('fs');
 const serviceEnvPath = path.join(__dirname, '.env');
@@ -10,6 +11,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
+const compression = require('compression');
 
 const productRoutes = require('./routes/products');
 const comboRoutes = require('./routes/combos');
@@ -30,30 +32,36 @@ const nutritionRoutes = require('./routes/nutrition');
 const footerRoutes = require('./routes/footer');
 const flashSaleRoutes = require('./routes/flashSales');
 const shippingRoutes = require('./routes/shipping');
+const storeRoutes = require('./routes/stores');
 const locationRoutes = require('./routes/locations');
 const analyticsRoutes = require('./routes/analytics');
 const cartRoutes = require('./routes/cart');
 const notificationRoutes = require('./routes/notifications');
-const { errorHandler } = require('./middleware/errorHandler');
+const auditLogRoutes = require('./routes/auditLogs');
+const bannerRoutes = require('./routes/banners');
+const { errorHandler, notFound } = require('./middleware/errorHandler');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const allowedOrigins = new Set([
   'http://localhost:4200',
   'http://127.0.0.1:4200',
+  'http://[::1]:4200',
   'http://localhost:4201',
   'http://127.0.0.1:4201',
+  'http://[::1]:4201',
 ]);
 
 // ── Middleware ────────────────────────────────────────────
+app.use(compression());
 app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      if (allowedOrigins.has(origin)) {
+      if (allowedOrigins.has(origin) || /^http:\/\/(localhost|127\.0\.0\.1|\[::1\]):(4200|4201|3000)$/.test(origin)) {
         return callback(null, true);
       }
-      return callback(new Error('Origin is not allowed by CORS'));
+      return callback(null, false);
     },
     credentials: true,
   })
@@ -108,10 +116,13 @@ app.use('/api/nutrition', nutritionRoutes);
 app.use('/api/footer', footerRoutes);
 app.use('/api/flash-sales', flashSaleRoutes);
 app.use('/api/shipping', shippingRoutes);
+app.use('/api/stores', storeRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/audit-logs', auditLogRoutes);
+app.use('/api/banners', bannerRoutes);
 
 // ── Health check ──────────────────────────────────────────
 app.get('/api/health', (_req, res) => {
@@ -123,6 +134,9 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
+// ── 404 Handler cho endpoint không tồn tại ────────────────
+app.use(notFound);
+
 // ── Error handler ─────────────────────────────────────────
 app.use(errorHandler);
 
@@ -131,16 +145,24 @@ async function startServer() {
   try {
     const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/xanh-la';
     mongoose.connection.on('disconnected', () => {
-      console.error('⚠️ MongoDB connection lost; waiting for Mongoose to reconnect');
+      console.error('[WARN] MongoDB connection lost; waiting for Mongoose to reconnect');
     });
     mongoose.connection.on('reconnected', () => {
-      console.log('✅ MongoDB connection restored');
+      console.log('[OK] MongoDB connection restored');
     });
 
     await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 12000,
     });
-    console.log('✅ MongoDB connected');
+    console.log('[OK] MongoDB connected');
+
+    // Khởi động tiến trình tự động xả hàng cuối ngày (18:00) và reset giá gốc (05:00)
+    const { initClearanceScheduler } = require('./utils/clearanceScheduler');
+    initClearanceScheduler();
+
+    // Khởi động tiến trình tự động hủy đơn VietQR quá hạn 15 phút và hoàn kho tức thì
+    const { startOrderExpiryScheduler } = require('./utils/orderExpiryScheduler');
+    startOrderExpiryScheduler(30000);
 
     // Dọn dẹp các bản ghi SearchLog rác do bắt sự kiện gõ phím ở frontend trước đó
     const SearchLog = require('./models/SearchLog');
@@ -151,13 +173,13 @@ async function startServer() {
       ],
     }).catch(() => {});
   } catch (err) {
-    console.error('❌ MongoDB connection error:', err.message);
+    console.error('[ERROR] MongoDB connection error:', err.message);
     console.error(`   Environment file loaded from: ${envPath}`);
     console.error('   Check MONGODB_URI, Atlas network access, and database credentials.');
     process.exit(1);
   }
   app.listen(PORT, () =>
-    console.log(`🚀 Server running at http://localhost:${PORT}`)
+    console.log(`[OK] Server running at http://localhost:${PORT}`)
   );
 }
 

@@ -23,7 +23,7 @@
 
   @if (errorMsg()) {
     <div class="alert alert-danger">
-      ⚠ {{ errorMsg() }}
+      Lỗi: {{ errorMsg() }}
     </div>
   }
 
@@ -37,7 +37,7 @@
       <!-- Cột trái: Kho hàng & Bản đồ -->
       <div class="card map-card">
         <div class="card-header">
-          <div class="card-icon">📍</div>
+          <div class="card-icon">Vị trí</div>
           <div>
             <h3 class="card-title">Vị trí kho hàng</h3>
             <p class="card-desc">Chọn vị trí kho trên bản đồ hoặc tìm kiếm địa chỉ.</p>
@@ -63,7 +63,7 @@
             <div class="search-results-list">
               @for (p of searchResults(); track p.place_id) {
                 <div class="search-item" (click)="selectPlace(p)">
-                  📍 {{ p.display_name }}
+                  {{ p.display_name }}
                 </div>
               }
             </div>
@@ -142,7 +142,7 @@
         <!-- Bán kính giao hàng tối đa -->
         <div class="card">
           <div class="card-header">
-            <div class="card-icon">⚡</div>
+            <div class="card-icon">Hỏa tốc</div>
             <div>
               <h3 class="card-title">Bán kính giao hàng tối đa</h3>
               <p class="card-desc">Đảm bảo chất lượng thực phẩm tươi mát.</p>
@@ -177,7 +177,7 @@
         <!-- Bảng giá cước theo cự ly -->
         <div class="card">
           <div class="card-header">
-            <div class="card-icon">🚚</div>
+            <div class="card-icon">Tiêu chuẩn</div>
             <div>
               <h3 class="card-title">Bảng phí theo khoảng cách</h3>
               <p class="card-desc">Tự động tính theo cự ly di chuyển thực tế.</p>
@@ -232,7 +232,7 @@
         <!-- Ưu đãi theo giá trị đơn hàng -->
         <div class="card">
           <div class="card-header">
-            <div class="card-icon">🎁</div>
+            <div class="card-icon">Ưu đãi</div>
             <div>
               <h3 class="card-title">Ưu đãi phí ship theo giá trị đơn</h3>
               <p class="card-desc">Tự động trừ vào phí vận chuyển.</p>

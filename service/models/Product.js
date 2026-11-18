@@ -27,11 +27,12 @@ const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, unique: true, lowercase: true },
-    price: { type: String, required: true },           // display string "25 ₫"
+    price: { type: String, default: '' },
     priceNumber: { type: Number, required: true, min: 0 },
+    costPrice: { type: Number, default: 0, min: 0, comment: 'Đơn giá vốn nhập hàng cơ sở (VNĐ)' },
     image: { type: String, default: '' },
+    categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', default: null, index: true },
     category: { type: String, default: '' },
-    categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', default: null },
     categoryVi: { type: String, default: '' },
     description: { type: String, default: '' },
     brand: { type: String, default: '' },
@@ -58,6 +59,7 @@ const productSchema = new mongoose.Schema(
     stock: { type: Number, default: 100, min: 0 },
     reservedStock: { type: Number, default: 0, min: 0 },
     safetyBuffer: { type: Number, default: 2, min: 0 },
+    maxPurchaseQuotaPerDay: { type: Number, default: 0, min: 0, comment: 'Định mức tối đa mỗi khách được mua/ngày (Anti-Hoarding)' },
     // Combo mua kèm tiết kiệm: combo là một sản phẩm riêng có giá ưu đãi
     isCombo: { type: Boolean, default: false },
     comboStatus: {
@@ -89,5 +91,10 @@ productSchema.virtual('availableOnlineStock').get(function () {
 
 productSchema.index({ name: 'text', description: 'text' });
 productSchema.index({ categoryId: 1, stock: 1 });
+productSchema.index({ isActive: 1, createdAt: -1 });
+productSchema.index({ isActive: 1, category: 1 });
+productSchema.index({ isCombo: 1, comboStatus: 1 });
+productSchema.index({ soldCount: -1 });
+productSchema.index({ priceNumber: 1 });
 
 module.exports = mongoose.model('Product', productSchema);

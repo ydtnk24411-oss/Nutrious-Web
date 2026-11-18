@@ -21,5 +21,10 @@ const inventoryLogSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+inventoryLogSchema.index({ createdAt: -1 });
+inventoryLogSchema.index({ storeId: 1, createdAt: -1 });
+inventoryLogSchema.index({ product: 1, createdAt: -1 });
+inventoryLogSchema.index({ type: 1, createdAt: -1 });
+
 module.exports = mongoose.model('InventoryLog', inventoryLogSchema);
 

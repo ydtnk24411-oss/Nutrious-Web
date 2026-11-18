@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { CartService } from '../../shared/services/cart.service';
@@ -28,6 +29,7 @@ interface NewsItem { title: string; image: string; path: string; date: string; }
   styleUrl: './home.component.css',
 })
 export class HomeComponent implements OnInit, OnDestroy {
+  private http = inject(HttpClient);
   private cart = inject(CartService);
   private productApi = inject(ProductApiService);
   private categoryApi = inject(CategoryApiService);
@@ -38,11 +40,18 @@ export class HomeComponent implements OnInit, OnDestroy {
   readonly originImage = originImage;
   readonly fallbackProductImage = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=700&q=80';
 
-  readonly heroSlides = [
-    { eyebrow: 'TƯƠI NGON MỖI NGÀY', title: 'Đi chợ thông minh, chăm nhà thật vui.', subtitle: 'Thực phẩm tươi, sản phẩm thiết yếu và ưu đãi dành cho cả gia đình.', cta: 'Mua sắm ngay', image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1600&q=90' },
-    { eyebrow: 'BỮA CƠM NHÀ THÊM ĐỦ ĐẦY', title: 'Chọn điều tươi lành mỗi ngày.', subtitle: 'Khám phá rau củ, trái cây và nguyên liệu cho những bữa ăn ngon.', cta: 'Khám phá gian hàng', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1600&q=90' },
-    { eyebrow: 'SĂN DEAL – NHẬN ƯU ĐÃI', title: 'Mua sắm tiết kiệm, vui trọn mỗi ngày.', subtitle: 'Đừng bỏ lỡ những sản phẩm nổi bật và mã ưu đãi dành riêng cho bạn.', cta: 'Xem ưu đãi', image: 'https://images.unsplash.com/photo-1543083477-4f785aeafaa9?auto=format&fit=crop&w=1600&q=90' },
+  heroSlides: Array<{ eyebrow: string; title: string; subtitle: string; cta: string; image: string; link?: string }> = [
+    { eyebrow: 'TƯƠI SẠCH MỖI NGÀY - GIAO NHANH 2H', title: 'Đi chợ thông minh - Nông sản tươi sạch giao nhanh 2 giờ.', subtitle: 'Thực phẩm tươi VietGAP, rau củ hữu cơ và hàng tiêu dùng thiết yếu cho cả gia đình.', cta: 'Mua sắm ngay', image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1600&q=90', link: '/online-ordering' },
+    { eyebrow: 'CHUẨN NGUỒN GỐC - VÌ SỨC KHỎE GIA ĐÌNH', title: 'Thực phẩm tươi sạch mỗi ngày - An tâm cho cả gia đình.', subtitle: 'Khám phá rau củ hữu cơ, trái cây đặc sản và nguyên liệu tươi ngon chuẩn chất lượng.', cta: 'Khám phá gian hàng', image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1600&q=90', link: '/online-ordering' },
+    { eyebrow: 'SĂN DEAL HÔM NAY - NHẬN ƯU ĐÃI TỐT', title: 'Săn deal giá tốt - Mua sắm tiết kiệm cùng Evergreen Mart.', subtitle: 'Đừng bỏ lỡ Flash Sale hôm nay, mã giảm giá độc quyền và điểm thưởng tích lũy mỗi đơn hàng.', cta: 'Xem ưu đãi', image: 'https://images.unsplash.com/photo-1543083477-4f785aeafaa9?auto=format&fit=crop&w=1600&q=90', link: '/promotions' },
   ];
+  promoPopup = signal<any | null>(null);
+  showPromoPopup = signal(false);
+
+  closePromoPopup(): void {
+    this.showPromoPopup.set(false);
+    sessionStorage.setItem('dismiss_promo_popup', 'true');
+  }
   activeHero = 0;
   private heroTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -109,6 +118,22 @@ export class HomeComponent implements OnInit, OnDestroy {
   get visibleProducts(): ApiProduct[] { return this.apiProducts.slice(this.productOffset, this.productOffset + 4); }
 
   ngOnInit(): void {
+    this.http.get<any>('http://localhost:3000/api/banners').subscribe({
+      next: (res) => {
+        if (res && res.success && res.data) {
+          const activeSlides = (res.data.heroSlides || []).filter((s: any) => s.active !== false);
+          if (activeSlides.length > 0) {
+            this.heroSlides = activeSlides;
+          }
+          if (res.data.promoPopup?.enabled && !sessionStorage.getItem('dismiss_promo_popup')) {
+            this.promoPopup.set(res.data.promoPopup);
+            this.showPromoPopup.set(true);
+          }
+        }
+      },
+      error: () => {}
+    });
+
     this.voucherService.loadPublic();
     this.voucherService.refreshMine();
     this.productApi.getAll({ limit: 12, sort: 'createdAt' }).subscribe({

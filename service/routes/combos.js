@@ -11,7 +11,7 @@ const {
 
 const VALID_COMBO_STATUSES = ['active', 'paused', 'hidden'];
 
-// GET /api/combos — Danh sách Combo trong Admin (kèm tổng mua lẻ, tiết kiệm & tồn kho khả dụng tính động)
+// GET /api/combos - Danh sách Combo trong Admin (kèm tổng mua lẻ, tiết kiệm & tồn kho khả dụng tính động)
 router.get('/', protect, staffOnly, async (req, res, next) => {
   try {
     const {
@@ -93,7 +93,7 @@ router.get('/', protect, staffOnly, async (req, res, next) => {
   }
 });
 
-// GET /api/combos/:id — Xem chi tiết 1 Combo trong Admin
+// GET /api/combos/:id - Xem chi tiết 1 Combo trong Admin
 router.get('/:id', protect, staffOnly, async (req, res, next) => {
   try {
     const rawId = req.params.id;
@@ -117,7 +117,7 @@ router.get('/:id', protect, staffOnly, async (req, res, next) => {
   }
 });
 
-// POST /api/combos — Tạo mới Combo tiết kiệm trong Admin
+// POST /api/combos - Tạo mới Combo tiết kiệm trong Admin
 router.post('/', protect, adminOnly, async (req, res, next) => {
   try {
     const {
@@ -202,7 +202,7 @@ router.post('/', protect, adminOnly, async (req, res, next) => {
   }
 });
 
-// PUT /api/combos/:id — Chỉnh sửa Combo tiết kiệm trong Admin
+// PUT /api/combos/:id - Chỉnh sửa Combo tiết kiệm trong Admin
 router.put('/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const existing = await Product.findOne({ _id: req.params.id, isCombo: true });
@@ -302,7 +302,7 @@ router.put('/:id', protect, adminOnly, async (req, res, next) => {
   }
 });
 
-// PATCH /api/combos/:id/status — Đổi nhanh trạng thái Combo (Đang kinh doanh / Tạm ngừng / Ẩn)
+// PATCH /api/combos/:id/status - Đổi nhanh trạng thái Combo (Đang kinh doanh / Tạm ngừng / Ẩn)
 router.patch('/:id/status', protect, adminOnly, async (req, res, next) => {
   try {
     const { comboStatus } = req.body || {};
@@ -339,7 +339,7 @@ router.patch('/:id/status', protect, adminOnly, async (req, res, next) => {
   }
 });
 
-// DELETE /api/combos/:id — Ẩn Combo khỏi cửa hàng (giữ toàn vẹn lịch sử đơn hàng)
+// DELETE /api/combos/:id - Ẩn Combo khỏi cửa hàng (giữ toàn vẹn lịch sử đơn hàng)
 router.delete('/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const updated = await Product.findOneAndUpdate(

@@ -35,7 +35,7 @@ const INITIAL_WELCOME_MESSAGE: ChatMessage = {
   sender: 'bot',
   senderRole: 'ai',
   senderName: 'NutriBot AI',
-  text: `Xin chào, tôi là **NutriBot AI** — Trợ lý Nông sản & Dinh dưỡng Evergreen Mart.\n\nTôi có thể hỗ trợ bạn tìm kiếm nông sản hữu cơ, tư vấn thực đơn khoa học và phân tích thành phần dinh dưỡng. Bạn cũng có thể **tải ảnh nguyên liệu hoặc món ăn lên** để nhận diện chi tiết.\n\nBạn đang quan tâm đến sản phẩm hoặc thực đơn nào hôm nay?`,
+  text: `Xin chào, tôi là **NutriBot AI** - Trợ lý Nông sản & Dinh dưỡng Evergreen Mart.\n\nTôi có thể hỗ trợ bạn tìm kiếm nông sản hữu cơ, tư vấn thực đơn khoa học và phân tích thành phần dinh dưỡng. Bạn cũng có thể **tải ảnh nguyên liệu hoặc món ăn lên** để nhận diện chi tiết.\n\nBạn đang quan tâm đến sản phẩm hoặc thực đơn nào hôm nay?`,
   timestamp: new Date(),
 };
 
@@ -67,10 +67,12 @@ export class ChatbotService {
       localStorage.setItem('xanhla_chatbot_provider', 'gemini');
     } catch {}
 
-    // Polling session every 2.5s for real-time 2-way live sync with Admin Support
+    // Polling session: Chỉ poll khi khung chat đang mở hoặc đang chờ nhân viên phản hồi
     this.pollTimer = setInterval(() => {
-      this.syncSession();
-    }, 2500);
+      if (this.isOpen() || this.isStaffMode()) {
+        this.syncSession();
+      }
+    }, 4000);
 
     // Initial check
     setTimeout(() => this.syncSession(), 600);

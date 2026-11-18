@@ -3,8 +3,7 @@
   <!-- Header -->
   <div class="page-header">
     <div class="header-left">
-      <h1 class="page-title">Quản lý Tồn kho</h1>
-      <p class="page-subtitle">Theo dõi số lượng hàng hóa thực tế và lịch sử biến động kho Evergreen Mart</p>
+      <h1 class="page-title">{{ isSales() ? 'Tra cứu Tồn kho Chi nhánh' : 'Quản lý Tồn kho' }}</h1>
     </div>
     <div class="header-right">
       <div class="tab-pill-group">
@@ -16,14 +15,32 @@
         >
           Danh sách tồn kho
         </button>
-        <button
-          type="button"
-          class="tab-pill-btn"
-          [class.active]="activeTab() === 'logs'"
-          (click)="switchTab('logs')"
-        >
-          Lịch sử biến động
-        </button>
+        @if (!isSales() && (isAdmin() || isWarehouse() || isManager())) {
+          <button
+            type="button"
+            class="tab-pill-btn"
+            [class.active]="activeTab() === 'logs'"
+            (click)="switchTab('logs')"
+          >
+            Lịch sử biến động
+          </button>
+          <button
+            type="button"
+            class="tab-pill-btn"
+            [class.active]="activeTab() === 'tickets'"
+            (click)="switchTab('tickets')"
+          >
+            Phiếu nhập &amp; Kiểm kho
+          </button>
+          <button
+            type="button"
+            class="tab-pill-btn"
+            [class.active]="activeTab() === 'debts'"
+            (click)="switchTab('debts')"
+          >
+            Công nợ Nhà Cung Cấp
+          </button>
+        }
       </div>
     </div>
   </div>
@@ -37,101 +54,260 @@
     </div>
   }
 
-  <!-- KPI Cards -->
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="kpi-icon bg-green">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
-          <path d="m3.3 7 8.7 5 8.7-5"/>
-          <path d="M12 22V12"/>
-        </svg>
-      </div>
-      <div class="kpi-info">
-        <span class="kpi-label">Tổng sản phẩm</span>
-        <span class="kpi-value">{{ summary().totalProducts }}</span>
-      </div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-icon bg-blue">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-      </div>
-      <div class="kpi-info">
-        <span class="kpi-label">Đủ hàng</span>
-        <span class="kpi-value text-success">{{ summary().inStockCount }}</span>
-      </div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-icon bg-yellow">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-          <line x1="12" y1="9" x2="12" y2="13"/>
-          <line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
-      </div>
-      <div class="kpi-info">
-        <span class="kpi-label">Sắp hết hàng</span>
-        <span class="kpi-value text-warning">{{ summary().lowStockCount }}</span>
-      </div>
-    </div>
-
-    <div class="kpi-card">
-      <div class="kpi-icon bg-red">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="15" y1="9" x2="9" y2="15"/>
-          <line x1="9" y1="9" x2="15" y2="15"/>
-        </svg>
-      </div>
-      <div class="kpi-info">
-        <span class="kpi-label">Hết hàng</span>
-        <span class="kpi-value text-danger">{{ summary().outOfStockCount }}</span>
-      </div>
-    </div>
-  </div>
-
   @if (activeTab() === 'list') {
+    <!-- KPI Cards for Product Stock (Interactive Click-to-Filter) -->
+    <div class="kpi-grid">
+      <div
+        class="kpi-card kpi-card--all"
+        [class.is-active]="selectedStatus() === 'all'"
+        (click)="onCardFilter('all')"
+        title="Bấm để xem tất cả sản phẩm"
+      >
+        <div class="kpi-icon bg-green">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+            <path d="m3.3 7 8.7 5 8.7-5"/>
+            <path d="M12 22V12"/>
+          </svg>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Tổng sản phẩm</span>
+          <span class="kpi-value">{{ summary().totalProducts }}</span>
+        </div>
+      </div>
+
+      <div
+        class="kpi-card kpi-card--in-stock"
+        [class.is-active]="selectedStatus() === 'in_stock'"
+        (click)="onCardFilter('in_stock')"
+        title="Bấm để lọc sản phẩm đủ hàng"
+      >
+        <div class="kpi-icon bg-blue">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Đủ hàng</span>
+          <span class="kpi-value text-success">{{ summary().inStockCount }}</span>
+        </div>
+      </div>
+
+      <div
+        class="kpi-card kpi-card--low-stock"
+        [class.is-active]="selectedStatus() === 'low_stock'"
+        (click)="onCardFilter('low_stock')"
+        title="Bấm để lọc sản phẩm sắp hết hàng"
+      >
+        <div class="kpi-icon bg-yellow">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Sắp hết hàng</span>
+          <span class="kpi-value text-warning">{{ summary().lowStockCount }}</span>
+        </div>
+      </div>
+
+      <div
+        class="kpi-card kpi-card--out-of-stock"
+        [class.is-active]="selectedStatus() === 'out_of_stock'"
+        (click)="onCardFilter('out_of_stock')"
+        title="Bấm để lọc sản phẩm hết hàng"
+      >
+        <div class="kpi-icon bg-red">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Hết hàng</span>
+          <span class="kpi-value text-danger">{{ summary().outOfStockCount }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chương trình Xả hàng Cuối ngày (Clearance Flash Sale) - Thiết kế gọn gàng 1 dòng -->
+    <div class="clearance-banner" style="background:linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);border:1.5px solid #fde68a;border-radius:12px;padding:10px 18px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;box-shadow:0 1px 4px rgba(217,119,6,0.06);">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:36px;height:36px;border-radius:8px;background:#fef08a;color:#b45309;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <strong style="font-size:13.5px;color:#92400e;">Xả hàng Cuối ngày &amp; Đồ tươi Cận date (Flash Sale -30%)</strong>
+          @if (clearanceActive()) {
+            <span style="background:#dc2626;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:0.04em;">ĐANG XẢ KHO ({{ clearanceCount() }} SP)</span>
+          } @else {
+            <span style="background:#fef08a;color:#78350f;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">TỰ ĐỘNG: 17:00 - 21:30</span>
+          }
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;">
+        @if (clearanceActive()) {
+          <button
+            type="button"
+            (click)="resetClearanceAction()"
+            [disabled]="clearanceLoading()"
+            style="padding:8px 14px;background:#ffffff;border:1.5px solid #d97706;color:#b45309;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.16s;"
+          >
+            <span>Kết thúc xả hàng (Về giá gốc)</span>
+          </button>
+        } @else {
+          <button
+            type="button"
+            (click)="triggerClearanceAction()"
+            [disabled]="clearanceLoading()"
+            style="padding:8px 14px;background:#d97706;border:1px solid #b45309;color:#ffffff;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 6px rgba(217,119,6,0.25);transition:all 0.16s;"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>Kích hoạt Xả hàng ngay (-30%)</span>
+          </button>
+        }
+      </div>
+    </div>
+
     <!-- Filter Toolbar -->
     <div class="filter-card">
-      <div class="search-input-wrapper">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"/>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        <input
-          type="text"
-          placeholder="Tìm theo tên hoặc mã sản phẩm..."
-          [ngModel]="searchQuery()"
-          (ngModelChange)="searchQuery.set($event); loadInventory()"
-        />
+      <div class="filter-header-bar">
+        <span class="filter-badge-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+          </svg>
+          Bộ lọc &amp; Tìm kiếm tồn kho
+        </span>
+
+        <div style="display:flex;align-items:center;gap:10px;">
+          @if (selectedStatus() !== 'all') {
+            <div style="display:flex;align-items:center;gap:6px;background:#f0fdf4;border:1.5px solid #86efac;padding:3px 10px;border-radius:9999px;font-size:12px;font-weight:700;color:#166534;">
+              <span>Đang lọc: {{ getStatusFilterLabel() }}</span>
+              <button
+                type="button"
+                (click)="onCardFilter('all')"
+                style="border:none;background:transparent;cursor:pointer;color:#166534;font-size:14px;line-height:1;padding:0;font-weight:bold;"
+                title="Bỏ lọc trạng thái này"
+              >
+                &times;
+              </button>
+            </div>
+          }
+
+          @if (hasActiveFilters()) {
+            <button
+              type="button"
+              class="btn-reset-filters"
+              (click)="resetAllFilters()"
+              title="Xóa toàn bộ bộ lọc và tìm kiếm về mặc định"
+            >
+              <i class="bi bi-arrow-counterclockwise"></i>
+              <span>Đặt lại bộ lọc</span>
+            </button>
+          }
+
+          <button
+            type="button"
+            (click)="toggleShowThumbnails()"
+            class="btn-reset-filters"
+            style="background:#f8fafc;border-color:#cbd5e1;color:#475569;"
+            [title]="showThumbnails() ? 'Ẩn cột ảnh để tải trang siêu tốc' : 'Hiện cột ảnh sản phẩm'"
+          >
+            <i class="bi" [class.bi-image]="!showThumbnails()" [class.bi-image-fill]="showThumbnails()"></i>
+            <span>{{ showThumbnails() ? 'Ẩn ảnh (Tăng tốc)' : 'Hiện ảnh' }}</span>
+          </button>
+        </div>
       </div>
 
-      <div class="filter-controls">
-        <select
-          [ngModel]="selectedCategory()"
-          (ngModelChange)="selectedCategory.set($event); onFilterChange()"
-          class="filter-select"
-        >
-          <option value="">Tất cả danh mục</option>
-          @for (cat of categories(); track cat._id) {
-            <option [value]="cat.name">{{ cat.name }}</option>
-          }
-        </select>
+      <div class="filter-row-main">
+        <div class="search-input-wrapper">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Tìm theo tên hoặc mã sản phẩm..."
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event); loadInventory()"
+          />
+        </div>
 
-        <select
-          [ngModel]="selectedStatus()"
-          (ngModelChange)="selectedStatus.set($event); onFilterChange()"
-          class="filter-select"
-        >
-          <option value="all">Tất cả trạng thái</option>
-          <option value="in_stock">Còn hàng</option>
-          <option value="low_stock">Sắp hết hàng</option>
-          <option value="out_of_stock">Hết hàng</option>
-        </select>
+        <div class="filter-controls">
+          @if (!isManager() && (isAdmin() || isWarehouse() || isSales())) {
+            <div class="filter-control-item" style="border-color:#15803d;background:#f0fdf4;">
+              <label class="filter-control-label" style="color:#166534;">
+                <i class="bi bi-geo-alt-fill text-success"></i> Chi nhánh:
+              </label>
+              <select
+                [ngModel]="inventoryFilterStoreId()"
+                (ngModelChange)="onStoreFilterChange($event)"
+                class="filter-select"
+                style="color:#166534;"
+                title="Lọc tồn kho theo từng chi nhánh cụ thể"
+              >
+                @if (!isManager() && !isWarehouse()) {
+                  <option value="all">Toàn bộ kho &amp; chi nhánh (Tổng công ty)</option>
+                }
+                @for (st of storesList(); track st.id) {
+                  @if (!isManager() || st.id === managerStoreId()) {
+                    <option [value]="st.id">{{ st.name }}</option>
+                  }
+                }
+              </select>
+            </div>
+          }
+
+          <div class="filter-control-item">
+            <label class="filter-control-label">
+              <i class="bi bi-grid-fill text-primary"></i> Danh mục:
+            </label>
+            <select
+              [ngModel]="selectedCategory()"
+              (ngModelChange)="selectedCategory.set($event); onFilterChange()"
+              class="filter-select"
+            >
+              <option value="">Tất cả danh mục</option>
+              @for (cat of categories(); track cat._id) {
+                <option [value]="cat.name">{{ cat.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="filter-control-item">
+            <label class="filter-control-label">
+              <i class="bi bi-box-seam-fill text-warning"></i> Loại hàng:
+            </label>
+            <select
+              [ngModel]="selectedType()"
+              (ngModelChange)="selectedType.set($event); onFilterChange()"
+              class="filter-select"
+            >
+              <option value="all">Tất cả mặt hàng</option>
+              <option value="single">Sản phẩm lẻ</option>
+              <option value="combo">Combo nông sản</option>
+            </select>
+          </div>
+
+          <div class="filter-control-item">
+            <label class="filter-control-label">
+              <i class="bi bi-check-circle-fill text-info"></i> Tồn kho:
+            </label>
+            <select
+              [ngModel]="selectedStatus()"
+              (ngModelChange)="selectedStatus.set($event); onFilterChange()"
+              class="filter-select"
+            >
+              <option value="all">Tất cả trạng thái</option>
+              <option value="in_stock">Còn hàng</option>
+              <option value="low_stock">Sắp hết hàng</option>
+              <option value="out_of_stock">Hết hàng</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -147,74 +323,100 @@
           <p>Không tìm thấy sản phẩm nào phù hợp điều kiện lọc.</p>
         </div>
       } @else {
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th style="width: 60px;">Ảnh</th>
-              <th>Sản phẩm</th>
-              <th>Danh mục</th>
-              <th>Đơn vị tính</th>
-              <th style="text-align: right;">Số lượng tồn</th>
-              <th style="text-align: right;">Mức tối thiểu</th>
-              <th>Trạng thái</th>
-              <th style="width: 140px; text-align: right;">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of items(); track item._id) {
-              @let status = getStatusBadge(item);
+        <div class="table-responsive" style="overflow-x:auto;">
+          <table class="admin-table">
+            <thead>
               <tr>
-                <td>
-                  <img
-                    [src]="item.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&q=80'"
-                    [alt]="item.name"
-                    class="product-thumb"
-                    loading="lazy"
-                  />
-                </td>
-                <td>
-                  <div class="product-info-col">
-                    <span class="product-name">{{ item.name }}</span>
-                    <span class="product-code">Mã: {{ item._id.slice(-6).toUpperCase() }}</span>
-                  </div>
-                </td>
-                <td>
-                  <span class="category-tag">{{ item.categoryVi || item.category || 'Nông sản' }}</span>
-                </td>
-                <td>
-                  <span class="unit-text">{{ item.unit || 'kg' }}</span>
-                </td>
-                <td style="text-align: right;">
-                  <span class="stock-number" [class.text-danger]="item.stock <= 0" [class.text-warning]="item.stock > 0 && item.stock <= (item.minStock || 10)" style="font-variant-numeric: tabular-nums;">
-                    {{ item.stock }}
-                  </span>
-                </td>
-                <td style="text-align: right;">
-                  <span class="text-muted" style="font-variant-numeric: tabular-nums;">{{ item.minStock || 10 }}</span>
-                </td>
-                <td>
-                  <span class="status-badge" [ngClass]="status.cssClass">
-                    {{ status.text }}
-                  </span>
-                </td>
-                <td style="text-align: right;">
-                  <button
-                    type="button"
-                    class="btn-action-primary"
-                    (click)="openAdjustModal(item)"
-                    title="Điều chỉnh số lượng kho"
-                  >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M12 20h9"/>
-                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                    </svg>
-                    <span>Cập nhật</span>
-                  </button>
-                </td>
+                @if (showThumbnails()) {
+                  <th style="width: 60px; text-align: center;">Ảnh</th>
+                }
+                <th style="min-width: 240px;">Sản phẩm</th>
+                <th style="min-width: 150px; white-space: nowrap;">Danh mục</th>
+                <th>Đơn vị tính</th>
+                <th style="text-align: right;">Số lượng tồn</th>
+                <th style="text-align: right;">Mức tối thiểu</th>
+                <th>Trạng thái</th>
+                @if (!isSales()) {
+                  <th style="width: 230px; text-align: right;">{{ (isAdmin() || isManager()) ? 'Minh chứng & Cấu hình' : 'Minh chứng thẻ kho' }}</th>
+                }
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (item of items(); track item._id) {
+                @let status = getStatusBadge(item);
+                <tr>
+                  @if (showThumbnails()) {
+                    <td style="width: 60px; text-align: center;">
+                      <img
+                        [src]="item.image || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&q=80'"
+                        [alt]="item.name"
+                        class="product-thumb"
+                        loading="lazy"
+                        decoding="async"
+                        (error)="$any($event.target).src = 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&q=80'"
+                      />
+                    </td>
+                  }
+                  <td>
+                    <div class="product-info-col">
+                      <span class="product-name">{{ item.name }}</span>
+                      <span class="product-code">Mã: {{ item._id.slice(-6).toUpperCase() }}</span>
+                    </div>
+                  </td>
+                  <td style="white-space: nowrap;">
+                    <span class="category-tag">{{ item.categoryVi || item.category || 'Nông sản' }}</span>
+                  </td>
+                  <td>
+                    <span class="unit-text">{{ item.unit || 'kg' }}</span>
+                  </td>
+                  <td style="text-align: right;">
+                    <span class="stock-number" [class.text-danger]="item.stock <= 0" [class.text-warning]="item.stock > 0 && item.stock <= (item.minStock || 10)" style="font-variant-numeric: tabular-nums;">
+                      {{ item.stock }}
+                    </span>
+                  </td>
+                  <td style="text-align: right;">
+                    <span class="text-muted" style="font-variant-numeric: tabular-nums;">{{ item.minStock || 10 }}</span>
+                  </td>
+                  <td>
+                    <span class="status-badge" [ngClass]="status.cssClass">
+                      {{ status.text }}
+                    </span>
+                  </td>
+                  @if (!isSales()) {
+                    <td style="text-align: right; white-space: nowrap;">
+                      <div style="display:inline-flex;align-items:center;gap:6px;justify-content:flex-end;">
+                        <button
+                          type="button"
+                          class="btn-action-outline"
+                          style="padding:5px 10px;font-size:12px;color:#1e293b;border-color:#cbd5e1;background:#fff;display:inline-flex;align-items:center;gap:5px;"
+                          (click)="viewProductLogs(item)"
+                          title="Xem toàn bộ lịch sử xuất/nhập/bán và mã chứng từ minh chứng cho số tồn này"
+                        >
+                          <i class="bi bi-clock-history text-primary"></i>
+                          <span>Thẻ kho</span>
+                        </button>
+
+                        @if (isAdmin() || isManager()) {
+                          <button
+                            type="button"
+                            class="btn-action-outline"
+                            style="padding:5px 10px;font-size:12px;color:#15803d;border-color:#bbf7d0;background:#f0fdf4;display:inline-flex;align-items:center;gap:5px;"
+                            (click)="openStoreConfigModal(item)"
+                            title="Cài đặt mức tồn đệm an toàn (Safety Buffer) và giá xả hàng cận hạn"
+                          >
+                            <i class="bi bi-sliders"></i>
+                            <span>Cấu hình bán</span>
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+            
+          </table>
+        </div>
 
         @if (totalPages() > 1) {
           <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid #e5e7eb;background:#fafaf9">
@@ -230,7 +432,100 @@
         }
       }
     </div>
-  } @else {
+  }
+
+  @else if (activeTab() === 'logs') {
+
+    <!-- Filter Toolbar -->
+    <div class="filter-card" style="margin-bottom:16px;">
+      <div class="filter-header-bar">
+        <span class="filter-badge-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+          </svg>
+          Bộ lọc thẻ kho &amp; Lịch sử biến động
+        </span>
+
+        <div style="display:flex;align-items:center;gap:10px;">
+          @if (hasActiveLogFilters()) {
+            <button
+              type="button"
+              class="btn-reset-filters"
+              (click)="resetLogFilters()"
+              title="Xóa toàn bộ bộ lọc và tìm kiếm về mặc định"
+            >
+              <i class="bi bi-arrow-counterclockwise"></i>
+              <span>Đặt lại bộ lọc</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="filter-row-main">
+        <div class="search-input-wrapper">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Tìm theo tên sản phẩm, lý do, người lập, mã chứng từ..."
+            [ngModel]="logSearchQuery()"
+            (ngModelChange)="onLogSearch($event)"
+          />
+          @if (logSearchQuery()) {
+            <button
+              type="button"
+              (click)="onLogSearch('')"
+              style="border:none;background:transparent;cursor:pointer;color:#94a3b8;font-size:16px;padding:0 6px;"
+              title="Xóa từ khóa tìm kiếm"
+            >
+              &times;
+            </button>
+          }
+        </div>
+
+        <div class="filter-controls">
+          @if (isAdmin() || isWarehouse() || isManager()) {
+            <div class="filter-control-item">
+              <label class="filter-control-label">
+                <i class="bi bi-geo-alt-fill text-success"></i> Chi nhánh:
+              </label>
+              <select
+                class="filter-select"
+                [ngModel]="getEffectiveStoreId()"
+                (ngModelChange)="onLogStoreChange($event)"
+              >
+                @if (isAdmin()) {
+                  <option value="all">Toàn bộ kho &amp; chi nhánh (Tổng công ty)</option>
+                }
+                @for (store of storesList(); track store.id) {
+                  <option [value]="store.id">{{ store.name }}</option>
+                }
+              </select>
+            </div>
+          }
+
+          <div class="filter-control-item">
+            <label class="filter-control-label">
+              <i class="bi bi-funnel"></i> Loại biến động:
+            </label>
+            <select
+              class="filter-select"
+              [ngModel]="logTypeFilter()"
+              (ngModelChange)="onLogTypeChange($event)"
+            >
+              <option value="all">Tất cả loại biến động</option>
+              <option value="import">Nhập kho (Nhập NCC, Nhập điều chuyển)</option>
+              <option value="export">Xuất kho (Bán hàng, Hủy hỏng, Xuất chuyển)</option>
+              <option value="adjustment">Điều chỉnh kiểm kê thực tế</option>
+              <option value="order_cancel">Hủy đơn hoàn tồn</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Tab Logs -->
     <div class="table-card">
       <div class="card-header-bar">
@@ -252,12 +547,36 @@
             </div>
           }
 
-          <button type="button" class="log-export-btn" (click)="exportLogsCsv()" [disabled]="logs().length === 0">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-            <span>Xuất báo cáo CSV</span>
-          </button>
+          <div class="admin-export-wrap">
+            <button
+              type="button"
+              class="admin-btn-secondary"
+              style="white-space:nowrap;padding:7px 14px;display:inline-flex;align-items:center;gap:6px"
+              (click)="toggleExportMenu()"
+              [disabled]="logs().length === 0"
+              title="Xuất lịch sử biến động kho"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span>Xuất file</span>
+              <i class="bi bi-chevron-down" style="font-size:10px"></i>
+            </button>
+            @if (exportMenuOpen()) {
+              <div class="admin-export-popover">
+                <button type="button" class="admin-pop-item" (click)="exportLogs('xlsx'); closeExportMenu()">
+                  <i class="bi bi-file-earmark-excel" style="color:#16a34a"></i>
+                  <span>Xuất Excel (.xlsx)</span>
+                </button>
+                <button type="button" class="admin-pop-item" (click)="exportLogs('csv'); closeExportMenu()">
+                  <i class="bi bi-file-earmark-text" style="color:#2563eb"></i>
+                  <span>Xuất CSV (.csv)</span>
+                </button>
+              </div>
+            }
+          </div>
         </div>
       </div>
       @if (loading()) {
@@ -268,57 +587,86 @@
       } @else if (logs().length === 0) {
         <div class="table-empty">
           <p>Chưa có lịch sử điều chỉnh tồn kho nào được ghi nhận.</p>
-        </div>
-      } @else {
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Thời gian</th>
-              <th>Sản phẩm</th>
-              <th>Loại thay đổi</th>
-              <th style="text-align: right;">Biến động</th>
-              <th style="text-align: right;">Tồn trước</th>
-              <th style="text-align: right;">Tồn sau</th>
-              <th>Lý do & Ghi chú</th>
-              <th>Người thực hiện</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (log of logs(); track log._id) {
+        </div>} @else {
+        <div class="table-responsive" style="overflow-x:auto;">
+          <table class="admin-table">
+            <thead>
               <tr>
-                <td class="text-muted" style="white-space: nowrap;">
-                  {{ log.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                <th class="" style="min-width: 140px; white-space: nowrap;">Thời gian</th>
+                @if (getEffectiveStoreId() === 'all') {
+                <th style="min-width: 180px; white-space: nowrap;">Chi nhánh / Kho</th>
+              }
+              <th style="min-width: 200px;">Sản phẩm</th>
+                <th style="min-width: 130px; white-space: nowrap;">Loại thay đổi</th>
+                <th style="text-align: right; min-width: 110px; white-space: nowrap;">Biến động</th>
+                <th style="text-align: right; min-width: 100px; white-space: nowrap;">Tồn trước</th>
+                <th style="text-align: right; min-width: 100px; white-space: nowrap;">Tồn sau</th>
+                <th style="min-width: 220px;">Lý do & Ghi chú</th>
+                <th style="min-width: 140px; white-space: nowrap;">Người thực hiện</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (log of logs(); track log._id) {
+                <tr>
+                  <td class="text-muted" style="white-space: nowrap;">
+                    {{ log.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                  </td>
+                  @if (getEffectiveStoreId() === 'all') {
+                    <td>
+                      <span class="ticket-badge is-blue" style="font-size:11.5px;padding:3px 8px;">
+                        {{ log.storeName || getStoreDisplayName(log.storeId) }}
+                      </span>
+                    </td>
+                  }
+                  <td>
+                    <span class="product-name">{{ log.productName }}</span>
+                  </td>
+                  <td>
+                    <span class="log-type-tag" [class.bg-import]="log.delta > 0" [class.bg-export]="log.delta < 0">
+                      {{ log.type }}
+                    </span>
+                  </td>
+                  <td style="text-align: right;">
+                    <span class="delta-value" [class.text-success]="log.delta > 0" [class.text-danger]="log.delta < 0" style="font-variant-numeric: tabular-nums;">
+                      {{ log.delta > 0 ? '+' + log.delta : log.delta }}
+                    </span>
+                  </td>
+                  <td style="text-align: right; font-variant-numeric: tabular-nums;">{{ log.oldStock }}</td>
+                  <td class="font-bold" style="text-align: right; font-variant-numeric: tabular-nums;">{{ log.newStock }}</td>
+                  <td>
+                    <div class="reason-col">
+                      <span class="reason-title">{{ log.reason }}</span>
+                      @if (log.note) {
+                        <span class="reason-note text-muted">{{ log.note }}</span>
+                      }
+                    </div>
+                  </td>
+                  <td>
+                    <span class="user-badge">{{ log.updatedBy?.name || 'Admin' }}</span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+            <tfoot class="sticky-table-footer">
+              <tr class="summary-total-row">
+                <td [attr.colspan]="getEffectiveStoreId() === 'all' ? 4 : 3" style="font-weight:700;color:#1e3a24;background:#f8fafc;">
+                  <span class="badge-total-pill">TỔNG CỘNG TRANG NÀY ({{ logs().length }} BIẾN ĐỘNG):</span>
                 </td>
-                <td>
-                  <span class="product-name">{{ log.productName }}</span>
-                </td>
-                <td>
-                  <span class="log-type-tag" [class.bg-import]="log.delta > 0" [class.bg-export]="log.delta < 0">
-                    {{ log.type }}
+                <td style="text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; background:#f8fafc;">
+                  <span [class.text-success]="logSummary().netDelta > 0" [class.text-danger]="logSummary().netDelta < 0" style="font-size:14px">
+                    {{ logSummary().netDelta > 0 ? '+' + logSummary().netDelta : logSummary().netDelta }}
                   </span>
-                </td>
-                <td style="text-align: right;">
-                  <span class="delta-value" [class.text-success]="log.delta > 0" [class.text-danger]="log.delta < 0" style="font-variant-numeric: tabular-nums;">
-                    {{ log.delta > 0 ? '+' + log.delta : log.delta }}
-                  </span>
-                </td>
-                <td style="text-align: right; font-variant-numeric: tabular-nums;">{{ log.oldStock }}</td>
-                <td class="font-bold" style="text-align: right; font-variant-numeric: tabular-nums;">{{ log.newStock }}</td>
-                <td>
-                  <div class="reason-col">
-                    <span class="reason-title">{{ log.reason }}</span>
-                    @if (log.note) {
-                      <span class="reason-note text-muted">{{ log.note }}</span>
-                    }
+                  <div style="font-size:11px;font-weight:600;color:#64748b;margin-top:2px">
+                    Nhập: +{{ logSummary().totalImport }} | Xuất: -{{ logSummary().totalExport }}
                   </div>
                 </td>
-                <td>
-                  <span class="user-badge">{{ log.updatedBy?.name || 'Admin' }}</span>
+                <td colspan="4" style="background:#f8fafc;color:#475569;font-size:12.5px;font-weight:600;vertical-align:middle">
+                  Tổng lũy kế toàn sổ cái: <strong style="color:#0f172a">{{ logTotal() }}</strong> biến động
                 </td>
               </tr>
-            }
-          </tbody>
-        </table>
+            </tfoot>
+          </table>
+        </div>
 
         @if (logTotalPages() > 1) {
           <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid #e5e7eb;background:#fafaf9">
@@ -335,6 +683,616 @@
       }
     </div>
   }
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- TAB 3: PHIẾU NHẬP KHO & ĐIỀU CHUYỂN LIÊN KHO (TICKETS)         -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  @else if (activeTab() === 'tickets') {
+    <!-- 4 Ticket KPI Cards (Click-to-Filter) -->
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 20px;">
+      <div
+        class="kpi-card kpi-card--all"
+        [class.is-active]="ticketStatusFilter() === 'all'"
+        (click)="ticketStatusFilter.set('all'); ticketPage.set(1); loadTickets()"
+        title="Bấm để xem tất cả phiếu kho"
+      >
+        <div class="kpi-icon bg-blue">
+          <i class="bi bi-file-earmark-text" style="font-size:20px;"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Tổng phiếu kho</span>
+          <span class="kpi-value">{{ serverTicketSummary()?.total ?? ticketTotal() }}</span>
+        </div>
+      </div>
+
+      <div
+        class="kpi-card kpi-card--low-stock"
+        [class.is-active]="ticketStatusFilter() === 'pending_approval'"
+        (click)="ticketStatusFilter.set('pending_approval'); ticketPage.set(1); loadTickets()"
+        title="Bấm để lọc phiếu đang chờ duyệt"
+      >
+        <div class="kpi-icon bg-yellow">
+          <i class="bi bi-clock-history" style="font-size:20px;"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Chờ duyệt</span>
+          <span class="kpi-value text-warning">{{ ticketSummary().pending }}</span>
+        </div>
+      </div>
+
+      <div
+        class="kpi-card kpi-card--all"
+        [class.is-active]="ticketStatusFilter() === 'in_transit'"
+        (click)="ticketStatusFilter.set('in_transit'); ticketPage.set(1); loadTickets()"
+        title="Bấm để lọc phiếu đang vận chuyển"
+      >
+        <div class="kpi-icon bg-blue" style="background:#ede9fe;color:#6d28d9;border-color:#ddd6fe;">
+          <i class="bi bi-truck" style="font-size:20px;"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Đang vận chuyển</span>
+          <span class="kpi-value" style="color:#6d28d9;">{{ ticketSummary().inTransit }}</span>
+        </div>
+      </div>
+
+      <div
+        class="kpi-card kpi-card--in-stock"
+        [class.is-active]="ticketStatusFilter() === 'approved' || ticketStatusFilter() === 'completed'"
+        (click)="ticketStatusFilter.set('completed'); ticketPage.set(1); loadTickets()"
+        title="Bấm để lọc phiếu đã hoàn tất"
+      >
+        <div class="kpi-icon bg-green">
+          <i class="bi bi-check2-all" style="font-size:20px;"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Đã hoàn tất / Đã nhận</span>
+          <span class="kpi-value text-success">{{ ticketSummary().completed }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;width:100%;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          @if (ticketStatusFilter() !== 'all') {
+            <div style="display:flex;align-items:center;gap:6px;background:#f0fdf4;border:1.5px solid #86efac;padding:5px 12px;border-radius:9999px;font-size:12.5px;font-weight:700;color:#166534;">
+              <span>Lọc trạng thái: {{ ticketStatusFilter() === 'pending_approval' ? 'Chờ duyệt' : (ticketStatusFilter() === 'in_transit' ? 'Đang chuyển' : 'Đã hoàn tất') }}</span>
+              <button
+                type="button"
+                (click)="ticketStatusFilter.set('all'); ticketPage.set(1); loadTickets()"
+                style="border:none;background:transparent;cursor:pointer;color:#166534;font-size:15px;line-height:1;padding:0 2px;font-weight:bold;"
+                title="Xóa bộ lọc"
+              >
+                &times;
+              </button>
+            </div>
+          }
+
+          @if (isAdmin() || isWarehouse() || isManager()) {
+            <div class="filter-control-item" style="background:#fff;">
+              <label class="filter-control-label">
+                <i class="bi bi-geo-alt-fill text-success"></i> Chi nhánh:
+              </label>
+              <select
+                class="filter-select"
+                [ngModel]="ticketStoreFilter()"
+                (ngModelChange)="ticketStoreFilter.set($event); ticketPage.set(1); loadTickets()"
+              >
+                <option value="all">Tất cả chi nhánh</option>
+                @for (st of storesList(); track st.id) {
+                  <option [value]="st.id">{{ st.name }}</option>
+                }
+              </select>
+            </div>
+          }
+
+          <div class="filter-control-item" style="background:#fff;">
+            <label class="filter-control-label">
+              <i class="bi bi-file-earmark-text-fill text-primary"></i> Loại phiếu:
+            </label>
+            <select
+              class="filter-select"
+              [ngModel]="ticketTypeFilter()"
+              (ngModelChange)="ticketTypeFilter.set($event); ticketPage.set(1); loadTickets()"
+            >
+              <option value="all">Tất cả loại phiếu</option>
+              <option value="goods_receipt">Nhập kho NCC</option>
+              <option value="store_transfer">Điều chuyển liên kho</option>
+              <option value="spoilage_writeoff">Xuất hủy dập hỏng</option>
+              <option value="cycle_count">Kiểm kê định kỳ</option>
+              <option value="boris_return">Tái nhập hàng đổi trả</option>
+            </select>
+          </div>
+
+          <div class="filter-control-item" style="background:#fff;">
+            <label class="filter-control-label">
+              <i class="bi bi-check-circle-fill text-info"></i> Trạng thái:
+            </label>
+            <select
+              class="filter-select"
+              [ngModel]="ticketStatusFilter()"
+              (ngModelChange)="ticketStatusFilter.set($event); ticketPage.set(1); loadTickets()"
+            >
+              <option value="all">Tất cả trạng thái</option>
+              <option value="approved">Đã duyệt / Đã nhập</option>
+              <option value="in_transit">Đang vận chuyển</option>
+              <option value="completed">Đã nhận hàng đủ</option>
+              <option value="pending_approval">Chờ duyệt</option>
+              <option value="rejected">Từ chối</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <button
+            type="button"
+            class="btn-action-outline"
+            style="color:#15803d;border-color:#86efac;background:#f0fdf4;padding:8px 14px;font-size:13px;display:flex;align-items:center;gap:6px;"
+            (click)="openCreateTicketModal('goods_receipt')"
+          >
+            <i class="bi bi-box-arrow-in-down"></i>
+            <span>Nhập hàng NCC</span>
+          </button>
+
+          <button
+            type="button"
+            class="btn-action-outline"
+            style="color:#4f46e5;border-color:#c7d2fe;background:#e0e7ff;padding:8px 14px;font-size:13px;display:flex;align-items:center;gap:6px;"
+            (click)="openCreateTicketModal('store_transfer')"
+          >
+            <i class="bi bi-arrow-left-right"></i>
+            <span>Điều chuyển kho</span>
+          </button>
+
+          <button
+            type="button"
+            class="btn-action-outline"
+            style="color:#dc2626;border-color:#fca5a5;background:#fef2f2;padding:8px 14px;font-size:13px;display:flex;align-items:center;gap:6px;"
+            (click)="openCreateTicketModal('spoilage_writeoff')"
+          >
+            <i class="bi bi-trash"></i>
+            <span>Xuất hủy hỏng</span>
+          </button>
+
+          <button
+            type="button"
+            class="btn-action-outline"
+            style="color:#2563eb;border-color:#bfdbfe;background:#eff6ff;padding:8px 14px;font-size:13px;display:flex;align-items:center;gap:6px;"
+            (click)="openCreateTicketModal('cycle_count')"
+          >
+            <i class="bi bi-clipboard-check"></i>
+            <span>Kiểm kê thực tế</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tickets Table -->
+    <div class="table-card">
+      @if (loadingTickets()) {
+        <div class="table-loading">
+          <div class="spinner"></div>
+          <span>Đang tải danh sách phiếu kho...</span>
+        </div>
+      } @else if (tickets().length === 0) {
+        <div class="table-empty">
+          <p>Chưa có phiếu kho nào phù hợp bộ lọc.</p>
+        </div>
+      } @else {
+        <div class="table-responsive" style="overflow-x:auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th class="" style="min-width:140px;">Mã phiếu</th>
+                <th style="min-width:130px;white-space:nowrap;">Thời gian</th>
+                <th style="min-width:230px;white-space:nowrap;">Bên xuất / Nguồn hàng</th>
+                <th style="min-width:170px;white-space:nowrap;">Loại nghiệp vụ</th>
+                <th style="text-align:center;min-width:100px;white-space:nowrap;">Mặt hàng</th>
+                <th style="text-align:right;min-width:140px;white-space:nowrap;">Giá trị hàng</th>
+                <th style="min-width:200px;white-space:nowrap;">Bên nhận / Nơi nhập</th>
+                <th style="text-align:center;min-width:140px;white-space:nowrap;">Trạng thái</th>
+                <th style="text-align:center;min-width:140px;white-space:nowrap;">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (t of tickets(); track t._id) {
+                @let typeBadge = getTicketTypeBadge(t.type);
+                @let statusBadge = getTicketStatusBadge(t.status);
+                <tr>
+                  <td class="">
+                    <button
+                      type="button"
+                      class="btn-ticket-link"
+                      (click)="openTicketDetail(t)"
+                      title="Bấm để xem chi tiết danh sách mặt hàng và chứng từ phiếu"
+                      style="border:none;background:transparent;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:5px;font-family:monospace;font-weight:700;color:#15803d;"
+                    >
+                      <i class="bi bi-file-earmark-text"></i>
+                      <span style="background:#f0fdf4;border:1px solid #bbf7d0;padding:2px 6px;border-radius:4px;white-space:nowrap;">
+                        #{{ t.ticketCode }}
+                      </span>
+                    </button>
+                  </td>
+                  <td style="white-space:nowrap;color:#64748b;font-size:12.5px;">
+                    {{ t.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                  </td>
+                  <td style="white-space:nowrap;">
+                    @if (t.type === 'goods_receipt') {
+                      <!-- Nhập kho từ NCC: Bên xuất hàng là Nhà Cung Cấp -->
+                      <strong style="color:#15803d;display:block;white-space:nowrap;">NCC: {{ t.supplierName || 'Nhà cung cấp đối tác' }}</strong>
+                      <span style="font-size:11.5px;color:#64748b;display:block;white-space:nowrap;">Đơn vị cung ứng hàng</span>
+                    } @else if (t.type === 'store_transfer') {
+                      <div style="display:flex;flex-direction:column;gap:3px;">
+                        @if (isCurrentStoreTarget(t)) {
+                          <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:#15803d;background:#dcfce7;padding:2px 7px;border-radius:4px;width:fit-content;">
+                            <i class="bi bi-box-arrow-in-down"></i> Hàng chuyển đến chi nhánh bạn
+                          </span>
+                          <span style="font-size:12.5px;color:#1e293b;font-weight:600;">Xuất từ: {{ getStoreDisplayName(t.storeId) }}</span>
+                        } @else if (isCurrentStoreSource(t)) {
+                          <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:#4f46e5;background:#ede9fe;padding:2px 7px;border-radius:4px;width:fit-content;">
+                            <i class="bi bi-box-arrow-up-right"></i> Xuất đi chi nhánh khác
+                          </span>
+                          <span style="font-size:12.5px;color:#1e293b;font-weight:600;">Tại kho: {{ getStoreDisplayName(t.storeId) }}</span>
+                        } @else {
+                          <strong style="color:#1e293b;display:block;">{{ getStoreDisplayName(t.storeId) }}</strong>
+                        }
+                        <span style="font-size:11.5px;color:#64748b;">Lập bởi: {{ t.creatorName || t.createdBy?.name || 'Thủ kho' }}</span>
+                      </div>
+                    } @else {
+                      <strong style="color:#1e293b;display:block;white-space:nowrap;">{{ getStoreDisplayName(t.storeId) }}</strong>
+                      <span style="font-size:11.5px;color:#64748b;display:block;white-space:nowrap;">Lập bởi: {{ t.creatorName || t.createdBy?.name || 'Thủ kho' }}</span>
+                    }
+                  </td>
+                  <td style="white-space:nowrap;">
+                    <span class="status-badge" [ngClass]="typeBadge.class" style="padding:3px 10px;border-radius:9999px;font-size:12px;font-weight:600;white-space:nowrap;display:inline-block;">
+                      {{ typeBadge.label }}
+                    </span>
+                  </td>
+                  <td style="text-align:center;white-space:nowrap;">
+                    <strong style="color:#0f172a;">{{ t.items.length }}</strong> món
+                  </td>
+                  <td style="text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;">
+                    @if (t.type === 'goods_receipt' || t.type === 'store_transfer') {
+                      <strong style="color:#15803d;">{{ getTicketItemsTotal(t) | number:'1.0-0' }}₫</strong>
+                    } @else if (t.type === 'spoilage_writeoff') {
+                      <strong style="color:#dc2626;">-{{ (t.totalLossValue || 0) | number:'1.0-0' }}₫</strong>
+                    } @else {
+                      <span style="color:#64748b;">-</span>
+                    }
+                  </td>
+                  <td style="white-space:nowrap;">
+                    @if (t.type === 'goods_receipt') {
+                      <!-- Nhập kho từ NCC: Bên nhận là Kho tiếp nhận của chuỗi -->
+                      <strong style="color:#1e293b;display:block;white-space:nowrap;">{{ getStoreDisplayName(t.storeId) }}</strong>
+                      <span style="font-size:11.5px;color:#64748b;display:block;white-space:nowrap;">Lập bởi: {{ t.creatorName || t.createdBy?.name || 'Thủ kho' }}</span>
+                    } @else if (t.type === 'store_transfer') {
+                      <div style="display:flex;flex-direction:column;gap:2px;">
+                        <strong style="font-size:12.5px;color:#4f46e5;display:inline-flex;align-items:center;gap:4px;">
+                          <i class="bi bi-geo-alt-fill"></i> {{ t.targetStoreName || getStoreDisplayName(t.targetStoreId) }}
+                        </strong>
+                        <span style="font-size:11.5px;color:#64748b;">Kho đích tiếp nhận</span>
+                      </div>
+                    } @else if (t.supplierName) {
+                      <div style="font-size:12.5px;color:#1e293b;font-weight:600;white-space:nowrap;">NCC: {{ t.supplierName }}</div>
+                      <span style="font-size:11.5px;color:#64748b;">Trả hàng nhà cung cấp</span>
+                    } @else {
+                      <span style="font-size:12px;color:#94a3b8;">Nội bộ kho</span>
+                    }
+                  </td>
+                  <td style="text-align:center;white-space:nowrap;min-width:140px;">
+                    <span class="status-badge" [ngClass]="statusBadge.class" style="padding:4px 10px;border-radius:9999px;font-size:12px;font-weight:600;display:inline-block;">
+                      {{ statusBadge.label }}
+                    </span>
+                    @if (t.type === 'store_transfer' && t.status === 'in_transit') {
+                      <div style="font-size:11px;color:#64748b;margin-top:2px;">Chờ CHT duyệt nhận</div>
+                    }
+                  </td>
+                  <td style="text-align:center;white-space:nowrap;min-width:150px;">
+                    <div style="display:inline-flex;align-items:center;gap:6px;">
+                      <button
+                        type="button"
+                        class="btn-action-outline"
+                        style="padding:3px 8px;font-size:11.5px;color:#0f172a;border-color:#cbd5e1;background:#fff;"
+                        (click)="openTicketDetail(t)"
+                        title="Xem chi tiết các mặt hàng xuất/nhập của phiếu này"
+                      >
+                        <i class="bi bi-eye me-1"></i> Chi tiết
+                      </button>
+
+                      @if (t.type === 'store_transfer' && t.status === 'in_transit' && canReceiveTransfer(t)) {
+                        <button
+                          type="button"
+                          class="btn-action-primary"
+                          style="background:#15803d;padding:3px 10px;font-size:11.5px;"
+                          (click)="confirmReceiveTransfer(t)"
+                          title="Xác nhận hàng đã về tới kho và duyệt nhập kho"
+                        >
+                          <i class="bi bi-check2-circle me-1"></i> Duyệt nhận
+                        </button>
+                      } @else if (t.status === 'pending_approval' && (isAdmin() || isManager())) {
+                        <button
+                          type="button"
+                          class="btn-action-primary"
+                          style="padding:3px 8px;font-size:11.5px;background:#15803d;"
+                          (click)="approveTicket(t)"
+                        >
+                          Duyệt
+                        </button>
+                        <button
+                          type="button"
+                          class="btn-action-outline"
+                          style="padding:3px 8px;font-size:11.5px;color:#dc2626;border-color:#fca5a5;"
+                          (click)="rejectTicket(t)"
+                        >
+                          Từ chối
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+            
+          </table>
+        </div>
+
+        @if (ticketTotalPages() > 1) {
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid #e5e7eb;background:#fafaf9">
+            <span style="font-size:13px;color:#6b7280">
+              Hiển thị <strong>{{ (ticketPage() - 1) * ticketPageSize() + 1 }}</strong> - <strong>{{ Math.min(ticketPage() * ticketPageSize(), ticketTotal()) }}</strong> trên <strong>{{ ticketTotal() }}</strong> phiếu
+            </span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button type="button" class="btn-action-outline" [disabled]="ticketPage() <= 1" (click)="ticketPage.set(ticketPage() - 1); loadTickets()">← Trước</button>
+              <span style="font-size:13px;font-weight:600;padding:0 8px">{{ ticketPage() }} / {{ ticketTotalPages() }}</span>
+              <button type="button" class="btn-action-outline" [disabled]="ticketPage() >= ticketTotalPages()" (click)="ticketPage.set(ticketPage() + 1); loadTickets()">Sau →</button>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  }
+
+
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- TAB 4: BÁO CÁO & ĐỐI SOÁT CÔNG NỢ NHÀ CUNG CẤP (DEBTS)          -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  @else if (activeTab() === 'debts') {
+    <!-- 4 Modern KPI Cards -->
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 20px;">
+      <div class="kpi-card" style="cursor:default;">
+        <div class="kpi-icon bg-blue" style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#eff6ff;color:#2563eb;">
+          <i class="bi bi-buildings" style="font-size:20px;"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label" style="font-size:12.5px;color:#64748b;font-weight:600;">Nhà cung cấp đối tác</span>
+          <span class="kpi-value text-dark" style="font-size:22px;font-weight:800;color:#0f172a;">{{ debtSummary().totalSuppliers }}</span>
+        </div>
+      </div>
+
+      <div class="kpi-card" style="cursor:default;">
+        <div class="kpi-icon" style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#f3e8ff;color:#7c3aed;">
+          <i class="bi bi-box-arrow-in-down" style="font-size:20px;"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label" style="font-size:12.5px;color:#64748b;font-weight:600;">Tổng tiền nhập hàng</span>
+          <span class="kpi-value" style="font-size:20px;font-weight:800;color:#7c3aed;font-variant-numeric:tabular-nums;">{{ debtSummary().totalInboundAmount | number:'1.0-0' }}₫</span>
+        </div>
+      </div>
+
+      <div class="kpi-card" style="cursor:default;">
+        <div class="kpi-icon bg-green" style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#dcfce7;color:#15803d;">
+          <i class="bi bi-check2-circle" style="font-size:20px;"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label" style="font-size:12.5px;color:#64748b;font-weight:600;">Đã thanh toán</span>
+          <span class="kpi-value text-success" style="font-size:20px;font-weight:800;color:#15803d;font-variant-numeric:tabular-nums;">{{ debtSummary().totalPaidAmount | number:'1.0-0' }}₫</span>
+        </div>
+      </div>
+
+      <div class="kpi-card" style="cursor:default;">
+        <div class="kpi-icon bg-red" style="width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:#fee2e2;color:#dc2626;">
+          <i class="bi bi-exclamation-triangle" style="font-size:20px;"></i>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label" style="font-size:12.5px;color:#64748b;font-weight:600;">Công nợ còn lại</span>
+          <span class="kpi-value text-danger" style="font-size:20px;font-weight:800;color:#dc2626;font-variant-numeric:tabular-nums;">{{ debtSummary().totalRemainingDebt | number:'1.0-0' }}₫</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search & Filter Toolbar -->
+    <div class="filter-card" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;width:100%;">
+        <div class="search-input-wrapper" style="max-width:380px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Tìm theo tên NCC, mã NCC, SĐT..."
+            [ngModel]="debtSearchQuery()"
+            (ngModelChange)="debtSearchQuery.set($event)"
+          />
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button
+            type="button"
+            class="tab-pill-btn"
+            style="font-size:12.5px;padding:6px 14px;"
+            [class.active]="debtStatusFilter() === 'all'"
+            (click)="debtStatusFilter.set('all')"
+          >
+            Tất cả
+          </button>
+          <button
+            type="button"
+            class="tab-pill-btn"
+            style="font-size:12.5px;padding:6px 14px;"
+            [class.active]="debtStatusFilter() === 'has_debt'"
+            (click)="debtStatusFilter.set('has_debt')"
+          >
+            Còn nợ
+          </button>
+          <button
+            type="button"
+            class="tab-pill-btn"
+            style="font-size:12.5px;padding:6px 14px;"
+            [class.active]="debtStatusFilter() === 'paid_off'"
+            (click)="debtStatusFilter.set('paid_off')"
+          >
+            Đã thanh toán đủ
+          </button>
+          <button
+            type="button"
+            class="tab-pill-btn"
+            style="font-size:12.5px;padding:6px 14px;"
+            [class.active]="debtStatusFilter() === 'zero'"
+            (click)="debtStatusFilter.set('zero')"
+          >
+            Chưa phát sinh
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table of Supplier Debts -->
+    <div class="table-card">
+      <div class="table-responsive" style="overflow-x:auto;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th class="" style="min-width:250px;">Nhà cung cấp / Nông trại</th>
+              <th style="min-width:110px;white-space:nowrap;">Mã NCC</th>
+              <th style="min-width:140px;white-space:nowrap;">Số điện thoại</th>
+              <th style="min-width:220px;">Khu vực / Tỉnh</th>
+              <th style="text-align:center;min-width:90px;white-space:nowrap;">Số đợt nhập</th>
+              <th style="text-align:right;min-width:140px;white-space:nowrap;">Tổng tiền hàng</th>
+              <th style="text-align:right;min-width:140px;white-space:nowrap;">Đã thanh toán</th>
+              <th style="text-align:right;min-width:140px;white-space:nowrap;">Còn nợ</th>
+              <th style="text-align:center;min-width:140px;white-space:nowrap;">Trạng thái</th>
+              <th style="text-align:center;min-width:130px;white-space:nowrap;">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (loadingDebts()) {
+              <tr>
+                <td colspan="10" style="text-align:center;padding:36px;color:#64748b;">
+                  <span class="spinner-border spinner-border-sm me-2"></span> Đang tải dữ liệu công nợ nhà cung cấp...
+                </td>
+              </tr>
+            } @else {
+              @for (sup of filteredSupplierDebts(); track sup._id) {
+                <tr>
+                  <td class="">
+                    <strong style="color:#0f172a;font-size:13.5px;display:block;">{{ sup.name }}</strong>
+                    <div style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:4px;margin-top:2px;">
+                      <i class="bi bi-person"></i>
+                      <span>{{ sup.contactPerson || 'Đại diện kinh doanh' }}</span>
+                    </div>
+                  </td>
+                  <td style="white-space:nowrap;">
+                    <span style="display:inline-block;padding:3px 8px;border-radius:6px;font-size:11.5px;font-weight:700;font-family:monospace;background:#f8fafc;color:#334155;border:1px solid #cbd5e1;white-space:nowrap;">
+                      {{ sup.code || 'NCC' }}
+                    </span>
+                  </td>
+                  <td style="white-space:nowrap;">
+                    <div style="display:inline-flex;align-items:center;gap:6px;font-weight:600;color:#1e293b;white-space:nowrap;">
+                      <i class="bi bi-telephone text-muted" style="font-size:12px;"></i>
+                      <span>{{ sup.phone || '-' }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="font-size:12.5px;color:#475569;line-height:1.4;">
+                      {{ sup.address || sup.province || '-' }}
+                    </div>
+                  </td>
+                  <td style="text-align:center;white-space:nowrap;">
+                    <strong style="font-size:14px;color:#0f172a;">{{ sup.totalInboundOrders || 0 }}</strong>
+                    <span style="font-size:11.5px;color:#64748b;margin-left:2px;">phiếu</span>
+                  </td>
+                  <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;">
+                    <span style="font-weight:600;color:#0f172a;font-size:13.5px;">{{ (sup.totalAmount || 0) | number:'1.0-0' }}₫</span>
+                  </td>
+                  <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;">
+                    <span style="font-weight:600;color:#15803d;font-size:13.5px;">{{ (sup.paidAmount || 0) | number:'1.0-0' }}₫</span>
+                  </td>
+                  <td style="text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;">
+                    <strong style="font-size:14px;color:{{ (sup.remainingDebt || 0) > 0 ? '#dc2626' : '#15803d' }};">
+                      {{ (sup.remainingDebt || 0) | number:'1.0-0' }}₫
+                    </strong>
+                  </td>
+                  <td style="text-align:center;white-space:nowrap;">
+                    @if ((sup.remainingDebt || 0) <= 0 && (sup.totalAmount || 0) > 0) {
+                      <span class="status-badge is-approved" style="padding:4px 10px;border-radius:9999px;font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:4px;">
+                        <i class="bi bi-check-circle-fill"></i> Đã thanh toán
+                      </span>
+                    } @else if ((sup.remainingDebt || 0) > 0) {
+                      <span class="status-badge is-rejected" style="padding:4px 10px;border-radius:9999px;font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:4px;">
+                        <i class="bi bi-exclamation-circle-fill"></i> Còn nợ
+                      </span>
+                    } @else {
+                      <span class="status-badge is-blue" style="padding:4px 10px;border-radius:9999px;font-size:11.5px;font-weight:600;display:inline-flex;align-items:center;gap:4px;">
+                        <i class="bi bi-dash-circle"></i> Chưa phát sinh
+                      </span>
+                    }
+                  </td>
+                  <td style="text-align:center;white-space:nowrap;">
+                    @if ((sup.remainingDebt || 0) > 0) {
+                      @if (isAdmin()) {
+                        <button
+                          type="button"
+                          class="btn-action-primary"
+                          style="padding:6px 14px;font-size:12px;font-weight:600;background:#15803d;border:none;border-radius:6px;color:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:5px;"
+                          (click)="openPayDebtModal(sup)"
+                          title="Thanh toán công nợ cho nhà cung cấp này"
+                        >
+                          <i class="bi bi-credit-card"></i>
+                          <span>Thanh toán</span>
+                        </button>
+                      } @else {
+                        <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:11.5px;font-weight:600;background:#fef3c7;color:#92400e;border:1px solid #fde68a;" title="Chỉ Quản trị viên / Kế toán có quyền thực hiện chi trả công nợ">
+                          <i class="bi bi-shield-lock"></i>
+                          <span>Chờ Admin / Kế toán chi trả</span>
+                        </span>
+                      }
+                    } @else if ((sup.totalAmount || 0) > 0) {
+                      <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;">
+                        <i class="bi bi-check2-all" style="font-size:14px;"></i>
+                        <span>Đã tất toán</span>
+                      </span>
+                    } @else {
+                      <button
+                        type="button"
+                        class="btn-action-outline"
+                        style="padding:5px 12px;font-size:12px;font-weight:600;color:#15803d;border-color:#86efac;background:#f0fdf4;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;"
+                        (click)="openCreateTicketForSupplier(sup)"
+                        title="Tạo phiếu nhập hàng từ nhà cung cấp này"
+                      >
+                        <i class="bi bi-box-arrow-in-down"></i>
+                        <span>Nhập hàng</span>
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+              @if (filteredSupplierDebts().length === 0) {
+                <tr>
+                  <td colspan="10" style="text-align:center;padding:36px;color:#94a3b8;">
+                    Không tìm thấy nhà cung cấp nào phù hợp với bộ lọc.
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+
 
   <!-- Modal Adjust Stock -->
   @if (adjustModalOpen() && selectedProduct()) {
@@ -422,5 +1380,854 @@
       </div>
     </div>
   }
+
+  <!-- MODAL: THANH TOÁN CÔNG NỢ NHÀ CUNG CẤP -->
+  @if (payDebtModalOpen() && selectedDebtSupplier()) {
+    <div class="modal-backdrop" (click)="closePayDebtModal()">
+      <div class="modal-content" style="max-width:520px;border-radius:14px;overflow:hidden;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);" (click)="$event.stopPropagation()">
+        <div class="modal-header" style="background:#f8fafc;padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;border-radius:8px;background:#dcfce7;color:#15803d;display:flex;align-items:center;justify-content:center;font-size:18px;">
+              <i class="bi bi-credit-card"></i>
+            </div>
+            <div>
+              <h3 class="modal-title" style="margin:0;font-size:16px;font-weight:700;color:#0f172a;">Ghi nhận Thanh toán Công nợ NCC</h3>
+              <p class="modal-subtitle" style="margin:0;font-size:12px;color:#64748b;">{{ selectedDebtSupplier()?.name }}</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close" (click)="closePayDebtModal()">&times;</button>
+        </div>
+
+        <div class="modal-body" style="padding:20px;">
+          <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <span style="font-size:12px;color:#991b1b;font-weight:600;display:block;">Số nợ hiện tại cần thanh toán:</span>
+              <strong style="font-size:20px;color:#dc2626;font-variant-numeric:tabular-nums;">{{ (selectedDebtSupplier()?.remainingDebt || 0) | number:'1.0-0' }}₫</strong>
+            </div>
+            <span style="font-size:11.5px;background:#fee2e2;color:#b91c1c;padding:3px 8px;border-radius:9999px;font-weight:700;">
+              {{ selectedDebtSupplier()?.code || 'NCC' }}
+            </span>
+          </div>
+
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label" style="font-weight:700;font-size:13px;color:#1e293b;">Số tiền thanh toán đợt này (₫) *</label>
+            <input
+              type="number"
+              min="1000"
+              class="form-control"
+              style="font-size:15px;font-weight:700;padding:10px 14px;"
+              [ngModel]="paymentAmount()"
+              (ngModelChange)="paymentAmount.set($event)"
+              placeholder="VD: 5000000"
+            />
+          </div>
+
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label" style="font-weight:700;font-size:13px;color:#1e293b;">Ghi chú / Chứng từ thanh toán (Số UNC, Ủy nhiệm chi)</label>
+            <input
+              type="text"
+              class="form-control"
+              style="padding:10px 14px;"
+              [ngModel]="paymentNote()"
+              (ngModelChange)="paymentNote.set($event)"
+              placeholder="VD: UNC Vietcombank số 984729 ngày 18/11..."
+            />
+          </div>
+
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;display:flex;align-items:flex-start;gap:8px;">
+            <i class="bi bi-info-circle-fill" style="color:#2563eb;font-size:14px;margin-top:2px;"></i>
+            <span style="font-size:12px;color:#1e40af;line-height:1.4;">
+              Hệ thống sẽ tự động gạch nợ cho các đợt nhập hàng của Nhà cung cấp này theo thứ tự ưu tiên phiếu cũ nhất trước (FIFO).
+            </span>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="padding:14px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:10px;">
+          <button type="button" class="btn-secondary" (click)="closePayDebtModal()" [disabled]="isSubmittingPayment()">Hủy</button>
+          <button type="button" class="btn-primary" style="background:#15803d;border-color:#15803d;" (click)="submitSupplierPayment()" [disabled]="isSubmittingPayment()">
+            @if (isSubmittingPayment()) {
+              <span class="spinner-border spinner-border-sm me-1"></span> Đang xử lý...
+            } @else {
+              <i class="bi bi-check2-circle me-1"></i> Xác nhận thanh toán
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: XEM CHI TIẾT PHIẾU KHO & CHỨNG TỪ LUÂN CHUYỂN -->
+  @if (ticketDetailModalOpen() && selectedTicket(); as ticket) {
+    @let tBadge = getTicketTypeBadge(ticket.type);
+    @let sBadge = getTicketStatusBadge(ticket.status);
+    <div class="modal-backdrop ticket-print-backdrop" (click)="closeTicketDetail()">
+      <div class="modal-content ticket-print-modal" style="max-width:850px;border-radius:14px;overflow:hidden;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);" (click)="$event.stopPropagation()">
+        <!-- Modal Header -->
+        <div class="modal-header ticket-print-header" style="background:#f8fafc;padding:16px 22px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:42px;height:42px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;display:flex;align-items:center;justify-content:center;color:#15803d;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"></path>
+                <path d="M8 7h8"></path>
+                <path d="M8 11h8"></path>
+                <path d="M8 15h5"></path>
+              </svg>
+            </div>
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <h3 style="margin:0;font-size:16.5px;font-weight:800;color:#0f172a;">
+                  Phiếu #{{ ticket.ticketCode }}
+                </h3>
+                <span class="status-badge" [ngClass]="tBadge.class" style="padding:2px 8px;border-radius:9999px;font-size:11.5px;font-weight:700;">
+                  {{ tBadge.label }}
+                </span>
+                <span class="status-badge" [ngClass]="sBadge.class" style="padding:2px 8px;border-radius:9999px;font-size:11.5px;font-weight:700;">
+                  {{ sBadge.label }}
+                </span>
+              </div>
+              <p style="margin:3px 0 0 0;font-size:12px;color:#64748b;">
+                Ngày lập: {{ ticket.createdAt | date:'dd/MM/yyyy HH:mm:ss' }} - Người lập: <strong style="color:#334155;">{{ ticket.creatorName || ticket.createdBy?.name || 'Hệ thống' }}</strong>
+              </p>
+            </div>
+          </div>
+          <button type="button" class="btn-close" (click)="closeTicketDetail()" style="border:none;background:transparent;cursor:pointer;font-size:20px;color:#64748b;">&times;</button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body ticket-print-body" style="padding:20px 22px;max-height:75vh;overflow-y:auto;">
+          <!-- Metadata 4-Box Grid -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;margin-bottom:20px;background:#f8fafc;padding:14px;border-radius:10px;border:1px solid #e2e8f0;">
+            @if (ticket.type === 'goods_receipt') {
+              <div>
+                <span style="font-size:11.5px;color:#15803d;font-weight:600;display:block;">Đơn vị giao hàng (NCC)</span>
+                <strong style="font-size:13px;color:#15803d;display:block;margin-top:2px;">{{ ticket.supplierName || 'Nhà cung cấp đối tác' }}</strong>
+              </div>
+              <div>
+                <span style="font-size:11.5px;color:#0f172a;font-weight:600;display:block;">Kho tiếp nhận nhập kho</span>
+                <strong style="font-size:13px;color:#0f172a;display:block;margin-top:2px;">{{ getStoreDisplayName(ticket.storeId) }}</strong>
+              </div>
+              <div>
+                <span style="font-size:11.5px;color:#64748b;font-weight:600;display:block;">Người nhận / Nghiệm thu</span>
+                <strong style="font-size:13px;color:#0f172a;display:block;margin-top:2px;">{{ ticket.approverName || (ticket.status === 'completed' ? 'Đã nghiệm thu nhập kho' : 'Chờ nghiệm thu') }}</strong>
+              </div>
+            } @else if (ticket.type === 'store_transfer') {
+              <div>
+                <span style="font-size:11.5px;color:#64748b;font-weight:600;display:block;">Kho xuất hàng (Nguồn)</span>
+                <strong style="font-size:13px;color:#0f172a;display:block;margin-top:2px;">{{ getStoreDisplayName(ticket.storeId) }}</strong>
+              </div>
+              <div>
+                <span style="font-size:11.5px;color:#4f46e5;font-weight:600;display:block;">Kho nhận hàng (Đích)</span>
+                <strong style="font-size:13px;color:#4f46e5;display:block;margin-top:2px;">{{ ticket.targetStoreName || getStoreDisplayName(ticket.targetStoreId) }}</strong>
+              </div>
+              <div>
+                <span style="font-size:11.5px;color:#64748b;font-weight:600;display:block;">Người nhận / Phê duyệt</span>
+                <strong style="font-size:13px;color:#0f172a;display:block;margin-top:2px;">{{ ticket.approverName || (ticket.status === 'in_transit' ? 'Chờ CHT chi nhánh nhận' : 'Đã nghiệm thu') }}</strong>
+              </div>
+            } @else {
+              <div>
+                <span style="font-size:11.5px;color:#64748b;font-weight:600;display:block;">Chi nhánh thực hiện</span>
+                <strong style="font-size:13px;color:#0f172a;display:block;margin-top:2px;">{{ getStoreDisplayName(ticket.storeId) }}</strong>
+              </div>
+              <div>
+                <span style="font-size:11.5px;color:#64748b;font-weight:600;display:block;">Nghiệp vụ chứng từ</span>
+                <strong style="font-size:13px;color:#0f172a;display:block;margin-top:2px;">{{ getTicketTypeBadge(ticket.type).label }}</strong>
+              </div>
+              <div>
+                <span style="font-size:11.5px;color:#64748b;font-weight:600;display:block;">Cấp xét duyệt</span>
+                <strong style="font-size:13px;color:#0f172a;display:block;margin-top:2px;">{{ ticket.approverName || 'Cửa hàng trưởng' }}</strong>
+              </div>
+            }
+
+            <div>
+              <span style="font-size:11.5px;color:#64748b;font-weight:600;display:block;">Thời gian hoàn tất</span>
+              <span style="font-size:13px;color:#0f172a;display:block;margin-top:2px;font-weight:600;">
+                {{ ticket.approvedAt ? (ticket.approvedAt | date:'dd/MM/yyyy HH:mm') : (ticket.status === 'completed' ? (ticket.createdAt | date:'dd/MM/yyyy HH:mm') : 'Đang xử lý') }}
+              </span>
+            </div>
+          </div>
+
+
+
+          <!-- Items Table -->
+          <div style="margin-bottom:18px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <h4 style="margin:0;font-size:13.5px;font-weight:700;color:#0f172a;">
+                @if (ticket.type === 'goods_receipt') {
+                  Danh sách mặt hàng nhập kho ({{ ticket.items.length }} mặt hàng)
+                } @else if (ticket.type === 'spoilage_writeoff') {
+                  Danh sách mặt hàng đề nghị xuất hủy ({{ ticket.items.length }} mặt hàng)
+                } @else if (ticket.type === 'cycle_count') {
+                  Danh sách mặt hàng kiểm kê ({{ ticket.items.length }} mặt hàng)
+                } @else {
+                  Danh sách mặt hàng điều chuyển ({{ ticket.items.length }} mặt hàng)
+                }
+              </h4>
+            </div>
+
+            <div class="ticket-table-wrap" style="border:1px solid #e2e8f0;border-radius:8px;overflow-x:auto;">
+              <table class="admin-table ticket-print-table" style="font-size:12.5px;margin:0;min-width:700px;">
+                <thead>
+                  <tr style="background:#f8fafc;">
+                    <th style="width:45px;text-align:center;">STT</th>
+                    <th style="min-width:200px;">Sản phẩm</th>
+                    <th style="width:100px;text-align:center;">Số lượng</th>
+                    <th style="width:110px;text-align:right;">Đơn giá vốn</th>
+                    <th style="width:120px;text-align:right;">Thành tiền</th>
+                    <th style="width:110px;">Mã lô / HSD</th>
+                    <th style="min-width:140px;">Lý do / Tình trạng</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of ticket.items; track $index) {
+                    <tr>
+                      <td style="text-align:center;color:#64748b;">{{ $index + 1 }}</td>
+                      <td>
+                        <strong style="color:#0f172a;display:block;">{{ item.productName }}</strong>
+                        <span style="font-size:11.5px;color:#64748b;font-family:monospace;">SKU: {{ item.sku || 'SP-' + item.productId.slice(-6) }}</span>
+                      </td>
+                      <td style="text-align:center;">
+                        <span style="font-weight:700;font-size:13.5px;color:#15803d;">
+                          {{ Math.abs(item.quantityDelta) }}
+                        </span>
+                      </td>
+                      <td style="text-align:right;color:#334155;">
+                        {{ (item.unitPrice || 0) | number:'1.0-0' }}₫
+                      </td>
+                      <td style="text-align:right;">
+                        <strong style="color:#15803d;">
+                          {{ (Math.abs(item.quantityDelta) * (item.unitPrice || 0)) | number:'1.0-0' }}₫
+                        </strong>
+                      </td>
+                      <td>
+                        <div style="font-size:11.5px;color:#0f172a;font-weight:600;">{{ item.batchCode || '-' }}</div>
+                        @if (item.expDate) {
+                          <span style="font-size:11px;color:#64748b;">HSD: {{ item.expDate | date:'dd/MM/yyyy' }}</span>
+                        }
+                      </td>
+                      <td style="font-size:12px;color:#475569;">
+                        {{ item.reason || (ticket.type === 'goods_receipt' ? 'Nhập kho từ nhà cung cấp' : (ticket.type === 'spoilage_writeoff' ? 'Hàng hao hụt / dập nát' : (ticket.type === 'cycle_count' ? 'Chênh lệch kiểm kê thực tế' : 'Điều chuyển hàng hóa theo kế hoạch'))) }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Total Summary Bar -->
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;background:#f8fafc;padding:12px 18px;border-radius:8px;border:1px solid #e2e8f0;">
+            <div style="font-size:12.5px;color:#475569;">
+              <div>Tổng số lượng: <strong style="color:#0f172a;font-size:13.5px;">{{ ticket.items.length }} mặt hàng</strong> ({{ getTicketTotalQuantity(ticket) | number }} sản phẩm)</div>
+              <div style="font-style:italic;margin-top:2px;">Bằng chữ: <strong>{{ numberToVietnameseWords(getTicketItemsTotal(ticket)) }}</strong></div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:16px;">
+              <div style="font-size:13px;color:#64748b;text-align:right;">
+                <span>Tổng giá trị hàng:</span>
+                <strong style="color:#15803d;font-size:17px;display:block;font-variant-numeric:tabular-nums;">
+                  {{ getTicketItemsTotal(ticket) | number:'1.0-0' }}₫
+                </strong>
+              </div>
+              @if (ticket.totalLossValue) {
+                <div style="font-size:13px;color:#64748b;text-align:right;">
+                  <span>Thiệt hại hao hụt:</span>
+                  <strong style="color:#dc2626;font-size:17px;display:block;font-variant-numeric:tabular-nums;">
+                    -{{ (ticket.totalLossValue || 0) | number:'1.0-0' }}₫
+                  </strong>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- PHẦN CHỮ KÝ XÁC NHẬN CHUẨN KẾ TOÁN (TỰ ĐỘNG PHÙ HỢP THEO LOẠI PHIẾU) -->
+          <div class="print-signatures-section" style="margin-top:28px;">
+            <div style="display:grid;grid-template-columns:repeat(4, 1fr);text-align:center;gap:12px;">
+              @if (ticket.type === 'goods_receipt') {
+                <div>
+                  <strong style="font-size:12px;display:block;color:#0f172a;">NGƯỜI LẬP PHIẾU</strong>
+                  <span style="font-size:11px;font-style:italic;color:#64748b;">(Ký, ghi rõ họ tên)</span>
+                  <div style="height:55px;"></div>
+                  <div style="font-weight:700;font-size:12px;color:#0f172a;">{{ ticket.creatorName || ticket.createdBy?.name || 'Thủ kho' }}</div>
+                </div>
+                <div>
+                  <strong style="font-size:12px;display:block;color:#0f172a;">NGƯỜI GIAO HÀNG (NCC)</strong>
+                  <span style="font-size:11px;font-style:italic;color:#64748b;">(Ký, ghi rõ họ tên)</span>
+                  <div style="height:55px;"></div>
+                  <div style="font-weight:700;font-size:12px;color:#0f172a;">{{ ticket.supplierName ? ('Đại diện ' + ticket.supplierName) : 'Đại diện Nhà Cung Cấp' }}</div>
+                </div>
+                <div>
+                  <strong style="font-size:12px;display:block;color:#0f172a;">THỦ KHO NHẬN HÀNG</strong>
+                  <span style="font-size:11px;font-style:italic;color:#64748b;">(Ký, ghi rõ họ tên)</span>
+                  <div style="height:55px;"></div>
+                  <div style="font-weight:700;font-size:12px;color:#0f172a;">Bộ phận Thủ kho ({{ getStoreDisplayName(ticket.storeId) }})</div>
+                </div>
+                <div>
+                  <strong style="font-size:12px;display:block;color:#0f172a;">CHT / KẾ TOÁN TRƯỞNG</strong>
+                  <span style="font-size:11px;font-style:italic;color:#64748b;">(Ký, đóng dấu)</span>
+                  <div style="height:55px;"></div>
+                  <div style="font-weight:700;font-size:12px;color:#0f172a;">{{ ticket.approverName || 'Cửa hàng trưởng / Kế toán' }}</div>
+                </div>
+              } @else if (ticket.type === 'store_transfer') {
+                <div>
+                  <strong style="font-size:12px;display:block;color:#0f172a;">NGƯỜI LẬP PHIẾU</strong>
+                  <span style="font-size:11px;font-style:italic;color:#64748b;">(Ký, ghi rõ họ tên)</span>
+                  <div style="height:55px;"></div>
+                  <div style="font-weight:700;font-size:12px;color:#0f172a;">{{ ticket.creatorName || 'Thủ kho lập' }}</div>
+                </div>
+                <div>
+                  <strong style="font-size:12px;display:block;color:#0f172a;">THỦ KHO XUẤT HÀNG</strong>
+                  <span style="font-size:11px;font-style:italic;color:#64748b;">(Ký, ghi rõ họ tên)</span>
+                  <div style="height:55px;"></div>
+                  <div style="font-weight:700;font-size:12px;color:#0f172a;">{{ getStoreDisplayName(ticket.storeId) }}</div>
+                </div>
+                <div>
+                  <strong style="font-size:12px;display:block;color:#0f172a;">NGƯỜI VẬN CHUYỂN</strong>
+                  <span style="font-size:11px;font-style:italic;color:#64748b;">(Ký, ghi rõ họ tên)</span>
+                  <div style="height:55px;"></div>
+                  <div style="font-weight:700;font-size:12px;color:#0f172a;">Bộ phận Xe vận chuyển</div>
+                </div>
+                <div>
+                  <strong style="font-size:12px;display:block;color:#0f172a;">THỦ KHO NHẬN / CHT</strong>
+                  <span style="font-size:11px;font-style:italic;color:#64748b;">(Ký, ghi rõ họ tên)</span>
+                  <div style="height:55px;"></div>
+                  <div style="font-weight:700;font-size:12px;color:#0f172a;">{{ ticket.approverName || (ticket.status === 'in_transit' ? 'Chờ CHT đích duyệt' : 'Cửa hàng trưởng chi nhánh nhận') }}</div>
+                </div>
+              } @else {
+                <div>
+                  <strong style="font-size:12px;display:block;color:#0f172a;">NGƯỜI LẬP BIÊN BẢN</strong>
+                  <span style="font-size:11px;font-style:italic;color:#64748b;">(Ký, ghi rõ họ tên)</span>
+                  <div style="height:55px;"></div>
+                  <div style="font-weight:700;font-size:12px;color:#0f172a;">{{ ticket.creatorName || 'Nhân viên kiểm đếm' }}</div>
+                </div>
+                <div>
+                  <strong style="font-size:12px;display:block;color:#0f172a;">KIỂM SOÁT HÀNG (QC)</strong>
+                  <span style="font-size:11px;font-style:italic;color:#64748b;">(Ký, ghi rõ họ tên)</span>
+                  <div style="height:55px;"></div>
+                  <div style="font-weight:700;font-size:12px;color:#0f172a;">Bộ phận Kiểm định O2O</div>
+                </div>
+                <div>
+                  <strong style="font-size:12px;display:block;color:#0f172a;">THỦ KHO PHỤ TRÁCH</strong>
+                  <span style="font-size:11px;font-style:italic;color:#64748b;">(Ký, ghi rõ họ tên)</span>
+                  <div style="height:55px;"></div>
+                  <div style="font-weight:700;font-size:12px;color:#0f172a;">{{ getStoreDisplayName(ticket.storeId) }}</div>
+                </div>
+                <div>
+                  <strong style="font-size:12px;display:block;color:#0f172a;">CỬA HÀNG TRƯỞNG DUYỆT</strong>
+                  <span style="font-size:11px;font-style:italic;color:#64748b;">(Ký, đóng dấu)</span>
+                  <div style="height:55px;"></div>
+                  <div style="font-weight:700;font-size:12px;color:#0f172a;">{{ ticket.approverName || 'Cửa hàng trưởng' }}</div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer" style="background:#f8fafc;padding:12px 22px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+          <button
+            type="button"
+            class="btn-action-outline"
+            style="padding:7px 16px;font-size:13px;display:inline-flex;align-items:center;gap:6px;background:#fff;"
+            (click)="printTicket()"
+          >
+            <i class="bi bi-printer"></i> In phiếu kho
+          </button>
+
+          <div style="display:flex;align-items:center;gap:8px;">
+            @if (ticket.type === 'store_transfer' && ticket.status === 'in_transit' && canReceiveTransfer(ticket)) {
+              <button
+                type="button"
+                class="btn-action-primary"
+                style="background:#15803d;padding:7px 18px;font-size:13px;display:inline-flex;align-items:center;gap:6px;"
+                (click)="confirmReceiveTransfer(ticket); closeTicketDetail()"
+              >
+                <i class="bi bi-check2-circle"></i> Duyệt nhận hàng ngay
+              </button>
+            }
+            <button
+              type="button"
+              class="btn-action-outline"
+              style="padding:7px 18px;font-size:13px;"
+              (click)="closeTicketDetail()"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: TẠO PHIẾU NHẬP KHO / ĐIỀU CHUYỂN / XUẤT HỦY / KIỂM KÊ -->
+  @if (createTicketModalOpen()) {
+    <div class="modal-backdrop" (click)="closeCreateTicketModal()">
+      <div class="modal-content" style="max-width:980px;width:95vw;border-radius:14px;overflow:hidden;" (click)="$event.stopPropagation()">
+        <div class="modal-header" style="background:#f8fafc;padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <h3 class="modal-title" style="margin:0;font-size:16px;font-weight:700;color:#0f172a;">
+              {{ ticketType() === 'goods_receipt' ? 'Tạo Phiếu Nhập Kho (Goods Receipt Note)' : (ticketType() === 'store_transfer' ? 'Tạo Phiếu Điều Chuyển Kho Liên Chi Nhánh' : (ticketType() === 'spoilage_writeoff' ? 'Lập Biên Bản Xuất Hủy Nông Sản Dập Hỏng' : 'Lập Phiếu Kiểm Kê Thực Tế Chi Nhánh')) }}
+            </h3>
+            <p class="modal-subtitle" style="margin:2px 0 0 0;font-size:12.5px;color:#64748b;">
+              Ghi nhận nhập hàng lô, điều phối hàng hóa và đối soát thực tế tại chi nhánh
+            </p>
+          </div>
+          <button type="button" class="btn-close" (click)="closeCreateTicketModal()">&times;</button>
+        </div>
+
+        <div class="modal-body" style="padding:16px 20px;max-height:75vh;overflow-y:auto;">
+          <!-- Top Metadata Grid -->
+          <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px;background:#f8fafc;padding:16px;border-radius:10px;border:1px solid #e2e8f0;">
+            <div>
+              <label class="form-label" style="font-weight:700;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;">Loại nghiệp vụ *</label>
+              <select
+                class="form-control"
+                style="height:42px;font-size:13px;border-radius:8px;font-weight:600;width:100%;"
+                [ngModel]="ticketType()"
+                (ngModelChange)="openCreateTicketModal($event)"
+              >
+                <option value="goods_receipt">Nhập kho mới từ Nhà Cung Cấp</option>
+                <option value="store_transfer">Điều chuyển liên kho (Tổng kho -> Chi nhánh)</option>
+                <option value="spoilage_writeoff">Xuất hủy nông sản dập nát / hư hỏng</option>
+                <option value="cycle_count">Kiểm kê thực tế định kỳ</option>
+              </select>
+            </div>
+
+            @if (ticketType() === 'store_transfer') {
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div>
+                  <label class="form-label" style="font-weight:700;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;">
+                    Chi nhánh xuất hàng (Kho nguồn) *
+                  </label>
+                  <select
+                    class="form-control"
+                    style="height:42px;font-size:13px;border-radius:8px;font-weight:600;width:100%;"
+                    [ngModel]="ticketSourceStoreId()"
+                    (ngModelChange)="ticketSourceStoreId.set($event)"
+                  >
+                    @for (store of storesList(); track store.id) {
+                      <option [value]="store.id">{{ store.name }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div>
+                  <label class="form-label" style="font-weight:700;font-size:12.5px;color:#4f46e5;margin-bottom:6px;display:block;">
+                    Chi nhánh nhận hàng (Kho đích) *
+                  </label>
+                  <select
+                    class="form-control"
+                    style="height:42px;font-size:13px;border-radius:8px;font-weight:600;border-color:#a5b4fc;background:#f5f3ff;width:100%;"
+                    [ngModel]="ticketTargetStoreId()"
+                    (ngModelChange)="ticketTargetStoreId.set($event)"
+                  >
+                    @for (store of storesList(); track store.id) {
+                      @if (store.id !== ticketSourceStoreId()) {
+                        <option [value]="store.id">{{ store.name }}</option>
+                      }
+                    }
+                  </select>
+                </div>
+              </div>
+            } @else if (ticketType() === 'goods_receipt') {
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div>
+                  <label class="form-label" style="font-weight:700;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;">
+                    Chi nhánh nhập hàng *
+                  </label>
+                  <select
+                    class="form-control"
+                    style="height:42px;font-size:13px;border-radius:8px;font-weight:600;width:100%;"
+                    [ngModel]="ticketSourceStoreId()"
+                    (ngModelChange)="ticketSourceStoreId.set($event)"
+                  >
+                    @for (store of storesList(); track store.id) {
+                      <option [value]="store.id">{{ store.name }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div>
+                  <label class="form-label" style="font-weight:700;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;">
+                    Nhà cung cấp / Đối tác *
+                  </label>
+                  <select
+                    class="form-control"
+                    style="height:42px;font-size:13px;border-radius:8px;font-weight:600;width:100%;"
+                    [ngModel]="ticketSupplierId()"
+                    (ngModelChange)="onSupplierChange($event)"
+                  >
+                    @for (sup of suppliersList(); track sup._id) {
+                      <option [value]="sup._id">{{ sup.name }} ({{ sup.code }})</option>
+                    }
+                  </select>
+                </div>
+              </div>
+            } @else {
+              <div>
+                <label class="form-label" style="font-weight:700;font-size:12.5px;color:#334155;margin-bottom:6px;display:block;">
+                  Chi nhánh ghi nhận *
+                </label>
+                <select
+                  class="form-control"
+                  style="height:42px;font-size:13px;border-radius:8px;font-weight:600;width:100%;"
+                  [ngModel]="ticketSourceStoreId()"
+                  (ngModelChange)="ticketSourceStoreId.set($event)"
+                >
+                  @for (store of storesList(); track store.id) {
+                    <option [value]="store.id">{{ store.name }}</option>
+                  }
+                </select>
+              </div>
+            }
+          </div>
+
+          <!-- Items Table -->
+          <div style="margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-weight:700;font-size:13px;color:#1e293b;">
+                  Danh sách mặt hàng kiểm đếm ({{ ticketItems().length }})
+                </span>
+                <span style="font-size:11.5px;color:#64748b;background:#f1f5f9;padding:2px 8px;border-radius:9999px;">
+                  Kho có {{ allCatalogProducts().length || 434 }} sản phẩm
+                </span>
+              </div>
+
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <select
+                  class="form-control"
+                  style="height:34px;font-size:12px;padding:4px 8px;width:150px;"
+                  [ngModel]="modalCategoryFilter()"
+                  (ngModelChange)="modalCategoryFilter.set($event)"
+                >
+                  <option value="">Tất cả danh mục</option>
+                  @for (cat of categories(); track cat._id) {
+                    <option [value]="cat.name">{{ cat.name }}</option>
+                  }
+                </select>
+
+                <select
+                  class="form-control"
+                  style="height:34px;font-size:12px;padding:4px 8px;width:135px;"
+                  [ngModel]="modalTypeFilter()"
+                  (ngModelChange)="modalTypeFilter.set($event)"
+                >
+                  <option value="all">Tất cả mặt hàng</option>
+                  <option value="single">Sản phẩm lẻ</option>
+                  <option value="combo">Combo nông sản</option>
+                </select>
+
+                <div style="position:relative;width:200px;">
+                  <input
+                    type="text"
+                    placeholder="Tìm tên / mã sp..."
+                    class="form-control"
+                    style="height:34px;font-size:12px;padding:4px 10px;"
+                    [ngModel]="catalogSearchQuery()"
+                    (ngModelChange)="catalogSearchQuery.set($event)"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  class="btn-action-outline"
+                  style="padding:6px 14px;font-size:12px;display:flex;align-items:center;gap:5px;background:#f0fdf4;color:#15803d;border-color:#86efac;font-weight:700;"
+                  (click)="addTicketRow()"
+                >
+                  <i class="bi bi-plus-circle"></i>
+                  <span>+ Thêm dòng</span>
+                </button>
+              </div>
+            </div>
+
+            <div style="border:1px solid #e2e8f0;border-radius:8px;overflow-x:auto;">
+              <table class="admin-table" style="font-size:12.5px;margin:0;">
+                <thead>
+                  <tr style="background:#f8fafc;">
+                    <th style="min-width:240px;">Sản phẩm</th>
+                    <th style="width:90px;text-align:center;">SL</th>
+                    <th style="width:120px;text-align:right;">Đơn giá (₫)</th>
+                    <th style="width:120px;">Mã lô</th>
+                    <th style="width:130px;">Hạn dùng</th>
+                    <th style="min-width:160px;">Lý do / Ghi chú</th>
+                    <th style="width:40px;"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of ticketItems(); track $index) {
+                    <tr>
+                      <td style="padding:6px 8px;">
+                        <select
+                          class="form-control"
+                          style="font-size:12.5px;padding:6px 8px;height:36px;"
+                          [ngModel]="row.productId"
+                          (ngModelChange)="onTicketProductSelect($index, $event)"
+                        >
+                          <option value="">-- Chọn sản phẩm ({{ filteredCatalogProducts().length }} sp phù hợp) --</option>
+                          @for (grp of groupedCatalogProducts(); track grp.category) {
+                            <optgroup [label]="'[' + grp.category + ' - ' + grp.items.length + ' sp]'">
+                              @for (p of grp.items; track p._id) {
+                                <option [value]="p._id">
+                                  {{ p.name }} (tồn: {{ p.stock }} {{ p.unit || 'kg' }}) - {{ (p.priceNumber || 0) | number:'1.0-0' }}₫
+                                </option>
+                              }
+                            </optgroup>
+                          }
+                        </select>
+                      </td>
+                      <td style="padding:6px 8px;text-align:center;">
+                        <input
+                          type="number"
+                          min="1"
+                          class="form-control"
+                          style="font-size:12.5px;padding:6px 6px;text-align:center;font-weight:700;"
+                          [(ngModel)]="row.quantity"
+                        />
+                      </td>
+                      <td style="padding:6px 8px;text-align:right;">
+                        <input
+                          type="number"
+                          min="0"
+                          class="form-control"
+                          style="font-size:12.5px;padding:6px 8px;text-align:right;"
+                          [(ngModel)]="row.unitPrice"
+                        />
+                      </td>
+                      <td style="padding:6px 8px;">
+                        <input
+                          type="text"
+                          class="form-control"
+                          style="font-size:12px;padding:6px 6px;font-family:monospace;"
+                          [(ngModel)]="row.batchCode"
+                        />
+                      </td>
+                      <td style="padding:6px 8px;">
+                        <input
+                          type="date"
+                          class="form-control"
+                          style="font-size:12px;padding:6px 6px;"
+                          [(ngModel)]="row.expDate"
+                        />
+                      </td>
+                      <td style="padding:6px 8px;">
+                        <input
+                          type="text"
+                          class="form-control"
+                          style="font-size:12px;padding:6px 6px;"
+                          [(ngModel)]="row.reason"
+                          placeholder="Lý do..."
+                        />
+                      </td>
+                      <td style="padding:6px 4px;text-align:center;">
+                        @if (ticketItems().length > 1) {
+                          <button
+                            type="button"
+                            style="border:none;background:transparent;cursor:pointer;color:#ef4444;"
+                            (click)="removeTicketRow($index)"
+                          >
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Ghi chú chung -->
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" style="font-weight:700;font-size:12.5px;color:#334155;">Ghi chú đợt hàng</label>
+            <textarea
+              class="form-control"
+              rows="2"
+              [(ngModel)]="ticketNote"
+              placeholder="VD: Xe lạnh chuyển hàng đạt 8°C, bàn giao đầy đủ chứng từ..."
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="padding:14px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;gap:10px;">
+          <button type="button" class="btn-secondary" (click)="closeCreateTicketModal()">Hủy</button>
+          <button
+            type="button"
+            class="btn-primary"
+            style="background:#15803d;border-color:#15803d;"
+            [disabled]="submittingTicket()"
+            (click)="submitTicket()"
+          >
+            {{ submittingTicket() ? 'Đang tạo & lưu phiếu...' : 'Xác nhận Lưu Phiếu' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal Cấu hình Bán & Giá xả hàng Chi nhánh (O2O Store Config) -->
+  @if (storeConfigModalOpen() && configProduct()) {
+    @let prod = configProduct()!;
+    <div class="modal-backdrop" (click)="closeStoreConfigModal()">
+      <div class="modal-content" style="max-width: 620px; border-radius: 14px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);" (click)="$event.stopPropagation()">
+        <!-- Header -->
+        <div class="modal-header" style="background:#f8fafc; padding:16px 20px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:40px; height:40px; border-radius:10px; background:#eff6ff; border:1px solid #bfdbfe; display:flex; align-items:center; justify-content:center; color:#2563eb; font-size:18px;">
+              <i class="bi bi-sliders"></i>
+            </div>
+            <div>
+              <h3 class="modal-title" style="margin:0; font-size:16px; font-weight:700; color:#0f172a;">
+                Cấu hình Bán &amp; Xả hàng Chi nhánh
+              </h3>
+              <p class="modal-subtitle" style="margin:2px 0 0 0; font-size:12.5px; color:#64748b;">
+                {{ prod.name }} (Mã: {{ prod._id.slice(-6).toUpperCase() }})
+              </p>
+            </div>
+          </div>
+          <button type="button" class="btn-close" (click)="closeStoreConfigModal()">&times;</button>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body" style="padding: 20px; max-height: 75vh; overflow-y: auto;">
+          @if (loadingStoreConfig()) {
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 0; gap:10px;">
+              <div class="spinner"></div>
+              <span style="font-size:13px; color:#64748b;">Đang tải thông tin cấu hình chi nhánh...</span>
+            </div>
+          } @else {
+            <!-- Chọn chi nhánh áp dụng -->
+            <div class="form-group" style="margin-bottom:16px;">
+              <label class="form-label" style="font-weight:700; font-size:12.5px; color:#334155; display:flex; align-items:center; gap:6px;">
+                <i class="bi bi-geo-alt-fill text-success"></i> Chi nhánh áp dụng cấu hình:
+              </label>
+              <select
+                class="form-control"
+                [ngModel]="selectedStoreId()"
+                (ngModelChange)="onStoreChange($event)"
+                style="font-size:13.5px; font-weight:600;"
+              >
+                @for (st of storesList(); track st.id) {
+                  <option [value]="st.id">{{ st.name }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Box tóm tắt tồn kho & giá niêm yết -->
+            <div style="background:#f1f5f9; border-radius:10px; padding:12px 16px; margin-bottom:18px; display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+              <div>
+                <span style="display:block; font-size:11.5px; color:#64748b; text-transform:uppercase; font-weight:600;">Giá niêm yết gốc</span>
+                <span style="font-size:15px; font-weight:700; color:#0f172a;">{{ (prod.priceNumber || 0) | number:'1.0-0' }}đ / {{ prod.unit || 'kg' }}</span>
+              </div>
+              <div>
+                <span style="display:block; font-size:11.5px; color:#64748b; text-transform:uppercase; font-weight:600;">Tồn kho thực tế tại kho</span>
+                <span style="font-size:15px; font-weight:700; color:#15803d;">
+                  {{ currentStoreInventory()?.stock ?? prod.stock }} {{ prod.unit || 'kg' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Cấu hình 1: Vùng đệm an toàn Online (Buffer) -->
+            <div style="border:1px solid #e2e8f0; border-radius:10px; padding:14px; margin-bottom:16px; background:#fafafa;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                <div>
+                  <label class="form-label" style="font-weight:700; font-size:13px; color:#0f172a; margin-bottom:2px; display:flex; align-items:center; gap:6px;">
+                    <i class="bi bi-shield-check text-primary"></i> Vùng đệm an toàn Online (Buffer)
+                  </label>
+                  <p style="margin:0; font-size:12px; color:#64748b; line-height:1.4;">
+                    Số lượng giữ lại tại quầy siêu thị, không đưa lên website để tránh đơn hàng bị trùng lặp (overselling) khi khách mua trực tiếp.
+                  </p>
+                </div>
+              </div>
+
+              <div style="display:flex; align-items:center; gap:12px; margin-top:8px;">
+                <div style="position:relative; width:140px;">
+                  <input
+                    type="number"
+                    min="0"
+                    class="form-control"
+                    [ngModel]="configSafetyBuffer()"
+                    (ngModelChange)="configSafetyBuffer.set($event)"
+                    style="font-weight:700; text-align:right; padding-right:32px;"
+                  />
+                  <span style="position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:12px; color:#94a3b8; pointer-events:none;">
+                    {{ prod.unit || 'kg' }}
+                  </span>
+                </div>
+                <div style="font-size:12px; color:#475569;">
+                  Tồn khả dụng bán Online:
+                  <strong style="color:#15803d; font-size:13px;">
+                    {{ getOnlineAvailableStock() }} {{ prod.unit || 'kg' }}
+                  </strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cấu hình 2: Bán Xả hàng / Giảm giá Cận Date -->
+            <div style="border:1px solid #fed7aa; border-radius:10px; padding:14px; background:#fffbeb;">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                <input
+                  type="checkbox"
+                  id="chkClearance"
+                  [checked]="configIsClearanceSale()"
+                  (change)="configIsClearanceSale.set($any($event.target).checked)"
+                  style="width:17px; height:17px; accent-color:#f97316; cursor:pointer;"
+                />
+                <label for="chkClearance" style="font-weight:700; font-size:13px; color:#9a3412; cursor:pointer; margin:0;">
+                  Bật chương trình Xả hàng / Giảm giá cận Date tại chi nhánh này
+                </label>
+              </div>
+              <p style="margin:0 0 10px 25px; font-size:12px; color:#7c2d12; line-height:1.4;">
+                Áp dụng giá xả hàng đặc biệt tại riêng chi nhánh này để thanh lý nhanh các lô hàng chuẩn bị hết hạn.
+              </p>
+
+              @if (configIsClearanceSale()) {
+                <div style="margin-left: 25px; display:flex; flex-direction:column; gap:8px;">
+                  <label class="form-label" style="font-weight:700; font-size:12.5px; color:#334155;">
+                    Giá xả hàng ưu đãi (VNĐ):
+                  </label>
+                  <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="position:relative; width:180px;">
+                      <input
+                        type="number"
+                        min="1000"
+                        step="1000"
+                        class="form-control"
+                        [ngModel]="configClearancePrice()"
+                        (ngModelChange)="configClearancePrice.set($event)"
+                        style="font-weight:700; color:#ea580c; text-align:right; padding-right:32px;"
+                      />
+                      <span style="position:absolute; right:10px; top:50%; transform:translateY(-50%); font-size:12px; color:#94a3b8; pointer-events:none;">đ</span>
+                    </div>
+                    @if (getClearanceDiscountPercent() > 0) {
+                      <span style="background:#ffedd5; color:#c2410c; padding:3px 8px; border-radius:6px; font-size:12px; font-weight:700;">
+                        Giảm {{ getClearanceDiscountPercent() }}% so với giá gốc
+                      </span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer" style="padding:14px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" class="btn-secondary" (click)="closeStoreConfigModal()">Đóng</button>
+          <button
+            type="button"
+            class="btn-primary"
+            style="background:#2563eb; border-color:#2563eb; display:flex; align-items:center; gap:6px;"
+            [disabled]="savingStoreConfig() || loadingStoreConfig()"
+            (click)="saveStoreConfig()"
+          >
+            <i class="bi bi-check2"></i>
+            <span>{{ savingStoreConfig() ? 'Đang lưu cấu hình...' : 'Lưu cấu hình bán' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>
+
+
 

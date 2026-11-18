@@ -1,0 +1,302 @@
+<div class="admin-page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Quản lý Banner &amp; Pop-up Khuyến mãi</h1>
+    </div>
+    @if (activeTab() === 'hero') {
+      <button type="button" class="admin-btn admin-btn-primary" (click)="openAddSlide()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        <span>Thêm Banner mới</span>
+      </button>
+    }
+  </div>
+
+  @if (successMsg()) {
+    <div class="banner-alert alert-success">
+      <span>{{ successMsg() }}</span>
+    </div>
+  }
+  @if (errorMsg()) {
+    <div class="banner-alert alert-danger">
+      <span>{{ errorMsg() }}</span>
+    </div>
+  }
+
+  <!-- Tab Selector -->
+  <div class="banner-tabs-bar">
+    <button
+      type="button"
+      class="banner-tab-btn"
+      [class.active]="activeTab() === 'hero'"
+      (click)="setTab('hero')"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+        <line x1="8" y1="21" x2="16" y2="21"/>
+        <line x1="12" y1="17" x2="12" y2="21"/>
+      </svg>
+      <span>Banner Trượt Trang Chủ (Hero Slider)</span>
+      <span class="tab-badge">{{ slides().length }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="banner-tab-btn"
+      [class.active]="activeTab() === 'popup'"
+      (click)="setTab('popup')"
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+      <span>Pop-up Ưu Đãi Lễ / Tết</span>
+      <span class="tab-badge" [class.is-live]="popup().enabled">{{ popup().enabled ? 'Đang bật' : 'Đang tắt' }}</span>
+    </button>
+  </div>
+
+  <!-- TAB 1: HERO SLIDER -->
+  @if (activeTab() === 'hero') {
+    <div class="banner-content-grid">
+      <!-- Live Preview Card -->
+      @if (slides().length > 0) {
+        <div class="preview-card">
+          <div class="preview-header">
+            <span class="preview-title">Xem trước hiển thị trên Trang chủ</span>
+            <div class="preview-nav-dots">
+              @for (sl of slides(); track $index) {
+                <button
+                  type="button"
+                  class="preview-dot"
+                  [class.is-active]="$index === activePreviewIndex()"
+                  (click)="activePreviewIndex.set($index)"
+                  [title]="sl.title"
+                ></button>
+              }
+            </div>
+          </div>
+          <div class="preview-hero-box">
+            <img [src]="slides()[activePreviewIndex()].image" [alt]="slides()[activePreviewIndex()].title" class="preview-img" />
+            <div class="preview-hero-shade"></div>
+            <div class="preview-hero-copy">
+              <span class="preview-kicker">{{ slides()[activePreviewIndex()].eyebrow }}</span>
+              <h2 class="preview-hero-title">{{ slides()[activePreviewIndex()].title }}</h2>
+              <p class="preview-hero-sub">{{ slides()[activePreviewIndex()].subtitle }}</p>
+              <button type="button" class="preview-cta-btn">{{ slides()[activePreviewIndex()].cta || 'Mua sắm ngay' }}</button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Slides List Table -->
+      <div class="table-card">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th style="width: 50px;">Thứ tự</th>
+              <th style="width: 140px;">Hình ảnh</th>
+              <th>Tiêu đề &amp; Thông điệp</th>
+              <th>Nút bấm (CTA)</th>
+              <th>Trạng thái</th>
+              <th style="width: 140px; text-align: right;">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (slide of slides(); track $index) {
+              <tr [class.is-inactive]="!slide.active">
+                <td style="font-weight: 700; text-align: center;">{{ slide.sortOrder || ($index + 1) }}</td>
+                <td>
+                  <img [src]="slide.image" [alt]="slide.title" class="slide-thumb" />
+                </td>
+                <td>
+                  <div class="slide-info-col">
+                    <span class="slide-eyebrow">{{ slide.eyebrow }}</span>
+                    <strong class="slide-title">{{ slide.title }}</strong>
+                    <p class="slide-sub">{{ slide.subtitle }}</p>
+                  </div>
+                </td>
+                <td>
+                  <span class="cta-badge">{{ slide.cta }} ({{ slide.link }})</span>
+                </td>
+                <td>
+                  <span class="status-pill" [class.is-on]="slide.active" (click)="toggleSlideActive($index)">
+                    {{ slide.active ? 'Đang bật' : 'Tắt' }}
+                  </span>
+                </td>
+                <td style="text-align: right;">
+                  <div class="actions-group">
+                    <button type="button" class="btn-sm-action" (click)="openEditSlide($index)" title="Chỉnh sửa banner">
+                      Sửa
+                    </button>
+                    <button type="button" class="btn-sm-action btn-danger-action" (click)="deleteSlide($index)" title="Xóa banner">
+                      Xóa
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- TAB 2: POP-UP KHUYẾN MÃI -->
+  @if (activeTab() === 'popup') {
+    <div class="popup-management-grid">
+      <!-- Form Cấu hình Pop-up -->
+      <div class="popup-config-card">
+        <div class="popup-config-head">
+          <div>
+            <h3>Cấu hình Pop-up Ưu đãi Trang chủ</h3>
+            <p>Pop-up tự động hiện khi khách hàng truy cập website lần đầu để thông báo voucher lễ/tết</p>
+          </div>
+          <div class="popup-switch-wrap">
+            <label class="switch-toggle">
+              <input type="checkbox" [checked]="popup().enabled" (change)="togglePopup()" />
+              <span class="slider"></span>
+            </label>
+            <span class="switch-status">{{ popup().enabled ? 'Đang kích hoạt' : 'Đang tắt' }}</span>
+          </div>
+        </div>
+
+        <form (ngSubmit)="savePopupConfig()" class="popup-form">
+          <div class="form-row">
+            <label class="form-label">Tiêu đề Pop-up *</label>
+            <input type="text" [(ngModel)]="popup().title" name="popTitle" class="form-input" placeholder="Ví dụ: Đại tiệc Nông sản - Giảm 20% hôm nay" required />
+          </div>
+
+          <div class="form-row">
+            <label class="form-label">Nhãn Badge góc trên</label>
+            <input type="text" [(ngModel)]="popup().badge" name="popBadge" class="form-input" placeholder="Ví dụ: ƯU ĐÃI ĐẶC BIỆT / CHÀO MỪNG BẠN MỚI" />
+          </div>
+
+          <div class="form-row">
+            <label class="form-label">Mô tả chi tiết ưu đãi</label>
+            <textarea [(ngModel)]="popup().description" name="popDesc" rows="3" class="form-textarea" placeholder="Nhập thể lệ ngắn gọn, điều kiện áp dụng..."></textarea>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-row">
+              <label class="form-label">Mã Voucher đính kèm (nếu có)</label>
+              <input type="text" [(ngModel)]="popup().voucherCode" name="popVoucher" class="form-input" placeholder="Ví dụ: EVG20K" />
+            </div>
+            <div class="form-row">
+              <label class="form-label">Link ảnh minh họa Pop-up</label>
+              <input type="text" [(ngModel)]="popup().image" name="popImg" class="form-input" placeholder="URL hình ảnh banner popup" />
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-row">
+              <label class="form-label">Tên nút bấm (CTA)</label>
+              <input type="text" [(ngModel)]="popup().buttonText" name="popBtnText" class="form-input" placeholder="Ví dụ: Lưu mã & Mua sắm" />
+            </div>
+            <div class="form-row">
+              <label class="form-label">Đường dẫn khi bấm nút</label>
+              <input type="text" [(ngModel)]="popup().buttonLink" name="popBtnLink" class="form-input" placeholder="/vouchers hoặc /online-ordering" />
+            </div>
+          </div>
+
+          <div class="form-submit-row">
+            <button type="submit" class="admin-btn admin-btn-primary" [disabled]="saving()">
+              {{ saving() ? 'Đang lưu...' : 'Lưu cấu hình Pop-up' }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Live Mockup Pop-up -->
+      <div class="popup-preview-card">
+        <span class="preview-title">Xem trước Pop-up trên giao diện người dùng</span>
+        <div class="mockup-modal-wrapper">
+          <div class="mockup-modal-overlay">
+            <div class="mockup-popup-box">
+              <div class="mockup-popup-badge">{{ popup().badge || 'KHUYẾN MÃI' }}</div>
+              @if (popup().image) {
+                <img [src]="popup().image" alt="Pop-up" class="mockup-popup-img" />
+              }
+              <div class="mockup-popup-body">
+                <h4>{{ popup().title || 'Tiêu đề khuyến mãi' }}</h4>
+                <p>{{ popup().description || 'Mô tả chi tiết ưu đãi hiển thị tại đây...' }}</p>
+                @if (popup().voucherCode) {
+                  <div class="mockup-code-pill">
+                    <span>Mã: <strong>{{ popup().voucherCode }}</strong></span>
+                  </div>
+                }
+                <button type="button" class="mockup-cta-btn">{{ popup().buttonText || 'Nhận ưu đãi' }}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal Edit / Add Slide -->
+  @if (modalOpen()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal-box" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ isEditingSlide() ? 'Chỉnh sửa Banner' : 'Thêm Banner mới' }}</h3>
+          <button type="button" class="modal-close" (click)="closeModal()">×</button>
+        </div>
+        <form (ngSubmit)="saveSlide()" class="modal-body">
+          <div class="form-row">
+            <label class="form-label">Dòng nhãn nhỏ (Eyebrow / Kicker)</label>
+            <input type="text" [(ngModel)]="slideForm().eyebrow" name="slideEyebrow" class="form-input" placeholder="TƯƠI SẠCH MỖI NGÀY - GIAO NHANH 2H" />
+          </div>
+
+          <div class="form-row">
+            <label class="form-label">Tiêu đề Banner *</label>
+            <input type="text" [(ngModel)]="slideForm().title" name="slideTitle" class="form-input" placeholder="Đi chợ thông minh - Nông sản tươi sạch..." required />
+          </div>
+
+          <div class="form-row">
+            <label class="form-label">Dòng phụ (Subtitle)</label>
+            <textarea [(ngModel)]="slideForm().subtitle" name="slideSub" rows="2" class="form-textarea" placeholder="Mô tả phụ cho banner..."></textarea>
+          </div>
+
+          <div class="form-row">
+            <label class="form-label">Link ảnh banner *</label>
+            <input type="text" [(ngModel)]="slideForm().image" name="slideImg" class="form-input" placeholder="https://images.unsplash.com/..." required />
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-row">
+              <label class="form-label">Tên nút CTA</label>
+              <input type="text" [(ngModel)]="slideForm().cta" name="slideCta" class="form-input" placeholder="Mua sắm ngay" />
+            </div>
+            <div class="form-row">
+              <label class="form-label">Đường dẫn khi bấm nút</label>
+              <input type="text" [(ngModel)]="slideForm().link" name="slideLink" class="form-input" placeholder="/online-ordering" />
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-row">
+              <label class="form-label">Thứ tự hiển thị</label>
+              <input type="number" [(ngModel)]="slideForm().sortOrder" name="slideOrder" class="form-input" />
+            </div>
+            <div class="form-row" style="display:flex;align-items:center;margin-top:24px;">
+              <label style="display:flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;">
+                <input type="checkbox" [(ngModel)]="slideForm().active" name="slideActive" />
+                <span>Kích hoạt hiển thị banner</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" (click)="closeModal()">Hủy</button>
+            <button type="submit" class="admin-btn admin-btn-primary" [disabled]="saving()">
+              {{ saving() ? 'Đang lưu...' : 'Lưu Banner' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

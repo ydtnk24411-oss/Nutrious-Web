@@ -58,7 +58,7 @@ const PAGE_HEADERS: Record<InfoSectionKey, PageHeaderMeta> = {
     badge: 'VỀ EVERGREEN MART',
     title: 'Nông Sản Sạch Từ Nông Trại Đến Bàn Ăn',
     subtitle:
-      'Hệ thống 18 chi nhánh tại 10 tỉnh thành, kết nối nông sản chuẩn VietGAP, GlobalGAP và Organic cùng trợ lý dinh dưỡng thông minh cho gia đình Việt.',
+      'Hệ thống 8 chi nhánh & kho lạnh tại TP. Hồ Chí Minh và Dĩ An (Bình Dương), kết nối nông sản chuẩn VietGAP, GlobalGAP và Organic cùng trợ lý dinh dưỡng thông minh cho gia đình Việt.',
     updatedAt: 'Cập nhật tháng 11/2026',
   },
   faq: {
@@ -126,7 +126,7 @@ const FAQ_LIST: FaqItem[] = [
     categoryLabel: 'Chất lượng & Kiểm hàng',
     question: 'Nông sản tại Evergreen Mart có nguồn gốc từ đâu và được bảo quản thế nào?',
     answer:
-      'Rau củ, trái cây, thịt cá và thực phẩm tại Evergreen Mart được thu mua từ các nông trại, hợp tác xã đạt chuẩn VietGAP, GlobalGAP và Organic tại Đà Lạt, Miền Tây và Tây Nguyên. Hàng tươi sống được phân phối về 18 kho lạnh chi nhánh (0°C – 4°C) để xuất giao mỗi ngày.',
+      'Rau củ, trái cây, thịt cá và thực phẩm tại Evergreen Mart được thu mua từ các nông trại, hợp tác xã đạt chuẩn VietGAP, GlobalGAP và Organic tại Đà Lạt, Miền Tây và Tây Nguyên. Hàng tươi sống được phân phối về hệ thống kho lạnh chi nhánh (0°C – 4°C) để xuất giao mỗi ngày.',
   },
   {
     id: 'delivery-time',
@@ -134,7 +134,7 @@ const FAQ_LIST: FaqItem[] = [
     categoryLabel: 'Đặt hàng & Giao nhận',
     question: 'Hệ thống có những hình thức và khung giờ giao hàng nào?',
     answer:
-      'Bạn có thể chọn: (1) Giao ngay dự kiến 30–45 phút (phục vụ từ 07:00 – 21:15 hằng ngày, cộng phụ phí giao nhanh 10.000đ); (2) Hẹn 8 khung giờ từ 07h30 – 22h00 cho Hôm nay hoặc Ngày mai; (3) Giao tiết kiệm trong 24h; hoặc (4) Nhận tại 1 trong 18 cửa hàng hoàn toàn miễn phí (0đ).',
+      'Bạn có thể chọn: (1) Giao ngay dự kiến 30–45 phút (phục vụ từ 07:00 – 21:15 hằng ngày, cộng phụ phí giao nhanh 10.000đ); (2) Hẹn 8 khung giờ từ 07h30 – 22h00 cho Hôm nay hoặc Ngày mai; (3) Giao tiết kiệm trong 24h; hoặc (4) Nhận tại bất kỳ cửa hàng nào trong hệ thống hoàn toàn miễn phí (0đ).',
   },
   {
     id: 'shipping-fee',

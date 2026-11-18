@@ -37,7 +37,7 @@
     <form (submit)="submit($event)" class="admin-login-form">
       <div class="admin-field">
         <label for="email">Tài khoản (Email hoặc Số điện thoại)</label>
-        <input id="email" type="text" placeholder="admin@xanhla.farm hoặc 0987654321" [value]="email()"
+        <input id="email" type="text" placeholder="Nhập email hoặc số điện thoại" [value]="email()"
           (input)="email.set($any($event.target).value)" required autocomplete="username" />
       </div>
 
@@ -87,9 +87,5 @@
         }
       </button>
     </form>
-
-    <div class="admin-login-hint">
-      Tài khoản mặc định: <code>admin&#64;xanhla.farm</code> / <code>admin123</code>
-    </div>
   </div>
 </div>

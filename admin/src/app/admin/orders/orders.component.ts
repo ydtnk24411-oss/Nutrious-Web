@@ -1,7 +1,9 @@
 import { Component, signal, inject, OnInit, OnDestroy, HostListener, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { OrderApiService, ApiOrder } from '../../shared/services/order-api.service';
+import { AdminAuthService } from '../../shared/services/admin-auth.service';
 
 @Component({
   selector: 'app-admin-orders',
@@ -11,8 +13,15 @@ import { OrderApiService, ApiOrder } from '../../shared/services/order-api.servi
   styleUrl: './orders.component.css',
 })
 export class AdminOrdersComponent implements OnInit, OnDestroy {
+  protected auth = inject(AdminAuthService);
   private orderApi = inject(OrderApiService);
+  private route = inject(ActivatedRoute);
   private pollTimer: any = null;
+
+  isWarehouse = computed(() => (this.auth.user()?.role || '').toLowerCase() === 'warehouse');
+  isAdmin = computed(() => (this.auth.user()?.role || '').toLowerCase() === 'admin');
+  isManager = computed(() => (this.auth.user()?.role || '').toLowerCase() === 'manager');
+  isSales = computed(() => (this.auth.user()?.role || '').toLowerCase() === 'sales');
 
   orders   = signal<ApiOrder[]>([]);
   total    = signal(0);
@@ -39,6 +48,53 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   paymentStateFilter = signal<'' | 'paid' | 'unpaid' | 'expired'>('');
   shippingFilter = signal<'' | 'delivery' | 'pickup'>('');
   dateRange = signal<'all' | 'today' | '7d' | '30d'>('all');
+  storeFilter = signal<string>('');
+  storeMenuOpen = signal(false);
+
+  readonly warehouseList = [
+    { id: '', name: 'Tất cả chi nhánh' },
+    { id: 'store-thuduc', name: 'Tổng kho Evergreen Mart Thủ Đức' },
+    { id: 'store-q1', name: 'Cửa hàng Evergreen Mart Quận 1' },
+    { id: 'store-binhthanh', name: 'Cửa hàng Evergreen Mart Bình Thạnh' },
+    { id: 'store-q7', name: 'Cửa hàng Evergreen Mart Quận 7' },
+    { id: 'store-tanbinh', name: 'Cửa hàng Evergreen Mart Tân Bình' },
+    { id: 'store-govap', name: 'Cửa hàng Evergreen Mart Gò Vấp' },
+    { id: 'store-binhtan', name: 'Cửa hàng Evergreen Mart Bình Tân' },
+    { id: 'store-dian', name: 'Kho Evergreen Mart Dĩ An' },
+  ];
+
+  readonly warehouseMap: Record<string, string> = {
+    'store-thuduc': 'Tổng kho Thủ Đức',
+    'store-q1': 'Cửa hàng Quận 1',
+    'store-binhthanh': 'Cửa hàng Bình Thạnh',
+    'store-q7': 'Cửa hàng Quận 7',
+    'store-tanbinh': 'Cửa hàng Tân Bình',
+    'store-govap': 'Cửa hàng Gò Vấp',
+    'store-binhtan': 'Cửa hàng Bình Tân',
+    'store-dian': 'Kho Dĩ An',
+  };
+
+  currentManagerStoreName(): string {
+    const sId = this.auth.user()?.assignedStore || 'store-q1';
+    const match = this.warehouseList.find(w => w.id === sId);
+    return match ? match.name : 'Cửa hàng Evergreen Mart Quận 1';
+  }
+
+  getOrderWarehouseName(order: ApiOrder): string {
+    if (order.warehouseId && this.warehouseMap[order.warehouseId]) {
+      return this.warehouseMap[order.warehouseId];
+    }
+    if (order.pickupStore?.name) {
+      return order.pickupStore.name.replace(' (Trụ sở chính)', '');
+    }
+    return 'Cửa hàng Quận 1';
+  }
+
+  onStoreFilter(v: string): void {
+    this.storeFilter.set(v);
+    this.page.set(1);
+    this.load();
+  }
   visibleCols = signal({
     customer: true,
     product: true,
@@ -53,10 +109,16 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   updatingStatus = signal(false);
   confirmingPayment = signal(false);
   updatingOrderId = signal<string | null>(null);
+  qrOnlyFilter = signal(false);
   lastUpdatedOrderId = signal<string | null>(null);
   recentlyUpdatedIds = signal<Set<string>>(new Set());
   statusCounts = signal<Record<string, number>>({});
   newStatus   = signal('');
+
+  auditLogOpen = signal(false);
+  toggleAuditLog(): void {
+    this.auditLogOpen.update(v => !v);
+  }
 
   totalPages = computed(() => Math.ceil(this.total() / this.limit));
 
@@ -93,6 +155,18 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   };
 
   ngOnInit(): void {
+    if (this.isManager()) {
+      const userStore = this.auth.user()?.assignedStore || 'store-q1';
+      this.storeFilter.set(userStore);
+    }
+
+    this.route.queryParams.subscribe((params) => {
+      if (params['filter'] === 'qr' || params['qr'] === '1' || params['status'] === 'pending_qr') {
+        this.qrOnlyFilter.set(true);
+        this.status.set('');
+      }
+    });
+
     this.load();
     // Đồng bộ đơn hàng mới ngầm mỗi 12 giây
     this.pollTimer = setInterval(() => {
@@ -121,6 +195,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     const params: Record<string, string | number> = { page: this.page(), limit: this.limit };
     if (this.search())  params['search'] = this.search();
     if (this.status())  params['status'] = this.status();
+    if (this.storeFilter()) params['warehouseId'] = this.storeFilter();
 
     this.orderApi.getAll(params).subscribe({
       next: (res) => {
@@ -156,7 +231,18 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   }
 
   onSearch(v: string): void { this.search.set(v); this.page.set(1); this.load(); }
-  onStatus(v: string): void { this.status.set(v); this.page.set(1); this.load(); }
+  onStatus(v: string): void { this.qrOnlyFilter.set(false); this.status.set(v); this.page.set(1); this.load(); }
+  toggleQrFilter(): void {
+    const next = !this.qrOnlyFilter();
+    this.qrOnlyFilter.set(next);
+    if (next) {
+      this.status.set('');
+    }
+  }
+  filterPendingQr(): void {
+    this.qrOnlyFilter.set(true);
+    this.status.set('');
+  }
   prevPage(): void { if (this.page() > 1)              { this.page.update(p => p - 1); this.load(); } }
   nextPage(): void { if (this.page() < this.totalPages()){ this.page.update(p => p + 1); this.load(); } }
 
@@ -176,6 +262,14 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     const o = order || this.selected();
     const allowed: ApiOrder['status'][] = [current];
     const isUnpaidQr = o && o.paymentMethod === 'bank_transfer' && o.paymentStatus !== 'paid';
+
+    if (this.isWarehouse()) {
+      if (!isUnpaidQr) {
+        if (current === 'confirmed') allowed.push('preparing');
+        if (current === 'preparing') allowed.push('shipping');
+      }
+      return this.statusOptions.filter(opt => allowed.includes(opt.value as ApiOrder['status']));
+    }
 
     // Đơn VietQR chưa thanh toán: BẮT BUỘC duyệt QR trước, không cho nhảy sang bước tiếp theo
     if (!isUnpaidQr) {
@@ -227,6 +321,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   }
 
   canConfirmQrPayment(o: ApiOrder): boolean {
+    if (this.isWarehouse() || this.isSales()) return false;
     return (
       o.paymentMethod === 'bank_transfer' &&
       o.paymentStatus !== 'paid' &&
@@ -323,6 +418,16 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
   }
 
   nextActionLabel(status: ApiOrder['status']): string | null {
+    if (this.isSales()) {
+      // Sales phụ trách tiếp nhận & xác nhận đơn hàng khi khách đặt
+      if (status === 'pending') return 'Xác nhận đơn';
+      return null; // Các bước Chuẩn bị hàng, Bắt đầu giao thuộc về Bộ phận Kho & Vận chuyển!
+    }
+    if (this.isWarehouse()) {
+      if (status === 'confirmed') return 'Chuẩn bị hàng';
+      if (status === 'preparing') return 'Bắt đầu giao';
+      return null;
+    }
     const labels: Partial<Record<ApiOrder['status'], string>> = {
       pending: 'Xác nhận đơn',
       confirmed: 'Chuẩn bị hàng',
@@ -340,7 +445,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
     if (!slot) return '';
     const idx = slot.indexOf(':');
     const clean = idx >= 0 ? slot.slice(idx + 1).trim() : slot;
-    return clean.replace(/^Từ\s+/i, '').replace(/🛵/g, '').replace(/\s+/g, ' ').trim();
+    return clean.replace(/^Từ\s+/i, '').replace(/\s+/g, ' ').trim();
   }
 
   quickAdvance(o: ApiOrder): void {
@@ -405,6 +510,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
       range === '30d' ? now.getTime() - 30 * 86400000 : 0;
 
     const list = this.orders().filter(o => {
+      if (this.qrOnlyFilter() && !this.canConfirmQrPayment(o)) return false;
       // Tuân thủ nghiêm ngặt các bộ lọc thuộc tính người dùng đã chọn (Phương thức thanh toán, tình trạng tiền, hình thức nhận, thời gian)
       if (pay && o.paymentMethod !== pay) return false;
       if (payState && (o.paymentStatus || 'unpaid') !== payState) return false;
@@ -601,7 +707,7 @@ export class AdminOrdersComponent implements OnInit, OnDestroy {
           <div>
             <div class="store-name">Evergreen Mart</div>
             <div class="store-info">Nông sản sạch VietGAP &amp; Thực phẩm hữu cơ</div>
-            <div class="store-info">Hotline: 1900 8888 • www.evergreenmart.vn</div>
+            <div class="store-info">Hotline: 1900 8888 - www.evergreenmart.vn</div>
           </div>
           <div style="text-align:right">
             <div style="font-size:16px;font-weight:700">PHIẾU ĐÓNG GÓI &amp; GIAO HÀNG</div>

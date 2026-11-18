@@ -48,7 +48,7 @@ function sendOrderConfirmationEmail(order) {
       const html = `
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden">
           <div style="background:#1e4226;padding:20px;text-align:center;color:#fff">
-            <h2 style="margin:0;font-size:22px">Xanh Lá — Đặt Hàng Thành Công</h2>
+            <h2 style="margin:0;font-size:22px">Xanh Lá - Đặt Hàng Thành Công</h2>
             <p style="margin:4px 0 0 0;font-size:14px;color:#dcfce7">Cảm ơn bạn đã tin chọn nông sản tươi sạch chuẩn VietGAP</p>
           </div>
           <div style="padding:24px">
@@ -90,7 +90,7 @@ function sendOrderConfirmationEmail(order) {
             </p>
           </div>
           <div style="background:#f3f4f6;padding:12px;text-align:center;font-size:12px;color:#9ca3af">
-            © 2026 Xanh Lá — Nông sản hữu cơ &amp; Thực phẩm sạch vì sức khỏe gia đình.
+             2026 Xanh Lá - Nông sản hữu cơ &amp; Thực phẩm sạch vì sức khỏe gia đình.
           </div>
         </div>
       `;

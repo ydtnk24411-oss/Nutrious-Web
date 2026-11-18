@@ -236,7 +236,7 @@ module.exports = {
     unit: 'Gói (300g)',
     storageInstructions: 'Bảo quản ngăn đông lạnh -18°C.',
     usageInstructions: 'Khía quả trám trên lớp da vịt, áp chảo mặt da cho ra bớt mỡ giòn rụm rồi lật mặt thịt ăn kèm sốt cam tươi.',
-    specifications: { 'Chứng nhận': 'PGI chỉ dẫn địa lý Tây Nam nước Pháp', 'Loại': 'Magret de Canard vịt nuôi ngô truyền thống', 'Năng lượng': '202 kcal / 100g', 'Chất đạm (Protein)': '19.5g / 100g', 'Chất béo (Lipid)': '13.6g / 100g (Mỡ vịt giàu axit béo không bão hòa đơn)', 'Carbohydrate': '0g / 100g', 'Vitamin & Khoáng chất': 'Sắt (4.5mg — cao hơn cả thịt bò), Vitamin B3, B12, Selen, Kẽm' },
+    specifications: { 'Chứng nhận': 'PGI chỉ dẫn địa lý Tây Nam nước Pháp', 'Loại': 'Magret de Canard vịt nuôi ngô truyền thống', 'Năng lượng': '202 kcal / 100g', 'Chất đạm (Protein)': '19.5g / 100g', 'Chất béo (Lipid)': '13.6g / 100g (Mỡ vịt giàu axit béo không bão hòa đơn)', 'Carbohydrate': '0g / 100g', 'Vitamin & Khoáng chất': 'Sắt (4.5mg - cao hơn cả thịt bò), Vitamin B3, B12, Selen, Kẽm' },
     description: 'Ức vịt Pháp Magret de Canard Rougié danh tiếng thế giới, lớp da dày giòn tan vàng ruộm thơm bơ nướng quyện cùng thớ thịt nạc đỏ hồng ngọt mềm như bít tết bò thượng hạng ăn cùng sốt cam tươi.'
   },
   'me-ga-lam-sach-tuoi': {

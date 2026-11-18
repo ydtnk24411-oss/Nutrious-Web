@@ -1,5 +1,5 @@
 /* =========================================================
-   XANH LÁ — ORDER PAGE
+   XANH LÁ - ORDER PAGE
    Đồng bộ với homepage: lime + forest + coral + cream
    Bo góc bất đối xứng, sticker shadow, typography đậm
    ========================================================= */
@@ -268,21 +268,36 @@
    ========================================================= */
 .ord-sidebar {
   position: sticky;
-  top: 180px;
+  top: 198px;
   align-self: start;
-  max-height: calc(100vh - 195px);
-  overflow-y: auto;
-  padding: 20px 18px;
+  max-height: calc(100vh - 215px);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
   background: #fff;
   border: 2px solid var(--xl-forest);
   border-radius: 8px 26px 8px 26px;
   box-shadow: 6px 7px 0 #e2edc6;
+  overflow: hidden;
+  z-index: 20;
+}
+
+.ord-sidebar-fixed-top {
+  padding: 18px 18px 0;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.ord-sidebar-scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 18px 18px;
   scrollbar-width: thin;
   scrollbar-color: #c8dca0 transparent;
 }
 
-.ord-sidebar::-webkit-scrollbar { width: 6px; }
-.ord-sidebar::-webkit-scrollbar-thumb {
+.ord-sidebar-scroll-body::-webkit-scrollbar { width: 6px; }
+.ord-sidebar-scroll-body::-webkit-scrollbar-thumb {
   background: #c8dca0;
   border-radius: 3px;
 }

@@ -1,7 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
 
-export type UserRole = 'customer' | 'admin' | 'sales' | 'warehouse' | 'support' | 'content';
+export type UserRole =
+  | 'customer'
+  | 'admin'
+  | 'manager'
+  | 'sales'
+  | 'warehouse'
+  | 'marketing'
+  | 'support'
+  | 'content';
 
 export interface ApiUser {
   _id: string;
@@ -11,6 +19,9 @@ export interface ApiUser {
   avatar?: string;
   role: UserRole;
   isActive: boolean;
+  employeeCode?: string;
+  assignedStore?: string;
+  storeName?: string;
   createdAt: string;
   totalSpent?: number;
   orderCount?: number;

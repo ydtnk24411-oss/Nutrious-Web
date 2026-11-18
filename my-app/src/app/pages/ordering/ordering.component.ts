@@ -578,12 +578,6 @@ export class OrderingComponent implements OnInit, OnDestroy {
     ).subscribe((q) => {
       this.search.set(q);
       this.syncQueryParamsToUrl();
-      const trimmed = (q || '').trim();
-      if (trimmed.length >= 2 && trimmed !== this.lastTrackedKeyword) {
-        this.lastTrackedKeyword = trimmed;
-        const count = this.filteredProducts().length;
-        this.analytics.trackSearch(trimmed, count);
-      }
     });
     effect(() => {
       // Tự động đặt lại hiển thị 20 sản phẩm đầu khi đổi danh mục, tìm kiếm, bộ lọc hoặc sắp xếp
@@ -928,6 +922,24 @@ export class OrderingComponent implements OnInit, OnDestroy {
   protected onSearchInput(event: Event): void {
     const val = (event.target as HTMLInputElement).value || '';
     this.searchSubject.next(val);
+  }
+
+  protected onSearchEnter(): void {
+    const trimmed = (this.search() || '').trim();
+    if (trimmed.length >= 2 && trimmed !== this.lastTrackedKeyword) {
+      this.lastTrackedKeyword = trimmed;
+      const count = this.filteredProducts().length;
+      this.analytics.trackSearch(trimmed, count);
+    }
+  }
+
+  protected onSearchBlur(): void {
+    const trimmed = (this.search() || '').trim();
+    if (trimmed.length >= 3 && trimmed !== this.lastTrackedKeyword) {
+      this.lastTrackedKeyword = trimmed;
+      const count = this.filteredProducts().length;
+      this.analytics.trackSearch(trimmed, count);
+    }
   }
 
   protected toggleInStock(): void {

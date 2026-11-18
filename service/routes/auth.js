@@ -77,10 +77,11 @@ const publicUser = (u) => ({
   email: u.email || '',
   phone: u.phone || '',
   role: u.role || 'customer',
-  firstName: u.firstName || '',
-  lastName: u.lastName || '',
   title: u.title || '',
   avatar: u.avatar || '',
+  assignedStore: u.assignedStore || 'default',
+  assignedStoreIds: Array.isArray(u.assignedStoreIds) && u.assignedStoreIds.length > 0 ? u.assignedStoreIds : [u.assignedStore || 'default'],
+  storeName: u.storeName || '',
   points: u.points || 0,
   tier: u.tier || 'bronze',
   totalSpent: u.totalSpent || 0,
@@ -362,12 +363,15 @@ router.post(
 
       const normalizedPhone = normalizeVietnamesePhone(rawInput);
       const emailInput = rawInput.toLowerCase();
+      const emailsToSearch = [emailInput];
+      if (emailInput === 'admin@xanhla.farm') emailsToSearch.push('admin@evergreen.vn');
+      if (emailInput === 'admin@evergreen.vn') emailsToSearch.push('admin@xanhla.farm');
 
       const user = await User.findOne({
         $or: [
           ...(isValidVietnamesePhone(normalizedPhone) ? [{ phone: normalizedPhone }] : []),
           { phone: rawInput },
-          { email: emailInput },
+          { email: { $in: emailsToSearch } },
         ],
       }).select('+password');
 
@@ -430,12 +434,15 @@ router.post(
 
       const normalizedPhone = normalizeVietnamesePhone(rawInput);
       const emailInput = rawInput.toLowerCase();
+      const emailsToSearch = [emailInput];
+      if (emailInput === 'admin@xanhla.farm') emailsToSearch.push('admin@evergreen.vn');
+      if (emailInput === 'admin@evergreen.vn') emailsToSearch.push('admin@xanhla.farm');
 
       const user = await User.findOne({
         $or: [
           ...(isValidVietnamesePhone(normalizedPhone) ? [{ phone: normalizedPhone }] : []),
           { phone: rawInput },
-          { email: emailInput },
+          { email: { $in: emailsToSearch } },
         ],
       }).select('+password');
 
@@ -505,13 +512,16 @@ router.post(
 
       const normalizedPhone = normalizeVietnamesePhone(rawInput);
       const emailInput = rawInput.toLowerCase();
+      const emailsToSearch = [emailInput];
+      if (emailInput === 'admin@xanhla.farm') emailsToSearch.push('admin@evergreen.vn');
+      if (emailInput === 'admin@evergreen.vn') emailsToSearch.push('admin@xanhla.farm');
 
       // Tìm kiếm theo số điện thoại đã chuẩn hóa hoặc theo email
       const user = await User.findOne({
         $or: [
           ...(isValidVietnamesePhone(normalizedPhone) ? [{ phone: normalizedPhone }] : []),
           { phone: rawInput },
-          { email: emailInput },
+          { email: { $in: emailsToSearch } },
         ],
       }).select('+password');
 

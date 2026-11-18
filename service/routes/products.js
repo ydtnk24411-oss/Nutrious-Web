@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const { body } = require('express-validator');
 const Product  = require('../models/Product');
 const Category = require('../models/Category');
+const StoreInventory = require('../models/StoreInventory');
+const ShippingConfig = require('../models/ShippingConfig');
 const SearchLog = require('../models/SearchLog');
 const { protect, adminOnly, optionalAuth, authorizeRoles } = require('../middleware/auth');
 const { validate }           = require('../middleware/validate');
@@ -67,9 +69,9 @@ async function sanitizeAddOnDeals(rawDeals, selfId, mainDoc) {
   return result;
 }
 
-// GET /api/products  — public, supports ?categoryId=&category=&search=&sort=&page=&limit=
-// Cache 20 giây đối với các lượt duyệt catalog chung, KHÔNG cache đối với tìm kiếm từ khóa để đảm bảo ghi nhận SearchLog đầy đủ
-router.get('/', optionalAuth, cacheMiddleware(20, (req) => !req.query.search && !req.query.keyword), async (req, res, next) => {
+// GET /api/products  - public, supports ?categoryId=&category=&search=&sort=&page=&limit=
+// Cache 30 giây đối với các lượt duyệt catalog chung (dùng public scope chung cho mọi user để tăng hit rate 99%)
+router.get('/', optionalAuth, cacheMiddleware(30, (req) => !req.query.search && !req.query.keyword, true), async (req, res, next) => {
   try {
     const {
       categoryId,
@@ -168,7 +170,13 @@ router.get('/', optionalAuth, cacheMiddleware(20, (req) => !req.query.search && 
     let query = Product.find(filter)
       .sort(sortObj)
       .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
-      .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
+      .populate('addOnDeals.product', ADDON_POPULATE_FIELDS)
+      .lean();
+
+    // Tối ưu hóa kích thước payload khi tải toàn bộ hoặc yêu cầu format rút gọn
+    if (req.query.format === 'brief' || req.query.fields === 'brief' || limitNum === 0 || limitNum > 100) {
+      query = query.select('name slug price priceNumber image category categoryVi categoryId stock isActive isCombo addOnDeals comboItems weight unit');
+    }
 
     if (limitNum > 0) {
       const skip = (pageNum - 1) * limitNum;
@@ -189,16 +197,68 @@ router.get('/', optionalAuth, cacheMiddleware(20, (req) => !req.query.search && 
       });
     }
 
+    const storeId = req.query.storeId || req.headers['x-store-id'];
+    let enrichedData = enrichProductOrComboList(products);
+
+    if (storeId && storeId !== 'all') {
+      const prodIds = enrichedData.map(p => p._id || p.id).filter(Boolean);
+      const storeInvs = await StoreInventory.find({
+        storeId,
+        productId: { $in: prodIds },
+      }).lean();
+
+      const invMap = new Map(storeInvs.map(inv => [String(inv.productId), inv]));
+
+      enrichedData = enrichedData.map(p => {
+        const prodObj = typeof p.toObject === 'function' ? p.toObject() : { ...p };
+        const inv = invMap.get(String(prodObj._id || prodObj.id));
+
+        if (prodObj.isCombo && Array.isArray(prodObj.comboItems)) {
+          let minComboStock = 9999;
+          for (const ci of prodObj.comboItems) {
+            const ciProd = ci.product;
+            const ciId = ciProd?._id || ciProd?.id || ciProd;
+            const ciInv = invMap.get(String(ciId));
+            const ciStock = ciInv ? Math.max(0, (ciInv.physicalStock || 0) - (ciInv.reservedStock || 0) - (ciInv.safetyBuffer || 0)) : 0;
+            const perCombo = Math.floor(ciStock / (ci.quantity || 1));
+            minComboStock = Math.min(minComboStock, perCombo);
+          }
+          const availableStock = minComboStock === 9999 ? 0 : minComboStock;
+          prodObj.availableStock = availableStock;
+          prodObj.stock = availableStock;
+          prodObj.storeStock = availableStock;
+        } else {
+          const availableStock = inv ? Math.max(0, (inv.physicalStock || 0) - (inv.reservedStock || 0) - (inv.safetyBuffer || 0)) : 0;
+          prodObj.storePhysicalStock = inv?.physicalStock || 0;
+          prodObj.storeReservedStock = inv?.reservedStock || 0;
+          prodObj.availableStock = availableStock;
+          prodObj.stock = availableStock;
+          prodObj.storeStock = availableStock;
+          if (inv?.storePrice) {
+            prodObj.priceNumber = inv.storePrice;
+            prodObj.price = inv.storePrice.toLocaleString('vi-VN') + ' ₫';
+          }
+        }
+        prodObj.storeId = storeId;
+        prodObj.storeName = inv?.storeName || '';
+        return prodObj;
+      });
+
+      if (inStock === 'true' || inStock === true) {
+        enrichedData = enrichedData.filter(p => (p.stock ?? 0) > 0);
+      }
+    }
+
     res.json({
       success: true,
       total,
       page: pageNum,
-      data: enrichProductOrComboList(products),
+      data: enrichedData,
     });
   } catch (err) { next(err); }
 });
 
-// GET /api/products/:slug/related — lấy sản phẩm liên quan cùng danh mục
+// GET /api/products/:slug/related - lấy sản phẩm liên quan cùng danh mục
 router.get('/:slug/related', async (req, res, next) => {
   try {
     const rawSlug = req.params.slug;
@@ -247,7 +307,7 @@ router.get('/:slug/related', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/products/:slug/frequently-bought — Sản phẩm thường được mua cùng nhau (Frequently Bought Together)
+// GET /api/products/:slug/frequently-bought - Sản phẩm thường được mua cùng nhau (Frequently Bought Together)
 router.get('/:slug/frequently-bought', async (req, res, next) => {
   try {
     const rawSlug = req.params.slug;
@@ -274,7 +334,7 @@ router.get('/:slug/frequently-bought', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/products/:slug/combos — combo mua kèm tiết kiệm có chứa sản phẩm này
+// GET /api/products/:slug/combos - combo mua kèm tiết kiệm có chứa sản phẩm này
 router.get('/:slug/combos', async (req, res, next) => {
   try {
     const rawSlug = req.params.slug;
@@ -310,9 +370,142 @@ router.get('/:slug/combos', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/products/:slug — public
+// POST /api/products/compare-store-prices - so sánh giá và tồn kho giữa 2 chi nhánh khi đổi khu vực
+router.post('/compare-store-prices', async (req, res, next) => {
+  try {
+    const { fromStoreId, toStoreId, items } = req.body;
+    if (!fromStoreId || !toStoreId || !Array.isArray(items) || items.length === 0) {
+      return res.json({ success: true, hasDiscrepancy: false, discrepancies: [] });
+    }
+
+    if (fromStoreId === toStoreId) {
+      return res.json({ success: true, hasDiscrepancy: false, discrepancies: [] });
+    }
+
+    const shippingConfig = await ShippingConfig.findOne({ key: 'default' }).lean();
+    const warehouses = shippingConfig?.warehouses || [];
+    const fromStoreInfo = warehouses.find((w) => w.id === fromStoreId) || { id: fromStoreId, name: fromStoreId };
+    const toStoreInfo = warehouses.find((w) => w.id === toStoreId) || { id: toStoreId, name: toStoreId };
+
+    const discrepancies = [];
+
+    for (const it of items) {
+      const prodIdentifier = it.productId || it.product || it.slug;
+      if (!prodIdentifier) continue;
+
+      let p = null;
+      if (mongoose.Types.ObjectId.isValid(prodIdentifier)) {
+        p = await Product.findById(prodIdentifier).lean();
+      }
+      if (!p && typeof prodIdentifier === 'string') {
+        p = await Product.findOne({ slug: prodIdentifier }).lean();
+      }
+      if (!p) continue;
+
+      const [fromInv, toInv] = await Promise.all([
+        StoreInventory.findOne({ storeId: fromStoreId, productId: p._id }).lean(),
+        StoreInventory.findOne({ storeId: toStoreId, productId: p._id }).lean(),
+      ]);
+
+      const oldPrice = Number(fromInv?.storeDiscountPrice || fromInv?.basePrice || it.priceNumber || p.priceNumber || 0);
+      const newPrice = Number(toInv?.storeDiscountPrice || toInv?.basePrice || p.priceNumber || 0);
+
+      const toPhysical = toInv?.physicalStock ?? p.stock ?? 0;
+      const toReserved = toInv?.reservedStock ?? 0;
+      const toBuffer = toInv?.safetyBuffer ?? 0;
+      const toAvailable = Math.max(0, toPhysical - toReserved - toBuffer);
+
+      const qty = Number(it.quantity) || 1;
+      const isPriceChanged = oldPrice !== newPrice;
+      const isOutOfStock = toAvailable < qty;
+
+      if (isPriceChanged || isOutOfStock) {
+        discrepancies.push({
+          productId: String(p._id),
+          productName: p.name,
+          slug: p.slug,
+          image: p.image,
+          requestedQuantity: qty,
+          oldPrice,
+          newPrice,
+          priceDiff: newPrice - oldPrice,
+          isPriceChanged,
+          oldStoreStock: fromInv?.physicalStock ?? p.stock ?? 0,
+          newStoreStock: toAvailable,
+          isOutOfStock,
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      fromStore: fromStoreInfo,
+      toStore: toStoreInfo,
+      hasDiscrepancy: discrepancies.length > 0,
+      discrepancies,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/products/:slug/stock-by-stores - kiểm tra tồn kho của sản phẩm tại tất cả các chi nhánh
+router.get('/:slug/stock-by-stores', async (req, res, next) => {
+  try {
+    const rawSlug = req.params.slug;
+    let product = await Product.findOne({ slug: rawSlug, isActive: { $ne: false } });
+    if (!product && mongoose.Types.ObjectId.isValid(rawSlug)) {
+      product = await Product.findOne({ _id: rawSlug, isActive: { $ne: false } });
+    }
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
+    }
+
+    const inventories = await StoreInventory.find({ productId: product._id }).lean();
+    const invMap = new Map(inventories.map((inv) => [inv.storeId, inv]));
+
+    const shippingConfig = await ShippingConfig.findOne({ key: 'default' }).lean();
+    const warehouses = (shippingConfig?.warehouses && shippingConfig.warehouses.length > 0)
+      ? shippingConfig.warehouses
+      : [];
+
+    const storesStock = warehouses.map((w) => {
+      const inv = invMap.get(w.id);
+      const physical = inv?.physicalStock || 0;
+      const reserved = inv?.reservedStock || 0;
+      const buffer = inv?.safetyBuffer || 0;
+      const available = Math.max(0, physical - reserved - buffer);
+      return {
+        storeId: w.id,
+        storeName: w.name,
+        address: w.address,
+        province: w.province,
+        district: w.district,
+        phone: w.phone,
+        openingHours: w.openingHours || '07:00 - 21:30',
+        lat: w.lat,
+        lng: w.lng,
+        physicalStock: physical,
+        availableStock: available,
+        inStock: available > 0,
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        product: { id: product._id, name: product.name, slug: product.slug, totalStock: product.stock },
+        stores: storesStock,
+        totalStoresInStock: storesStock.filter((s) => s.inStock).length,
+      },
+    });
+  } catch (err) { next(err); }
+});
+
+// GET /api/products/:slug - public
 router.get('/:slug', async (req, res, next) => {
   try {
+    const storeId = req.query.storeId || req.headers['x-store-id'];
     const publicFilter = {
       $or: [
         { isCombo: { $ne: true }, isActive: { $ne: false } },
@@ -329,7 +522,31 @@ router.get('/:slug', async (req, res, next) => {
         .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     }
     if (!product) return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
-    const responseData = product.isCombo ? enrichComboDocument(product) : product;
+    let responseData = product.isCombo ? enrichComboDocument(product) : (product.toObject ? product.toObject() : { ...product });
+
+    if (storeId && storeId !== 'all') {
+      const inv = await StoreInventory.findOne({ storeId, productId: product._id }).lean();
+      const availableStock = inv ? Math.max(0, (inv.physicalStock || 0) - (inv.reservedStock || 0) - (inv.safetyBuffer || 0)) : 0;
+      responseData.storePhysicalStock = inv?.physicalStock || 0;
+      responseData.storeReservedStock = inv?.reservedStock || 0;
+      responseData.availableStock = availableStock;
+      responseData.stock = availableStock;
+      responseData.storeStock = availableStock;
+      responseData.storeId = storeId;
+      responseData.storeName = inv?.storeName || '';
+      if (inv?.storeDiscountPrice && Number(inv.storeDiscountPrice) > 0) {
+        responseData.originalPrice = responseData.price || (Number(product.priceNumber || 0).toLocaleString('vi-VN') + ' ₫');
+        responseData.originalPriceNumber = product.priceNumber || 0;
+        responseData.priceNumber = Number(inv.storeDiscountPrice);
+        responseData.price = Number(inv.storeDiscountPrice).toLocaleString('vi-VN') + ' ₫';
+        responseData.isStoreDiscount = true;
+        responseData.storeDiscountPrice = Number(inv.storeDiscountPrice);
+      } else if (inv?.storePrice) {
+        responseData.priceNumber = Number(inv.storePrice);
+        responseData.price = Number(inv.storePrice).toLocaleString('vi-VN') + ' ₫';
+      }
+    }
+
     res.json({ success: true, data: responseData });
   } catch (err) { next(err); }
 });
@@ -340,7 +557,7 @@ const productValidation = [
   body('priceNumber').isNumeric().withMessage('Giá phải là số.'),
 ];
 
-// POST /api/products — admin
+// POST /api/products - admin
 router.post('/', protect, adminOnly, productValidation, validate, async (req, res, next) => {
   try {
     if (req.body.categoryId) {
@@ -362,8 +579,8 @@ router.post('/', protect, adminOnly, productValidation, validate, async (req, re
   } catch (err) { next(err); }
 });
 
-// PUT /api/products/:id — admin
-router.put('/:id', protect, authorizeRoles('Manager', 'Admin', 'Sales'), async (req, res, next) => {
+// PUT /api/products/:id - Manager, Admin & Marketing
+router.put('/:id', protect, authorizeRoles('Manager', 'Admin', 'Marketing'), async (req, res, next) => {
   try {
     const userRole = String(req.user?.role || req.session?.employee?.role || '').toLowerCase();
     const isPriceChanged = req.body.priceNumber !== undefined || req.body.price !== undefined;
@@ -395,7 +612,7 @@ router.put('/:id', protect, authorizeRoles('Manager', 'Admin', 'Sales'), async (
   } catch (err) { next(err); }
 });
 
-// DELETE /api/products/:id — admin (soft delete)
+// DELETE /api/products/:id - admin (soft delete)
 router.delete('/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const product = await Product.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });

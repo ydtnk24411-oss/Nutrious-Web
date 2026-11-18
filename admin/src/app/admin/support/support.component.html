@@ -200,21 +200,20 @@
               </div>
             }
             @if (msg.sender === 'ai') {
-              <div class="msg-bubble-avatar msg-bot-avatar">🤖</div>
+              <div class="msg-bubble-avatar msg-bot-avatar">AI</div>
             }
             <!-- Message Bubble -->
             <div class="message-bubble">
               <div class="message-header-line">
-                <span class="message-sender-tag">
-                  @switch (msg.sender) {
-                    @case ('customer') { {{ activeConversation()?.customerName || msg.senderName || 'Khách hàng' }} }
-                    @case ('ai') { NutriBot AI 🤖 }
-                    @case ('admin') { {{ msg.senderName || 'Nhân viên hỗ trợ' }} }
-                  }
-                </span>
+                <span class="message-sender-tag">{{ getSenderName(msg) }}</span>
                 <span class="message-time">{{ msg.timestamp | date: 'HH:mm' }}</span>
               </div>
               <div class="message-text">{{ msg.content }}</div>
+              @if (msg.sender === 'admin' && getStaffAttribution(msg)) {
+                <div class="message-staff-attribution">
+                  <span>Người gửi: <strong>{{ getStaffAttribution(msg) }}</strong></span>
+                </div>
+              }
             </div>
           </div>
         }

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Menus — Thực đơn
+   Menus - Thực đơn
    ========================================================================== */
 
 .menus-page {
@@ -110,7 +110,7 @@
   white-space: nowrap;
 }
 
-/* ── Grid — 4 cột, đồng bộ deal card ────────────────────── */
+/* ── Grid - 4 cột, đồng bộ deal card ────────────────────── */
 .menus-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

@@ -87,7 +87,7 @@ function findExactProductForIngredient(ingName, products) {
 }
 
 const NUTRITION_HERO = {
-  kicker: '🥗 Trợ Lý Thực Đơn Khoa Học - Dữ Liệu Trực Tuyến',
+  kicker: 'Trợ Lý Thực Đơn Khoa Học - Dữ Liệu Trực Tuyến',
   title: 'Dinh dưỡng thông minh & Thực đơn chuẩn vị',
   subtitle:
     'Khám phá các gói thực đơn dinh dưỡng tiết kiệm, xem chi tiết công thức chế biến từng bước, bảng thành phần vi chất và thêm trọn bộ nguyên liệu tươi sạch vào giỏ hàng chỉ với một chạm.',
@@ -95,12 +95,12 @@ const NUTRITION_HERO = {
 };
 
 const NUTRITION_GOALS = [
-  { id: 'protein', label: 'Bổ sung protein', icon: '🥩', unit: 'g', min: 0, max: 200, step: 5, default: 50 },
-  { id: 'fiber',   label: 'Bổ sung chất xơ', icon: '🥦', unit: 'g', min: 0, max: 50, step: 1, default: 10 },
-  { id: 'vitamin', label: 'Bổ sung vitamin', icon: '🍊', unit: 'mg', min: 0, max: 500, step: 10, default: 50 },
-  { id: 'mineral', label: 'Bổ sung khoáng chất', icon: '💊', unit: 'mg', min: 0, max: 1000, step: 50, default: 200 },
-  { id: 'variety', label: 'Đa dạng thực phẩm', icon: '🌈', unit: '', min: 0, max: 0, step: 0, default: 0 },
-  { id: 'balance', label: 'Bữa ăn cân bằng', icon: '⚖️', unit: '', min: 0, max: 0, step: 0, default: 0 },
+  { id: 'protein', label: 'Bổ sung protein', icon: 'protein', unit: 'g', min: 0, max: 200, step: 5, default: 50 },
+  { id: 'fiber',   label: 'Bổ sung chất xơ', icon: 'fiber', unit: 'g', min: 0, max: 50, step: 1, default: 10 },
+  { id: 'vitamin', label: 'Bổ sung vitamin', icon: 'vitamin', unit: 'mg', min: 0, max: 500, step: 10, default: 50 },
+  { id: 'mineral', label: 'Bổ sung khoáng chất', icon: 'mineral', unit: 'mg', min: 0, max: 1000, step: 50, default: 200 },
+  { id: 'variety', label: 'Đa dạng thực phẩm', icon: 'variety', unit: '', min: 0, max: 0, step: 0, default: 0 },
+  { id: 'balance', label: 'Bữa ăn cân bằng', icon: 'balance', unit: '', min: 0, max: 0, step: 0, default: 0 },
 ];
 
 const NUTRITION_MEAL_PLANS = [
@@ -227,7 +227,7 @@ function mapRecipeDoc(r, products = []) {
   };
 }
 
-// GET /api/nutrition — Lấy cấu hình hero, gói thực đơn mẫu, mục tiêu dinh dưỡng và danh sách công thức từ MongoDB (cache 60s)
+// GET /api/nutrition - Lấy cấu hình hero, gói thực đơn mẫu, mục tiêu dinh dưỡng và danh sách công thức từ MongoDB (cache 60s)
 router.get('/', cacheMiddleware(60), async (req, res, next) => {
   try {
     const [recipes, products, recentOrders] = await Promise.all([
@@ -263,7 +263,7 @@ router.get('/', cacheMiddleware(60), async (req, res, next) => {
   }
 });
 
-// GET /api/nutrition/:id — Lấy chi tiết 1 món ăn từ MongoDB
+// GET /api/nutrition/:id - Lấy chi tiết 1 món ăn từ MongoDB
 router.get('/:id', async (req, res, next) => {
   try {
     const [recipe, products] = await Promise.all([

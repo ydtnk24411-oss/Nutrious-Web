@@ -88,7 +88,7 @@ const DEFAULT_WAREHOUSES = [
     readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
   },
 
-  // Bình Dương
+  // Dĩ An (Bình Dương - cửa ngõ Thủ Đức)
   {
     id: 'store-dian',
     name: 'Kho Evergreen Mart Dĩ An',
@@ -98,142 +98,6 @@ const DEFAULT_WAREHOUSES = [
     lat: 10.8986,
     lng: 106.7865,
     phone: '0274 377 8899',
-    openingHours: '07:00 - 21:30',
-    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
-  },
-  {
-    id: 'store-thudaumot',
-    name: 'Kho Evergreen Mart Thủ Dầu Một',
-    address: '230 Đại lộ Bình Dương, Phường Phú Hòa, TP. Thủ Dầu Một, Bình Dương',
-    province: 'Tỉnh Bình Dương',
-    district: 'TP. Thủ Dầu Một',
-    lat: 10.9805,
-    lng: 106.6745,
-    phone: '0274 382 1234',
-    openingHours: '07:00 - 21:30',
-    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
-  },
-
-  // Đồng Nai
-  {
-    id: 'store-bienhoa',
-    name: 'Kho Evergreen Mart Biên Hòa',
-    address: '104 Đồng Khởi, Phường Tân Hiệp, TP. Biên Hòa, Đồng Nai',
-    province: 'Tỉnh Đồng Nai',
-    district: 'TP. Biên Hòa',
-    lat: 10.9631,
-    lng: 106.8488,
-    phone: '0251 388 6677',
-    openingHours: '07:00 - 21:30',
-    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
-  },
-
-  // Hà Nội
-  {
-    id: 'store-dongda',
-    name: 'Kho Evergreen Mart Đống Đa - Hà Nội',
-    address: '12 Chùa Bộc, Phường Quang Trung, Quận Đống Đa, Hà Nội',
-    province: 'Thành phố Hà Nội',
-    district: 'Quận Đống Đa',
-    lat: 21.0074,
-    lng: 105.8285,
-    phone: '024 3852 4466',
-    openingHours: '07:00 - 21:30',
-    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
-  },
-  {
-    id: 'store-caugiay',
-    name: 'Kho Evergreen Mart Cầu Giấy - Hà Nội',
-    address: '165 Cầu Giấy, Phường Dịch Vọng, Quận Cầu Giấy, Hà Nội',
-    province: 'Thành phố Hà Nội',
-    district: 'Quận Cầu Giấy',
-    lat: 21.0336,
-    lng: 105.7946,
-    phone: '024 3767 1122',
-    openingHours: '07:00 - 21:30',
-    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
-  },
-
-  // Đà Nẵng
-  {
-    id: 'store-danang',
-    name: 'Kho Evergreen Mart Đà Nẵng',
-    address: '48 Điện Biên Phủ, Phường Chính Gián, Quận Thanh Khê, TP. Đà Nẵng',
-    province: 'Thành phố Đà Nẵng',
-    district: 'Quận Thanh Khê',
-    lat: 16.0678,
-    lng: 108.1963,
-    phone: '0236 374 8899',
-    openingHours: '07:00 - 21:30',
-    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
-  },
-
-  // Khánh Hòa (Nha Trang)
-  {
-    id: 'store-nhatrang',
-    name: 'Kho Evergreen Mart Nha Trang',
-    address: 'Số 82 Lê Hồng Phong, Phường Phước Hải, TP. Nha Trang, Khánh Hòa',
-    province: 'Tỉnh Khánh Hòa',
-    district: 'TP. Nha Trang',
-    lat: 12.2355,
-    lng: 109.1865,
-    phone: '0258 387 9900',
-    openingHours: '07:00 - 21:30',
-    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
-  },
-
-  // Đắk Lắk (Buôn Ma Thuột)
-  {
-    id: 'store-daklak',
-    name: 'Kho Evergreen Mart Buôn Ma Thuột',
-    address: '35 Nguyễn Tất Thành, Phường Tân An, TP. Buôn Ma Thuột, Đắk Lắk',
-    province: 'Tỉnh Đắk Lắk',
-    district: 'TP. Buôn Ma Thuột',
-    lat: 12.6934,
-    lng: 108.0538,
-    phone: '0262 395 7788',
-    openingHours: '07:00 - 21:30',
-    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
-  },
-
-  // Cần Thơ
-  {
-    id: 'store-cantho',
-    name: 'Kho Evergreen Mart Cần Thơ',
-    address: '209 Đường 30 Tháng 4, Phường Xuân Khánh, Quận Ninh Kiều, Cần Thơ',
-    province: 'Thành phố Cần Thơ',
-    district: 'Quận Ninh Kiều',
-    lat: 10.0278,
-    lng: 105.7725,
-    phone: '0292 383 6677',
-    openingHours: '07:00 - 21:30',
-    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
-  },
-
-  // Bà Rịa - Vũng Tàu
-  {
-    id: 'store-vungtau',
-    name: 'Kho Evergreen Mart Vũng Tàu',
-    address: '155 Nguyễn Thái Học, Phường 7, TP. Vũng Tàu, Bà Rịa - Vũng Tàu',
-    province: 'Tỉnh Bà Rịa - Vũng Tàu',
-    district: 'TP. Vũng Tàu',
-    lat: 10.3542,
-    lng: 107.0863,
-    phone: '0254 357 8899',
-    openingHours: '07:00 - 21:30',
-    readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
-  },
-
-  // Lâm Đồng (Đà Lạt)
-  {
-    id: 'store-dalat',
-    name: 'Kho Evergreen Mart Đà Lạt',
-    address: 'Số 10 Phan Chu Trinh, Phường 9, TP. Đà Lạt, Lâm Đồng',
-    province: 'Tỉnh Lâm Đồng',
-    district: 'TP. Đà Lạt',
-    lat: 11.9442,
-    lng: 108.4552,
-    phone: '0263 382 3344',
     openingHours: '07:00 - 21:30',
     readyTime: 'Chuẩn bị hàng: 15 - 30 phút',
   },
@@ -351,15 +215,19 @@ async function getOrCreateShippingConfig() {
       ],
       foodPreservationPolicy: 'Ưu tiên giao nhanh trong ngày bằng xe chuyên dụng / túi giữ nhiệt bảo quản thực phẩm mát.',
       isServiceActive: true,
+      warehouses: DEFAULT_WAREHOUSES,
     });
+  } else if (!config.warehouses || config.warehouses.length === 0) {
+    config.warehouses = DEFAULT_WAREHOUSES;
+    await config.save();
   }
   return config;
 }
 
 /**
- * Tính toán phí vận chuyển hoàn chỉnh theo khoảng cách & giá trị đơn hàng
+ * Tính toán phí vận chuyển hoàn chỉnh theo khoảng cách, giá trị đơn hàng & đặc quyền hạng thành viên
  */
-async function calculateShipping(customerLat, customerLng, subtotal = 0, customConfig = null) {
+async function calculateShipping(customerLat, customerLng, subtotal = 0, customConfig = null, loyaltyTier = '') {
   const config = customConfig || (await getOrCreateShippingConfig());
   const allWarehouses = (Array.isArray(config.warehouses) && config.warehouses.length > 0)
     ? config.warehouses
@@ -430,19 +298,27 @@ async function calculateShipping(customerLat, customerLng, subtotal = 0, customC
     }
   }
 
-  // 2. Ưu đãi theo giá trị đơn hàng (Bậc thang Freeship thực tế)
-  // Dưới 150.000đ: không áp dụng ưu đãi phí ship
-  // Từ 150.000đ: giảm 10.000đ
-  // Từ 300.000đ: giảm 25.000đ (Freeship tối đa 25.000đ)
+  // 2. Ưu đãi theo Hạng thành viên Loyalty & Giá trị đơn hàng
   let discountAmount = 0;
   let discountReason = 'Dưới 150.000đ: chưa đủ điều kiện hỗ trợ phí ship';
 
   const orderValue = Number(subtotal) || 0;
-  if (orderValue >= 300000) {
-    discountAmount = 25000;
+  const tier = String(loyaltyTier || '').toLowerCase();
+
+  if (tier === 'platinum' || tier === 'gold') {
+    discountAmount = baseFee;
+    discountReason = `Đặc quyền thành viên ${tier === 'platinum' ? 'Bạch kim' : 'Vàng'}: Miễn phí giao hàng`;
+  } else if (tier === 'silver' && orderValue >= 300000) {
+    discountAmount = baseFee;
+    discountReason = 'Đặc quyền thành viên Bạc: Miễn phí giao hàng đơn từ 300.000đ';
+  } else if (tier === 'bronze' && orderValue >= 500000) {
+    discountAmount = baseFee;
+    discountReason = 'Đặc quyền thành viên Đồng: Miễn phí giao hàng đơn từ 500.000đ';
+  } else if (orderValue >= 300000) {
+    discountAmount = Math.min(25000, baseFee);
     discountReason = 'Đơn hàng từ 300.000đ: hỗ trợ tối đa 25.000đ phí vận chuyển (Freeship)';
   } else if (orderValue >= 150000) {
-    discountAmount = 10000;
+    discountAmount = Math.min(10000, baseFee);
     discountReason = 'Đơn hàng từ 150.000đ: giảm 10.000đ phí vận chuyển';
   }
 

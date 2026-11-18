@@ -5,9 +5,10 @@ const User = require('../models/User');
 const PointTransaction = require('../models/PointTransaction');
 const { protect, optionalAuth, staffOnly, hasRole, adminOnly } = require('../middleware/auth');
 const { evaluateVoucher } = require('../utils/voucher');
+const { cacheMiddleware, clearCache } = require('../utils/cache');
 
 // GET /api/vouchers - voucher đang hoạt động (public)
-router.get('/', async (req, res, next) => {
+router.get('/', cacheMiddleware(30), async (req, res, next) => {
   try {
     const now = new Date();
     const vouchers = await Voucher.find({
@@ -19,12 +20,12 @@ router.get('/', async (req, res, next) => {
         { usageLimit: 0 },
         { $expr: { $lt: ['$usedCount', '$usageLimit'] } },
       ],
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean();
     res.json({ success: true, data: vouchers });
   } catch (err) { next(err); }
 });
 
-// GET /api/vouchers/admin — get all vouchers for admin management
+// GET /api/vouchers/admin - get all vouchers for admin management
 router.get('/admin', protect, staffOnly, async (req, res, next) => {
   try {
     const { search, status, page = 1, limit = 50 } = req.query;
@@ -83,7 +84,7 @@ router.get('/admin', protect, staffOnly, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// POST /api/vouchers — create new voucher
+// POST /api/vouchers - create new voucher
 router.post('/', protect, staffOnly, async (req, res, next) => {
   try {
     const {
@@ -130,7 +131,7 @@ router.post('/', protect, staffOnly, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// PUT /api/vouchers/:id — update voucher
+// PUT /api/vouchers/:id - update voucher
 router.put('/:id', protect, staffOnly, async (req, res, next) => {
   try {
     const voucher = await Voucher.findById(req.params.id);
@@ -148,7 +149,7 @@ router.put('/:id', protect, staffOnly, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// DELETE /api/vouchers/:id — delete voucher
+// DELETE /api/vouchers/:id - delete voucher
 router.delete('/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const voucher = await Voucher.findByIdAndDelete(req.params.id);

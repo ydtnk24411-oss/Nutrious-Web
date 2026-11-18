@@ -8,6 +8,7 @@ const messageSchema = new mongoose.Schema(
       required: true,
     },
     senderName: { type: String, default: '' },
+    staffName: { type: String, default: '' },
     senderAvatar: { type: String, default: '' },
     content: { type: String, required: true },
     timestamp: { type: Date, default: Date.now },
@@ -41,6 +42,8 @@ const conversationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+conversationSchema.index({ customer: 1 });
+conversationSchema.index({ customerEmail: 1 });
 conversationSchema.index({ status: 1, lastMessageAt: -1 });
 
 module.exports = mongoose.model('Conversation', conversationSchema);

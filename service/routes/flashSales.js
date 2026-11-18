@@ -4,7 +4,7 @@ const FlashSale = require('../models/FlashSale');
 const Product = require('../models/Product');
 const { protect, adminOnly } = require('../middleware/auth');
 
-// GET /api/flash-sales/active — public (used by Home page & Promotions)
+// GET /api/flash-sales/active - public (used by Home page & Promotions)
 router.get('/active', async (req, res, next) => {
   try {
     const now = new Date();
@@ -53,7 +53,7 @@ router.get('/active', async (req, res, next) => {
   }
 });
 
-// GET /api/flash-sales — all flash sales (supports admin filter)
+// GET /api/flash-sales - all flash sales (supports admin filter)
 router.get('/', async (req, res, next) => {
   try {
     const sales = await FlashSale.find()
@@ -65,7 +65,7 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// POST /api/flash-sales — admin
+// POST /api/flash-sales - admin
 router.post('/', protect, adminOnly, async (req, res, next) => {
   try {
     const flashSale = await FlashSale.create(req.body);
@@ -75,7 +75,7 @@ router.post('/', protect, adminOnly, async (req, res, next) => {
   }
 });
 
-// PUT /api/flash-sales/:id — admin
+// PUT /api/flash-sales/:id - admin
 router.put('/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const flashSale = await FlashSale.findByIdAndUpdate(req.params.id, req.body, {
@@ -91,7 +91,7 @@ router.put('/:id', protect, adminOnly, async (req, res, next) => {
   }
 });
 
-// DELETE /api/flash-sales/:id — admin
+// DELETE /api/flash-sales/:id - admin
 router.delete('/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const flashSale = await FlashSale.findByIdAndDelete(req.params.id);

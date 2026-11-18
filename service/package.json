@@ -1,15 +1,16 @@
 {
-  "name": "xanh-la-server",
+  "name": "evergreen-mart-server",
   "version": "1.0.0",
-  "description": "Xanh Lá REST API — Node.js + Express + MongoDB",
-  "main": "src/index.js",
+  "description": "Evergreen Mart REST API - Node.js + Express + MongoDB",
+  "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "seed": "node seed.js"
+    "seed": "node seed-data.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "compression": "^1.8.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
