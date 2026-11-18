@@ -17,6 +17,7 @@ export interface IngredientItem {
   product: ApiProduct | null;
   selected: boolean;
   owned: boolean;
+  buyPacksOverride?: number;
 }
 
 export interface RecipeMacros {
@@ -119,6 +120,72 @@ export interface NutritionHeroConfig {
   title: string;
   subtitle: string;
   bannerImage: string;
+  fallbackFoodImage?: string;
+}
+
+export interface QuickSearchTag {
+  label: string;
+  query: string;
+}
+
+export interface IngredientAliasItem {
+  keyword: string;
+  slug: string;
+  excludeKeyword?: string;
+}
+
+export interface WeekDayOption {
+  key: string;
+  label: string;
+  short: string;
+}
+
+export interface MealSlotOption {
+  key: MealSlotKey;
+  label: string;
+  time: string;
+  icon: string;
+}
+
+export interface NutrientBoostOption {
+  id: string;
+  label: string;
+  desc: string;
+}
+
+export interface PlannerHealthGoalConfig {
+  id: 'protein' | 'eatclean' | 'family' | 'yogurt_detox';
+  title: string;
+  subtitle: string;
+  badge: string;
+  metrics: string;
+  mealsPerDay: 2 | 3 | 4;
+  targetDailyKcal: number;
+  targetProtein: number;
+  targetFiber: number;
+  targetCarbs: number;
+  priorityNutrients: string[];
+  dayTheme: string;
+  weekDayThemes: Record<string, string>;
+  defaultSingleDaySchedule: DayMealPlanMap;
+  weeklySchedule: Record<string, DayMealPlanMap>;
+}
+
+export interface NutritionPlannerConfig {
+  weekDays: WeekDayOption[];
+  mealSlots: MealSlotOption[];
+  lightRecipeIds: string[];
+  nutrientBoostOptions: NutrientBoostOption[];
+  healthGoals: PlannerHealthGoalConfig[];
+}
+
+export interface RecipeDefaultsConfig {
+  cookTime?: string;
+  difficulty?: string;
+  calories?: number;
+  macros?: RecipeMacros;
+  chefTips?: string;
+  steps?: RecipeStep[];
 }
 
 export type MealSlotKey = 'breakfast' | 'lunch' | 'dinner' | 'snack';
@@ -184,295 +251,13 @@ export interface DayPlanComputedView {
   ingredientBreakdown: PlanIngredientBreakdown[];
 }
 
-export const GOAL_ICONS: Record<string, string> = {
-  protein: '<i class="bi bi-lightning-charge"></i>',
-  fiber: '<i class="bi bi-flower1"></i>',
-  vitamin: '<i class="bi bi-brightness-high"></i>',
-  mineral: '<i class="bi bi-gem"></i>',
-  variety: '<i class="bi bi-grid"></i>',
-  balance: '<i class="bi bi-sliders"></i>',
-};
-
-const FALLBACK_FOOD_IMG = 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=700&q=80';
-
-const FALLBACK_RECIPES_DB: RecipeDbItem[] = [
-  {
-    id: 'ca-hoi-ap-chao',
-    name: 'Cá hồi áp chảo cải thìa baby',
-    image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&q=80',
-    description: 'Cá hồi Na Uy fillet tươi áp chảo xém vàng thơm bơ tỏi, kèm cải thìa baby giòn ngọt và cà chua bi tươi mát.',
-    prepTime: '10 phút',
-    cookTime: '10 phút',
-    difficulty: 'Dễ nấu',
-    calories: 460,
-    macros: { protein: '36g', carbs: '14g', fat: '22g', fiber: '6g', vitamins: 'Omega-3, Vitamin D, B12, Vitamin C, Canxi' },
-    servingBase: 1,
-    nutritionNote: 'Giàu đạm nạc chất lượng cao, axit béo Omega-3 tốt cho tim mạch và chất xơ tự nhiên.',
-    goalsTags: ['protein', 'mineral', 'balance'],
-    ingredients: [
-      { name: 'Cá Hồi Na Uy Fillet Tươi', amountPer1Serving: 150, unit: 'g' },
-      { name: 'Cải Thìa Baby', amountPer1Serving: 120, unit: 'g' },
-      { name: 'Cà Chua Bi Đà Lạt', amountPer1Serving: 100, unit: 'g' },
-    ],
-  },
-  {
-    id: 'salad-ga-nuong',
-    name: 'Salad gà nướng rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80',
-    description: 'Thịt gà ta nướng thảo mộc xé phay, trộn cùng cà chua bi Đà Lạt chín mọng và ớt chuông 3 màu giòn ngọt.',
-    prepTime: '10 phút',
-    cookTime: '15 phút',
-    difficulty: 'Dễ nấu',
-    calories: 340,
-    macros: { protein: '32g', carbs: '18g', fat: '10g', fiber: '9g', vitamins: 'Vitamin C, Vitamin A, B6, Kẽm, Kali' },
-    servingBase: 1,
-    nutritionNote: 'Cung cấp nguồn protein nạc ít béo, dồi dào chất xơ và vitamin C giúp giữ dáng, thanh lọc cơ thể.',
-    goalsTags: ['protein', 'fiber', 'vitamin', 'balance'],
-    ingredients: [
-      { name: 'Gà Ta Thả Vườn Nguyên Con', amountPer1Serving: 150, unit: 'g' },
-      { name: 'Cà Chua Bi Đà Lạt', amountPer1Serving: 100, unit: 'g' },
-      { name: 'Ớt Chuông 3 Màu', amountPer1Serving: 100, unit: 'g' },
-    ],
-  },
-  {
-    id: 'canh-cai-xanh-thit-bo',
-    name: 'Canh cải xanh thịt bò bắp Mỹ',
-    image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=800&q=80',
-    description: 'Cải xanh Đà Lạt tươi giòn nấu cùng thịt bò Mỹ ngọt mềm và cà rốt baby Đà Lạt thanh mát, ấm bụng.',
-    prepTime: '10 phút',
-    cookTime: '15 phút',
-    difficulty: 'Dễ nấu',
-    calories: 380,
-    macros: { protein: '29g', carbs: '20g', fat: '12g', fiber: '8g', vitamins: 'Sắt Heme, Vitamin A, K, C, Folate' },
-    servingBase: 1,
-    nutritionNote: 'Cung cấp sắt hữu cơ, đạm cao cấp, tiền chất vitamin A và chất xơ hỗ trợ hệ tiêu hoá.',
-    goalsTags: ['protein', 'fiber', 'mineral', 'balance'],
-    ingredients: [
-      { name: 'Thịt Bò Bắp Mỹ Nhập Khẩu', amountPer1Serving: 120, unit: 'g' },
-      { name: 'Cải Xanh Đà Lạt', amountPer1Serving: 150, unit: 'g' },
-      { name: 'Cà Rốt Baby Đà Lạt', amountPer1Serving: 80, unit: 'g' },
-    ],
-  },
-  {
-    id: 'sinh-to-dau-xoai',
-    name: 'Sinh tố dâu tây, xoài cát & sữa chua Hy Lạp',
-    image: 'https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=800&q=80',
-    description: 'Sự kết hợp tươi mát giữa dâu tây Đà Lạt mọng nước, xoài cát Hòa Lộc ngọt thơm và sữa chua Hy Lạp giàu lợi khuẩn Probiotics.',
-    prepTime: '5 phút',
-    cookTime: '5 phút',
-    difficulty: 'Rất dễ',
-    calories: 255,
-    macros: { protein: '11g', carbs: '46g', fat: '3.5g', fiber: '7g', vitamins: 'Probiotics, Canxi, Vitamin C, Vitamin A, E, Kali' },
-    servingBase: 1,
-    nutritionNote: 'Dồi dào vitamin C, lợi khuẩn Probiotics từ sữa chua Hy Lạp và chất xơ hòa tan giúp tốt tiêu hóa, đẹp da.',
-    goalsTags: ['vitamin', 'fiber', 'mineral', 'variety'],
-    ingredients: [
-      { name: 'Sữa Chua Hy Lạp Hữu Cơ Không Đường', amountPer1Serving: 100, unit: 'g' },
-      { name: 'Dâu Tây Đà Lạt', amountPer1Serving: 150, unit: 'g' },
-      { name: 'Xoài Cát Hòa Lộc', amountPer1Serving: 150, unit: 'g' },
-    ],
-  },
-  {
-    id: 'ca-rot-xao-thit-ga',
-    name: 'Gà xào nấm đông cô & cà rốt baby',
-    image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=800&q=80',
-    description: 'Thịt gà mềm thơm xào cùng nấm đông cô Đà Lạt và cà rốt baby thái lát, vị ngọt thanh tự nhiên.',
-    prepTime: '10 phút',
-    cookTime: '12 phút',
-    difficulty: 'Dễ nấu',
-    calories: 390,
-    macros: { protein: '31g', carbs: '22g', fat: '13g', fiber: '7g', vitamins: 'Beta-Caroten (Vitamin A), Selen, Vitamin D, B3' },
-    servingBase: 1,
-    nutritionNote: 'Cực kỳ giàu beta-caroten (tiền vitamin A) sáng mắt, selen từ nấm và chất đạm phát triển cơ bắp.',
-    goalsTags: ['protein', 'vitamin', 'variety'],
-    ingredients: [
-      { name: 'Gà Ta Thả Vườn Nguyên Con', amountPer1Serving: 140, unit: 'g' },
-      { name: 'Nấm Đông Cô Đà Lạt', amountPer1Serving: 80, unit: 'g' },
-      { name: 'Cà Rốt Baby Đà Lạt', amountPer1Serving: 100, unit: 'g' },
-    ],
-  },
-  {
-    id: 'tom-su-hap-cai-ngot',
-    name: 'Tôm sú hấp sả & rau cải ngọt',
-    image: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=800&q=80',
-    description: 'Tôm sú Cà Mau tươi sống hấp sả thơm lừng giữ trọn vị ngọt tự nhiên, dùng kèm rau cải ngọt luộc thanh đạm.',
-    prepTime: '8 phút',
-    cookTime: '10 phút',
-    difficulty: 'Dễ nấu',
-    calories: 320,
-    macros: { protein: '34g', carbs: '12g', fat: '8g', fiber: '6g', vitamins: 'Canxi, Kẽm, I-ốt, Vitamin B12, Folate' },
-    servingBase: 1,
-    nutritionNote: 'Bổ sung canxi, kẽm, i-ốt và đạm biển dễ tiêu hóa cùng chất xơ xanh ít calo.',
-    goalsTags: ['protein', 'mineral', 'fiber', 'balance'],
-    ingredients: [
-      { name: 'Tôm Sú Tươi Sống Cà Mau', amountPer1Serving: 150, unit: 'g' },
-      { name: 'Rau Cải Ngọt', amountPer1Serving: 150, unit: 'g' },
-      { name: 'Sả Tươi Bến Tre', amountPer1Serving: 30, unit: 'g' },
-    ],
-  },
-  {
-    id: 'bo-ap-chao-bong-cai',
-    name: 'Thăn bò Mỹ áp chảo & bông cải xanh hấp',
-    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80',
-    description: 'Thịt bò Mỹ mềm mọng áp chảo vừa chín tới, ăn kèm bông cải xanh Đà Lạt và cà rốt baby giữ trọn độ giòn ngọt.',
-    prepTime: '10 phút',
-    cookTime: '10 phút',
-    difficulty: 'Dễ nấu',
-    calories: 450,
-    macros: { protein: '38g', carbs: '16g', fat: '20g', fiber: '8g', vitamins: 'Sắt, Kẽm, Vitamin K, Vitamin C, B12' },
-    servingBase: 1,
-    nutritionNote: 'Hàm lượng sắt heme, kẽm, vitamin K và protein cao giúp phục hồi cơ bắp nhanh chóng.',
-    goalsTags: ['protein', 'mineral', 'fiber', 'balance'],
-    ingredients: [
-      { name: 'Thịt Bò Bắp Mỹ Nhập Khẩu', amountPer1Serving: 150, unit: 'g' },
-      { name: 'Bông Cải Xanh Đà Lạt', amountPer1Serving: 150, unit: 'g' },
-      { name: 'Cà Rốt Baby Đà Lạt', amountPer1Serving: 80, unit: 'g' },
-    ],
-  },
-  {
-    id: 'salad-bo-ca-hoi',
-    name: 'Salad bơ sáp Đắk Lắk & cá hồi tươi',
-    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80',
-    description: 'Bơ sáp béo ngậy kết hợp cá hồi Na Uy giàu Omega-3, xà lách thủy canh và cà chua bi thanh mát.',
-    prepTime: '10 phút',
-    cookTime: '5 phút',
-    difficulty: 'Rất dễ',
-    calories: 410,
-    macros: { protein: '28g', carbs: '14g', fat: '24g', fiber: '9g', vitamins: 'Omega-3, Vitamin E, Vitamin C, Folate, Kali' },
-    servingBase: 1,
-    nutritionNote: 'Cung cấp chất béo không bão hòa đơn tốt cho tim mạch, vitamin E đẹp da và đạm tinh khiết.',
-    goalsTags: ['protein', 'vitamin', 'fiber', 'balance'],
-    ingredients: [
-      { name: 'Cá Hồi Na Uy Fillet Tươi', amountPer1Serving: 120, unit: 'g' },
-      { name: 'Bơ Sáp Đắk Lắk', amountPer1Serving: 120, unit: 'g' },
-      { name: 'Cà Chua Bi Đà Lạt', amountPer1Serving: 80, unit: 'g' },
-    ],
-  },
-  {
-    id: 'sup-bi-do-hat-sen',
-    name: 'Súp bí đỏ Đà Lạt hầm nấm đông cô',
-    image: 'https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?w=800&q=80',
-    description: 'Bí đỏ Đà Lạt dẻo bùi nấu nhuyễn cùng nấm đông cô thơm dịu và cà rốt baby, dễ tiêu hóa và ấm bụng.',
-    prepTime: '10 phút',
-    cookTime: '15 phút',
-    difficulty: 'Dễ nấu',
-    calories: 280,
-    macros: { protein: '8g', carbs: '38g', fat: '7g', fiber: '10g', vitamins: 'Vitamin A, Lutein, Vitamin C, Sắt, Magie' },
-    servingBase: 1,
-    nutritionNote: 'Dồi dào vitamin A, Lutein tốt cho thị lực, chất xơ hòa tan tốt cho dạ dày và giấc ngủ.',
-    goalsTags: ['vitamin', 'fiber', 'variety', 'balance'],
-    ingredients: [
-      { name: 'Bí Đỏ Hồ Lô Đà Lạt', amountPer1Serving: 200, unit: 'g' },
-      { name: 'Nấm Đông Cô Đà Lạt', amountPer1Serving: 80, unit: 'g' },
-      { name: 'Cà Rốt Baby Đà Lạt', amountPer1Serving: 60, unit: 'g' },
-    ],
-  },
-  {
-    id: 'heo-thao-moc-cuon-rau',
-    name: 'Thịt heo thảo mộc luộc cuốn rau xanh',
-    image: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=800&q=80',
-    description: 'Thịt heo thảo mộc ngọt thơm thái mỏng cuốn cùng cải xanh, xà lách và dưa leo hữu cơ thanh mát.',
-    prepTime: '10 phút',
-    cookTime: '15 phút',
-    difficulty: 'Dễ nấu',
-    calories: 410,
-    macros: { protein: '30g', carbs: '16g', fat: '18g', fiber: '8g', vitamins: 'Vitamin B1, B6, B12, Kẽm, Vitamin K' },
-    servingBase: 1,
-    nutritionNote: 'Cân bằng hoàn hảo giữa đạm thịt sạch, vitamin nhóm B và lượng chất xơ dồi dào từ rau sống.',
-    goalsTags: ['protein', 'fiber', 'variety', 'balance'],
-    ingredients: [
-      { name: 'Thịt Ba Rọi Heo Thảo Mộc', amountPer1Serving: 140, unit: 'g' },
-      { name: 'Cải Xanh Đà Lạt', amountPer1Serving: 120, unit: 'g' },
-      { name: 'Dưa Leo Baby Đà Lạt', amountPer1Serving: 100, unit: 'g' },
-    ],
-  },
-  {
-    id: 'dau-hu-sot-nam-chay',
-    name: 'Nấm đông cô xào cải thìa & đậu hũ thanh đạm',
-    image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&q=80',
-    description: 'Món chay thanh lọc cơ thể với nấm đông cô Đà Lạt xào cải thìa baby và ớt chuông ngọt tự nhiên.',
-    prepTime: '8 phút',
-    cookTime: '10 phút',
-    difficulty: 'Dễ nấu',
-    calories: 260,
-    macros: { protein: '14g', carbs: '26g', fat: '8g', fiber: '11g', vitamins: 'Vitamin D, Vitamin C, Canxi, Sắt thực vật, Selen' },
-    servingBase: 1,
-    nutritionNote: 'Ít calo, không cholesterol, giàu chất chống oxy hóa Ergothioneine từ nấm và chất xơ xanh.',
-    goalsTags: ['fiber', 'vitamin', 'mineral', 'variety'],
-    ingredients: [
-      { name: 'Nấm Đông Cô Đà Lạt', amountPer1Serving: 120, unit: 'g' },
-      { name: 'Cải Thìa Baby', amountPer1Serving: 150, unit: 'g' },
-      { name: 'Ớt Chuông 3 Màu', amountPer1Serving: 80, unit: 'g' },
-    ],
-  },
-  {
-    id: 'detox-cam-tao-ca-rot',
-    name: 'Nước ép Detox cam sành, dâu tây & cà rốt',
-    image: 'https://images.unsplash.com/photo-1610970881699-44a5587cabec?w=800&q=80',
-    description: 'Thức uống ép lạnh nguyên chất từ cam sành mọng nước, dâu tây Đà Lạt và cà rốt baby giàu vitamin.',
-    prepTime: '5 phút',
-    cookTime: '5 phút',
-    difficulty: 'Rất dễ',
-    calories: 195,
-    macros: { protein: '3g', carbs: '42g', fat: '1g', fiber: '6g', vitamins: 'Vitamin C, Beta-Caroten, Kali, Folate' },
-    servingBase: 1,
-    nutritionNote: 'Cung cấp 100% nhu cầu Vitamin C và Beta-Caroten mỗi ngày, hỗ trợ sáng da và tăng miễn dịch.',
-    goalsTags: ['vitamin', 'mineral', 'variety'],
-    ingredients: [
-      { name: 'Cam Sành Vĩnh Long', amountPer1Serving: 200, unit: 'g' },
-      { name: 'Cà Rốt Baby Đà Lạt', amountPer1Serving: 120, unit: 'g' },
-      { name: 'Dâu Tây Đà Lạt', amountPer1Serving: 80, unit: 'g' },
-    ],
-  },
-  {
-    id: 'sua-chua-hy-lap-trai-cay',
-    name: 'Bát sữa chua Hy Lạp trái cây tươi & bơ sáp (Yogurt Bowl)',
-    image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=800&q=80',
-    description: 'Bữa ăn sáng hoặc bữa phụ Eat Clean tuyệt hảo với sữa chua Hy Lạp đặc sánh giàu lợi khuẩn Probiotics, ăn kèm dâu tây Đà Lạt, xoài cát và bơ sáp Đắk Lắk.',
-    prepTime: '5 phút',
-    cookTime: '0 phút (Ăn liền)',
-    difficulty: 'Rất dễ',
-    calories: 310,
-    macros: { protein: '18g', carbs: '32g', fat: '11g', fiber: '8g', vitamins: 'Probiotics (10 tỷ lợi khuẩn), Canxi, Vitamin C, E, B12' },
-    servingBase: 1,
-    nutritionNote: 'Cung cấp hàng tỷ lợi khuẩn Probiotics hỗ trợ đường ruột khỏe mạnh, giàu đạm tự nhiên và Canxi từ sữa chua kết hợp chất béo tốt từ quả bơ.',
-    goalsTags: ['protein', 'vitamin', 'fiber', 'mineral', 'balance'],
-    ingredients: [
-      { name: 'Sữa Chua Hy Lạp Hữu Cơ Không Đường', amountPer1Serving: 150, unit: 'g' },
-      { name: 'Dâu Tây Đà Lạt', amountPer1Serving: 100, unit: 'g' },
-      { name: 'Xoài Cát Hòa Lộc', amountPer1Serving: 80, unit: 'g' },
-      { name: 'Bơ Sáp Đắk Lắk', amountPer1Serving: 70, unit: 'g' },
-    ],
-  },
-  {
-    id: 'salad-uc-ga-sot-sua-chua',
-    name: 'Salad gà áp chảo & rau củ sốt sữa chua men sống',
-    image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=800&q=80',
-    description: 'Thay thế sốt mayonnaise nhiều dầu mỡ bằng sốt sữa chua men sống Đà Lạt thanh mát, trộn cùng thịt gà áp chảo, dưa leo baby và cà chua bi.',
-    prepTime: '10 phút',
-    cookTime: '8 phút',
-    difficulty: 'Dễ nấu',
-    calories: 345,
-    macros: { protein: '33g', carbs: '19g', fat: '9g', fiber: '7g', vitamins: 'Probiotics, Canxi, Vitamin C, Vitamin A, Kẽm' },
-    servingBase: 1,
-    nutritionNote: 'Giảm 70% lượng chất béo xấu nhờ sốt sữa chua tự nhiên, giúp nhẹ bụng, tốt tiêu hóa mà vẫn cung cấp 33g đạm chất lượng cao.',
-    goalsTags: ['protein', 'fiber', 'mineral', 'balance'],
-    ingredients: [
-      { name: 'Sữa Chua Men Sống Đà Lạt Ít Đường', amountPer1Serving: 100, unit: 'g' },
-      { name: 'Gà Ta Thả Vườn Nguyên Con', amountPer1Serving: 130, unit: 'g' },
-      { name: 'Dưa Leo Baby Đà Lạt', amountPer1Serving: 100, unit: 'g' },
-      { name: 'Cà Chua Bi Đà Lạt', amountPer1Serving: 80, unit: 'g' },
-    ],
-  },
-];
-
 function formatProductSlug(slug?: string, id?: string): string {
   const raw = (slug || id || '').trim();
   if (!raw) return '/online-ordering';
   return raw.startsWith('/') ? raw : `/product-page/${raw}`;
 }
 
-function toCartProduct(p: ApiProduct, customPrice?: number): XanhLaProduct {
+function toCartProduct(p: ApiProduct, customPrice?: number, fallbackImage = ''): XanhLaProduct {
   const finalPrice = customPrice ?? (p.priceNumber || 0);
   const cleanSlug = (p.slug || '').replace(/^\/product-page\//, '').replace(/^\//, '').trim() || p._id || 'sp';
   return {
@@ -481,7 +266,7 @@ function toCartProduct(p: ApiProduct, customPrice?: number): XanhLaProduct {
     slug: cleanSlug,
     price: customPrice !== undefined ? formatPrice(customPrice) : p.price,
     priceNumber: finalPrice,
-    image: p.image || FALLBACK_FOOD_IMG,
+    image: p.image || fallbackImage,
     category: p.categoryId,
     categoryVi: p.categoryVi || '',
     description: p.description || '',
@@ -530,704 +315,27 @@ export function parseGramWeight(weightStr?: string): number {
   return 0;
 }
 
-export interface IngredientMetaDef {
-  slug: string;
-  name: string;
-  priceNumber: number;
-  weight: string;
-  categoryVi: string;
-  image: string;
-}
-
-const EXACT_INGREDIENT_META: Record<string, IngredientMetaDef> = {
-  // Gà ta / Thịt gà
-  'gà ta thả vườn nguyên con': {
-    slug: 'ga-ta-tha-vuon-nguyen-con',
-    name: 'Gà Ta Thả Vườn Nguyên Con',
-    priceNumber: 95000,
-    weight: 'Khay 500g',
-    categoryVi: 'Thịt tươi sạch',
-    image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80',
-  },
-  'gà ta thả vườn': {
-    slug: 'ga-ta-tha-vuon-nguyen-con',
-    name: 'Gà Ta Thả Vườn Nguyên Con',
-    priceNumber: 95000,
-    weight: 'Khay 500g',
-    categoryVi: 'Thịt tươi sạch',
-    image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80',
-  },
-  'thịt gà thả vườn': {
-    slug: 'ga-ta-tha-vuon-nguyen-con',
-    name: 'Gà Ta Thả Vườn Nguyên Con',
-    priceNumber: 95000,
-    weight: 'Khay 500g',
-    categoryVi: 'Thịt tươi sạch',
-    image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80',
-  },
-  'thịt gà': {
-    slug: 'ga-ta-tha-vuon-nguyen-con',
-    name: 'Gà Ta Thả Vườn Nguyên Con',
-    priceNumber: 95000,
-    weight: 'Khay 500g',
-    categoryVi: 'Thịt tươi sạch',
-    image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80',
-  },
-  'ức gà': {
-    slug: 'ga-ta-tha-vuon-nguyen-con',
-    name: 'Gà Ta Thả Vườn Nguyên Con',
-    priceNumber: 95000,
-    weight: 'Khay 500g',
-    categoryVi: 'Thịt tươi sạch',
-    image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80',
-  },
-  'gà ta': {
-    slug: 'ga-ta-tha-vuon-nguyen-con',
-    name: 'Gà Ta Thả Vườn Nguyên Con',
-    priceNumber: 95000,
-    weight: 'Khay 500g',
-    categoryVi: 'Thịt tươi sạch',
-    image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80',
-  },
-
-  // Ớt chuông
-  'ớt chuông 3 màu': {
-    slug: 'ot-chuong-3-mau-da-lat',
-    name: 'Ớt Chuông 3 Màu Đà Lạt',
-    priceNumber: 35000,
-    weight: 'Túi 400g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=600&q=80',
-  },
-  'ớt chuông đà lạt': {
-    slug: 'ot-chuong-3-mau-da-lat',
-    name: 'Ớt Chuông 3 Màu Đà Lạt',
-    priceNumber: 35000,
-    weight: 'Túi 400g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=600&q=80',
-  },
-  'ớt chuông': {
-    slug: 'ot-chuong-3-mau-da-lat',
-    name: 'Ớt Chuông 3 Màu Đà Lạt',
-    priceNumber: 35000,
-    weight: 'Túi 400g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=600&q=80',
-  },
-  'ớt chuông 3 màu đà lạt': {
-    slug: 'ot-chuong-3-mau-da-lat',
-    name: 'Ớt Chuông 3 Màu Đà Lạt',
-    priceNumber: 35000,
-    weight: 'Túi 400g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=600&q=80',
-  },
-
-  // Cá hồi
-  'cá hồi na uy fillet tươi': {
-    slug: 'ca-hoi-na-uy-fillet-tuoi',
-    name: 'Cá Hồi Na Uy Fillet Tươi',
-    priceNumber: 165000,
-    weight: 'Khay 250g',
-    categoryVi: 'Hải sản tươi sống',
-    image: 'https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?w=600&q=80',
-  },
-  'cá hồi phi lê': {
-    slug: 'ca-hoi-na-uy-fillet-tuoi',
-    name: 'Cá Hồi Na Uy Fillet Tươi',
-    priceNumber: 165000,
-    weight: 'Khay 250g',
-    categoryVi: 'Hải sản tươi sống',
-    image: 'https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?w=600&q=80',
-  },
-  'cá hồi na uy': {
-    slug: 'ca-hoi-na-uy-fillet-tuoi',
-    name: 'Cá Hồi Na Uy Fillet Tươi',
-    priceNumber: 165000,
-    weight: 'Khay 250g',
-    categoryVi: 'Hải sản tươi sống',
-    image: 'https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?w=600&q=80',
-  },
-  'cá hồi': {
-    slug: 'ca-hoi-na-uy-fillet-tuoi',
-    name: 'Cá Hồi Na Uy Fillet Tươi',
-    priceNumber: 165000,
-    weight: 'Khay 250g',
-    categoryVi: 'Hải sản tươi sống',
-    image: 'https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?w=600&q=80',
-  },
-
-  // Bông cải xanh
-  'bông cải xanh đà lạt': {
-    slug: 'bong-cai-xanh-da-lat',
-    name: 'Bông Cải Xanh Đà Lạt',
-    priceNumber: 28000,
-    weight: 'Búp 350g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?w=600&q=80',
-  },
-  'bông cải xanh': {
-    slug: 'bong-cai-xanh-da-lat',
-    name: 'Bông Cải Xanh Đà Lạt',
-    priceNumber: 28000,
-    weight: 'Búp 350g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?w=600&q=80',
-  },
-
-  // Cà rốt
-  'cà rốt baby đà lạt': {
-    slug: 'ca-rot-baby-da-lat',
-    name: 'Cà Rốt Baby Đà Lạt',
-    priceNumber: 22000,
-    weight: 'Túi 400g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=600&q=80',
-  },
-  'cà rốt đà lạt': {
-    slug: 'ca-rot-baby-da-lat',
-    name: 'Cà Rốt Baby Đà Lạt',
-    priceNumber: 22000,
-    weight: 'Túi 400g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=600&q=80',
-  },
-  'cà rốt baby': {
-    slug: 'ca-rot-baby-da-lat',
-    name: 'Cà Rốt Baby Đà Lạt',
-    priceNumber: 22000,
-    weight: 'Túi 400g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=600&q=80',
-  },
-  'cà rốt': {
-    slug: 'ca-rot-baby-da-lat',
-    name: 'Cà Rốt Baby Đà Lạt',
-    priceNumber: 22000,
-    weight: 'Túi 400g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=600&q=80',
-  },
-
-  // Dưa leo
-  'dưa leo baby đà lạt': {
-    slug: 'dua-leo-baby-da-lat',
-    name: 'Dưa Leo Baby Đà Lạt',
-    priceNumber: 20000,
-    weight: 'Túi 400g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1449300079323-02e209d9d3a6?w=600&q=80',
-  },
-  'dưa leo baby': {
-    slug: 'dua-leo-baby-da-lat',
-    name: 'Dưa Leo Baby Đà Lạt',
-    priceNumber: 20000,
-    weight: 'Túi 400g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1449300079323-02e209d9d3a6?w=600&q=80',
-  },
-  'dưa leo': {
-    slug: 'dua-leo-baby-da-lat',
-    name: 'Dưa Leo Baby Đà Lạt',
-    priceNumber: 20000,
-    weight: 'Túi 400g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1449300079323-02e209d9d3a6?w=600&q=80',
-  },
-  'dưa leo tươi': {
-    slug: 'dua-leo-baby-da-lat',
-    name: 'Dưa Leo Baby Đà Lạt',
-    priceNumber: 20000,
-    weight: 'Túi 400g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1449300079323-02e209d9d3a6?w=600&q=80',
-  },
-
-  // Cà chua
-  'cà chua bi đà lạt': {
-    slug: 'ca-chua-bi-da-lat',
-    name: 'Cà Chua Bi Đà Lạt',
-    priceNumber: 25000,
-    weight: 'Hộp 350g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&q=80',
-  },
-  'cà chua bi': {
-    slug: 'ca-chua-bi-da-lat',
-    name: 'Cà Chua Bi Đà Lạt',
-    priceNumber: 25000,
-    weight: 'Hộp 350g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&q=80',
-  },
-  'cà chua': {
-    slug: 'ca-chua-bi-da-lat',
-    name: 'Cà Chua Bi Đà Lạt',
-    priceNumber: 25000,
-    weight: 'Hộp 350g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600&q=80',
-  },
-
-  // Thịt bò
-  'thịt bò bắp mỹ nhập khẩu': {
-    slug: 'thit-bo-bap-my-nhap-khau',
-    name: 'Thịt Bò Bắp Mỹ Nhập Khẩu',
-    priceNumber: 135000,
-    weight: 'Khay 300g',
-    categoryVi: 'Thịt bò nhập khẩu',
-    image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=600&q=80',
-  },
-  'thịt bò bắp mỹ': {
-    slug: 'thit-bo-bap-my-nhap-khau',
-    name: 'Thịt Bò Bắp Mỹ Nhập Khẩu',
-    priceNumber: 135000,
-    weight: 'Khay 300g',
-    categoryVi: 'Thịt bò nhập khẩu',
-    image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=600&q=80',
-  },
-  'thịt bò mỹ': {
-    slug: 'thit-bo-bap-my-nhap-khau',
-    name: 'Thịt Bò Bắp Mỹ Nhập Khẩu',
-    priceNumber: 135000,
-    weight: 'Khay 300g',
-    categoryVi: 'Thịt bò nhập khẩu',
-    image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=600&q=80',
-  },
-  'thịt bò': {
-    slug: 'thit-bo-bap-my-nhap-khau',
-    name: 'Thịt Bò Bắp Mỹ Nhập Khẩu',
-    priceNumber: 135000,
-    weight: 'Khay 300g',
-    categoryVi: 'Thịt bò nhập khẩu',
-    image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=600&q=80',
-  },
-  'bò bắp': {
-    slug: 'thit-bo-bap-my-nhap-khau',
-    name: 'Thịt Bò Bắp Mỹ Nhập Khẩu',
-    priceNumber: 135000,
-    weight: 'Khay 300g',
-    categoryVi: 'Thịt bò nhập khẩu',
-    image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=600&q=80',
-  },
-  'bò mỹ thăn': {
-    slug: 'thit-bo-bap-my-nhap-khau',
-    name: 'Thịt Bò Bắp Mỹ Nhập Khẩu',
-    priceNumber: 135000,
-    weight: 'Khay 300g',
-    categoryVi: 'Thịt bò nhập khẩu',
-    image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=600&q=80',
-  },
-
-  // Cải xanh
-  'cải xanh đà lạt': {
-    slug: 'cai-xanh-da-lat',
-    name: 'Cải Xanh Đà Lạt',
-    priceNumber: 18000,
-    weight: 'Bó 350g',
-    categoryVi: 'Rau lá hữu cơ',
-    image: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=600&q=80',
-  },
-  'cải xanh': {
-    slug: 'cai-xanh-da-lat',
-    name: 'Cải Xanh Đà Lạt',
-    priceNumber: 18000,
-    weight: 'Bó 350g',
-    categoryVi: 'Rau lá hữu cơ',
-    image: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=600&q=80',
-  },
-
-  // Sữa chua Hy Lạp
-  'sữa chua hy lạp hữu cơ không đường': {
-    slug: 'sua-chua-hy-lap-huu-co',
-    name: 'Sữa Chua Hy Lạp Hữu Cơ Không Đường',
-    priceNumber: 45000,
-    weight: 'Hộp 250g',
-    categoryVi: 'Sữa chua & Chế phẩm sữa',
-    image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=600&q=80',
-  },
-  'sữa chua hy lạp hữu cơ': {
-    slug: 'sua-chua-hy-lap-huu-co',
-    name: 'Sữa Chua Hy Lạp Hữu Cơ Không Đường',
-    priceNumber: 45000,
-    weight: 'Hộp 250g',
-    categoryVi: 'Sữa chua & Chế phẩm sữa',
-    image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=600&q=80',
-  },
-  'sữa chua hy lạp': {
-    slug: 'sua-chua-hy-lap-huu-co',
-    name: 'Sữa Chua Hy Lạp Hữu Cơ Không Đường',
-    priceNumber: 45000,
-    weight: 'Hộp 250g',
-    categoryVi: 'Sữa chua & Chế phẩm sữa',
-    image: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=600&q=80',
-  },
-
-  // Sữa chua men sống
-  'sữa chua men sống đà lạt ít đường': {
-    slug: 'sua-chua-men-song-da-lat',
-    name: 'Sữa Chua Men Sống Đà Lạt Ít Đường',
-    priceNumber: 32000,
-    weight: 'Lốc 4 hộp',
-    categoryVi: 'Sữa chua & Chế phẩm sữa',
-    image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=600&q=80',
-  },
-  'sữa chua men sống đà lạt': {
-    slug: 'sua-chua-men-song-da-lat',
-    name: 'Sữa Chua Men Sống Đà Lạt Ít Đường',
-    priceNumber: 32000,
-    weight: 'Lốc 4 hộp',
-    categoryVi: 'Sữa chua & Chế phẩm sữa',
-    image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=600&q=80',
-  },
-  'sữa chua men sống': {
-    slug: 'sua-chua-men-song-da-lat',
-    name: 'Sữa Chua Men Sống Đà Lạt Ít Đường',
-    priceNumber: 32000,
-    weight: 'Lốc 4 hộp',
-    categoryVi: 'Sữa chua & Chế phẩm sữa',
-    image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=600&q=80',
-  },
-
-  // Dâu tây
-  'dâu tây đà lạt': {
-    slug: 'dau-tay-da-lat',
-    name: 'Dâu Tây Đà Lạt',
-    priceNumber: 85000,
-    weight: 'Hộp 250g',
-    categoryVi: 'Trái cây Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=600&q=80',
-  },
-  'dâu tây': {
-    slug: 'dau-tay-da-lat',
-    name: 'Dâu Tây Đà Lạt',
-    priceNumber: 85000,
-    weight: 'Hộp 250g',
-    categoryVi: 'Trái cây Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=600&q=80',
-  },
-
-  // Xoài cát
-  'xoài cát hòa lộc': {
-    slug: 'xoai-cat-hoa-loc',
-    name: 'Xoài Cát Hòa Lộc',
-    priceNumber: 55000,
-    weight: 'Trái 500g',
-    categoryVi: 'Trái cây miền Tây',
-    image: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=600&q=80',
-  },
-  'xoài cát': {
-    slug: 'xoai-cat-hoa-loc',
-    name: 'Xoài Cát Hòa Lộc',
-    priceNumber: 55000,
-    weight: 'Trái 500g',
-    categoryVi: 'Trái cây miền Tây',
-    image: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=600&q=80',
-  },
-
-  // Nấm đông cô
-  'nấm đông cô đà lạt': {
-    slug: 'nam-dong-co-da-lat',
-    name: 'Nấm Đông Cô Đà Lạt',
-    priceNumber: 42000,
-    weight: 'Khay 250g',
-    categoryVi: 'Nấm tươi hữu cơ',
-    image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80',
-  },
-  'nấm đông cô tươi': {
-    slug: 'nam-dong-co-da-lat',
-    name: 'Nấm Đông Cô Đà Lạt',
-    priceNumber: 42000,
-    weight: 'Khay 250g',
-    categoryVi: 'Nấm tươi hữu cơ',
-    image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80',
-  },
-  'nấm đông cô': {
-    slug: 'nam-dong-co-da-lat',
-    name: 'Nấm Đông Cô Đà Lạt',
-    priceNumber: 42000,
-    weight: 'Khay 250g',
-    categoryVi: 'Nấm tươi hữu cơ',
-    image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80',
-  },
-
-  // Tôm sú
-  'tôm sú tươi sống cà mau': {
-    slug: 'tom-su-tuoi-song-ca-mau',
-    name: 'Tôm Sú Tươi Sống Cà Mau',
-    priceNumber: 125000,
-    weight: 'Khay 350g',
-    categoryVi: 'Hải sản tươi sống',
-    image: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=600&q=80',
-  },
-  'tôm sú tươi sống': {
-    slug: 'tom-su-tuoi-song-ca-mau',
-    name: 'Tôm Sú Tươi Sống Cà Mau',
-    priceNumber: 125000,
-    weight: 'Khay 350g',
-    categoryVi: 'Hải sản tươi sống',
-    image: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=600&q=80',
-  },
-  'tôm sú': {
-    slug: 'tom-su-tuoi-song-ca-mau',
-    name: 'Tôm Sú Tươi Sống Cà Mau',
-    priceNumber: 125000,
-    weight: 'Khay 350g',
-    categoryVi: 'Hải sản tươi sống',
-    image: 'https://images.unsplash.com/photo-1565680018434-b513d5e5fd47?w=600&q=80',
-  },
-
-  // Cải ngọt
-  'rau cải ngọt': {
-    slug: 'rau-cai-ngot-huu-co',
-    name: 'Rau Cải Ngọt Hữu Cơ',
-    priceNumber: 18000,
-    weight: 'Bó 350g',
-    categoryVi: 'Rau ăn lá hữu cơ',
-    image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&q=80',
-  },
-  'cải ngọt hữu cơ': {
-    slug: 'rau-cai-ngot-huu-co',
-    name: 'Rau Cải Ngọt Hữu Cơ',
-    priceNumber: 18000,
-    weight: 'Bó 350g',
-    categoryVi: 'Rau ăn lá hữu cơ',
-    image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&q=80',
-  },
-  'cải ngọt': {
-    slug: 'rau-cai-ngot-huu-co',
-    name: 'Rau Cải Ngọt Hữu Cơ',
-    priceNumber: 18000,
-    weight: 'Bó 350g',
-    categoryVi: 'Rau ăn lá hữu cơ',
-    image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&q=80',
-  },
-  'rau cải': {
-    slug: 'cai-thia-baby-da-lat',
-    name: 'Cải Thìa Baby Đà Lạt',
-    priceNumber: 20000,
-    weight: 'Túi 350g',
-    categoryVi: 'Rau ăn lá hữu cơ',
-    image: 'https://images.unsplash.com/photo-1518843875459-f738682238a6?w=600&q=80',
-  },
-
-  // Sả tươi
-  'sả tươi bến tre': {
-    slug: 'sa-tuoi-ben-tre',
-    name: 'Sả Tươi Bến Tre',
-    priceNumber: 12000,
-    weight: 'Bó 200g',
-    categoryVi: 'Rau gia vị',
-    image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=600&q=80',
-  },
-  'sả tươi': {
-    slug: 'sa-tuoi-ben-tre',
-    name: 'Sả Tươi Bến Tre',
-    priceNumber: 12000,
-    weight: 'Bó 200g',
-    categoryVi: 'Rau gia vị',
-    image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=600&q=80',
-  },
-
-  // Quả bơ
-  'bơ sáp đắk lắk': {
-    slug: 'bo-sap-dak-lak',
-    name: 'Bơ Sáp Đắk Lắk',
-    priceNumber: 48000,
-    weight: 'Túi 500g',
-    categoryVi: 'Trái cây Tây Nguyên',
-    image: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=600&q=80',
-  },
-  'quả bơ sáp': {
-    slug: 'bo-sap-dak-lak',
-    name: 'Bơ Sáp Đắk Lắk',
-    priceNumber: 48000,
-    weight: 'Túi 500g',
-    categoryVi: 'Trái cây Tây Nguyên',
-    image: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=600&q=80',
-  },
-  'bơ hass đắk lắk': {
-    slug: 'bo-sap-dak-lak',
-    name: 'Bơ Sáp Đắk Lắk',
-    priceNumber: 48000,
-    weight: 'Túi 500g',
-    categoryVi: 'Trái cây Tây Nguyên',
-    image: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=600&q=80',
-  },
-  'bơ sáp': {
-    slug: 'bo-sap-dak-lak',
-    name: 'Bơ Sáp Đắk Lắk',
-    priceNumber: 48000,
-    weight: 'Túi 500g',
-    categoryVi: 'Trái cây Tây Nguyên',
-    image: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=600&q=80',
-  },
-
-  // Bí đỏ
-  'bí đỏ hồ lô đà lạt': {
-    slug: 'bi-do-ho-lo-da-lat',
-    name: 'Bí Đỏ Hồ Lô Đà Lạt',
-    priceNumber: 24000,
-    weight: 'Trái 600g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1570586437263-ab629fccc818?w=600&q=80',
-  },
-  'bí đỏ hồ lô': {
-    slug: 'bi-do-ho-lo-da-lat',
-    name: 'Bí Đỏ Hồ Lô Đà Lạt',
-    priceNumber: 24000,
-    weight: 'Trái 600g',
-    categoryVi: 'Rau củ Đà Lạt',
-    image: 'https://images.unsplash.com/photo-1570586437263-ab629fccc818?w=600&q=80',
-  },
-
-  // Thịt heo
-  'thịt ba rọi heo thảo mộc': {
-    slug: 'thit-ba-roi-heo-thao-moc',
-    name: 'Thịt Ba Rọi Heo Thảo Mộc',
-    priceNumber: 88000,
-    weight: 'Khay 350g',
-    categoryVi: 'Thịt heo thảo mộc',
-    image: 'https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?w=600&q=80',
-  },
-  'thịt heo thảo mộc': {
-    slug: 'thit-ba-roi-heo-thao-moc',
-    name: 'Thịt Ba Rọi Heo Thảo Mộc',
-    priceNumber: 88000,
-    weight: 'Khay 350g',
-    categoryVi: 'Thịt heo thảo mộc',
-    image: 'https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?w=600&q=80',
-  },
-  'thịt ba rọi': {
-    slug: 'thit-ba-roi-heo-thao-moc',
-    name: 'Thịt Ba Rọi Heo Thảo Mộc',
-    priceNumber: 88000,
-    weight: 'Khay 350g',
-    categoryVi: 'Thịt heo thảo mộc',
-    image: 'https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?w=600&q=80',
-  },
-
-  // Cải thìa
-  'cải thìa baby đà lạt': {
-    slug: 'cai-thia-baby-da-lat',
-    name: 'Cải Thìa Baby Đà Lạt',
-    priceNumber: 20000,
-    weight: 'Túi 350g',
-    categoryVi: 'Rau ăn lá hữu cơ',
-    image: 'https://images.unsplash.com/photo-1518843875459-f738682238a6?w=600&q=80',
-  },
-  'cải thìa baby': {
-    slug: 'cai-thia-baby-da-lat',
-    name: 'Cải Thìa Baby Đà Lạt',
-    priceNumber: 20000,
-    weight: 'Túi 350g',
-    categoryVi: 'Rau ăn lá hữu cơ',
-    image: 'https://images.unsplash.com/photo-1518843875459-f738682238a6?w=600&q=80',
-  },
-  'cải thìa đà lạt': {
-    slug: 'cai-thia-baby-da-lat',
-    name: 'Cải Thìa Baby Đà Lạt',
-    priceNumber: 20000,
-    weight: 'Túi 350g',
-    categoryVi: 'Rau ăn lá hữu cơ',
-    image: 'https://images.unsplash.com/photo-1518843875459-f738682238a6?w=600&q=80',
-  },
-  'cải thìa': {
-    slug: 'cai-thia-baby-da-lat',
-    name: 'Cải Thìa Baby Đà Lạt',
-    priceNumber: 20000,
-    weight: 'Túi 350g',
-    categoryVi: 'Rau ăn lá hữu cơ',
-    image: 'https://images.unsplash.com/photo-1518843875459-f738682238a6?w=600&q=80',
-  },
-
-  // Cam sành
-  'cam sành vĩnh long': {
-    slug: 'cam-sanh-vinh-long',
-    name: 'Cam Sành Vĩnh Long',
-    priceNumber: 36000,
-    weight: 'Túi 1kg',
-    categoryVi: 'Trái cây miền Tây',
-    image: 'https://images.unsplash.com/photo-1547514701-42782101795e?w=600&q=80',
-  },
-  'cam sành tươi': {
-    slug: 'cam-sanh-vinh-long',
-    name: 'Cam Sành Vĩnh Long',
-    priceNumber: 36000,
-    weight: 'Túi 1kg',
-    categoryVi: 'Trái cây miền Tây',
-    image: 'https://images.unsplash.com/photo-1547514701-42782101795e?w=600&q=80',
-  },
-  'cam sành': {
-    slug: 'cam-sanh-vinh-long',
-    name: 'Cam Sành Vĩnh Long',
-    priceNumber: 36000,
-    weight: 'Túi 1kg',
-    categoryVi: 'Trái cây miền Tây',
-    image: 'https://images.unsplash.com/photo-1547514701-42782101795e?w=600&q=80',
-  },
-};
-
-function resolveIngredientMeta(rawKey: string): IngredientMetaDef | null {
-  if (EXACT_INGREDIENT_META[rawKey]) return EXACT_INGREDIENT_META[rawKey];
-  for (const [k, meta] of Object.entries(EXACT_INGREDIENT_META)) {
-    if (rawKey.includes(k) || k.includes(rawKey)) {
-      return meta;
-    }
-  }
-  if (rawKey.includes('gà')) return EXACT_INGREDIENT_META['gà ta thả vườn nguyên con'];
-  if (rawKey.includes('ớt chuông')) return EXACT_INGREDIENT_META['ớt chuông 3 màu'];
-  if (rawKey.includes('cá hồi')) return EXACT_INGREDIENT_META['cá hồi na uy fillet tươi'];
-  if (rawKey.includes('thịt bò') || rawKey.includes('bò')) return EXACT_INGREDIENT_META['thịt bò bắp mỹ nhập khẩu'];
-  if (rawKey.includes('bông cải')) return EXACT_INGREDIENT_META['bông cải xanh đà lạt'];
-  if (rawKey.includes('cà rốt')) return EXACT_INGREDIENT_META['cà rốt baby đà lạt'];
-  if (rawKey.includes('cà chua')) return EXACT_INGREDIENT_META['cà chua bi đà lạt'];
-  if (rawKey.includes('dưa leo') || rawKey.includes('dưa chuột')) return EXACT_INGREDIENT_META['dưa leo baby đà lạt'];
-  if (rawKey.includes('sữa chua men sống')) return EXACT_INGREDIENT_META['sữa chua men sống đà lạt ít đường'];
-  if (rawKey.includes('sữa chua')) return EXACT_INGREDIENT_META['sữa chua hy lạp hữu cơ không đường'];
-  if (rawKey.includes('dâu tây')) return EXACT_INGREDIENT_META['dâu tây đà lạt'];
-  if (rawKey.includes('xoài')) return EXACT_INGREDIENT_META['xoài cát hòa lộc'];
-  if (rawKey.includes('nấm')) return EXACT_INGREDIENT_META['nấm đông cô đà lạt'];
-  if (rawKey.includes('tôm')) return EXACT_INGREDIENT_META['tôm sú tươi sống cà mau'];
-  if (rawKey.includes('cải thìa')) return EXACT_INGREDIENT_META['cải thìa baby'];
-  if (rawKey.includes('cải xanh')) return EXACT_INGREDIENT_META['cải xanh đà lạt'];
-  if (rawKey.includes('cải ngọt') || rawKey.includes('rau cải')) return EXACT_INGREDIENT_META['rau cải ngọt'];
-  if (rawKey.includes('sả')) return EXACT_INGREDIENT_META['sả tươi bến tre'];
-  if (rawKey.includes('bơ')) return EXACT_INGREDIENT_META['bơ sáp đắk lắk'];
-  if (rawKey.includes('bí đỏ')) return EXACT_INGREDIENT_META['bí đỏ hồ lô đà lạt'];
-  if (rawKey.includes('heo') || rawKey.includes('ba rọi')) return EXACT_INGREDIENT_META['thịt ba rọi heo thảo mộc'];
-  if (rawKey.includes('cam')) return EXACT_INGREDIENT_META['cam sành vĩnh long'];
-  return null;
-}
-
 function isCompatibleProduct(ingredientRaw: string, product: ApiProduct): boolean {
   if (!product || !product.name) return false;
   const pName = lowerKeepDiacritics(product.name);
   const pSlug = product.slug || '';
   const ing = lowerKeepDiacritics(ingredientRaw);
 
-  // If ingredient is cải xanh (not bông cải), product must NOT be bông cải
   if (ing.includes('cải xanh') && !ing.includes('bông cải')) {
     if (pName.includes('bông cải') || pSlug.includes('bong-cai')) return false;
   }
-  // If ingredient is nấm, product must have nấm
   if (ing.includes('nấm') && !pName.includes('nấm') && !pSlug.includes('nam')) {
     return false;
   }
-  // If ingredient is cà rốt, product must have cà rốt
   if (ing.includes('cà rốt') && !pName.includes('cà rốt') && !pSlug.includes('ca-rot')) {
     return false;
   }
-  // If ingredient is ớt chuông, product must have ớt chuông
   if (ing.includes('ớt chuông') && !pName.includes('ớt chuông') && !pSlug.includes('ot-chuong')) {
     return false;
   }
-  // If ingredient is gà, product must have gà
   if (ing.includes('gà') && !pName.includes('gà') && !pSlug.includes('ga')) {
     return false;
   }
-  // If ingredient is sả, product must be real sả, and NOT cá thu, cá hồi, thịt, or false match from 'đặc sản'
   if (/(?:^|[\s,;.-])sả(?:$|[\s,;.-])/i.test(ing) || ing.includes('sả')) {
     const isRealSa = /(?:^|[\s,;.-])sả(?:$|[\s,;.-])|củ\s*sả|sả\s*tươi/i.test(pName);
     const hasFalseMatch = /đặc\s*sản|nông\s*sản|thủy\s*sản|hải\s*sản|khoáng\s*sản/i.test(pName);
@@ -1236,11 +344,9 @@ function isCompatibleProduct(ingredientRaw: string, product: ApiProduct): boolea
       return false;
     }
   }
-  // If ingredient is bơ, product must NOT be thịt bò
   if (ing.includes('bơ') && (pName.includes('thịt bò') || pSlug.includes('thit-bo') || pName.includes('bò bắp'))) {
     return false;
   }
-  // If ingredient is thịt bò, product must have bò and NOT bơ
   if (ing.includes('bò') && !ing.includes('bơ') && (!pName.includes('bò') || pName.includes('bơ sáp'))) {
     return false;
   }
@@ -1250,103 +356,47 @@ function isCompatibleProduct(ingredientRaw: string, product: ApiProduct): boolea
 function matchCatalogueProduct(
   ingredientName: string,
   catalogue: ApiProduct[],
-  preMatched?: ApiProduct | null
+  preMatched?: ApiProduct | null,
+  aliases: IngredientAliasItem[] = []
 ): ApiProduct | null {
   const rawKey = lowerKeepDiacritics(ingredientName);
-  const exactMeta = resolveIngredientMeta(rawKey);
 
-  // 0. If the backend already matched the product AND it is actually compatible with the ingredient name, use it
+  // 1. Prefer product already matched from MongoDB by /api/nutrition
   if (preMatched && preMatched.name && (preMatched.image || preMatched.priceNumber)) {
     if (isCompatibleProduct(rawKey, preMatched)) {
       return preMatched;
     }
   }
 
-  // 1. Strict match in catalogue (MongoDB products)
-  if (catalogue && catalogue.length > 0) {
-    if (exactMeta) {
+  if (!catalogue || catalogue.length === 0) return null;
+
+  // 2. Match exact product name from MongoDB /api/products catalogue
+  const byExactName = catalogue.find(
+    (p) => lowerKeepDiacritics(p.name) === rawKey && isCompatibleProduct(rawKey, p)
+  );
+  if (byExactName) return byExactName;
+
+  // 3. Match using DB-configured ingredient aliases (longest keyword first so specific aliases win)
+  if (aliases.length > 0) {
+    const sortedAliases = [...aliases].sort((a, b) => (b.keyword?.length || 0) - (a.keyword?.length || 0));
+    for (const alias of sortedAliases) {
+      const kw = lowerKeepDiacritics(alias.keyword);
+      if (!kw || !rawKey.includes(kw)) continue;
+      if (alias.excludeKeyword && rawKey.includes(lowerKeepDiacritics(alias.excludeKeyword))) continue;
+
       const bySlug = catalogue.find(
-        (p) => p.slug === exactMeta.slug || normalizeStr(p.slug) === normalizeStr(exactMeta.slug)
+        (p) => (p.slug === alias.slug || normalizeStr(p.slug) === normalizeStr(alias.slug)) && isCompatibleProduct(rawKey, p)
       );
-      if (bySlug && isCompatibleProduct(rawKey, bySlug)) {
-        return {
-          ...bySlug,
-          image: exactMeta.image || bySlug.image,
-        };
-      }
-      const byExactName = catalogue.find(
-        (p) => lowerKeepDiacritics(p.name) === lowerKeepDiacritics(exactMeta.name)
-      );
-      if (byExactName && isCompatibleProduct(rawKey, byExactName)) {
-        return {
-          ...byExactName,
-          image: exactMeta.image || byExactName.image,
-        };
-      }
-    }
-
-    // 2. Strict core agricultural noun-phrase matching with explicit exclusions
-    const CORE_SEARCH_PHRASES: { pattern: RegExp; exclude?: RegExp }[] = [
-      { pattern: /nấm\s+đông\s+cô|nấm/i },
-      { pattern: /cà\s+rốt/i },
-      { pattern: /bông\s+cải\s+xanh|súp\s+lơ/i },
-      { pattern: /cải\s+xanh/i, exclude: /bông\s+cải/i },
-      { pattern: /cải\s+thìa/i },
-      { pattern: /cải\s+ngọt/i, exclude: /bông\s+cải/i },
-      { pattern: /ớt\s+chuông/i },
-      { pattern: /cà\s+chua/i },
-      { pattern: /dưa\s+leo|dưa\s+chuột/i },
-      { pattern: /cá\s+hồi/i },
-      { pattern: /thịt\s+bò|thăn\s+bò|bắp\s+bò/i },
-      { pattern: /thịt\s+gà|gà\s+ta|ức\s+gà/i },
-      { pattern: /thịt\s+heo|ba\s+rọi|thịt\s+lợn/i },
-      { pattern: /tôm\s+sú|tôm/i },
-      { pattern: /sữa\s+chua\s+men\s+sống/i },
-      { pattern: /sữa\s+chua\s+hy\s+lạp|sữa\s+chua/i },
-      { pattern: /dâu\s+tây/i },
-      { pattern: /xoài/i },
-      { pattern: /sả\s+tươi|củ\s+sả|(?:^|\s)sả(?:\s|$)/i, exclude: /đặc\s*sản|nông\s*sản|thủy\s*sản|hải\s*sản|cá\s*thu|cá\s*hồi|thịt/i },
-      { pattern: /bơ\s+sáp|quả\s+bơ/i, exclude: /thịt\s+bò|thăn\s+bò/i },
-      { pattern: /bí\s+đỏ/i },
-      { pattern: /cam\s+sành/i },
-    ];
-
-    for (const rule of CORE_SEARCH_PHRASES) {
-      if (rule.pattern.test(rawKey)) {
-        const found = catalogue.find((p) => {
-          const pName = p.name || '';
-          if (rule.exclude && rule.exclude.test(pName)) return false;
-          return rule.pattern.test(pName);
-        });
-        if (found && isCompatibleProduct(rawKey, found)) {
-          return {
-            ...found,
-            image: exactMeta?.image || found.image,
-          };
-        }
-        // If this core ingredient is recognized but not present in catalogue, STOP here immediately!
-        // Never fall through to loose single-word / stopword matching!
-        break;
-      }
+      if (bySlug) return bySlug;
     }
   }
 
-  // 3. Fallback to the exact ingredient meta so the photo, price & weight are 100% accurate
-  if (exactMeta) {
-    return {
-      _id: exactMeta.slug,
-      name: exactMeta.name,
-      slug: exactMeta.slug,
-      price: formatPrice(exactMeta.priceNumber),
-      priceNumber: exactMeta.priceNumber,
-      image: exactMeta.image,
-      categoryId: exactMeta.categoryVi,
-      categoryVi: exactMeta.categoryVi,
-      weight: exactMeta.weight,
-    } as ApiProduct;
-  }
-
-  return null;
+  // 4. Normalized exact name fallback against live MongoDB catalogue
+  const normKey = normalizeStr(ingredientName);
+  const byNorm = catalogue.find(
+    (p) => normalizeStr(p.name) === normKey && isCompatibleProduct(rawKey, p)
+  );
+  return byNorm || null;
 }
 
 @Component({
@@ -1364,25 +414,53 @@ export class NutritionComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
-  readonly GOAL_ICONS = GOAL_ICONS;
   protected formatPrice = formatPrice;
 
-  heroConfig = signal<NutritionHeroConfig>({
-    kicker: 'Trợ Lý Thực Đơn Khoa Học - Dữ Liệu Trực Tuyến',
-    title: 'Dinh dưỡng thông minh & Thực đơn chuẩn vị',
-    subtitle:
-      'Khám phá các gói thực đơn dinh dưỡng tiết kiệm, xem chi tiết công thức chế biến từng bước, bảng thành phần vi chất và thêm trọn bộ nguyên liệu tươi sạch vào giỏ hàng chỉ với một chạm.',
-    bannerImage: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&h=520&fit=crop',
-  });
-
   // Dynamic data loaded from MongoDB via /api/nutrition and /api/products
+  heroConfig = signal<NutritionHeroConfig>({
+    kicker: '',
+    title: '',
+    subtitle: '',
+    bannerImage: '',
+    fallbackFoodImage: '',
+  });
   private goalsSignal = signal<GoalItem[]>([]);
-  private recipesDbSignal = signal<RecipeDbItem[]>(FALLBACK_RECIPES_DB);
+  private recipesDbSignal = signal<RecipeDbItem[]>([]);
   private mealPlansSignal = signal<MealPlanDeal[]>([]);
+  private ingredientAliasesSignal = signal<IngredientAliasItem[]>([]);
+  private recipeDefaultsSignal = signal<RecipeDefaultsConfig | null>(null);
+  private quickSearchTagsSignal = signal<QuickSearchTag[]>([]);
+  private plannerConfigSignal = signal<NutritionPlannerConfig>({
+    weekDays: [],
+    mealSlots: [],
+    lightRecipeIds: [],
+    nutrientBoostOptions: [],
+    healthGoals: [],
+  });
   catalogue = signal<ApiProduct[]>([]);
 
   get GOALS(): GoalItem[] {
     return this.goalsSignal();
+  }
+
+  get quickSearchTags(): QuickSearchTag[] {
+    return this.quickSearchTagsSignal();
+  }
+
+  get WEEK_DAYS(): WeekDayOption[] {
+    return this.plannerConfigSignal().weekDays || [];
+  }
+
+  get MEAL_SLOTS_META(): MealSlotOption[] {
+    return this.plannerConfigSignal().mealSlots || [];
+  }
+
+  get HEALTH_GOALS(): PlannerHealthGoalConfig[] {
+    return this.plannerConfigSignal().healthGoals || [];
+  }
+
+  get NUTRIENT_BOOST_OPTIONS(): NutrientBoostOption[] {
+    return this.plannerConfigSignal().nutrientBoostOptions || [];
   }
 
   selectedGoals = signal<string[]>([]);
@@ -1400,34 +478,7 @@ export class NutritionComponent implements OnInit {
   recentMealsMap = signal<Record<string, { timestamp: number; label: string }>>({});
   recentOrderedItemNames = signal<string[]>([]);
 
-  readonly quickSearchTags = [
-    { label: 'Sữa chua', query: 'sữa chua' },
-    { label: 'Cá hồi', query: 'cá hồi' },
-    { label: 'Quả bơ', query: 'bơ' },
-    { label: 'Thịt gà', query: 'gà' },
-    { label: 'Dâu tây', query: 'dâu tây' },
-    { label: 'Thịt bò', query: 'thịt bò' },
-    { label: 'Nấm đông cô', query: 'nấm' },
-  ];
-
   // ===== DAILY & WEEKLY MEAL PLANNER STATE =====
-  readonly WEEK_DAYS = [
-    { key: 'mon', label: 'Thứ 2', short: 'T2' },
-    { key: 'tue', label: 'Thứ 3', short: 'T3' },
-    { key: 'wed', label: 'Thứ 4', short: 'T4' },
-    { key: 'thu', label: 'Thứ 5', short: 'T5' },
-    { key: 'fri', label: 'Thứ 6', short: 'T6' },
-    { key: 'sat', label: 'Thứ 7', short: 'T7' },
-    { key: 'sun', label: 'Chủ Nhật', short: 'CN' },
-  ];
-
-  readonly MEAL_SLOTS_META: { key: MealSlotKey; label: string; time: string; icon: string }[] = [
-    { key: 'breakfast', label: 'Bữa Sáng Năng Lượng', time: '07:00 – 08:30', icon: 'bi-brightness-high' },
-    { key: 'lunch', label: 'Bữa Trưa Đủ Chất', time: '11:30 – 13:00', icon: 'bi-sun' },
-    { key: 'snack', label: 'Bữa Phụ & Sữa Chua', time: '15:30 – 16:30', icon: 'bi-cup-straw' },
-    { key: 'dinner', label: 'Bữa Tối Thanh Đạm', time: '18:30 – 20:00', icon: 'bi-moon-stars' },
-  ];
-
   plannerMode = signal<'day' | 'week'>('day');
   selectedWeekDay = signal<string>('mon');
   weeklyOverviewMode = signal<boolean>(false);
@@ -1437,43 +488,6 @@ export class NutritionComponent implements OnInit {
   onboardingCompleted = signal<boolean>(false);
   readonly TOTAL_ONBOARDING_STEPS = 5;
   readonly ONBOARDING_STEPS_LIST = [1, 2, 3, 4, 5] as const;
-
-  readonly HEALTH_GOALS: {
-    id: 'protein' | 'eatclean' | 'family' | 'yogurt_detox';
-    title: string;
-    subtitle: string;
-    badge: string;
-    metrics: string;
-  }[] = [
-    {
-      id: 'protein',
-      title: 'Tập Gym & Tăng Cơ',
-      subtitle: 'Tối ưu phục hồi & xây dựng cơ bắp với ức gà, thăn bò, cá hồi Na Uy, trứng gà ta.',
-      badge: '35% Đạm',
-      metrics: '~2.000 kcal - 145g Protein',
-    },
-    {
-      id: 'eatclean',
-      title: 'Giảm Cân & Siết Mỡ (Eat Clean)',
-      subtitle: 'Thâm hụt calo lành mạnh, dồi dào chất xơ tự nhiên, loại bỏ đường tinh luyện.',
-      badge: 'Thâm hụt nhẹ',
-      metrics: '~1.350 kcal - 95g Protein',
-    },
-    {
-      id: 'family',
-      title: 'Giữ Dáng & Cơm Nhà Cân Bằng',
-      subtitle: 'Cân đối vi chất chuẩn tháp dinh dưỡng, thanh mát, thơm ngon, dễ chuẩn bị cho cả nhà.',
-      badge: '4 nhóm chất',
-      metrics: '~1.750 kcal - Đủ 4 nhóm chất',
-    },
-    {
-      id: 'yogurt_detox',
-      title: 'Thanh Lọc & Tiêu Hóa Khỏe',
-      subtitle: 'Bổ sung sữa chua men sống, sinh tố hạt chia thanh mát, nhẹ bụng sáng da.',
-      badge: '10 Tỷ Probiotics',
-      metrics: '~1.400 kcal - Lợi khuẩn đường ruột',
-    },
-  ];
 
   currentStep = signal<1 | 2 | 3>(1);
   mealsPerDay = signal<2 | 3 | 4>(3);
@@ -1490,78 +504,8 @@ export class NutritionComponent implements OnInit {
   private planRefreshTimer: ReturnType<typeof setTimeout> | undefined;
   private macroInputTimer: ReturnType<typeof setTimeout> | undefined;
 
-  readonly NUTRIENT_BOOST_OPTIONS = [
-    { id: 'protein', label: 'Tăng Đạm (Protein Xây Cơ)', desc: 'Thịt bò, ức gà, cá hồi, tôm sú' },
-    { id: 'fiber', label: 'Giàu Chất Xơ (No Lâu)', desc: 'Bông cải xanh, cải ngọt, bí đỏ' },
-    { id: 'probiotic', label: 'Lợi Khuẩn Sữa Chua', desc: 'Sữa chua Hy Lạp, men sống tiêu hóa' },
-    { id: 'omega3', label: 'Omega-3 & Tim Mạch', desc: 'Cá hồi Na Uy, quả bơ sáp' },
-    { id: 'vitamin', label: 'Vitamin Đẹp Da & Đề Kháng', desc: 'Dâu tây, cam sành, ớt chuông' },
-    { id: 'lowcarb', label: 'Low-Carb (Giảm Tinh Bột)', desc: 'Ưu tiên rau xanh & đạm nạc' },
-  ];
-
-  readonly DAY_THEMES: Record<'eatclean' | 'protein' | 'family' | 'yogurt_detox', string> = {
-    protein: 'Thực đơn Tập Gym Tăng Cơ: Giàu Đạm Tinh Khiết, Phục Hồi Năng Lượng & Săn Chắc Cơ Bắp',
-    eatclean: 'Thực đơn Eat Clean Giảm Mỡ: Thâm Hụt Calo Thông Minh, Giàu Chất Xơ Tự Nhiên & Ít Tinh Bột',
-    family: 'Thực đơn Cơm Nhà Đủ Chất: Cân Bằng 4 Nhóm Dinh Dưỡng, Thơm Ngon Hợp Khẩu Vị Cả Nhà',
-    yogurt_detox: 'Thực đơn Thanh Lọc & Tiêu Hóa Khỏe: Bổ Sung Probiotics Từ Sữa Chua Hy Lạp & Trái Cây Tươi',
-  };
-
-  readonly WEEK_DAY_THEMES: Record<'eatclean' | 'protein' | 'family' | 'yogurt_detox', Record<string, string>> = {
-    protein: {
-      mon: 'Thứ 2: Nạp Đạm Tinh Khiết & Khởi Động Cơ Bắp',
-      tue: 'Thứ 3: Tăng Sức Bền Với Bò Mỹ & Bông Cải Xanh',
-      wed: 'Thứ 4: Phục Hồi Cơ Chuyên Sâu Cùng Omega-3 Cá Hồi',
-      thu: 'Thứ 5: Siết Cơ Nạc Với Ức Gà & Sữa Chua Hy Lạp',
-      fri: 'Thứ 6: Bổ Sung Kẽm & Đạm Hải Sản Tôm Sú Cà Mau',
-      sat: 'Thứ 7: Năng Lượng Đỉnh Cao Cho Buổi Tập Cuối Tuần',
-      sun: 'Chủ Nhật: Giãn Cơ, Bù Khoáng & Tiêu Hóa Nhẹ Nhàng',
-    },
-    eatclean: {
-      mon: 'Thứ 2: Thanh Lọc Đầu Tuần & Thâm Hụt Calo Tự Nhiên',
-      tue: 'Thứ 3: Đốt Mỡ Thừa Với Chất Béo Tốt (Bơ Sáp & Cá Hồi)',
-      wed: 'Thứ 4: Nhẹ Bụng Đẹp Da Cùng Salad Ức Gà Sốt Sữa Chua',
-      thu: 'Thứ 5: Cân Bằng Đường Huyết & Giàu Chất Xơ Hoà Tan',
-      fri: 'Thứ 6: Detox Vitamin C & Chống Oxy Hóa Tươi Mát',
-      sat: 'Thứ 7: Eat Clean Cuối Tuần Ngon Miệng Không Lo Tăng Cân',
-      sun: 'Chủ Nhật: Nghỉ Ngơi, Bổ Sung Lợi Khuẩn & Làm Sạch Ruột',
-    },
-    family: {
-      mon: 'Thứ 2: Cơm Nhà Đủ Chất Khởi Đầu Tuần Mới',
-      tue: 'Thứ 3: Đổi Vị Cuốn Rau Thảo Mộc & Canh Ngọt Thanh',
-      wed: 'Thứ 4: Bổ Sung Canxi & Sắt Cho Cả Gia Đình',
-      thu: 'Thứ 5: Bữa Cơm Ấm Cúng Giàu Omega-3 & Vitamin A',
-      fri: 'Thứ 6: Thực Đơn Thanh Mát, Dễ Tiêu Hóa Cho Người Lớn & Trẻ Nhỏ',
-      sat: 'Thứ 7: Tiệc Cuối Tuần Tươi Ngon Với Hải Sản & Rau Hữu Cơ',
-      sun: 'Chủ Nhật: Cân Bằng Dinh Dưỡng & Bữa Phụ Sữa Chua Trái Cây',
-    },
-    yogurt_detox: {
-      mon: 'Thứ 2: Đánh Thức Hệ Vi Sinh Đường Ruột Với Sữa Chua Hy Lạp',
-      tue: 'Thứ 3: Thanh Lọc Cơ Thể & Bổ Sung Enzyme Tự Nhiên',
-      wed: 'Thứ 4: Tăng Cường Miễn Dịch Với Probiotics & Vitamin C',
-      thu: 'Thứ 5: Thực Đơn Nhẹ Bụng, Giảm Đầy Hơi & Tốt Cho Dạ Dày',
-      fri: 'Thứ 6: Trẻ Hóa Làn Da Với Dâu Tây, Xoài Cát & Sữa Chua Men Sống',
-      sat: 'Thứ 7: Phục Hồi Năng Lượng Xanh Từ Đạm Thực Vật & Nấm',
-      sun: 'Chủ Nhật: Thư Giãn Toàn Diện & Cân Bằng Hệ Tiêu Hóa',
-    },
-  };
-
-  // Dedicated single-day schedule (independent of weekly schedule)
-  singleDaySchedule = signal<DayMealPlanMap>({
-    breakfast: 'sua-chua-hy-lap-trai-cay',
-    lunch: 'bo-ap-chao-bong-cai',
-    snack: 'sinh-to-dau-xoai',
-    dinner: 'ca-hoi-ap-chao',
-  });
-
-  weeklySchedule = signal<Record<string, DayMealPlanMap>>({
-    mon: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'ca-hoi-ap-chao', snack: 'sinh-to-dau-xoai', dinner: 'salad-ga-nuong' },
-    tue: { breakfast: 'sinh-to-dau-xoai', lunch: 'bo-ap-chao-bong-cai', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'canh-cai-xanh-thit-bo' },
-    wed: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'tom-su-hap-cai-ngot', snack: 'detox-cam-tao-ca-rot', dinner: 'salad-uc-ga-sot-sua-chua' },
-    thu: { breakfast: 'detox-cam-tao-ca-rot', lunch: 'ca-rot-xao-thit-ga', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'salad-bo-ca-hoi' },
-    fri: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'heo-thao-moc-cuon-rau', snack: 'sinh-to-dau-xoai', dinner: 'sup-bi-do-hat-sen' },
-    sat: { breakfast: 'sinh-to-dau-xoai', lunch: 'ca-hoi-ap-chao', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'dau-hu-sot-nam-chay' },
-    sun: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'bo-ap-chao-bong-cai', snack: 'detox-cam-tao-ca-rot', dinner: 'tom-su-hap-cai-ngot' },
-  });
+  singleDaySchedule = signal<DayMealPlanMap>({ breakfast: '', lunch: '', snack: '', dinner: '' });
+  weeklySchedule = signal<Record<string, DayMealPlanMap>>({});
 
   // Dedicated detail view state (for viewing a dish or a meal plan on its own detail screen)
   selectedRecipeId = signal<string | null>(null);
@@ -1715,8 +659,9 @@ export class NutritionComponent implements OnInit {
     const allResults = this.results();
     const recipes = this.recipesDbSignal();
     const cat = this.catalogue();
+    const aliases = this.ingredientAliasesSignal();
 
-    return plans.map((plan, idx) => {
+    return plans.map((plan) => {
       const planRecipes = plan.recipeIds
         .map(id => allResults.find(r => r.id === id))
         .filter((r): r is RecipeResult => !!r);
@@ -1728,7 +673,7 @@ export class NutritionComponent implements OnInit {
       const prodMap = new Map<string, ApiProduct>();
       for (const r of dbRecipes) {
         for (const ing of r.ingredients) {
-          const p = matchCatalogueProduct(ing.name, cat, ing.product);
+          const p = matchCatalogueProduct(ing.name, cat, ing.product, aliases);
           if (p) prodMap.set(p._id || p.slug, p);
         }
       }
@@ -1737,16 +682,9 @@ export class NutritionComponent implements OnInit {
       const dealTotal = Math.round((originalTotal * (100 - plan.discountPercent)) / 100 / 1000) * 1000;
       const saved = Math.max(0, originalTotal - dealTotal);
 
-      const defaultImages = [
-        'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=700&q=80',
-        'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=700&q=80',
-        'https://images.unsplash.com/photo-1547592180-85f173990554?w=700&q=80',
-        'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=700&q=80',
-      ];
-
       return {
         ...plan,
-        image: plan.image || dbRecipes[0]?.image || defaultImages[idx % defaultImages.length],
+        image: plan.image || dbRecipes[0]?.image || this.heroConfig().fallbackFoodImage || '',
         recipes: planRecipes,
         recipeNames: dbRecipes.map(r => r.name),
         matchedProducts,
@@ -1858,7 +796,8 @@ export class NutritionComponent implements OnInit {
 
   private buildDayPlanView(dayKey: string, dayLabel: string): DayPlanComputedView {
     const isSingle = dayKey === 'day';
-    const sched = isSingle ? this.singleDaySchedule() : (this.weeklySchedule()[dayKey] || this.weeklySchedule()['mon']);
+    const emptySched: DayMealPlanMap = { breakfast: '', lunch: '', dinner: '', snack: '' };
+    const sched = (isSingle ? this.singleDaySchedule() : (this.weeklySchedule()[dayKey] || this.weeklySchedule()['mon'])) || emptySched;
     const filtered = this.results();
     const all = this.allComputedRecipes();
     const lookupPool = filtered.length > 0 ? filtered : all;
@@ -2041,9 +980,10 @@ export class NutritionComponent implements OnInit {
     const allInCart = matchedProducts.length > 0 && missingCount === 0;
 
     const preset = this.plannerPreset();
+    const goalCfg = this.HEALTH_GOALS.find((g) => g.id === preset);
     const dayTheme = isSingle
-      ? (this.DAY_THEMES[preset] || 'Thực đơn cân bằng dinh dưỡng chuẩn khoa học')
-      : (this.WEEK_DAY_THEMES[preset]?.[dayKey] || 'Thực đơn cân bằng dinh dưỡng & nông sản tươi sạch thu hoạch trong ngày');
+      ? (goalCfg?.dayTheme || '')
+      : (goalCfg?.weekDayThemes?.[dayKey] || '');
 
     return {
       dayKey,
@@ -2077,7 +1017,7 @@ export class NutritionComponent implements OnInit {
     }
 
     const dKey = this.selectedWeekDay();
-    const dObj = this.WEEK_DAYS.find((d) => d.key === dKey) || this.WEEK_DAYS[0];
+    const dObj = this.WEEK_DAYS.find((d) => d.key === dKey) || this.WEEK_DAYS[0] || { key: dKey, label: dKey, short: dKey };
     return this.buildDayPlanView(dObj.key, `${dObj.label} (${this.mealsPerDay()} bữa/ngày)`);
   });
 
@@ -2357,7 +1297,7 @@ export class NutritionComponent implements OnInit {
         weeklySchedule: this.weeklySchedule(),
       };
       localStorage.setItem('evergreen_nutrition_onboarding_v1', JSON.stringify(payload));
-    } catch (_) {}
+    } catch (_) { }
   }
 
   private restoreOnboardingStateFromStorage(): void {
@@ -2420,14 +1360,14 @@ export class NutritionComponent implements OnInit {
           this.weeklySchedule.set(parsed.weeklySchedule);
         }
       }
-    } catch (_) {}
+    } catch (_) { }
   }
 
   resetOnboardingPlan(): void {
     if (typeof window !== 'undefined' && window.localStorage) {
       try {
         localStorage.removeItem('evergreen_nutrition_onboarding_v1');
-      } catch (_) {}
+      } catch (_) { }
     }
     this.onboardingCompleted.set(false);
     this.smartPlanConfigured.set(false);
@@ -2446,38 +1386,22 @@ export class NutritionComponent implements OnInit {
 
   getPresetLabel(preset?: string): string {
     const p = preset || this.plannerPreset();
-    if (p === 'protein') return 'Tập Gym & Tăng Cơ';
-    if (p === 'eatclean') return 'Giảm Cân & Siết Mỡ (Eat Clean)';
-    if (p === 'family') return 'Giữ Dáng & Cơm Nhà Cân Bằng';
-    if (p === 'yogurt_detox') return 'Thanh Lọc & Tiêu Hóa Khỏe';
-    return 'Cân Bằng Dinh Dưỡng';
+    return this.HEALTH_GOALS.find((g) => g.id === p)?.title || '';
   }
 
   getPresetDescription(preset?: string): string {
     const p = preset || this.plannerPreset();
-    if (p === 'protein') return 'Tối ưu phục hồi & xây dựng cơ bắp với ức gà, thăn bò, cá hồi Na Uy, trứng gà ta.';
-    if (p === 'eatclean') return 'Thâm hụt calo lành mạnh, dồi dào chất xơ tự nhiên, loại bỏ đường tinh luyện.';
-    if (p === 'family') return 'Cân đối vi chất chuẩn tháp dinh dưỡng, thanh mát, thơm ngon, dễ chuẩn bị cho cả nhà.';
-    if (p === 'yogurt_detox') return 'Bổ sung sữa chua men sống, sinh tố hạt chia thanh mát, nhẹ bụng sáng da.';
-    return 'Cân bằng dinh dưỡng và năng lượng cho cơ thể khỏe mạnh.';
+    return this.HEALTH_GOALS.find((g) => g.id === p)?.subtitle || '';
   }
 
   getPresetBadge(preset?: string): string {
     const p = preset || this.plannerPreset();
-    if (p === 'protein') return '35% Đạm';
-    if (p === 'eatclean') return 'Thâm hụt nhẹ';
-    if (p === 'family') return '4 nhóm chất';
-    if (p === 'yogurt_detox') return '10 Tỷ Probiotics';
-    return 'Chuẩn Dinh Dưỡng';
+    return this.HEALTH_GOALS.find((g) => g.id === p)?.badge || '';
   }
 
   getPresetSummaryText(preset?: string): string {
     const p = preset || this.plannerPreset();
-    if (p === 'protein') return '~2.000 kcal - 145g Protein';
-    if (p === 'eatclean') return '~1.350 kcal - 95g Protein';
-    if (p === 'family') return '~1.750 kcal - Đủ 4 nhóm chất';
-    if (p === 'yogurt_detox') return '~1.400 kcal - Lợi khuẩn đường ruột';
-    return 'Thực đơn khoa học';
+    return this.HEALTH_GOALS.find((g) => g.id === p)?.metrics || '';
   }
 
   applyPlannerPreset(
@@ -2485,99 +1409,21 @@ export class NutritionComponent implements OnInit {
     runGenerate: boolean = true
   ): void {
     this.plannerPreset.set(preset);
-    if (preset === 'protein') {
-      this.mealsPerDay.set(4);
-      this.targetDailyKcal.set(2000);
-      this.targetProtein.set(145);
-      this.targetFiber.set(30);
-      this.targetCarbs.set(160);
-      this.priorityNutrients.set(['protein', 'omega3', 'probiotic']);
-      this.singleDaySchedule.set({
-        breakfast: 'sua-chua-hy-lap-trai-cay',
-        lunch: 'bo-ap-chao-bong-cai',
-        snack: 'sinh-to-dau-xoai',
-        dinner: 'ca-hoi-ap-chao',
-      });
-    } else if (preset === 'eatclean') {
-      this.mealsPerDay.set(3);
-      this.targetDailyKcal.set(1350);
-      this.targetProtein.set(95);
-      this.targetFiber.set(35);
-      this.targetCarbs.set(90);
-      this.priorityNutrients.set(['fiber', 'lowcarb', 'vitamin']);
-      this.singleDaySchedule.set({
-        breakfast: 'sua-chua-hy-lap-trai-cay',
-        lunch: 'ca-hoi-ap-chao',
-        snack: 'sinh-to-dau-xoai',
-        dinner: 'salad-ga-nuong',
-      });
-    } else if (preset === 'family') {
-      this.mealsPerDay.set(3);
-      this.targetDailyKcal.set(1750);
-      this.targetProtein.set(110);
-      this.targetFiber.set(28);
-      this.targetCarbs.set(150);
-      this.priorityNutrients.set(['protein', 'fiber', 'vitamin']);
-      this.singleDaySchedule.set({
-        breakfast: 'sua-chua-hy-lap-trai-cay',
-        lunch: 'canh-cai-xanh-thit-bo',
-        snack: 'sinh-to-dau-xoai',
-        dinner: 'ca-rot-xao-thit-ga',
-      });
-    } else if (preset === 'yogurt_detox') {
-      this.mealsPerDay.set(4);
-      this.targetDailyKcal.set(1400);
-      this.targetProtein.set(85);
-      this.targetFiber.set(36);
-      this.targetCarbs.set(105);
-      this.priorityNutrients.set(['probiotic', 'fiber', 'vitamin']);
-      this.singleDaySchedule.set({
-        breakfast: 'sua-chua-hy-lap-trai-cay',
-        lunch: 'salad-uc-ga-sot-sua-chua',
-        snack: 'sinh-to-dau-xoai',
-        dinner: 'dau-hu-sot-nam-chay',
-      });
+    const goalCfg = this.HEALTH_GOALS.find((g) => g.id === preset);
+    if (goalCfg) {
+      this.mealsPerDay.set(goalCfg.mealsPerDay);
+      this.targetDailyKcal.set(goalCfg.targetDailyKcal);
+      this.targetProtein.set(goalCfg.targetProtein);
+      this.targetFiber.set(goalCfg.targetFiber);
+      this.targetCarbs.set(goalCfg.targetCarbs);
+      this.priorityNutrients.set([...(goalCfg.priorityNutrients || [])]);
+      if (goalCfg.defaultSingleDaySchedule) {
+        this.singleDaySchedule.set(goalCfg.defaultSingleDaySchedule);
+      }
+      if (goalCfg.weeklySchedule) {
+        this.weeklySchedule.set(goalCfg.weeklySchedule);
+      }
     }
-
-    const presets: Record<'eatclean' | 'protein' | 'family' | 'yogurt_detox', Record<string, DayMealPlanMap>> = {
-      eatclean: {
-        mon: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'ca-hoi-ap-chao', snack: 'sinh-to-dau-xoai', dinner: 'salad-ga-nuong' },
-        tue: { breakfast: 'sinh-to-dau-xoai', lunch: 'salad-bo-ca-hoi', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'tom-su-hap-cai-ngot' },
-        wed: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-uc-ga-sot-sua-chua', snack: 'detox-cam-tao-ca-rot', dinner: 'dau-hu-sot-nam-chay' },
-        thu: { breakfast: 'detox-cam-tao-ca-rot', lunch: 'ca-hoi-ap-chao', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'sup-bi-do-hat-sen' },
-        fri: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-ga-nuong', snack: 'sinh-to-dau-xoai', dinner: 'tom-su-hap-cai-ngot' },
-        sat: { breakfast: 'sinh-to-dau-xoai', lunch: 'salad-bo-ca-hoi', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'salad-uc-ga-sot-sua-chua' },
-        sun: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'ca-hoi-ap-chao', snack: 'detox-cam-tao-ca-rot', dinner: 'sup-bi-do-hat-sen' },
-      },
-      protein: {
-        mon: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'bo-ap-chao-bong-cai', snack: 'sinh-to-dau-xoai', dinner: 'ca-hoi-ap-chao' },
-        tue: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'ca-rot-xao-thit-ga', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'tom-su-hap-cai-ngot' },
-        wed: { breakfast: 'sinh-to-dau-xoai', lunch: 'ca-hoi-ap-chao', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'salad-uc-ga-sot-sua-chua' },
-        thu: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'bo-ap-chao-bong-cai', snack: 'sinh-to-dau-xoai', dinner: 'heo-thao-moc-cuon-rau' },
-        fri: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'tom-su-hap-cai-ngot', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'salad-bo-ca-hoi' },
-        sat: { breakfast: 'sinh-to-dau-xoai', lunch: 'bo-ap-chao-bong-cai', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'ca-hoi-ap-chao' },
-        sun: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-ga-nuong', snack: 'sinh-to-dau-xoai', dinner: 'tom-su-hap-cai-ngot' },
-      },
-      family: {
-        mon: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'canh-cai-xanh-thit-bo', snack: 'sinh-to-dau-xoai', dinner: 'ca-rot-xao-thit-ga' },
-        tue: { breakfast: 'sinh-to-dau-xoai', lunch: 'heo-thao-moc-cuon-rau', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'tom-su-hap-cai-ngot' },
-        wed: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'bo-ap-chao-bong-cai', snack: 'detox-cam-tao-ca-rot', dinner: 'sup-bi-do-hat-sen' },
-        thu: { breakfast: 'sup-bi-do-hat-sen', lunch: 'ca-hoi-ap-chao', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'canh-cai-xanh-thit-bo' },
-        fri: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'ca-rot-xao-thit-ga', snack: 'sinh-to-dau-xoai', dinner: 'heo-thao-moc-cuon-rau' },
-        sat: { breakfast: 'sinh-to-dau-xoai', lunch: 'tom-su-hap-cai-ngot', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'bo-ap-chao-bong-cai' },
-        sun: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'ca-hoi-ap-chao', snack: 'sinh-to-dau-xoai', dinner: 'dau-hu-sot-nam-chay' },
-      },
-      yogurt_detox: {
-        mon: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-uc-ga-sot-sua-chua', snack: 'sinh-to-dau-xoai', dinner: 'dau-hu-sot-nam-chay' },
-        tue: { breakfast: 'sinh-to-dau-xoai', lunch: 'salad-bo-ca-hoi', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'sup-bi-do-hat-sen' },
-        wed: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-ga-nuong', snack: 'detox-cam-tao-ca-rot', dinner: 'salad-uc-ga-sot-sua-chua' },
-        thu: { breakfast: 'detox-cam-tao-ca-rot', lunch: 'dau-hu-sot-nam-chay', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'tom-su-hap-cai-ngot' },
-        fri: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-uc-ga-sot-sua-chua', snack: 'sinh-to-dau-xoai', dinner: 'sup-bi-do-hat-sen' },
-        sat: { breakfast: 'sinh-to-dau-xoai', lunch: 'salad-bo-ca-hoi', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'dau-hu-sot-nam-chay' },
-        sun: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-uc-ga-sot-sua-chua', snack: 'detox-cam-tao-ca-rot', dinner: 'salad-ga-nuong' },
-      },
-    };
-    this.weeklySchedule.set(presets[preset]);
     this.smartPlanConfigured.set(true);
     if (runGenerate && this.nutritionView() !== 'onboarding') {
       this.generateSmartPlan(false, false);
@@ -2659,18 +1505,15 @@ export class NutritionComponent implements OnInit {
     };
     const budget = this.budgetLimit();
     const priorities = this.priorityNutrients();
-    const lightIds = new Set([
-      'sua-chua-hy-lap-trai-cay',
-      'sinh-to-dau-xoai',
-      'detox-cam-tao-ca-rot',
-      'sup-bi-do-hat-sen',
-      'salad-uc-ga-sot-sua-chua',
-    ]);
+    const lightIds = new Set(this.plannerConfigSignal().lightRecipeIds || []);
+    if (slots.length === 0) {
+      return { breakfast: pool[0].id, lunch: pool[0].id, snack: pool[0].id, dinner: pool[0].id };
+    }
     const recipeCandidates = pool.length <= 20
       ? pool
       : [...pool]
-          .sort((a, b) => this.recipeTargetDistance(a, target, slots.length) - this.recipeTargetDistance(b, target, slots.length))
-          .slice(0, 20);
+        .sort((a, b) => this.recipeTargetDistance(a, target, slots.length) - this.recipeTargetDistance(b, target, slots.length))
+        .slice(0, 20);
     let best: RecipeResult[] = [];
     let bestScore = Number.NEGATIVE_INFINITY;
     const yesterdayPlan = previousDayPlans.length > 0 ? previousDayPlans[previousDayPlans.length - 1] : null;
@@ -2704,7 +1547,7 @@ export class NutritionComponent implements OnInit {
       const budgetPenalty =
         budget && budget > 0
           ? totals.overBudgetCount * 3.5 +
-            (avgDishCost > budget ? ((avgDishCost - budget) / budget) * 2.5 : (avgDishCost / budget) * 0.45)
+          (avgDishCost > budget ? ((avgDishCost - budget) / budget) * 2.5 : (avgDishCost / budget) * 0.45)
           : 0;
       const repeats = recipes.length - new Set(recipes.map((recipe) => recipe.id)).size;
 
@@ -2771,17 +1614,21 @@ export class NutritionComponent implements OnInit {
     const all = this.results();
     if (all.length === 0) return;
 
-    const currentSched = isDayMode
+    const currentSched = (isDayMode
       ? this.singleDaySchedule()
-      : (this.weeklySchedule()[dayKey || this.selectedWeekDay()] || this.weeklySchedule()['mon']);
+      : (this.weeklySchedule()[dayKey || this.selectedWeekDay()] || this.weeklySchedule()['mon'])) || {
+      breakfast: '',
+      lunch: '',
+      dinner: '',
+      snack: '',
+    };
     const currentId = currentSched[slotKey];
 
     // Pick appropriate pool for snack/breakfast vs main meals
+    const lightIds = new Set(this.plannerConfigSignal().lightRecipeIds || []);
     let pool = all;
     if (slotKey === 'snack' || slotKey === 'breakfast') {
-      const lightPool = all.filter((r) =>
-        ['sua-chua-hy-lap-trai-cay', 'sinh-to-dau-xoai', 'detox-cam-tao-ca-rot', 'sup-bi-do-hat-sen', 'salad-uc-ga-sot-sua-chua'].includes(r.id)
-      );
+      const lightPool = all.filter((r) => lightIds.has(r.id) || (r.calories || 0) <= 350);
       if (lightPool.length > 1) pool = lightPool;
     }
 
@@ -2810,7 +1657,8 @@ export class NutritionComponent implements OnInit {
   }
 
   assignRecipeToPlanner(recipe: RecipeResult): void {
-    const isLight = ['sua-chua-hy-lap-trai-cay', 'sinh-to-dau-xoai', 'detox-cam-tao-ca-rot'].includes(recipe.id);
+    const lightIds = new Set(this.plannerConfigSignal().lightRecipeIds || []);
+    const isLight = lightIds.has(recipe.id) || (recipe.calories || 0) <= 350;
     const slotKey: MealSlotKey =
       isLight && this.mealsPerDay() >= 3 ? (this.mealsPerDay() === 4 ? 'snack' : 'breakfast') : 'lunch';
 
@@ -3057,27 +1905,14 @@ export class NutritionComponent implements OnInit {
   }
 
   private loadRecentMealsHistory(serverRecentItems?: { name: string; orderedAt?: string }[]): void {
-    const defaultRecent: Record<string, { timestamp: number; label: string }> = {
-      'sua-chua-hy-lap-trai-cay': {
-        timestamp: Date.now() - 3600 * 1000 * 5,
-        label: 'Đã ăn / Mua gần đây',
-      },
-      'ca-hoi-ap-chao': {
-        timestamp: Date.now() - 3600 * 1000 * 18,
-        label: 'Đã mua nguyên liệu tuần này',
-      },
-      'salad-ga-nuong': {
-        timestamp: Date.now() - 3600 * 1000 * 36,
-        label: 'Đã mua nguyên liệu gần đây',
-      },
-    };
-
     try {
       const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('xanhla_recent_meals_v1') : null;
       const parsed = raw ? JSON.parse(raw) : {};
-      this.recentMealsMap.set({ ...defaultRecent, ...parsed });
+      if (parsed && typeof parsed === 'object') {
+        this.recentMealsMap.set(parsed);
+      }
     } catch {
-      this.recentMealsMap.set(defaultRecent);
+      this.recentMealsMap.set({});
     }
 
     const names: string[] = [];
@@ -3120,7 +1955,7 @@ export class NutritionComponent implements OnInit {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('xanhla_recent_meals_v1', JSON.stringify(updated));
       }
-    } catch {}
+    } catch { }
   }
 
   ngOnInit(): void {
@@ -3145,7 +1980,6 @@ export class NutritionComponent implements OnInit {
       // Show personalized results only after the user completes setup or explicitly requests view=result.
       this.nutritionView.set('landing');
     }
-    this.computeRecipes();
 
     this.loading.set(true);
     forkJoin({
@@ -3156,6 +1990,10 @@ export class NutritionComponent implements OnInit {
             hero?: NutritionHeroConfig;
             goals: GoalItem[];
             mealPlans?: MealPlanDeal[];
+            ingredientAliases?: IngredientAliasItem[];
+            recipeDefaults?: RecipeDefaultsConfig;
+            quickSearchTags?: QuickSearchTag[];
+            plannerConfig?: NutritionPlannerConfig;
             recipes: RecipeDbItem[];
             recentOrderedItems?: { name: string; orderedAt?: string }[];
           };
@@ -3168,6 +2006,10 @@ export class NutritionComponent implements OnInit {
                 hero: undefined as NutritionHeroConfig | undefined,
                 goals: [] as GoalItem[],
                 mealPlans: [] as MealPlanDeal[],
+                ingredientAliases: [] as IngredientAliasItem[],
+                recipeDefaults: undefined as RecipeDefaultsConfig | undefined,
+                quickSearchTags: [] as QuickSearchTag[],
+                plannerConfig: undefined as NutritionPlannerConfig | undefined,
                 recipes: [] as RecipeDbItem[],
                 recentOrderedItems: [] as { name: string; orderedAt?: string }[],
               },
@@ -3182,6 +2024,33 @@ export class NutritionComponent implements OnInit {
         if (nutrition.data.hero) this.heroConfig.set(nutrition.data.hero);
         if (nutrition.data.goals?.length) this.goalsSignal.set(nutrition.data.goals);
         if (nutrition.data.mealPlans?.length) this.mealPlansSignal.set(nutrition.data.mealPlans);
+        if (nutrition.data.ingredientAliases?.length) {
+          this.ingredientAliasesSignal.set(nutrition.data.ingredientAliases);
+        }
+        if (nutrition.data.recipeDefaults) {
+          this.recipeDefaultsSignal.set(nutrition.data.recipeDefaults);
+        }
+        if (nutrition.data.quickSearchTags?.length) {
+          this.quickSearchTagsSignal.set(nutrition.data.quickSearchTags);
+        }
+        if (nutrition.data.plannerConfig) {
+          this.plannerConfigSignal.set(nutrition.data.plannerConfig);
+          const dbGoals = nutrition.data.plannerConfig.healthGoals || [];
+          const matchedPreset = dbGoals.find((g) => g.id === this.plannerPreset()) || dbGoals[0];
+          const hasStoredOnboarding =
+            typeof window !== 'undefined' &&
+            !!window.localStorage?.getItem('evergreen_nutrition_onboarding_v1');
+          if (!hasStoredOnboarding && matchedPreset) {
+            this.applyPlannerPreset(matchedPreset.id, false);
+          } else if (matchedPreset) {
+            if (!this.singleDaySchedule()?.breakfast && matchedPreset.defaultSingleDaySchedule) {
+              this.singleDaySchedule.set(matchedPreset.defaultSingleDaySchedule);
+            }
+            if (!this.weeklySchedule()?.['mon'] && matchedPreset.weeklySchedule) {
+              this.weeklySchedule.set(matchedPreset.weeklySchedule);
+            }
+          }
+        }
         if (nutrition.data.recipes?.length) {
           this.recipesDbSignal.set(nutrition.data.recipes);
         }
@@ -3236,10 +2105,14 @@ export class NutritionComponent implements OnInit {
     });
   }
 
-  onImageError(event: Event, fallbackUrl = FALLBACK_FOOD_IMG): void {
+  onImageError(event: Event, fallbackUrl = ''): void {
     const img = event.target as HTMLImageElement | null;
-    if (img && img.src !== fallbackUrl) {
-      img.src = fallbackUrl;
+    if (!img || img.dataset['fallbackApplied']) return;
+    const resolvedFallback =
+      fallbackUrl || this.heroConfig().fallbackFoodImage || this.recipesDbSignal()[0]?.image || '';
+    if (resolvedFallback && img.src !== resolvedFallback) {
+      img.dataset['fallbackApplied'] = '1';
+      img.src = resolvedFallback;
     }
   }
 
@@ -3381,7 +2254,7 @@ export class NutritionComponent implements OnInit {
 
   adjustServings(recipeId: string, delta: number): void {
     const recipesDb = this.recipesDbSignal();
-    this.results.update((list) =>
+    const updater = (list: RecipeResult[]) =>
       list.map((recipe) => {
         if (recipe.id !== recipeId) return recipe;
 
@@ -3404,6 +2277,7 @@ export class NutritionComponent implements OnInit {
           return {
             ...ing,
             amount: `${scaledAmount}`,
+            buyPacksOverride: undefined,
           };
         });
 
@@ -3412,8 +2286,10 @@ export class NutritionComponent implements OnInit {
           servings: newServings,
           ingredients: updatedIngredients,
         };
-      })
-    );
+      });
+
+    this.results.update(updater);
+    this.allComputedRecipes.update(updater);
   }
 
   findRecipes(): void {
@@ -3488,6 +2364,8 @@ export class NutritionComponent implements OnInit {
     });
 
     const currentCatalogue = this.catalogue();
+    const aliases = this.ingredientAliasesSignal();
+    const defaults = this.recipeDefaultsSignal();
 
     const recipeResults: RecipeResult[] = matchedRecipes.map((recipe) => {
       let matchScore = 95;
@@ -3517,7 +2395,7 @@ export class NutritionComponent implements OnInit {
 
       const ingredients: IngredientItem[] = recipe.ingredients.map((ing) => {
         const scaledAmount = ing.amountPer1Serving * currentServings * currentMeals;
-        const matchedProd = matchCatalogueProduct(ing.name, currentCatalogue, ing.product);
+        const matchedProd = matchCatalogueProduct(ing.name, currentCatalogue, ing.product, aliases);
 
         return {
           name: ing.name,
@@ -3544,27 +2422,12 @@ export class NutritionComponent implements OnInit {
         servings: currentServings,
         meals: currentMeals,
         prepTime: recipe.prepTime,
-        cookTime: recipe.cookTime || '15 phút',
-        difficulty: recipe.difficulty || 'Dễ nấu',
-        calories: recipe.calories || 420,
-        macros: recipe.macros || {
-          protein: '32g',
-          carbs: '24g',
-          fat: '14g',
-          fiber: '8g',
-          vitamins: 'Vitamin A, C, B6, Omega-3, Sắt, Canxi',
-        },
-        chefTips:
-          recipe.chefTips ||
-          'Chế biến ở lửa vừa cùng nông sản tươi sạch thu hoạch trong ngày từ Xanh Lá để giữ trọn vẹn hương vị và vi chất.',
-        steps: recipe.steps?.length
-          ? recipe.steps
-          : [
-              { stepNumber: 1, title: 'Sơ chế nguyên liệu', detail: 'Rửa sạch rau củ hữu cơ và thấm khô phần thịt/hải sản tươi.' },
-              { stepNumber: 2, title: 'Tẩm ướp gia vị', detail: 'Ướp nguyên liệu với muối hồng, tiêu đen và dầu ô liu trong 10 phút.' },
-              { stepNumber: 3, title: 'Chế biến giữ trọn vi chất', detail: 'Nấu hoặc áp chảo vừa chín tới để giữ màu xanh giòn của rau củ.' },
-              { stepNumber: 4, title: 'Trình bày & Thưởng thức', detail: 'Bày ra đĩa và thưởng thức ngay khi còn nóng.' },
-            ],
+        cookTime: recipe.cookTime || defaults?.cookTime || '',
+        difficulty: recipe.difficulty || defaults?.difficulty || '',
+        calories: recipe.calories || defaults?.calories || 0,
+        macros: recipe.macros || defaults?.macros || { protein: '', carbs: '', fat: '', fiber: '', vitamins: '' },
+        chefTips: recipe.chefTips || defaults?.chefTips || '',
+        steps: recipe.steps?.length ? recipe.steps : (defaults?.steps || []),
         ingredients,
         nutritionNote: recipe.nutritionNote,
         goalsTags: recipe.goalsTags,
@@ -3586,32 +2449,66 @@ export class NutritionComponent implements OnInit {
     this.hasSearched.set(true);
   }
 
-  toggleIngredient(recipeId: string, ingredientName: string): void {
-    this.results.update((list) =>
+  private updateRecipeIngredients(recipeId: string, transform: (ing: IngredientItem, recipe: RecipeResult) => IngredientItem): void {
+    const updater = (list: RecipeResult[]) =>
       list.map((recipe) => {
         if (recipe.id !== recipeId) return recipe;
         return {
           ...recipe,
-          ingredients: recipe.ingredients.map((ing) =>
-            ing.name === ingredientName ? { ...ing, selected: !ing.selected } : ing
-          ),
+          ingredients: recipe.ingredients.map((ing) => transform(ing, recipe)),
         };
-      })
+      });
+    this.results.update(updater);
+    this.allComputedRecipes.update(updater);
+  }
+
+  toggleIngredient(recipeId: string, ingredientName: string): void {
+    this.updateRecipeIngredients(recipeId, (ing) =>
+      ing.name === ingredientName ? { ...ing, selected: !ing.selected } : ing
     );
   }
 
   toggleOwned(recipeId: string, ingredientName: string): void {
-    this.results.update((list) =>
-      list.map((recipe) => {
-        if (recipe.id !== recipeId) return recipe;
-        return {
-          ...recipe,
-          ingredients: recipe.ingredients.map((ing) =>
-            ing.name === ingredientName ? { ...ing, owned: !ing.owned } : ing
-          ),
-        };
-      })
+    this.updateRecipeIngredients(recipeId, (ing) =>
+      ing.name === ingredientName ? { ...ing, owned: !ing.owned } : ing
     );
+  }
+
+  adjustIngredientPacks(recipeId: string, ingredientName: string, delta: number): void {
+    this.updateRecipeIngredients(recipeId, (ing, recipe) => {
+      if (ing.name !== ingredientName || !ing.product) return ing;
+      const base = this.getIngredientMissingQty({ ...ing, selected: true, owned: false }, recipe.servings, recipe.meals);
+      const maxStock = typeof ing.product.stock === 'number' && ing.product.stock > 0 ? Math.floor(ing.product.stock) : 99;
+      const next = Math.max(1, Math.min(maxStock, (base || 1) + delta));
+      return { ...ing, buyPacksOverride: next, selected: true };
+    });
+  }
+
+  getReadyDetailIngredients(recipe: RecipeResult): IngredientItem[] {
+    if (!recipe) return [];
+    return recipe.ingredients.filter(
+      (i) => i.owned || (i.product && this.isIngredientFullyInCart(i, recipe.servings, recipe.meals))
+    );
+  }
+
+  getMissingDetailIngredients(recipe: RecipeResult): IngredientItem[] {
+    if (!recipe) return [];
+    return recipe.ingredients.filter(
+      (i) => !i.owned && (!i.product || !this.isIngredientFullyInCart(i, recipe.servings, recipe.meals))
+    );
+  }
+
+  getDisplayBuyPacks(item: IngredientItem, recipe: RecipeResult): number {
+    if (!item.product) return 0;
+    if (typeof item.buyPacksOverride === 'number' && item.buyPacksOverride > 0) {
+      return item.buyPacksOverride;
+    }
+    const computed = this.getIngredientNeededPacks(item, recipe.servings, recipe.meals) - this.getCartQty(item.product);
+    return Math.max(1, computed);
+  }
+
+  getDetailPackLabel(item: IngredientItem): string {
+    return item.product?.weight || item.product?.packSize || '1 phần';
   }
 
   getIngredientNeededPacks(item: IngredientItem, servings?: number, meals?: number): number {
@@ -3701,6 +2598,9 @@ export class NutritionComponent implements OnInit {
 
   getIngredientMissingQty(item: IngredientItem, servings: number, meals: number = 1): number {
     if (!item || !item.product || item.owned || !item.selected) return 0;
+    if (typeof item.buyPacksOverride === 'number' && item.buyPacksOverride > 0) {
+      return item.buyPacksOverride;
+    }
     const neededPacks = this.getIngredientNeededPacks(item, servings, meals);
     const inCart = this.getCartQty(item.product);
     return Math.max(0, neededPacks - inCart);
@@ -3792,6 +2692,11 @@ export class NutritionComponent implements OnInit {
         this.cart.addItem(toCartProduct(item.product), qtyToAdd);
       }
     }
+
+    // Clear manual pack overrides after adding so future missing counts re-sync with cart
+    this.updateRecipeIngredients(recipe.id, (ing) =>
+      ing.buyPacksOverride !== undefined ? { ...ing, buyPacksOverride: undefined } : ing
+    );
 
     // Tự động chỉ tick chọn các nguyên liệu thuộc món này (tạm bỏ tick các món khác trong giỏ)
     this.cart.selectOnlyRecipeItems(recipe.ingredients.filter(i => i.selected && !i.owned));

@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const Product = require('../models/Product');
+const Combo = require('../models/Combo');
 const InventoryLog = require('../models/InventoryLog');
 const StoreInventory = require('../models/StoreInventory');
 const StockAdjustmentTicket = require('../models/StockAdjustmentTicket');
@@ -142,6 +143,13 @@ router.post('/adjust', protect, hasRole('warehouse', 'admin'), async (req, res, 
 
     const product = await Product.findById(productId);
     if (!product) {
+      const isComboDoc = await Combo.exists({ _id: productId });
+      if (isComboDoc) {
+        return res.status(400).json({
+          success: false,
+          message: 'Tồn kho Combo được tính tự động từ tồn kho các sản phẩm thành phần, không chỉnh sửa độc lập.',
+        });
+      }
       return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm' });
     }
     if (product.isCombo) {

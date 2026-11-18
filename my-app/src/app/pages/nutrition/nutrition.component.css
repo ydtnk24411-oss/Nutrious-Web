@@ -1484,124 +1484,6 @@
   margin-bottom: 40px;
 }
 
-.xl-detail-panel {
-  background: #fff;
-  border: 1.5px solid #e2eadc;
-  border-radius: 18px;
-  padding: 22px 24px;
-}
-
-.xl-detail-panel-title {
-  margin: 0 0 6px;
-  font-size: 19px;
-  font-weight: 800;
-  color: #1a3d22;
-}
-
-.xl-detail-panel-sub {
-  margin: 0 0 18px;
-  font-size: 13px;
-  color: #657c68;
-}
-
-.xl-detail-ing-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.xl-detail-ing-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px;
-  border: 1px solid #e3ece0;
-  border-radius: 12px;
-  background: #fafdf9;
-  transition: border-color 0.15s;
-}
-
-.xl-detail-ing-card.is-owned {
-  background: #f0f7ea;
-  border-color: #a3cfa9;
-}
-
-.xl-detail-ing-card.is-deselected {
-  opacity: 0.55;
-}
-
-.xl-detail-ing-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-
-.xl-detail-ing-img {
-  width: 56px;
-  height: 56px;
-  border-radius: 10px;
-  object-fit: cover;
-  border: 1px solid #d5e2d0;
-  flex-shrink: 0;
-}
-
-.xl-detail-ing-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.xl-detail-ing-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: #1a3d22;
-}
-
-.xl-detail-ing-qty {
-  font-size: 12px;
-  color: #5a6b5a;
-}
-
-.xl-detail-ing-qty strong {
-  color: #2d6a4f;
-}
-
-.xl-detail-prod-link {
-  font-size: 12px;
-  font-weight: 600;
-  color: #2d6a4f;
-  text-decoration: none;
-}
-
-.xl-detail-prod-link:hover {
-  text-decoration: underline;
-}
-
-.xl-detail-ing-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.xl-detail-ing-price {
-  font-size: 14px;
-  font-weight: 800;
-  color: #dc2626;
-}
-
-.xl-detail-ing-price-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 3px;
-}
-
 .xl-in-cart-badge {
   display: inline-flex;
   align-items: center;
@@ -1665,81 +1547,6 @@
   border: 1px solid #bbf7d0;
   padding: 3px 9px;
   border-radius: 6px;
-}
-
-.xl-detail-ing-btns {
-  display: flex;
-  gap: 6px;
-}
-
-.xl-steps-timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-bottom: 20px;
-}
-
-.xl-step-card {
-  display: flex;
-  gap: 14px;
-  padding: 14px 16px;
-  background: #f8fbf7;
-  border: 1px solid #dce8d8;
-  border-radius: 14px;
-}
-
-.xl-step-num-circle {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: #2d6a4f;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 800;
-  flex-shrink: 0;
-}
-
-.xl-step-content h4 {
-  margin: 0 0 4px;
-  font-size: 14.5px;
-  font-weight: 800;
-  color: #1a3d22;
-}
-
-.xl-step-content p {
-  margin: 0;
-  font-size: 13.5px;
-  color: #4b5e4d;
-  line-height: 1.6;
-}
-
-.xl-chef-tips-box {
-  background: #fffbeb;
-  border: 1.5px solid #fde68a;
-  border-radius: 14px;
-  padding: 14px 16px;
-}
-
-.xl-chef-tips-box h4 {
-  margin: 0 0 6px;
-  font-size: 14px;
-  font-weight: 800;
-  color: #92400e;
-}
-
-.xl-chef-tips-box p {
-  margin: 0;
-  font-size: 13px;
-  color: #78350f;
-  line-height: 1.6;
-}
-
-.xl-related-section {
-  margin-top: 20px;
-  margin-bottom: 40px;
 }
 
 .xl-related-grid {
@@ -2168,74 +1975,6 @@
 .xl-detail-sec-head span {
   font-size: 12.5px;
   color: #657c68;
-}
-
-.xl-detail-ing-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.xl-detail-ing-top {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.xl-detail-ing-store {
-  font-size: 12px;
-  color: #5a6b5a;
-}
-
-.xl-detail-ing-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  flex-shrink: 0;
-}
-
-.xl-view-prod-link {
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #2d6a4f;
-  text-decoration: none;
-  padding: 4px 8px;
-}
-
-.xl-view-prod-link:hover {
-  text-decoration: underline;
-}
-
-.xl-step-num-circle {
-  width: auto;
-  min-width: 66px;
-  height: 30px;
-  padding: 0 10px;
-  border-radius: 999px;
-  font-size: 12px;
-}
-
-.xl-step-body h4 {
-  margin: 0 0 4px;
-  font-size: 14.5px;
-  font-weight: 800;
-  color: #1a3d22;
-}
-
-.xl-step-body p {
-  margin: 0;
-  font-size: 13.5px;
-  color: #4b5e4d;
-  line-height: 1.6;
-}
-
-.xl-chef-tips-title {
-  font-size: 13.5px;
-  font-weight: 800;
-  color: #92400e;
-  margin-bottom: 6px;
 }
 
 .xl-related-recipes-section {
@@ -4781,104 +4520,6 @@
   font-weight: 600;
 }
 
-.xl-detail-ing-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.xl-detail-ing-card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px 18px;
-  background: #ffffff;
-  border: 1.5px solid #e5ede3;
-  border-radius: 14px;
-  transition: all 0.2s ease;
-}
-
-.xl-detail-ing-card:hover {
-  border-color: #bbf7d0;
-  box-shadow: 0 6px 18px rgba(22, 101, 52, 0.06);
-}
-
-.xl-detail-ing-card.is-owned {
-  background: #f8fbf8;
-  border-color: #d1e7d4;
-  opacity: 0.85;
-}
-
-.xl-detail-ing-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.xl-detail-ing-visual {
-  position: relative;
-  width: 68px;
-  height: 68px;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid #e2ece0;
-  flex-shrink: 0;
-  background: #f8faf8;
-}
-
-.xl-detail-ing-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.xl-ing-owned-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(22, 101, 52, 0.72);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.xl-detail-ing-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.xl-detail-ing-name-row,
-.xl-detail-ing-badges-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin: 3px 0 4px;
-}
-
-.xl-detail-ing-name {
-  font-size: 16px;
-  font-weight: 800;
-  color: #1e3820;
-  margin: 0;
-  line-height: 1.3;
-}
-
-.xl-detail-ing-qty-badge {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #475569;
-  background: #f1f5f9;
-  padding: 2px 8px;
-  border-radius: 6px;
-}
-
 .xl-in-cart-badge {
   display: inline-flex;
   align-items: center;
@@ -4944,30 +4585,6 @@
   border-radius: 6px;
 }
 
-.xl-detail-ing-store-line {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #64748b;
-  flex-wrap: wrap;
-  margin-top: 2px;
-}
-
-.xl-detail-ing-store-line.is-pantry {
-  font-style: italic;
-  color: #64748b;
-}
-
-.xl-store-tag {
-  font-size: 11px;
-  font-weight: 700;
-  color: #166534;
-  background: #dcfce7;
-  padding: 1px 7px;
-  border-radius: 4px;
-}
-
 .xl-prod-name-link {
   font-weight: 600;
   color: #166534;
@@ -4981,27 +4598,6 @@
 .xl-prod-weight {
   color: #64748b;
   font-weight: normal;
-}
-
-.xl-detail-ing-price-row {
-  margin-top: 2px;
-}
-
-.xl-detail-ing-price {
-  font-size: 16px;
-  font-weight: 800;
-  color: #dc2626;
-}
-
-/* Actions Footer Bar */
-.xl-detail-ing-actions-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding-top: 10px;
-  border-top: 1px dashed #e8f0e6;
-  margin-top: 2px;
 }
 
 .xl-owned-btn {
@@ -5028,25 +4624,6 @@
   border-color: #16a34a;
   color: #166534;
   font-weight: 700;
-}
-
-.xl-detail-ing-buy-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-left: auto;
-}
-
-.xl-view-prod-link {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #166534;
-  text-decoration: none;
-  padding: 4px 6px;
-}
-
-.xl-view-prod-link:hover {
-  text-decoration: underline;
 }
 
 .xl-add-single-btn {
@@ -5083,93 +4660,542 @@
 }
 
 /* ==========================================================================
-   ALIGNMENT & EXPANDED DRAWER FIXES
+   RECIPE DETAIL: COOK-STYLE CHECKLIST, QTY CONTROLS & NUMBERED STEPS
    ========================================================================== */
-
-/* 1. Detail View Ingredient Cards - Strict Left-Aligned Layout */
-.xl-detail-ing-list {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: stretch !important;
-  justify-content: flex-start !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-  margin: 0 !important;
-  padding: 0 !important;
+.xl-detail-cook-grid {
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 28px;
+  align-items: start;
+  margin-top: 4px;
 }
 
-.xl-detail-ing-card {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: stretch !important;
-  justify-content: flex-start !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-  text-align: left !important;
+.xl-subhead {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1b3823;
+  margin: 0 0 14px;
+  letter-spacing: 0.01em;
 }
 
-.xl-detail-ing-header {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: flex-start !important;
-  justify-content: flex-start !important;
-  width: 100% !important;
-  gap: 16px !important;
-  margin: 0 !important;
-  text-align: left !important;
+.xl-fridge-box,
+.xl-missing-box {
+  background: #fff;
+  border: 1px solid #dce5d9;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
 }
 
-.xl-detail-ing-visual {
-  position: relative !important;
-  width: 68px !important;
-  min-width: 68px !important;
-  max-width: 68px !important;
-  height: 68px !important;
-  border-radius: 12px !important;
-  overflow: hidden !important;
-  border: 1px solid #e2ece0 !important;
-  flex: 0 0 68px !important;
-  margin: 0 !important;
-  background: #f8faf8 !important;
+.xl-box-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 800;
+  margin-bottom: 12px;
 }
 
-.xl-detail-ing-img {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  display: block !important;
-  margin: 0 !important;
+.xl-box-svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
 }
 
-.xl-detail-ing-info {
-  flex: 1 1 auto !important;
-  min-width: 0 !important;
-  text-align: left !important;
+.xl-text-green {
+  color: #176b3a;
 }
 
-.xl-detail-ing-actions-bar {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
+.xl-text-amber {
+  color: #b45309;
 }
 
-.xl-detail-ing-packs-badge {
+.xl-empty-hint {
+  font-size: 12px;
+  color: #839185;
+  margin: 0;
+  font-style: italic;
+}
+
+.xl-ing-ready-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.xl-ing-ready-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  padding: 8px 12px;
+  background: #f5f9f3;
+  border: 1px solid #e4efe2;
+  border-radius: 8px;
+}
+
+.xl-ing-ready-check {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #176b3a;
+  flex-shrink: 0;
+}
+
+.xl-ing-ready-check svg {
+  width: 14px;
+  height: 14px;
+}
+
+.xl-ing-thumb-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #d5e6d3;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.xl-ing-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.xl-ing-ready-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  color: #1e3323;
+  text-decoration: none;
+}
+
+.xl-ing-ready-title.is-link:hover {
+  color: #176b3a;
+  text-decoration: underline;
+}
+
+.xl-ing-ready-scale {
+  font-size: 11.5px;
+  color: #4f6354;
+}
+
+.xl-ready-mini-btn {
+  background: #fff;
+  border: 1px dashed #8bb18f;
+  color: #176b3a;
+  padding: 3px 8px;
+  border-radius: 4px;
   font-size: 11px;
   font-weight: 700;
-  color: #1e40af;
-  background: #dbeafe;
-  border: 1px solid #bfdbfe;
-  padding: 1px 7px;
-  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
-.xl-detail-unit-breakdown {
+.xl-ready-mini-btn:hover {
+  background: #176b3a;
+  color: #fff;
+  border-style: solid;
+}
+
+.xl-ready-celebrate {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #eaf4e8;
+  color: #176b3a;
+  border: 1px solid #a8cfa9;
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.xl-ready-celebrate svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.xl-missing-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.xl-missing-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 12px;
+  background: #fdfaf3;
+  border: 1px solid #f1e4cb;
+  border-radius: 8px;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.xl-missing-card-row.is-deselected {
+  opacity: 0.6;
+  background: #fafaf8;
+  border-color: #e5e7eb;
+}
+
+.xl-missing-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  margin: 0;
+}
+
+.xl-missing-checkbox {
+  accent-color: #176b3a;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.xl-missing-thumb-wrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e6d7ba;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(34, 52, 30, 0.06);
+}
+
+.xl-missing-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.xl-missing-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.xl-missing-name {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #213324;
+  line-height: 1.35;
+}
+
+.xl-missing-scale {
+  font-weight: 400;
+  color: #7a8a7c;
+  margin-left: 4px;
   font-size: 12px;
-  color: #6b7280;
-  font-weight: 500;
-  margin-left: 6px;
+}
+
+.xl-product-match {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+
+.xl-badge-source {
+  color: #556b57;
+}
+
+.xl-prod-name {
+  font-weight: 700;
+  color: #176b3a;
+  text-decoration: none;
+}
+
+.xl-prod-name:hover {
+  text-decoration: underline;
+}
+
+.xl-product-match .xl-prod-price {
+  font-weight: 800;
+  color: #c92e36;
+  font-size: 11.5px;
+}
+
+.xl-pack-hint {
+  font-size: 11px;
+  color: #4e6353;
+}
+
+.xl-buy-qty-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.xl-buy-qty-label {
+  font-size: 11.5px;
+  color: #4f6353;
+  font-weight: 600;
+}
+
+.xl-buy-qty-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid #bfd1bf;
+  background: #f5faf4;
+  color: #174e2b;
+  font-weight: 800;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.xl-buy-qty-btn:hover:not(:disabled) {
+  background: #e1f1df;
+  border-color: #176b3a;
+}
+
+.xl-buy-qty-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.xl-buy-qty-num {
+  min-width: 22px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #174e2b;
+}
+
+.xl-self-prep {
+  font-size: 11px;
+  color: #8c9b8d;
+  font-style: italic;
+  display: block;
+  margin-top: 2px;
+}
+
+.xl-btn-already-have {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #fff;
+  border: 1px dashed #7ea383;
+  color: #176b3a;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.xl-btn-already-have svg {
+  width: 11px;
+  height: 11px;
+}
+
+.xl-btn-already-have:hover {
+  background: #176b3a;
+  color: #fff;
+  border-style: solid;
+}
+
+.xl-missing-order-panel {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #ebd9b5;
+}
+
+.xl-order-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 12.5px;
+  color: #2b3e2f;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.xl-order-price-group {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.xl-order-orig-price {
+  font-size: 13px;
+  color: #9ca3af;
+  text-decoration: line-through;
+  font-weight: 600;
+}
+
+.xl-missing-order-panel .xl-total-price {
+  font-size: 19px;
+  font-weight: 800;
+  color: #c92e36;
+}
+
+.xl-btn-add-missing-cart {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  background: #176b3a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.xl-btn-add-missing-cart svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.xl-btn-add-missing-cart:hover:not(:disabled) {
+  background: #104c2c;
+}
+
+.xl-btn-add-missing-cart:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.xl-cart-guarantee {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #728073;
+  text-align: center;
+  margin: 8px 0 0;
+}
+
+.xl-cart-guarantee svg {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+}
+
+.xl-steps-list {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.xl-step-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.xl-step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #eaf3e7;
+  color: #176b3a;
+  font-weight: 800;
+  font-size: 11.5px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.xl-step-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #2b3e2f;
+}
+
+.xl-chef-tip {
+  margin-top: 18px;
+  background: #fff8e8;
+  border: 1px solid #fae3af;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: #634f1e;
+}
+
+.xl-chef-tip strong {
+  color: #92580c;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.xl-chef-tip strong svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.xl-chef-tip p {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .xl-detail-cook-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .xl-ing-ready-item {
+    flex-wrap: wrap;
+  }
+
+  .xl-missing-card-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .xl-btn-already-have {
+    align-self: flex-end;
+  }
 }
 
 /* 2. Expanded Drawer Inside Recipe Cards (Solves narrow cramped column bug) */

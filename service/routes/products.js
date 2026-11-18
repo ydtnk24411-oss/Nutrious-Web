@@ -2,6 +2,7 @@ const router   = require('express').Router();
 const mongoose = require('mongoose');
 const { body } = require('express-validator');
 const Product  = require('../models/Product');
+const Combo    = require('../models/Combo');
 const Category = require('../models/Category');
 const SearchLog = require('../models/SearchLog');
 const { protect, adminOnly, optionalAuth, authorizeRoles } = require('../middleware/auth');
@@ -154,35 +155,62 @@ router.get('/', optionalAuth, cacheMiddleware(20, (req) => !req.query.search && 
       }
     }
 
-    // 4. Sắp xếp kết quả (Sort)
-    const sortObj = (sort === 'price-asc' || sort === 'priceNumber')   ? { priceNumber:  1 }
-                  : (sort === 'price-desc' || sort === '-priceNumber')  ? { priceNumber: -1 }
-                  : (sort === 'name-asc' || sort === 'name')           ? { name:  1 }
-                  : (sort === 'name-desc' || sort === '-name')          ? { name: -1 }
-                  : sort === 'bestseller' || sort === 'popular'         ? { soldCount: -1, createdAt: -1 }
-                  : sort === 'rating'                                   ? { averageRating: -1, createdAt: -1 }
-                  : sort === 'newest'                                   ? { createdAt: -1 }
-                  : { createdAt: -1 };
+    const sortField = (sort === 'price-asc' || sort === 'priceNumber')   ? 'priceNumber'
+                    : (sort === 'price-desc' || sort === '-priceNumber') ? 'priceNumber'
+                    : (sort === 'name-asc' || sort === 'name')           ? 'name'
+                    : (sort === 'name-desc' || sort === '-name')         ? 'name'
+                    : (sort === 'bestseller' || sort === 'popular')      ? 'soldCount'
+                    : (sort === 'rating')                                ? 'averageRating'
+                    : 'createdAt';
+    const sortDir = (sort === 'price-asc' || sort === 'priceNumber' || sort === 'name-asc' || sort === 'name') ? 1 : -1;
+    const sortObj = sort === 'bestseller' || sort === 'popular' || sort === 'rating'
+      ? { [sortField]: -1, createdAt: -1 }
+      : { [sortField]: sortDir };
 
     const limitNum = Number(limit);
     const pageNum  = Math.max(1, Number(page) || 1);
-    let query = Product.find(filter)
-      .sort(sortObj)
-      .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
+    const skipNum  = limitNum > 0 ? (pageNum - 1) * limitNum : 0;
 
-    if (isCombo !== 'false') {
-      query = query.populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS);
+    let resultDocs = [];
+    let total = 0;
+
+    if (isCombo === 'true') {
+      const comboFilter = { ...filter };
+      delete comboFilter.isCombo;
+      let comboQuery = Combo.find(comboFilter)
+        .sort(sortObj)
+        .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS);
+      if (limitNum > 0) comboQuery = comboQuery.skip(skipNum).limit(limitNum);
+      [resultDocs, total] = await Promise.all([comboQuery, Combo.countDocuments(comboFilter)]);
+    } else if (isCombo === 'false') {
+      let prodQuery = Product.find(filter)
+        .sort(sortObj)
+        .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
+      if (limitNum > 0) prodQuery = prodQuery.skip(skipNum).limit(limitNum);
+      [resultDocs, total] = await Promise.all([prodQuery, Product.countDocuments(filter)]);
+    } else {
+      // Combine standalone Products + active Combos from collection combos
+      const prodFilter = { ...filter, isCombo: { $ne: true } };
+      const comboFilter = { ...filter };
+      delete comboFilter.isCombo;
+      const [prods, combos] = await Promise.all([
+        Product.find(prodFilter).sort(sortObj).populate('addOnDeals.product', ADDON_POPULATE_FIELDS),
+        Combo.find(comboFilter).sort(sortObj).populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS),
+      ]);
+      const combined = [...prods, ...combos];
+      combined.sort((a, b) => {
+        if (sortField === 'name') {
+          return sortDir * String(a.name || '').localeCompare(String(b.name || ''), 'vi');
+        }
+        if (sortField === 'priceNumber' || sortField === 'soldCount' || sortField === 'averageRating') {
+          const diff = (Number(a[sortField]) || 0) - (Number(b[sortField]) || 0);
+          if (diff !== 0) return sortDir * diff;
+        }
+        return (new Date(b.createdAt || 0).getTime()) - (new Date(a.createdAt || 0).getTime());
+      });
+      total = combined.length;
+      resultDocs = limitNum > 0 ? combined.slice(skipNum, skipNum + limitNum) : combined;
     }
-
-    if (limitNum > 0) {
-      const skip = (pageNum - 1) * limitNum;
-      query = query.skip(skip).limit(limitNum);
-    }
-
-    const [products, total] = await Promise.all([
-      query,
-      Product.countDocuments(filter),
-    ]);
 
     if (searchTerm) {
       recordSearchLogSafely({
@@ -197,19 +225,35 @@ router.get('/', optionalAuth, cacheMiddleware(20, (req) => !req.query.search && 
       success: true,
       total,
       page: pageNum,
-      data: enrichProductOrComboList(products),
+      data: enrichProductOrComboList(resultDocs),
     });
   } catch (err) { next(err); }
 });
 
+async function findPublicItemOrCombo(rawSlug) {
+  let product = await Product.findOne({ slug: rawSlug, isActive: { $ne: false } }).lean();
+  if (!product && mongoose.Types.ObjectId.isValid(rawSlug)) {
+    product = await Product.findOne({ _id: rawSlug, isActive: { $ne: false } }).lean();
+  }
+  if (product) return { doc: product, isCombo: false };
+
+  const comboPublicFilter = {
+    $or: [
+      { comboStatus: 'paused' },
+      { comboStatus: { $nin: ['hidden', 'paused'] }, isActive: { $ne: false } },
+    ],
+  };
+  let combo = await Combo.findOne({ slug: rawSlug, ...comboPublicFilter }).lean();
+  if (!combo && mongoose.Types.ObjectId.isValid(rawSlug)) {
+    combo = await Combo.findOne({ _id: rawSlug, ...comboPublicFilter }).lean();
+  }
+  return combo ? { doc: combo, isCombo: true } : { doc: null, isCombo: false };
+}
+
 // GET /api/products/:slug/related — lấy sản phẩm liên quan cùng danh mục
 router.get('/:slug/related', async (req, res, next) => {
   try {
-    const rawSlug = req.params.slug;
-    let product = await Product.findOne({ slug: rawSlug, isActive: { $ne: false } });
-    if (!product && mongoose.Types.ObjectId.isValid(rawSlug)) {
-      product = await Product.findOne({ _id: rawSlug, isActive: { $ne: false } });
-    }
+    const { doc: product } = await findPublicItemOrCombo(req.params.slug);
     if (!product) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
     }
@@ -218,13 +262,12 @@ router.get('/:slug/related', async (req, res, next) => {
     const filter = {
       _id: { $ne: product._id },
       isActive: { $ne: false },
-      isCombo: { $ne: true },
       stock: { $gt: 0 },
     };
 
     if (product.categoryId) {
       filter.categoryId = product.categoryId;
-    } else if (product.category) {
+    } else if (product.category && product.category !== 'combo') {
       filter.category = product.category;
     }
 
@@ -239,7 +282,6 @@ router.get('/:slug/related', async (req, res, next) => {
       const fallbackProducts = await Product.find({
         _id: { $nin: excludeIds },
         isActive: { $ne: false },
-        isCombo: { $ne: true },
         stock: { $gt: 0 },
       })
         .sort({ rating: -1, soldCount: -1 })
@@ -254,11 +296,7 @@ router.get('/:slug/related', async (req, res, next) => {
 // GET /api/products/:slug/frequently-bought — Sản phẩm thường được mua cùng nhau (Frequently Bought Together)
 router.get('/:slug/frequently-bought', async (req, res, next) => {
   try {
-    const rawSlug = req.params.slug;
-    let product = await Product.findOne({ slug: rawSlug, isActive: { $ne: false } });
-    if (!product && mongoose.Types.ObjectId.isValid(rawSlug)) {
-      product = await Product.findOne({ _id: rawSlug, isActive: { $ne: false } });
-    }
+    const { doc: product } = await findPublicItemOrCombo(req.params.slug);
     if (!product) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
     }
@@ -267,7 +305,6 @@ router.get('/:slug/frequently-bought', async (req, res, next) => {
     const companionProducts = await Product.find({
       _id: { $ne: product._id },
       isActive: { $ne: false },
-      isCombo: { $ne: true },
       stock: { $gt: 0 },
     })
       .sort({ soldCount: -1, rating: -1 })
@@ -278,24 +315,22 @@ router.get('/:slug/frequently-bought', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/products/:slug/combos — combo mua kèm tiết kiệm có chứa sản phẩm này
+// GET /api/products/:slug/combos — combo mua kèm tiết kiệm có chứa sản phẩm này (từ collection combos)
 router.get('/:slug/combos', async (req, res, next) => {
   try {
-    const rawSlug = req.params.slug;
-    let product = await Product.findOne({ slug: rawSlug, isActive: { $ne: false } });
-    if (!product && mongoose.Types.ObjectId.isValid(rawSlug)) {
-      product = await Product.findOne({ _id: rawSlug, isActive: { $ne: false } });
-    }
-    if (!product) {
+    const { doc: item, isCombo } = await findPublicItemOrCombo(req.params.slug);
+    if (!item) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
+    }
+    if (isCombo) {
+      return res.json({ success: true, data: [] });
     }
 
     const limitNum = Math.min(6, Number(req.query.limit) || 3);
-    const combos = await Product.find({
-      isCombo: true,
+    const combos = await Combo.find({
       isActive: { $ne: false },
       comboStatus: { $nin: ['paused', 'hidden'] },
-      'comboItems.product': product._id,
+      'comboItems.product': item._id,
     })
       .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
       .limit(limitNum);
@@ -314,27 +349,34 @@ router.get('/:slug/combos', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/products/:slug — public
+// GET /api/products/:slug — public (kiểm tra Product trước, nếu không có thì tìm trong collection combos)
 router.get('/:slug', async (req, res, next) => {
   try {
-    const publicFilter = {
-      $or: [
-        { isCombo: { $ne: true }, isActive: { $ne: false } },
-        { isCombo: true, comboStatus: 'paused' },
-        { isCombo: true, comboStatus: { $nin: ['hidden', 'paused'] }, isActive: { $ne: false } },
-      ],
-    };
-    let product = await Product.findOne({ slug: req.params.slug, ...publicFilter })
-      .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
+    let product = await Product.findOne({ slug: req.params.slug, isActive: { $ne: false } })
       .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     if (!product && mongoose.Types.ObjectId.isValid(req.params.slug)) {
-      product = await Product.findOne({ _id: req.params.slug, ...publicFilter })
-        .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
+      product = await Product.findOne({ _id: req.params.slug, isActive: { $ne: false } })
         .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     }
-    if (!product) return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
-    const responseData = enrichProductOrComboList([product])[0];
-    res.json({ success: true, data: responseData });
+    if (product) {
+      const responseData = enrichProductOrComboList([product])[0];
+      return res.json({ success: true, data: responseData });
+    }
+
+    const comboFilter = {
+      $or: [
+        { comboStatus: 'paused' },
+        { comboStatus: { $nin: ['hidden', 'paused'] }, isActive: { $ne: false } },
+      ],
+    };
+    let combo = await Combo.findOne({ slug: req.params.slug, ...comboFilter })
+      .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS);
+    if (!combo && mongoose.Types.ObjectId.isValid(req.params.slug)) {
+      combo = await Combo.findOne({ _id: req.params.slug, ...comboFilter })
+        .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS);
+    }
+    if (!combo) return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
+    res.json({ success: true, data: enrichComboDocument(combo) });
   } catch (err) { next(err); }
 });
 
@@ -359,12 +401,11 @@ router.post('/', protect, adminOnly, productValidation, validate, async (req, re
       if (!req.body.image && req.body.images.length) req.body.image = req.body.images[0];
     }
     if (req.body.addOnDeals !== undefined) {
-      req.body.addOnDeals = req.body.isCombo ? [] : sanitizeAddOnDeals(req.body.addOnDeals, null);
+      req.body.addOnDeals = await sanitizeAddOnDeals(req.body.addOnDeals, null, req.body);
     }
     const created = await Product.create(req.body);
     clearCache();
     const product = await Product.findById(created._id)
-      .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
       .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     res.status(201).json({ success: true, data: enrichProductOrComboList([product])[0] });
   } catch (err) { next(err); }
@@ -399,10 +440,10 @@ router.put('/:id', protect, authorizeRoles('Manager', 'Admin', 'Sales'), async (
       req.body.images = normalizeProductImages({ image: req.body.image, images: existing?.images || [] });
     }
     if (req.body.addOnDeals !== undefined) {
-      req.body.addOnDeals = req.body.isCombo ? [] : sanitizeAddOnDeals(req.body.addOnDeals, req.params.id);
+      const mainDoc = await Product.findById(req.params.id).select('priceNumber category categoryVi').lean();
+      req.body.addOnDeals = await sanitizeAddOnDeals(req.body.addOnDeals, req.params.id, { ...mainDoc, ...req.body });
     }
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
-      .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
       .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     if (!product) return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
     clearCache();

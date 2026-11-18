@@ -1,15 +1,15 @@
 /**
- * Tạo dữ liệu "Combo mua kèm tiết kiệm".
+ * Tạo dữ liệu "Combo mua kèm tiết kiệm" vào collection `combos`.
  *
- * - Chỉ THÊM mới các sản phẩm combo (isCombo: true). Không sửa hay xóa sản phẩm cũ.
- * - Chạy lại an toàn: upsert theo slug combo, chỉ đụng tới document có isCombo: true.
- * - Mỗi sản phẩm thường xuất hiện trong 2 combo cùng danh mục (2 cách ghép khác nhau).
+ * - Mỗi Combo tham chiếu tới các sản phẩm gốc trong collection `products` qua `comboItems[].product`.
+ * - Không chèn Combo vào collection `products`; tự động dọn bỏ record combo cũ (nếu còn) trong `products`.
  *
  * Chạy: cd service; node scripts/seed-combos.js
  */
 const mongoose = require('mongoose');
 require('dotenv').config({ path: __dirname + '/../.env' });
 const Product = require('../models/Product');
+const Combo = require('../models/Combo');
 const Category = require('../models/Category');
 
 const DISCOUNT_BY_SIZE = { 2: 0.08, 3: 0.12, 4: 0.15 };
@@ -45,7 +45,7 @@ async function main() {
     .lean();
 
   const categories = await Category.find({}).lean();
-  const catName = new Map(categories.map((c) => [String(c._id), c.name]));
+  const catMap = new Map(categories.map((c) => [String(c._id), c]));
 
   const byCat = new Map();
   for (const p of products) {
@@ -59,7 +59,9 @@ async function main() {
 
   for (const [catId, list] of byCat) {
     if (list.length < 2) continue;
-    const name = catName.get(catId) || list[0].categoryVi || 'Thực phẩm';
+    const catDoc = catMap.get(catId);
+    const name = catDoc?.name || list[0].categoryVi || 'Thực phẩm';
+    const catSlug = (catDoc?.slug || '').replace(/^\/category\//, '') || list[0].category || 'combo';
 
     // Cách ghép A: theo giá tăng dần (các món cùng tầm giá)
     // Cách ghép B: xen kẽ rẻ - đắt để có combo cân đối
@@ -85,10 +87,11 @@ async function main() {
         const saving = original - comboPrice;
         const stock = Math.max(0, Math.min(50, ...group.map((p) => Number(p.stock) || 0)));
         const slug = `combo-${catId.slice(-6)}-${tag}${index}`;
+        const images = Array.from(new Set(group.map((p) => p.image).filter(Boolean)));
 
         ops.push({
           updateOne: {
-            filter: { slug, isCombo: true },
+            filter: { slug },
             update: {
               $set: {
                 name: `Combo ${name} tiết kiệm ${index}`,
@@ -96,16 +99,17 @@ async function main() {
                 price: formatVnd(comboPrice),
                 priceNumber: comboPrice,
                 originalPriceNumber: original,
-                image: group[0].image || '',
-                category: 'combo',
-                categoryId: null,
-                categoryVi: 'Combo tiết kiệm',
+                image: images[0] || '',
+                images,
+                category: catSlug,
+                categoryId: catDoc ? catDoc._id : group[0].categoryId,
+                categoryVi: name,
                 description:
                   `Combo gồm ${group.length} sản phẩm: ${group.map((p) => p.name).join(', ')}. ` +
                   `Tiết kiệm ${formatVnd(saving)} so với mua lẻ.`,
                 brand: 'Evergreen Mart',
                 unit: `Combo (${group.length} sản phẩm)`,
-                isCombo: true,
+                comboStatus: 'active',
                 comboItems: group.map((p) => ({ product: p._id, quantity: 1 })),
                 isActive: true,
                 stock,
@@ -119,14 +123,20 @@ async function main() {
   }
 
   if (ops.length) {
-    const res = await Product.bulkWrite(ops);
-    console.log(`Combos: ${res.upsertedCount} created, ${res.modifiedCount} updated (total ${ops.length}).`);
+    const res = await Combo.bulkWrite(ops);
+    console.log(`Combos (collection combos): ${res.upsertedCount} created, ${res.modifiedCount} updated (total ${ops.length}).`);
   }
 
-  const afterBase = await Product.countDocuments({ isCombo: { $ne: true } });
-  const comboCount = await Product.countDocuments({ isCombo: true });
-  console.log(`Base products: ${baseCount} -> ${afterBase} (unchanged: ${baseCount === afterBase})`);
-  console.log(`Combo products in DB: ${comboCount}`);
+  // Dọn bỏ các record combo cũ từng nằm trong collection products (nếu có)
+  const delLegacy = await Product.collection.deleteMany({ isCombo: true });
+  if (delLegacy.deletedCount > 0) {
+    console.log(`Removed ${delLegacy.deletedCount} legacy isCombo docs from collection products.`);
+  }
+
+  const afterBase = await Product.countDocuments({});
+  const comboCount = await Combo.countDocuments({});
+  console.log(`Products in 'products': ${afterBase}`);
+  console.log(`Combos in 'combos': ${comboCount}`);
 
   await mongoose.disconnect();
 }
