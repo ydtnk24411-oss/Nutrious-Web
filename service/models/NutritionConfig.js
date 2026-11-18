@@ -74,6 +74,21 @@ const nutritionConfigSchema = new mongoose.Schema(
         },
       ],
     },
+    cookConfig: {
+      unitOptions: [
+        {
+          value: { type: String, required: true },
+          label: { type: String, required: true },
+        },
+      ],
+      categoryHints: { type: mongoose.Schema.Types.Mixed, default: {} },
+      quickIngredients: [
+        {
+          query: { type: String, required: true },
+          label: { type: String, required: true },
+        },
+      ],
+    },
   },
   { timestamps: true }
 );

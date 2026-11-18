@@ -6,20 +6,19 @@ import { ShellComponent } from '../../components/shell/shell.component';
 import { CartService } from '../../shared/services/cart.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { ApiService } from '../../shared/services/api.service';
-import { onlineOrderProducts } from '../../shared/data/xanh-la.data';
 import { XanhLaProduct } from '../../shared/models/xanh-la.models';
 
 export type IngredientUnit = 'g' | 'kg' | 'quả' | 'củ' | 'bó' | 'gói' | 'phần';
 
-export const COOK_INGREDIENT_UNITS: { value: IngredientUnit; label: string }[] = [
-  { value: 'g', label: 'g' },
-  { value: 'kg', label: 'kg' },
-  { value: 'quả', label: 'quả' },
-  { value: 'củ', label: 'củ' },
-  { value: 'bó', label: 'bó' },
-  { value: 'gói', label: 'gói' },
-  { value: 'phần', label: 'phần' },
-];
+export interface CookUnitOption {
+  value: IngredientUnit;
+  label: string;
+}
+
+export interface CookQuickIngredient {
+  query: string;
+  label: string;
+}
 
 export interface UserIngredient {
   name: string;
@@ -67,7 +66,7 @@ interface RawRecipeIngredient {
   amountPer1Serving: number;
   unit: string;
   keywords?: string[];
-  categoryHint?: 'vegetables' | 'fruits' | 'meat' | 'seafood';
+  categoryHint?: string;
   productId?: string;
 }
 
@@ -82,221 +81,6 @@ interface RawRecipe {
   steps: string[];
   ingredients: RawRecipeIngredient[];
 }
-
-const RECIPE_DB: RawRecipe[] = [
-  {
-    id: 'canh-chua-ca-hoi',
-    name: 'Canh chua cá hồi thanh mát',
-    image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=600&q=80',
-    description: 'Vị chua thanh của me và cà chua chín mọng hòa quyện cùng từng thớ thịt cá hồi tươi mềm ngọt, bổ sung dồi dào Omega-3.',
-    prepTime: 15,
-    cookTime: 20,
-    servingBase: 2,
-    steps: [
-      'Rửa sạch cá hồi với nước muối loãng và lát gừng, cắt miếng vuông vừa ăn.',
-      'Cà chua rửa sạch bổ múi cau, rau thơm (ngò gai, ngò rí) rửa sạch cắt nhỏ.',
-      'Phi thơm tỏi băm trên chảo, cho một nửa cà chua vào xào mềm tạo màu nước canh tự nhiên.',
-      'Đổ 700ml nước đun sôi bùng, cho cá hồi vào nấu lửa vừa trong 6-8 phút.',
-      'Cho phần cà chua còn lại vào, nêm nước mắm và gia vị vừa khẩu vị, rắc rau thơm rồi tắt bếp.'
-    ],
-    ingredients: [
-      { name: 'Cá hồi tươi', amountPer1Serving: 150, unit: 'g', categoryHint: 'seafood', keywords: ['cá hồi', 'phi lê cá hồi'] },
-      { name: 'Cà chua', amountPer1Serving: 1, unit: 'quả', categoryHint: 'vegetables', keywords: ['cà chua', 'cà chua bi'] },
-      { name: 'Dưa leo tươi', amountPer1Serving: 0.5, unit: 'quả', categoryHint: 'vegetables', keywords: ['dưa leo', 'dưa chuột'] },
-      { name: 'Rau cải', amountPer1Serving: 80, unit: 'g', categoryHint: 'vegetables', keywords: ['rau cải', 'cải ngọt', 'cải thìa', 'cải xanh'] }
-    ]
-  },
-  {
-    id: 'ga-xao-rau-cai',
-    name: 'Gà ta xào rau cải thìa',
-    image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=600&q=80',
-    description: 'Thịt gà ta săn chắc xào cùng rau cải thìa tươi giòn mọng nước, đậm đà hương tỏi thơm cho bữa cơm thanh lành.',
-    prepTime: 10,
-    cookTime: 15,
-    servingBase: 2,
-    steps: [
-      'Thịt gà lọc xương hoặc thái miếng vừa ăn, ướp chút hạt nêm, tiêu và dầu hào trong 10 phút.',
-      'Rau cải rửa sạch từng bẹ, ngâm nước muối loãng rồi để ráo, cắt khúc vừa miệng.',
-      'Làm nóng chảo với chút dầu hạt cải, phi thơm tỏi đập dập rồi xào gà trên lửa lớn đến khi chín tới.',
-      'Cho tiếp rau cải vào đảo nhanh tay khoảng 2-3 phút để giữ trọn sắc xanh và độ giòn ngọt.',
-      'Rắc thêm chút tiêu đen xay rồi dọn ra đĩa thưởng thức nóng cùng cơm gạo lứt.'
-    ],
-    ingredients: [
-      { name: 'Gà ta thả vườn', amountPer1Serving: 160, unit: 'g', categoryHint: 'meat', keywords: ['gà ta', 'thịt gà', 'ức gà', 'đùi gà'] },
-      { name: 'Rau cải', amountPer1Serving: 150, unit: 'g', categoryHint: 'vegetables', keywords: ['rau cải', 'cải thìa', 'cải ngọt', 'cải xanh'] },
-      { name: 'Cà rốt', amountPer1Serving: 0.5, unit: 'củ', categoryHint: 'vegetables', keywords: ['cà rốt'] }
-    ]
-  },
-  {
-    id: 'bo-xay-mat-ong',
-    name: 'Sinh tố bơ Hass mật ong',
-    image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&q=80',
-    description: 'Thức uống bổ dưỡng từ bơ sáp Hass dẻo thơm quyện cùng mật ong hoa rừng nguyên chất, nạp trọn chất béo lành mạnh.',
-    prepTime: 5,
-    cookTime: 5,
-    servingBase: 1,
-    steps: [
-      'Dùng dao cắt đôi quả bơ Hass theo chiều dọc, khẽ xoay nhẹ tách hạt rồi nạo lấy phần thịt sáp vàng.',
-      'Cho bơ vào cối xay sinh tố cùng mật ong, chút sữa chua hoặc sữa hạt nguyên chất.',
-      'Thêm một ít đá viên sạch, bật máy xay nhuyễn mịn trong 35-45 giây.',
-      'Rót ra ly thưởng thức ngay để tận hưởng trọn vẹn vị béo ngậy ngọt ngào tự nhiên.'
-    ],
-    ingredients: [
-      { name: 'Quả bơ Hass', amountPer1Serving: 1, unit: 'quả', categoryHint: 'fruits', keywords: ['bơ', 'quả bơ', 'bơ sáp', 'bơ hass'] },
-      { name: 'Cà chua', amountPer1Serving: 0.5, unit: 'quả', categoryHint: 'vegetables', keywords: ['cà chua', 'cà chua bi'] }
-    ]
-  },
-  {
-    id: 'ca-rot-xao-thit-bo',
-    name: 'Cà rốt xào thịt bò thăn mềm',
-    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&q=80',
-    description: 'Thịt bò Mỹ thăn mềm ngọt xào nhanh lửa lớn cùng cà rốt đỏ giòn, giàu vitamin A và khoáng chất cho cả nhà.',
-    prepTime: 12,
-    cookTime: 10,
-    servingBase: 2,
-    steps: [
-      'Thịt bò thăn thái lát mỏng ngang thớ, ướp với tỏi băm, một thìa dầu ăn và tiêu để thịt giữ độ mềm ngọt.',
-      'Cà rốt nạo vỏ, thái sợi dày hoặc tỉa hoa thái lát mỏng đẹp mắt.',
-      'Đun nóng chảo với chút dầu ăn, trút thịt bò vào xào nhanh lửa to trong 90 giây rồi múc ra đĩa riêng.',
-      'Dùng lại chảo, cho cà rốt vào xào vừa chín tới cùng 2 thìa nước dùng để cà rốt mọng nước.',
-      'Trút lại thịt bò vào chảo đảo đều thêm 30 giây, nêm nếm vừa ăn rồi rắc hành ngò thơm.'
-    ],
-    ingredients: [
-      { name: 'Bò Mỹ thăn', amountPer1Serving: 130, unit: 'g', categoryHint: 'meat', keywords: ['thịt bò', 'bò mỹ', 'bò úc', 'bò'] },
-      { name: 'Cà rốt', amountPer1Serving: 1, unit: 'củ', categoryHint: 'vegetables', keywords: ['cà rốt'] },
-      { name: 'Rau cải', amountPer1Serving: 60, unit: 'g', categoryHint: 'vegetables', keywords: ['rau cải', 'cải ngọt', 'cải thìa'] }
-    ]
-  },
-  {
-    id: 'op-la-ca-chua',
-    name: 'Ốp la sốt cà chua thảo mộc',
-    image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=600&q=80',
-    description: 'Bữa sáng nhanh gọn nhưng đong đầy năng lượng với trứng ốp la lòng đào sốt cà chua đỏ tươi sánh quyện.',
-    prepTime: 5,
-    cookTime: 10,
-    servingBase: 1,
-    steps: [
-      'Cà chua đỏ rửa sạch, thái hạt lựu nhỏ để nhanh mềm khi nấu sốt.',
-      'Phi thơm hành tỏi băm nhỏ với dầu ô liu, cho cà chua vào đảo nhuyễn tạo sốt sánh đỏ.',
-      'Nêm chút xíu muối, đường tự nhiên và tiêu đen cho tròn vị chua ngọt hài hòa.',
-      'Tạo 2 khoảng trống nhỏ trong chảo sốt, khéo léo đập trứng tươi vào giữa.',
-      'Đậy nắp chảo đun lửa nhỏ 2-3 phút đến khi lòng trắng vừa đông mà lòng đào vẫn sánh dẻo.'
-    ],
-    ingredients: [
-      { name: 'Cà chua', amountPer1Serving: 2, unit: 'quả', categoryHint: 'vegetables', keywords: ['cà chua', 'cà chua bi'] },
-      { name: 'Rau cải', amountPer1Serving: 50, unit: 'g', categoryHint: 'vegetables', keywords: ['rau cải', 'cải ngọt', 'cải thìa'] },
-      { name: 'Dưa leo tươi', amountPer1Serving: 0.5, unit: 'quả', categoryHint: 'vegetables', keywords: ['dưa leo', 'dưa chuột'] }
-    ]
-  },
-  {
-    id: 'salad-bap-cai-tuoi',
-    name: 'Salad bắp cải thanh mát sốt mè',
-    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&q=80',
-    description: 'Món salad giòn rụm từ rau cải tươi, dưa leo và cà chua chín mọng giúp cân bằng tiêu hóa và giữ vóc dáng thon gọn.',
-    prepTime: 10,
-    cookTime: 0,
-    servingBase: 2,
-    steps: [
-      'Rau cải và bắp cải non rửa sạch, thái sợi mỏng rồi ngâm nước đá lạnh 5 phút để giữ độ giòn sần sật.',
-      'Dưa leo thái lát mỏng, cà chua rửa sạch bổ đôi hoặc cắt múi cau nhỏ.',
-      'Vớt rau ra để thật ráo nước rồi cho toàn bộ vào tô thủy tinh lớn.',
-      'Rưới sốt mè rang hoặc sốt dầu giấm chua ngọt lên trên, trộn nhẹ tay bằng đũa.',
-      'Bày ra đĩa sâu lòng và dùng ngay để cảm nhận độ tươi mát mọng nước của từng loại nông sản.'
-    ],
-    ingredients: [
-      { name: 'Rau cải', amountPer1Serving: 150, unit: 'g', categoryHint: 'vegetables', keywords: ['rau cải', 'bắp cải', 'xà lách', 'cải ngọt'] },
-      { name: 'Cà chua', amountPer1Serving: 1, unit: 'quả', categoryHint: 'vegetables', keywords: ['cà chua', 'cà chua bi'] },
-      { name: 'Dưa leo tươi', amountPer1Serving: 1, unit: 'quả', categoryHint: 'vegetables', keywords: ['dưa leo', 'dưa chuột'] },
-      { name: 'Cà rốt', amountPer1Serving: 0.5, unit: 'củ', categoryHint: 'vegetables', keywords: ['cà rốt'] }
-    ]
-  },
-  {
-    id: 'thit-bo-xao-can-tay',
-    name: 'Thịt bò xào cần tây hành tỏi',
-    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=600&q=80',
-    description: 'Món xào thơm lừng với thịt bò thăn mềm, cần tây tươi giòn nồng đượm, kích thích vị giác và giàu chất sắt.',
-    prepTime: 10,
-    cookTime: 10,
-    servingBase: 2,
-    steps: [
-      'Thịt bò thái lát mỏng, ướp tỏi băm, nước tương và dầu hào trong 10 phút.',
-      'Cần tây nhặt lá, rửa sạch, cắt khúc xéo khoảng 3-4 cm.',
-      'Cà chua rửa sạch bổ múi cau.',
-      'Phi thơm tỏi trên chảo lửa to, xào thịt bò nhanh trong 2 phút rồi vớt ra.',
-      'Cho cần tây và cà chua vào đảo nhanh 2 phút, trút thịt bò vào lại, đảo đều và tắt bếp.'
-    ],
-    ingredients: [
-      { name: 'Bò Mỹ thăn', amountPer1Serving: 140, unit: 'g', categoryHint: 'meat', keywords: ['thịt bò', 'bò mỹ', 'bò úc', 'bò'] },
-      { name: 'Rau Cần Tây', amountPer1Serving: 100, unit: 'g', categoryHint: 'vegetables', keywords: ['cần tây', 'rau cần'] },
-      { name: 'Cà chua', amountPer1Serving: 1, unit: 'quả', categoryHint: 'vegetables', keywords: ['cà chua', 'cà chua bi'] },
-      { name: 'Cà rốt', amountPer1Serving: 0.5, unit: 'củ', categoryHint: 'vegetables', keywords: ['cà rốt'] }
-    ]
-  },
-  {
-    id: 'canh-ga-ham-bi-do',
-    name: 'Canh gà ta hầm bí đỏ ngọt lành',
-    image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=600&q=80',
-    description: 'Thịt gà ta hầm mềm ngọt cùng bí đỏ bùi thơm, món canh bổ dưỡng làm ấm dạ dày và tăng sức đề kháng.',
-    prepTime: 15,
-    cookTime: 25,
-    servingBase: 3,
-    steps: [
-      'Thịt gà chặt miếng vừa ăn, chần sơ qua nước sôi để nước canh trong ngọt.',
-      'Bí đỏ gọt vỏ, bỏ ruột, cắt khối vuông quân cờ.',
-      'Cà rốt gọt vỏ tỉa hoa cắt lát dày.',
-      'Cho thịt gà vào nồi cùng 800ml nước, đun sôi rồi vớt bọt, hầm nhỏ lửa 15 phút.',
-      'Thêm bí đỏ và cà rốt vào hầm thêm 10 phút đến khi bí chín mềm, nêm nếm gia vị và rắc hành ngò.'
-    ],
-    ingredients: [
-      { name: 'Gà ta thả vườn', amountPer1Serving: 180, unit: 'g', categoryHint: 'meat', keywords: ['gà ta', 'thịt gà', 'ức gà', 'đùi gà'] },
-      { name: 'Cà rốt', amountPer1Serving: 0.5, unit: 'củ', categoryHint: 'vegetables', keywords: ['cà rốt'] },
-      { name: 'Rau cải', amountPer1Serving: 50, unit: 'g', categoryHint: 'vegetables', keywords: ['rau cải', 'cải ngọt', 'cải thìa'] }
-    ]
-  },
-  {
-    id: 'bo-xao-bong-cai-xanh',
-    name: 'Thịt bò xào bông cải xanh giòn ngọt',
-    image: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=600&q=80',
-    description: 'Bông cải xanh mướt giòn sần sật kết hợp cùng thịt bò thăn mềm ngọt, cung cấp hàm lượng vitamin C và chất chống oxy hóa vượt trội.',
-    prepTime: 12,
-    cookTime: 12,
-    servingBase: 2,
-    steps: [
-      'Bông cải xanh cắt nhỏ từng nhánh vừa ăn, ngâm nước muối loãng rồi chần sơ qua nước sôi 1 phút.',
-      'Thịt bò thái mỏng ướp tỏi băm, dầu ăn và chút tiêu.',
-      'Cà rốt tỉa hoa thái lát mỏng.',
-      'Phi thơm tỏi, xào thịt bò trên lửa lớn trong 90 giây rồi trút ra đĩa.',
-      'Xào bông cải xanh và cà rốt với 2 thìa nước dùng trong 2 phút, cho thịt bò vào đảo nhanh tay rồi tắt bếp.'
-    ],
-    ingredients: [
-      { name: 'Bò Mỹ thăn', amountPer1Serving: 140, unit: 'g', categoryHint: 'meat', keywords: ['thịt bò', 'bò mỹ', 'bò úc', 'bò'] },
-      { name: 'Bông Cải Xanh (Súp Lơ Xanh)', amountPer1Serving: 150, unit: 'g', categoryHint: 'vegetables', keywords: ['bông cải xanh', 'súp lơ xanh', 'bông cải'] },
-      { name: 'Cà rốt', amountPer1Serving: 0.5, unit: 'củ', categoryHint: 'vegetables', keywords: ['cà rốt'] }
-    ]
-  },
-  {
-    id: 'ca-hoi-ap-chao-bo-toi',
-    name: 'Cá hồi áp chảo sốt bơ tỏi chanh',
-    image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=600&q=80',
-    description: 'Miếng phi lê cá hồi da giòn thịt mềm béo ngậy sốt bơ tỏi chanh thơm lừng chuẩn phong cách ẩm thực Địa Trung Hải.',
-    prepTime: 10,
-    cookTime: 15,
-    servingBase: 2,
-    steps: [
-      'Cá hồi thấm khô bằng khăn giấy, ướp chút muối tiêu và nước cốt chanh trong 5 phút.',
-      'Dưa leo thái lát tròn mỏng, cà chua rửa sạch để ăn kèm.',
-      'Đun nóng chảo chống dính với chút dầu ô liu, áp chảo cá hồi mặt da trước khoảng 4 phút đến khi vàng giòn.',
-      'Lật mặt cá, thêm một thìa bơ và tỏi đập dập vào chảo, rưới bơ nóng lên bề mặt cá trong 2 phút.',
-      'Bày cá ra đĩa kèm dưa leo, cà chua và sốt bơ tỏi thơm ngậy.'
-    ],
-    ingredients: [
-      { name: 'Cá hồi tươi', amountPer1Serving: 180, unit: 'g', categoryHint: 'seafood', keywords: ['cá hồi', 'phi lê cá hồi'] },
-      { name: 'Quả bơ Hass', amountPer1Serving: 0.5, unit: 'quả', categoryHint: 'fruits', keywords: ['bơ', 'quả bơ', 'bơ sáp', 'bơ hass'] },
-      { name: 'Cà chua', amountPer1Serving: 1, unit: 'quả', categoryHint: 'vegetables', keywords: ['cà chua', 'cà chua bi'] },
-      { name: 'Dưa leo tươi', amountPer1Serving: 1, unit: 'quả', categoryHint: 'vegetables', keywords: ['dưa leo', 'dưa chuột'] }
-    ]
-  }
-];
 
 function removeVietnameseTones(str: string): string {
   return (str || '')
@@ -317,17 +101,14 @@ function normalizeKeepTones(str: string): string {
     .trim();
 }
 
-const COOK_CATEGORY_HINTS: Record<string, string[]> = {
-  vegetables: ['vegetables', 'rau cu', 'rau xanh', 'cu qua', 'nam'],
-  fruits: ['fruits', 'trai cay'],
-  meat: ['meat', 'thit'],
-  seafood: ['seafood', 'hai san', 'ca'],
-};
-
-function matchesCookCategoryHint(prod: ApiProduct, hint?: string): boolean | null {
+function matchesCookCategoryHint(
+  prod: ApiProduct,
+  hint: string | undefined,
+  categoryHintsMap: Record<string, string[]>
+): boolean | null {
   if (!hint) return null;
-  const hints = COOK_CATEGORY_HINTS[hint];
-  if (!hints) return null;
+  const hints = categoryHintsMap[hint];
+  if (!hints || hints.length === 0) return null;
   const prodCat = removeVietnameseTones(`${prod.category || ''} ${prod.categoryVi || ''}`);
   if (!prodCat) return null;
   return hints.some(h => prodCat.includes(h));
@@ -467,7 +248,7 @@ export class CookComponent implements OnInit {
   protected cart = inject(CartService);
   private productApi = inject(ProductApiService);
   private api = inject(ApiService);
-  readonly unitOptions = COOK_INGREDIENT_UNITS;
+  unitOptions = signal<CookUnitOption[]>([]);
 
   // ── Signals ──────────────────────────────────────────────
   inputText = signal('');
@@ -485,13 +266,19 @@ export class CookComponent implements OnInit {
   addedFeedback = signal<string | null>(null);
   catalogueProducts = signal<ApiProduct[]>([]);
   catalogueLoading = signal(true);
+  recipesDb = signal<RawRecipe[]>([]);
+  recipesLoading = signal(true);
+  recipesLoadError = signal<string | null>(null);
+  categoryHints = signal<Record<string, string[]>>({});
+  quickIngredients = signal<CookQuickIngredient[]>([]);
   failedProductImages = signal<Record<string, true>>({});
   hasSearched = signal(false);
 
   unmatchedIngredients = computed(() => {
     const catalogue = this.catalogueProducts();
+    const recipes = this.recipesDb();
     return this.myIngredients().filter(userIng => {
-      return !RECIPE_DB.some(recipe =>
+      return !recipes.some(recipe =>
         recipe.ingredients.some(ing => {
           const matchedProd = this.resolveCatalogueProduct(ing, catalogue);
           const resolvedProductId = matchedProd?._id || ing.productId || null;
@@ -519,26 +306,50 @@ export class CookComponent implements OnInit {
     this.catalogueLoading.set(true);
     this.productApi.getAll({ limit: 0, isCombo: 'false' }).subscribe({
       next: (res) => {
-        if (res?.data && res.data.length > 0) {
-          this.catalogueProducts.set(res.data);
-        } else {
-          this.catalogueProducts.set(onlineOrderProducts as unknown as ApiProduct[]);
-        }
+        this.catalogueProducts.set(res?.data || []);
         this.catalogueLoading.set(false);
-        if (this.hasSearched()) {
-          this.results.set(this.computeRecipeResults());
-          this.loading.set(false);
-        }
+        this.tryFinishPendingSearch();
       },
       error: () => {
-        this.catalogueProducts.set(onlineOrderProducts as unknown as ApiProduct[]);
+        this.catalogueProducts.set([]);
         this.catalogueLoading.set(false);
-        if (this.hasSearched()) {
-          this.results.set(this.computeRecipeResults());
-          this.loading.set(false);
-        }
+        this.tryFinishPendingSearch();
       }
     });
+
+    this.recipesLoading.set(true);
+    this.recipesLoadError.set(null);
+    this.api.get<{
+      success: boolean;
+      data?: RawRecipe[];
+      config?: {
+        unitOptions?: CookUnitOption[];
+        categoryHints?: Record<string, string[]>;
+        quickIngredients?: CookQuickIngredient[];
+      };
+    }>('/recipes').subscribe({
+      next: (res) => {
+        this.recipesDb.set(Array.isArray(res?.data) ? res.data : []);
+        this.unitOptions.set(Array.isArray(res?.config?.unitOptions) ? res.config.unitOptions : []);
+        this.categoryHints.set(res?.config?.categoryHints || {});
+        this.quickIngredients.set(Array.isArray(res?.config?.quickIngredients) ? res.config.quickIngredients : []);
+        this.recipesLoading.set(false);
+        this.tryFinishPendingSearch();
+      },
+      error: () => {
+        this.recipesDb.set([]);
+        this.recipesLoading.set(false);
+        this.recipesLoadError.set('Không tải được danh sách công thức từ MongoDB. Vui lòng thử lại sau.');
+        this.tryFinishPendingSearch();
+      }
+    });
+  }
+
+  private tryFinishPendingSearch(): void {
+    if (this.hasSearched() && !this.catalogueLoading() && !this.recipesLoading()) {
+      this.results.set(this.computeRecipeResults());
+      this.loading.set(false);
+    }
   }
 
   scrollToInput(): void {
@@ -645,7 +456,7 @@ export class CookComponent implements OnInit {
 
     const catalogue = this.catalogueProducts();
     const rawTone = normalizeKeepTones(raw);
-    const knownRecipeIng = RECIPE_DB.flatMap(r => r.ingredients).find(
+    const knownRecipeIng = this.recipesDb().flatMap(r => r.ingredients).find(
       ing => normalizeKeepTones(ing.name) === rawTone
     );
     const matched = knownRecipeIng
@@ -888,7 +699,10 @@ export class CookComponent implements OnInit {
     this.loading.set(true);
     this.hasSearched.set(true);
 
-    if (this.catalogueLoading() && this.catalogueProducts().length === 0) {
+    if (
+      (this.catalogueLoading() && this.catalogueProducts().length === 0) ||
+      (this.recipesLoading() && this.recipesDb().length === 0)
+    ) {
       return;
     }
 
@@ -944,7 +758,7 @@ export class CookComponent implements OnInit {
         if (nameScore === 0) continue;
 
         score = nameScore;
-        const catMatch = matchesCookCategoryHint(prod, ing.categoryHint);
+        const catMatch = matchesCookCategoryHint(prod, ing.categoryHint, this.categoryHints());
         if (catMatch === true) score += 50;
         else if (catMatch === false) score -= 120;
 
@@ -975,7 +789,7 @@ export class CookComponent implements OnInit {
 
     // Tránh ghép nhầm nếu sản phẩm user thuộc nhóm khác hẳn (vd: Bơ Sáp (fruits) với Bò Mỹ thăn (meat))
     if (u.product) {
-      const userCatMatch = matchesCookCategoryHint(u.product, ing.categoryHint);
+      const userCatMatch = matchesCookCategoryHint(u.product, ing.categoryHint, this.categoryHints());
       if (userCatMatch === false) return false;
     }
 
@@ -1012,7 +826,7 @@ export class CookComponent implements OnInit {
       return [];
     }
 
-    for (const raw of RECIPE_DB) {
+    for (const raw of this.recipesDb()) {
       const totalDuration = raw.prepTime + raw.cookTime;
       if (maxT !== null && maxT > 0 && totalDuration > maxT) {
         continue;

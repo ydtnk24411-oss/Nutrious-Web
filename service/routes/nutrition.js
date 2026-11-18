@@ -83,7 +83,14 @@ router.get('/', cacheMiddleware(60), async (req, res, next) => {
   try {
     const [config, recipes, products, recentOrders] = await Promise.all([
       NutritionConfig.findOne({ key: 'main' }).lean(),
-      Recipe.find({ isActive: true }).sort({ createdAt: 1 }),
+      Recipe.find({
+        isActive: true,
+        $or: [
+          { sources: 'nutrition' },
+          { sources: { $exists: false } },
+          { sources: { $size: 0 } },
+        ],
+      }).sort({ createdAt: 1 }),
       Product.find({ isActive: { $ne: false } }).lean().catch(() => []),
       Order.find({}).sort({ createdAt: -1 }).limit(12).lean().catch(() => []),
     ]);
