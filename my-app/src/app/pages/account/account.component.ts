@@ -527,6 +527,7 @@ export class AccountComponent implements OnInit, OnDestroy {
 
   // ── Đổi số điện thoại (Change Phone Number) ──
   showChangePhoneModal = signal(false);
+  changePhoneInputsUnlocked = signal(false);
   changePhoneStep = signal<'input' | 'otp'>('input');
   newPhoneInput = signal('');
   changePhonePassword = signal('');
@@ -557,6 +558,7 @@ export class AccountComponent implements OnInit, OnDestroy {
   }
 
   openChangePhoneModal(): void {
+    this.changePhoneInputsUnlocked.set(false);
     this.newPhoneInput.set('');
     this.changePhonePassword.set('');
     this.changePhoneOtpDigits.set(['', '', '', '', '', '']);

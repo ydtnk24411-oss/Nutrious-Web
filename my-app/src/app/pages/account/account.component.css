@@ -1876,20 +1876,44 @@
   cursor: pointer;
 }
 
+.otp-view-container .acc-dialog-desc {
+  text-align: center;
+}
+
 .otp-boxes-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
-  margin-bottom: 14px;
+  grid-template-columns: repeat(6, minmax(0, 48px));
+  justify-content: center;
+  gap: 10px;
+  max-width: 100%;
+  margin: 0 auto 14px;
 }
 
 .otp-digit-box {
-  height: 44px;
+  width: 100%;
+  min-width: 0;
+  height: 48px;
+  padding: 0;
+  box-sizing: border-box;
   text-align: center;
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 800;
+  color: #162d18;
+  background: #fbfcf9;
   border: 1.5px solid #cbd5e1;
-  border-radius: 8px;
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.otp-digit-box:focus {
+  border-color: #2f6c1c;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(47, 108, 28, 0.14);
+}
+
+.otp-view-container .acc-dialog-actions {
+  justify-content: center;
 }
 
 .otp-demo-badge {
@@ -1995,5 +2019,15 @@
 
   .acc-hero-art {
     display: none;
+  }
+
+  .otp-boxes-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .otp-digit-box {
+    height: 42px;
+    font-size: 17px;
   }
 }
