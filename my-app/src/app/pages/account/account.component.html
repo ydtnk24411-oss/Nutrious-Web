@@ -1042,14 +1042,36 @@
 
           @if (changePhoneStep() === 'input') {
             <p class="acc-dialog-desc">Sau khi đổi số, bạn sẽ đăng nhập bằng số điện thoại mới. Toàn bộ lịch sử đơn hàng và địa chỉ được giữ nguyên.</p>
-            <form (submit)="submitChangePhoneRequest($event)">
+            <form (submit)="submitChangePhoneRequest($event)" autocomplete="off">
               <div class="acc-dialog-field">
                 <label>Số điện thoại mới *</label>
-                <input type="tel" placeholder="Ví dụ: 0912345678" [value]="newPhoneInput()" (input)="newPhoneInput.set($any($event.target).value)" required />
+                <input
+                  type="tel"
+                  name="evergreen_new_phone_input"
+                  autocomplete="off"
+                  [readonly]="!changePhoneInputsUnlocked()"
+                  (pointerdown)="changePhoneInputsUnlocked.set(true)"
+                  (focus)="changePhoneInputsUnlocked.set(true)"
+                  placeholder="Ví dụ: 0912345678"
+                  [value]="newPhoneInput()"
+                  (input)="newPhoneInput.set($any($event.target).value)"
+                  required
+                />
               </div>
               <div class="acc-dialog-field">
                 <label>Mật khẩu tài khoản hiện tại *</label>
-                <input type="password" placeholder="Nhập mật khẩu để tiếp tục" [value]="changePhonePassword()" (input)="changePhonePassword.set($any($event.target).value)" required />
+                <input
+                  type="password"
+                  name="evergreen_verify_pwd_input"
+                  autocomplete="new-password"
+                  [readonly]="!changePhoneInputsUnlocked()"
+                  (pointerdown)="changePhoneInputsUnlocked.set(true)"
+                  (focus)="changePhoneInputsUnlocked.set(true)"
+                  placeholder="Nhập mật khẩu để tiếp tục"
+                  [value]="changePhonePassword()"
+                  (input)="changePhonePassword.set($any($event.target).value)"
+                  required
+                />
               </div>
               <div class="acc-dialog-actions">
                 <button type="button" class="acc-btn-outline" (click)="closeChangePhoneModal()">Hủy</button>
@@ -1070,6 +1092,7 @@
                     class="otp-digit-box"
                     type="text"
                     inputmode="numeric"
+                    size="1"
                     maxlength="1"
                     pattern="[0-9]*"
                     [value]="digit"
@@ -1115,10 +1138,18 @@
         <div class="acc-dialog-body">
           @if (unlinkError()) { <div class="acc-alert-error">{{ unlinkError() }}</div> }
           <p class="acc-dialog-desc">Vui lòng nhập mật khẩu tài khoản EvergreenMart để xác nhận hủy liên kết Google:</p>
-          <form (submit)="submitUnlinkGoogle($event)">
+          <form (submit)="submitUnlinkGoogle($event)" autocomplete="off">
             <div class="acc-dialog-field">
               <label>Mật khẩu tài khoản của bạn *</label>
-              <input type="password" placeholder="Nhập mật khẩu tài khoản" [value]="unlinkPassword()" (input)="unlinkPassword.set($any($event.target).value)" required />
+              <input
+                type="password"
+                name="evergreen_unlink_pwd"
+                autocomplete="new-password"
+                placeholder="Nhập mật khẩu tài khoản"
+                [value]="unlinkPassword()"
+                (input)="unlinkPassword.set($any($event.target).value)"
+                required
+              />
             </div>
             <div class="acc-dialog-actions">
               <button type="button" class="acc-btn-outline" (click)="closeUnlinkGoogleModal()">Hủy bỏ</button>

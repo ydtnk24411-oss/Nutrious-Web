@@ -8,7 +8,10 @@ const Conversation = require('../models/Conversation');
 const Voucher = require('../models/Voucher');
 const Review = require('../models/Review');
 const ShippingConfig = require('../models/ShippingConfig');
-const { protect, staffOnly } = require('../middleware/auth');
+const StoreInventory = require('../models/StoreInventory');
+const Store = require('../models/Store');
+const StockAdjustmentTicket = require('../models/StockAdjustmentTicket');
+const { protect, staffOnly, adminOnly, authorizeRoles, getScopedStoreId } = require('../middleware/auth');
 
 const dashCache = new Map();
 function clearDashboardCache() {
@@ -27,33 +30,91 @@ function setCache(key, data, ttlMs = 30000) {
   dashCache.set(key, { data, expires: Date.now() + ttlMs });
 }
 
+function getEffectiveStoreFilter(req) {
+  const scopedStore = getScopedStoreId(req);
+  if (!scopedStore || scopedStore === 'all' || scopedStore === 'ALL') {
+    return null;
+  }
+  return scopedStore;
+}
+
+function parseDateParam(dateStr, isEndOfDay = false) {
+  if (!dateStr) return null;
+  const parts = String(dateStr).split('T')[0].split('-').map(Number);
+  if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+    const [y, m, d] = parts;
+    return isEndOfDay
+      ? new Date(y, m - 1, d, 23, 59, 59, 999)
+      : new Date(y, m - 1, d, 0, 0, 0, 0);
+  }
+  const dt = new Date(dateStr);
+  if (isEndOfDay) dt.setHours(23, 59, 59, 999);
+  return dt;
+}
+
 function buildDateFilter(startDate, endDate) {
   const filter = {};
-  if (startDate && endDate) {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+  const start = parseDateParam(startDate, false);
+  const end = parseDateParam(endDate, true);
+
+  if (start && end) {
     filter.createdAt = { $gte: start, $lte: end };
-  } else if (startDate) {
-    filter.createdAt = { $gte: new Date(startDate) };
-  } else if (endDate) {
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+  } else if (start) {
+    filter.createdAt = { $gte: start };
+  } else if (end) {
     filter.createdAt = { $lte: end };
   }
   return filter;
 }
 
-// GET /api/dashboard/stats — admin/staff
+// GET /api/dashboard/stats - admin/staff
 router.get('/stats', protect, staffOnly, async (req, res, next) => {
   try {
-    const { startDate, endDate } = req.query;
-    const cacheKey = `stats_${startDate || ''}_${endDate || ''}`;
+    const { startDate, endDate, store } = req.query;
+    const scopedStore = getEffectiveStoreFilter(req) || (store && store !== 'all' ? store : null);
+    const cacheKey = `stats_${startDate || ''}_${endDate || ''}_${scopedStore || 'all'}`;
     const cached = getCache(cacheKey);
     if (cached) return res.json(cached);
 
     const dateFilter = buildDateFilter(startDate, endDate);
+    const orderMatch = { ...dateFilter };
+    if (scopedStore) {
+      orderMatch.warehouseId = scopedStore;
+    }
     const now = new Date();
+
+    // Nếu là Store Manager: Tồn kho lấy từ StoreInventory của đúng chi nhánh đó!
+    const stockQuery = scopedStore
+      ? StoreInventory.aggregate([
+          { $match: { storeId: scopedStore } },
+          {
+            $group: {
+              _id: null,
+              totalProducts: { $sum: 1 },
+              lowStockCount: {
+                $sum: { $cond: [{ $and: [{ $gt: ['$physicalStock', 0] }, { $lte: ['$physicalStock', 10] }] }, 1, 0] },
+              },
+              outOfStockCount: {
+                $sum: { $cond: [{ $lte: ['$physicalStock', 0] }, 1, 0] },
+              },
+            },
+          },
+        ]).option({ maxTimeMS: 6000 })
+      : Product.aggregate([
+          { $match: { isActive: { $ne: false } } },
+          {
+            $group: {
+              _id: null,
+              totalProducts: { $sum: 1 },
+              lowStockCount: {
+                $sum: { $cond: [{ $and: [{ $gt: ['$stock', 0] }, { $lte: ['$stock', 10] }] }, 1, 0] },
+              },
+              outOfStockCount: {
+                $sum: { $cond: [{ $lte: ['$stock', 0] }, 1, 0] },
+              },
+            },
+          },
+        ]).option({ maxTimeMS: 6000 });
 
     const [
       stockAgg,
@@ -64,30 +125,35 @@ router.get('/stats', protect, staffOnly, async (req, res, next) => {
       waitingSupportCount,
       activeVouchersCount,
       reviewsAgg,
+      storeInfo,
     ] = await Promise.all([
-      Product.aggregate([
-        { $match: { isActive: { $ne: false } } },
-        {
-          $group: {
-            _id: null,
-            totalProducts: { $sum: 1 },
-            lowStockCount: {
-              $sum: { $cond: [{ $and: [{ $gt: ['$stock', 0] }, { $lte: ['$stock', 10] }] }, 1, 0] },
-            },
-            outOfStockCount: {
-              $sum: { $cond: [{ $lte: ['$stock', 0] }, 1, 0] },
-            },
-          },
-        },
-      ]).option({ maxTimeMS: 6000 }),
+      stockQuery,
 
       Order.aggregate([
-        { $match: dateFilter },
+        { $match: orderMatch },
         {
           $group: {
             _id: '$status',
             count: { $sum: 1 },
             revenue: { $sum: { $cond: [{ $ne: ['$status', 'cancelled'] }, '$total', 0] } },
+            realizedRevenue: {
+              $sum: {
+                $cond: [
+                  { $or: [{ $eq: ['$status', 'delivered'] }, { $eq: ['$paymentStatus', 'paid'] }] },
+                  '$total',
+                  0
+                ]
+              }
+            },
+            completedCount: {
+              $sum: {
+                $cond: [
+                  { $or: [{ $eq: ['$status', 'delivered'] }, { $eq: ['$paymentStatus', 'paid'] }] },
+                  1,
+                  0
+                ]
+              }
+            },
             validCount: { $sum: { $cond: [{ $ne: ['$status', 'cancelled'] }, 1, 0] } },
           },
         },
@@ -95,10 +161,10 @@ router.get('/stats', protect, staffOnly, async (req, res, next) => {
 
       User.countDocuments({ role: 'customer' }).maxTimeMS(6000),
 
-      Order.find(dateFilter)
+      Order.find(orderMatch)
         .sort({ createdAt: -1 })
         .limit(5)
-        .select('orderCode guestName total status createdAt')
+        .select('orderCode guestName total status createdAt warehouseId pickupStore')
         .maxTimeMS(6000)
         .lean(),
 
@@ -116,15 +182,27 @@ router.get('/stats', protect, staffOnly, async (req, res, next) => {
           },
         },
       ]).option({ maxTimeMS: 6000 }),
+
+      scopedStore ? Store.findById(scopedStore).lean() : null,
     ]);
 
     const stock = stockAgg[0] || { totalProducts: 0, lowStockCount: 0, outOfStockCount: 0 };
     const ordersByStatus = (orderAgg || []).map((o) => ({ _id: o._id, count: o.count }));
     const totalOrders = (orderAgg || []).reduce((s, o) => s + o.count, 0);
     const pendingOrders = (orderAgg || []).find((o) => o._id === 'pending')?.count || 0;
-    const totalRevenue = (orderAgg || []).reduce((s, o) => s + o.revenue, 0);
-    const validOrdersCount = (orderAgg || []).reduce((s, o) => s + o.validCount, 0);
-    const averageOrderValue = validOrdersCount > 0 ? Math.round(totalRevenue / validOrdersCount) : 0;
+    const completedOrders = (orderAgg || []).reduce((s, o) => s + (o.completedCount || 0), 0);
+    const cancelledOrdersCount = (orderAgg || []).find((o) => o._id === 'cancelled')?.count || 0;
+    const validOrdersCount = totalOrders - cancelledOrdersCount;
+    const inPipelineOrdersCount = Math.max(0, validOrdersCount - completedOrders);
+
+    // Chuẩn kế toán & TMĐT: Doanh thu thuần (Net Revenue) = Tổng giá trị các đơn hàng hợp lệ (không hủy)
+    const netRevenue = (orderAgg || []).reduce((s, o) => s + o.revenue, 0);
+    // Tiền thực thu (Realized Revenue): Đơn đã giao thành công hoặc VietQR đã thanh toán
+    const realizedRevenue = (orderAgg || []).reduce((s, o) => s + (o.realizedRevenue || 0), 0);
+    // Tiền đang luân chuyển / chờ thu (In-pipeline)
+    const pipelineRevenue = Math.max(0, netRevenue - realizedRevenue);
+    const allOrdersValue = netRevenue;
+    const averageOrderValue = validOrdersCount > 0 ? Math.round(netRevenue / validOrdersCount) : 0;
     const reviewData = reviewsAgg[0] || { averageRating: 0, totalReviews: 0 };
     const averageRating = reviewData.averageRating ? Math.round(reviewData.averageRating * 10) / 10 : 0;
 
@@ -133,10 +211,18 @@ router.get('/stats', protect, staffOnly, async (req, res, next) => {
       data: {
         totalProducts: stock.totalProducts,
         totalOrders,
-        totalUsers,
+        validOrdersCount,
+        completedOrders,
         pendingOrders,
-        totalRevenue,
+        cancelledOrdersCount,
+        inPipelineOrdersCount,
+        totalRevenue: netRevenue,
+        netRevenue,
+        realizedRevenue,
+        pipelineRevenue,
+        allOrdersValue,
         averageOrderValue,
+        totalUsers: totalUsers || 0,
         recentOrders: recentOrders || [],
         ordersByStatus,
         lowStockCount: stock.lowStockCount,
@@ -148,6 +234,11 @@ router.get('/stats', protect, staffOnly, async (req, res, next) => {
           averageRating,
           totalReviews: reviewData.totalReviews,
         },
+        storeScope: {
+          isScoped: Boolean(scopedStore),
+          storeId: scopedStore || 'all',
+          storeName: storeInfo?.name || (scopedStore ? scopedStore : 'Toàn bộ 18 chi nhánh'),
+        },
       },
     };
 
@@ -156,11 +247,12 @@ router.get('/stats', protect, staffOnly, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/dashboard/revenue — revenue over time chart
+// GET /api/dashboard/revenue - revenue over time chart
 router.get('/revenue', protect, staffOnly, async (req, res, next) => {
   try {
-    const { startDate, endDate } = req.query;
-    const cacheKey = `rev_${startDate || ''}_${endDate || ''}`;
+    const { startDate, endDate, store } = req.query;
+    const scopedStore = getEffectiveStoreFilter(req) || (store && store !== 'all' ? store : null);
+    const cacheKey = `rev_${startDate || ''}_${endDate || ''}_${scopedStore || 'all'}`;
     const cached = getCache(cacheKey);
     if (cached) return res.json(cached);
 
@@ -172,6 +264,9 @@ router.get('/revenue', protect, staffOnly, async (req, res, next) => {
       createdAt: { $gte: start, $lte: end },
       status: { $ne: 'cancelled' },
     };
+    if (scopedStore) {
+      dateFilter.warehouseId = scopedStore;
+    }
 
     const data = await Order.aggregate([
       { $match: dateFilter },
@@ -220,11 +315,12 @@ router.get('/revenue', protect, staffOnly, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/dashboard/revenue-by-category — bar chart data
+// GET /api/dashboard/revenue-by-category - bar chart data
 router.get('/revenue-by-category', protect, staffOnly, async (req, res, next) => {
   try {
-    const { startDate, endDate } = req.query;
-    const cacheKey = `revcat_${startDate || ''}_${endDate || ''}`;
+    const { startDate, endDate, store } = req.query;
+    const scopedStore = getEffectiveStoreFilter(req) || (store && store !== 'all' ? store : null);
+    const cacheKey = `revcat_${startDate || ''}_${endDate || ''}_${scopedStore || 'all'}`;
     const cached = getCache(cacheKey);
     if (cached) return res.json(cached);
 
@@ -232,14 +328,30 @@ router.get('/revenue-by-category', protect, staffOnly, async (req, res, next) =>
       ...buildDateFilter(startDate, endDate),
       status: { $ne: 'cancelled' },
     };
+    if (scopedStore) {
+      dateFilter.warehouseId = scopedStore;
+    }
 
-    const categories = await Category.find({ isActive: { $ne: false } });
+    const [categories, products, orderItems] = await Promise.all([
+      Category.find({ isActive: { $ne: false } }).select('_id name').lean(),
+      Product.find({ isActive: { $ne: false } }).select('_id name slug categoryId').lean(),
+      Order.aggregate([
+        { $match: dateFilter },
+        { $unwind: '$items' },
+        {
+          $group: {
+            _id: { $ifNull: ['$items.product', '$items.productName'] },
+            revenue: { $sum: { $multiply: ['$items.priceNumber', '$items.quantity'] } },
+          },
+        },
+      ]),
+    ]);
+
     const catMap = {};
     categories.forEach(c => {
       catMap[c._id.toString()] = c.name;
     });
 
-    const products = await Product.find({ isActive: { $ne: false } }).select('name slug categoryId');
     const prodMap = {};
     for (const p of products) {
       const catName = catMap[p.categoryId?.toString()] || 'Khác';
@@ -247,17 +359,6 @@ router.get('/revenue-by-category', protect, staffOnly, async (req, res, next) =>
       prodMap[p.name] = catName;
       if (p.slug) prodMap[p.slug] = catName;
     }
-
-    const orderItems = await Order.aggregate([
-      { $match: dateFilter },
-      { $unwind: '$items' },
-      {
-        $group: {
-          _id: { $ifNull: ['$items.product', '$items.productName'] },
-          revenue: { $sum: { $multiply: ['$items.priceNumber', '$items.quantity'] } },
-        },
-      },
-    ]);
 
     const catRevMap = {};
     categories.forEach(c => { catRevMap[c.name] = 0; });
@@ -279,11 +380,12 @@ router.get('/revenue-by-category', protect, staffOnly, async (req, res, next) =>
   } catch (err) { next(err); }
 });
 
-// GET /api/dashboard/top-products — top selling products
+// GET /api/dashboard/top-products - top selling products
 router.get('/top-products', protect, staffOnly, async (req, res, next) => {
   try {
-    const { startDate, endDate, limit = 5 } = req.query;
-    const cacheKey = `topprod_${startDate || ''}_${endDate || ''}_${limit}`;
+    const { startDate, endDate, limit = 5, store } = req.query;
+    const scopedStore = getEffectiveStoreFilter(req) || (store && store !== 'all' ? store : null);
+    const cacheKey = `topprod_${startDate || ''}_${endDate || ''}_${limit}_${scopedStore || 'all'}`;
     const cached = getCache(cacheKey);
     if (cached) return res.json(cached);
 
@@ -291,6 +393,9 @@ router.get('/top-products', protect, staffOnly, async (req, res, next) => {
       ...buildDateFilter(startDate, endDate),
       status: { $ne: 'cancelled' },
     };
+    if (scopedStore) {
+      dateFilter.warehouseId = scopedStore;
+    }
 
     const top = await Order.aggregate([
       { $match: dateFilter },
@@ -322,21 +427,36 @@ router.get('/top-products', protect, staffOnly, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/dashboard/finance — full & per-store financial analytics
-router.get('/finance', protect, staffOnly, async (req, res, next) => {
+// GET /api/dashboard/finance - full & per-store financial analytics (Admin & Branch Manager)
+router.get('/finance', protect, authorizeRoles('admin', 'manager'), async (req, res, next) => {
   try {
     const { startDate, endDate, store } = req.query;
-    const dateFilter = buildDateFilter(startDate, endDate);
+    const scopedStore = getEffectiveStoreFilter(req);
+    const cacheKey = `finance_${startDate || ''}_${endDate || ''}_${scopedStore || store || 'all'}`;
+    const cached = getCache(cacheKey);
+    if (cached) return res.json(cached);
 
-    const [orders, shippingCfg] = await Promise.all([
+    const dateFilter = buildDateFilter(startDate, endDate);
+    if (scopedStore) {
+      dateFilter.warehouseId = scopedStore;
+    }
+
+    const [orders, shippingCfg, allProducts] = await Promise.all([
       Order.find(dateFilter)
         .sort({ createdAt: -1 })
-        .select('orderCode guestName subtotal discount comboDiscount addonDiscount shippingDiscount shippingVoucherDiscount shippingFee total shippingMethod pickupStore paymentMethod paymentStatus status createdAt')
+        .select('orderCode guestName subtotal discount comboDiscount addonDiscount shippingDiscount shippingVoucherDiscount shippingFee total shippingMethod pickupStore paymentMethod paymentStatus status createdAt warehouseId items')
         .lean(),
       ShippingConfig.findOne({ key: 'default' }).lean(),
+      Product.find().select('_id costPrice priceNumber').lean(),
     ]);
 
-    const rawWarehouses = Array.isArray(shippingCfg?.warehouses) && shippingCfg.warehouses.length > 0
+    const prodCostMap = new Map();
+    allProducts.forEach((p) => {
+      const fallbackCost = p.priceNumber ? Math.round(p.priceNumber * 0.55) : 0;
+      prodCostMap.set(String(p._id), p.costPrice || fallbackCost);
+    });
+
+    let rawWarehouses = Array.isArray(shippingCfg?.warehouses) && shippingCfg.warehouses.length > 0
       ? shippingCfg.warehouses
       : [{
           id: 'hq',
@@ -345,7 +465,11 @@ router.get('/finance', protect, staffOnly, async (req, res, next) => {
           isHeadquarter: true,
         }];
 
-    const hqStore = rawWarehouses.find((w) => w.isHeadquarter) || rawWarehouses[0];
+    if (scopedStore) {
+      rawWarehouses = rawWarehouses.filter(w => w.id === scopedStore);
+    }
+
+    const hqStore = rawWarehouses.find((w) => w.isHeadquarter) || rawWarehouses[0] || { name: 'Cửa hàng Evergreen Mart' };
     const storeMap = new Map();
 
     const ensureStore = (name, address = '', isHeadquarter = false) => {
@@ -374,6 +498,7 @@ router.get('/finance', protect, staffOnly, async (req, res, next) => {
           vietqrCount: 0,
           vietqrPaidAmount: 0,
           vietqrPendingAmount: 0,
+          cogs: 0,
         });
       }
       return storeMap.get(key);
@@ -382,6 +507,11 @@ router.get('/finance', protect, staffOnly, async (req, res, next) => {
     rawWarehouses.forEach((w) => ensureStore(w.name, w.address || '', Boolean(w.isHeadquarter)));
 
     const resolveOrderStoreName = (o) => {
+      // Ưu tiên kho xuất hàng trực tiếp (warehouseId) vì đây là kho trừ tồn và ghi nhận doanh thu chi nhánh
+      if (o.warehouseId) {
+        const found = rawWarehouses.find((w) => w.id === o.warehouseId);
+        if (found) return found.name;
+      }
       const pName = o.pickupStore?.name?.trim();
       if (pName) return pName;
       return hqStore.name;
@@ -403,6 +533,17 @@ router.get('/finance', protect, staffOnly, async (req, res, next) => {
       const shipFee = Number(o.shippingFee || 0);
       const orderDiscount = vDisc + cDisc + aDisc;
 
+      // Tính giá vốn thực tế từ từng món trong đơn hàng
+      let orderActualCogs = 0;
+      if (Array.isArray(o.items) && o.items.length > 0) {
+        for (const it of o.items) {
+          const cp = prodCostMap.get(String(it.productId)) || (it.priceNumber ? Math.round(it.priceNumber * 0.55) : 0);
+          orderActualCogs += cp * (Number(it.quantity) || 1);
+        }
+      } else {
+        orderActualCogs = Math.round(subtotal * 0.55);
+      }
+
       if (isCancelled) {
         bucket.cancelledCount += 1;
         bucket.cancelledAmount += total;
@@ -416,6 +557,7 @@ router.get('/finance', protect, staffOnly, async (req, res, next) => {
         bucket.totalDiscount += orderDiscount;
         bucket.shippingRevenue += shipFee;
         bucket.netRevenue += total;
+        bucket.cogs += orderActualCogs;
 
         if (isCollected) bucket.collectedAmount += total;
         else bucket.pendingAmount += total;
@@ -432,7 +574,7 @@ router.get('/finance', protect, staffOnly, async (req, res, next) => {
       }
 
       if (!store || store === sName) {
-        const estCogs = Math.round(subtotal * 0.64);
+        const estCogs = isCancelled ? 0 : orderActualCogs;
         const estOps = Math.round(total * 0.08);
         transactions.push({
           _id: String(o._id),
@@ -447,6 +589,9 @@ router.get('/finance', protect, staffOnly, async (req, res, next) => {
           totalDiscount: orderDiscount,
           shippingFee: shipFee,
           total,
+          estimatedCogs: estCogs,
+          cogs: estCogs,
+          estimatedOps: estOps,
           estimatedProfit: isCancelled ? 0 : (total - estCogs - estOps),
           isCollected,
           createdAt: o.createdAt,
@@ -457,15 +602,17 @@ router.get('/finance', protect, staffOnly, async (req, res, next) => {
     const totalSystemNet = Array.from(storeMap.values()).reduce((sum, s) => sum + s.netRevenue, 0);
 
     const stores = Array.from(storeMap.values()).map((s) => {
-      const estimatedCogs = Math.round(s.grossRevenue * 0.64);
+      const estimatedCogs = s.cogs;
       const estimatedOps = Math.round(s.netRevenue * 0.08);
       const estimatedProfit = s.netRevenue - estimatedCogs - estimatedOps;
       const profitMargin = s.netRevenue > 0 ? Number(((estimatedProfit / s.netRevenue) * 100).toFixed(1)) : 0;
+      const cogsRate = s.netRevenue > 0 ? Number(((estimatedCogs / s.netRevenue) * 100).toFixed(1)) : 0;
       const avgOrderValue = s.orderCount > 0 ? Math.round(s.netRevenue / s.orderCount) : 0;
       const revenueShare = totalSystemNet > 0 ? Number(((s.netRevenue / totalSystemNet) * 100).toFixed(1)) : 0;
       return {
         ...s,
         estimatedCogs,
+        cogsRate,
         estimatedOps,
         estimatedProfit,
         profitMargin,
@@ -526,21 +673,261 @@ router.get('/finance', protect, staffOnly, async (req, res, next) => {
     summary.profitMargin = summary.netRevenue > 0
       ? Number(((summary.estimatedProfit / summary.netRevenue) * 100).toFixed(1))
       : 0;
+    summary.cogsRate = summary.netRevenue > 0
+      ? Number(((summary.estimatedCogs / summary.netRevenue) * 100).toFixed(1))
+      : 0;
     summary.avgOrderValue = summary.validOrdersCount > 0
       ? Math.round(summary.netRevenue / summary.validOrdersCount)
       : 0;
 
-    res.json({
+    // Tính Daily Trends cho biểu đồ Xu hướng Tài chính
+    const dailyMap = new Map();
+    for (const o of orders) {
+      if (o.status === 'cancelled') continue;
+      const sName = resolveOrderStoreName(o);
+      if (store && store !== sName) continue;
+
+      const dateKey = new Date(o.createdAt).toISOString().slice(0, 10);
+      if (!dailyMap.has(dateKey)) {
+        dailyMap.set(dateKey, {
+          date: dateKey,
+          netRevenue: 0,
+          estimatedProfit: 0,
+          orderCount: 0,
+        });
+      }
+      const d = dailyMap.get(dateKey);
+      const total = Number(o.total || 0);
+      let orderActualCogs = 0;
+      if (Array.isArray(o.items) && o.items.length > 0) {
+        for (const it of o.items) {
+          const cp = prodCostMap.get(String(it.productId)) || (it.priceNumber ? Math.round(it.priceNumber * 0.55) : 0);
+          orderActualCogs += cp * (Number(it.quantity) || 1);
+        }
+      } else {
+        orderActualCogs = Math.round(Number(o.subtotal || 0) * 0.55);
+      }
+      const estOps = Math.round(total * 0.08);
+      d.netRevenue += total;
+      d.estimatedProfit += (total - orderActualCogs - estOps);
+      d.orderCount += 1;
+    }
+
+    const dailyTrends = Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+
+    const responseData = {
       success: true,
       data: {
         summary,
         stores,
-        transactions: transactions.slice(0, 60),
+        dailyTrends,
+        transactions: transactions.slice(0, 100),
+      },
+    };
+    setCache(cacheKey, responseData, 20000);
+    res.json(responseData);
+  } catch (err) { next(err); }
+});
+
+// GET /api/dashboard/badges - realtime unread / pending counts for sidebar pills
+router.get('/badges', protect, staffOnly, async (req, res, next) => {
+  try {
+    const scopedStore = getEffectiveStoreFilter(req);
+    const qrFilter = {
+      paymentMethod: 'bank_transfer',
+      paymentStatus: { $in: ['pending', 'unpaid'] },
+      status: { $nin: ['cancelled', 'delivered'] },
+    };
+    if (scopedStore) {
+      qrFilter.$or = [
+        { warehouseId: scopedStore },
+        { pickupStoreId: scopedStore },
+      ];
+    }
+
+    const complaintFilter = { status: 'pending' };
+    if (scopedStore) {
+      complaintFilter.warehouseId = scopedStore;
+    }
+
+    // Chuyển kho đến (kho đích cần nhận hàng)
+    const transferFilter = { type: 'store_transfer', status: 'in_transit' };
+    if (scopedStore) {
+      transferFilter.targetStoreId = scopedStore;
+    }
+
+    // Phiếu kho chờ CHT duyệt (kiểm kê lệch / xuất hủy hao hụt)
+    const approvalFilter = { status: 'pending_approval' };
+    if (scopedStore) {
+      approvalFilter.storeId = scopedStore;
+    }
+
+    const userRole = (req.user?.role || '').toLowerCase();
+    const isStoreManager = userRole === 'manager';
+
+    const [pendingQr, waitingChats, pendingComplaints, badReviews, incomingTransfers, pendingTickets] = await Promise.all([
+      Order.countDocuments(qrFilter),
+      !isStoreManager
+        ? Conversation.countDocuments({
+            $or: [
+              { status: 'WAITING_FOR_ADMIN' },
+              { unreadAdminCount: { $gt: 0 } },
+            ],
+          })
+        : 0,
+      Complaint.countDocuments(complaintFilter),
+      !isStoreManager
+        ? Review.countDocuments({
+            rating: { $lte: 2 },
+            isHidden: { $ne: true },
+            $or: [{ adminReply: '' }, { adminReply: null }, { adminReply: { $exists: false } }],
+          })
+        : 0,
+      StockAdjustmentTicket.countDocuments(transferFilter),
+      StockAdjustmentTicket.countDocuments(approvalFilter),
+    ]);
+
+    const isWarehouseRole = userRole === 'warehouse';
+    const isMarketingRole = userRole === 'marketing';
+    const isSupportRole = userRole === 'support' || userRole === 'sales';
+
+    const actualIncomingTransfers = (userRole === 'manager' || userRole === 'admin') ? incomingTransfers : 0;
+    const actualComplaints = (!isWarehouseRole && !isMarketingRole) ? pendingComplaints : 0;
+    const actualQr = (!isWarehouseRole && !isMarketingRole) ? pendingQr : 0;
+
+    let bellTotal = 0;
+    if (isWarehouseRole) {
+      bellTotal = pendingTickets || 0;
+    } else if (isMarketingRole) {
+      bellTotal = 0;
+    } else if (isSupportRole) {
+      bellTotal = (actualQr || 0) + (actualComplaints || 0);
+    } else {
+      bellTotal = (actualQr || 0) + (actualIncomingTransfers || 0) + (pendingTickets || 0) + (actualComplaints || 0);
+    }
+
+    res.json({
+      success: true,
+      data: {
+        pendingQr: isWarehouseRole ? 0 : (pendingQr || 0),
+        waitingChats: (isStoreManager || isWarehouseRole) ? 0 : (waitingChats || 0),
+        pendingComplaints: actualComplaints || 0,
+        incomingTransfers: actualIncomingTransfers || 0,
+        pendingTickets: pendingTickets || 0,
+        bellTotal,
+        badReviews: (isStoreManager || isWarehouseRole) ? 0 : (badReviews || 0),
+        unrepliedReviews: (isStoreManager || isWarehouseRole) ? 0 : (badReviews || 0),
+        supportTotal: 0,
       },
     });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/dashboard/operational-notifications - thông báo nghiệp vụ toàn diện cho chuông
+router.get('/operational-notifications', protect, staffOnly, async (req, res, next) => {
+  try {
+    const role = (req.user?.role || '').toLowerCase();
+    const scopedStore = getEffectiveStoreFilter(req);
+
+    const isWarehouseRole = role === 'warehouse';
+    const isMarketingRole = role === 'marketing';
+    const isSupportRole = role === 'support' || role === 'sales';
+
+    // 1. Chuyển kho đến (kho đích cần nhận hàng)
+    // CHỈ gửi thông báo cho Cửa hàng trưởng (Manager) của kho đích hoặc Admin khi theo dõi kho đích.
+    // Thủ kho toàn chuỗi là người điều phối xuất/nhập trực tiếp trên Tab Phiếu kho, không nhận chuông tự báo cho chính mình.
+    let incomingTransfers = [];
+    if (role === 'manager' || role === 'admin') {
+      const transferFilter = { type: 'store_transfer', status: 'in_transit' };
+      if (scopedStore) {
+        transferFilter.targetStoreId = scopedStore;
+        transferFilter.storeId = { $ne: scopedStore }; // Không bao giờ báo cho kho xuất hàng
+      } else if (role === 'manager' && req.user.assignedStore && req.user.assignedStore !== 'all') {
+        transferFilter.targetStoreId = req.user.assignedStore;
+        transferFilter.storeId = { $ne: req.user.assignedStore };
+      }
+      incomingTransfers = await StockAdjustmentTicket.find(transferFilter)
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .select('ticketCode storeId storeName targetStoreId targetStoreName totalAmount createdAt')
+        .lean();
+    }
+
+    // 2. Phiếu kho chờ duyệt/kiểm đếm - Phục vụ Kho & CHT
+    let pendingTickets = [];
+    if (!isSupportRole && !isMarketingRole) {
+      const approvalFilter = { status: 'pending_approval' };
+      if (scopedStore) {
+        approvalFilter.storeId = scopedStore;
+      }
+      pendingTickets = await StockAdjustmentTicket.find(approvalFilter)
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .select('ticketCode storeId storeName type totalLossValue totalAmount createdBy creatorName createdAt')
+        .lean();
+    }
+
+    // 3. Khiếu nại & phản ánh chờ giải quyết (Chỉ CSKH, Cửa hàng trưởng và Admin - không gửi cho Marketing & Kho)
+    let pendingComplaints = [];
+    if (!isWarehouseRole && !isMarketingRole) {
+      const complaintFilter = { status: 'pending' };
+      if (scopedStore) {
+        complaintFilter.warehouseId = scopedStore;
+      }
+      pendingComplaints = await Complaint.find(complaintFilter)
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .select('complaintCode customerName customerPhone title type warehouseId createdAt')
+        .lean();
+    }
+
+    // 4. Đơn hàng VietQR chờ duyệt thanh toán (Chỉ Thu ngân, CSKH, CHT và Admin - không gửi cho Marketing & Kho)
+    let pendingQrOrders = [];
+    if (!isWarehouseRole && !isMarketingRole) {
+      const qrFilter = {
+        paymentMethod: 'bank_transfer',
+        paymentStatus: { $in: ['pending', 'unpaid'] },
+        status: { $nin: ['cancelled', 'delivered'] },
+      };
+      if (scopedStore) {
+        qrFilter.$or = [
+          { warehouseId: scopedStore },
+          { pickupStoreId: scopedStore },
+        ];
+      }
+      pendingQrOrders = await Order.find(qrFilter)
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .select('orderCode guestName guestPhone total createdAt warehouseId pickupStore')
+        .lean();
+    }
+
+    const counts = {
+      incomingTransfers: incomingTransfers.length,
+      pendingTickets: pendingTickets.length,
+      pendingComplaints: pendingComplaints.length,
+      pendingQr: pendingQrOrders.length,
+      total: incomingTransfers.length + pendingTickets.length + pendingComplaints.length + pendingQrOrders.length,
+    };
+
+    res.json({
+      success: true,
+      counts,
+      data: {
+        incomingTransfers,
+        pendingTickets,
+        pendingComplaints,
+        pendingQrOrders,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 router.clearDashboardCache = clearDashboardCache;
 module.exports = router;
+
 module.exports.clearDashboardCache = clearDashboardCache;

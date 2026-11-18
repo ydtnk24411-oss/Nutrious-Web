@@ -1,5 +1,5 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
-import { ApiService } from './api.service';
+import { Injectable, signal, computed, inject, effect, OnDestroy } from '@angular/core';
+import { ApiService, API_BASE } from './api.service';
 import { CartService } from './cart.service';
 
 export interface InAppNotification {
@@ -13,26 +13,59 @@ export interface InAppNotification {
 }
 
 @Injectable({ providedIn: 'root' })
-export class NotificationService {
+export class NotificationService implements OnDestroy {
   private api = inject(ApiService);
   private cart = inject(CartService);
 
   private _notifications = signal<InAppNotification[]>([]);
   private eventSource: EventSource | null = null;
+  private pollTimer: any = null;
 
   readonly notifications = this._notifications.asReadonly();
   readonly unreadCount = computed(() => this._notifications().filter(n => n.unread).length);
 
   constructor() {
-    this.loadHistory();
-    this.connectSse();
+    // 1. Tự động tải lại lịch sử thông báo và tái kết nối SSE mỗi khi phiên đăng nhập của người dùng thay đổi
+    effect(() => {
+      // Đọc signal currentUser để effect tự động kích hoạt lại khi đăng nhập / đăng xuất
+      const user = this.cart.currentUser();
+      this.loadHistory();
+      this.connectSse();
+    });
+
+    // 2. Cơ chế đối soát ngầm định kỳ (polling mỗi 15 giây) dự phòng trường hợp kết nối mạng bị gián đoạn
+    if (typeof window !== 'undefined') {
+      this.pollTimer = setInterval(() => {
+        this.loadHistory();
+      }, 15000);
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = null;
+    }
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
+    }
   }
 
   loadHistory(): void {
-    this.api.get<{ success: boolean; unreadCount: number; data: InAppNotification[] }>('/notifications').subscribe({
+    this.api.get<{ success: boolean; unreadCount: number; data: any[] }>('/notifications').subscribe({
       next: (res) => {
         if (res.success && Array.isArray(res.data)) {
-          this._notifications.set(res.data);
+          const mapped: InAppNotification[] = res.data.map(item => ({
+            id: String(item.id || item._id || ''),
+            title: item.title || '',
+            body: item.body || '',
+            type: item.type || 'order',
+            path: item.path || '/account?tab=orders',
+            unread: item.unread !== false,
+            createdAt: item.createdAt || new Date().toISOString(),
+          }));
+          this._notifications.set(mapped);
         }
       },
       error: () => {},
@@ -43,13 +76,22 @@ export class NotificationService {
     if (typeof window === 'undefined' || typeof EventSource === 'undefined') return;
 
     try {
-      const user = this.cart.currentUser();
-      const query = user ? `?userId=${user._id}&role=${user.role || 'customer'}` : '';
-      const streamUrl = `http://localhost:3000/api/notifications/stream${query}`;
-
       if (this.eventSource) {
         this.eventSource.close();
+        this.eventSource = null;
       }
+
+      const user = this.cart.currentUser();
+      const userId = user ? String(user._id || (user as any).id || '') : '';
+      const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('xanhla_auth_token') || '') : '';
+
+      const params = new URLSearchParams();
+      if (userId) params.set('userId', userId);
+      if (user?.role) params.set('role', user.role);
+      if (token) params.set('token', token);
+
+      const qs = params.toString();
+      const streamUrl = `${API_BASE}/notifications/stream${qs ? '?' + qs : ''}`;
 
       this.eventSource = new EventSource(streamUrl);
 
@@ -58,13 +100,22 @@ export class NotificationService {
         try {
           const parsed = JSON.parse(event.data);
           if (parsed && parsed.title) {
-            this._notifications.update(list => [parsed, ...list.filter(n => n.id !== parsed.id)]);
+            const item: InAppNotification = {
+              id: String(parsed.id || parsed._id || ''),
+              title: parsed.title,
+              body: parsed.body,
+              type: parsed.type || 'order',
+              path: parsed.path || '/account?tab=orders',
+              unread: parsed.unread !== false,
+              createdAt: parsed.createdAt || new Date().toISOString(),
+            };
+            this._notifications.update(list => [item, ...list.filter(n => n.id !== item.id)]);
           }
         } catch {}
       };
 
       this.eventSource.onerror = () => {
-        // EventSource will automatically attempt reconnection
+        // EventSource sẽ tự động kết nối lại khi có kết nối mạng
       };
     } catch {}
   }

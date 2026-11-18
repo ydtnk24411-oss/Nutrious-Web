@@ -46,11 +46,6 @@ export const routes: Routes = [
         canActivate: [roleGuard(['Manager', 'Admin', 'Marketing'])],
       },
       {
-        path: 'combos',
-        loadComponent: () =>
-          import('./admin/combos/combos.component').then((m) => m.AdminCombosComponent),
-      },
-      {
         path: 'orders',
         loadComponent: () =>
           import('./admin/orders/orders.component').then((m) => m.AdminOrdersComponent),
@@ -84,7 +79,7 @@ export const routes: Routes = [
         path: 'users',
         loadComponent: () =>
           import('./admin/users/users.component').then((m) => m.AdminUsersComponent),
-        canActivate: [roleGuard(['Manager', 'Admin', 'Sales'])],
+        canActivate: [roleGuard(['Manager', 'Admin', 'Sales', 'Marketing'])],
       },
       {
         path: 'support',
@@ -109,6 +104,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./admin/vouchers/vouchers.component').then((m) => m.AdminVouchersComponent),
         canActivate: [roleGuard(['Manager', 'Admin', 'Marketing', 'Sales'])],
+      },
+      {
+        path: 'banners',
+        loadComponent: () =>
+          import('./admin/banners/banners.component').then((m) => m.AdminBannersComponent),
+        canActivate: [roleGuard(['Manager', 'Admin', 'Marketing'])],
       },
       {
         path: 'staff',

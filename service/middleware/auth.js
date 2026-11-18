@@ -61,11 +61,11 @@ const optionalAuth = async (req, res, next) => {
   next();
 };
 
-// Admin only
+// Admin only: Chỉ Super Admin cấp hệ thống mới có quyền truy cập
 const adminOnly = (req, res, next) => {
   const userRole = (req.user?.role || '').toLowerCase();
-  if (userRole !== 'admin' && userRole !== 'manager') {
-    return res.status(403).json({ success: false, message: 'Chỉ admin mới có quyền truy cập.' });
+  if (userRole !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Chỉ Quản trị viên cấp cao (Admin) mới có quyền truy cập.' });
   }
   next();
 };
@@ -85,8 +85,8 @@ const authorizeRoles = (...roles) => (req, res, next) => {
   const normalizedAllowed = roles.map(r => String(r).toLowerCase());
   const userRole = String(req.user?.role || req.session?.employee?.role || '').toLowerCase();
 
-  // Admin hoặc Manager có quyền tối thượng
-  if (userRole === 'admin' || userRole === 'manager') {
+  // Admin có quyền tối thượng
+  if (userRole === 'admin') {
     return next();
   }
 
@@ -99,6 +99,98 @@ const authorizeRoles = (...roles) => (req, res, next) => {
   next();
 };
 
+// Helper: Lấy storeId bị giới hạn theo quyền người dùng (Quản lý kho/Admin quản lý toàn chuỗi)
+const getScopedStoreId = (req) => {
+  const user = req.user;
+  if (!user) return null;
+  const role = (user.role || '').toLowerCase();
+  if (role === 'manager') {
+    // Cửa hàng trưởng (Store Manager) GẮN CHẶT phạm vi quản lý tại chi nhánh được phân công
+    return user.assignedStore || (Array.isArray(user.assignedStoreIds) ? user.assignedStoreIds[0] : null) || 'store-q1';
+  }
+  if (['admin', 'warehouse', 'sales', 'marketing', 'support', 'cskh'].includes(role)) {
+    // Admin toàn quyền; Kho, Sales, Marketing có thể tra cứu theo từng kho hoặc toàn hệ thống
+    return req.query?.storeId || req.query?.warehouseId || null;
+  }
+  const assigned = user.assignedStore;
+  if (assigned && assigned !== 'all' && assigned !== 'ALL' && assigned !== 'default') {
+    return assigned;
+  }
+  if (Array.isArray(user.assignedStoreIds) && user.assignedStoreIds.length > 0) {
+    const first = user.assignedStoreIds[0];
+    if (first && first !== 'ALL' && first !== 'all') return first;
+  }
+  return null;
+};
+
+// Middleware kiểm tra quyền theo đúng Chi nhánh (Backend Store-level Access Control)
+// Hỗ trợ cả 2 cách gọi:
+// 1. router.put('/:id', verifyStoreAccess('id'), ...) - Dạng factory
+// 2. router.post('/adjust', verifyStoreAccess, ...) - Dạng direct middleware
+const verifyStoreAccess = (paramNameOrReq, maybeRes, maybeNext) => {
+  // Trường hợp gọi dạng middleware trực tiếp: verifyStoreAccess(req, res, next)
+  if (paramNameOrReq && typeof paramNameOrReq === 'object' && paramNameOrReq.headers) {
+    const req = paramNameOrReq;
+    const res = maybeRes;
+    const next = maybeNext;
+    return checkStoreAccess(req, res, next, 'default');
+  }
+
+  // Trường hợp gọi dạng factory: verifyStoreAccess('id') hoặc verifyStoreAccess()
+  const paramField = typeof paramNameOrReq === 'string' ? paramNameOrReq : 'id';
+  return (req, res, next) => {
+    checkStoreAccess(req, res, next, paramField);
+  };
+};
+
+function checkStoreAccess(req, res, next, paramField) {
+  const targetStoreId =
+    (paramField && req.params?.[paramField]) ||
+    req.body?.storeId ||
+    req.params?.storeId ||
+    req.query?.storeId ||
+    'default';
+
+  const user = req.user;
+  if (!user) {
+    return res.status(401).json({ success: false, message: 'Chưa xác thực người dùng.' });
+  }
+
+  const role = String(user.role || '').toLowerCase();
+  // Quản trị viên, Quản lý kho, Quản lý chuỗi có quyền trên toàn bộ các kho
+  if (['admin', 'warehouse', 'manager'].includes(role)) {
+    return next();
+  }
+
+  const assigned = Array.isArray(user.assignedStoreIds) && user.assignedStoreIds.length > 0
+    ? user.assignedStoreIds
+    : (user.assignedStore ? [user.assignedStore] : ['default']);
+
+  if (assigned.includes('ALL') || assigned.includes('all')) {
+    return next();
+  }
+
+  // Quản lý cửa hàng (Store Manager) chỉ được thao tác trên storeId được phân công
+  if (!assigned.includes(targetStoreId)) {
+    return res.status(403).json({
+      success: false,
+      message: `Bạn chỉ có quyền quản lý chi nhánh [${assigned.join(', ')}]. Không có quyền thao tác trên kho [${targetStoreId}].`,
+    });
+  }
+
+  next();
+}
+
 const hasRole = authorizeRoles;
 
-module.exports = { protect, optionalAuth, adminOnly, staffOnly, hasRole, authorizeRoles, signToken };
+module.exports = {
+  protect,
+  optionalAuth,
+  adminOnly,
+  staffOnly,
+  hasRole,
+  authorizeRoles,
+  verifyStoreAccess,
+  getScopedStoreId,
+  signToken,
+};

@@ -47,21 +47,27 @@
       ════════════════════════════════════════ -->
         <aside class="ord-sidebar">
 
+        <!-- Cố định phần Tìm kiếm & Tiêu đề trên cùng -->
+        <div class="ord-sidebar-fixed-top">
           <!-- Search -->
           <div class="ord-filter-search">
             <i class="bi bi-search" style="font-size:14px;color:var(--xl-forest)"></i>
-            <input type="text" placeholder="Tìm sản phẩm theo tên, SKU..." [value]="search()"
-              (input)="onSearchInput($event)" />
+            <input type="text" placeholder="Tìm sản phẩm theo tên, SKU..."
+                   [value]="search()" (input)="onSearchInput($event)"
+                   (keydown.enter)="onSearchEnter()" (blur)="onSearchBlur()" />
           </div>
 
           <!-- Header sidebar -->
           <div class="ord-filter-header">
             <span class="ord-filter-title">Lọc theo</span>
             @if (hasActiveFilters()) {
-            <button class="ord-filter-clear" type="button" (click)="clearAllFilters()">Xóa tất cả</button>
+              <button class="ord-filter-clear" type="button" (click)="clearAllFilters()">Xóa tất cả</button>
             }
           </div>
+        </div>
 
+        <!-- Phần danh sách bộ lọc cuộn mượt bên dưới -->
+        <div class="ord-sidebar-scroll-body">
           <!-- Sort -->
           <div class="ord-filter-group">
             <button class="ord-filter-group-btn" type="button" (click)="toggleAccordion('sort')">
@@ -335,6 +341,7 @@
             </div>
             }
           </div>
+        </div>
 
         </aside>
 

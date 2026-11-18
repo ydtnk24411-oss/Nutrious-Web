@@ -2,11 +2,12 @@ const mongoose = require('mongoose');
 const bcrypt   = require('bcryptjs');
 
 const addressSchema = new mongoose.Schema({
+  id: { type: String, default: function() { return this._id ? String(this._id) : ('addr_' + Date.now()); } },
   label: { type: String, default: 'Nhà riêng' },
-  fullName: { type: String, required: true },
-  phone: { type: String, required: true },
+  fullName: { type: String, default: 'Khách hàng' },
+  phone: { type: String, default: '' },
   address: { type: String, required: true },
-  city: { type: String, required: true },
+  city: { type: String, default: 'TP. Hồ Chí Minh' },
   // Địa chỉ có cấu trúc theo đơn vị hành chính 2 cấp (Tỉnh/Thành → Phường/Xã)
   province: { type: String, default: '' },
   provinceCode: { type: Number, default: null },
@@ -53,10 +54,15 @@ const userSchema = new mongoose.Schema(
     googleName: { type: String, default: '' },
     googleAvatar: { type: String, default: '' },
     authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
-    role:     { type: String, enum: ['customer', 'manager', 'sales', 'warehouse', 'marketing', 'admin', 'support', 'content'], default: 'customer' },
+    role:     { type: String, enum: ['customer', 'manager', 'sales', 'warehouse', 'marketing', 'admin', 'support', 'content', 'Manager', 'Sales', 'Warehouse', 'Marketing', 'Admin'], default: 'customer' },
+    employeeCode:  { type: String, default: '', trim: true },
     assignedStore: { type: String, default: 'default', trim: true }, // Chi nhánh phụ trách (khóa quyền O2O)
+    assignedStoreIds: { type: [String], default: ['default'] },       // Danh sách các chi nhánh được phân quyền (['ALL'] cho quản lý vùng)
     storeName:     { type: String, default: '', trim: true },
     isActive: { type: Boolean, default: true },
+    mustChangePassword: { type: Boolean, default: false },
+    tokenVersion: { type: Number, default: 1 },
+    lastLoginAt: { type: Date, default: null },
     // Loyalty program
     points: { type: Number, default: 0 },
     tier: { type: String, enum: ['bronze', 'silver', 'gold', 'platinum'], default: 'bronze' },
@@ -119,5 +125,7 @@ userSchema.index(
   { googleId: 1 },
   { unique: true, partialFilterExpression: { googleId: { $type: 'string', $gt: '' } } }
 );
+userSchema.index({ role: 1, createdAt: -1 });
+userSchema.index({ assignedStore: 1 });
 
 module.exports = mongoose.model('User', userSchema);

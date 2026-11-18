@@ -1,22 +1,28 @@
 <!-- Header & Store / Time Filters -->
 <div class="fin-header">
   <div>
-    <h2 class="admin-page-title">Quản lý Tài chính &amp; Chi nhánh</h2>
-    <p class="admin-page-subtitle">Theo dõi P&amp;L, dòng tiền COD/VietQR, chiết khấu khuyến mãi và hiệu quả từng cửa hàng</p>
+    <h2 class="admin-page-title">{{ isManager() ? 'Tài chính Cửa hàng (' + managerStoreName() + ')' : 'Quản lý Tài chính & Chi nhánh' }}</h2>
   </div>
 
   <div class="fin-controls">
-    <select
-      class="admin-select fin-store-select"
-      [ngModel]="selectedStore()"
-      (ngModelChange)="onStoreChange($event)"
-      aria-label="Lọc theo cửa hàng"
-    >
-      <option value="">Tất cả cửa hàng (Toàn chuỗi)</option>
-      @for (st of report()?.stores ?? []; track st.storeName) {
-        <option [value]="st.storeName">{{ st.storeName }}</option>
-      }
-    </select>
+    @if (isManager()) {
+      <div class="dash-branch-fixed-badge" style="display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;border:1.5px solid #86efac;color:#166534;font-weight:700;font-size:13px;padding:7px 14px;border-radius:10px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span>{{ managerStoreName() }}</span>
+      </div>
+    } @else {
+      <select
+        class="admin-select fin-store-select"
+        [ngModel]="selectedStore()"
+        (ngModelChange)="onStoreChange($event)"
+        aria-label="Lọc theo cửa hàng"
+      >
+        <option value="">Tất cả cửa hàng (Toàn chuỗi)</option>
+        @for (st of report()?.stores ?? []; track st.storeName) {
+          <option [value]="st.storeName">{{ st.storeName }}</option>
+        }
+      </select>
+    }
 
     <div class="fin-time-pills">
       <button type="button" class="fin-pill-btn" [class.is-active]="timeFilter() === '7d'" (click)="onTimeFilterChange('7d')">7 ngày</button>
@@ -42,12 +48,7 @@
   </div>
 </div>
 
-@if (selectedStore()) {
-  <div class="fin-active-store-bar">
-    <span>Đang lọc dữ liệu tài chính riêng cho: <strong>{{ selectedStore() }}</strong></span>
-    <button type="button" class="fin-reset-store" (click)="onStoreChange('')">Xem toàn chuỗi</button>
-  </div>
-}
+
 
 @if (loading()) {
   <div class="admin-empty" style="padding:72px 20px">
@@ -71,7 +72,7 @@
 
     <div class="fin-kpi-card">
       <div class="fin-kpi-top">
-        <span class="fin-kpi-label">Lợi nhuận gộp ước tính</span>
+        <span class="fin-kpi-label">Lợi nhuận gộp</span>
         <span class="fin-kpi-badge is-lime">Biên {{ rep.summary.profitMargin }}%</span>
       </div>
       <div class="fin-kpi-val is-green">{{ formatPrice(rep.summary.estimatedProfit) }}</div>
@@ -84,17 +85,159 @@
         <span class="fin-kpi-badge">{{ pct(rep.summary.collectedAmount, rep.summary.netRevenue) }}%</span>
       </div>
       <div class="fin-kpi-val">{{ formatPrice(rep.summary.collectedAmount) }}</div>
-      <div class="fin-kpi-sub">Đơn đã giao hoàn tất hoặc đã TT VietQR</div>
+      <div class="fin-kpi-sub">Thực nhận qua cổng thanh toán &amp; COD</div>
     </div>
 
     <div class="fin-kpi-card">
       <div class="fin-kpi-top">
         <span class="fin-kpi-label">Chờ thu / Công nợ</span>
-        <span class="fin-kpi-badge is-warn">Hủy: {{ rep.summary.cancelledOrdersCount }} đơn</span>
+        <span class="fin-kpi-badge is-warn" style="white-space:nowrap;display:inline-flex;align-items:center;">Hủy: {{ rep.summary.cancelledOrdersCount }} đơn</span>
       </div>
       <div class="fin-kpi-val is-amber">{{ formatPrice(rep.summary.pendingAmount) }}</div>
       <div class="fin-kpi-sub">Thất thoát đơn hủy: {{ formatPrice(rep.summary.cancelledAmount) }}</div>
     </div>
+  </div>
+
+  <!-- Daily Financial Trend Chart -->
+  <div class="fin-card fin-trend-card" style="margin-bottom:20px">
+    <div class="fin-card-header fin-trend-header">
+      <div>
+        <h3>Xu hướng Doanh thu thuần &amp; Lợi nhuận gộp theo Ngày</h3>
+      </div>
+
+      <div class="fin-trend-readout">
+        @if (hoveredTrendPoint(); as pt) {
+          <div class="fin-readout-pill">
+            <strong>{{ pt.date | date:'dd/MM' }}</strong>
+            <span class="fin-readout-dot is-revenue"></span>
+            <span>DT: {{ formatPrice(pt.netRevenue) }}</span>
+            <span class="fin-readout-dot is-profit"></span>
+            <span>LN gộp: {{ formatPrice(pt.estimatedProfit) }}</span>
+            <span class="fin-readout-margin" style="white-space:nowrap;">Biên {{ pt.margin }}%</span>
+          </div>
+        } @else {
+          <div class="fin-trend-legend">
+            <span class="fin-legend-item">
+              <span class="fin-readout-dot is-revenue"></span>
+              <span>Doanh thu thuần</span>
+            </span>
+            <span class="fin-legend-item">
+              <span class="fin-readout-dot is-profit"></span>
+              <span>Lợi nhuận gộp</span>
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+
+    @if (trendData().length === 0) {
+      <div class="admin-empty" style="padding:28px 16px">
+        <p>Chưa có dữ liệu giao dịch trong khoảng thời gian đã chọn.</p>
+      </div>
+    } @else {
+      <div class="fin-chart-wrap" (mouseleave)="hoveredTrendIndex.set(null)">
+        <div class="fin-chart-y-axis">
+          @for (tick of trendYAxisTicks(); track $index) {
+            <span>{{ tick }}</span>
+          }
+        </div>
+
+        <div class="fin-svg-box">
+          <svg width="100%" height="180" viewBox="0 0 600 180" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="finAreaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#14532d" stop-opacity="0.22"/>
+                <stop offset="80%" stop-color="#166534" stop-opacity="0.04"/>
+                <stop offset="100%" stop-color="#166534" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+
+            <!-- Grid Lines -->
+            <line x1="0" y1="20" x2="600" y2="20" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4 4"/>
+            <line x1="0" y1="85" x2="600" y2="85" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4 4"/>
+            <line x1="0" y1="150" x2="600" y2="150" stroke="#cbd5e1" stroke-width="1"/>
+
+            <!-- Area fill for Revenue -->
+            <polygon [attr.points]="trendPoints().areaRev" fill="url(#finAreaGrad)" />
+
+            <!-- Crosshair vertical line on hover -->
+            @if (hoveredTrendIndex() !== null) {
+              <line
+                [attr.x1]="trendPointX(hoveredTrendIndex()!)"
+                y1="10"
+                [attr.x2]="trendPointX(hoveredTrendIndex()!)"
+                y2="155"
+                stroke="#14532d"
+                stroke-width="1.2"
+                stroke-dasharray="3 3"
+                opacity="0.6"
+              />
+            }
+
+            <!-- Revenue Polyline (Deep Forest) -->
+            <polyline
+              [attr.points]="trendPoints().lineRev"
+              fill="none"
+              stroke="#14532d"
+              stroke-width="2.6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+
+            <!-- Profit Polyline (Vibrant Emerald) -->
+            <polyline
+              [attr.points]="trendPoints().lineProf"
+              fill="none"
+              stroke="#16a34a"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+
+            <!-- Interactive Hotspots & Dots -->
+            @for (pt of trendData(); track pt.date; let i = $index) {
+              <!-- Revenue Dot -->
+              <circle
+                [attr.cx]="trendPointX(i)"
+                [attr.cy]="trendPointRevY(pt)"
+                r="3.5"
+                fill="#ffffff"
+                stroke="#14532d"
+                stroke-width="2"
+                [style.opacity]="hoveredTrendIndex() === i || hoveredTrendIndex() === null ? 1 : 0.3"
+              />
+              <!-- Profit Dot -->
+              <circle
+                [attr.cx]="trendPointX(i)"
+                [attr.cy]="trendPointProfY(pt)"
+                r="3.5"
+                fill="#ffffff"
+                stroke="#16a34a"
+                stroke-width="2"
+                [style.opacity]="hoveredTrendIndex() === i || hoveredTrendIndex() === null ? 1 : 0.3"
+              />
+              <!-- Invisible hover rect -->
+              <rect
+                [attr.x]="trendHoverHitX(i)"
+                y="0"
+                [attr.width]="trendHoverHitW()"
+                height="175"
+                fill="transparent"
+                style="cursor: pointer"
+                (mouseenter)="hoveredTrendIndex.set(i)"
+              />
+            }
+          </svg>
+
+          <!-- X Axis Dates -->
+          <div class="fin-chart-x-axis">
+            @for (lbl of trendXAxisLabels(); track $index) {
+              <span>{{ lbl }}</span>
+            }
+          </div>
+        </div>
+      </div>
+    }
   </div>
 
   <!-- P&L Breakdown + Cashflow Channels & Promo -->
@@ -195,102 +338,103 @@
     </div>
   </div>
 
-  <!-- Store-by-Store Financial Breakdown -->
-  <div class="fin-card" style="margin-bottom:20px">
-    <div class="fin-card-header">
-      <div>
-        <h3>Hiệu quả Tài chính theo Cửa hàng / Chi nhánh</h3>
-        <p class="fin-card-sub">Nhấn vào một chi nhánh để lọc xem riêng P&amp;L và sổ cái của cửa hàng đó</p>
+  <!-- Store-by-Store Financial Breakdown: Chỉ hiển thị khi đang xem Toàn chuỗi (không chọn riêng kho) -->
+  @if (!selectedStore()) {
+    <div class="fin-card" style="margin-bottom:20px">
+      <div class="fin-card-header">
+        <div>
+          <h3>Hiệu quả Tài chính theo Cửa hàng / Chi nhánh</h3>
+          <p class="fin-card-sub">Nhấn vào một chi nhánh để lọc xem riêng P&amp;L và sổ cái của cửa hàng đó</p>
+        </div>
+        <span class="fin-tag">{{ rep.stores.length }} chi nhánh</span>
       </div>
-      <span class="fin-tag">{{ rep.stores.length }} chi nhánh</span>
-    </div>
 
-    <div class="admin-table-wrap" style="border:none">
-      <table class="admin-table fin-store-table">
-        <thead>
-          <tr>
-            <th>Cửa hàng / Chi nhánh</th>
-            <th class="is-num">Đơn (Hợp lệ / Hủy)</th>
-            <th class="is-num">DT gộp</th>
-            <th class="is-num">Chiết khấu</th>
-            <th class="is-num">DT thuần</th>
-            <th class="is-num">Đã thu / Chờ thu</th>
-            <th class="is-num">LN ước tính</th>
-            <th class="is-num">Tỷ trọng</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (st of rep.stores; track st.storeName) {
-            <tr
-              class="fin-store-row"
-              [class.is-selected]="selectedStore() === st.storeName"
-              (click)="toggleStoreRow(st)"
-            >
-              <td>
-                <div class="fin-store-name">
-                  <span>{{ st.storeName }}</span>
-                  @if (st.isHeadquarter) {
-                    <span class="fin-hq-badge">Trung tâm</span>
-                  }
-                </div>
-                @if (st.address) {
-                  <div class="fin-store-addr">{{ st.address }}</div>
-                }
-              </td>
-              <td class="is-num">
-                <strong>{{ st.orderCount }}</strong>
-                <span class="fin-muted"> / {{ st.cancelledCount }}</span>
-              </td>
-              <td class="is-num">{{ formatPrice(st.grossRevenue) }}</td>
-              <td class="is-num fin-minus">-{{ formatPrice(st.totalDiscount) }}</td>
-              <td class="is-num">
-                <strong class="fin-net">{{ formatPrice(st.netRevenue) }}</strong>
-                <div class="fin-muted">AOV {{ formatPrice(st.avgOrderValue) }}</div>
-              </td>
-              <td class="is-num">
-                <div class="fin-collected">{{ formatPrice(st.collectedAmount) }}</div>
-                <div class="fin-pending">Chờ: {{ formatPrice(st.pendingAmount) }}</div>
-              </td>
-              <td class="is-num">
-                <strong class="fin-profit-txt">{{ formatPrice(st.estimatedProfit) }}</strong>
-                <div class="fin-muted">Biên {{ st.profitMargin }}%</div>
-              </td>
-              <td class="is-num">
-                <div class="fin-share-wrap">
-                  <span>{{ st.revenueShare }}%</span>
-                  <div class="fin-share-bar">
-                    <div class="fin-share-fill" [style.width.%]="st.revenueShare"></div>
-                  </div>
-                </div>
-              </td>
+      <div class="admin-table-wrap" style="border:none">
+        <table class="admin-table fin-store-table">
+          <thead>
+            <tr>
+              <th>Cửa hàng / Chi nhánh</th>
+              <th class="is-num">Đơn (Hợp lệ / Hủy)</th>
+              <th class="is-num">DT gộp</th>
+              <th class="is-num">Chiết khấu</th>
+              <th class="is-num">DT thuần</th>
+              <th class="is-num">Đã thu / Chờ thu</th>
+              <th class="is-num">LN ước tính</th>
+              <th class="is-num">Tỷ trọng</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @for (st of rep.stores; track st.storeName) {
+              <tr
+                class="fin-store-row"
+                [class.is-selected]="selectedStore() === st.storeName"
+                (click)="toggleStoreRow(st)"
+              >
+                <td>
+                  <div class="fin-store-name">
+                    <span>{{ st.storeName }}</span>
+                    @if (st.isHeadquarter) {
+                      <span class="fin-hq-badge">Trung tâm</span>
+                    }
+                  </div>
+                  @if (st.address) {
+                    <div class="fin-store-addr">{{ st.address }}</div>
+                  }
+                </td>
+                <td class="is-num">
+                  <strong>{{ st.orderCount }}</strong>
+                  <span class="fin-muted"> / {{ st.cancelledCount }}</span>
+                </td>
+                <td class="is-num">{{ formatPrice(st.grossRevenue) }}</td>
+                <td class="is-num fin-minus">-{{ formatPrice(st.totalDiscount) }}</td>
+                <td class="is-num">
+                  <strong class="fin-net">{{ formatPrice(st.netRevenue) }}</strong>
+                  <div class="fin-muted">AOV {{ formatPrice(st.avgOrderValue) }}</div>
+                </td>
+                <td class="is-num">
+                  <div class="fin-collected">{{ formatPrice(st.collectedAmount) }}</div>
+                  <div class="fin-pending">Chờ: {{ formatPrice(st.pendingAmount) }}</div>
+                </td>
+                <td class="is-num">
+                  <strong class="fin-profit-txt">{{ formatPrice(st.estimatedProfit) }}</strong>
+                  <div class="fin-muted">Biên {{ st.profitMargin }}%</div>
+                </td>
+                <td class="is-num">
+                  <div class="fin-share-wrap">
+                    <span>{{ st.revenueShare }}%</span>
+                    <div class="fin-share-bar">
+                      <div class="fin-share-fill" [style.width.%]="st.revenueShare"></div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
+  }
 
   <!-- Financial Ledger -->
   <div class="fin-card">
     <div class="fin-card-header fin-ledger-head">
       <div>
         <h3>Sổ cái Giao dịch Tài chính</h3>
-        <p class="fin-card-sub">Chi tiết tạm tính, giảm giá, phí vận chuyển, thực thu và lợi nhuận ước tính từng đơn</p>
       </div>
 
       <div class="fin-ledger-tools">
         <div class="fin-time-pills">
-          <button type="button" class="fin-pill-btn" [class.is-active]="txFilter() === 'all'" (click)="txFilter.set('all')">Tất cả</button>
-          <button type="button" class="fin-pill-btn" [class.is-active]="txFilter() === 'collected'" (click)="txFilter.set('collected')">Đã thu</button>
-          <button type="button" class="fin-pill-btn" [class.is-active]="txFilter() === 'pending'" (click)="txFilter.set('pending')">Chờ thu</button>
-          <button type="button" class="fin-pill-btn" [class.is-active]="txFilter() === 'cancelled'" (click)="txFilter.set('cancelled')">Đã hủy</button>
+          <button type="button" class="fin-pill-btn" [class.is-active]="txFilter() === 'all'" (click)="onTxFilterChange('all')">Tất cả</button>
+          <button type="button" class="fin-pill-btn" [class.is-active]="txFilter() === 'collected'" (click)="onTxFilterChange('collected')">Đã thu</button>
+          <button type="button" class="fin-pill-btn" [class.is-active]="txFilter() === 'pending'" (click)="onTxFilterChange('pending')">Chờ thu</button>
+          <button type="button" class="fin-pill-btn" [class.is-active]="txFilter() === 'cancelled'" (click)="onTxFilterChange('cancelled')">Đã hủy</button>
         </div>
         <input
           type="text"
           class="fin-tx-search"
           placeholder="Tìm mã đơn, khách, chi nhánh..."
           [ngModel]="txSearch()"
-          (ngModelChange)="txSearch.set($event)"
+          (ngModelChange)="onTxSearchChange($event)"
         />
       </div>
     </div>
@@ -317,7 +461,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (tx of filteredTransactions(); track tx._id) {
+            @for (tx of pagedTransactions(); track tx._id) {
               <tr>
                 <td>
                   <code class="fin-order-code">#{{ tx.orderCode }}</code>
@@ -347,7 +491,54 @@
               </tr>
             }
           </tbody>
+          <tfoot>
+            <tr class="fin-ledger-total-row">
+              <td colspan="4" class="fin-total-title">
+                <strong>TỔNG CỘNG HỢP LỆ ({{ ledgerTotals().count }} GIAO DỊCH)</strong>
+              </td>
+              <td class="is-num"><strong>{{ formatPrice(ledgerTotals().subtotal) }}</strong></td>
+              <td class="is-num fin-minus"><strong>-{{ formatPrice(ledgerTotals().discount) }}</strong></td>
+              <td class="is-num"><strong>{{ formatPrice(ledgerTotals().shipping) }}</strong></td>
+              <td class="is-num"><strong>{{ formatPrice(ledgerTotals().total) }}</strong></td>
+              <td class="is-num fin-profit-txt"><strong>{{ formatPrice(ledgerTotals().profit) }}</strong></td>
+              <td></td>
+            </tr>
+          </tfoot>
         </table>
+      </div>
+
+      <!-- Phân trang Sổ cái Tài chính chuẩn nghiệp vụ Kế toán -->
+      <div class="fin-pagination-bar">
+        <div class="fin-page-info">
+          Hiển thị <strong>{{ (page() - 1) * pageSize() + 1 }}</strong> - <strong>{{ mathMin(page() * pageSize(), filteredTransactions().length) }}</strong> trên tổng <strong>{{ filteredTransactions().length }}</strong> giao dịch
+        </div>
+
+        <div class="fin-page-controls">
+          <div class="fin-page-size-wrap">
+            <span class="fin-muted">Số dòng:</span>
+            <select [ngModel]="pageSize()" (ngModelChange)="setPageSize($event)" class="fin-page-size-select">
+              <option [value]="10">10 dòng/trang</option>
+              <option [value]="25">25 dòng/trang</option>
+              <option [value]="50">50 dòng/trang</option>
+            </select>
+          </div>
+
+          <div class="fin-page-buttons">
+            <button type="button" class="fin-page-btn" [disabled]="page() <= 1" (click)="setPage(1)" title="Trang đầu">
+              &laquo;
+            </button>
+            <button type="button" class="fin-page-btn" [disabled]="page() <= 1" (click)="setPage(page() - 1)" title="Trang trước">
+              &lsaquo;
+            </button>
+            <span class="fin-page-cur">Trang <strong>{{ page() }}</strong> / {{ totalPages() }}</span>
+            <button type="button" class="fin-page-btn" [disabled]="page() >= totalPages()" (click)="setPage(page() + 1)" title="Trang sau">
+              &rsaquo;
+            </button>
+            <button type="button" class="fin-page-btn" [disabled]="page() >= totalPages()" (click)="setPage(totalPages())" title="Trang cuối">
+              &raquo;
+            </button>
+          </div>
+        </div>
       </div>
     }
   </div>

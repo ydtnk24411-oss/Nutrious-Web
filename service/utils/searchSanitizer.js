@@ -41,25 +41,40 @@ async function recordSearchLogSafely({ keyword, resultCount = 0, customerId = nu
 
     const normalized = cleanKw.toLowerCase();
 
-    // Chống spam: kiểm tra trong vòng 15 giây qua đã có lượt tìm trùng lặp chưa
+    // Chống spam và hợp nhất từ gõ dở: kiểm tra trong vòng 15 giây qua
     const fifteenSecondsAgo = new Date(Date.now() - 15000);
-    const spamFilter = {
-      normalizedKeyword: normalized,
+    const sessionFilter = {
       createdAt: { $gte: fifteenSecondsAgo },
     };
 
     if (sessionId && customerId) {
-      spamFilter.$or = [{ sessionId }, { customerId }];
+      sessionFilter.$or = [{ sessionId }, { customerId }];
     } else if (sessionId) {
-      spamFilter.sessionId = sessionId;
+      sessionFilter.sessionId = sessionId;
     } else if (customerId) {
-      spamFilter.customerId = customerId;
+      sessionFilter.customerId = customerId;
+    } else {
+      sessionFilter.normalizedKeyword = normalized;
     }
 
-    const recent = await SearchLog.findOne(spamFilter);
+    const recent = await SearchLog.findOne(sessionFilter).sort({ createdAt: -1 });
     if (recent) {
-      // Đã ghi nhận lượt tìm này gần đây từ cùng người dùng/phiên, bỏ qua để chống spam count
-      return null;
+      // 1. Trùng lặp hoàn toàn trong 15s: bỏ qua để chống spam
+      if (recent.normalizedKeyword === normalized) {
+        return null;
+      }
+      // 2. Tiền tố gõ dở: từ mới mở rộng từ cũ (ví dụ: 'com' -> 'combo') -> cập nhật từ hoàn chỉnh
+      if (normalized.startsWith(recent.normalizedKeyword)) {
+        recent.keyword = cleanKw;
+        recent.normalizedKeyword = normalized;
+        recent.resultCount = Number(resultCount) || 0;
+        recent.createdAt = new Date();
+        return await recent.save();
+      }
+      // 3. Xóa lùi / backspace ngắn hơn từ vừa tìm: bỏ qua
+      if (recent.normalizedKeyword.startsWith(normalized)) {
+        return null;
+      }
     }
 
     return await SearchLog.create({

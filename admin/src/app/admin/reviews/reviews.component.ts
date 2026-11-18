@@ -30,6 +30,7 @@ export class AdminReviewsComponent implements OnInit {
   searchQuery = signal('');
   selectedRating = signal<number | 'all'>('all');
   selectedStatus = signal<'all' | 'visible' | 'hidden'>('all');
+  selectedReplyStatus = signal<'all' | 'pending' | 'replied'>('all');
   selectedSort = signal<'newest' | 'oldest'>('newest');
 
   // Pagination
@@ -57,6 +58,7 @@ export class AdminReviewsComponent implements OnInit {
     if (this.searchQuery()) params['search'] = this.searchQuery();
     if (this.selectedRating() !== 'all') params['rating'] = this.selectedRating();
     if (this.selectedStatus() !== 'all') params['status'] = this.selectedStatus();
+    if (this.selectedReplyStatus() !== 'all') params['replyStatus'] = this.selectedReplyStatus();
     if (this.selectedSort()) params['sort'] = this.selectedSort();
 
     this.reviewApi.getAll(params).subscribe({
@@ -89,6 +91,20 @@ export class AdminReviewsComponent implements OnInit {
   onFilterChange(): void {
     this.page.set(1);
     this.loadReviews();
+  }
+
+  filterUnreplied(): void {
+    this.selectedReplyStatus.set(this.selectedReplyStatus() === 'pending' ? 'all' : 'pending');
+    this.onFilterChange();
+  }
+
+  resetFilters(): void {
+    this.searchQuery.set('');
+    this.selectedRating.set('all');
+    this.selectedStatus.set('all');
+    this.selectedReplyStatus.set('all');
+    this.selectedSort.set('newest');
+    this.onFilterChange();
   }
 
   openReplyModal(item: AdminReviewItem): void {
@@ -130,6 +146,29 @@ export class AdminReviewsComponent implements OnInit {
       return item.user.avatar;
     }
     return '';
+  }
+
+  copyToast = signal('');
+
+  filter5StarSocialProof(): void {
+    this.selectedRating.set(5);
+    this.selectedStatus.set('visible');
+    this.onFilterChange();
+  }
+
+  copySocialProof(item: AdminReviewItem): void {
+    const quote = item.content || item.title || 'Sản phẩm tươi ngon tuyệt vời!';
+    const user = item.userName || 'Khách hàng';
+    const prod = item.productName || 'Nông sản sạch Evergreen Mart';
+    const text = `“${quote}”\n- ${user} chia sẻ trải nghiệm về ${prod} (Đánh giá ${item.rating}/5 sao tại Evergreen Mart)`;
+
+    navigator.clipboard.writeText(text).then(() => {
+      this.copyToast.set(`Đã sao chép tư liệu Social Proof 5 sao của ${user} vào Clipboard!`);
+      setTimeout(() => this.copyToast.set(''), 3500);
+    }).catch(() => {
+      this.copyToast.set(`Đã trích xuất tư liệu truyền thông của ${user}!`);
+      setTimeout(() => this.copyToast.set(''), 3500);
+    });
   }
 
   toggleHideReview(item: AdminReviewItem): void {

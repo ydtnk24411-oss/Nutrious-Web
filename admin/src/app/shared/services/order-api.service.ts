@@ -48,6 +48,8 @@ export interface ApiOrder {
   estimatedDeliveryTime?: string;
   shippingMethod: 'pickup' | 'delivery';
   shippingAddress: string;
+  warehouseId?: string;
+  storeName?: string;
   pickupStore?: { name?: string; address?: string } | null;
   deliveryTimeSlot?: string;
   hasNonRefundableItems?: boolean;

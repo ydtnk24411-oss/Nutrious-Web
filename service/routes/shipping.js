@@ -1,13 +1,14 @@
 const router = require('express').Router();
 const ShippingConfig = require('../models/ShippingConfig');
 const { protect, adminOnly } = require('../middleware/auth');
+const { cacheMiddleware, clearCache } = require('../utils/cache');
 const {
   getOrCreateShippingConfig,
   calculateShipping,
 } = require('../utils/shippingCalculator');
 
-// GET /api/shipping/config — public (Khách hàng và Admin đều lấy được thông tin kho)
-router.get('/config', async (req, res, next) => {
+// GET /api/shipping/config - public (Khách hàng và Admin đều lấy được thông tin kho)
+router.get('/config', cacheMiddleware(60), async (req, res, next) => {
   try {
     const config = await getOrCreateShippingConfig();
     res.json({ success: true, data: config });
@@ -16,7 +17,20 @@ router.get('/config', async (req, res, next) => {
   }
 });
 
-// PUT /api/shipping/config — admin only (Admin cập nhật vị trí kho & chính sách giá)
+// GET /api/shipping/warehouses - public danh sách tất cả các kho / chi nhánh
+router.get('/warehouses', cacheMiddleware(60), async (req, res, next) => {
+  try {
+    const config = await getOrCreateShippingConfig();
+    const warehouses = config.warehouses && config.warehouses.length > 0
+      ? config.warehouses
+      : [];
+    res.json({ success: true, data: warehouses });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PUT /api/shipping/config - admin only (Admin cập nhật vị trí kho & chính sách giá)
 router.put('/config', protect, adminOnly, async (req, res, next) => {
   try {
     const { warehouse, distanceTiers, maxDeliveryRadiusKm, orderDiscounts, foodPreservationPolicy } = req.body;
@@ -47,16 +61,17 @@ router.put('/config', protect, adminOnly, async (req, res, next) => {
     }
 
     await config.save();
+    clearCache('shipping');
     res.json({ success: true, message: 'Cập nhật cấu hình vận chuyển thành công.', data: config });
   } catch (err) {
     next(err);
   }
 });
 
-// POST /api/shipping/calculate — public (Tính toán phí ship theo tọa độ thực tế & OSRM)
+// POST /api/shipping/calculate - public (Tính toán phí ship theo tọa độ thực tế & OSRM)
 router.post('/calculate', async (req, res, next) => {
   try {
-    const { lat, lng, subtotal = 0 } = req.body;
+    const { lat, lng, subtotal = 0, loyaltyTier = '' } = req.body;
 
     if (typeof lat !== 'number' || typeof lng !== 'number') {
       return res.status(400).json({
@@ -73,7 +88,7 @@ router.post('/calculate', async (req, res, next) => {
       });
     }
 
-    const result = await calculateShipping(lat, lng, Number(subtotal) || 0);
+    const result = await calculateShipping(lat, lng, Number(subtotal) || 0, null, loyaltyTier);
     res.json({ success: true, data: result });
   } catch (err) {
     next(err);

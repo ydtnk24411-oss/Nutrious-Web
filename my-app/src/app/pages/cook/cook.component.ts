@@ -248,7 +248,15 @@ export class CookComponent implements OnInit {
   protected cart = inject(CartService);
   private productApi = inject(ProductApiService);
   private api = inject(ApiService);
-  unitOptions = signal<CookUnitOption[]>([]);
+  unitOptions = signal<CookUnitOption[]>([
+    { value: 'g', label: 'g' },
+    { value: 'kg', label: 'kg' },
+    { value: 'quả', label: 'quả' },
+    { value: 'củ', label: 'củ' },
+    { value: 'bó', label: 'bó' },
+    { value: 'gói', label: 'gói' },
+    { value: 'phần', label: 'phần' },
+  ]);
 
   // ── Signals ──────────────────────────────────────────────
   inputText = signal('');
@@ -330,7 +338,10 @@ export class CookComponent implements OnInit {
     }>('/recipes').subscribe({
       next: (res) => {
         this.recipesDb.set(Array.isArray(res?.data) ? res.data : []);
-        this.unitOptions.set(Array.isArray(res?.config?.unitOptions) ? res.config.unitOptions : []);
+        const apiUnits = res?.config?.unitOptions;
+        if (Array.isArray(apiUnits) && apiUnits.length > 0) {
+          this.unitOptions.set(apiUnits);
+        }
         this.categoryHints.set(res?.config?.categoryHints || {});
         this.quickIngredients.set(Array.isArray(res?.config?.quickIngredients) ? res.config.quickIngredients : []);
         this.recipesLoading.set(false);

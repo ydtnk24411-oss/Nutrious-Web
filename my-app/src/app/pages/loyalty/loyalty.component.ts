@@ -33,6 +33,36 @@ export class LoyaltyComponent implements OnInit {
     );
   });
 
+  readonly spent = computed(() => {
+    const user = this.cart.currentUser();
+    return this.loyalty.totalSpent() || user?.totalSpent || 0;
+  });
+
+  readonly nextTier = computed(() => {
+    const current = this.userTier();
+    const configs = this.loyalty.tierConfigs;
+    const idx = configs.findIndex((t) => t.tier === current.tier);
+    if (idx >= 0 && idx < configs.length - 1) {
+      return configs[idx + 1];
+    }
+    return null;
+  });
+
+  readonly neededSpent = computed(() => {
+    const next = this.nextTier();
+    if (!next) return 0;
+    return Math.max(0, next.minSpent - this.spent());
+  });
+
+  readonly progressPercent = computed(() => {
+    const next = this.nextTier();
+    if (!next) return 100;
+    const current = this.userTier();
+    const span = Math.max(1, next.minSpent - current.minSpent);
+    const progress = Math.max(0, this.spent() - current.minSpent);
+    return Math.min(100, Math.round((progress / span) * 100));
+  });
+
   readonly userTransactions = computed(() => {
     return this.loyalty.transactions();
   });

@@ -1,9 +1,26 @@
 <div class="ord-page">
+  <!-- Cảnh báo khẩn cấp duyệt QR (Chỉ dành cho Admin / Quản lý cửa hàng) -->
+  @if ((isAdmin() || isManager()) && pendingQrCount() > 0) {
+    <div class="ord-urgent-banner">
+      <div class="ord-urgent-main">
+        <span class="ord-urgent-badge">CẦN DUYỆT GẤP</span>
+        <div class="ord-urgent-text">
+          <strong>Có {{ pendingQrCount() }} đơn hàng VietQR đang chờ đối soát &amp; xác nhận thanh toán</strong>
+          <span>Vui lòng kiểm tra biến động số dư ngân hàng và xác nhận tiền vào để tiến hành đóng gói giao hàng.</span>
+        </div>
+      </div>
+      <button type="button" class="ord-urgent-action" (click)="filterPendingQr()" title="Lọc các đơn hàng cần duyệt QR">
+        <span>Xem và Duyệt ngay</span>
+        <span class="ord-urgent-count">{{ pendingQrCount() }}</span>
+      </button>
+    </div>
+  }
+
   <!-- Top Filter & Search Panel (Shopee / TikTok Seller Style) -->
   <section class="ord-panel">
     <!-- Status Tabs with Bottom Underline -->
     <nav class="ord-tabs" aria-label="Trạng thái đơn hàng">
-      <button type="button" class="ord-tab" [class.is-active]="status() === ''" (click)="onStatus('')">
+      <button type="button" class="ord-tab" [class.is-active]="status() === '' && !qrOnlyFilter()" (click)="onStatus('')">
         <span>Tất cả</span>
         <span class="ord-tab__count">{{ statusCounts()['all'] !== undefined ? statusCounts()['all'] : total() }}</span>
       </button>
@@ -11,7 +28,7 @@
         <button
           type="button"
           class="ord-tab"
-          [class.is-active]="status() === st.value"
+          [class.is-active]="status() === st.value && !qrOnlyFilter()"
           (click)="onStatus(st.value)"
         >
           <span>{{ st.label }}</span>
@@ -20,6 +37,19 @@
           } @else if (status() === st.value) {
             <span class="ord-tab__count">{{ total() }}</span>
           }
+        </button>
+      }
+      <!-- Tab Lọc Duyệt VietQR (Chỉ dành cho Admin / Quản lý kiểm tra tài khoản ngân hàng) -->
+      @if (isAdmin() || isManager()) {
+        <button
+          type="button"
+          class="ord-tab ord-tab--qr"
+          [class.is-active]="qrOnlyFilter()"
+          (click)="toggleQrFilter()"
+          title="Bấm để lọc nhanh các đơn hàng chuyển khoản VietQR đang chờ xác nhận tiền"
+        >
+          <span>Chờ duyệt QR</span>
+          <span class="ord-tab__count ord-tab__count--qr" [class.has-pending]="pendingQrCount() > 0">{{ pendingQrCount() }}</span>
         </button>
       }
     </nav>
@@ -188,6 +218,29 @@
           </div>
         }
       </div>
+
+      <!-- Chi nhánh / Kho xuất hàng filter (cho Admin, Sales, Warehouse) -->
+      @if (!isManager()) {
+        <div class="ord-pop-wrap">
+          <select
+            class="ord-pill-btn"
+            style="border:1.5px solid #d9e5cf;border-radius:10px;font-weight:700;font-size:12.5px;padding:6px 12px;background:#fff;color:#10321c;cursor:pointer"
+            [ngModel]="storeFilter()"
+            (ngModelChange)="onStoreFilter($event)"
+            title="Lọc đơn hàng theo kho điều phối"
+          >
+            @for (w of warehouseList; track w.id) {
+              <option [value]="w.id">{{ w.name }}</option>
+            }
+          </select>
+        </div>
+      } @else {
+        <!-- Cửa hàng trưởng: Badge cố định chi nhánh phụ trách -->
+        <div style="display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;border:1.5px solid #86efac;color:#166534;font-weight:700;font-size:12.5px;padding:6px 12px;border-radius:10px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>{{ currentManagerStoreName() }}</span>
+        </div>
+      }
     </div>
 
     <!-- Summary Strip -->
@@ -266,6 +319,7 @@
                   <span class="ord-info-dot" title="Phương thức và trạng thái đối soát thanh toán">i</span>
                 </span>
               </th>
+              <th>Kho xuất hàng</th>
               <th class="ord-th-status">
                 <button type="button" class="ord-th-btn ord-th-btn--center" [class.is-active]="sortBy() === 'status'" (click)="toggleSort('status')">
                   <span>Trạng thái</span>
@@ -343,6 +397,14 @@
                 <td class="ord-td-pay">
                   <span class="ord-pay-type" [class.is-vietqr]="o.paymentMethod === 'bank_transfer'" [class.is-cod]="o.paymentMethod !== 'bank_transfer'">
                     {{ o.paymentMethod === 'bank_transfer' ? 'VietQR' : 'COD' }}
+                  </span>
+                </td>
+
+                <!-- Scrollable Cell: Warehouse -->
+                <td class="ord-td-wh">
+                  <span class="ord-wh-pill" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;white-space:nowrap">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    {{ getOrderWarehouseName(o) }}
                   </span>
                 </td>
 
@@ -493,6 +555,12 @@
             {{ confirmingPayment() ? 'Đang duyệt...' : 'Xác nhận đã nhận tiền VietQR' }}
           </button>
         }
+
+        @if (isWarehouse() && ord.status === 'pending') {
+          <div style="font-size:12px;color:#b45309;background:#fef3c7;padding:8px 10px;border-radius:6px;border:1px solid #fde68a;margin-top:8px">
+            Đơn hàng đang ở bước Chờ xử lý. Nghiệp vụ Xác nhận đơn thuộc thẩm quyền của Nhân viên Bán hàng (Sales) hoặc Quản lý. Kho sẽ tiếp nhận đóng gói khi đơn chuyển sang "Đã xác nhận".
+          </div>
+        }
       </div>
 
       <div class="ord-drawer-box">
@@ -530,6 +598,10 @@
               <dd>{{ ord.pickupStore.name || ord.pickupStore.address }}</dd>
             </div>
           }
+          <div>
+            <dt>Kho điều phối xuất hàng</dt>
+            <dd style="font-weight:700;color:#166534">{{ getOrderWarehouseName(ord) }}</dd>
+          </div>
           @if (ord.note) {
             <div>
               <dt>Ghi chú</dt>
@@ -584,23 +656,36 @@
 
       @if (ord.statusHistory && ord.statusHistory.length > 0) {
         <div class="ord-drawer-box">
-          <h4>Nhật ký thao tác (Audit Log)</h4>
-          <div class="ord-history-list" style="display:flex;flex-direction:column;gap:8px;font-size:12px">
-            @for (h of ord.statusHistory; track $index) {
-              <div style="padding:8px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
-                  <strong style="color:#10321c">{{ statusLabel[h.status] || h.status }}</strong>
-                  <span style="color:#64748b">{{ h.updatedAt | date:'dd/MM/yyyy HH:mm' }}</span>
-                </div>
-                <div style="color:#334155">
-                  Thực hiện: <strong>{{ h.updatedBy }}</strong> <em style="color:#64748b">({{ h.role || 'Staff' }})</em>
-                </div>
-                @if (h.note) {
-                  <div style="color:#64748b;margin-top:2px">{{ h.note }}</div>
-                }
-              </div>
-            }
+          <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none" (click)="toggleAuditLog()">
+            <h4 style="margin:0;display:flex;align-items:center;gap:6px">
+              <span>Nhật ký thao tác (Audit Log)</span>
+              <span style="font-size:11px;background:#e2e8f0;color:#334155;padding:1px 6px;border-radius:10px">{{ ord.statusHistory.length }}</span>
+            </h4>
+            <button type="button" class="admin-btn-icon" style="border:none;background:none;font-size:12px;color:#166534;font-weight:600;display:inline-flex;align-items:center;gap:4px">
+              <span>{{ auditLogOpen() ? 'Thu gọn' : 'Mở rộng' }}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" [style.transform]="auditLogOpen() ? 'rotate(180deg)' : 'none'" style="transition:transform 0.2s">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
           </div>
+          @if (auditLogOpen()) {
+            <div class="ord-history-list" style="display:flex;flex-direction:column;gap:8px;font-size:12px;margin-top:12px">
+              @for (h of ord.statusHistory; track $index) {
+                <div style="padding:8px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+                    <strong style="color:#10321c">{{ statusLabel[h.status] || h.status }}</strong>
+                    <span style="color:#64748b">{{ h.updatedAt | date:'dd/MM/yyyy HH:mm' }}</span>
+                  </div>
+                  <div style="color:#334155">
+                    Thực hiện: <strong>{{ h.updatedBy }}</strong> <em style="color:#64748b">({{ h.role || 'Staff' }})</em>
+                  </div>
+                  @if (h.note) {
+                    <div style="color:#64748b;margin-top:2px">{{ h.note }}</div>
+                  }
+                </div>
+              }
+            </div>
+          }
         </div>
       }
     </div>

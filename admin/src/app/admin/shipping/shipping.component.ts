@@ -138,7 +138,7 @@ export class AdminShippingComponent implements OnInit, OnDestroy {
       className: 'admin-wh-pin',
       html: `
         <div style="background:#15803d;color:#fff;border:3px solid #fff;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(0,0,0,0.35);font-size:18px;cursor:grab;">
-          🏭
+          
         </div>
       `,
       iconSize: [38, 38],

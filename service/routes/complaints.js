@@ -1,24 +1,43 @@
 const router = require('express').Router();
 const Complaint = require('../models/Complaint');
 const Order = require('../models/Order');
-const { protect, staffOnly, hasRole, optionalAuth } = require('../middleware/auth');
+const { protect, staffOnly, hasRole, optionalAuth, getScopedStoreId } = require('../middleware/auth');
 
-// GET /api/complaints — list for admin
-router.get('/', protect, staffOnly, async (req, res, next) => {
+// GET /api/complaints - list for CSKH, Store Manager & Admin
+router.get('/', protect, hasRole('admin', 'manager', 'sales', 'support'), async (req, res, next) => {
   try {
     const { status, type, search, page = 1, limit = 50 } = req.query;
-    const filter = {};
+    const conditions = [];
 
-    if (status && status !== 'all') filter.status = status;
-    if (type && type !== 'all') filter.type = type;
-    if (search) {
-      filter.$or = [
-        { complaintCode: { $regex: search, $options: 'i' } },
-        { customerName: { $regex: search, $options: 'i' } },
-        { customerPhone: { $regex: search, $options: 'i' } },
-        { title: { $regex: search, $options: 'i' } },
-      ];
+    // Phân quyền theo Chi nhánh phụ trách
+    const scopedStore = getScopedStoreId(req);
+    let countScope = {};
+    if (scopedStore && scopedStore !== 'all' && scopedStore !== 'ALL') {
+      const storeOrderIds = await Order.find({ warehouseId: scopedStore }).distinct('_id');
+      const storeCondition = {
+        $or: [
+          { warehouseId: scopedStore },
+          { order: { $in: storeOrderIds } },
+        ],
+      };
+      conditions.push(storeCondition);
+      countScope = storeCondition;
     }
+
+    if (status && status !== 'all') conditions.push({ status });
+    if (type && type !== 'all') conditions.push({ type });
+    if (search) {
+      conditions.push({
+        $or: [
+          { complaintCode: { $regex: search, $options: 'i' } },
+          { customerName: { $regex: search, $options: 'i' } },
+          { customerPhone: { $regex: search, $options: 'i' } },
+          { title: { $regex: search, $options: 'i' } },
+        ],
+      });
+    }
+
+    const filter = conditions.length > 0 ? { $and: conditions } : {};
 
     const [
       complaints,
@@ -36,10 +55,10 @@ router.get('/', protect, staffOnly, async (req, res, next) => {
         .populate('order', 'orderCode total status createdAt')
         .populate('assignedTo', 'name email'),
       Complaint.countDocuments(filter),
-      Complaint.countDocuments({ status: 'pending' }),
-      Complaint.countDocuments({ status: 'processing' }),
-      Complaint.countDocuments({ status: 'resolved' }),
-      Complaint.countDocuments({ status: 'rejected' }),
+      Complaint.countDocuments({ ...countScope, status: 'pending' }),
+      Complaint.countDocuments({ ...countScope, status: 'processing' }),
+      Complaint.countDocuments({ ...countScope, status: 'resolved' }),
+      Complaint.countDocuments({ ...countScope, status: 'rejected' }),
     ]);
 
     const stats = {
@@ -48,15 +67,16 @@ router.get('/', protect, staffOnly, async (req, res, next) => {
       processing: processingCount,
       resolved: resolvedCount,
       rejected: rejectedCount,
+      scopedStore: scopedStore || 'all',
     };
 
-    res.json({ success: true, data: complaints, stats, total });
+    res.json({ success: true, data: complaints, stats, total, scopedStore: scopedStore || 'all' });
   } catch (err) {
     next(err);
   }
 });
 
-// GET /api/complaints/my — list complaints for logged in customer
+// GET /api/complaints/my - list complaints for logged in customer
 router.get('/my', protect, async (req, res, next) => {
   try {
     const complaints = await Complaint.find({ customer: req.user._id })
@@ -68,7 +88,7 @@ router.get('/my', protect, async (req, res, next) => {
   }
 });
 
-// GET /api/complaints/track/:code — track complaint by code (public)
+// GET /api/complaints/track/:code - track complaint by code (public)
 router.get('/track/:code', async (req, res, next) => {
   try {
     const rawCode = String(req.params.code || '').trim();
@@ -92,8 +112,8 @@ router.get('/track/:code', async (req, res, next) => {
   }
 });
 
-// GET /api/complaints/:id — detail (admin/staff)
-router.get('/:id', protect, staffOnly, async (req, res, next) => {
+// GET /api/complaints/:id - detail (admin/staff)
+router.get('/:id', protect, hasRole('admin', 'manager', 'sales', 'support'), async (req, res, next) => {
   try {
     const complaint = await Complaint.findById(req.params.id)
       .populate('customer', 'name email phone')
@@ -110,7 +130,7 @@ router.get('/:id', protect, staffOnly, async (req, res, next) => {
   }
 });
 
-// POST /api/complaints — create complaint
+// POST /api/complaints - create complaint
 router.post('/', optionalAuth, async (req, res, next) => {
   try {
     const { title, description, type = 'product', orderId, orderCode, customerName, customerPhone, customerEmail, images } = req.body;
@@ -145,8 +165,8 @@ router.post('/', optionalAuth, async (req, res, next) => {
   }
 });
 
-// PUT /api/complaints/:id — update resolution
-router.put('/:id', protect, hasRole('support', 'admin'), async (req, res, next) => {
+// PUT /api/complaints/:id - update resolution
+router.put('/:id', protect, hasRole('admin', 'support', 'cskh', 'sales', 'manager'), async (req, res, next) => {
   try {
     const { status, resolutionNote, assignedTo } = req.body;
     const complaint = await Complaint.findById(req.params.id);

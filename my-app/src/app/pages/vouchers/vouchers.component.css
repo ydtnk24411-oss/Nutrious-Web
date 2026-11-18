@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 .vouchers-page-wrap {
-  --voucher-canvas-bg: #f6f8f1;
+  --voucher-canvas-bg: #f6fbe9;
   background: var(--voucher-canvas-bg);
   min-height: calc(100vh - 180px);
 }
@@ -26,9 +26,9 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #1e4d32;
-  background: #e6f2e2;
-  border: 1px solid #cce0c4;
+  color: #203d0b;
+  background: #eff7d8;
+  border: 1px solid #d3dfb9;
   padding: 5px 14px;
   border-radius: 999px;
   margin-bottom: 10px;
@@ -38,13 +38,13 @@
   font-family: var(--font-display, inherit);
   font-size: clamp(24px, 3vw, 32px);
   font-weight: 800;
-  color: #1a3d22;
+  color: #203d0b;
   margin: 0 0 10px;
 }
 
 .vouchers-subtitle {
   font-size: 14.5px;
-  color: #546657;
+  color: #4f5d43;
   max-width: 650px;
   margin: 0 auto 18px;
   line-height: 1.6;
@@ -60,9 +60,9 @@
 .vouchers-nav-pill {
   padding: 8px 18px;
   border-radius: 999px;
-  border: 1.5px solid #d0dec8;
+  border: 1.5px solid #cbdba6;
   background: #fff;
-  color: #1a3d22;
+  color: #203d0b;
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
@@ -70,19 +70,20 @@
 }
 
 .vouchers-nav-pill:hover {
-  border-color: #1f5c39;
-  color: #1f5c39;
+  border-color: #6f9f18;
+  color: #203d0b;
+  background: #f7fbe9;
 }
 
 .vouchers-nav-pill--primary {
-  background: #1f5c39;
+  background: #203d0b;
   color: #fff;
-  border-color: #1f5c39;
+  border-color: #203d0b;
 }
 
 .vouchers-nav-pill--primary:hover {
-  background: #144026;
-  border-color: #144026;
+  background: #31540d;
+  border-color: #31540d;
   color: #fff;
 }
 
@@ -148,25 +149,25 @@
 .vouchers-tab {
   padding: 9px 22px;
   background: #fff;
-  border: 1.5px solid #d4e0cc;
+  border: 1.5px solid #cbdba6;
   border-radius: 999px;
   font-size: 13.5px;
   font-weight: 600;
-  color: #4f6051;
+  color: #4f5d43;
   cursor: pointer;
   transition: all 0.16s ease;
 }
 
 .vouchers-tab.active {
-  background: #1a4d30;
+  background: #203d0b;
   color: #fff;
-  border-color: #1a4d30;
-  box-shadow: 0 3px 10px rgba(26, 77, 48, 0.22);
+  border-color: #203d0b;
+  box-shadow: 0 3px 10px rgba(32, 61, 11, 0.22);
 }
 
 .vouchers-tab:hover:not(.active) {
-  border-color: #1a4d30;
-  color: #1a4d30;
+  border-color: #6f9f18;
+  color: #203d0b;
 }
 
 /* ── Loading ── */
@@ -198,35 +199,37 @@
   align-items: stretch;
 }
 
-/* Default theme variables */
+/* Default theme variables — đồng bộ bảng màu voucher trang chủ (#6f9f18, #e4a827, #e94d3b, #203d0b, #d8f56a) */
 .voucher-ticket {
-  --stub-bg: linear-gradient(155deg, #114b2f 0%, #1b6b43 100%);
-  --stub-accent: #145c38;
-  --stub-accent-hover: #0e4429;
-  --pill-bg: #e9f6ee;
-  --pill-ink: #114b2f;
-  --logo-ring: rgba(255, 255, 255, 0.26);
+  --stub-bg: #6f9f18;
+  --stub-ink: #ffffff;
+  --stub-kicker-ink: rgba(255, 255, 255, 0.88);
+  --stub-accent: #203d0b;
+  --stub-accent-hover: #31540d;
+  --pill-bg: #eff7d8;
+  --pill-ink: #31540d;
+  --logo-ring: rgba(255, 255, 255, 0.3);
 
   position: relative;
   display: flex;
   flex-direction: row;
   min-width: 0;
   background: #ffffff;
-  border: 1px solid #e3eade;
+  border: 1px solid #cbdba6;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(22, 48, 28, 0.055);
+  box-shadow: 5px 5px 0 #e2edc6;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .voucher-ticket:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 26px rgba(22, 48, 28, 0.11);
-  border-color: #c9d8be;
+  box-shadow: 6px 7px 0 #d8f56a;
+  border-color: #6f9f18;
 }
 
 .voucher-ticket.is-collected {
-  border-color: #9dd4b0;
+  border-color: #93b747;
 }
 
 .voucher-ticket.is-disabled {
@@ -234,64 +237,76 @@
   filter: grayscale(0.25);
 }
 
-/* Theme 1: Forest Emerald (Logo dark & leaf green match) */
+/* Theme 1: Leaf Green (#6f9f18 — đồng bộ coupon xanh trang chủ) */
 .voucher-theme--forest-emerald {
-  --stub-bg: linear-gradient(160deg, #0d4a2c 0%, #166840 100%);
-  --stub-accent: #125836;
-  --stub-accent-hover: #0c3d24;
-  --pill-bg: #e7f5ed;
-  --pill-ink: #0f4e2f;
-  --logo-ring: rgba(255, 255, 255, 0.28);
+  --stub-bg: #6f9f18;
+  --stub-ink: #ffffff;
+  --stub-kicker-ink: rgba(255, 255, 255, 0.88);
+  --stub-accent: #203d0b;
+  --stub-accent-hover: #31540d;
+  --pill-bg: #eff7d8;
+  --pill-ink: #31540d;
+  --logo-ring: rgba(255, 255, 255, 0.32);
 }
 
-/* Theme 2: Harvest Gold (Logo wheat & rising sun match) */
+/* Theme 2: Golden Honey (#e4a827 — đồng bộ coupon vàng trang chủ, chữ xanh đậm #203d0b tương phản cao) */
 .voucher-theme--harvest-gold {
-  --stub-bg: linear-gradient(160deg, #875306 0%, #b0700a 100%);
-  --stub-accent: #915a08;
-  --stub-accent-hover: #704304;
-  --pill-bg: #fef3d9;
-  --pill-ink: #854d0e;
-  --logo-ring: rgba(255, 248, 225, 0.34);
+  --stub-bg: #e4a827;
+  --stub-ink: #203d0b;
+  --stub-kicker-ink: rgba(32, 61, 11, 0.85);
+  --stub-accent: #203d0b;
+  --stub-accent-hover: #31540d;
+  --pill-bg: #fef3c7;
+  --pill-ink: #78350f;
+  --logo-ring: rgba(255, 255, 255, 0.52);
 }
 
-/* Theme 3: Orchard Olive (Logo upper leaf terrace match) */
+/* Theme 3: Orchard Olive (tông xanh oliu đậm hài hòa với #6f9f18) */
 .voucher-theme--orchard-olive {
-  --stub-bg: linear-gradient(160deg, #3a6112 0%, #4e8019 100%);
-  --stub-accent: #426d15;
-  --stub-accent-hover: #30510e;
+  --stub-bg: #5a8712;
+  --stub-ink: #ffffff;
+  --stub-kicker-ink: rgba(255, 255, 255, 0.88);
+  --stub-accent: #203d0b;
+  --stub-accent-hover: #31540d;
   --pill-bg: #eef6de;
   --pill-ink: #385c11;
-  --logo-ring: rgba(255, 255, 255, 0.28);
+  --logo-ring: rgba(255, 255, 255, 0.3);
 }
 
-/* Theme 4: Warm Terracotta (Ripe fruit & warm spice match) */
+/* Theme 4: Coral Red (#e94d3b — đồng bộ coupon đỏ san hô trang chủ) */
 .voucher-theme--warm-terracotta {
-  --stub-bg: linear-gradient(160deg, #9f3327 0%, #c04635 100%);
-  --stub-accent: #ac392b;
-  --stub-accent-hover: #872a20;
-  --pill-bg: #fdece9;
-  --pill-ink: #992b1e;
-  --logo-ring: rgba(255, 244, 240, 0.3);
+  --stub-bg: #e94d3b;
+  --stub-ink: #ffffff;
+  --stub-kicker-ink: rgba(255, 255, 255, 0.9);
+  --stub-accent: #203d0b;
+  --stub-accent-hover: #31540d;
+  --pill-bg: #fde8e8;
+  --pill-ink: #b91c1c;
+  --logo-ring: rgba(255, 255, 255, 0.35);
 }
 
-/* Theme 5: Lagoon Teal (Express cold-chain delivery match) */
+/* Theme 5: Botanical Emerald Moss */
 .voucher-theme--lagoon-teal {
-  --stub-bg: linear-gradient(160deg, #0d5b51 0%, #167a6c 100%);
-  --stub-accent: #0f675b;
-  --stub-accent-hover: #0a4b42;
-  --pill-bg: #e5f6f3;
-  --pill-ink: #0c5248;
-  --logo-ring: rgba(255, 255, 255, 0.28);
+  --stub-bg: #2d6a4f;
+  --stub-ink: #ffffff;
+  --stub-kicker-ink: rgba(255, 255, 255, 0.88);
+  --stub-accent: #203d0b;
+  --stub-accent-hover: #31540d;
+  --pill-bg: #e6f4ec;
+  --pill-ink: #1b4d37;
+  --logo-ring: rgba(255, 255, 255, 0.3);
 }
 
-/* Theme 6: Deep Pine (Deep evergreen shadow tone from logo) */
+/* Theme 6: Deep Forest (#203d0b — đồng bộ màu chữ & nút chính Evergreen) */
 .voucher-theme--deep-pine {
-  --stub-bg: linear-gradient(160deg, #173a22 0%, #265434 100%);
-  --stub-accent: #1b4428;
-  --stub-accent-hover: #122e1b;
-  --pill-bg: #e9f2ea;
-  --pill-ink: #173a22;
-  --logo-ring: rgba(255, 255, 255, 0.28);
+  --stub-bg: #203d0b;
+  --stub-ink: #ffffff;
+  --stub-kicker-ink: rgba(216, 245, 106, 0.9);
+  --stub-accent: #203d0b;
+  --stub-accent-hover: #31540d;
+  --pill-bg: #eff7d8;
+  --pill-ink: #203d0b;
+  --logo-ring: rgba(216, 245, 106, 0.35);
 }
 
 /* ── Left Ticket Stub ── */
@@ -300,7 +315,7 @@
   width: 118px;
   flex-shrink: 0;
   background: var(--stub-bg);
-  color: #ffffff;
+  color: var(--stub-ink);
   padding: 16px 10px;
   display: flex;
   flex-direction: column;
@@ -308,7 +323,7 @@
   justify-content: space-between;
   gap: 10px;
   text-align: center;
-  border-right: 2px dashed rgba(255, 255, 255, 0.48);
+  border-right: 2px dashed rgba(255, 255, 255, 0.65);
 }
 
 /* Top & bottom circular notches matching outer page background */
@@ -320,18 +335,18 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--voucher-canvas-bg, #f6f8f1);
+  background: var(--voucher-canvas-bg, #f6fbe9);
   z-index: 2;
 }
 
 .voucher-stub::before {
   top: -9px;
-  box-shadow: inset 0 -1px 0 #e3eade;
+  box-shadow: inset 0 -1px 0 #cbdba6;
 }
 
 .voucher-stub::after {
   bottom: -9px;
-  box-shadow: inset 0 1px 0 #e3eade;
+  box-shadow: inset 0 1px 0 #cbdba6;
 }
 
 /* Evergreen Mart Logo Medallion — nền trắng sáng + viền sáng chống chìm logo */
@@ -341,11 +356,11 @@
   padding: 4px;
   border-radius: 50%;
   background: var(--logo-ring);
-  border: 1px solid rgba(255, 255, 255, 0.36);
+  border: 1px solid rgba(255, 255, 255, 0.48);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+  box-shadow: 0 3px 10px rgba(32, 61, 11, 0.16);
 }
 
 .voucher-logo-disk {
@@ -353,7 +368,7 @@
   height: 100%;
   border-radius: 50%;
   background: #ffffff;
-  border: 1.5px solid rgba(212, 160, 23, 0.35);
+  border: 1.5px solid rgba(212, 160, 23, 0.4);
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -380,15 +395,15 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.84);
+  color: var(--stub-kicker-ink);
 }
 
 .voucher-stub-amount {
   font-size: 23px;
-  font-weight: 800;
+  font-weight: 900;
   line-height: 1.1;
   letter-spacing: -0.02em;
-  color: #ffffff;
+  color: var(--stub-ink);
 }
 
 .voucher-stub-tag {
@@ -397,7 +412,7 @@
   padding: 4px 11px;
   border-radius: 999px;
   background: #ffffff;
-  color: var(--stub-accent);
+  color: #203d0b;
   font-size: 9.5px;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -405,7 +420,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14);
+  box-shadow: 0 2px 6px rgba(32, 61, 11, 0.15);
 }
 
 /* ── Right Card Content ── */
@@ -468,7 +483,7 @@
   font-size: 14.5px;
   font-weight: 800;
   line-height: 1.35;
-  color: #182b1c;
+  color: #203d0b;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -487,11 +502,11 @@
 
 .voucher-min-order {
   font-weight: 700;
-  color: #1f3323;
+  color: #203d0b;
 }
 
 .voucher-expiry {
-  color: #6b7280;
+  color: #77816c;
   font-weight: 500;
 }
 
@@ -534,15 +549,15 @@
   justify-content: space-between;
   gap: 8px;
   padding: 6px 8px 6px 11px;
-  border: 1.5px dashed #d5e0cd;
+  border: 1px dashed #93b747;
   border-radius: 9px;
-  background: #fbfcf9;
+  background: #f7fbe9;
   transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .voucher-code-row.is-copied {
-  border-color: var(--stub-accent);
-  background: #f3f8f1;
+  border-color: #6f9f18;
+  background: #eff7d8;
 }
 
 .voucher-code-text {
@@ -550,7 +565,7 @@
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 0.05em;
-  color: var(--stub-accent);
+  color: #203d0b;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -563,24 +578,25 @@
   flex-shrink: 0;
   padding: 4px 10px;
   border-radius: 6px;
-  border: 1px solid #d6dfd0;
-  background: #ffffff;
-  color: #324435;
+  border: 1px solid #203d0b;
+  background: #d8f56a;
+  color: #203d0b;
   font-size: 11.5px;
-  font-weight: 600;
+  font-weight: 800;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .voucher-copy-btn:hover {
-  border-color: var(--stub-accent);
-  color: var(--stub-accent);
+  background: #cceb57;
+  border-color: #203d0b;
+  color: #203d0b;
 }
 
 .voucher-copy-btn.is-copied {
-  background: var(--stub-accent);
-  border-color: var(--stub-accent);
-  color: #ffffff;
+  background: #203d0b;
+  border-color: #203d0b;
+  color: #d8f56a;
 }
 
 /* ── Bottom Actions ── */
@@ -609,20 +625,20 @@
 }
 
 .voucher-save-btn {
-  border: 1.5px solid var(--stub-accent);
-  background: var(--stub-accent);
-  color: #ffffff;
+  border: 1.5px solid #93b747;
+  background: #ffffff;
+  color: #203d0b;
 }
 
 .voucher-save-btn:hover:not(:disabled) {
-  background: var(--stub-accent-hover);
-  border-color: var(--stub-accent-hover);
+  background: #f7fbe9;
+  border-color: #203d0b;
 }
 
 .voucher-save-btn.is-saved {
-  background: #ecf7ef;
-  border-color: #a9dfc0;
-  color: #166534;
+  background: #f7fbe9;
+  border: 1.5px dashed #93b747;
+  color: #31540d;
   cursor: default;
 }
 
@@ -634,15 +650,15 @@
 }
 
 .voucher-use-btn {
-  border: 1.5px solid #dce5d7;
-  background: #f8faf6;
-  color: #182b1c;
+  border: 1.5px solid #203d0b;
+  background: #203d0b;
+  color: #ffffff;
 }
 
 .voucher-use-btn:hover {
-  border-color: var(--stub-accent);
-  background: var(--pill-bg);
-  color: var(--pill-ink);
+  border-color: #31540d;
+  background: #31540d;
+  color: #ffffff;
 }
 
 /* ── Empty State ── */

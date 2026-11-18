@@ -4,7 +4,34 @@
   margin: 0 auto;
 }
 
+.social-proof-toast {
+  background: #ecfdf5;
+  border: 1px solid #10b981;
+  color: #065f46;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.15);
+  animation: fadeIn 0.3s ease;
+}
+
+.btn-social-proof {
+  background: #fefce8 !important;
+  color: #a16207 !important;
+  border-color: #fde047 !important;
+}
+
+.btn-social-proof:hover {
+  background: #fef08a !important;
+  color: #854d0e !important;
+}
+
 .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 24px;
 }
 

@@ -1,24 +1,16 @@
 const router = require('express').Router();
-const FooterConfig = require('../models/FooterConfig');
 const NewsletterSubscriber = require('../models/NewsletterSubscriber');
+const footerConfigData = require('../data/footer-config.json');
 
-// GET /api/footer — Lấy cấu hình footer, thông tin liên hệ và các chính sách trực tiếp từ MongoDB
-router.get('/', async (req, res, next) => {
-  try {
-    const doc = await FooterConfig.findOne({ key: 'main' }).lean();
-    if (!doc) {
-      return res.status(404).json({
-        success: false,
-        message: 'Chưa có cấu hình Footer trong MongoDB.',
-      });
-    }
-    res.json({ success: true, data: doc });
-  } catch (err) {
-    next(err);
-  }
+// GET /api/footer - Lay cau hinh chan trang tinh (khong truy van CSDL)
+router.get('/', (req, res) => {
+  res.json({
+    success: true,
+    data: footerConfigData,
+  });
 });
 
-// POST /api/footer/newsletter — Đăng ký nhận bản tin email lưu vào MongoDB
+// POST /api/footer/newsletter - Dang ky nhan ban tin email
 router.post('/newsletter', async (req, res, next) => {
   try {
     const rawEmail = String(req.body.email || '').trim().toLowerCase();

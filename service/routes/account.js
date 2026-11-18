@@ -41,6 +41,36 @@ router.put('/me', protect, async (req, res, next) => {
       }
     }
 
+    if (Array.isArray(updateData.addresses)) {
+      updateData.addresses = updateData.addresses.map((a, idx) => {
+        const fullAddr = String(a.address || '').trim();
+        let city = String(a.city || a.province || '').trim();
+        if (!city) {
+          if (/hồ chí minh|hô chi minh|hcm|sài gòn/i.test(fullAddr)) city = 'TP. Hồ Chí Minh';
+          else if (/hà nội|ha noi/i.test(fullAddr)) city = 'Hà Nội';
+          else if (/bình dương|binh duong/i.test(fullAddr)) city = 'Bình Dương';
+          else if (/đồng nai|dong nai/i.test(fullAddr)) city = 'Đồng Nai';
+          else city = 'TP. Hồ Chí Minh';
+        }
+        return {
+          id: a.id ? String(a.id) : (a._id ? String(a._id) : `addr_${Date.now()}_${idx}`),
+          label: String(a.label || 'Nhà riêng').trim(),
+          fullName: String(a.fullName || '').trim() || req.user.name || 'Khách hàng',
+          phone: String(a.phone || '').trim() || req.user.phone || '',
+          address: fullAddr || 'Chưa cập nhật số nhà',
+          city,
+          province: String(a.province || city).trim(),
+          provinceCode: a.provinceCode ?? null,
+          ward: String(a.ward || '').trim(),
+          wardCode: a.wardCode ?? null,
+          street: String(a.street || '').trim(),
+          lat: (typeof a.lat === 'number' && !isNaN(a.lat)) ? a.lat : null,
+          lng: (typeof a.lng === 'number' && !isNaN(a.lng)) ? a.lng : null,
+          isDefault: Boolean(a.isDefault),
+        };
+      });
+    }
+
     const user = await User.findByIdAndUpdate(
       req.user.id,
       { $set: updateData },
@@ -108,12 +138,23 @@ function pickStructuredAddress(body) {
 router.post('/addresses', protect, async (req, res, next) => {
   try {
     const { label, fullName, phone, address, city, isDefault } = req.body;
-    if (!fullName || !phone || !address || !city) {
-      return res.status(400).json({ success: false, message: 'Vui lòng nhập đầy đủ người nhận, số điện thoại và địa chỉ.' });
+    const resolvedAddress = String(address || '').trim();
+    if (!resolvedAddress) {
+      return res.status(400).json({ success: false, message: 'Vui lòng nhập địa chỉ nhận hàng.' });
     }
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
+    }
+    const resolvedFullName = String(fullName || '').trim() || user.name || 'Khách hàng';
+    const resolvedPhone = String(phone || '').trim() || user.phone || '';
+    let resolvedCity = String(city || '').trim();
+    if (!resolvedCity) {
+      if (/hồ chí minh|hô chi minh|hcm|sài gòn/i.test(resolvedAddress)) resolvedCity = 'TP. Hồ Chí Minh';
+      else if (/hà nội|ha noi/i.test(resolvedAddress)) resolvedCity = 'Hà Nội';
+      else if (/bình dương|binh duong/i.test(resolvedAddress)) resolvedCity = 'Bình Dương';
+      else if (/đồng nai|dong nai/i.test(resolvedAddress)) resolvedCity = 'Đồng Nai';
+      else resolvedCity = 'TP. Hồ Chí Minh';
     }
     // Địa chỉ đầu tiên luôn là mặc định
     const makeDefault = Boolean(isDefault) || user.addresses.length === 0;
@@ -121,7 +162,15 @@ router.post('/addresses', protect, async (req, res, next) => {
     if (makeDefault) {
       user.addresses = user.addresses.map(addr => ({ ...addr.toObject(), isDefault: false }));
     }
-    user.addresses.push({ label, fullName, phone, address, city, isDefault: makeDefault, ...pickStructuredAddress(req.body) });
+    user.addresses.push({
+      label: label || 'Nhà riêng',
+      fullName: resolvedFullName,
+      phone: resolvedPhone,
+      address: resolvedAddress,
+      city: resolvedCity,
+      isDefault: makeDefault,
+      ...pickStructuredAddress(req.body)
+    });
     await user.save();
     res.json({ success: true, data: user.addresses });
   } catch (err) { next(err); }
@@ -342,7 +391,7 @@ router.delete('/viewed-products', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/account/wishlist — Lấy danh sách sản phẩm yêu thích của tài khoản
+// GET /api/account/wishlist - Lấy danh sách sản phẩm yêu thích của tài khoản
 router.get('/wishlist', protect, async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id).populate('wishlist').lean();
@@ -352,7 +401,7 @@ router.get('/wishlist', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// POST /api/account/wishlist/toggle — Thêm hoặc bỏ sản phẩm khỏi Wishlist
+// POST /api/account/wishlist/toggle - Thêm hoặc bỏ sản phẩm khỏi Wishlist
 router.post('/wishlist/toggle', protect, async (req, res, next) => {
   try {
     const { productId } = req.body;
@@ -377,7 +426,7 @@ router.post('/wishlist/toggle', protect, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// POST /api/account/wishlist/sync — Đồng bộ danh sách wishlist từ localStorage khi khách đăng nhập
+// POST /api/account/wishlist/sync - Đồng bộ danh sách wishlist từ localStorage khi khách đăng nhập
 router.post('/wishlist/sync', protect, async (req, res, next) => {
   try {
     const { productIds } = req.body;

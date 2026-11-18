@@ -4,7 +4,7 @@ const Notification = require('../models/Notification');
 const { protect, optionalAuth } = require('../middleware/auth');
 const { addClient, removeClient } = require('../utils/sse');
 
-// GET /api/notifications/stream — SSE Stream thời gian thực
+// GET /api/notifications/stream - SSE Stream thời gian thực
 router.get('/stream', optionalAuth, (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -29,24 +29,42 @@ router.get('/stream', optionalAuth, (req, res) => {
   });
 });
 
-// GET /api/notifications — Lấy danh sách thông báo của tài khoản hoặc vai trò
+// GET /api/notifications - Lấy danh sách thông báo của tài khoản hoặc vai trò
 router.get('/', optionalAuth, async (req, res, next) => {
   try {
     const filter = {};
     if (req.user) {
-      filter.$or = [
-        { recipient: req.user._id },
-        { recipientRole: req.user.role },
-        { recipientRole: 'all' },
-      ];
-      if (['admin', 'sales'].includes(req.user.role)) {
-        filter.$or.push({ recipientRole: 'sales' });
-      }
-      if (['admin', 'warehouse'].includes(req.user.role)) {
-        filter.$or.push({ recipientRole: 'warehouse' });
+      if (req.user.role === 'customer') {
+        // Khách hàng CHỈ nhận thông báo gửi đích danh cho mình hoặc thông báo chung cho khách hàng
+        filter.$and = [
+          {
+            $or: [
+              { recipient: req.user._id },
+              { recipientRole: 'customer' },
+            ],
+          },
+          { type: { $ne: 'inventory' } }, // Tuyệt đối không nhận thông báo kho vận nội bộ
+        ];
+      } else {
+        // Nhân viên / Quản trị viên
+        filter.$or = [
+          { recipient: req.user._id },
+          { recipientRole: req.user.role },
+          { recipientRole: 'all' },
+        ];
+        if (['admin', 'sales'].includes(req.user.role)) {
+          filter.$or.push({ recipientRole: 'sales' });
+        }
+        if (['admin', 'warehouse'].includes(req.user.role)) {
+          filter.$or.push({ recipientRole: 'warehouse' });
+        }
+        if (['admin', 'manager'].includes(req.user.role)) {
+          filter.$or.push({ recipientRole: 'manager' });
+        }
       }
     } else {
       filter.recipientRole = 'customer';
+      filter.type = { $ne: 'inventory' };
     }
 
     const notifications = await Notification.find(filter)
@@ -64,7 +82,7 @@ router.get('/', optionalAuth, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// PUT /api/notifications/read-all — Đánh dấu tất cả đã đọc
+// PUT /api/notifications/read-all - Đánh dấu tất cả đã đọc
 router.put('/read-all', optionalAuth, async (req, res, next) => {
   try {
     const filter = {};
@@ -80,7 +98,7 @@ router.put('/read-all', optionalAuth, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// PUT /api/notifications/:id/read — Đánh dấu 1 thông báo đã đọc
+// PUT /api/notifications/:id/read - Đánh dấu 1 thông báo đã đọc
 router.put('/:id/read', optionalAuth, async (req, res, next) => {
   try {
     await Notification.findByIdAndUpdate(req.params.id, { $set: { unread: false } });

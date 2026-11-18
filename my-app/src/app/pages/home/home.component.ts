@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
@@ -29,6 +30,7 @@ interface NewsItem { title: string; image: string; path: string; date: string; }
   styleUrl: './home.component.css',
 })
 export class HomeComponent implements OnInit, OnDestroy {
+  private http = inject(HttpClient);
   private cart = inject(CartService);
   private productApi = inject(ProductApiService);
   private categoryApi = inject(CategoryApiService);
@@ -97,6 +99,16 @@ export class HomeComponent implements OnInit, OnDestroy {
   activeHero = 0;
   private heroTimer: ReturnType<typeof setInterval> | null = null;
 
+  promoPopup = signal<any | null>(null);
+  showPromoPopup = signal(false);
+
+  closePromoPopup(): void {
+    this.showPromoPopup.set(false);
+    try {
+      sessionStorage.setItem('dismiss_promo_popup', 'true');
+    } catch { }
+  }
+
   // =========================================================================
   // 3. DANH MỤC SẢN PHẨM: LOAD 100% ĐỘNG TỪ MONGODB (KHÔNG HARDCODE)
   // =========================================================================
@@ -104,6 +116,13 @@ export class HomeComponent implements OnInit, OnDestroy {
   categories: ApiCategory[] = [];
   loadingCategories = true;
   fallbackCategoryImage = '/images/categories/cat-rau-cu-trai-cay.png';
+
+  resolveMediaUrl(raw?: string): string {
+    const clean = (raw || '').trim();
+    if (!clean) return '';
+    if (clean.startsWith('/api/')) return `${this.backendOrigin}${clean}`;
+    return clean;
+  }
 
   onCatImageError(event: Event, rawImage?: string) {
     const imgEl = event.target as HTMLImageElement;
@@ -166,6 +185,28 @@ export class HomeComponent implements OnInit, OnDestroy {
   get visibleProducts(): ApiProduct[] { return this.apiProducts.slice(this.productOffset, this.productOffset + 4); }
 
   ngOnInit(): void {
+    // Nối banner chính động (giữ layout ảnh thuần của main/admin) & Pop-up khuyến mãi từ Admin Banners
+    this.http.get<any>(`${API_BASE}/banners`).subscribe({
+      next: (res) => {
+        if (res && res.success && res.data) {
+          const activeSlides = (res.data.heroSlides || []).filter((s: any) => s.active !== false);
+          if (activeSlides.length > 0 && res.data.updatedBy && res.data.updatedBy !== 'system') {
+            this.heroBanners = activeSlides.map((s: any, idx: number) => ({
+              image: this.resolveMediaUrl(s.image),
+              link: s.link || '/online-ordering',
+              alt: s.title || s.eyebrow || `Banner ${idx + 1}`,
+            }));
+            this.activeHero = 0;
+          }
+          if (res.data.promoPopup?.enabled && !sessionStorage.getItem('dismiss_promo_popup')) {
+            this.promoPopup.set(res.data.promoPopup);
+            this.showPromoPopup.set(true);
+          }
+        }
+      },
+      error: () => { },
+    });
+
     this.voucherService.loadPublic();
     this.voucherService.refreshMine();
     this.productApi.getAll({ limit: 12, sort: 'createdAt' }).subscribe({

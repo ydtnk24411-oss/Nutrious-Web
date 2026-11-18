@@ -137,6 +137,10 @@ export const routes: Routes = [
   { path: 'category/all-products',  redirectTo: 'online-ordering', pathMatch: 'full' },
   { path: 'category/:slug',         redirectTo: 'online-ordering', pathMatch: 'full' },
 
-  // ── Fallback ──────────────────────────────────────────────────
-  { path: '**', redirectTo: '' },
+  // ── 404 Not Found Page ───────────────────────────────────────
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./pages/not-found/not-found.component').then((m) => m.NotFoundComponent),
+  },
 ];
