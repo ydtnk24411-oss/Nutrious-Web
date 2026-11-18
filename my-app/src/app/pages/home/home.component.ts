@@ -42,28 +42,33 @@ export class HomeComponent implements OnInit, OnDestroy {
   readonly fallbackProductImage = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=700&q=80';
 
   // =========================================================================
-  // 1. DANH SÁCH BANNER CHÍNH (SLIDER) - NÔNG SẢN TƯƠI SẠCH HIỆN ĐẠI TỪ PINTEREST
+  // 1. DANH SÁCH BANNER CHÍNH (SLIDER) - NÔNG SẢN TƯƠI SẠCH & THỰC PHẨM CHUẨN SIÊU THỊ
   // =========================================================================
   private readonly defaultHeroBanners: Array<{ image: string; link?: string; alt?: string }> = [
     {
-      image: 'https://i.pinimg.com/1200x/51/08/ac/5108ac35883574a4c50e9acd0e8123ba.jpg',
+      image: '/images/banners/banner-fresh-vegetables.jpg',
       link: '/online-ordering',
-      alt: 'Nông sản hữu cơ tươi sạch giao nhanh 2h'
+      alt: 'Rau củ quả tươi sạch hữu cơ giao nhanh 2h'
     },
     {
-      image: 'https://i.pinimg.com/1200x/68/2f/ee/682fee6f3a630b2883f051fbad567c18.jpg',
+      image: '/images/banners/banner-seafood-salmon.jpg',
+      link: '/online-ordering',
+      alt: 'Hải sản cá hồi tươi sống cao cấp chuẩn tươi sạch'
+    },
+    {
+      image: '/images/banners/banner-fresh-fruits.jpg',
       link: '/promotions',
-      alt: 'Ưu đãi nông sản tươi ngon mỗi ngày'
+      alt: 'Trái cây nhiệt đới ngọt lành mỗi ngày'
     },
     {
-      image: 'https://i.pinimg.com/1200x/6a/26/aa/6a26aabb2d338bcca1215f28626d2b34.jpg',
+      image: '/images/banners/banner-spices-spoons.jpg',
       link: '/cook-with-what-you-have',
-      alt: 'Gợi ý món ngon từ nông sản sạch'
+      alt: 'Gia vị thảo mộc thiên nhiên cho bữa cơm trọn vị'
     },
     {
-      image: '/images/banners/banner_fresh_produce.jpg',
-      link: '/nutrition',
-      alt: 'Thực phẩm dinh dưỡng thông minh'
+      image: '/images/banners/banner-nam-o-sauce.jpg',
+      link: '/category/all-products',
+      alt: 'Nước mắm Nam Ô truyền thống nồng đượm vị biển mẹ'
     }
   ];
 
@@ -81,18 +86,18 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   // =========================================================================
-  // 2. HAI BANNER PHỤ BÊN PHẢI (ẢNH THUẦN PINTEREST ĐỒNG BỘ THƯƠNG HIỆU)
+  // 2. HAI BANNER PHỤ BÊN PHẢI (ẢNH THƯƠNG HIỆU SẮC NÉT CHUẨN THỰC PHẨM)
   // =========================================================================
   sideBanners = {
     top: {
-      image: 'https://i.pinimg.com/736x/ba/93/26/ba932662f9cfacf169b410e32a105b2a.jpg',
-      link: '/online-ordering',
-      alt: 'Nông sản tươi sạch mỗi ngày'
+      image: '/images/banners/banner-maggi.jpg',
+      link: '/promotions',
+      alt: 'Chốt quà Maggi thăng vị hè tươi mát'
     },
     bottom: {
-      image: '/images/banners/banner_fresh_produce.jpg',
-      link: '/nutrition',
-      alt: 'Dinh dưỡng thông minh cho cả gia đình'
+      image: '/images/banners/banner-chinsu-pepper.jpg',
+      link: '/online-ordering',
+      alt: 'Tiêu đen Chin-Su rắc tiêu thơm cơm đậm tình'
     }
   };
 
