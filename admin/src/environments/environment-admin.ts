@@ -4,4 +4,3 @@ export const environment = {
     adminMode: true,
     googleClientId: "188871008521-46hp48f411gfkh501b0g6rvvj6g5n31n.apps.googleusercontent.com"
 };
-
