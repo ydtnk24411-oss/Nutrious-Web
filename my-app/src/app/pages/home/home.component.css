@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
 
-#home-view.coop-home{--green:#176b3a;--green-dark:#104c2c;--green-soft:#eaf4e8;--red:#d92332;--ink:#202b24;--muted:#778078;--line:#e8ece6;--cream:#fffdf7;--yellow:#ffd64d;font-family:'Be Vietnam Pro',Arial,sans-serif;color:var(--ink);background:#fff;overflow:hidden}
+#home-view.coop-home{--green:#008848;--green-dark:#004D25;--green-soft:#F1F8F4;--red:#E53935;--ink:#1E293B;--muted:#64748B;--line:#EAEAEA;--cream:#FFFFFF;--yellow:#FF6B00;font-family:'Be Vietnam Pro',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--ink);background:#F4F6F8;overflow:hidden}
 .coop-home *{box-sizing:border-box}.coop-container{width:min(1240px,calc(100% - 40px));margin-inline:auto}
 .coop-service-strip{background:#f4f8f1;border-bottom:1px solid #e8eee4;color:#526b54;font-size:11px;font-weight:600}.service-inner{display:flex;gap:18px;align-items:center;justify-content:center;min-height:34px}
 .coop-hero{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(250px,.8fr);gap:16px;padding-top:22px}
@@ -31,14 +31,14 @@
    stronger contrast and a typography-only interface (no icons).
    ------------------------------------------------------------- */
 #home-view.coop-home {
-  --green: #176b3a;
-  --green-dark: #104c2c;
-  --green-soft: #eaf4e8;
-  --red: #d92332;
-  --ink: #1c2920;
-  --muted: #626e64;
-  --line: #d9e1d7;
-  background: #fff;
+  --green: #008848;
+  --green-dark: #004D25;
+  --green-soft: #F1F8F4;
+  --red: #E53935;
+  --ink: #1E293B;
+  --muted: #64748B;
+  --line: #EAEAEA;
+  background: #F4F6F8;
   color: var(--ink);
 }
 .coop-home .coop-container { width: min(1280px, calc(100% - 48px)); }
