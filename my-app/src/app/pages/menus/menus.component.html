@@ -49,13 +49,22 @@
                       <span class="xanhla-prod-card-unit">/ {{ prod.weight }}</span>
                     }
                   </div>
-                  <button class="xanhla-prod-card-add" type="button"
-                          [disabled]="isOutOfStock(prod)"
-                          [style.opacity]="isOutOfStock(prod) ? '0.5' : '1'"
-                          [style.cursor]="isOutOfStock(prod) ? 'not-allowed' : 'pointer'"
-                          (click)="addToCart(prod)">
-                    {{ isOutOfStock(prod) ? 'Tạm hết hàng' : 'Thêm vào giỏ' }}
-                  </button>
+                  <div class="ord-card-btn-row">
+                    @if (isOutOfStock(prod)) {
+                      <button class="xanhla-prod-card-add" type="button" disabled>
+                        <span>{{ prod.isCombo && prod.comboStatus === 'paused' ? 'Tạm ngừng kinh doanh' : 'Tạm hết hàng' }}</span>
+                      </button>
+                    } @else {
+                      <button class="xanhla-prod-card-add" type="button" (click)="addToCart(prod)" [attr.aria-label]="'Thêm ' + prod.name + ' vào giỏ'">
+                        <i class="bi bi-cart-plus"></i>
+                        <span>Thêm giỏ</span>
+                      </button>
+                      <button class="xanhla-prod-card-buynow" type="button" (click)="openBuyNow(prod)" [attr.aria-label]="'Mua ngay ' + prod.name">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                        <span>Mua ngay</span>
+                      </button>
+                    }
+                  </div>
                 </div>
               </div>
             }

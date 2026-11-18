@@ -71,4 +71,9 @@ export class MenusComponent implements OnInit {
     if (this.isOutOfStock(prod)) return;
     this.cart.addItem(toCartProduct(prod), 1);
   }
+
+  openBuyNow(prod: ApiProduct): void {
+    if (this.isOutOfStock(prod)) return;
+    this.cart.openBuyNowModal(toCartProduct(prod));
+  }
 }

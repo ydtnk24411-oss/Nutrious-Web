@@ -176,6 +176,11 @@ export class CatalogComponent implements OnInit {
     this.cart.addItem(toCartProduct(prod), 1);
   }
 
+  openBuyNow(prod: ApiProduct): void {
+    if (this.isOutOfStock(prod)) return;
+    this.cart.openBuyNowModal(toCartProduct(prod));
+  }
+
   facetLabel(key: string): string {
     const labels: Record<string, string> = {
       categories: 'Loại sản phẩm', container: 'Container', cutType: 'Cut Type',

@@ -535,17 +535,119 @@ app-header {
   margin-left: auto;
 }
 
-/* Nút — pill full-width, xanh đậm */
-.xanhla-prod-card-add {
-  width: 100%; padding: 11px;
-  background: var(--green-700); color: #fff;
-  border: none; border-radius: var(--r-full);
-  font-size: 14px; font-weight: 700; cursor: pointer;
-  transition: background .15s;
-  display: flex; align-items: center; justify-content: center;
-  letter-spacing: .01em;
+/* ==========================================================================
+   UNIFIED PRODUCT CARD ACTIONS (ENTERPRISE E-COMMERCE STANDARD)
+   ========================================================================== */
+.eg-card-btn-row,
+.ord-card-btn-row,
+.coop-card-btn-row,
+.fs-card-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  margin-top: 10px !important;
 }
-.xanhla-prod-card-add:hover { background: var(--green-900); }
+
+/* Button 1: Thêm giỏ (Outline / Clean White with Green Accent) */
+.eg-card-btn-add,
+.xanhla-prod-card-add,
+.coop-add-btn,
+.fs-add-btn {
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  padding: 0 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  background: #ffffff !important;
+  border: 1.5px solid #16a34a !important;
+  border-radius: 8px !important;
+  color: #15803d !important;
+  font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+  white-space: nowrap !important;
+  text-decoration: none !important;
+  box-sizing: border-box !important;
+  line-height: 1 !important;
+}
+
+.eg-card-btn-add:hover:not(:disabled),
+.xanhla-prod-card-add:hover:not(:disabled),
+.coop-add-btn:hover:not(:disabled),
+.fs-add-btn:hover:not(:disabled) {
+  background: #f0fdf4 !important;
+  border-color: #15803d !important;
+  color: #166534 !important;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.15) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Button 2: Mua ngay (High-Contrast Solid Green) */
+.eg-card-btn-buynow,
+.xanhla-prod-card-buynow,
+.coop-buynow-btn,
+.fs-buynow-btn {
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  padding: 0 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  background: #16a34a !important;
+  border: 1.5px solid #16a34a !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+  white-space: nowrap !important;
+  text-decoration: none !important;
+  box-sizing: border-box !important;
+  line-height: 1 !important;
+}
+
+.eg-card-btn-buynow:hover:not(:disabled),
+.xanhla-prod-card-buynow:hover:not(:disabled),
+.coop-buynow-btn:hover:not(:disabled),
+.fs-buynow-btn:hover:not(:disabled) {
+  background: #15803d !important;
+  border-color: #15803d !important;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.28) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Disabled State when Out of Stock */
+.eg-card-btn-disabled,
+.xanhla-prod-card-add:disabled,
+.coop-add-btn:disabled,
+.fs-add-btn:disabled,
+.xanhla-prod-card-buynow:disabled,
+.coop-buynow-btn:disabled,
+.fs-buynow-btn:disabled {
+  width: 100% !important;
+  flex: 1 1 100% !important;
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #94a3b8 !important;
+  cursor: not-allowed !important;
+  opacity: 0.75 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
 
 /* Carousel nav */
 .xanhla-carousel-nav { display: flex; gap: 8px; }
