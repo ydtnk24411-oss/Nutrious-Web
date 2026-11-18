@@ -7,6 +7,7 @@ import { CartService, formatPrice, calcAddOnUnitDiscount, resolveProductOption }
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { ReviewService, ReviewEligibility } from '../../shared/services/review.service';
 import { WishlistService } from '../../shared/services/wishlist.service';
+import { FlashSaleApiService, FlashSaleItem } from '../../shared/services/flash-sale-api.service';
 import { XanhLaProduct } from '../../shared/models/xanh-la.models';
 
 export interface AddOnCardView {
@@ -64,8 +65,10 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   private productApi      = inject(ProductApiService);
   private reviewService   = inject(ReviewService);
   protected wishlist      = inject(WishlistService);
+  private flashSaleApi    = inject(FlashSaleApiService);
 
   protected product       = signal<ApiProduct | null>(null);
+  protected activeFlashSale = signal<FlashSaleItem | null>(null);
   protected loading       = signal(true);
   protected error         = signal('');
   protected quantity      = signal(1);
@@ -403,6 +406,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
           this.reviewService.load(res.data._id);
         }
         this.loadRelatedProducts(res.data);
+        this.checkFlashSale(slug, res.data);
       },
       error: () => {
         // Thử thêm prefix nếu slug trực tiếp không tìm thấy
@@ -418,6 +422,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
               this.reviewService.load(r.data._id);
             }
             this.loadRelatedProducts(r.data);
+            this.checkFlashSale(prefixed, r.data);
           },
           error: () => {
             this.error.set('Không tìm thấy sản phẩm.');
@@ -755,6 +760,25 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     this.openAccordions.update(o => ({ ...o, [k]: !o[k] }));
   }
 
+  private checkFlashSale(slug: string, prod?: ApiProduct | null): void {
+    this.activeFlashSale.set(null);
+    this.flashSaleApi.getActive().subscribe({
+      next: (res) => {
+        if (res?.success && Array.isArray(res.data)) {
+          const deal = res.data.find((d) => {
+            const matchesSlug = d.slug === slug || (prod?.slug && d.slug === prod.slug);
+            const matchesId = prod?._id && d.productId === prod._id;
+            return (matchesSlug || matchesId) && !d.isSoldOut && d.isActive !== false;
+          });
+          if (deal) {
+            this.activeFlashSale.set(deal);
+          }
+        }
+      },
+      error: () => {},
+    });
+  }
+
   addToCart(): void {
     const p = this.product();
     if (!p || this.isProductUnavailable(p)) return;
@@ -767,7 +791,13 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       this.addSelectedBundleToCart();
       return;
     }
-    this.cart.addItem(toCartProduct(p), this.quantity(), this.currentSelectedOption());
+    const fs = this.activeFlashSale();
+    const cartProd = toCartProduct(p);
+    if (fs && fs.flashSalePrice) {
+      cartProd.priceNumber = fs.flashSalePrice;
+      cartProd.price = formatPrice(fs.flashSalePrice);
+    }
+    this.cart.addItem(cartProd, this.quantity(), this.currentSelectedOption());
   }
 
   buyNow(): void {
@@ -778,7 +808,13 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       this.buySelectedBundleNow();
       return;
     }
-    this.cart.startDirectBuyNow(toCartProduct(p), this.quantity(), this.currentSelectedOption());
+    const fs = this.activeFlashSale();
+    const cartProd = toCartProduct(p);
+    if (fs && fs.flashSalePrice) {
+      cartProd.priceNumber = fs.flashSalePrice;
+      cartProd.price = formatPrice(fs.flashSalePrice);
+    }
+    this.cart.startDirectBuyNow(cartProd, this.quantity(), this.currentSelectedOption());
     this.cart.closeCartDrawer();
     this.router.navigate(['/checkout'], { queryParams: { mode: 'buynow' } });
   }

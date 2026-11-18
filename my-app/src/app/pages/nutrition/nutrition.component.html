@@ -614,6 +614,15 @@
                       <div class="xl-ob-step-header">
                         <h1 class="xl-ob-title">Mục tiêu dinh dưỡng chính của bạn là gì?</h1>
                         <p class="xl-ob-subtitle">Hệ thống tự động cân đối chỉ số Calo, Đạm, Xơ và gợi ý thực đơn phù hợp nhất.</p>
+                        <div class="xl-ob-fridge-callout" style="margin-top:14px;padding:12px 16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+                          <div style="font-size:13px;color:#15803d;display:flex;align-items:center;gap:8px">
+                            <i class="bi bi-camera-fill" style="font-size:18px"></i>
+                            <span>Bạn đã có sẵn nguyên liệu trong tủ lạnh? Hãy để AI nhận diện qua ảnh!</span>
+                          </div>
+                          <a routerLink="/cook-with-what-you-have" style="padding:6px 14px;border-radius:8px;background:#15803d;color:#fff;font-size:12.5px;font-weight:700;text-decoration:none;white-space:nowrap">
+                            Chụp ảnh tủ lạnh →
+                          </a>
+                        </div>
                       </div>
 
                       <div class="xl-ob-goal-list" role="radiogroup" aria-label="Chọn mục tiêu thể trạng">
@@ -1016,6 +1025,9 @@
                 <button type="button" class="xl-hero-btn-primary" (click)="startOnboarding(1)">
                   {{ (nutritionView() === 'result' && onboardingCompleted()) ? 'Thiết Lập Lại Thực Đơn' : 'Bắt Đầu Lên Thực Đơn Ngay' }}
                 </button>
+                <a routerLink="/cook-with-what-you-have" class="xl-hero-btn-vision" style="display:inline-flex;align-items:center;gap:7px;padding:12px 20px;border-radius:10px;background:#15803d;color:#fff;text-decoration:none;font-weight:700;font-size:14px;box-shadow:0 2px 8px rgba(21,128,61,0.25);transition:all 0.2s ease;">
+                  <i class="bi bi-camera-fill"></i> Gợi ý từ gian bếp (AI tủ lạnh)
+                </a>
                 <button type="button" class="xl-hero-btn-secondary" (click)="scrollToElement('nutrition-results-section')">
                   Khám Phá {{ results().length }} Món Ăn
                 </button>

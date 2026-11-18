@@ -120,7 +120,26 @@
               </div>
             }
           } @else {
-            <div class="xanhla-product-info-price">Giá {{ money(resolveUnitPrice(p)) }}</div>
+            @if (activeFlashSale(); as deal) {
+              <div class="pd-flash-price-block">
+                <div class="pd-flash-deal-pill">
+                  <i class="bi bi-lightning-charge-fill"></i> FLASH SALE TIẾT KIỆM
+                </div>
+                <div class="pd-flash-main-row">
+                  <span class="pd-flash-current-price">{{ formatPrice(deal.flashSalePrice) }}</span>
+                  <span class="pd-flash-original-price">{{ money(resolveUnitPrice(p)) }}</span>
+                  <span class="pd-flash-discount-badge">-{{ deal.discountPercent }}%</span>
+                </div>
+                <div class="pd-flash-quota-wrap">
+                  <div class="pd-flash-quota-bar">
+                    <div class="pd-flash-quota-fill" [style.width.%]="deal.soldPercent || 75"></div>
+                  </div>
+                  <span class="pd-flash-quota-text">Đã bán {{ deal.soldQuantity || 0 }}/{{ deal.totalQuantity || deal.stock || 40 }} suất</span>
+                </div>
+              </div>
+            } @else {
+              <div class="xanhla-product-info-price">Giá {{ money(resolveUnitPrice(p)) }}</div>
+            }
 
             @if (p.options && p.options.length > 0) {
               <div class="xanhla-option-group">
@@ -135,7 +154,20 @@
             }
           }
 
-          <div style="margin-bottom:24px">
+          <!-- ACFC / Cotton On Style Shopping Perks Card -->
+          <div class="pd-acfc-promo-card">
+            <div class="pd-acfc-promo-header">
+              <i class="bi bi-shield-check"></i>
+              <span>ƯU ĐÃI &amp; CHÍNH SÁCH EVERGREEN MART</span>
+            </div>
+            <ul class="pd-acfc-promo-list">
+              <li><i class="bi bi-truck"></i> Giao xe lạnh 0°C – 4°C, giao hỏa tốc 2 giờ nội thành.</li>
+              <li><i class="bi bi-arrow-repeat"></i> Đổi trả 100% miễn phí hoặc hoàn tiền trong 24 giờ.</li>
+              <li><i class="bi bi-ticket-perforated"></i> Miễn phí vận chuyển cho đơn hàng từ 200.000đ.</li>
+            </ul>
+          </div>
+
+          <div style="margin-bottom:20px">
             <span class="xanhla-option-label">
               {{ p.isCombo ? 'Số lượng gói Combo' : 'Số lượng' }}
             </span>
@@ -146,39 +178,37 @@
             </div>
           </div>
 
-          <div class="xanhla-product-cta-row">
+          <div class="xanhla-product-cta-row acfc-cta-layout">
             <button
-              class="xanhla-btn-primary"
+              class="acfc-btn-add-cart"
               type="button"
-              style="flex:1"
               [disabled]="isProductUnavailable(p)"
               (click)="addToCart()"
             >
               @if (p.isCombo && p.comboStatus === 'paused') {
-                Tạm ngừng kinh doanh
+                TẠM NGỪNG KINH DOAN
               } @else if (p.isCombo && comboStock(p) <= 0) {
-                Tạm hết Combo
+                TẠM HẾT COMBO
               } @else if (isProductUnavailable(p)) {
-                Tạm hết hàng
+                TẠM HẾT HÀNG
               } @else {
-                Thêm vào giỏ hàng
+                <i class="bi bi-bag-plus"></i> THÊM VÀO GIỎ HÀNG
               }
             </button>
             @if (!isProductUnavailable(p)) {
               <button
-                class="xanhla-btn-secondary"
+                class="acfc-btn-buy-now"
                 type="button"
-                style="flex:1"
                 (click)="buyNow()"
               >
-                Mua ngay
+                <i class="bi bi-lightning-charge-fill"></i> MUA NGAY
               </button>
             }
             <button
               type="button"
+              class="acfc-btn-wishlist"
               (click)="wishlist.toggleWishlist(p)"
               [title]="wishlist.isWishlisted(p._id) ? 'Bỏ khỏi yêu thích' : 'Thêm vào yêu thích'"
-              style="width:48px;height:48px;border-radius:var(--xanh-radius-sm);border:1px solid #fecdd3;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;flex-shrink:0"
               [style.color]="wishlist.isWishlisted(p._id) ? '#e11d48' : '#64748b'"
               [style.background]="wishlist.isWishlisted(p._id) ? '#fff1f2' : '#ffffff'"
             >
