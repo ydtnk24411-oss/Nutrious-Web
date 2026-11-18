@@ -1,5 +1,5 @@
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
@@ -78,5 +78,56 @@ describe('HomeComponent', () => {
     const deptImages = Array.from(el.querySelectorAll('.coop-department-image img')).map(img => img.getAttribute('src'));
     expect(topImages).toEqual(['/images/categories/nuoc-uong.jpg', '/images/categories/sua.jpg']);
     expect(deptImages).toEqual(['/images/categories/nuoc-uong.jpg', '/images/categories/sua.jpg']);
+  });
+
+  it('should load active hero banners sorted by sortOrder and resolve MongoDB media URLs', () => {
+    const httpMock = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(HomeComponent);
+    fixture.detectChanges();
+    const comp = fixture.componentInstance;
+
+    const req = httpMock.expectOne((r) => r.url.endsWith('/api/banners'));
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.has('_t')).toBeTrue();
+
+    req.flush({
+      success: true,
+      data: {
+        updatedBy: 'Admin Evergreen Mart',
+        heroSlides: [
+          {
+            title: 'Slide 2',
+            link: '/promotions',
+            image: '/api/banners/media/slide-2-id',
+            active: true,
+            sortOrder: 2,
+          },
+          {
+            title: 'Slide Inactive',
+            link: '/vouchers',
+            image: '/api/banners/media/inactive-id',
+            active: false,
+            sortOrder: 0,
+          },
+          {
+            title: 'Slide 1',
+            link: '/online-ordering',
+            image: '/api/banners/media/slide-1-id',
+            active: true,
+            sortOrder: 1,
+          },
+        ],
+        promoPopup: { enabled: false },
+      },
+    });
+    fixture.detectChanges();
+
+    expect(comp.heroBanners.length).toBe(2);
+    expect(comp.heroBanners[0].image).toBe('http://localhost:3000/api/banners/media/slide-1-id');
+    expect(comp.heroBanners[1].image).toBe('http://localhost:3000/api/banners/media/slide-2-id');
+    expect(comp.activeHero).toBe(0);
+
+    const heroImg = (fixture.nativeElement as HTMLElement).querySelector('.coop-hero-slide-img') as HTMLImageElement | null;
+    expect(heroImg?.getAttribute('src')).toBe('http://localhost:3000/api/banners/media/slide-1-id');
   });
 });

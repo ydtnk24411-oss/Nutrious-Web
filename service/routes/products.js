@@ -26,6 +26,34 @@ const {
 
 const ADDON_POPULATE_FIELDS = 'name slug image price priceNumber unit weight stock isActive isCombo categoryVi category';
 
+function mergeUniqueByIdOrSlug(...lists) {
+  const seen = new Set();
+  const merged = [];
+  for (const list of lists) {
+    for (const doc of list || []) {
+      if (!doc) continue;
+      const key = String(doc._id || doc.id || doc.slug || '');
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      merged.push(doc);
+    }
+  }
+  return merged;
+}
+
+function sortMergedItems(list, sortField, sortDir) {
+  list.sort((a, b) => {
+    if (sortField === 'name') {
+      return sortDir * String(a.name || '').localeCompare(String(b.name || ''), 'vi');
+    }
+    if (sortField === 'priceNumber' || sortField === 'soldCount' || sortField === 'averageRating') {
+      const diff = (Number(a[sortField]) || 0) - (Number(b[sortField]) || 0);
+      if (diff !== 0) return sortDir * diff;
+    }
+    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+  });
+}
+
 async function sanitizeAddOnDeals(rawDeals, selfId, mainDoc) {
   if (!Array.isArray(rawDeals) || rawDeals.length === 0) return [];
   const seen = new Set();
@@ -178,14 +206,26 @@ router.get('/', optionalAuth, cacheMiddleware(30, (req) => !req.query.search && 
     let total = 0;
 
     if (isCombo === 'true') {
-      const comboFilter = { ...filter };
-      delete comboFilter.isCombo;
-      let comboQuery = Combo.find(comboFilter)
-        .sort(sortObj)
-        .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
-        .lean();
-      if (limitNum > 0) comboQuery = comboQuery.skip(skipNum).limit(limitNum);
-      [resultDocs, total] = await Promise.all([comboQuery, Combo.countDocuments(comboFilter)]);
+      const comboColFilter = { ...filter };
+      delete comboColFilter.isCombo;
+      const prodComboFilter = { ...filter, isCombo: true };
+      const [colCombos, prodCombos] = await Promise.all([
+        Combo.find(comboColFilter)
+          .sort(sortObj)
+          .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
+          .lean(),
+        Product.find(prodComboFilter)
+          .sort(sortObj)
+          .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
+          .lean(),
+      ]);
+      const combinedCombos = mergeUniqueByIdOrSlug(
+        colCombos.map((c) => ({ ...c, isCombo: true })),
+        prodCombos
+      );
+      sortMergedItems(combinedCombos, sortField, sortDir);
+      total = combinedCombos.length;
+      resultDocs = limitNum > 0 ? combinedCombos.slice(skipNum, skipNum + limitNum) : combinedCombos;
     } else if (isCombo === 'false') {
       let prodQuery = Product.find(filter)
         .sort(sortObj)
@@ -197,29 +237,26 @@ router.get('/', optionalAuth, cacheMiddleware(30, (req) => !req.query.search && 
       if (limitNum > 0) prodQuery = prodQuery.skip(skipNum).limit(limitNum);
       [resultDocs, total] = await Promise.all([prodQuery, Product.countDocuments(filter)]);
     } else {
-      // Combine standalone Products + active Combos from collection combos
+      // Combine standalone Products + active Combos from both collection combos and legacy Product { isCombo: true }
       const prodFilter = { ...filter, isCombo: { $ne: true } };
-      const comboFilter = { ...filter };
-      delete comboFilter.isCombo;
+      const comboColFilter = { ...filter };
+      delete comboColFilter.isCombo;
+      const prodComboFilter = { ...filter, isCombo: true };
       let prodQuery = Product.find(prodFilter).sort(sortObj).populate('addOnDeals.product', ADDON_POPULATE_FIELDS).lean();
       if (useBrief) {
         prodQuery = prodQuery.select('name slug price priceNumber image images category categoryVi categoryId stock reservedStock safetyBuffer isActive isCombo addOnDeals weight unit soldCount averageRating createdAt');
       }
-      const [prods, combos] = await Promise.all([
+      const [prods, colCombos, prodCombos] = await Promise.all([
         prodQuery,
-        Combo.find(comboFilter).sort(sortObj).populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS).lean(),
+        Combo.find(comboColFilter).sort(sortObj).populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS).lean(),
+        Product.find(prodComboFilter).sort(sortObj).populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS).lean(),
       ]);
-      const combined = [...prods, ...combos];
-      combined.sort((a, b) => {
-        if (sortField === 'name') {
-          return sortDir * String(a.name || '').localeCompare(String(b.name || ''), 'vi');
-        }
-        if (sortField === 'priceNumber' || sortField === 'soldCount' || sortField === 'averageRating') {
-          const diff = (Number(a[sortField]) || 0) - (Number(b[sortField]) || 0);
-          if (diff !== 0) return sortDir * diff;
-        }
-        return (new Date(b.createdAt || 0).getTime()) - (new Date(a.createdAt || 0).getTime());
-      });
+      const combined = mergeUniqueByIdOrSlug(
+        prods,
+        colCombos.map((c) => ({ ...c, isCombo: true })),
+        prodCombos
+      );
+      sortMergedItems(combined, sortField, sortDir);
       total = combined.length;
       resultDocs = limitNum > 0 ? combined.slice(skipNum, skipNum + limitNum) : combined;
     }
@@ -314,11 +351,18 @@ router.get('/', optionalAuth, cacheMiddleware(30, (req) => !req.query.search && 
 });
 
 async function findPublicItemOrCombo(rawSlug) {
-  let product = await Product.findOne({ slug: rawSlug, isActive: { $ne: false } }).lean();
+  const prodPublicFilter = {
+    $or: [
+      { isCombo: { $ne: true }, isActive: { $ne: false } },
+      { isCombo: true, comboStatus: 'paused' },
+      { isCombo: true, comboStatus: { $nin: ['hidden', 'paused'] }, isActive: { $ne: false } },
+    ],
+  };
+  let product = await Product.findOne({ slug: rawSlug, ...prodPublicFilter }).lean();
   if (!product && mongoose.Types.ObjectId.isValid(rawSlug)) {
-    product = await Product.findOne({ _id: rawSlug, isActive: { $ne: false } }).lean();
+    product = await Product.findOne({ _id: rawSlug, ...prodPublicFilter }).lean();
   }
-  if (product) return { doc: product, isCombo: false };
+  if (product) return { doc: product, isCombo: Boolean(product.isCombo) };
 
   const comboPublicFilter = {
     $or: [
@@ -345,6 +389,7 @@ router.get('/:slug/related', async (req, res, next) => {
     const filter = {
       _id: { $ne: product._id },
       isActive: { $ne: false },
+      isCombo: { $ne: true },
       stock: { $gt: 0 },
     };
 
@@ -365,6 +410,7 @@ router.get('/:slug/related', async (req, res, next) => {
       const fallbackProducts = await Product.find({
         _id: { $nin: excludeIds },
         isActive: { $ne: false },
+        isCombo: { $ne: true },
         stock: { $gt: 0 },
       })
         .sort({ rating: -1, soldCount: -1 })
@@ -384,10 +430,11 @@ router.get('/:slug/frequently-bought', async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
     }
 
-    // Tìm 2 sản phẩm gợi ý mua cùng: còn hàng, khác sản phẩm hiện tại, sắp xếp theo lượt bán và đánh giá
+    // Tìm 2 sản phẩm gợi ý mua cùng: còn hàng, không phải combo, khác sản phẩm hiện tại
     const companionProducts = await Product.find({
       _id: { $ne: product._id },
       isActive: { $ne: false },
+      isCombo: { $ne: true },
       stock: { $gt: 0 },
     })
       .sort({ soldCount: -1, rating: -1 })
@@ -398,7 +445,7 @@ router.get('/:slug/frequently-bought', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// GET /api/products/:slug/combos - combo mua kèm tiết kiệm có chứa sản phẩm này (từ collection combos)
+// GET /api/products/:slug/combos - combo mua kèm tiết kiệm có chứa sản phẩm này (đọc cả collection combos và Product { isCombo: true })
 router.get('/:slug/combos', async (req, res, next) => {
   try {
     const { doc: item, isCombo } = await findPublicItemOrCombo(req.params.slug);
@@ -410,13 +457,24 @@ router.get('/:slug/combos', async (req, res, next) => {
     }
 
     const limitNum = Math.min(6, Number(req.query.limit) || 3);
-    const combos = await Combo.find({
+    const sharedFilter = {
       isActive: { $ne: false },
       comboStatus: { $nin: ['paused', 'hidden'] },
       'comboItems.product': item._id,
-    })
-      .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
-      .limit(limitNum);
+    };
+
+    const [colCombos, prodCombos] = await Promise.all([
+      Combo.find(sharedFilter)
+        .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
+        .limit(limitNum)
+        .lean(),
+      Product.find({ isCombo: true, ...sharedFilter })
+        .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
+        .limit(limitNum)
+        .lean(),
+    ]);
+
+    const combos = mergeUniqueByIdOrSlug(colCombos, prodCombos);
 
     // Bỏ combo rỗng hoặc có thành phần đã ngừng kinh doanh, đồng thời tính động giá mua lẻ & tồn kho khả dụng
     const valid = combos
@@ -426,7 +484,8 @@ router.get('/:slug/combos', async (req, res, next) => {
           c.comboItems.length > 0 &&
           c.comboItems.every((it) => it.product && it.product.isActive !== false)
       )
-      .map((c) => enrichComboDocument(c));
+      .slice(0, limitNum)
+      .map((c) => enrichComboDocument(c, { assumeCombo: true }));
 
     res.json({ success: true, data: valid });
   } catch (err) { next(err); }
@@ -586,40 +645,77 @@ router.get('/:slug/stock-by-stores', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+async function applyStoreStockToDetail(responseData, storeId) {
+  if (!storeId || storeId === 'all') return responseData;
+
+  if (responseData.isCombo && Array.isArray(responseData.comboItems) && responseData.comboItems.length > 0) {
+    const compIds = responseData.comboItems
+      .map((ci) => ci?.product?._id || ci?.product?.id || ci?.product)
+      .filter((id) => mongoose.Types.ObjectId.isValid(id));
+    const compInvs = compIds.length > 0
+      ? await StoreInventory.find({ storeId, productId: { $in: compIds } }).lean()
+      : [];
+    const invMap = new Map(compInvs.map((inv) => [String(inv.productId), inv]));
+    let minComboStock = 9999;
+    for (const ci of responseData.comboItems) {
+      const ciId = ci?.product?._id || ci?.product?.id || ci?.product;
+      const ciInv = invMap.get(String(ciId));
+      const ciStock = ciInv ? Math.max(0, (ciInv.physicalStock || 0) - (ciInv.reservedStock || 0) - (ciInv.safetyBuffer || 0)) : 0;
+      minComboStock = Math.min(minComboStock, Math.floor(ciStock / (ci.quantity || 1)));
+    }
+    const availableStock = minComboStock === 9999 ? 0 : minComboStock;
+    responseData.availableStock = availableStock;
+    responseData.stock = availableStock;
+    responseData.storeStock = availableStock;
+    responseData.storeId = storeId;
+    return responseData;
+  }
+
+  const inv = await StoreInventory.findOne({ storeId, productId: responseData._id }).lean();
+  const availableStock = inv ? Math.max(0, (inv.physicalStock || 0) - (inv.reservedStock || 0) - (inv.safetyBuffer || 0)) : 0;
+  responseData.storePhysicalStock = inv?.physicalStock || 0;
+  responseData.storeReservedStock = inv?.reservedStock || 0;
+  responseData.availableStock = availableStock;
+  responseData.stock = availableStock;
+  responseData.storeStock = availableStock;
+  responseData.storeId = storeId;
+  responseData.storeName = inv?.storeName || '';
+  if (inv?.storeDiscountPrice && Number(inv.storeDiscountPrice) > 0) {
+    responseData.originalPrice = responseData.price || (Number(responseData.priceNumber || 0).toLocaleString('vi-VN') + ' ₫');
+    responseData.originalPriceNumber = responseData.priceNumber || 0;
+    responseData.priceNumber = Number(inv.storeDiscountPrice);
+    responseData.price = Number(inv.storeDiscountPrice).toLocaleString('vi-VN') + ' ₫';
+    responseData.isStoreDiscount = true;
+    responseData.storeDiscountPrice = Number(inv.storeDiscountPrice);
+  } else if (inv?.storePrice) {
+    responseData.priceNumber = Number(inv.storePrice);
+    responseData.price = Number(inv.storePrice).toLocaleString('vi-VN') + ' ₫';
+  }
+  return responseData;
+}
+
 // GET /api/products/:slug - public (kiểm tra Product trước, nếu không có thì tìm trong collection combos)
 router.get('/:slug', async (req, res, next) => {
   try {
     const storeId = req.query.storeId || req.headers['x-store-id'];
-    let product = await Product.findOne({ slug: req.params.slug, isActive: { $ne: false } })
+    const prodPublicFilter = {
+      $or: [
+        { isCombo: { $ne: true }, isActive: { $ne: false } },
+        { isCombo: true, comboStatus: 'paused' },
+        { isCombo: true, comboStatus: { $nin: ['hidden', 'paused'] }, isActive: { $ne: false } },
+      ],
+    };
+    let product = await Product.findOne({ slug: req.params.slug, ...prodPublicFilter })
+      .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
       .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     if (!product && mongoose.Types.ObjectId.isValid(req.params.slug)) {
-      product = await Product.findOne({ _id: req.params.slug, isActive: { $ne: false } })
+      product = await Product.findOne({ _id: req.params.slug, ...prodPublicFilter })
+        .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
         .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     }
     if (product) {
       const responseData = enrichProductOrComboList([product])[0];
-      if (storeId && storeId !== 'all') {
-        const inv = await StoreInventory.findOne({ storeId, productId: product._id }).lean();
-        const availableStock = inv ? Math.max(0, (inv.physicalStock || 0) - (inv.reservedStock || 0) - (inv.safetyBuffer || 0)) : 0;
-        responseData.storePhysicalStock = inv?.physicalStock || 0;
-        responseData.storeReservedStock = inv?.reservedStock || 0;
-        responseData.availableStock = availableStock;
-        responseData.stock = availableStock;
-        responseData.storeStock = availableStock;
-        responseData.storeId = storeId;
-        responseData.storeName = inv?.storeName || '';
-        if (inv?.storeDiscountPrice && Number(inv.storeDiscountPrice) > 0) {
-          responseData.originalPrice = responseData.price || (Number(product.priceNumber || 0).toLocaleString('vi-VN') + ' ₫');
-          responseData.originalPriceNumber = product.priceNumber || 0;
-          responseData.priceNumber = Number(inv.storeDiscountPrice);
-          responseData.price = Number(inv.storeDiscountPrice).toLocaleString('vi-VN') + ' ₫';
-          responseData.isStoreDiscount = true;
-          responseData.storeDiscountPrice = Number(inv.storeDiscountPrice);
-        } else if (inv?.storePrice) {
-          responseData.priceNumber = Number(inv.storePrice);
-          responseData.price = Number(inv.storePrice).toLocaleString('vi-VN') + ' ₫';
-        }
-      }
+      await applyStoreStockToDetail(responseData, storeId);
       return res.json({ success: true, data: responseData });
     }
 
@@ -637,27 +733,7 @@ router.get('/:slug', async (req, res, next) => {
     }
     if (!combo) return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
     const comboData = enrichComboDocument(combo);
-    if (storeId && storeId !== 'all' && Array.isArray(comboData.comboItems) && comboData.comboItems.length > 0) {
-      const compIds = comboData.comboItems
-        .map((ci) => ci?.product?._id || ci?.product?.id || ci?.product)
-        .filter((id) => mongoose.Types.ObjectId.isValid(id));
-      const compInvs = compIds.length > 0
-        ? await StoreInventory.find({ storeId, productId: { $in: compIds } }).lean()
-        : [];
-      const invMap = new Map(compInvs.map((inv) => [String(inv.productId), inv]));
-      let minComboStock = 9999;
-      for (const ci of comboData.comboItems) {
-        const ciId = ci?.product?._id || ci?.product?.id || ci?.product;
-        const ciInv = invMap.get(String(ciId));
-        const ciStock = ciInv ? Math.max(0, (ciInv.physicalStock || 0) - (ciInv.reservedStock || 0) - (ciInv.safetyBuffer || 0)) : 0;
-        minComboStock = Math.min(minComboStock, Math.floor(ciStock / (ci.quantity || 1)));
-      }
-      const availableStock = minComboStock === 9999 ? 0 : minComboStock;
-      comboData.availableStock = availableStock;
-      comboData.stock = availableStock;
-      comboData.storeStock = availableStock;
-      comboData.storeId = storeId;
-    }
+    await applyStoreStockToDetail(comboData, storeId);
     res.json({ success: true, data: comboData });
   } catch (err) { next(err); }
 });

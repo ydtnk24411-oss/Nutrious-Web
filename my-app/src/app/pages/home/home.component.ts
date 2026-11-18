@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { CartService } from '../../shared/services/cart.service';
@@ -42,12 +42,10 @@ export class HomeComponent implements OnInit, OnDestroy {
   readonly fallbackProductImage = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=700&q=80';
 
   // =========================================================================
-  // 1. DANH SÁCH BANNER CHÍNH (SLIDER) - BẠN CÓ THỂ THÊM BỚT BAO NHIÊU ẢNH TÙY THÍCH
+  // 1. DANH SÁCH BANNER CHÍNH (SLIDER) - MẶC ĐỊNH TRƯỚC KHI LOAD TỪ MONGODB
   // =========================================================================
-  heroBanners: Array<{ image: string; link?: string; alt?: string }> = [
+  private readonly defaultHeroBanners: Array<{ image: string; link?: string; alt?: string }> = [
     {
-      // Cách 1: Dùng ảnh trong thư mục public: '/images/banners/ten-anh.jpg'
-      // Cách 2: Dán trực tiếp link ảnh online: 'https://...'
       image: '/images/banners/banner1.jpg',
       link: '/online-ordering',
       alt: 'Banner 1'
@@ -72,9 +70,20 @@ export class HomeComponent implements OnInit, OnDestroy {
       link: '/cook-with-what-you-have',
       alt: 'Banner 4'
     }
-
-    // => Muốn thêm ảnh mới, bạn chỉ cần copy thêm 1 dòng { image: '...', link: '...' } vào đây!
   ];
+
+  private readonly heroBannersSignal = signal<Array<{ image: string; link?: string; alt?: string }>>(
+    [...this.defaultHeroBanners]
+  );
+  private readonly activeHeroSignal = signal(0);
+
+  get heroBanners(): Array<{ image: string; link?: string; alt?: string }> {
+    return this.heroBannersSignal();
+  }
+
+  set heroBanners(slides: Array<{ image: string; link?: string; alt?: string }>) {
+    this.heroBannersSignal.set(slides);
+  }
 
   // =========================================================================
   // 2. HAI BANNER PHỤ BÊN PHẢI (ẢNH THUẦN)
@@ -96,8 +105,16 @@ export class HomeComponent implements OnInit, OnDestroy {
     return this.heroBanners;
   }
 
-  activeHero = 0;
+  get activeHero(): number {
+    return this.activeHeroSignal();
+  }
+
+  set activeHero(index: number) {
+    this.activeHeroSignal.set(index);
+  }
+
   private heroTimer: ReturnType<typeof setInterval> | null = null;
+  private lastBannerSyncAt = 0;
 
   promoPopup = signal<any | null>(null);
   showPromoPopup = signal(false);
@@ -121,7 +138,26 @@ export class HomeComponent implements OnInit, OnDestroy {
     const clean = (raw || '').trim();
     if (!clean) return '';
     if (clean.startsWith('/api/')) return `${this.backendOrigin}${clean}`;
+    if (clean.startsWith('api/')) return `${this.backendOrigin}/${clean}`;
     return clean;
+  }
+
+  onHeroImageError(event: Event): void {
+    const imgEl = event.target as HTMLImageElement;
+    if (!imgEl) return;
+
+    const currentSrc = imgEl.getAttribute('src') || imgEl.src || '';
+    if (currentSrc.includes('/api/banners/media/') && !imgEl.dataset['retriedMedia']) {
+      imgEl.dataset['retriedMedia'] = '1';
+      const separator = currentSrc.includes('?') ? '&' : '?';
+      imgEl.src = `${currentSrc}${separator}_r=${Date.now()}`;
+      return;
+    }
+
+    const fallback = this.defaultHeroBanners[0].image;
+    if (!currentSrc.includes(fallback)) {
+      imgEl.src = fallback;
+    }
   }
 
   onCatImageError(event: Event, rawImage?: string) {
@@ -184,28 +220,80 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   get visibleProducts(): ApiProduct[] { return this.apiProducts.slice(this.productOffset, this.productOffset + 4); }
 
-  ngOnInit(): void {
-    // Nối banner chính động (giữ layout ảnh thuần của main/admin) & Pop-up khuyến mãi từ Admin Banners
-    this.http.get<any>(`${API_BASE}/banners`).subscribe({
+  @HostListener('window:focus')
+  onWindowFocus(): void {
+    this.loadBanners(true);
+  }
+
+  @HostListener('document:visibilitychange')
+  onVisibilityChange(): void {
+    if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+      this.loadBanners(true);
+    }
+  }
+
+  loadBanners(isRefresh = false): void {
+    const now = Date.now();
+    if (isRefresh && now - this.lastBannerSyncAt < 1500) {
+      return;
+    }
+    this.lastBannerSyncAt = now;
+
+    this.http.get<any>(`${API_BASE}/banners`, { params: { _t: String(now) } }).subscribe({
       next: (res) => {
         if (res && res.success && res.data) {
-          const activeSlides = (res.data.heroSlides || []).filter((s: any) => s.active !== false);
-          if (activeSlides.length > 0 && res.data.updatedBy && res.data.updatedBy !== 'system') {
-            this.heroBanners = activeSlides.map((s: any, idx: number) => ({
+          const activeSlides = (res.data.heroSlides || [])
+            .map((s: any, idx: number) => ({ s, idx }))
+            .filter(({ s }: { s: any }) => s && s.active !== false && String(s.image || '').trim().length > 0)
+            .sort((a: { s: any; idx: number }, b: { s: any; idx: number }) => {
+              const orderDiff = (Number(a.s?.sortOrder) || 999) - (Number(b.s?.sortOrder) || 999);
+              return orderDiff !== 0 ? orderDiff : a.idx - b.idx;
+            })
+            .map(({ s }: { s: any }) => s);
+
+          const isCustomized = Boolean(
+            (res.data.updatedBy && res.data.updatedBy !== 'system')
+            || activeSlides.some((s: any) => String(s.image || '').includes('/api/banners/media/'))
+          );
+
+          if (activeSlides.length > 0 && isCustomized) {
+            const mapped = activeSlides.map((s: any, idx: number) => ({
               image: this.resolveMediaUrl(s.image),
               link: s.link || '/online-ordering',
               alt: s.title || s.eyebrow || `Banner ${idx + 1}`,
             }));
-            this.activeHero = 0;
+            const nextSig = mapped.map((b: any) => `${b.image}|${b.link}|${b.alt}`).join(';;');
+            const curSig = this.heroBanners.map((b) => `${b.image}|${b.link}|${b.alt}`).join(';;');
+            if (nextSig !== curSig) {
+              this.heroBanners = mapped;
+              this.activeHero = 0;
+            }
           }
-          if (res.data.promoPopup?.enabled && !sessionStorage.getItem('dismiss_promo_popup')) {
+
+          if (res.data.promoPopup) {
             this.promoPopup.set(res.data.promoPopup);
-            this.showPromoPopup.set(true);
+            const dismissed = (() => {
+              try {
+                return Boolean(sessionStorage.getItem('dismiss_promo_popup'));
+              } catch {
+                return false;
+              }
+            })();
+            if (res.data.promoPopup.enabled && !dismissed && !isRefresh) {
+              this.showPromoPopup.set(true);
+            } else if (!res.data.promoPopup.enabled) {
+              this.showPromoPopup.set(false);
+            }
           }
         }
       },
       error: () => { },
     });
+  }
+
+  ngOnInit(): void {
+    // Nối banner chính động (giữ layout ảnh thuần của main/admin) & Pop-up khuyến mãi từ Admin Banners
+    this.loadBanners(false);
 
     this.voucherService.loadPublic();
     this.voucherService.refreshMine();

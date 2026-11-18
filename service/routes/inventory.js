@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const Combo = require('../models/Combo');
 const InventoryLog = require('../models/InventoryLog');
@@ -319,7 +320,9 @@ router.get('/logs', protect, staffOnly, async (req, res, next) => {
   try {
     const { page = 1, limit = 100, productId, days, startDate, endDate, storeId, search, type } = req.query;
     const filter = {};
-    if (productId) filter.product = productId;
+    if (productId && mongoose.Types.ObjectId.isValid(String(productId))) {
+      filter.product = String(productId);
+    }
 
     if (type && type !== 'all') {
       filter.type = type;
@@ -328,12 +331,27 @@ router.get('/logs', protect, staffOnly, async (req, res, next) => {
     if (search && search.trim()) {
       const q = search.trim();
       const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      filter.$or = [
+      const orClauses = [
         { productName: { $regex: escaped, $options: 'i' } },
         { reason: { $regex: escaped, $options: 'i' } },
         { note: { $regex: escaped, $options: 'i' } },
         { referenceId: { $regex: escaped, $options: 'i' } },
       ];
+
+      // Hỗ trợ tìm kiếm theo mã sản phẩm (6 ký tự cuối _id hoặc SP-xxxxxx)
+      const qLower = q.toLowerCase();
+      const codeQuery = qLower.replace(/^(sp[-_]?|#)/i, '').trim();
+      if (codeQuery.length >= 3) {
+        const cachedProducts = await getCachedAllProducts();
+        const matchedProdIds = cachedProducts
+          .filter((p) => String(p._id).toLowerCase().includes(codeQuery))
+          .map((p) => p._id);
+        if (matchedProdIds.length > 0) {
+          orClauses.push({ product: { $in: matchedProdIds } });
+        }
+      }
+
+      filter.$or = orClauses;
     }
 
     const scopedStore = getScopedStoreId(req) || storeId;
@@ -365,16 +383,93 @@ router.get('/logs', protect, staffOnly, async (req, res, next) => {
 
     const maxLimit = Math.min(Number(limit) || 100, 500);
     const skip = (Number(page) - 1) * maxLimit;
+    // Không dùng .populate('updatedBy') trực tiếp với .lean() vì log kế toán/seed lưu updatedBy dạng chuỗi tên (vd: "Trần Văn Toàn (Thủ kho)") gây CastError.
     const [logs, total] = await Promise.all([
       InventoryLog.find(filter)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(maxLimit)
-        .populate('updatedBy', 'name email'),
+        .lean(),
       InventoryLog.countDocuments(filter),
     ]);
 
-    res.json({ success: true, total, data: logs });
+    const isOid24 = (val) => {
+      const s = val && typeof val === 'object' && val._id ? String(val._id) : String(val || '');
+      return /^[0-9a-fA-F]{24}$/.test(s) && mongoose.Types.ObjectId.isValid(s);
+    };
+
+    const prodIdsSet = new Set();
+    const prodNamesSet = new Set();
+    const userIdsSet = new Set();
+
+    for (const l of logs) {
+      if (isOid24(l.product)) {
+        prodIdsSet.add(String(l.product));
+      }
+      if (l.productName) {
+        prodNamesSet.add(l.productName);
+      }
+      if (isOid24(l.updatedBy)) {
+        userIdsSet.add(String(l.updatedBy));
+      }
+    }
+
+    const prodIds = Array.from(prodIdsSet);
+    const prodNames = Array.from(prodNamesSet);
+    const userIds = Array.from(userIdsSet);
+
+    const prodConds = [];
+    if (prodIds.length > 0) prodConds.push({ _id: { $in: prodIds } });
+    if (prodNames.length > 0) prodConds.push({ name: { $in: prodNames } });
+
+    const [prods, combos, users] = await Promise.all([
+      prodConds.length > 0 ? Product.find({ $or: prodConds }).select('_id name slug image').lean() : [],
+      prodConds.length > 0 ? Combo.find({ $or: prodConds }).select('_id name slug image').lean() : [],
+      userIds.length > 0 ? User.find({ _id: { $in: userIds } }).select('_id name email').lean() : [],
+    ]);
+
+    const prodById = new Map();
+    const prodByName = new Map();
+    for (const doc of [...prods, ...combos]) {
+      if (!doc) continue;
+      prodById.set(String(doc._id), doc);
+      if (doc.name && !prodByName.has(doc.name)) {
+        prodByName.set(doc.name, doc);
+      }
+    }
+
+    const userById = new Map();
+    for (const u of users) {
+      if (u) userById.set(String(u._id), u);
+    }
+
+    const enrichedLogs = logs.map((l) => {
+      const pIdStr = isOid24(l.product) ? String(l.product) : '';
+      const prodDoc = (pIdStr && prodById.get(pIdStr)) || prodByName.get(l.productName) || null;
+      const resolvedProdId = prodDoc ? String(prodDoc._id) : pIdStr;
+      const img = (prodDoc && prodDoc.image) || '';
+
+      let resolvedUpdatedBy = null;
+      if (isOid24(l.updatedBy)) {
+        resolvedUpdatedBy = userById.get(String(l.updatedBy)) || null;
+      } else if (typeof l.updatedBy === 'string' && l.updatedBy.trim()) {
+        resolvedUpdatedBy = { name: l.updatedBy.trim() };
+      } else if (l.updatedBy && typeof l.updatedBy === 'object' && l.updatedBy.name) {
+        resolvedUpdatedBy = l.updatedBy;
+      }
+
+      return {
+        ...l,
+        product: prodDoc
+          ? { _id: prodDoc._id, name: prodDoc.name || l.productName, slug: prodDoc.slug, image: prodDoc.image }
+          : l.product,
+        productCode: resolvedProdId ? resolvedProdId.slice(-6).toUpperCase() : '',
+        productImage: img,
+        updatedBy: resolvedUpdatedBy,
+      };
+    });
+
+    res.json({ success: true, total, data: enrichedLogs });
   } catch (err) {
     next(err);
   }

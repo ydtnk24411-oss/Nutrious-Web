@@ -66,7 +66,7 @@ export class AdminInventoryComponent implements OnInit, OnDestroy {
   selectedType = signal<'all' | 'single' | 'combo'>('all');
   selectedStatus = signal<'all' | 'in_stock' | 'low_stock' | 'out_of_stock'>('all');
   cardFilter = signal<'all' | 'in_stock' | 'low_stock' | 'out_of_stock'>('all');
-  showThumbnails = signal(false); // Fast image rendering toggle for low latency!
+  showThumbnails = signal(true);
   page = signal(1);
   pageSize = signal(15);
   total = signal(0);
@@ -85,11 +85,12 @@ export class AdminInventoryComponent implements OnInit, OnDestroy {
 
   // Tab 2: Logs
   logs = signal<InventoryLogItem[]>([]);
-  logTimeFilter = signal<'7d' | '30d' | '90d' | 'custom'>('30d');
+  logTimeFilter = signal<'all' | '7d' | '30d' | '90d' | 'custom'>('30d');
   logCustomStartDate = signal<string>(new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10));
   logCustomEndDate = signal<string>(new Date().toISOString().slice(0, 10));
   logTypeFilter = signal<string>('all');
   logSearchQuery = signal<string>('');
+  logProductIdFilter = signal<string>('');
   logPage = signal(1);
   logPageSize = signal(15);
   logTotal = signal(0);
@@ -114,6 +115,7 @@ export class AdminInventoryComponent implements OnInit, OnDestroy {
   });
   hasActiveLogFilters = computed(() => {
     return Boolean(
+      this.logProductIdFilter() ||
       this.logSearchQuery() ||
       this.logTypeFilter() !== 'all' ||
       this.logTimeFilter() !== '30d' ||
@@ -432,14 +434,43 @@ export class AdminInventoryComponent implements OnInit, OnDestroy {
     this.onTabChange(tab);
   }
 
+  readonly fallbackThumb = 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&q=80';
+
   toggleShowThumbnails(): void {
     this.showThumbnails.update(v => !v);
   }
 
+  getProductCode(id?: string | null): string {
+    const raw = String(id || '').trim();
+    return raw ? raw.slice(-6).toUpperCase() : '---';
+  }
+
+  getLogProductCode(log: InventoryLogItem): string {
+    if (log.productCode) return log.productCode;
+    const rawId = typeof log.product === 'object' && log.product !== null ? log.product._id : log.product;
+    return this.getProductCode(rawId);
+  }
+
+  getLogProductImage(log: InventoryLogItem): string {
+    const populatedImg = typeof log.product === 'object' && log.product !== null ? log.product.image : '';
+    const img = (populatedImg || log.productImage || '').trim();
+    return img || this.fallbackThumb;
+  }
+
+  onThumbError(event: Event): void {
+    const imgEl = event.target as HTMLImageElement | null;
+    if (imgEl && imgEl.src !== this.fallbackThumb) {
+      imgEl.src = this.fallbackThumb;
+    }
+  }
+
   viewProductLogs(item: InventoryItem): void {
+    this.logProductIdFilter.set(item._id);
     this.logSearchQuery.set(item.name);
+    this.logTimeFilter.set('all');
     this.activeTab.set('logs');
     this.logPage.set(1);
+    this.logs.set([]);
     this.loadLogs();
   }
 
@@ -542,8 +573,12 @@ export class AdminInventoryComponent implements OnInit, OnDestroy {
 
   // ── TAB 2: LOGS ──────────────────────────────────────────────────
   loadLogs(silent: boolean = false): void {
-    if (!silent) this.loading.set(true);
-    else this.isRefreshing.set(true);
+    if (!silent) {
+      this.loading.set(true);
+      this.error.set('');
+    } else {
+      this.isRefreshing.set(true);
+    }
 
     const params: Record<string, string | number> = {
       page: this.logPage(),
@@ -552,11 +587,17 @@ export class AdminInventoryComponent implements OnInit, OnDestroy {
     const sId = this.getEffectiveStoreId();
     if (sId && sId !== 'all') params['storeId'] = sId;
     if (this.logTypeFilter() !== 'all') params['type'] = this.logTypeFilter();
-    if (this.logSearchQuery()) params['search'] = this.logSearchQuery();
+    if (this.logProductIdFilter()) {
+      params['productId'] = this.logProductIdFilter();
+    } else if (this.logSearchQuery()) {
+      params['search'] = this.logSearchQuery();
+    }
 
     if (this.logTimeFilter() === 'custom') {
       if (this.logCustomStartDate()) params['startDate'] = this.logCustomStartDate();
       if (this.logCustomEndDate()) params['endDate'] = this.logCustomEndDate();
+    } else if (this.logTimeFilter() === 'all') {
+      params['days'] = 'all';
     } else {
       const daysMap: Record<string, number> = { '7d': 7, '30d': 30, '90d': 90 };
       params['days'] = daysMap[this.logTimeFilter()] || 30;
@@ -565,14 +606,18 @@ export class AdminInventoryComponent implements OnInit, OnDestroy {
     this.invApi.getLogs(params).subscribe({
       next: (res) => {
         if (res.success) {
-          this.logs.set(res.data);
-          this.logTotal.set(res.total);
+          this.logs.set(res.data || []);
+          this.logTotal.set(res.total || 0);
         }
         this.loading.set(false);
         this.isRefreshing.set(false);
       },
-      error: () => {
-        if (!silent) this.error.set('Không thể tải nhật ký biến động kho.');
+      error: (err) => {
+        if (!silent) {
+          this.logs.set([]);
+          this.logTotal.set(0);
+          this.error.set(err?.error?.message || 'Không thể tải nhật ký biến động kho.');
+        }
         this.loading.set(false);
         this.isRefreshing.set(false);
       },
@@ -580,6 +625,7 @@ export class AdminInventoryComponent implements OnInit, OnDestroy {
   }
 
   onLogSearch(query: string): void {
+    this.logProductIdFilter.set('');
     this.logSearchQuery.set(query);
     this.logPage.set(1);
     this.loadLogs();
@@ -603,6 +649,7 @@ export class AdminInventoryComponent implements OnInit, OnDestroy {
   }
 
   resetLogFilters(): void {
+    this.logProductIdFilter.set('');
     this.logSearchQuery.set('');
     this.logTypeFilter.set('all');
     this.logTimeFilter.set('30d');
@@ -616,7 +663,7 @@ export class AdminInventoryComponent implements OnInit, OnDestroy {
     this.loadLogs();
   }
 
-  onLogTimeFilterChange(filter: '7d' | '30d' | '90d' | 'custom'): void {
+  onLogTimeFilterChange(filter: 'all' | '7d' | '30d' | '90d' | 'custom'): void {
     this.logTimeFilter.set(filter);
     this.logPage.set(1);
     this.loadLogs();
@@ -1167,12 +1214,13 @@ export class AdminInventoryComponent implements OnInit, OnDestroy {
   exportInventory(format: 'xlsx' | 'csv' = 'xlsx'): void {
     const list = this.items();
     if (list.length === 0) return;
-    const headers = ['Sản phẩm', 'Danh mục', 'Đơn vị tính', 'Giá nhập (Vốn)', 'Giá bán (VNĐ)', 'Số lượng tồn', 'Mức tối thiểu', 'Trạng thái'];
+    const headers = ['Mã sản phẩm', 'Sản phẩm', 'Danh mục', 'Đơn vị tính', 'Giá nhập (Vốn)', 'Giá bán (VNĐ)', 'Số lượng tồn', 'Mức tối thiểu', 'Trạng thái'];
     const rows = list.map(item => {
       let st = 'Còn hàng';
       if (item.status === 'low_stock') st = 'Sắp hết hàng';
       else if (item.status === 'out_of_stock') st = 'Hết hàng';
       return [
+        this.getProductCode(item._id),
         item.name,
         item.categoryVi || item.category || 'Khác',
         item.unit || '',
@@ -1189,11 +1237,12 @@ export class AdminInventoryComponent implements OnInit, OnDestroy {
   exportLogs(format: 'xlsx' | 'csv' = 'xlsx'): void {
     const list = this.logs();
     if (list.length === 0) return;
-    const headers = ['Thời gian', 'Chi nhánh / Kho', 'Sản phẩm', 'Loại biến động', 'Thay đổi', 'Tồn trước', 'Tồn sau', 'Lý do & Ghi chú', 'Người thực hiện'];
+    const headers = ['Thời gian', 'Chi nhánh / Kho', 'Mã sản phẩm', 'Sản phẩm', 'Loại biến động', 'Thay đổi', 'Tồn trước', 'Tồn sau', 'Lý do & Ghi chú', 'Người thực hiện'];
     const rows = list.map(l => [
       new Date(l.createdAt).toLocaleString('vi-VN'),
       l.storeName || this.getStoreDisplayName(l.storeId),
-      typeof l.product === 'object' ? l.product.name : l.productName,
+      this.getLogProductCode(l),
+      (typeof l.product === 'object' && l.product !== null ? l.product.name : '') || l.productName,
       l.type,
       l.delta > 0 ? `+${l.delta}` : `${l.delta}`,
       l.oldStock,

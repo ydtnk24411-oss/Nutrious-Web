@@ -360,6 +360,17 @@
   box-shadow: 0 1px 4px rgba(16, 50, 28, 0.08);
   background: #f7faf5;
 }
+.log-product-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 190px;
+}
+.log-product-thumb {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
 .product-info-col {
   display: flex;
   flex-direction: column;
@@ -371,6 +382,18 @@
 .product-code {
   font-size: 11.5px;
   color: #94a3b8;
+}
+.product-code-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
 }
 .category-tag {
   background: #f1f5f9;
@@ -453,6 +476,19 @@
   background: #dcfce7;
   border: 1px solid #86efac;
   color: #166534;
+  padding: 10px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.alert-error {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
   padding: 10px 16px;
   border-radius: 8px;
   margin-bottom: 16px;

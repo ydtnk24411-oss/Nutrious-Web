@@ -784,10 +784,17 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     setTimeout(() => this.addedSuccess.set(false), 2500);
   }
 
+  resolveUnitPrice(item: any): number {
+    const num = Number(item?.priceNumber);
+    if (Number.isFinite(num) && num > 0) return num;
+    const rawNum = Number(item?.price);
+    if (Number.isFinite(rawNum) && rawNum > 0) return rawNum;
+    const digits = String(item?.price || '').replace(/\D/g, '');
+    return digits ? Number(digits) : 0;
+  }
+
   getBundleTotal(p: any, companion: any): number {
-    const p1 = Number(p?.price) || 0;
-    const p2 = Number(companion?.price) || 0;
-    return p1 + p2;
+    return this.resolveUnitPrice(p) + this.resolveUnitPrice(companion);
   }
 
   // ── Review Methods ───────────────────────────────

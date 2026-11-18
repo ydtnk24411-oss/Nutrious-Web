@@ -26,6 +26,8 @@ export interface InventoryLogItem {
   _id: string;
   product: { _id: string; name: string; image?: string } | string;
   productName: string;
+  productCode?: string;
+  productImage?: string;
   type: 'import' | 'export' | 'adjustment' | 'order_cancel' | 'order_confirmed';
   delta: number;
   oldStock: number;
@@ -34,7 +36,7 @@ export interface InventoryLogItem {
   note?: string;
   storeId?: string;
   storeName?: string;
-  updatedBy?: { _id: string; name: string; email: string };
+  updatedBy?: { _id?: string; name: string; email?: string } | null;
   createdAt: string;
 }
 

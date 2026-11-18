@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ApiService } from './api.service';
 import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, tap, timeout } from 'rxjs/operators';
 
 export interface WarehouseLocation {
   id?: string;
@@ -218,6 +218,39 @@ export interface NominatimPlace {
 export class ShippingApiService {
   private api = inject(ApiService);
   private http = inject(HttpClient);
+  private reverseCache = new Map<string, string>();
+  private cachedCoords: { lat: number; lng: number; at: number } | null = null;
+
+  /**
+   * Lấy tọa độ trình duyệt nhanh (ưu tiên Wi-Fi/cache để tránh treo chờ GPS phần cứng trên desktop)
+   */
+  getCurrentBrowserPosition(
+    onSuccess: (coords: { lat: number; lng: number }) => void,
+    onError?: (err: GeolocationPositionError | Error) => void,
+    timeoutMs = 4000
+  ): void {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      onError?.(new Error('Trình duyệt không hỗ trợ định vị vị trí.'));
+      return;
+    }
+
+    if (this.cachedCoords && Date.now() - this.cachedCoords.at < 120000) {
+      onSuccess({ lat: this.cachedCoords.lat, lng: this.cachedCoords.lng });
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        this.cachedCoords = { ...coords, at: Date.now() };
+        onSuccess(coords);
+      },
+      (err) => {
+        onError?.(err);
+      },
+      { enableHighAccuracy: false, timeout: timeoutMs, maximumAge: 300000 }
+    );
+  }
 
   getConfig(): Observable<{ success: boolean; data: ShippingConfigData }> {
     return this.api.get<{ success: boolean; data: ShippingConfigData }>('/shipping/config');
@@ -246,6 +279,7 @@ export class ShippingApiService {
       photonUrl += `&lat=${biasLat}&lon=${biasLng}`;
     }
     return this.http.get<any>(photonUrl).pipe(
+      timeout(2500),
       map((res) => {
         const features = res?.features || [];
         return features.map((f: any) => {
@@ -285,8 +319,13 @@ export class ShippingApiService {
    * Chuyển tọa độ thành địa chỉ chi tiết bằng dữ liệu OpenStreetMap
    */
   reverseGeocodeNominatim(lat: number, lon: number): Observable<string | null> {
+    const cacheKey = `${lat.toFixed(4)},${lon.toFixed(4)}`;
+    const cached = this.reverseCache.get(cacheKey);
+    if (cached) return of(cached);
+
     const photonUrl = `https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}`;
     return this.http.get<any>(photonUrl).pipe(
+      timeout(2500),
       map((res) => {
         const p = res?.features?.[0]?.properties;
         if (!p) return null;
@@ -304,9 +343,13 @@ export class ShippingApiService {
       catchError(() => {
         const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`;
         return this.http.get<any>(nominatimUrl).pipe(
+          timeout(2500),
           map((res) => res?.display_name || null),
           catchError(() => of(null))
         );
+      }),
+      tap((addr) => {
+        if (addr) this.reverseCache.set(cacheKey, addr);
       })
     );
   }

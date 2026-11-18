@@ -2,13 +2,20 @@ import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, retry, throwError } from 'rxjs';
+import { API_BASE } from '../services/api.service';
 import { CartService } from '../services/cart.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const cartService = inject(CartService);
 
-  // Bật withCredentials: true trên các yêu cầu HTTP chéo cổng theo yêu cầu nghiệp vụ
+  const isInternalApi = req.url.startsWith(API_BASE) || req.url.startsWith('/');
+  if (!isInternalApi) {
+    // External APIs (Photon, Nominatim, etc.) reject withCredentials: true with CORS errors
+    return next(req);
+  }
+
+  // Bật withCredentials: true trên các yêu cầu HTTP tới backend của hệ thống
   const credentialReq = req.clone({
     withCredentials: true,
   });

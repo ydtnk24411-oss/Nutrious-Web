@@ -310,18 +310,16 @@ export class HeaderComponent implements OnDestroy {
       return;
     }
     this.isLocatingGps.set(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
+    this.storeLoc.detectLocationAndSelectNearest(
+      (wh) => {
         this.isLocatingGps.set(false);
-        const wh = this.storeLoc.selectNearestByCoords(pos.coords.latitude, pos.coords.longitude);
         this.selectedArea.set(wh.name);
         this.areaMenuOpen.set(false);
       },
-      (err) => {
+      () => {
         this.isLocatingGps.set(false);
         alert('Không thể xác định tọa độ GPS tự động. Vui lòng bấm chọn chi nhánh từ danh sách bên dưới.');
-      },
-      { timeout: 10000, enableHighAccuracy: true }
+      }
     );
   }
 

@@ -62,12 +62,59 @@ describe('ProductDetailComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('renders primary image first and switches main image when clicking a gallery thumbnail', () => {
+  it('renders gallery thumbnails, switches images, and shows Combo mua kem tiet kiem with Dang xem badge', () => {
     const fixture = TestBed.createComponent(ProductDetailComponent);
     fixture.detectChanges();
 
     const prodReq = httpMock.expectOne(`${API_BASE}/products/sprite-320ml`);
     prodReq.flush({ success: true, data: mockProduct });
+
+    const comboReq = httpMock.expectOne(`${API_BASE}/products/sprite-320ml/combos?limit=3`);
+    comboReq.flush({
+      success: true,
+      data: [
+        {
+          _id: 'combo-1',
+          name: 'Combo Giai Khat',
+          slug: 'combo-giai-khat',
+          price: '20.000đ',
+          priceNumber: 20000,
+          image: 'https://example.com/combo.jpg',
+          stock: 5,
+          availableStock: 5,
+          isActive: true,
+          isCombo: true,
+          comboStatus: 'active',
+          comboItems: [
+            {
+              quantity: 1,
+              product: {
+                _id: 'prod-sprite-1',
+                name: 'Nước Soda Vị Chanh Sprite Lon 320ml',
+                slug: 'sprite-320ml',
+                price: '12.000₫',
+                priceNumber: 12000,
+                image: 'https://example.com/sprite-main.jpg',
+                stock: 20,
+              },
+            },
+            {
+              quantity: 1,
+              product: {
+                _id: 'prod-other-2',
+                name: 'Chanh Tươi',
+                slug: 'chanh-tuoi',
+                price: '14.000₫',
+                priceNumber: 14000,
+                image: 'https://example.com/lemon.jpg',
+                stock: 10,
+              },
+            },
+          ],
+        },
+      ],
+    });
+
     httpMock.match(() => true).forEach((r) => r.flush({ success: true, data: [] }));
 
     fixture.detectChanges();
@@ -76,7 +123,7 @@ describe('ProductDetailComponent', () => {
     const thumbs = el.querySelectorAll('.xanhla-product-thumb');
 
     expect(thumbs.length).toBe(3);
-    expect(mainImg.src).toContain('sprite-main.jpg');
+    expect(mainImg?.src).toContain('sprite-main.jpg');
     expect(thumbs[0].classList.contains('is-active')).toBeTrue();
 
     (thumbs[1] as HTMLButtonElement).click();
@@ -88,5 +135,10 @@ describe('ProductDetailComponent', () => {
     fixture.detectChanges();
     expect(mainImg.src).toContain('sprite-pack-3.jpg');
     expect(thumbs[2].classList.contains('is-active')).toBeTrue();
+
+    const currentTag = el.querySelector('.pd-combo-item-tag');
+    expect(currentTag?.textContent?.trim()).toBe('Đang xem');
+    expect(el.querySelector('.pd-combo-btn')?.textContent).toContain('Thêm combo vào giỏ');
+    expect(fixture.componentInstance.getBundleTotal({ price: '32.000đ' }, { priceNumber: 14000 })).toBe(46000);
   });
 });

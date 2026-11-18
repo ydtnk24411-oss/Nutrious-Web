@@ -373,7 +373,7 @@
                     <img [src]="resolveBannerImage(slideForm().image)" alt="Banner preview" class="preview-thumb-img" />
                     <div class="preview-info">
                       <div class="preview-title">Ảnh Banner đã sẵn sàng</div>
-                      <div class="preview-sub">{{ slideForm().image.startsWith('/api/banners/media/') ? 'Đã lưu trong MongoDB' : 'Đang dùng đường dẫn ảnh hiện tại' }}</div>
+                      <div class="preview-sub">{{ slideForm().image.startsWith('/api/banners/media/') ? 'Đã tải lên MongoDB (bấm Lưu Banner để áp dụng)' : 'Đang dùng đường dẫn ảnh hiện tại' }}</div>
                       <div class="preview-actions">
                         <button type="button" class="btn-preview-change" (click)="slideFileInput.click()">
                           Đổi ảnh khác

@@ -179,7 +179,10 @@ export class AdminBannersComponent implements OnInit {
             } else {
               this.popup.update((p) => ({ ...p, image: url }));
             }
-            this.showSuccess('Đã tải ảnh lên và lưu vào MongoDB!');
+            const saveHint = target === 'slide'
+              ? 'Đã tải ảnh lên MongoDB. Hãy bấm "Lưu Banner" để cập nhật lên trang chủ!'
+              : 'Đã tải ảnh lên MongoDB. Hãy bấm "Lưu cấu hình Pop-up" để cập nhật lên trang chủ!';
+            this.showSuccess(saveHint);
           } else {
             this.uploadErrorMsg.set('Tải ảnh thất bại. Vui lòng thử lại.');
           }

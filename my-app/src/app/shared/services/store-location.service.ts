@@ -1,6 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { ApiService } from './api.service';
 import {
+  ShippingApiService,
   WarehouseLocation,
   DEFAULT_WAREHOUSES,
   findNearestWarehouse,
@@ -35,6 +36,7 @@ export interface PriceDiscrepancyModalData {
 @Injectable({ providedIn: 'root' })
 export class StoreLocationService {
   private api = inject(ApiService);
+  private shippingApi = inject(ShippingApiService);
 
   private _warehouses = signal<WarehouseLocation[]>(DEFAULT_WAREHOUSES);
   readonly warehouses = this._warehouses.asReadonly();
@@ -136,20 +138,17 @@ export class StoreLocationService {
    */
   detectLocationAndSelectNearest(
     onSuccess?: (wh: WarehouseLocation) => void,
-    onError?: (err: GeolocationPositionError) => void
+    onError?: (err: GeolocationPositionError | Error) => void
   ): void {
-    if (!navigator.geolocation) {
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const wh = this.selectNearestByCoords(pos.coords.latitude, pos.coords.longitude);
+    this.shippingApi.getCurrentBrowserPosition(
+      ({ lat, lng }) => {
+        const wh = this.selectNearestByCoords(lat, lng);
         onSuccess?.(wh);
       },
       (err) => {
         onError?.(err);
       },
-      { timeout: 8000 }
+      4000
     );
   }
 

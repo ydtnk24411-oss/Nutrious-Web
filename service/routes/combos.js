@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const mongoose = require('mongoose');
 const Combo = require('../models/Combo');
+const Product = require('../models/Product');
 const { protect, adminOnly, staffOnly } = require('../middleware/auth');
 const { clearCache } = require('../utils/cache');
 const {
@@ -23,12 +24,27 @@ router.get('/', protect, staffOnly, async (req, res, next) => {
       limit = 12,
     } = req.query;
 
-    const rawCombos = await Combo.find({})
-      .sort({ createdAt: -1 })
-      .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
-      .lean();
+    const [colCombos, prodCombos] = await Promise.all([
+      Combo.find({})
+        .sort({ createdAt: -1 })
+        .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
+        .lean(),
+      Product.find({ isCombo: true })
+        .sort({ createdAt: -1 })
+        .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
+        .lean(),
+    ]);
 
-    const allCombos = rawCombos.map((c) => enrichComboDocument(c));
+    const seenKeys = new Set();
+    const rawCombos = [];
+    for (const c of [...colCombos.map((x) => ({ ...x, isCombo: true })), ...prodCombos]) {
+      const k = String(c._id || c.slug || '');
+      if (!k || seenKeys.has(k)) continue;
+      seenKeys.add(k);
+      rawCombos.push(c);
+    }
+
+    const allCombos = rawCombos.map((c) => enrichComboDocument(c, { assumeCombo: true }));
 
     const summary = {
       totalCombos: allCombos.length,
@@ -100,14 +116,22 @@ router.get('/:id', protect, staffOnly, async (req, res, next) => {
     const rawId = req.params.id;
     let combo = null;
     if (mongoose.Types.ObjectId.isValid(rawId)) {
-      combo = await Combo.findById(rawId)
-        .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
-        .lean();
+      combo =
+        (await Combo.findById(rawId)
+          .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
+          .lean()) ||
+        (await Product.findOne({ _id: rawId, isCombo: true })
+          .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
+          .lean());
     }
     if (!combo) {
-      combo = await Combo.findOne({ slug: rawId })
-        .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
-        .lean();
+      combo =
+        (await Combo.findOne({ slug: rawId })
+          .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
+          .lean()) ||
+        (await Product.findOne({ slug: rawId, isCombo: true })
+          .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
+          .lean());
     }
     if (!combo) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy Combo.' });
@@ -206,7 +230,12 @@ router.post('/', protect, adminOnly, async (req, res, next) => {
 // PUT /api/combos/:id — Chỉnh sửa Combo tiết kiệm trong Admin
 router.put('/:id', protect, adminOnly, async (req, res, next) => {
   try {
-    const existing = await Combo.findById(req.params.id);
+    let OwnerModel = Combo;
+    let existing = await Combo.findById(req.params.id);
+    if (!existing) {
+      existing = await Product.findOne({ _id: req.params.id, isCombo: true });
+      OwnerModel = Product;
+    }
     if (!existing) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy Combo.' });
     }
@@ -291,7 +320,7 @@ router.put('/:id', protect, adminOnly, async (req, res, next) => {
     await existing.save();
     clearCache();
 
-    const populated = await Combo.findById(existing._id)
+    const populated = await OwnerModel.findById(existing._id)
       .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
       .lean();
 
@@ -315,7 +344,7 @@ router.patch('/:id/status', protect, adminOnly, async (req, res, next) => {
       });
     }
 
-    const updated = await Combo.findByIdAndUpdate(
+    let updated = await Combo.findByIdAndUpdate(
       req.params.id,
       {
         $set: {
@@ -327,6 +356,21 @@ router.patch('/:id/status', protect, adminOnly, async (req, res, next) => {
     )
       .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
       .lean();
+
+    if (!updated) {
+      updated = await Product.findOneAndUpdate(
+        { _id: req.params.id, isCombo: true },
+        {
+          $set: {
+            comboStatus,
+            isActive: comboStatus === 'active',
+          },
+        },
+        { new: true }
+      )
+        .populate('comboItems.product', COMBO_ITEM_POPULATE_FIELDS)
+        .lean();
+    }
 
     if (!updated) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy Combo.' });
@@ -346,11 +390,18 @@ router.patch('/:id/status', protect, adminOnly, async (req, res, next) => {
 // DELETE /api/combos/:id — Ẩn Combo khỏi cửa hàng (giữ toàn vẹn lịch sử đơn hàng)
 router.delete('/:id', protect, adminOnly, async (req, res, next) => {
   try {
-    const updated = await Combo.findByIdAndUpdate(
+    let updated = await Combo.findByIdAndUpdate(
       req.params.id,
       { $set: { comboStatus: 'hidden', isActive: false } },
       { new: true }
     );
+    if (!updated) {
+      updated = await Product.findOneAndUpdate(
+        { _id: req.params.id, isCombo: true },
+        { $set: { comboStatus: 'hidden', isActive: false } },
+        { new: true }
+      );
+    }
     if (!updated) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy Combo.' });
     }

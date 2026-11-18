@@ -7,7 +7,8 @@
       <div class="coop-hero-main">
         <a [routerLink]="heroBanners[activeHero].link || '/online-ordering'" class="coop-hero-slide-link">
           <img [src]="heroBanners[activeHero].image"
-            [alt]="heroBanners[activeHero].alt || ('Banner ' + (activeHero + 1))" class="coop-hero-slide-img" />
+            [alt]="heroBanners[activeHero].alt || ('Banner ' + (activeHero + 1))" class="coop-hero-slide-img"
+            (error)="onHeroImageError($event)" />
         </a>
 
         <!-- Nút Điều Hướng Slider (Trước / Sau & Số Thứ Tự) -->

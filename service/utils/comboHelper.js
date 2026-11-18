@@ -42,12 +42,18 @@ function resolveComboStatus(doc) {
   return 'active';
 }
 
-function enrichComboDocument(doc) {
+function isComboDocument(doc) {
+  if (!doc) return false;
+  if (doc.isCombo === true) return true;
+  if (doc.isCombo === false) return false;
+  if (doc.constructor?.modelName === 'Combo') return true;
+  return Array.isArray(doc.comboItems) && doc.comboItems.length > 0;
+}
+
+function enrichComboDocument(doc, options = {}) {
   if (!doc) return doc;
   const obj = typeof doc.toObject === 'function' ? doc.toObject() : { ...doc };
-  const isComboEntity = Boolean(
-    obj.isCombo || obj.comboStatus !== undefined || Array.isArray(obj.comboItems)
-  );
+  const isComboEntity = Boolean(options.assumeCombo) || isComboDocument(doc) || isComboDocument(obj);
   if (!isComboEntity) return obj;
 
   const status = resolveComboStatus(obj);
@@ -142,10 +148,8 @@ function enrichComboDocument(doc) {
 function enrichProductOrComboList(docs) {
   if (!Array.isArray(docs)) return [];
   return docs.map((d) => {
-    const isCombo = Boolean(
-      d && (d.isCombo === true || d.comboStatus !== undefined || (Array.isArray(d.comboItems) && d.comboItems.length > 0))
-    );
-    if (isCombo) return enrichComboDocument(d);
+    const isCombo = isComboDocument(d);
+    if (isCombo) return enrichComboDocument(d, { assumeCombo: true });
     const obj = typeof d?.toObject === 'function' ? d.toObject({ virtuals: true }) : { ...d };
     if (obj) {
       if (obj.availableOnlineStock === undefined) {
@@ -284,6 +288,7 @@ async function generateUniqueComboSlug(name, requestedSlug, excludeId = null) {
 module.exports = {
   COMBO_ITEM_POPULATE_FIELDS,
   normalizeProductImages,
+  isComboDocument,
   slugifyVietnamese,
   resolveComboStatus,
   enrichComboDocument,

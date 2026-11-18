@@ -341,10 +341,10 @@ router.post(
         const priceNum = typeof prod.priceNumber === 'number' ? prod.priceNumber : Number(prod.priceNumber || 0);
 
         if (isComboEntity) {
-          const popProd = await Combo.findById(prod._id).populate(
-            'comboItems.product',
-            'name price priceNumber image weight unit slug stock isActive'
-          );
+          const comboPopFields = 'name price priceNumber image weight unit slug stock isActive';
+          const popProd =
+            (await Combo.findById(prod._id).populate('comboItems.product', comboPopFields)) ||
+            (await Product.findById(prod._id).populate('comboItems.product', comboPopFields));
           if (!popProd || !Array.isArray(popProd.comboItems) || popProd.comboItems.length === 0) {
             return res.status(400).json({
               success: false,
@@ -1325,20 +1325,18 @@ async function attachComboDetailsToOrders(orders) {
       if (!it.isCombo) continue;
 
       let prod = null;
+      const comboPopFields = 'name price priceNumber image weight unit slug';
+      const findPopulatedCombo = async (query) =>
+        (await Combo.findOne(query).populate('comboItems.product', comboPopFields).lean()) ||
+        (await Product.findOne({ ...query, isCombo: true }).populate('comboItems.product', comboPopFields).lean());
       if (it.product && mongoose.Types.ObjectId.isValid(it.product)) {
-        prod = await Combo.findById(it.product)
-          .populate('comboItems.product', 'name price priceNumber image weight unit slug')
-          .lean();
+        prod = await findPopulatedCombo({ _id: it.product });
       }
       if (!prod && it.product) {
-        prod = await Combo.findOne({ slug: it.product })
-          .populate('comboItems.product', 'name price priceNumber image weight unit slug')
-          .lean();
+        prod = await findPopulatedCombo({ slug: it.product });
       }
       if (!prod && it.productName) {
-        prod = await Combo.findOne({ name: it.productName })
-          .populate('comboItems.product', 'name price priceNumber image weight unit slug')
-          .lean();
+        prod = await findPopulatedCombo({ name: it.productName });
       }
 
       if (prod && Array.isArray(prod.comboItems) && prod.comboItems.length > 0) {
