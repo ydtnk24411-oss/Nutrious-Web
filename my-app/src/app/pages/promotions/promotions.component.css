@@ -499,6 +499,27 @@
   border-radius: 20px;
 }
 
+.promo-card-meta-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.promo-cond-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #2d6a4f;
+  text-decoration: none;
+}
+
+.promo-cond-link:hover {
+  text-decoration: underline;
+}
+
 .promo-card-cta {
   display: flex;
   align-items: center;

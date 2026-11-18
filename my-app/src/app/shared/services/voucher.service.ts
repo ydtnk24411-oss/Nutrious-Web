@@ -62,6 +62,7 @@ function toVoucher(v: ApiVoucher): Voucher {
     usedCount: v.usedCount || 0,
     maxUsagePerUser: v.maxUsagePerUser || 0,
     isFirstOrderOnly: Boolean(v.isFirstOrderOnly),
+    pointsRequired: v.pointsRequired || 0,
     description: v.description ?? '',
     isPublic: v.isPublic !== false,
   };
@@ -305,5 +306,30 @@ export class VoucherService {
 
   getPublicVouchers(): Voucher[] {
     return this._publicVouchers();
+  }
+
+  /** Tìm voucher theo mã code (hoặc _id) từ API, có fallback sang cache công khai/ví cá nhân */
+  getVoucherDetail(codeOrId: string): Observable<Voucher | null> {
+    const clean = (codeOrId || '').trim();
+    if (!clean) return of(null);
+
+    const findCached = (): Voucher | null => {
+      const upper = clean.toUpperCase();
+      const fromPub = this._publicVouchers().find(
+        (v) => v.code.toUpperCase() === upper || v.id === clean
+      );
+      if (fromPub) return fromPub;
+      const fromMine = this._userVouchers().find(
+        (uv) => uv.voucher?.code?.toUpperCase() === upper || uv.voucherId === clean
+      );
+      return fromMine?.voucher ?? null;
+    };
+
+    return this.api
+      .get<{ success: boolean; data: ApiVoucher }>(`/vouchers/detail/${encodeURIComponent(clean)}`)
+      .pipe(
+        map((res) => (res?.success && res.data ? toVoucher(res.data) : findCached())),
+        catchError(() => of(findCached()))
+      );
   }
 }

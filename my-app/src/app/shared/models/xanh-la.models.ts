@@ -224,6 +224,7 @@ export interface Voucher {
   usedCount: number;
   maxUsagePerUser?: number;
   isFirstOrderOnly?: boolean;
+  pointsRequired?: number;
   description: string;
   isPublic: boolean;
 }

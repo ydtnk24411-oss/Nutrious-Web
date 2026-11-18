@@ -264,7 +264,12 @@
                     <i class="bi bi-clock" style="font-size:13px" aria-hidden="true"></i>
                     {{ promo.expiry }}
                   </span>
-                  <span class="promo-card-tag">{{ promo.tag }}</span>
+                  <div class="promo-card-meta-right">
+                    <span class="promo-card-tag">{{ promo.tag }}</span>
+                    <a [routerLink]="['/vouchers', promo.code]" class="promo-cond-link">
+                      <i class="bi bi-info-circle" aria-hidden="true"></i> Điều kiện
+                    </a>
+                  </div>
                 </div>
               </div>
 

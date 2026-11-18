@@ -49,6 +49,11 @@ export const routes: Routes = [
       import('./pages/vouchers/vouchers.component').then((m) => m.VouchersComponent),
   },
   {
+    path: 'vouchers/:code',
+    loadComponent: () =>
+      import('./pages/voucher-detail/voucher-detail.component').then((m) => m.VoucherDetailComponent),
+  },
+  {
     path: 'loyalty',
     loadComponent: () =>
       import('./pages/loyalty/loyalty.component').then((m) => m.LoyaltyComponent),

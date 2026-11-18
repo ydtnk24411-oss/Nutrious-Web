@@ -24,6 +24,44 @@ router.get('/', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// GET /api/vouchers/detail/:code - chi tiết điều kiện một mã voucher theo code hoặc _id
+router.get('/detail/:code', optionalAuth, async (req, res, next) => {
+  try {
+    const raw = String(req.params.code || '').trim();
+    if (!raw) {
+      return res.status(400).json({ success: false, message: 'Thiếu mã voucher.' });
+    }
+    const cleanUpper = raw.toUpperCase();
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(raw);
+    const query = isObjectId
+      ? { $or: [{ _id: raw }, { code: cleanUpper }] }
+      : { code: cleanUpper };
+
+    const voucher = await Voucher.findOne(query);
+    if (!voucher || !voucher.isActive) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy mã ưu đãi hoặc mã đã ngừng áp dụng.' });
+    }
+
+    const isRestricted = voucher.isPublic === false ||
+      (Array.isArray(voucher.assignedCustomerIds) && voucher.assignedCustomerIds.length > 0);
+    if (isRestricted) {
+      if (!req.user) {
+        return res.status(404).json({ success: false, message: 'Không tìm thấy mã ưu đãi hoặc bạn chưa đăng nhập.' });
+      }
+      const isPrivileged = ['admin', 'staff'].includes(req.user.role);
+      const isAssigned = (voucher.assignedCustomerIds || []).some(
+        (id) => String(id) === String(req.user._id)
+      );
+      const hasCollected = await UserVoucher.exists({ user: req.user._id, voucher: voucher._id });
+      if (!isPrivileged && !isAssigned && !hasCollected) {
+        return res.status(404).json({ success: false, message: 'Mã ưu đãi riêng tư không khả dụng cho tài khoản này.' });
+      }
+    }
+
+    res.json({ success: true, data: voucher });
+  } catch (err) { next(err); }
+});
+
 // GET /api/vouchers/admin — get all vouchers for admin management
 router.get('/admin', protect, staffOnly, async (req, res, next) => {
   try {

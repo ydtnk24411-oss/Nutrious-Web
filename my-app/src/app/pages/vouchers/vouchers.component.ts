@@ -6,6 +6,19 @@ import { VoucherService } from '../../shared/services/voucher.service';
 import { CartService } from '../../shared/services/cart.service';
 import { OrderApiService } from '../../shared/services/order-api.service';
 import { Voucher, UserVoucher } from '../../shared/models/xanh-la.models';
+import {
+  buildVoucherVisual,
+  formatVoucherDateVi,
+  VoucherCardVisual,
+} from '../../shared/utils/voucher-visual.util';
+
+export interface VoucherTicketView {
+  voucher: Voucher;
+  visual: VoucherCardVisual;
+  expiryFormatted: string;
+  statusInfo: { label: string; type: 'available' | 'used' | 'expired' | 'uncollected' };
+  timeWindow: { valid: boolean; statusLabel?: string };
+}
 
 @Component({
   selector: 'app-vouchers',
@@ -66,6 +79,16 @@ export class VouchersComponent implements OnInit {
         return this.filteredPublicVouchers();
     }
   });
+
+  readonly ticketViews = computed<VoucherTicketView[]>(() =>
+    this.tabVouchers().map((v, index) => ({
+      voucher: v,
+      visual: buildVoucherVisual(v, index),
+      expiryFormatted: formatVoucherDateVi(v.endDate),
+      statusInfo: this.getVoucherStatus(v.id),
+      timeWindow: this.voucher.checkTimeWindow(v),
+    }))
+  );
 
   ngOnInit(): void {
     this.voucher.loadPublic();
