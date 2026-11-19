@@ -383,3 +383,228 @@
 .back-link-btn:hover {
   color: #0f172a;
 }
+
+/* ===== Popup đăng ký thành công ===== */
+.register-success-modal {
+  position: relative;
+  width: min(400px, calc(100vw - 32px));
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(20, 83, 45, 0.35);
+  animation: rsPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes rsPop {
+  from { opacity: 0; transform: scale(0.85) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.register-success-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.register-success-close:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: rotate(90deg);
+}
+
+/* Hero xanh */
+.register-success-hero {
+  position: relative;
+  height: 150px;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.15) 0, transparent 45%),
+    radial-gradient(circle at 85% 30%, rgba(234, 179, 8, 0.25) 0, transparent 40%),
+    linear-gradient(135deg, #166534 0%, #15803d 55%, #4d7c0f 100%);
+}
+
+.register-success-hero::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 40px;
+  background: #fff;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+}
+
+/* Logo tròn */
+.register-success-logo {
+  position: absolute;
+  left: 50%;
+  bottom: -38px;
+  z-index: 2;
+  width: 112px;
+  height: 112px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: #fff;
+  padding: 12px;
+  box-shadow: 0 10px 28px rgba(20, 83, 45, 0.28), 0 0 0 6px rgba(220, 252, 231, 0.9);
+  animation: rsLogo 0.6s 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.register-success-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+@keyframes rsLogo {
+  from { opacity: 0; transform: translateX(-50%) scale(0.4) rotate(-20deg); }
+  to { opacity: 1; transform: translateX(-50%) scale(1) rotate(0); }
+}
+
+.register-success-check {
+  position: absolute;
+  right: -2px;
+  bottom: 4px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #22c55e, #15803d);
+  color: #fff;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 10px rgba(21, 128, 61, 0.4);
+  animation: rsCheck 0.4s 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes rsCheck {
+  from { opacity: 0; transform: scale(0); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Confetti + lá trang trí */
+.rs-confetti {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  opacity: 0.9;
+  animation: rsFloat 3s ease-in-out infinite;
+}
+.rs-c1 { top: 22px; left: 14%; background: #fde047; transform: rotate(20deg); }
+.rs-c2 { top: 58px; left: 8%; background: #bbf7d0; border-radius: 50%; animation-delay: 0.4s; }
+.rs-c3 { top: 30px; right: 18%; background: #facc15; border-radius: 50%; animation-delay: 0.8s; }
+.rs-c4 { top: 70px; right: 9%; background: #dcfce7; transform: rotate(45deg); animation-delay: 1.2s; }
+.rs-c5 { top: 16px; left: 42%; background: #fef08a; width: 6px; height: 6px; border-radius: 50%; animation-delay: 0.6s; }
+.rs-c6 { top: 84px; left: 26%; background: #fde68a; width: 6px; height: 10px; animation-delay: 1s; }
+
+@keyframes rsFloat {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -6px; }
+}
+
+.rs-leaf {
+  position: absolute;
+  width: 46px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 0 100% 0 100%;
+}
+.rs-leaf-left { bottom: 46px; left: 22px; transform: rotate(-25deg); }
+.rs-leaf-right { bottom: 52px; right: 22px; transform: rotate(205deg); }
+
+/* Nội dung */
+.register-success-body {
+  padding: 52px 28px 28px;
+}
+
+.register-success-eyebrow {
+  display: inline-block;
+  padding: 3px 12px;
+  margin-bottom: 10px;
+  border-radius: 999px;
+  background: #fef9c3;
+  color: #a16207;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.register-success-title {
+  margin: 0 0 10px;
+  font-family: var(--xanh-font-display, inherit);
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--green-900, #14532d);
+}
+
+.register-success-text {
+  margin: 0 0 24px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: #475569;
+}
+
+.register-success-text strong {
+  color: var(--green-800, #166534);
+}
+
+.register-success-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.register-success-btn,
+.register-success-btn-outline {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.register-success-btn {
+  border: none;
+  color: #fff;
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 60%, #166534 100%);
+  box-shadow: 0 8px 18px rgba(21, 128, 61, 0.35);
+}
+
+.register-success-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(21, 128, 61, 0.42);
+}
+
+.register-success-btn-outline {
+  border: 1.5px solid #bbf7d0;
+  background: #f0fdf4;
+  color: var(--green-800, #166534);
+}
+
+.register-success-btn-outline:hover {
+  background: #dcfce7;
+  border-color: #86efac;
+}

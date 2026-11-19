@@ -1,6 +1,7 @@
 import { Component, signal, inject, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
 import { CartService, AuthTab } from '../../shared/services/cart.service';
 import { GoogleAuthService } from '../../shared/services/google-auth.service';
@@ -16,6 +17,10 @@ export class AuthModalComponent implements OnDestroy {
   protected cart = inject(CartService);
   protected googleAuth = inject(GoogleAuthService);
   protected cookieService = inject(CookieService);
+  private router = inject(Router);
+
+  // Popup đăng ký thành công (hiển thị sau khi modal đăng ký đã đóng)
+  protected registerSuccessName = signal<string | null>(null);
 
   constructor() {
     const saved = this.cookieService.get('customer_remembered_username');
@@ -61,7 +66,7 @@ export class AuthModalComponent implements OnDestroy {
   protected canResend = signal(false);
   private countdownInterval: any = null;
   protected verifiedPhone = signal('');
-  protected demoOtp = signal<string>('123456');
+  protected demoOtp = signal<string>('');
 
   // UI state
   protected loading = signal(false);
@@ -238,9 +243,7 @@ export class AuthModalComponent implements OnDestroy {
       (res) => {
         this.loading.set(false);
         this.verifiedPhone.set(res.phone || phone);
-        if (res.demoOtp) {
-          this.demoOtp.set(res.demoOtp);
-        }
+        this.demoOtp.set(res.demoOtp || '');
         this.otpStep.set(true);
         this.otpDigits.set(['', '', '', '', '', '']);
         this.infoMessage.set(`Mã xác minh gồm 6 số đã được gửi đến số điện thoại ${res.phone || phone}.`);
@@ -270,10 +273,12 @@ export class AuthModalComponent implements OnDestroy {
     this.cart.verifyRegisterOtp(
       this.verifiedPhone(),
       otp,
-      () => {
+      (user) => {
         this.otpLoading.set(false);
         this.clearCountdown();
+        const displayName = (user?.name || this.name()).trim();
         this.resetForm();
+        this.registerSuccessName.set(displayName);
       },
       (errMsg) => {
         this.otpLoading.set(false);
@@ -291,9 +296,7 @@ export class AuthModalComponent implements OnDestroy {
     this.cart.resendRegisterOtp(
       this.verifiedPhone(),
       (res) => {
-        if (res.demoOtp) {
-          this.demoOtp.set(res.demoOtp);
-        }
+        this.demoOtp.set(res.demoOtp || '');
         this.infoMessage.set(`Đã gửi lại mã OTP mới đến số điện thoại ${this.verifiedPhone()}.`);
         this.startCountdown();
         this.otpDigits.set(['', '', '', '', '', '']);
@@ -417,6 +420,16 @@ export class AuthModalComponent implements OnDestroy {
     }
   }
 
+  // Đóng popup đăng ký thành công, tuỳ chọn điều hướng
+  closeRegisterSuccess(target?: 'account' | 'shop'): void {
+    this.registerSuccessName.set(null);
+    if (target === 'account') {
+      this.router.navigate(['/account']);
+    } else if (target === 'shop') {
+      this.router.navigate(['/online-ordering']);
+    }
+  }
+
   private resetForm(): void {
     this.name.set('');
     this.phone.set('');
@@ -469,9 +482,7 @@ export class AuthModalComponent implements OnDestroy {
       (res) => {
         this.loading.set(false);
         this.verifiedPhone.set(res.phone || phone);
-        if (res.demoOtp) {
-          this.demoOtp.set(res.demoOtp);
-        }
+        this.demoOtp.set(res.demoOtp || '');
         this.forgotStep.set(2);
         this.otpDigits.set(['', '', '', '', '', '']);
         this.infoMessage.set(`Mã xác thực OTP đã được gửi đến số điện thoại ${res.phone || phone}.`);
@@ -522,9 +533,7 @@ export class AuthModalComponent implements OnDestroy {
     this.cart.resendForgotPasswordOtp(
       this.verifiedPhone(),
       (res) => {
-        if (res.demoOtp) {
-          this.demoOtp.set(res.demoOtp);
-        }
+        this.demoOtp.set(res.demoOtp || '');
         this.infoMessage.set(`Đã gửi lại mã OTP mới đến số điện thoại ${this.verifiedPhone()}.`);
         this.startCountdown();
         this.otpDigits.set(['', '', '', '', '', '']);
