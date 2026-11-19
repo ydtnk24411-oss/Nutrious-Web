@@ -169,6 +169,8 @@ export class AdminInventoryComponent implements OnInit, OnDestroy {
     batchCode: string;
     expDate: string;
     reason: string;
+    direction?: 'increase' | 'decrease';
+    currentStock?: number;
   }>>([]);
   allCatalogProducts = signal<InventoryItem[]>([]);
   catalogSearchQuery = signal<string>('');
@@ -885,6 +887,8 @@ export class AdminInventoryComponent implements OnInit, OnDestroy {
         batchCode: defaultBatch,
         expDate: defaultExp,
         reason: defaultReason,
+        direction: 'decrease',
+        currentStock: prod.stock ?? 0,
       },
     ]);
   }
@@ -901,6 +905,7 @@ export class AdminInventoryComponent implements OnInit, OnDestroy {
           productName: prod.name,
           sku: prod.slug || prod._id,
           unitPrice: prod.costPrice || Math.round(prod.priceNumber * 0.7) || 20000,
+          currentStock: prod.stock ?? 0,
         };
       }
       return updated;
@@ -945,14 +950,22 @@ export class AdminInventoryComponent implements OnInit, OnDestroy {
       supplierName: type === 'goods_receipt' ? this.ticketSupplierName() : undefined,
       type,
       note: this.ticketNote(),
-      items: rows.map(r => ({
-        productId: r.productId,
-        quantityDelta: type === 'spoilage_writeoff' ? -Math.abs(r.quantity) : Math.abs(r.quantity),
-        unitPrice: r.unitPrice,
-        batchCode: r.batchCode,
-        expDate: r.expDate || null,
-        reason: r.reason,
-      })),
+      items: rows.map(r => {
+        let qDelta = Math.abs(r.quantity);
+        if (type === 'spoilage_writeoff') {
+          qDelta = -Math.abs(r.quantity);
+        } else if (type === 'cycle_count' && r.direction === 'decrease') {
+          qDelta = -Math.abs(r.quantity);
+        }
+        return {
+          productId: r.productId,
+          quantityDelta: qDelta,
+          unitPrice: r.unitPrice,
+          batchCode: r.batchCode,
+          expDate: r.expDate || null,
+          reason: r.reason,
+        };
+      }),
     };
 
     this.invApi.createTicket(payload).subscribe({

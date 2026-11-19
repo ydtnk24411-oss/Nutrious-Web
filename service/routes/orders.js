@@ -1677,10 +1677,14 @@ async function restoreOrderInventoryOnce(orderId, updatedBy = null) {
       { new: false }
     );
     if (!prevDoc) continue;
-    const targetStoreId = lockedOrder.warehouseId || lockedOrder.storeId || 'default';
+    const targetStoreId = lockedOrder.warehouseId || lockedOrder.pickupStore?.id || lockedOrder.pickupStoreId || lockedOrder.storeId || 'store-thuduc';
     await StoreInventory.findOneAndUpdate(
       { storeId: targetStoreId, productId: pid },
       { $inc: { reservedStock: -info.totalQty, physicalStock: info.totalQty } }
+    );
+    await StoreInventory.updateOne(
+      { storeId: targetStoreId, productId: pid, reservedStock: { $lt: 0 } },
+      { $set: { reservedStock: 0 } }
     );
     await Product.findByIdAndUpdate(pid, { $inc: { reservedStock: -info.totalQty } });
 
@@ -1690,13 +1694,15 @@ async function restoreOrderInventoryOnce(orderId, updatedBy = null) {
       product: prevDoc._id,
       productName: prevDoc.name || info.productName,
       type: 'order_cancel',
+      storeId: targetStoreId,
+      referenceId: lockedOrder.orderCode || String(lockedOrder._id),
       delta: info.totalQty,
       oldStock,
       newStock,
       reason: info.reasons.length > 0
-        ? `Hủy đơn ${lockedOrder.orderCode} (${info.reasons.join('; ')})`
-        : `Hủy đơn ${lockedOrder.orderCode}`,
-      note: 'Hoàn tồn tự động đúng 1 lần khi đơn hàng bị hủy',
+        ? `Hủy đơn [${lockedOrder.orderCode}] (${info.reasons.join('; ')})`
+        : `Hủy đơn [${lockedOrder.orderCode}]`,
+      note: 'Hoàn tồn tự động khi đơn hàng bị hủy',
       updatedBy: updatedBy || null,
     });
   }

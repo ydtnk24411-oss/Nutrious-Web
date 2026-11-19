@@ -1,4 +1,5 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import {
   XanhLaProduct,
   XanhLaCartItem,
@@ -8,6 +9,11 @@ import {
   EvaluatedCartItemPricing,
 } from '../models/xanh-la.models';
 import { ApiService } from './api.service';
+import {
+  DEFAULT_WAREHOUSES,
+  WarehouseLocation,
+  findNearestWarehouse,
+} from './shipping-api.service';
 import { animateFlyToCart } from '../utils/fly-to-cart.util';
 
 const USER_KEY         = 'xanhla_user_session';
@@ -172,6 +178,30 @@ export function resolveProductMaxStock(
     ? product.availableStock
     : (typeof product.stock === 'number' ? product.stock : null);
   return raw !== null && Number.isFinite(raw) ? Math.max(0, Math.floor(raw)) : null;
+}
+
+export function resolveStoreIdForAddress(addr?: Partial<XanhLaAddress> | null): string {
+  if (!addr) return 'store-thuduc';
+  if (typeof addr.lat === 'number' && typeof addr.lng === 'number' && addr.lat > 0 && addr.lng > 0) {
+    const nearest = findNearestWarehouse(addr.lat, addr.lng, DEFAULT_WAREHOUSES);
+    if (nearest?.id) return nearest.id;
+  }
+  const fullText = `${addr.street || ''} ${addr.ward || ''} ${addr.address || ''} ${addr.city || ''} ${addr.province || ''}`.toLowerCase();
+  if (fullText.includes('dĩ an') || fullText.includes('di an') || fullText.includes('bình dương') || fullText.includes('binh duong')) {
+    return 'store-dian';
+  }
+  if (fullText.includes('thủ đức') || fullText.includes('thu duc')) return 'store-thuduc';
+  if (fullText.includes('quận 1') || fullText.includes('quan 1')) return 'store-q1';
+  if (fullText.includes('bình thạnh') || fullText.includes('binh thanh')) return 'store-binhthanh';
+  if (fullText.includes('gò vấp') || fullText.includes('go vap')) return 'store-govap';
+  if (fullText.includes('tân bình') || fullText.includes('tan binh')) return 'store-tanbinh';
+  if (fullText.includes('bình tân') || fullText.includes('binh tan')) return 'store-binhtan';
+  if (fullText.includes('quận 7') || fullText.includes('quan 7')) return 'store-q7';
+  if (fullText.includes('quận 8') || fullText.includes('quan 8')) return 'store-q8';
+  if (fullText.includes('quận 12') || fullText.includes('quan 12')) return 'store-q12';
+  if (fullText.includes('hóc môn') || fullText.includes('hoc mon')) return 'store-hocmon';
+  if (fullText.includes('bình chánh') || fullText.includes('binh chanh')) return 'store-binhchanh';
+  return 'store-thuduc';
 }
 
 export function isComboProduct(
@@ -510,6 +540,7 @@ function cleanCartStr(s?: string): string {
 @Injectable({ providedIn: 'root' })
 export class CartService {
   private api = inject(ApiService);
+  private router = inject(Router);
 
   // ── Auth ────────────────────────────────────────────────
   private _currentUser = signal<XanhLaUser | null>(this._loadUser());
@@ -547,6 +578,27 @@ export class CartService {
   private _authPrefill = signal<AuthModalPrefill | null>(null);
   readonly authPrefill = this._authPrefill.asReadonly();
 
+  // ── Global Toast ─────────────────────────────────────────
+  private _toastMessage = signal<string>('');
+  readonly toastMessage = this._toastMessage.asReadonly();
+  private _toastType = signal<'warning' | 'error' | 'success' | 'info'>('warning');
+  readonly toastType = this._toastType.asReadonly();
+  private toastTimer: any = null;
+
+  showToast(message: string, type: 'warning' | 'error' | 'success' | 'info' = 'warning'): void {
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this._toastMessage.set(message);
+    this._toastType.set(type);
+    this.toastTimer = setTimeout(() => {
+      this._toastMessage.set('');
+    }, 4500);
+  }
+
+  clearToast(): void {
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this._toastMessage.set('');
+  }
+
   // ── Cart state ──────────────────────────────────────────
   private _items = signal<XanhLaCartItem[]>([]);
   readonly items = this._items.asReadonly();
@@ -577,20 +629,57 @@ export class CartService {
 
   readonly buyNowItem = computed<XanhLaCartItem | null>(() => this._buyNowSession()?.[0] ?? null);
 
+  getActiveStoreId(): string {
+    const u = this._currentUser();
+    if (u && Array.isArray(u.addresses) && u.addresses.length > 0) {
+      const def = u.addresses.find(a => a.isDefault) || u.addresses[0];
+      if (def) {
+        const sId = resolveStoreIdForAddress(def);
+        if (sId) return sId;
+      }
+    }
+    const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('xanhla_selected_store_id') : null;
+    if (saved) return saved;
+    return 'store-thuduc';
+  }
+
+  getActiveStore(): WarehouseLocation {
+    const sId = this.getActiveStoreId();
+    return DEFAULT_WAREHOUSES.find(w => w.id === sId) || DEFAULT_WAREHOUSES[0];
+  }
+
+  readonly activeStoreName = computed<string>(() => {
+    this._currentUser();
+    return this.getActiveStore().name;
+  });
+
   openBuyNowModal(product: XanhLaProduct, initialQty = 1, option?: string): void {
+    const storeId = this.getActiveStoreId();
+    const activeStore = this.getActiveStore();
+    try {
+      localStorage.setItem('xanhla_selected_store_id', storeId);
+    } catch {}
+
     const maxStock = resolveProductMaxStock(product);
-    if (maxStock === 0) return;
-    const clampedQty = maxStock !== null ? Math.min(maxStock, Math.max(1, initialQty)) : Math.max(1, initialQty);
-    this._buyNowProduct.set(product);
+    if (maxStock === 0) {
+      this.showToast(`Sản phẩm "${product.name}" hiện tạm hết hàng tại chi nhánh [${activeStore.name}].`, 'warning');
+      return;
+    }
+    const clampedQty = maxStock !== null && maxStock > 0 ? Math.min(maxStock, Math.max(1, initialQty)) : Math.max(1, initialQty);
+    this._buyNowProduct.set({
+      ...product,
+      storeId,
+      storeName: activeStore.name,
+    });
     this._buyNowQuantity.set(clampedQty);
     const defaultOpt = option || (product.options?.[0]?.values?.[0] ?? '');
     this._buyNowOption.set(defaultOpt);
     this._buyNowModalOpen.set(true);
 
-    // Đối chiếu lại tồn kho thực tế từ API để tránh sản phẩm hết hàng (như Flash Sale chưa đồng bộ) đi tiếp vào Checkout
+    // Đối chiếu lại tồn kho thực tế từ API tại chi nhánh để chặn ngay tại modal Mua ngay
     const cleanSlug = String(product.slug || '').replace(/^\/product-page\//, '').replace(/^\//, '');
     if (cleanSlug) {
-      this.api.get<{ success: boolean; data: any }>(`/products/${encodeURIComponent(cleanSlug)}`).subscribe({
+      this.api.get<{ success: boolean; data: any }>(`/products/${encodeURIComponent(cleanSlug)}`, { storeId }).subscribe({
         next: (res) => {
           const live = res?.data;
           if (!live) return;
@@ -604,14 +693,22 @@ export class CartService {
           const updated: XanhLaProduct = {
             ...current,
             stock: liveStock,
-            availableStock: typeof live.availableStock === 'number' ? Math.max(0, Math.floor(live.availableStock)) : current.availableStock,
+            availableStock: typeof live.availableStock === 'number' ? Math.max(0, Math.floor(live.availableStock)) : liveStock,
+            storeStock: typeof live.storeStock === 'number' ? Math.max(0, Math.floor(live.storeStock)) : liveStock,
+            storeId: live.storeId || storeId,
+            storeName: live.storeName || activeStore.name,
             comboStatus: live.comboStatus ?? current.comboStatus,
             isCombo: live.isCombo ?? current.isCombo,
           };
           this._buyNowProduct.set(updated);
           const refreshedMax = resolveProductMaxStock(updated);
-          if (refreshedMax !== null && refreshedMax > 0 && this._buyNowQuantity() > refreshedMax) {
-            this._buyNowQuantity.set(refreshedMax);
+          if (refreshedMax !== null) {
+            if (refreshedMax === 0) {
+              this.showToast(`Sản phẩm "${product.name}" hiện tạm hết hàng tại chi nhánh [${activeStore.name}].`, 'warning');
+            } else if (this._buyNowQuantity() > refreshedMax) {
+              this._buyNowQuantity.set(refreshedMax);
+              this.showToast(`Chi nhánh [${activeStore.name}] chỉ còn ${refreshedMax} sản phẩm khả dụng. Số lượng đã được điều chỉnh.`, 'warning');
+            }
           }
         },
         error: () => {},
@@ -624,8 +721,12 @@ export class CartService {
   }
 
   setBuyNowQuantity(qty: number): void {
+    const store = this.getActiveStore();
     const maxStock = resolveProductMaxStock(this._buyNowProduct());
     const parsed = Math.max(1, Math.floor(qty) || 1);
+    if (maxStock !== null && maxStock > 0 && parsed > maxStock) {
+      this.showToast(`Số lượng yêu cầu vượt quá tồn kho khả dụng (kho [${store.name}] chỉ còn ${maxStock} sản phẩm).`, 'warning');
+    }
     const clamped = maxStock !== null && maxStock > 0 ? Math.min(maxStock, parsed) : parsed;
     this._buyNowQuantity.set(clamped);
   }
@@ -639,13 +740,21 @@ export class CartService {
       this.openAuthModal('login');
       return;
     }
+    const store = this.getActiveStore();
     const maxStock = resolveProductMaxStock(product);
-    if (maxStock === 0) return;
+    if (maxStock === 0) {
+      this.showToast(`Sản phẩm "${product.name}" hiện tạm hết hàng tại chi nhánh [${store.name}].`, 'warning');
+      return;
+    }
     const cleanOption = resolveProductOption(product, selectedOption);
     const combo = isComboProduct(product);
-    const safeQty = maxStock !== null ? Math.min(maxStock, Math.max(1, Math.floor(quantity) || 1)) : Math.max(1, Math.floor(quantity) || 1);
+    const safeQty = maxStock !== null && maxStock > 0 ? Math.min(maxStock, Math.max(1, Math.floor(quantity) || 1)) : Math.max(1, Math.floor(quantity) || 1);
     const item: XanhLaCartItem = {
-      product,
+      product: {
+        ...product,
+        storeId: store.id,
+        storeName: store.name,
+      },
       quantity: safeQty,
       selectedOption: cleanOption,
       itemType: combo ? 'combo' : 'regular',
@@ -1091,7 +1200,10 @@ export class CartService {
       return;
     }
     const maxStock = resolveProductMaxStock(product);
-    if (maxStock === 0) return;
+    if (maxStock === 0) {
+      this.showToast(`Sản phẩm "${product.name}" hiện tạm hết hàng tại chi nhánh.`, 'warning');
+      return;
+    }
 
     if (opts?.event) {
       animateFlyToCart(opts.event, product.image);
@@ -1137,6 +1249,9 @@ export class CartService {
             isCombo: combo || baseProduct.isCombo,
           };
           const rawNext = opts?.setExactQuantity ? Math.max(1, quantity) : (i.quantity + quantity);
+          if (maxStock !== null && maxStock > 0 && rawNext > maxStock) {
+            this.showToast(`Số lượng yêu cầu vượt quá tồn kho khả dụng (kho chi nhánh chỉ còn ${maxStock} sản phẩm).`, 'warning');
+          }
           const cappedNext = maxStock !== null ? Math.min(maxStock, rawNext) : rawNext;
           return {
             ...i,
@@ -1150,6 +1265,9 @@ export class CartService {
         this._saveCartForCurrentUser(updated);
         return updated;
       } else {
+        if (maxStock !== null && maxStock > 0 && quantity > maxStock) {
+          this.showToast(`Số lượng yêu cầu vượt quá tồn kho khả dụng (kho chi nhánh chỉ còn ${maxStock} sản phẩm).`, 'warning');
+        }
         const cappedInitial = maxStock !== null ? Math.min(maxStock, Math.max(1, quantity)) : Math.max(1, quantity);
         const updated = [...current, { product, quantity: cappedInitial, selectedOption: cleanOption, itemType, isCombo: combo }];
         this._saveCartForCurrentUser(updated);
@@ -1286,9 +1404,15 @@ export class CartService {
 
   updateQuantity(slug: string, quantity: number): void {
     this._items.update((current) => {
-      const updated = quantity <= 0
+      const target = current.find((i) => i.product.slug === slug && i.itemType !== 'addon');
+      const maxStock = target ? resolveProductMaxStock(target.product) : null;
+      if (maxStock !== null && maxStock > 0 && quantity > maxStock) {
+        this.showToast(`Số lượng yêu cầu vượt quá tồn kho khả dụng (kho chi nhánh chỉ còn ${maxStock} sản phẩm).`, 'warning');
+      }
+      const clamped = (maxStock !== null && maxStock > 0 && quantity > 0) ? Math.min(maxStock, quantity) : quantity;
+      const updated = clamped <= 0
         ? current.filter((i) => !(i.product.slug === slug && i.itemType !== 'addon'))
-        : current.map((i) => (i.product.slug === slug && i.itemType !== 'addon') ? { ...i, quantity } : i);
+        : current.map((i) => (i.product.slug === slug && i.itemType !== 'addon') ? { ...i, quantity: clamped } : i);
       this._saveCartForCurrentUser(updated);
       return updated;
     });
@@ -1307,7 +1431,11 @@ export class CartService {
       const target = current.find((i) => getCartItemKey(i) === targetKey);
       const maxStock = resolveProductMaxStock(target?.product ?? item.product);
       if (quantity > 0 && target && maxStock === 0 && quantity > target.quantity) {
+        this.showToast(`Sản phẩm hiện tạm hết hàng tại chi nhánh.`, 'warning');
         return current;
+      }
+      if (maxStock !== null && maxStock > 0 && quantity > maxStock) {
+        this.showToast(`Số lượng yêu cầu vượt quá tồn kho khả dụng (kho chi nhánh chỉ còn ${maxStock} sản phẩm).`, 'warning');
       }
       const nextQty = quantity <= 0
         ? quantity
@@ -1920,6 +2048,20 @@ export class CartService {
     localStorage.setItem(USER_KEY, JSON.stringify(user));
     localStorage.setItem(TOKEN_KEY, token);
 
+    // Tự động định vị kho theo địa chỉ mặc định của người dùng
+    if (user && Array.isArray(user.addresses) && user.addresses.length > 0) {
+      const def = user.addresses.find(a => a.isDefault) || user.addresses[0];
+      if (def) {
+        const storeId = resolveStoreIdForAddress(def);
+        if (storeId) {
+          try {
+            localStorage.setItem('xanhla_selected_store_id', storeId);
+            window.dispatchEvent(new CustomEvent('xanhla:store_changed', { detail: { id: storeId } }));
+          } catch {}
+        }
+      }
+    }
+
     // Khôi phục giỏ hàng cho user và tự động gộp hàng khách vãng lai đã chọn trước đó
     const ident = user.phone || user.email || user._id || 'guest';
     const userCart = this._loadCartForUser(ident, user.email);
@@ -2055,6 +2197,12 @@ export class CartService {
     this._selectedKeys.set(new Set());
     this._viewedProducts.set([]);
     persistSelectedKeys(new Set());
+    if (typeof window !== 'undefined') {
+      const cur = this.router.url;
+      if (cur.startsWith('/checkout') || cur.startsWith('/account')) {
+        this.router.navigate(['/']);
+      }
+    }
   }
 
   openAuthModal(tab: AuthTab = 'login', prefill?: AuthModalPrefill): void {
@@ -2157,7 +2305,17 @@ export class CartService {
         localStorage.removeItem(TOKEN_KEY);
         return null;
       }
-      return JSON.parse(raw);
+      const u: XanhLaUser = JSON.parse(raw);
+      if (u && Array.isArray(u.addresses) && u.addresses.length > 0) {
+        const def = u.addresses.find(a => a.isDefault) || u.addresses[0];
+        if (def) {
+          const storeId = resolveStoreIdForAddress(def);
+          if (storeId) {
+            try { localStorage.setItem('xanhla_selected_store_id', storeId); } catch {}
+          }
+        }
+      }
+      return u;
     } catch { return null; }
   }
 }

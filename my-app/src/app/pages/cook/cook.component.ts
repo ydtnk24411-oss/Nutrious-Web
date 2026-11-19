@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject, OnInit } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -57,8 +57,14 @@ export interface RecipeIngredient {
   productId?: string | null;
   buyQuantity: number; // recommended packs/units to buy for missingAmount
   packLabel: string;
+  packSizeInRecipeUnit: number;
   isOutOfStock: boolean;
   selected: boolean;
+  inFridgeAmount?: number;
+  inCartAmount?: number;
+  inCartPacks?: number;
+  packEquivalent?: string;
+  buyQuantityEquivalent?: string;
 }
 
 interface RawRecipeIngredient {
@@ -309,6 +315,16 @@ export class CookComponent implements OnInit {
   detectedFromImage = signal<UserIngredient[]>([]);
   visionMessage = signal<string | null>(null);
   visionError = signal(false);
+
+  constructor() {
+    effect(() => {
+      // Tự động tính toán lại khi các sản phẩm trong giỏ hàng thay đổi
+      const _ = this.cart.items();
+      if (this.hasSearched() && !this.catalogueLoading() && !this.recipesLoading()) {
+        this.results.set(this.computeRecipeResults());
+      }
+    }, { allowSignalWrites: true });
+  }
 
   // ── Lifecycle ───────────────────────────────────────────
   ngOnInit(): void {
@@ -858,21 +874,64 @@ export class CookComponent implements OnInit {
 
         const requiredAmount = this.scaledAmount(ing.amountPer1Serving, raw.servingBase);
 
-        // Cộng dồn tất cả nguyên liệu khớp trong tủ lạnh (quy đổi về đơn vị công thức)
-        let availableAmount = 0;
+        // 1. Tủ lạnh: Cộng dồn tất cả nguyên liệu khớp trong tủ lạnh (quy đổi về đơn vị công thức)
+        let inFridgeAmount = 0;
         for (const u of userIngredients) {
           if (!this.doesUserIngredientMatch(u, ing, resolvedProductId, matchedProd)) continue;
 
           const uParsedPack = parseWeightString(u.product?.weight);
           const uPackGrams = uParsedPack ? convertQty(uParsedPack.qty, uParsedPack.unit, 'g', u.name) : 250;
-          availableAmount += convertQty(u.qty, u.unit, ing.unit, ing.name, uPackGrams);
+          inFridgeAmount += convertQty(u.qty, u.unit, ing.unit, ing.name, uPackGrams);
         }
-        availableAmount = round1(availableAmount);
+        inFridgeAmount = round1(inFridgeAmount);
 
-        const missingAmount = Math.max(0, round1(requiredAmount - availableAmount));
+        // 2. Giỏ hàng: Quét sản phẩm đã có trong giỏ hàng (CartService)
+        let inCartAmount = 0;
+        let inCartPacks = 0;
+        const currentCartItems = this.cart.items();
+        for (const cItem of currentCartItems) {
+          const cProd = cItem.product;
+          if (!cProd || cItem.quantity <= 0) continue;
+
+          const cProdId = cProd.id || (cProd as any)._id;
+          const isDirectMatch = Boolean(
+            (resolvedProductId && cProdId === resolvedProductId) ||
+            (matchedProd && (cProdId === matchedProd._id || (cProd as any).id === matchedProd._id || cProd.slug === matchedProd.slug))
+          );
+
+          let isMatch = isDirectMatch;
+          if (!isMatch) {
+            const pseudo: UserIngredient = {
+              name: cProd.name,
+              productId: cProdId,
+              product: cProd as any,
+              qty: cItem.quantity,
+              unit: 'phần'
+            };
+            isMatch = this.doesUserIngredientMatch(pseudo, ing, resolvedProductId, matchedProd);
+          }
+
+          if (isMatch) {
+            inCartPacks += cItem.quantity;
+            const cParsedPack = parseWeightString(cProd.weight);
+            if (cParsedPack) {
+              const packInRecipeUnit = convertQty(cParsedPack.qty, cParsedPack.unit, ing.unit, ing.name);
+              inCartAmount += cItem.quantity * packInRecipeUnit;
+            } else {
+              const def = inferDefaultQtyUnit(cProd.name, cProd as any);
+              const defInRecipeUnit = convertQty(def.qty, def.unit, ing.unit, ing.name);
+              inCartAmount += cItem.quantity * defInRecipeUnit;
+            }
+          }
+        }
+        inCartAmount = round1(inCartAmount);
+
+        const totalAvailable = round1(inFridgeAmount + inCartAmount);
+        const availableAmount = totalAvailable;
+        const missingAmount = Math.max(0, round1(requiredAmount - totalAvailable));
         const inFridge = missingAmount <= 0;
-        const hasPartial = availableAmount > 0 && missingAmount > 0;
-        const ratio = requiredAmount > 0 ? Math.min(1, availableAmount / requiredAmount) : 1;
+        const hasPartial = totalAvailable > 0 && missingAmount > 0;
+        const ratio = requiredAmount > 0 ? Math.min(1, totalAvailable / requiredAmount) : 1;
         coverageSum += ratio;
 
         const outOfStock = isApiProductOutOfStock(matchedProd);
@@ -890,11 +949,21 @@ export class CookComponent implements OnInit {
           packLabel = `${defPack.qty}${defPack.unit === 'g' || defPack.unit === 'kg' ? defPack.unit : ' ' + defPack.unit}`;
         }
 
+        let packEquivalent = '';
+        if (packSizeInRecipeUnit > 1 && (ing.unit === 'quả' || ing.unit === 'củ')) {
+          packEquivalent = `≈ ${round1(packSizeInRecipeUnit)} ${ing.unit}/phần`;
+        }
+
         let buyQuantity = missingAmount > 0 && matchedProd && !outOfStock
           ? Math.max(1, Math.ceil(missingAmount / packSizeInRecipeUnit))
           : 0;
         if (matchedProd && typeof matchedProd.stock === 'number' && matchedProd.stock > 0) {
           buyQuantity = Math.min(buyQuantity, Math.floor(matchedProd.stock));
+        }
+
+        let buyQuantityEquivalent = '';
+        if (buyQuantity > 0 && packSizeInRecipeUnit > 1 && (ing.unit === 'quả' || ing.unit === 'củ')) {
+          buyQuantityEquivalent = `≈ ${Math.round(buyQuantity * packSizeInRecipeUnit)} ${ing.unit}`;
         }
 
         return {
@@ -910,8 +979,14 @@ export class CookComponent implements OnInit {
           productId: resolvedProductId,
           buyQuantity,
           packLabel,
+          packSizeInRecipeUnit,
           isOutOfStock: outOfStock,
-          selected: !inFridge && Boolean(matchedProd) && !outOfStock && buyQuantity > 0
+          selected: !inFridge && Boolean(matchedProd) && !outOfStock && buyQuantity > 0,
+          inFridgeAmount,
+          inCartAmount,
+          inCartPacks,
+          packEquivalent,
+          buyQuantityEquivalent
         };
       });
 
@@ -1041,7 +1116,11 @@ export class CookComponent implements OnInit {
             ? Math.floor(ing.product.stock)
             : 99;
           const next = Math.max(1, Math.min(maxStock, ing.buyQuantity + delta));
-          return { ...ing, buyQuantity: next, selected: true };
+          let buyQuantityEquivalent = ing.buyQuantityEquivalent;
+          if (ing.packSizeInRecipeUnit && ing.packSizeInRecipeUnit > 1 && (ing.unit === 'quả' || ing.unit === 'củ')) {
+            buyQuantityEquivalent = `≈ ${Math.round(next * ing.packSizeInRecipeUnit)} ${ing.unit}`;
+          }
+          return { ...ing, buyQuantity: next, buyQuantityEquivalent, selected: true };
         })
       };
     }));

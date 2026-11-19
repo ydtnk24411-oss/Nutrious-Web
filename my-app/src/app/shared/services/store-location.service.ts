@@ -59,6 +59,16 @@ export class StoreLocationService {
     this.refreshWarehouses();
 
     if (typeof window !== 'undefined') {
+      window.addEventListener('xanhla:store_changed', (evt: any) => {
+        const store = evt?.detail;
+        if (store?.id) {
+          const found = this._warehouses().find((w) => w.id === store.id) || DEFAULT_WAREHOUSES.find((w) => w.id === store.id);
+          if (found && found.id !== this._selectedStore().id) {
+            this._selectedStore.set(found);
+          }
+        }
+      });
+
       try {
         const hasPrompted = localStorage.getItem(STORE_PROMPTED_KEY);
         const hasExplicitStore = localStorage.getItem(SELECTED_STORE_KEY);
@@ -75,6 +85,20 @@ export class StoreLocationService {
 
   private _loadInitialStore(): WarehouseLocation {
     try {
+      const userStr = typeof localStorage !== 'undefined' ? localStorage.getItem('xanhla_user_session') : null;
+      if (userStr) {
+        const u = JSON.parse(userStr);
+        if (u && Array.isArray(u.addresses) && u.addresses.length > 0) {
+          const def = u.addresses.find((a: any) => a.isDefault) || u.addresses[0];
+          if (def) {
+            const nearest = this.findNearestForAddress(def);
+            if (nearest && nearest.id) {
+              localStorage.setItem(SELECTED_STORE_KEY, nearest.id);
+              return nearest;
+            }
+          }
+        }
+      }
       const savedId = localStorage.getItem(SELECTED_STORE_KEY);
       if (savedId) {
         const found = DEFAULT_WAREHOUSES.find((w) => w.id === savedId);

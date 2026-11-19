@@ -1,4 +1,19 @@
 <div class="xanhla-site">
+  @if (cart.toastMessage()) {
+    <div class="xanhla-global-toast" [class]="'toast-' + cart.toastType()" role="alert" aria-live="assertive">
+      @if (cart.toastType() === 'warning') {
+        <i class="bi bi-exclamation-triangle-fill"></i>
+      } @else if (cart.toastType() === 'error') {
+        <i class="bi bi-x-circle-fill"></i>
+      } @else if (cart.toastType() === 'success') {
+        <i class="bi bi-check-circle-fill"></i>
+      } @else {
+        <i class="bi bi-info-circle-fill"></i>
+      }
+      <span class="xanhla-toast-text">{{ cart.toastMessage() }}</span>
+      <button type="button" class="xanhla-toast-close" (click)="cart.clearToast()" aria-label="Đóng">&times;</button>
+    </div>
+  }
   <app-header />
   <main>
     <ng-content />

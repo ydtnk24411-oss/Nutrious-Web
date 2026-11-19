@@ -194,6 +194,38 @@
   font-weight: 700;
 }
 
+.bn-store-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+}
+
+.bn-store-badge-text {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #15803d;
+}
+
+.bn-qty-label-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bn-stock-status {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.bn-stock-status.is-out {
+  color: #dc2626;
+}
+
+.bn-stock-status.is-available {
+  color: #059669;
+}
+
 .bn-qty-header {
   display: flex;
   align-items: center;

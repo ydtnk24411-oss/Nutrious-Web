@@ -21,6 +21,7 @@ export class BuyNowModalComponent {
 
   readonly maxStock = computed(() => resolveProductMaxStock(this.product()));
   readonly isOutOfStock = computed(() => this.maxStock() === 0);
+  readonly storeName = computed(() => this.cart.activeStoreName());
 
   readonly unitPrice = computed(() => {
     const p = this.product();
@@ -37,7 +38,11 @@ export class BuyNowModalComponent {
 
   increase(): void {
     const max = this.maxStock();
-    if (max !== null && this.quantity() >= max) return;
+    const store = this.storeName();
+    if (max !== null && max > 0 && this.quantity() >= max) {
+      this.cart.showToast(`Số lượng yêu cầu vượt quá tồn kho khả dụng (kho [${store}] chỉ còn ${max} sản phẩm).`, 'warning');
+      return;
+    }
     this.cart.setBuyNowQuantity(this.quantity() + 1);
   }
 
@@ -51,9 +56,11 @@ export class BuyNowModalComponent {
     const target = event.target as HTMLInputElement;
     const val = parseInt(target.value, 10);
     const max = this.maxStock();
+    const store = this.storeName();
     let safe = isNaN(val) || val < 1 ? 1 : val;
-    if (max !== null && max > 0) {
-      safe = Math.min(max, safe);
+    if (max !== null && max > 0 && val > max) {
+      this.cart.showToast(`Số lượng yêu cầu vượt quá tồn kho khả dụng (kho [${store}] chỉ còn ${max} sản phẩm).`, 'warning');
+      safe = max;
     }
     this.cart.setBuyNowQuantity(safe);
     target.value = String(this.quantity());
@@ -70,6 +77,13 @@ export class BuyNowModalComponent {
   confirm(): void {
     const p = this.product();
     if (!p || this.isOutOfStock()) return;
+    const max = this.maxStock();
+    const store = this.storeName();
+    if (max !== null && max > 0 && this.quantity() > max) {
+      this.cart.showToast(`Số lượng yêu cầu vượt quá tồn kho khả dụng (kho [${store}] chỉ còn ${max} sản phẩm).`, 'warning');
+      this.cart.setBuyNowQuantity(max);
+      return;
+    }
     const hasOptions = Array.isArray(p.options) && p.options.length > 0;
     const opt = hasOptions ? this.selectedOption() : undefined;
     this.cart.startDirectBuyNow(p, this.quantity(), opt);

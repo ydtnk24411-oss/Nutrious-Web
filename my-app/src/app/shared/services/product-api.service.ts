@@ -84,12 +84,17 @@ export class ProductApiService {
   private catalogCache = new Map<string, { data: { success: boolean; total: number; data: ApiProduct[] }; time: number }>();
 
   getAll(params?: Record<string, string | number>) {
-    const key = JSON.stringify(params || {});
+    const sId = (typeof localStorage !== 'undefined' ? localStorage.getItem('xanhla_selected_store_id') : null) || 'store-thuduc';
+    const mergedParams: Record<string, string | number> = { ...(params || {}) };
+    if (!mergedParams['storeId']) {
+      mergedParams['storeId'] = sId;
+    }
+    const key = JSON.stringify(mergedParams);
     const cached = this.catalogCache.get(key);
     if (cached && (Date.now() - cached.time < 300000)) {
       return of(cached.data);
     }
-    return this.api.get<{ success: boolean; total: number; data: ApiProduct[] }>('/products', params).pipe(
+    return this.api.get<{ success: boolean; total: number; data: ApiProduct[] }>('/products', mergedParams).pipe(
       tap(res => {
         if (res && res.success) {
           this.catalogCache.set(key, { data: res, time: Date.now() });
@@ -102,8 +107,9 @@ export class ProductApiService {
     this.catalogCache.clear();
   }
 
-  getBySlug(slug: string) {
-    return this.api.get<{ success: boolean; data: ApiProduct }>(`/products/${slug}`);
+  getBySlug(slug: string, storeId?: string) {
+    const sId = storeId || (typeof localStorage !== 'undefined' ? localStorage.getItem('xanhla_selected_store_id') : null) || 'store-thuduc';
+    return this.api.get<{ success: boolean; data: ApiProduct }>(`/products/${slug}`, { storeId: sId });
   }
 
   getRelated(slug: string, limit: number = 8) {

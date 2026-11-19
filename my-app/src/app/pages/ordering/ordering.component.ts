@@ -2,7 +2,7 @@
 import { Component, signal, inject, OnInit, OnDestroy, computed, effect } from '@angular/core';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
-import { CommonModule } from '@angular/common';
+import { Location, CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { CartService, formatPrice } from '../../shared/services/cart.service';
@@ -581,6 +581,7 @@ export class OrderingComponent implements OnInit, OnDestroy {
   private categoryApi = inject(CategoryApiService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private location = inject(Location);
   private analytics = inject(AnalyticsTrackerService);
   private lastTrackedKeyword = '';
 
@@ -973,13 +974,17 @@ export class OrderingComponent implements OnInit, OnDestroy {
     this.syncQueryParamsToUrl();
   }
 
+  protected onMaxPriceInput(newPrice: number): void {
+    this.maxPrice.set(newPrice);
+  }
+
   protected onMaxPriceChange(newPrice: number): void {
     this.maxPrice.set(newPrice);
     this.syncQueryParamsToUrl();
   }
 
   protected syncQueryParamsToUrl(): void {
-    this.router.navigate([], {
+    const tree = this.router.createUrlTree([], {
       relativeTo: this.route,
       queryParams: {
         q: this.search().trim() || null,
@@ -989,6 +994,7 @@ export class OrderingComponent implements OnInit, OnDestroy {
       },
       queryParamsHandling: 'merge',
     });
+    this.location.replaceState(this.router.serializeUrl(tree));
   }
 
   protected sections = computed(() => {
@@ -1268,7 +1274,8 @@ export class OrderingComponent implements OnInit, OnDestroy {
       if (prod.comboStatus === 'paused' || prod.comboStatus === 'hidden') return 0;
       if (typeof prod.availableStock === 'number') return Math.max(0, Math.floor(prod.availableStock));
     }
-    return typeof prod.stock === 'number' ? Math.max(0, Math.floor(prod.stock)) : 0;
+    const eff = typeof prod.availableStock === 'number' ? prod.availableStock : prod.stock;
+    return typeof eff === 'number' ? Math.max(0, Math.floor(eff)) : 0;
   }
 
   isProdUnavailable(prod: ApiProduct): boolean {
@@ -1276,14 +1283,24 @@ export class OrderingComponent implements OnInit, OnDestroy {
   }
 
   openBuyNow(prod: ApiProduct): void {
-    if (this.isProdUnavailable(prod)) return;
+    if (this.isProdUnavailable(prod)) {
+      this.cart.showToast(`Sản phẩm "${prod.name}" hiện tạm hết hàng tại chi nhánh.`, 'warning');
+      return;
+    }
     this.cart.openBuyNowModal(toCartProduct(prod));
   }
 
   addOne(prod: ApiProduct, event?: Event): void {
-    if (this.isProdUnavailable(prod)) return;
+    if (this.isProdUnavailable(prod)) {
+      this.cart.showToast(`Sản phẩm "${prod.name}" hiện tạm hết hàng tại chi nhánh.`, 'warning');
+      return;
+    }
     const maxStock = this.getProdStock(prod);
-    if (this.itemQty(prod.slug) >= maxStock) return;
+    const currentQty = this.itemQty(prod.slug);
+    if (maxStock > 0 && currentQty >= maxStock) {
+      this.cart.showToast(`Số lượng yêu cầu vượt quá tồn kho khả dụng (kho chi nhánh chỉ còn ${maxStock} sản phẩm).`, 'warning');
+      return;
+    }
     if (event) {
       this.cart.animateFlyToCart(event, prod.image);
     }

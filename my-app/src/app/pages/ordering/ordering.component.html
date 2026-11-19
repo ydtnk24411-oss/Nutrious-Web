@@ -121,7 +121,8 @@
                 <span class="ord-price-max-val">{{ maxPrice() }} đ</span>
               </div>
               <input type="range" class="ord-price-slider" [min]="0" [max]="maxPriceInDB()" [value]="maxPrice()"
-                (input)="onMaxPriceChange(+$any($event.target).value)" />
+                (input)="onMaxPriceInput(+$any($event.target).value)"
+                (change)="onMaxPriceChange(+$any($event.target).value)" />
             </div>
             }
           </div>

@@ -42,6 +42,7 @@ function toCartProduct(p: ApiProduct): XanhLaProduct {
     thickness: p.thickness, type: p.type, weight: p.weight,
     options: p.options,
     stock: effStock,
+    availableStock: effStock,
     isCombo: p.isCombo,
     comboStatus: p.comboStatus,
     originalPriceNumber: retailTotal,
@@ -395,8 +396,9 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
 
-    // Thử slug trực tiếp, backend hỗ trợ cả dạng slug thuần và /product-page/xxx
-    this.productApi.getBySlug(slug).subscribe({
+    // Thử slug trực tiếp, backend hỗ trợ cả dạng slug thuần và /product-page/xxx với kho hiện tại
+    const currentStoreId = this.cart.getActiveStoreId();
+    this.productApi.getBySlug(slug, currentStoreId).subscribe({
       next: (res) => {
         this.product.set(res.data);
         this.loading.set(false);
@@ -412,7 +414,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       error: () => {
         // Thử thêm prefix nếu slug trực tiếp không tìm thấy
         const prefixed = slug.startsWith('/product-page/') ? slug.replace('/product-page/', '') : slug;
-        this.productApi.getBySlug(prefixed).subscribe({
+        this.productApi.getBySlug(prefixed, currentStoreId).subscribe({
           next: (r) => {
             this.product.set(r.data);
             this.loading.set(false);
@@ -740,7 +742,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   productMaxStock(p: ApiProduct): number {
     if (p.isCombo) return Math.max(0, this.comboStock(p));
-    return typeof p.stock === 'number' ? Math.max(0, Math.floor(p.stock)) : 0;
+    const eff = typeof p.availableStock === 'number' ? p.availableStock : p.stock;
+    return typeof eff === 'number' ? Math.max(0, Math.floor(eff)) : 0;
   }
 
   isProductUnavailable(p: ApiProduct): boolean {
@@ -753,7 +756,14 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     const p = this.product();
     if (!p) return;
     const maxStock = this.productMaxStock(p);
-    if (maxStock <= 0) return;
+    if (maxStock <= 0) {
+      this.cart.showToast('Sản phẩm hiện tạm hết hàng tại chi nhánh này.', 'warning');
+      return;
+    }
+    if (this.quantity() >= maxStock) {
+      this.cart.showToast(`Số lượng yêu cầu vượt quá tồn kho khả dụng (kho chi nhánh chỉ còn ${maxStock} sản phẩm).`, 'warning');
+      return;
+    }
     this.quantity.update(q => Math.min(maxStock, q + 1));
   }
 
@@ -782,7 +792,30 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   addToCart(): void {
     const p = this.product();
-    if (!p || this.isProductUnavailable(p)) return;
+    if (!p || this.isProductUnavailable(p)) {
+      this.cart.showToast('Sản phẩm hiện không khả dụng tại chi nhánh.', 'warning');
+      return;
+    }
+    const maxStock = this.productMaxStock(p);
+    const existingInCart = this.cart.items().find(i =>
+      (i.product?.slug && i.product.slug === p.slug) ||
+      (i.product?.id && (i.product.id === p._id || i.product.id === (p as any).id))
+    );
+    const inCartQty = existingInCart ? existingInCart.quantity : 0;
+    const totalQty = inCartQty + this.quantity();
+
+    if (maxStock > 0 && totalQty > maxStock) {
+      this.cart.showToast(
+        `Số lượng yêu cầu vượt quá tồn kho khả dụng (kho chi nhánh chỉ còn ${maxStock} sản phẩm${inCartQty > 0 ? `, bạn đã có ${inCartQty} trong giỏ` : ''}).`,
+        'warning'
+      );
+      const remainingAddable = Math.max(0, maxStock - inCartQty);
+      if (remainingAddable > 0) {
+        this.quantity.set(remainingAddable);
+      }
+      return;
+    }
+
     if (p.isCombo) {
       this.cart.addItem(toCartProduct(p), this.quantity());
       return;
@@ -803,7 +836,19 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   buyNow(): void {
     const p = this.product();
-    if (!p || this.isProductUnavailable(p)) return;
+    if (!p || this.isProductUnavailable(p)) {
+      this.cart.showToast('Sản phẩm hiện không khả dụng tại chi nhánh.', 'warning');
+      return;
+    }
+    const maxStock = this.productMaxStock(p);
+    if (maxStock > 0 && this.quantity() > maxStock) {
+      this.cart.showToast(
+        `Số lượng yêu cầu vượt quá tồn kho khả dụng (kho chi nhánh chỉ còn ${maxStock} sản phẩm).`,
+        'warning'
+      );
+      this.quantity.set(maxStock);
+      return;
+    }
     const entries = this.buildSelectedAddOnEntries();
     if (entries.length > 0) {
       this.buySelectedBundleNow();

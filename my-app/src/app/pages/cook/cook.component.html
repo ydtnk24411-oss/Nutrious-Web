@@ -550,10 +550,10 @@
                   <div class="xanhla-fridge-box">
                     <div class="xanhla-box-title xanhla-text-green">
                       <i class="bi bi-check-circle-fill me-2" style="font-size:16px;color:var(--xanh-moss)"></i>
-                      <span>Đã sẵn sàng trong tủ lạnh ({{ hasIngredients(recipe).length }})</span>
+                      <span>Đã sẵn sàng trong bếp & giỏ hàng ({{ hasIngredients(recipe).length }})</span>
                     </div>
                     @if (hasIngredients(recipe).length === 0) {
-                    <p class="xanhla-empty-hint">Chưa có nguyên liệu nào trong tủ lạnh cho món này.</p>
+                    <p class="xanhla-empty-hint">Chưa có nguyên liệu nào trong tủ lạnh hoặc giỏ hàng cho món này.</p>
                     } @else {
                     <ul class="xanhla-ing-list">
                       @for (ing of hasIngredients(recipe); track ing.name) {
@@ -575,6 +575,11 @@
                         <span class="xanhla-ing-title">{{ ing.name }}</span>
                         <span class="xanhla-ing-scale">
                           Có {{ ing.availableAmount }} / cần {{ ing.requiredAmount }} {{ ing.unit }}
+                          @if (ing.inCartPacks && ing.inCartPacks > 0) {
+                          <span class="xanhla-cart-in-badge text-primary fw-medium ms-1">
+                            (Đã có {{ ing.inCartPacks }} phần trong giỏ)
+                          </span>
+                          }
                         </span>
                         @if (ing.hasPartial) {
                         <span class="xanhla-ing-partial-badge">Thiếu {{ ing.missingAmount }} {{ ing.unit }}</span>
@@ -621,7 +626,11 @@
                               <span class="xanhla-missing-scale">
                                 @if (ing.hasPartial) {
                                 (Thiếu {{ ing.missingAmount }} {{ ing.unit }} - đã có {{ ing.availableAmount }}/{{
-                                ing.requiredAmount }} {{ ing.unit }})
+                                ing.requiredAmount }} {{ ing.unit }}
+                                @if (ing.inCartPacks && ing.inCartPacks > 0) {
+                                <span class="text-primary">, gồm {{ ing.inCartPacks }} phần trong giỏ</span>
+                                }
+                                )
                                 } @else {
                                 (Thiếu {{ ing.missingAmount }} {{ ing.unit }})
                                 }
@@ -632,7 +641,11 @@
                               <span class="xanhla-badge-source">Nông sản sạch:</span>
                               <span class="xanhla-prod-name">{{ ing.product.name }}</span>
                               <span class="xanhla-prod-price">{{ formatPrice(ing.product.priceNumber || ing.product.price) }}</span>
-                              <span class="xanhla-pack-hint">- Quy cách ~{{ ing.packLabel }}</span>
+                              <span class="xanhla-pack-hint">- Quy cách ~{{ ing.packLabel }}
+                                @if (ing.packEquivalent) {
+                                <span class="text-success fw-medium">({{ ing.packEquivalent }})</span>
+                                }
+                              </span>
                               @if (ing.isOutOfStock) {
                               <span class="xanhla-outofstock-tag">Tạm hết hàng</span>
                               }
@@ -646,6 +659,11 @@
                               <strong class="xanhla-buy-qty-num">{{ ing.buyQuantity }}</strong>
                               <button type="button" class="xanhla-buy-qty-btn"
                                 (click)="adjustMissingBuyQty(recipe.id, ing.name, 1)">+</button>
+                              @if (ing.buyQuantityEquivalent) {
+                              <span class="xanhla-buy-equiv-badge ms-2 text-muted fw-medium" style="font-size: 13px;">
+                                ({{ ing.buyQuantityEquivalent }})
+                              </span>
+                              }
                             </div>
                             }
                             } @else {

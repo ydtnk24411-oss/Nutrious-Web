@@ -94,7 +94,7 @@ export class AdminComplaintsComponent implements OnInit {
 
   openDetailModal(item: ComplaintItem): void {
     this.activeComplaint.set(item);
-    this.updateStatus.set(item.status);
+    this.updateStatus.set(item.status === 'pending' || item.status === 'processing' ? 'resolved' : item.status);
     this.resolutionNote.set(item.resolutionNote || '');
     this.detailModalOpen.set(true);
   }

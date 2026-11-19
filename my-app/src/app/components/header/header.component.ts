@@ -334,6 +334,9 @@ export class HeaderComponent implements OnDestroy {
   logout(): void {
     this.cart.logout();
     this.userMenuOpen.set(false);
+    if (this.router.url.startsWith('/checkout') || this.router.url.startsWith('/account')) {
+      this.router.navigate(['/']);
+    }
   }
 
   isActive(path: string): boolean {

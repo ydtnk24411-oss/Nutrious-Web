@@ -1226,11 +1226,18 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     this.checkoutForm.get('phone')?.valueChanges.subscribe(v => this.guestPhone.set(v ?? ''));
     this.checkoutForm.get('email')?.valueChanges.subscribe(v => this.guestEmail.set(v ?? ''));
 
-    // Tự động điền dữ liệu bằng Reactive Forms patchValue() khi khách hàng đăng nhập (chỉ chạy 1 lần khi có user)
+    // Tự động điền dữ liệu bằng Reactive Forms patchValue() khi khách hàng đăng nhập; hoặc tự động thoát ra Trang chủ nếu Đăng xuất
     let lastAutofilledUserId: string | null = null;
     effect(() => {
       const u = this.cart.currentUser();
-      const currentId = u?._id ? String(u._id) : (u ? 'logged-in' : null);
+      if (!u) {
+        // Đang ở thanh toán mà đăng xuất thì thoát ra trang chủ ngay lập tức
+        untracked(() => {
+          this.router.navigate(['/']);
+        });
+        return;
+      }
+      const currentId = u?._id ? String(u._id) : 'logged-in';
       if (currentId && currentId !== lastAutofilledUserId) {
         lastAutofilledUserId = currentId;
         untracked(() => {

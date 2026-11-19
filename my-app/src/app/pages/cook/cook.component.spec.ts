@@ -430,5 +430,69 @@ describe('CookComponent', () => {
     expect((component as any).totalMissingCost(gaCanh)).toBe(22000);
     expect(gaCanh.ingredients.find((i: any) => i.name === 'Gà ta thả vườn')?.product?.image).toBe('/ga.jpg');
   });
+
+  it('should consider cart items in recipe availability and show pack conversion equivalents for missing items', () => {
+    const fixture = TestBed.createComponent(CookComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+    flushRecipesRequest(httpMock);
+
+    const tomatoProd = makeProduct({
+      _id: 'tomato-1',
+      name: 'Cà Chua Bi',
+      slug: 'ca-chua-bi',
+      category: 'vegetables',
+      weight: '500g',
+      priceNumber: 25000,
+    });
+    const avocadoProd = makeProduct({
+      _id: 'avocado-1',
+      name: 'Bơ Sáp',
+      slug: 'bo-sap',
+      category: 'fruits',
+      weight: '500g',
+      priceNumber: 48000,
+    });
+
+    (component as any).catalogueProducts.set([tomatoProd, avocadoProd]);
+
+    // User has 1 avocado in fridge, for 10 servings of Sinh tố bơ Hass (cần 10 quả)
+    (component as any).servings.set(10);
+    (component as any).myIngredients.set([
+      { name: 'Quả bơ Hass', productId: null, product: null, qty: 1, unit: 'quả' },
+    ]);
+
+    // Cart already has 2 packs of Cà Chua Bi (500g x 2 = 1000g ~ 10 quả)
+    const cart = (component as any).cart;
+    (cart as any)._currentUser.set({ _id: 'u-1', name: 'Test User', email: 'test@example.com' });
+    cart.addItem({
+      id: 'tomato-1',
+      name: 'Cà Chua Bi',
+      slug: '/product-page/ca-chua-bi',
+      priceNumber: 25000,
+      weight: '500g',
+    }, 2);
+
+    const computedResults = (component as any).computeRecipeResults();
+    const boRecipe = computedResults.find((r: any) => r.id === 'bo-xay-mat-ong');
+    expect(boRecipe).toBeTruthy();
+
+    const avocadoIng = boRecipe.ingredients.find((i: any) => i.name === 'Quả bơ Hass');
+    const tomatoIng = boRecipe.ingredients.find((i: any) => i.name === 'Cà chua');
+
+    // Avocado: needs 10, has 1 in fridge -> missing 9. 500g pack ~ 2 avocados -> buyQuantity = 5 packs (~10 avocados)
+    expect(avocadoIng.requiredAmount).toBe(10);
+    expect(avocadoIng.availableAmount).toBe(1);
+    expect(avocadoIng.missingAmount).toBe(9);
+    expect(avocadoIng.buyQuantity).toBe(5);
+    expect(avocadoIng.buyQuantityEquivalent).toBe('≈ 10 quả');
+    expect(avocadoIng.packEquivalent).toBe('≈ 2 quả/phần');
+
+    // Tomato: needs 5, cart has 2 packs (10 quả) -> inCartPacks: 2, missing: 0 -> inFridge/ready is true!
+    expect(tomatoIng.requiredAmount).toBe(5);
+    expect(tomatoIng.inCartPacks).toBe(2);
+    expect(tomatoIng.missingAmount).toBe(0);
+    expect(tomatoIng.inFridge).toBeTrue();
+  });
 });
 

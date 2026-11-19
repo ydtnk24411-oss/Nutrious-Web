@@ -12,7 +12,25 @@ const errorHandler = (err, _req, res, _next) => {
 
   // Mongoose duplicate key
   if (err.code === 11000) {
-    const field = Object.keys(err.keyValue)[0];
+    const field = Object.keys(err.keyValue || {})[0] || '';
+    if (field === 'slug' || field === 'sku') {
+      return res.status(409).json({
+        success: false,
+        message: 'Mã SKU này đã tồn tại trong hệ thống, vui lòng nhập mã khác.',
+      });
+    }
+    if (field === 'phone') {
+      return res.status(409).json({
+        success: false,
+        message: 'Số điện thoại này đã được đăng ký.',
+      });
+    }
+    if (field === 'email') {
+      return res.status(409).json({
+        success: false,
+        message: 'Email này đã tồn tại trong hệ thống.',
+      });
+    }
     return res.status(409).json({ success: false, message: `${field} đã tồn tại.` });
   }
 

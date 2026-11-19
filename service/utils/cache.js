@@ -13,7 +13,8 @@ function cacheMiddleware(durationSeconds = 15, shouldCacheFn = null, isPublicSco
     const userScope = (isPublicScope || !req.user)
       ? 'public'
       : `${req.user._id}_${req.user.assignedStore || ''}_${req.user.role || ''}`;
-    const cacheKey = `${userScope}::${req.originalUrl || req.url}`;
+    const storeScope = req.headers['x-store-id'] || req.query.storeId || 'default';
+    const cacheKey = `${userScope}::${storeScope}::${req.originalUrl || req.url}`;
     const cached = memoryCache.get(cacheKey);
     const now = Date.now();
 

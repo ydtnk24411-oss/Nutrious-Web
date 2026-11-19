@@ -317,7 +317,9 @@ router.get('/', optionalAuth, cacheMiddleware(600, (req) => !req.query.search &&
           prodObj.stock = availableStock;
           prodObj.storeStock = availableStock;
         } else {
-          const availableStock = inv ? Math.max(0, (inv.physicalStock || 0) - (inv.reservedStock || 0) - (inv.safetyBuffer || 0)) : 0;
+          const availableStock = inv
+            ? Math.max(0, (inv.physicalStock || 0) - (inv.reservedStock || 0) - (inv.safetyBuffer || 0))
+            : ((storeId === 'store-thuduc' || storeId === 'default') ? Math.max(0, (prodObj.stock || 0) - (prodObj.safetyBuffer || 0)) : 0);
           prodObj.storePhysicalStock = inv?.physicalStock || 0;
           prodObj.storeReservedStock = inv?.reservedStock || 0;
           prodObj.availableStock = availableStock;
@@ -779,7 +781,9 @@ async function applyStoreStockToDetail(responseData, storeId) {
   }
 
   const inv = await StoreInventory.findOne({ storeId, productId: responseData._id }).lean();
-  const availableStock = inv ? Math.max(0, (inv.physicalStock || 0) - (inv.reservedStock || 0) - (inv.safetyBuffer || 0)) : 0;
+  const availableStock = inv
+    ? Math.max(0, (inv.physicalStock || 0) - (inv.reservedStock || 0) - (inv.safetyBuffer || 0))
+    : ((storeId === 'store-thuduc' || storeId === 'default') ? Math.max(0, (responseData.stock || 0) - (responseData.safetyBuffer || 0)) : 0);
   responseData.storePhysicalStock = inv?.physicalStock || 0;
   responseData.storeReservedStock = inv?.reservedStock || 0;
   responseData.availableStock = availableStock;
@@ -854,6 +858,16 @@ const productValidation = [
 // POST /api/products - admin
 router.post('/', protect, adminOnly, productValidation, validate, async (req, res, next) => {
   try {
+    if (req.body.slug) {
+      const existingProduct = await Product.findOne({ slug: req.body.slug.trim().toLowerCase() });
+      if (existingProduct) {
+        return res.status(409).json({
+          success: false,
+          message: 'Mã SKU này đã tồn tại trong hệ thống, vui lòng nhập mã khác.',
+        });
+      }
+    }
+
     if (req.body.categoryId) {
       const cat = await Category.findById(req.body.categoryId);
       if (cat) {
@@ -943,6 +957,19 @@ router.put('/:id', protect, authorizeRoles('Manager', 'Admin', 'Marketing'), asy
         success: false,
         message: 'Chỉ Quản lý (Manager) hoặc Admin mới có quyền điều chỉnh giá sản phẩm.',
       });
+    }
+
+    if (req.body.slug) {
+      const existingProduct = await Product.findOne({
+        slug: req.body.slug.trim().toLowerCase(),
+        _id: { $ne: req.params.id }
+      });
+      if (existingProduct) {
+        return res.status(409).json({
+          success: false,
+          message: 'Mã SKU này đã tồn tại trong hệ thống, vui lòng nhập mã khác.',
+        });
+      }
     }
 
     if (req.body.categoryId) {

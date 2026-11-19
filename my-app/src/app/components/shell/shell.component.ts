@@ -1,4 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { CartService } from '../../shared/services/cart.service';
 import { HeaderComponent } from '../header/header.component';
 import { FooterComponent } from '../footer/footer.component';
 import { CartDrawerComponent } from '../cart-drawer/cart-drawer.component';
@@ -10,6 +12,7 @@ import { BuyNowModalComponent } from '../buy-now-modal/buy-now-modal.component';
   selector: 'app-shell',
   standalone: true,
   imports: [
+    CommonModule,
     HeaderComponent,
     FooterComponent,
     CartDrawerComponent,
@@ -20,4 +23,6 @@ import { BuyNowModalComponent } from '../buy-now-modal/buy-now-modal.component';
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.css',
 })
-export class ShellComponent {}
+export class ShellComponent {
+  protected cart = inject(CartService);
+}

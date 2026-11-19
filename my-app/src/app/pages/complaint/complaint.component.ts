@@ -92,16 +92,16 @@ export class ComplaintComponent implements OnInit {
       border: '#fef08a',
     },
     processing: {
-      label: 'Đang xử lý & kiểm tra',
-      bg: '#f0fdf4',
-      color: '#166534',
-      border: '#bbf7d0',
+      label: 'Đang xử lý',
+      bg: '#eff6ff',
+      color: '#1d4ed8',
+      border: '#bfdbfe',
     },
     resolved: {
       label: 'Đã giải quyết xong',
-      bg: '#ecfccb',
-      color: '#365314',
-      border: '#bef264',
+      bg: '#f0fdf4',
+      color: '#15803d',
+      border: '#86efac',
     },
     rejected: {
       label: 'Từ chối giải quyết',

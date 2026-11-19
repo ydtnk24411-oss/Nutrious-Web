@@ -30,7 +30,7 @@ describe('CartService', () => {
     };
     service.addItem(mockProduct, 2);
     expect(service.itemCount()).toBe(2);
-    expect(service.subtotal()).toBe(20);
+    expect(service.allTotals().subtotal).toBe(20);
   });
 
   it('should remove item', () => {

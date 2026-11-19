@@ -71,6 +71,9 @@ export interface XanhLaProduct {
   originalPriceNumber?: number;
   comboItems?: any[];
   addOnDeals?: AddOnDealInfo[];
+  storeId?: string;
+  storeName?: string;
+  storeStock?: number;
 }
 
 export interface XanhLaMeal {
