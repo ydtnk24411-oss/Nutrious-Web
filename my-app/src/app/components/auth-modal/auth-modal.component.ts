@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
-import { CartService, AuthTab } from '../../shared/services/cart.service';
+import { CartService, AuthTab, WelcomeVoucher } from '../../shared/services/cart.service';
 import { GoogleAuthService } from '../../shared/services/google-auth.service';
 
 @Component({
@@ -21,6 +21,8 @@ export class AuthModalComponent implements OnDestroy {
 
   // Popup đăng ký thành công (hiển thị sau khi modal đăng ký đã đóng)
   protected registerSuccessName = signal<string | null>(null);
+  protected welcomeVouchers = signal<WelcomeVoucher[]>([]);
+  protected copiedVoucherCode = signal('');
 
   constructor() {
     const saved = this.cookieService.get('customer_remembered_username');
@@ -273,11 +275,13 @@ export class AuthModalComponent implements OnDestroy {
     this.cart.verifyRegisterOtp(
       this.verifiedPhone(),
       otp,
-      (user) => {
+      (user, vouchers) => {
         this.otpLoading.set(false);
         this.clearCountdown();
         const displayName = (user?.name || this.name()).trim();
         this.resetForm();
+        this.welcomeVouchers.set(vouchers || []);
+        this.copiedVoucherCode.set('');
         this.registerSuccessName.set(displayName);
       },
       (errMsg) => {
@@ -420,13 +424,30 @@ export class AuthModalComponent implements OnDestroy {
     }
   }
 
+  // Sao chép mã voucher bạn mới
+  copyVoucherCode(code: string): void {
+    const done = () => {
+      this.copiedVoucherCode.set(code);
+      setTimeout(() => {
+        if (this.copiedVoucherCode() === code) this.copiedVoucherCode.set('');
+      }, 2000);
+    };
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(code).then(done, done);
+    } else {
+      done();
+    }
+  }
+
   // Đóng popup đăng ký thành công, tuỳ chọn điều hướng
-  closeRegisterSuccess(target?: 'account' | 'shop'): void {
+  closeRegisterSuccess(target?: 'account' | 'shop' | 'vouchers'): void {
     this.registerSuccessName.set(null);
     if (target === 'account') {
       this.router.navigate(['/account']);
     } else if (target === 'shop') {
       this.router.navigate(['/online-ordering']);
+    } else if (target === 'vouchers') {
+      this.router.navigate(['/vouchers']);
     }
   }
 

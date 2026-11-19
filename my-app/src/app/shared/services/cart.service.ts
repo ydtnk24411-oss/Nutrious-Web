@@ -107,6 +107,14 @@ export function buildAddonCartItem(
 
 export type AuthTab = 'login' | 'signup' | 'forgot';
 
+/** Voucher bạn mới trả về khi đăng ký thành công */
+export interface WelcomeVoucher {
+  code: string;
+  name: string;
+  description: string;
+  endDate?: string;
+}
+
 export interface AuthModalPrefill {
   name?: string;
   phone?: string;
@@ -1399,7 +1407,7 @@ export class CartService {
   verifyRegisterOtp(
     phone: string,
     otp: string,
-    onSuccess: (user: XanhLaUser) => void,
+    onSuccess: (user: XanhLaUser, welcomeVouchers?: WelcomeVoucher[]) => void,
     onError: (errMsg: string) => void
   ): void {
     this.api.post<{
@@ -1407,6 +1415,7 @@ export class CartService {
       token: string;
       user: XanhLaUser;
       message: string;
+      welcomeVouchers?: WelcomeVoucher[];
     }>('/auth/register/verify-otp', {
       phone: phone.trim(),
       otp: otp.trim(),
@@ -1418,7 +1427,7 @@ export class CartService {
           this._authModalOpen.set(false);
           this._authPrefill.set(null);
           this.loadUserData();
-          onSuccess(user);
+          onSuccess(user, res.welcomeVouchers || []);
         } else {
           onError(res.message || 'Xác minh OTP thất bại.');
         }
