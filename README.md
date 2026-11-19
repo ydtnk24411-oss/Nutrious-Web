@@ -22,15 +22,17 @@ Hệ thống tích hợp các công nghệ và giải pháp nổi bật:
 
 1. [Kiến trúc hệ thống](#1-kiến-trúc-hệ-thống)
 2. [Cấu trúc thư mục](#2-cấu-trúc-thư-mục)
-3. [Cài đặt và khởi chạy](#3-cài-đặt-và-khởi-chạy)
+3. [Cài đặt, nạp dữ liệu và khởi chạy](#3-cài-đặt-nạp-dữ-liệu-và-khởi-chạy)
    - [Yêu cầu hệ thống](#31-yêu-cầu-hệ-thống)
-   - [Khởi chạy Backend REST API](#32-khởi-chạy-backend-rest-api)
+   - [Cấu hình & nạp dữ liệu Backend](#32-khởi-chạy-backend-rest-api)
    - [Khởi chạy Storefront](#33-khởi-chạy-storefront)
    - [Khởi chạy Admin Dashboard](#34-khởi-chạy-admin-dashboard)
-   - [Tổng hợp cổng dịch vụ](#35-tổng-hợp-cổng-dịch-vụ)
+   - [Tổng hợp cổng dịch vụ & Link Deploy](#35-tổng-hợp-cổng-dịch-vụ--link-deploy)
 4. [Các tính năng nổi bật](#4-các-tính-năng-nổi-bật)
 5. [Công nghệ sử dụng](#5-công-nghệ-sử-dụng)
 6. [Tài liệu dự án](#6-tài-liệu-dự-án)
+
+> **Dành cho Giảng viên / Người chấm bài:** Xem nhanh hướng dẫn nạp full dữ liệu mẫu (`41` collections, `19,559` bản ghi) và bảng tài khoản phân quyền tại [`HUONG_DAN_CHAY_DATA.md`](HUONG_DAN_CHAY_DATA.md).
 
 ---
 
@@ -50,38 +52,41 @@ flowchart TD
     end
 
     subgraph DataStore["TẦNG DỮ LIỆU"]
-        DB[("MongoDB Atlas<br/>Orders - Products<br/>Inventories - Users<br/>AuditLogs - Reviews")]
+        DB[("MongoDB Atlas / Local<br/>41 Collections - Orders, Products<br/>StoreInventories, Users, AuditLogs")]
     end
 
-    subgraph ExternalServices["DỊCH VỤ BÊN NGOÀI"]
-        VietQR["VietQR / MB Bank"]
-        Gemini["Google Gemini AI"]
+    subgraph ExternalServices["DỊCH VỤ & API TÍCH HỢP"]
+        VietQR["VietQR + SePay/Casso Webhook"]
+        Gemini["Gemini / OpenAI REST API"]
         OAuth["Google OAuth 2.0"]
+        Maps["OSRM / Nominatim / Provinces v2"]
         Email["Nodemailer / SMTP"]
     end
 
-    Storefront <--> |HTTPS / REST API| API
-    AdminPortal <--> |HTTPS / REST API| API
+    Storefront <--> |HTTPS / REST / SSE| API
+    AdminPortal <--> |HTTPS / REST / SSE| API
     API <--> |Mongoose ODM| DB
 
-    API -.-> |Payment Integration| VietQR
-    API -.-> |Generative Language API| Gemini
-    API -.-> |ID Token Verification| OAuth
+    API -.-> |Payment & Webhook| VietQR
+    API -.-> |AI Assistant| Gemini
+    API -.-> |Token Verification| OAuth
+    API -.-> |Routing & Address| Maps
     API -.-> |Transactional Emails| Email
 ```
 
 ### 1.2. Các thành phần kiến trúc
 
-| Thành phần     | Công nghệ             | Vai trò                                                             |
-| -------------- | --------------------- | ------------------------------------------------------------------- |
-| Storefront     | Angular 19            | Giao diện dành cho khách hàng mua sắm và sử dụng dịch vụ dinh dưỡng |
-| Admin Portal   | Angular 19            | Giao diện quản trị và vận hành hệ thống                             |
-| Backend API    | Node.js, Express.js   | Xử lý nghiệp vụ, xác thực, phân quyền và cung cấp REST API          |
-| Database       | MongoDB Atlas         | Lưu trữ dữ liệu người dùng, sản phẩm, đơn hàng và tồn kho           |
-| Payment        | VietQR                | Tạo mã thanh toán và hỗ trợ xử lý giao dịch                         |
-| AI Service     | Google Gemini AI      | Hỗ trợ chatbot và tư vấn dinh dưỡng                                 |
-| Authentication | JWT, Google OAuth 2.0 | Xác thực người dùng và kiểm soát quyền truy cập                     |
-| Email Service  | Nodemailer / SMTP     | Gửi hóa đơn và thông báo qua email                                  |
+| Thành phần     | Công nghệ                              | Vai trò                                                                |
+| -------------- | -------------------------------------- | ---------------------------------------------------------------------- |
+| Storefront     | Angular 19 (Cloudflare Pages)          | Giao diện dành cho khách hàng mua sắm, đặt đơn O2O và tư vấn dinh dưỡng |
+| Admin Portal   | Angular 19 (Cloudflare Pages)          | Giao diện quản trị chuỗi cửa hàng, kho O2O, tài chính & vận hành       |
+| Backend API    | Node.js, Express.js (Render)           | Xử lý nghiệp vụ, phân quyền RBAC/Store Scoping, SSE và cung cấp REST API |
+| Database       | MongoDB Atlas / MongoDB Local          | Lưu trữ sản phẩm, combo, đơn hàng, tồn kho theo chi nhánh và nhật ký   |
+| Payment        | VietQR + Webhook SePay/Casso           | Tạo mã QR động và đối soát thanh toán chuyển khoản tự động             |
+| AI Service     | Gemini / OpenAI REST API               | Hỗ trợ chatbot tư vấn dinh dưỡng và gợi ý món ăn                       |
+| Authentication | JWT, bcryptjs, Google OAuth 2.0        | Xác thực, liên kết tài khoản Google và phân quyền nhân sự theo chi nhánh |
+| Maps & Address | Leaflet, CARTO, OSM, OSRM, Provinces   | Chọn vị trí giao hàng, tính phí vận chuyển theo km thực tế             |
+| Email Service  | Nodemailer / SMTP                      | Gửi hóa đơn, OTP và thông báo giao dịch qua email                      |
 
 ---
 
@@ -93,18 +98,16 @@ Dự án được tổ chức thành ba phân hệ chính: Backend, Storefront v
 Nutrious-Web/
 │
 ├── service/                         # Backend REST API
-│   ├── data/                        # Mock data và dữ liệu cấu hình
-│   ├── middleware/                  # Authentication, authorization,
-│   │                                # upload và error handling
+│   ├── data/                        # Snapshot DB (xanh-la-snapshot.json.gz) & footer-config.json
+│   ├── middleware/                  # Auth JWT, RBAC, O2O Store Scoping & error handling
 │   ├── models/                      # Mongoose Schemas
 │   ├── routes/                      # API routes và xử lý nghiệp vụ
-│   ├── scripts/                     # Scripts hỗ trợ dữ liệu
-│   ├── utils/                       # Utilities: shipping, voucher,
-│   │                                # VietQR, email, SSE
+│   ├── scripts/                     # export-data.js, import-data.js & scripts chuẩn hóa dữ liệu
+│   ├── utils/                       # shipping, combo, VietQR, email, cache, SSE, schedulers
 │   ├── .env.example                 # Mẫu biến môi trường
 │   ├── index.js                     # Backend entry point
 │   ├── package.json
-│   └── seed-data.js                 # Khởi tạo dữ liệu mẫu
+│   └── seed-data.js                 # Khởi tạo dữ liệu mẫu / đồng bộ Atlas -> Local
 │
 ├── my-app/                          # Storefront - Angular 19
 │   ├── public/                      # Logo, icons, banners
@@ -113,17 +116,22 @@ Nutrious-Web/
 │   │   │   ├── components/          # Shared UI components
 │   │   │   ├── models/              # TypeScript interfaces
 │   │   │   ├── pages/
-│   │   │   │   ├── home/            # Trang chủ
+│   │   │   │   ├── home/            # Trang chủ & Flash Sale
+│   │   │   │   ├── ordering/        # Đặt hàng O2O theo chi nhánh & tìm kiếm
 │   │   │   │   ├── catalog/         # Danh mục sản phẩm
-│   │   │   │   ├── product-detail/  # Chi tiết sản phẩm
+│   │   │   │   ├── product-detail/  # Chi tiết sản phẩm & Combo mua kèm
 │   │   │   │   ├── cart/            # Giỏ hàng
-│   │   │   │   ├── checkout/        # Đặt hàng và thanh toán
-│   │   │   │   ├── order-detail/    # Chi tiết đơn hàng
-│   │   │   │   ├── tracker/         # Tra cứu đơn hàng
-│   │   │   │   ├── account/         # Quản lý tài khoản
-│   │   │   │   ├── nutrition/       # Tư vấn dinh dưỡng
-│   │   │   │   ├── cook/            # Công thức nấu ăn
-│   │   │   │   └── vouchers/        # Voucher và khuyến mãi
+│   │   │   │   ├── checkout/        # Đặt hàng, chọn kho/địa chỉ & VietQR/COD
+│   │   │   │   ├── order-detail/    # Chi tiết đơn hàng & hủy đơn
+│   │   │   │   ├── tracker/         # Tra cứu trạng thái đơn hàng
+│   │   │   │   ├── account/         # Hồ sơ, địa chỉ, điểm thưởng & liên kết Google
+│   │   │   │   ├── nutrition/       # Tư vấn dinh dưỡng thông minh
+│   │   │   │   ├── cook/            # Sổ tay nấu ăn
+│   │   │   │   ├── handbook/        # Cẩm nang sống xanh
+│   │   │   │   ├── promotions/      # Khuyến mãi & deal
+│   │   │   │   ├── vouchers/        # Ví voucher & chi tiết voucher
+│   │   │   │   ├── loyalty/         # Hạng thành viên & đổi điểm
+│   │   │   │   └── complaint/       # Gửi & theo dõi khiếu nại
 │   │   │   ├── shared/              # Pipes, directives, guards,
 │   │   │   │                        # interceptors
 │   │   │   ├── app.config.ts
@@ -139,15 +147,22 @@ Nutrious-Web/
 │   │   ├── app/
 │   │   │   ├── admin/
 │   │   │   │   ├── dashboard/       # Tổng quan kinh doanh
-│   │   │   │   ├── orders/          # Quản lý đơn hàng
+│   │   │   │   ├── finance/         # Tài chính & đối soát thanh toán
+│   │   │   │   ├── analytics/       # Phân tích kinh doanh & hành vi
+│   │   │   │   ├── orders/          # Quản lý đơn hàng & in phiếu giao hàng
 │   │   │   │   ├── products/        # Quản lý sản phẩm
-│   │   │   │   ├── inventory/       # Quản lý tồn kho
-│   │   │   │   ├── vouchers/        # Voucher và Flash Sale
+│   │   │   │   ├── combos/          # Quản lý gói combo ưu đãi
+│   │   │   │   ├── inventory/       # Quản lý tồn kho FEFO/FIFO & điều chuyển chi nhánh
+│   │   │   │   ├── shipping/        # Cấu hình kho vận & phí giao hàng bản đồ
+│   │   │   │   ├── users/           # Quản lý & phân nhóm khách hàng
+│   │   │   │   ├── staff/           # Quản lý nhân sự & phân quyền chi nhánh
+│   │   │   │   ├── support/         # Live Chat & chăm sóc khách hàng
 │   │   │   │   ├── reviews/         # Kiểm duyệt đánh giá
 │   │   │   │   ├── complaints/      # Quản lý khiếu nại
-│   │   │   │   ├── analytics/       # Phân tích kinh doanh
-│   │   │   │   ├── audit-log/       # Nhật ký kiểm toán
-│   │   │   │   └── layout/          # Sidebar, Navbar, Header
+│   │   │   │   ├── vouchers/        # Voucher & Flash Sale
+│   │   │   │   ├── banners/         # Banner & Pop-up khuyến mãi
+│   │   │   │   ├── audit-log/       # Nhật ký kiểm toán hệ thống
+│   │   │   │   └── layout/          # Sidebar phân quyền theo role, Header, Quick Search
 │   │   │   ├── shared/              # Services, Guards, Interceptors
 │   │   │   └── app.routes.ts
 │   ├── angular.json
@@ -156,27 +171,28 @@ Nutrious-Web/
 ├── docs/                            # Tài liệu phân tích và thiết kế
 │   └── EVERGREENMART_BUSINESS_RULES_SPECIFICATION_DRAFT.md
 │
+├── HUONG_DAN_CHAY_DATA.md           # Hướng dẫn nạp data & tài khoản demo cho Giảng viên
 ├── AGENTS.md                        # Quy ước coding
-├── SETUP.md                         # Hướng dẫn thiết lập môi trường
+├── SETUP.md                         # Hướng dẫn thiết lập môi trường Atlas
 ├── TEAM_WORKFLOW.md                 # Quy trình làm việc nhóm
 └── README.md                        # Tổng quan dự án
 ```
 
 ---
 
-## 3. Cài đặt và khởi chạy
+## 3. Cài đặt, nạp dữ liệu và khởi chạy
 
-Evergreen Mart bao gồm ba ứng dụng độc lập. Để vận hành toàn bộ hệ thống, cần khởi chạy Backend, Storefront và Admin Portal trong ba cửa sổ Terminal riêng biệt.
+Evergreen Mart bao gồm ba ứng dụng độc lập. Để vận hành toàn bộ hệ thống trên máy cá nhân, cần tạo cấu hình `.env` / nạp dữ liệu cho Backend trước, sau đó khởi chạy Backend, Storefront và Admin Portal trong ba cửa sổ Terminal riêng biệt.
 
 ### 3.1. Yêu cầu hệ thống
 
-| Công cụ       | Phiên bản yêu cầu   | Mục đích                       |
-| ------------- | ------------------- | ------------------------------ |
-| Node.js       | 18.x hoặc 20.x LTS  | Backend runtime                |
-| npm           | 9.x trở lên         | Quản lý dependencies           |
-| Angular CLI   | 19.x                | Khởi chạy Angular applications |
-| MongoDB Atlas | Cloud Database      | Lưu trữ dữ liệu                |
-| Git           | Phiên bản hiện hành | Quản lý mã nguồn               |
+| Công cụ                  | Phiên bản yêu cầu   | Mục đích                                      |
+| ------------------------ | ------------------- | --------------------------------------------- |
+| Node.js                  | 18.x trở lên        | Backend runtime                               |
+| npm                      | 9.x trở lên         | Quản lý dependencies                          |
+| Angular CLI              | 19.x                | Khởi chạy Angular applications                |
+| MongoDB Atlas / Community| Cloud hoặc Local 27017 | Lưu trữ dữ liệu (Atlas hoặc chạy offline local) |
+| Git                      | Phiên bản hiện hành | Quản lý mã nguồn                              |
 
 Cài đặt Angular CLI:
 
@@ -202,7 +218,19 @@ cd service
 ```bash
 npm install
 ```
-**Bước 3. Khởi chạy Backend**
+
+**Bước 3. Tạo file cấu hình `service/.env` & Nạp dữ liệu mẫu**
+
+- Tham khảo mẫu [`service/.env.example`](service/.env.example) để tạo file `service/.env` (điền `MONGODB_URI` trỏ tới MongoDB Atlas do nhóm cung cấp **hoặc** dùng MongoDB Local `mongodb://127.0.0.1:27017/xanh-la`).
+- **Nếu chạy Offline trên MongoDB Local** (cổng `27017` đang bật), chạy thêm 1 lệnh sau để nạp toàn bộ **`41` collections (`19,559` bản ghi)** từ [`service/data/xanh-la-snapshot.json.gz`](service/data/xanh-la-snapshot.json.gz):
+
+```bash
+npm run import-data -- --local
+```
+
+> Xem hướng dẫn đầy đủ từng bước và bảng tài khoản demo tại [`HUONG_DAN_CHAY_DATA.md`](HUONG_DAN_CHAY_DATA.md).
+
+**Bước 4. Khởi chạy Backend**
 
 Chế độ phát triển (khuyến nghị):
 
@@ -295,9 +323,9 @@ Mở trình duyệt tại:
 
 `http://localhost:4201`
 
-### 3.5. Tổng hợp cổng dịch vụ
+### 3.5. Tổng hợp cổng dịch vụ & Link Deploy
 
-Sau khi khởi chạy thành công cả ba ứng dụng, hệ thống hoạt động trên các cổng mặc định sau:
+#### Chạy trên máy cá nhân (Local)
 
 | Phân hệ      | Thư mục    | Port | Địa chỉ truy cập        | Lệnh khởi chạy |
 | ------------ | ---------- | ---: | ----------------------- | -------------- |
@@ -307,74 +335,81 @@ Sau khi khởi chạy thành công cả ba ứng dụng, hệ thống hoạt đ�
 
 > **Quan trọng:** Cần khởi chạy Backend trước khi sử dụng Storefront và Admin Portal để đảm bảo các ứng dụng Frontend có thể kết nối và trao đổi dữ liệu với hệ thống API.
 
+#### Hệ thống triển khai trực tuyến (Live Deploy)
+
+| Phân hệ      | Nền tảng         | Địa chỉ truy cập                    |
+| ------------ | ---------------- | ----------------------------------- |
+| Storefront   | Cloudflare Pages | https://evergreen-client.pages.dev  |
+| Admin Portal | Cloudflare Pages | https://nutrious-admin.pages.dev    |
+| Backend API  | Render           | https://nutrious-web.onrender.com   |
+
+> Danh sách tài khoản Admin / Quản lý chi nhánh / Nhân viên và hướng dẫn đăng ký khách hàng với OTP demo xem tại [`HUONG_DAN_CHAY_DATA.md`](HUONG_DAN_CHAY_DATA.md#5-tài-khoản-demo-để-kiểm-thử-chức-năng).
+
 ---
 
 ## 4. Các tính năng nổi bật
 ### 4.1. Customer Storefront – Phân hệ khách hàng
 
-| Tính năng                       | Mô tả                                                                                 |
-| ------------------------------- | ------------------------------------------------------------------------------------- |
-| Danh mục và tìm kiếm thông minh | Tìm kiếm, lọc sản phẩm theo danh mục, giá bán, đặc tính dinh dưỡng và chứng nhận xanh |
-| Thanh toán VietQR động          | Tự động tạo mã QR theo số tiền và mã đơn hàng, thiết lập thời hạn thanh toán 15 phút  |
-| Quản lý thời hạn thanh toán     | Tự động xử lý đơn quá hạn và hoàn trả tồn kho theo quy tắc nghiệp vụ                  |
-| Thanh toán COD                  | Hỗ trợ thanh toán khi nhận hàng và áp dụng quy chế xử lý đơn thực phẩm tươi sống      |
-| Khuyến mãi đa tầng              | Kết hợp voucher giảm giá đơn hàng, mã miễn phí vận chuyển và Flash Sale               |
-| Trợ lý dinh dưỡng AI            | Sử dụng Google Gemini AI để hỗ trợ tư vấn khẩu phần, Eat Clean, Keto và gợi ý món ăn  |
-| Theo dõi đơn hàng               | Tra cứu trạng thái đơn hàng: `pending`, `confirmed`, `shipping`, `delivered`          |
-| Quản lý tài khoản               | Quản lý hồ sơ cá nhân, địa chỉ nhận hàng và sổ điểm thưởng                            |
-| Sổ tay nấu ăn                   | Tham khảo công thức và gợi ý chế biến các món ăn dinh dưỡng                           |
-| Ví voucher                      | Quản lý các mã giảm giá và chương trình ưu đãi cá nhân                                |
+| Tính năng                       | Mô tả                                                                                              |
+| ------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Đặt hàng đa chi nhánh (O2O)     | Chọn cửa hàng gần nhất theo vị trí, kiểm tra tồn kho và giá tại từng chi nhánh                     |
+| Danh mục & tìm kiếm thông minh  | Tìm kiếm, lọc sản phẩm theo danh mục, giá bán, đặc tính dinh dưỡng và chứng nhận xanh              |
+| Thanh toán VietQR động          | Tự động tạo mã QR theo số tiền và mã đơn hàng, đối soát qua webhook và giới hạn thanh toán 15 phút |
+| Thanh toán COD & hủy đơn        | Hỗ trợ COD, tự hoàn kho nếu đơn VietQR quá hạn và cho phép khách hủy đơn khi chưa chuẩn bị hàng    |
+| Khuyến mãi đa tầng & Combo      | Kết hợp voucher đơn hàng, mã freeship, Flash Sale theo khung giờ và Combo mua kèm tiết kiệm        |
+| Bản đồ & tính phí vận chuyển    | Chọn tọa độ giao hàng trên bản đồ Leaflet và tính khoảng cách tuyến đường thực tế qua OSRM         |
+| Trợ lý dinh dưỡng AI            | Chatbot tích hợp Gemini / OpenAI REST API tư vấn khẩu phần, Eat Clean, Keto và gợi ý món ăn        |
+| Tài khoản, Google & OTP         | Đăng ký/đổi SĐT với OTP, liên kết tài khoản Google OAuth 2.0, tích điểm hạng thành viên            |
+| Theo dõi đơn, nấu ăn & khiếu nại| Tra cứu trạng thái đơn hàng, sổ tay nấu ăn, cẩm nang sống xanh, gửi đánh giá & khiếu nại sau mua   |
 
 ### 4.2. Admin Dashboard – Phân hệ quản trị
 
-| Tính năng                 | Mô tả                                                                        |
-| ------------------------- | ---------------------------------------------------------------------------- |
-| Dashboard tổng quan       | Theo dõi doanh thu, số lượng đơn hàng và khách hàng mới                      |
-| Quản lý đơn hàng          | Kiểm tra, xác nhận thanh toán và cập nhật trạng thái đơn hàng                |
-| Quản lý sản phẩm          | Thêm, sửa, xóa sản phẩm và cấu hình thông tin dinh dưỡng                     |
-| Quản lý tồn kho FEFO/FIFO | Quản lý nhập, xuất, tồn theo lô hàng và hạn sử dụng                          |
-| Stock Adjustment Ticket   | Lập phiếu điều chỉnh tồn kho và ghi nhận các thay đổi                        |
-| Marketing và Flash Sale   | Thiết lập chương trình khuyến mãi, khung giờ và giới hạn số lượng            |
-| Quản lý đánh giá          | Kiểm duyệt đánh giá và theo dõi phản hồi của khách hàng                      |
-| Quản lý khiếu nại         | Tiếp nhận và xử lý các vấn đề phát sinh từ khách hàng                        |
-| Business Analytics        | Phân tích doanh thu, sản phẩm bán chạy và tỷ lệ hủy đơn                      |
-| Xuất báo cáo              | Hỗ trợ xuất dữ liệu Excel (`.xlsx`) và CSV (`.csv`)                          |
-| Audit Log                 | Ghi nhận các thao tác chỉnh sửa giá, hủy đơn và điều chỉnh kho của nhân viên |
+| Tính năng                 | Mô tả                                                                                     |
+| ------------------------- | ----------------------------------------------------------------------------------------- |
+| Phân quyền RBAC & O2O     | Phân quyền 5 vai trò (`Admin`, `Manager`, `Sales`, `Warehouse`, `Marketing`) khóa theo kho|
+| Dashboard & Tài chính     | Theo dõi doanh thu, đối soát tiền mặt / VietQR, số đơn và tăng trưởng khách hàng          |
+| Quản lý đơn & In phiếu    | Cập nhật trạng thái đơn, xử lý yêu cầu hủy và in phiếu giao hàng / đóng gói               |
+| Quản lý sản phẩm & Combo  | Thêm/sửa/xóa sản phẩm, cấu hình thông tin dinh dưỡng và tạo gói Combo tiết kiệm           |
+| Quản lý tồn kho FEFO/FIFO | Nhập, xuất, điều chuyển liên kho, kiểm kê theo lô hàng & hạn sử dụng                      |
+| Bản đồ kho vận & Ship     | Cấu hình tọa độ cửa hàng, bán kính phục vụ và đơn giá giao hàng                           |
+| Marketing, Voucher & Banner| Thiết lập Voucher, Flash Sale theo khung giờ, quản lý Banner và Pop-up trang chủ         |
+| Khách hàng, Đánh giá & CSKH| Phân nhóm khách hàng, kiểm duyệt đánh giá, xử lý khiếu nại và Live Chat hỗ trợ trực tuyến|
+| Analytics, Xuất Excel & Log| Phân tích hành vi, xuất báo cáo Excel/CSV và Audit Log theo dõi thao tác nhân viên       |
 
 ---
 
 ## 5. Công nghệ sử dụng
 
-| Hạng mục                | Công nghệ                  | Vai trò                                   |
-| ----------------------- | -------------------------- | ----------------------------------------- |
-| Frontend Framework      | Angular 19                 | Xây dựng giao diện Storefront và Admin    |
-| Programming Language    | TypeScript 5.6             | Phát triển ứng dụng Frontend              |
-| UI & Styling            | Vanilla CSS3, SVG          | Thiết kế giao diện và responsive          |
-| State & Reactive        | Angular Signals, RxJS 7.8  | Quản lý trạng thái và xử lý luồng dữ liệu |
-| Form Handling           | Reactive Forms             | Xây dựng và kiểm soát biểu mẫu            |
-| Backend Runtime         | Node.js 18+/20+            | Môi trường thực thi Backend               |
-| Backend Framework       | Express.js 4.19            | Xây dựng REST API                         |
-| Database                | MongoDB Atlas              | Lưu trữ dữ liệu                           |
-| ODM                     | Mongoose 8.5               | Tương tác với MongoDB                     |
-| Authentication          | JWT, bcryptjs              | Xác thực và bảo mật tài khoản             |
-| Social Login            | Google OAuth 2.0           | Đăng nhập bằng Google                     |
-| Payment Integration     | VietQR Open API            | Tạo mã QR thanh toán                      |
-| Artificial Intelligence | Google Gemini AI SDK       | Tích hợp trợ lý AI                        |
-| Maps & Location         | Leaflet 1.9, OpenStreetMap | Hiển thị bản đồ và vị trí                 |
-| File Processing         | ExcelJS, SheetJS (XLSX)    | Xử lý dữ liệu và xuất báo cáo             |
-| Email Service           | Nodemailer, SMTP           | Gửi email thông báo                       |
+| Hạng mục                | Công nghệ                                                  | Vai trò                                                      |
+| ----------------------- | ---------------------------------------------------------- | ------------------------------------------------------------ |
+| Frontend Framework      | Angular 19 (`^19.0.0`, Standalone, Lazy Loading)           | Xây dựng giao diện Storefront và Admin                       |
+| Programming Language    | TypeScript `~5.6`                                          | Phát triển ứng dụng Frontend                                 |
+| UI & Styling            | CSS3 thuần theo component, SVG                             | Thiết kế giao diện và responsive                             |
+| State & Reactive        | Angular Signals, RxJS `~7.8`                               | Quản lý trạng thái và xử lý luồng HTTP                       |
+| Backend Runtime         | Node.js (`>= 18`), Express.js `^4.19`                      | Xây dựng REST API và middleware phân quyền                   |
+| Database & ODM          | MongoDB Atlas / Community, Mongoose `^8.5`                 | Lưu trữ và mô hình hóa `41` collections                      |
+| Authentication          | JWT (`jsonwebtoken`), `bcryptjs`, `express-session`        | Xác thực người dùng, RBAC và bảo vệ chi nhánh O2O            |
+| Social Login            | Google Identity Services & Google OAuth 2.0                | Đăng nhập và liên kết tài khoản Google                       |
+| Payment Integration     | VietQR + Webhook SePay/Casso                               | Tạo mã QR động và đối soát chuyển khoản tự động              |
+| Artificial Intelligence | Google Gemini API / OpenAI API (REST `fetch`) + Fallback   | Tích hợp trợ lý AI tư vấn dinh dưỡng                         |
+| Maps & Location         | Leaflet `^1.9`, CARTO, OSM Nominatim, OSRM, Provinces API  | Bản đồ ghim vị trí, địa chính 2 cấp và tính quãng đường ship |
+| Real-time & Optimization| Server-Sent Events (SSE), In-memory Cache, Schedulers      | Thông báo real-time, giảm tải DB và tác vụ tự động nền       |
+| File Processing         | ExcelJS (`^4.4`), SheetJS `xlsx` (`^0.18`)                 | Nhập/xuất báo cáo Excel & CSV                                |
+| Email & Testing         | Nodemailer `^10.6`, Jasmine / Karma                        | Gửi email thông báo và kiểm thử unit test Angular            |
+| Deployment              | Cloudflare Pages, Render, MongoDB Atlas                    | Triển khai trực tuyến Client, Admin, Backend & Database      |
 
 ---
 
 ## 6. Tài liệu dự án
 
-Các tài liệu hỗ trợ quá trình thiết lập, phát triển và vận hành hệ thống:
+Các tài liệu hỗ trợ quá trình thiết lập, nạp dữ liệu, phát triển và vận hành hệ thống:
 
-| Tài liệu                                                                                                               | Nội dung                                                |
-| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| [`SETUP.md`](SETUP.md)                                                                                                 | Hướng dẫn thiết lập môi trường và kết nối MongoDB Atlas |
-| [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md)                                                                                 | Quy trình làm việc nhóm, Git Branch và Pull Request     |
-| [`AGENTS.md`](AGENTS.md)                                                                                               | Quy ước coding và hướng dẫn dành cho Agent              |
-| [`docs/EVERGREENMART_BUSINESS_RULES_SPECIFICATION_DRAFT.md`](docs/EVERGREENMART_BUSINESS_RULES_SPECIFICATION_DRAFT.md) | Đặc tả quy tắc nghiệp vụ của Evergreen Mart             |
+| Tài liệu                                                                                                               | Nội dung                                                         |
+| ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [`HUONG_DAN_CHAY_DATA.md`](HUONG_DAN_CHAY_DATA.md)                                                                     | Hướng dẫn Giảng viên nạp full data mẫu & bảng tài khoản demo     |
+| [`SETUP.md`](SETUP.md)                                                                                                 | Hướng dẫn thiết lập môi trường và kết nối MongoDB Atlas          |
+| [`TEAM_WORKFLOW.md`](TEAM_WORKFLOW.md)                                                                                 | Quy trình làm việc nhóm, Git Branch và Pull Request              |
+| [`AGENTS.md`](AGENTS.md)                                                                                               | Quy ước coding và hướng dẫn làm việc trên repository             |
+| [`docs/EVERGREENMART_BUSINESS_RULES_SPECIFICATION_DRAFT.md`](docs/EVERGREENMART_BUSINESS_RULES_SPECIFICATION_DRAFT.md) | Đặc tả quy tắc nghiệp vụ của Evergreen Mart                      |
 
 ---

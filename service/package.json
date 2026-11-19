@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "seed": "node seed-data.js"
+    "seed": "node seed-data.js",
+    "export-data": "node scripts/export-data.js",
+    "import-data": "node scripts/import-data.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
