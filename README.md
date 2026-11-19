@@ -219,16 +219,17 @@ cd service
 npm install
 ```
 
-**Bước 3. Tạo file cấu hình `service/.env` & Nạp dữ liệu mẫu**
+**Bước 3. Nạp dữ liệu mẫu (Chạy Offline) hoặc cấu hình `.env` (Chạy Atlas)**
 
-- Tham khảo mẫu [`service/.env.example`](service/.env.example) để tạo file `service/.env` (điền `MONGODB_URI` trỏ tới MongoDB Atlas do nhóm cung cấp **hoặc** dùng MongoDB Local `mongodb://127.0.0.1:27017/xanh-la`).
-- **Nếu chạy Offline trên MongoDB Local** (cổng `27017` đang bật), chạy thêm 1 lệnh sau để nạp toàn bộ **`41` collections (`19,559` bản ghi)** từ [`service/data/xanh-la-snapshot.json.gz`](service/data/xanh-la-snapshot.json.gz):
+- **Cách 1 — Chạy Offline trên MongoDB Local *(không cần tạo file `.env`)*:** Backend đã có sẵn cấu hình mặc định trỏ tới `mongodb://127.0.0.1:27017/xanh-la`, cổng `3000`, JWT và VietQR. Chỉ cần đảm bảo MongoDB Local trên máy đang bật ở cổng `27017`, rồi chạy 1 lệnh nạp toàn bộ **`41` collections (`19,559` bản ghi)** từ [`service/data/xanh-la-snapshot.json.gz`](service/data/xanh-la-snapshot.json.gz):
 
 ```bash
-npm run import-data -- --local
+npm run import-data
 ```
 
-> Xem hướng dẫn đầy đủ từng bước và bảng tài khoản demo tại [`HUONG_DAN_CHAY_DATA.md`](HUONG_DAN_CHAY_DATA.md).
+- **Cách 2 — Kết nối MongoDB Atlas của nhóm *(không cần nạp data)*:** Chỉ cần tạo file `service/.env` (tham khảo [`service/.env.example`](service/.env.example)) và dán chuỗi `MONGODB_URI`, `JWT_SECRET`, `GEMINI_API_KEY`... do nhóm gửi kèm khi nộp bài.
+
+> Chi tiết hướng dẫn cho Giảng viên & xử lý lỗi xem tại [`HUONG_DAN_CHAY_DATA.md`](HUONG_DAN_CHAY_DATA.md).
 
 **Bước 4. Khởi chạy Backend**
 
@@ -343,7 +344,20 @@ Mở trình duyệt tại:
 | Admin Portal | Cloudflare Pages | https://nutrious-admin.pages.dev    |
 | Backend API  | Render           | https://nutrious-web.onrender.com   |
 
-> Danh sách tài khoản Admin / Quản lý chi nhánh / Nhân viên và hướng dẫn đăng ký khách hàng với OTP demo xem tại [`HUONG_DAN_CHAY_DATA.md`](HUONG_DAN_CHAY_DATA.md#5-tài-khoản-demo-để-kiểm-thử-chức-năng).
+#### Tài khoản Demo nhanh
+
+- **Khách hàng (Storefront):** Chọn **Đăng ký** bằng số điện thoại bất kỳ, khi chạy ở local (`NODE_ENV !== 'production'`) hệ thống bật sẵn OTP demo **`123456`**.
+- **Quản trị & Nhân viên theo phân quyền (Admin Portal):**
+
+| Vai trò             | Email đăng nhập                | Mật khẩu   | Phạm vi                     |
+| ------------------- | ------------------------------ | ---------- | --------------------------- |
+| **Admin**           | `admin@xanhla.farm`            | `admin123` | Toàn hệ thống               |
+| **Manager** (Q1)    | `manager.q1@evergreen.vn`      | `manager123` | Chi nhánh Quận 1 *(các chi nhánh khác tương tự; riêng `manager.dian@evergreen.vn` dùng `12345678`)* |
+| **Sales**           | `sales@evergreen.vn`           | `staff123` | Bán hàng, đơn hàng & CSKH   |
+| **Warehouse**       | `warehouse@evergreen.vn`       | `staff123` | Kho vận FEFO/FIFO & ship    |
+| **Marketing**       | `marketing@evergreen.vn`       | `staff123` | Voucher, Flash Sale, Banner |
+
+> Danh sách đủ 12 tài khoản theo từng chi nhánh và hướng dẫn xử lý lỗi xem tại [`HUONG_DAN_CHAY_DATA.md`](HUONG_DAN_CHAY_DATA.md#5-tài-khoản-demo-để-kiểm-thử-chức-năng).
 
 ---
 

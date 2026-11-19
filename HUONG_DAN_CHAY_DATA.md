@@ -8,38 +8,26 @@ Tài liệu này hướng dẫn Giảng viên nạp đầy đủ dữ liệu m�
 
 - **Node.js** `18.x` hoặc `20.x LTS` (kèm `npm`)
 - **Angular CLI** (`npm install -g @angular/cli` hoặc dùng `npm start` trong từng thư mục)
-- **MongoDB Community Server** (nếu chạy **Cách 2 – Offline trên máy cá nhân**; không cần nếu dùng **Cách 1 – MongoDB Atlas**)
+- **MongoDB Community Server** (nếu chạy **Cách 1 – Offline trên máy cá nhân**; không cần cài nếu dùng **Cách 2 – MongoDB Atlas**)
 
 ---
 
 ## 2. Cấu hình & Nạp Dữ Liệu Database (Chọn 1 trong 2 cách)
 
-> **Quan trọng:** File cấu hình `service/.env` không được đưa lên GitHub vì lý do bảo mật. Thầy vui lòng tạo file `service/.env` trước khi chạy Backend.
+### Cách 1: Chạy Offline 100% trên MongoDB Local *(Khuyên dùng khi chấm bài, không cần `.env`, không lo mạng chặn Atlas)*
 
-### Cách 1: Chạy Offline 100% trên MongoDB Local *(Khuyên dùng khi chấm bài, không lo mạng chặn Atlas)*
-
-Dự án đã đóng gói sẵn toàn bộ snapshot dữ liệu mẫu trong [`service/data/xanh-la-snapshot.json.gz`](service/data/xanh-la-snapshot.json.gz) kèm script nạp 1 lệnh (`import-data`, không cần cài `mongorestore`).
+Dự án đã đóng gói sẵn toàn bộ snapshot dữ liệu mẫu trong [`service/data/xanh-la-snapshot.json.gz`](service/data/xanh-la-snapshot.json.gz) kèm script nạp 1 lệnh (`import-data`, không cần cài `mongorestore`). **Backend đã cấu hình sẵn giá trị mặc định** (`PORT=3000`, `MONGODB_URI=mongodb://127.0.0.1:27017/xanh-la`, `JWT_SECRET`, thông tin VietQR), nên chạy Offline **không cần tạo file `service/.env`**.
 
 1. Đảm bảo **MongoDB Service** trên máy đang chạy ở cổng mặc định `27017` (`mongodb://127.0.0.1:27017`).
-2. Tạo file `service/.env` (tham khảo mẫu [`service/.env.example`](service/.env.example)) với nội dung:
-   ```env
-   PORT=3000
-   MONGODB_URI=mongodb://127.0.0.1:27017/xanh-la
-   JWT_SECRET=xanh-la-secret-key-2025
-   JWT_EXPIRE=7d
-   BANK_ID=MB
-   ACCOUNT_NO=0962299122
-   ACCOUNT_NAME=VY TAM NHU
-   ```
-3. Mở terminal tại thư mục `service/`, cài đặt thư viện và nạp toàn bộ dữ liệu:
+2. Mở terminal tại thư mục `service/`, cài đặt thư viện và nạp toàn bộ dữ liệu:
    ```bash
    cd service
    npm install
    npm run import-data
    ```
-   *(Hoặc chạy `npm run import-data -- --local` nếu muốn ép nạp vào `mongodb://127.0.0.1:27017/xanh-la` bất kể giá trị `.env`)*
+   *(Nếu trong máy có sẵn file `service/.env` đang trỏ đi nơi khác, chạy `npm run import-data -- --local` để ép nạp vào `mongodb://127.0.0.1:27017/xanh-la`)*
 
-4. Khi terminal hiển thị `[OK] Da nap xong 19559 ban ghi vao 41 collections.` là dữ liệu đã sẵn sàng.
+3. Khi terminal hiển thị `[OK] Da nap xong 19559 ban ghi vao 41 collections.` là dữ liệu đã sẵn sàng.
 
 > *(Lưu ý: Không chạy lệnh `npm run seed` cũ khi dùng offline vì `seed-data.js` được viết để đồng bộ từ Atlas về).*
 
@@ -126,7 +114,7 @@ Sau khi chạy Backend (`localhost:3000`), có thể mở nhanh trình duyệt k
 
 | Tình huống | Nguyên nhân | Cách khắc phục |
 | :--- | :--- | :--- |
-| API trả về `503 Cơ sở dữ liệu đang mất kết nối` | Chưa tạo `service/.env` hoặc MongoDB chưa bật | Kiểm tra lại `service/.env` và đảm bảo MongoDB local đã chạy (hoặc kiểm tra mạng Atlas) |
+| API trả về `503 Cơ sở dữ liệu đang mất kết nối` | MongoDB Local chưa bật (Cách 1) hoặc `service/.env` chưa cấu hình đúng Atlas (Cách 2) | Bật MongoDB Service cổng `27017` (hoặc kiểm tra lại `MONGODB_URI` & mạng nếu dùng Atlas) |
 | Chạy `import-data` báo `[ABORT] MONGODB_URI dang tro den MongoDB tu xa` | `.env` đang trỏ Atlas nên script chặn ghi đè | Chạy `npm run import-data -- --local` để ép nạp vào MongoDB local |
 | Lỗi `Error: listen EADDRINUSE :::3000` | Cổng `3000` đang có tiến trình Node khác chạy sẵn | Tắt tiến trình Node cũ đang chiếm cổng `3000` rồi chạy lại `npm start` |
 | Web lên nhưng không thấy sản phẩm / danh mục trống | Chưa nạp dữ liệu hoặc DB bị trống | Chạy `cd service && npm run import-data -- --local` |
