@@ -6,6 +6,35 @@ const bcrypt = require('bcryptjs');
 const { protect, adminOnly, staffOnly } = require('../middleware/auth');
 const { logAction } = require('../utils/auditLogger');
 
+// Exclude oversized inline base64 avatar blobs from list responses while preserving lightweight URLs
+const USER_LIST_SELECT = {
+  _id: 1,
+  name: 1,
+  email: 1,
+  phone: 1,
+  role: 1,
+  isActive: 1,
+  employeeCode: 1,
+  assignedStore: 1,
+  storeName: 1,
+  createdAt: 1,
+  points: 1,
+  tier: 1,
+  totalSpent: 1,
+  avatar: {
+    $cond: [
+      {
+        $and: [
+          { $eq: [{ $type: '$avatar' }, 'string'] },
+          { $lte: [{ $strLenCP: '$avatar' }, 1000] },
+        ],
+      },
+      '$avatar',
+      '',
+    ],
+  },
+};
+
 // GET /api/users - admin/staff list
 router.get('/', protect, staffOnly, async (req, res, next) => {
   try {
@@ -34,10 +63,10 @@ router.get('/', protect, staffOnly, async (req, res, next) => {
     const skip = (Number(page) - 1) * Number(limit);
     const [users, total] = await Promise.all([
       User.find(filter)
-        .sort({ _id: -1 })
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(Number(limit))
-        .select('_id name email phone role isActive avatar employeeCode assignedStore storeName createdAt points tier totalSpent')
+        .select(USER_LIST_SELECT)
         .lean(),
       User.countDocuments(filter),
     ]);
@@ -66,10 +95,10 @@ router.get('/purchase-stats', protect, staffOnly, async (req, res, next) => {
 
     const [users, total] = await Promise.all([
       User.find(filter)
-        .sort({ _id: -1 })
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(Number(limit))
-        .select('_id name email phone role isActive avatar employeeCode assignedStore storeName createdAt points tier totalSpent')
+        .select(USER_LIST_SELECT)
         .lean(),
       User.countDocuments(filter),
     ]);

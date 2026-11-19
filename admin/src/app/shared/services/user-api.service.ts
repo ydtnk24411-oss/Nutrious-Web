@@ -39,11 +39,11 @@ export class UserApiService {
   private api = inject(ApiService);
 
   getAll(params?: Record<string, string | number>) {
-    return this.api.get<{ success: boolean; total: number; data: ApiUser[] }>('/users', params);
+    return this.api.get<{ success: boolean; total: number; data: ApiUser[] }>('/users', params, 25000);
   }
 
   getWithStats(params?: Record<string, string | number>) {
-    return this.api.get<{ success: boolean; total: number; data: ApiUserWithStats[] }>('/users/purchase-stats', params);
+    return this.api.get<{ success: boolean; total: number; data: ApiUserWithStats[] }>('/users/purchase-stats', params, 25000);
   }
 
   getById(id: string) {
