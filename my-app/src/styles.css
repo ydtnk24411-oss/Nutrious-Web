@@ -1,5 +1,5 @@
 /* ==========================================================================
-   XANH LÁ — Global Design System
+   XANH LÁ - Global Design System
    ========================================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
 @import 'leaflet/dist/leaflet.css';
@@ -60,7 +60,7 @@ img { display: block; max-width: 100%; }
   --border:     #EAEAEA;
   --border-2:   #F0F0F0;
 
-  /* Semantic aliases — giữ để không break code cũ */
+  /* Semantic aliases - giữ để không break code cũ */
   --xanh-primary:       var(--green-700);
   --xanh-primary-light: var(--green-500);
   --xanh-primary-bg:    var(--green-100);
@@ -438,10 +438,10 @@ app-header {
 }
 .xanhla-prod-card:hover .xanhla-prod-card-img img { transform: scale(1.04); }
 
-/* Không có gradient tối — ảnh sáng như mẫu */
+/* Không có gradient tối - ảnh sáng như mẫu */
 .xanhla-prod-card-img::before { display: none; }
 
-/* ── Badge giảm giá góc ảnh — đỏ tươi thực phẩm gọn gàng ── */
+/* ── Badge giảm giá góc ảnh - đỏ tươi thực phẩm gọn gàng ── */
 .xanhla-prod-badge-sale {
   position: absolute; top: 8px; left: 8px; z-index: 2;
   background: #E53935; color: #fff;
@@ -458,7 +458,7 @@ app-header {
   padding: 3px 8px; border-radius: 4px;
 }
 
-/* Countdown timer — chỉ ở card khuyến mãi */
+/* Countdown timer - chỉ ở card khuyến mãi */
 .xanhla-prod-card-timer {
   position: absolute; bottom: 8px; left: 8px; z-index: 2;
   background: rgba(15, 23, 42, 0.82);
@@ -628,30 +628,30 @@ app-header {
   box-sizing: border-box !important;
 }
 
-/* 3. Nút 1: THÊM GIỎ (Outline Green, nền trắng, chữ xanh, icon cart) */
+/* 3. Nút 1: THÊM GIỎ (To rõ, thoáng đãng, chuẩn thương hiệu) */
 .eg-card-btn-add,
 .xanhla-prod-card-add,
 .coop-add-btn,
 .fs-add-btn {
   flex: 1 1 0% !important;
-  width: 50% !important;
+  width: 100% !important;
   min-width: 0 !important;
-  max-width: 50% !important;
-  height: 36px !important;
-  min-height: 36px !important;
-  max-height: 36px !important;
-  padding: 0 4px !important;
+  max-width: 100% !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  padding: 0 6px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 4px !important;
-  background: #ffffff !important;
-  border: 1.5px solid #16a34a !important;
-  border-radius: 6px !important;
-  color: #16a34a !important;
+  gap: 5px !important;
+  background: #d8f56a !important;
+  border: 1.5px solid #165b32 !important;
+  border-radius: 8px !important;
+  color: #165b32 !important;
   font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   font-size: 11.5px !important;
-  font-weight: 700 !important;
+  font-weight: 800 !important;
   cursor: pointer !important;
   transition: all 0.18s ease !important;
   white-space: nowrap !important;
@@ -666,7 +666,7 @@ app-header {
 .coop-add-btn i,
 .fs-add-btn i {
   font-size: 13px !important;
-  color: #16a34a !important;
+  color: #165b32 !important;
   display: inline-block !important;
   line-height: 1 !important;
   flex-shrink: 0 !important;
@@ -675,36 +675,36 @@ app-header {
 .eg-card-btn-add:hover:not(:disabled),
 .xanhla-prod-card-add:hover:not(:disabled),
 .coop-add-btn:hover:not(:disabled) {
-  background: #f0fdf4 !important;
-  border-color: #15803d !important;
-  color: #15803d !important;
-  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.15) !important;
+  background: #c8ee44 !important;
+  border-color: #144e28 !important;
+  color: #144e28 !important;
+  box-shadow: 0 2px 6px rgba(22, 91, 50, 0.15) !important;
   transform: translateY(-1px) !important;
 }
 
-/* 4. Nút 2: Mua ngay - SẢN PHẨM THƯỜNG (Xanh lá thương hiệu #16a34a, icon tia chớp vàng #fde047) */
+/* 4. Nút 2: Mua ngay (To rõ, nền xanh lá đậm thương hiệu #165b32, chữ trắng) */
 .eg-card-btn-buynow,
 .xanhla-prod-card-buynow,
 .coop-buynow-btn {
   flex: 1 1 0% !important;
-  width: 50% !important;
+  width: 100% !important;
   min-width: 0 !important;
-  max-width: 50% !important;
-  height: 36px !important;
-  min-height: 36px !important;
-  max-height: 36px !important;
-  padding: 0 4px !important;
+  max-width: 100% !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  padding: 0 6px !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 4px !important;
-  background: #16a34a !important;
-  border: 1.5px solid #16a34a !important;
-  border-radius: 6px !important;
+  gap: 5px !important;
+  background: #165b32 !important;
+  border: 1.5px solid #165b32 !important;
+  border-radius: 8px !important;
   color: #ffffff !important;
   font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   font-size: 11.5px !important;
-  font-weight: 700 !important;
+  font-weight: 800 !important;
   cursor: pointer !important;
   transition: all 0.18s ease !important;
   white-space: nowrap !important;
@@ -717,8 +717,8 @@ app-header {
 .eg-card-btn-buynow i,
 .xanhla-prod-card-buynow i,
 .coop-buynow-btn i {
-  font-size: 12px !important;
-  color: #fde047 !important; /* Tia chớp vàng tươi thương hiệu trên nền xanh lá */
+  font-size: 13px !important;
+  color: #ffffff !important;
   display: inline-block !important;
   line-height: 1 !important;
   flex-shrink: 0 !important;
@@ -727,19 +727,20 @@ app-header {
 .eg-card-btn-buynow:hover:not(:disabled),
 .xanhla-prod-card-buynow:hover:not(:disabled),
 .coop-buynow-btn:hover:not(:disabled) {
-  background: #15803d !important;
-  border-color: #15803d !important;
-  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3) !important;
+  background: #0d3922 !important;
+  border-color: #0d3922 !important;
+  box-shadow: 0 2px 8px rgba(22, 91, 50, 0.3) !important;
   transform: translateY(-1px) !important;
 }
 
-/* 5. Nút 2: Mua ngay - KHỐI FLASH SALE (Cam rực rỡ #FF6600, sắc đỏ/cam đặc trưng tạo cảm giác cấp bách) */
+/* 5. Nút 2: Mua ngay - KHỐI FLASH SALE (Đỏ gốm son Bát Tràng #c53826, văn hóa may mắn & cấp bách tinh tế) */
 .fs-buynow-btn,
 .coop-flash-panel .coop-buynow-btn,
 .promo-flash-deal .coop-buynow-btn {
-  background: #FF6600 !important;
-  border: 1.5px solid #FF6600 !important;
+  background: #c53826 !important;
+  border: 1.5px solid #c53826 !important;
   color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(197, 56, 38, 0.22) !important;
 }
 
 .fs-buynow-btn i,
@@ -751,9 +752,9 @@ app-header {
 .fs-buynow-btn:hover:not(:disabled),
 .coop-flash-panel .coop-buynow-btn:hover:not(:disabled),
 .promo-flash-deal .coop-buynow-btn:hover:not(:disabled) {
-  background: #e65c00 !important;
-  border-color: #e65c00 !important;
-  box-shadow: 0 2px 8px rgba(255, 102, 0, 0.3) !important;
+  background: #ae2e1e !important;
+  border-color: #ae2e1e !important;
+  box-shadow: 0 4px 12px rgba(197, 56, 38, 0.35) !important;
 }
 
 /* 6. Trạng thái hết hàng (Disabled State) */
@@ -1035,7 +1036,7 @@ app-header {
 }
 .xanhla-deal-card-cta:hover { background: var(--green-900); }
 
-/* Hero deal — full-width banner khuyến mãi đặc biệt */
+/* Hero deal - full-width banner khuyến mãi đặc biệt */
 .xanhla-hero-deal {
   background: linear-gradient(110deg, #1e4a22 0%, #2d6a2d 50%, #1e4a22 100%);
   border-radius: var(--r-xl);
@@ -1509,7 +1510,7 @@ app-header {
    ========================================================================== */
 
 /* ==========================================================================
-   XANH LÁ — Premium Admin Design System
+   XANH LÁ - Premium Admin Design System
    Modern Organic Farm Dashboard - Deep Forest & Vibrant Lime
    ========================================================================== */
 
@@ -2273,7 +2274,7 @@ th.text-right, td.text-right,
   font-variant-numeric: tabular-nums !important;
 }
 
-/* 3. Ô nhập liệu & Nút bấm trong Biểu mẫu (Forms — Đăng nhập, Thanh toán) */
+/* 3. Ô nhập liệu & Nút bấm trong Biểu mẫu (Forms - Đăng nhập, Thanh toán) */
 .xanhla-auth-field input,
 .xanhla-auth-field select,
 #section-contact-info input,

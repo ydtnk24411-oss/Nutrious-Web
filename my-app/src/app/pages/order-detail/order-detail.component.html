@@ -88,7 +88,7 @@
             <img [src]="order()!.qrUrl" alt="Mã VietQR thanh toán" style="width:110px;height:110px;border-radius:8px;background:#fff;border:1px solid #e2e8f0;object-fit:contain" />
             <div style="flex:1;min-width:180px;font-size:13px;line-height:1.5;color:#78350f">
               <div style="font-weight:700;margin-bottom:4px">Đơn hàng đang chờ thanh toán VietQR</div>
-              <div>Ngân hàng: <strong>{{ order()!.bankInfo?.bankId || 'MB' }}</strong> — STK: <strong>{{ order()!.bankInfo?.accountNo || '0962299122' }}</strong></div>
+              <div>Ngân hàng: <strong>{{ order()!.bankInfo?.bankId || 'MB' }}</strong> - STK: <strong>{{ order()!.bankInfo?.accountNo || '0962299122' }}</strong></div>
               <div>Nội dung CK: <strong style="font-family:monospace">{{ order()!.orderCode }}</strong></div>
             </div>
           </div>
@@ -247,7 +247,7 @@
               <line x1="12" y1="8" x2="12" y2="12"/>
               <line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
-            <span>Đơn hàng có sản phẩm tươi sống (Rau củ, Trái cây, Thịt, Cá & Hải sản) — Không hỗ trợ hủy đơn theo quy chế bảo đảm độ tươi mới.</span>
+            <span>Đơn hàng có sản phẩm tươi sống (Rau củ, Trái cây, Thịt, Cá & Hải sản) - Không hỗ trợ hủy đơn theo quy chế bảo đảm độ tươi mới.</span>
           </div>
         } @else {
           <button class="btn-cancel" [disabled]="cancelling()" (click)="cancelOrder()">

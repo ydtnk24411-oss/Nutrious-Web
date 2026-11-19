@@ -58,75 +58,75 @@ export class HomeComponent implements OnInit, OnDestroy {
   private readonly defaultHeroBanners: HeroBannerSlide[] = [
     {
       image: '/images/banners/banner-fresh-vegetables.jpg',
-      eyebrow: 'NÔNG SẢN SẠCH VIETGAP - GIAO NHANH 2H',
-      title: 'Rau củ quả tươi sạch thu hoạch trong ngày',
-      subtitle: 'Nguồn nông sản hữu cơ Đà Lạt an toàn, bảo đảm tươi ngon trọn vẹn từng bữa ăn gia đình.',
-      cta: 'Đi chợ ngay',
+      eyebrow: 'NÔNG SẢN HỮU CƠ ĐÀ LẠT',
+      title: 'Rau củ thuần khiết thu hoạch sớm mai',
+      subtitle: 'Nguồn nông sản hữu cơ VietGAP tươi mới mỗi ngày, trọn vẹn vị lành nguyên bản cho bữa cơm gia đình.',
+      cta: 'Khám phá ngay',
       link: '/online-ordering',
-      alt: 'Rau củ quả tươi sạch hữu cơ giao nhanh 2h'
+      alt: 'Rau củ hữu cơ thuần khiết thu hoạch sớm mai'
     },
     {
       image: '/images/banners/banner-seafood-salmon.jpg',
-      eyebrow: 'HẢI SẢN TƯƠI SỐNG - GIAO CHUẨN LẠNH',
-      title: 'Cá hồi Na Uy phi lê & hải sản cao cấp',
-      subtitle: 'Cá hồi nhập khẩu trực tiếp tươi rói mỗi ngày, bảo quản thùng xốp giữ trọn vị ngọt biển.',
+      eyebrow: 'HẢI SẢN CAO CẤP NHẬP KHẨU',
+      title: 'Cá hồi Na Uy tươi rói chuẩn vị biển',
+      subtitle: 'Phi lê cá hồi thượng hạng giữ lạnh 0-2°C, ngọt mềm từng thớ thịt béo ngậy giàu dưỡng chất.',
       cta: 'Xem hải sản',
       link: '/online-ordering',
-      alt: 'Hải sản cá hồi tươi sống cao cấp chuẩn tươi sạch'
+      alt: 'Cá hồi Na Uy tươi rói chuẩn vị biển tự nhiên'
     },
     {
       image: '/images/banners/banner-seafood-ice.jpg',
-      eyebrow: 'ƯỚP ĐÁ TỰ NHIÊN - ĐÁNH BẮT TRONG NGÀY',
-      title: 'Tôm sú & cá biển tươi sống ướp đá sạch',
-      subtitle: 'Tuyển chọn tôm sú, cá thu, cá bớp biển nguyên con tươi ngon, sơ chế sạch theo yêu cầu.',
+      eyebrow: 'ĐÁNH BẮT TRONG NGÀY - ƯỚP ĐÁ LẠNH',
+      title: 'Tôm sú & cá biển tươi sống ướp đá',
+      subtitle: 'Hải sản tươi sống ướp đá tự nhiên cập bến sớm, giữ trọn độ giòn ngọt thanh lành từ biển mẹ.',
       cta: 'Đặt hàng ngay',
       link: '/online-ordering',
-      alt: 'Tôm cá tươi ngon ướp đá giao hàng lạnh nội thành'
+      alt: 'Tôm sú và cá biển tươi sống ướp đá tự nhiên'
     },
     {
       image: '/images/banners/banner-salmon-dish.jpg',
-      eyebrow: 'BỮA ĂN DINH DƯỠNG LÀNH MẠNH',
-      title: 'Thực đơn cân bằng dinh dưỡng thông minh',
-      subtitle: 'Cá hồi áp chảo thanh vị cùng rau củ hữu cơ, tính toán calorie và vi chất chuẩn khoa học.',
-      cta: 'Lên thực đơn',
+      eyebrow: 'ẨM THỰC DINH DƯỠNG LÀNH MẠNH',
+      title: 'Bữa ăn cân bằng nâng niu sức khỏe',
+      subtitle: 'Cá hồi áp chảo thanh vị cùng rau củ hữu cơ, tính toán calorie và vi chất thanh sạch chuẩn khoa học.',
+      cta: 'Xem thực đơn',
       link: '/nutrition',
-      alt: 'Cá hồi áp chảo cùng rau củ thanh mát đủ chất'
+      alt: 'Bữa ăn cân bằng dinh dưỡng nâng niu sức khỏe'
     },
     {
       image: '/images/banners/banner-fresh-fruits.jpg',
-      eyebrow: 'TRÁI CÂY TƯƠI MỌNG NƯỚC',
-      title: 'Trái cây nhiệt đới ngọt lành mỗi ngày',
-      subtitle: 'Đặc sản dâu tây, kiwi, nho, chuối chín cây ngọt dịu tự nhiên, bổ sung vitamin cho cả nhà.',
-      cta: 'Xem ưu đãi',
+      eyebrow: 'VƯỜN TRÁI CÂY NHIỆT ĐỚI TƯƠI MỌNG',
+      title: 'Hương sắc thiên nhiên ngọt lành mỗi ngày',
+      subtitle: 'Dâu tây Đà Lạt, kiwi, chuối, nho mọng nước chín cây, thanh mát bổ sung vitamin tự nhiên.',
+      cta: 'Chọn trái cây',
       link: '/promotions',
-      alt: 'Trái cây nhiệt đới ngọt lành mỗi ngày'
+      alt: 'Trái cây nhiệt đới ngọt lành tươi mọng'
     },
     {
       image: '/images/banners/banner-spices-spoons.jpg',
-      eyebrow: 'GIA VỊ THẢO MỘC NGUYÊN CHẤT',
-      title: 'Gia vị thảo mộc thiên nhiên thơm lành',
-      subtitle: 'Tiêu rừng, quế chi, hoa hồi, hạt ngò tự nhiên đánh thức hương vị cơm mẹ nấu đậm đà.',
-      cta: 'Xem gian bếp',
+      eyebrow: 'GIA VỊ THẢO MỘC THIÊN NHIÊN',
+      title: 'Tinh hoa thảo mộc đượm vị cơm nhà',
+      subtitle: 'Tiêu rừng, quế chi, hoa hồi 100% tự nhiên đánh thức hương vị cơm mẹ nấu ấm áp đậm đà.',
+      cta: 'Xem gia vị',
       link: '/cook-with-what-you-have',
-      alt: 'Gia vị thảo mộc thiên nhiên cho bữa cơm trọn vị'
+      alt: 'Gia vị thảo mộc thiên nhiên đượm vị cơm nhà'
     },
     {
       image: '/images/banners/banner-nam-o-sauce.jpg',
       eyebrow: 'ĐẶC SẢN LÀNG NGHỀ TRĂM NĂM',
-      title: 'Nước mắm Nam Ô truyền thống đượm vị',
-      subtitle: 'Ủ chượp thủ công từ cá cơm than vịnh Đà Nẵng và muối hạt tinh khiết, đậm đà vị biển mẹ.',
+      title: 'Nước mắm Nam Ô truyền thống đượm tình',
+      subtitle: 'Ủ chượp thủ công từ cá cơm than vịnh Đà Nẵng và muối hạt tinh khiết, lắng đọng từng giọt ngọc biển.',
       cta: 'Mua đặc sản',
       link: '/category/all-products',
-      alt: 'Nước mắm Nam Ô truyền thống nồng đượm vị biển mẹ'
+      alt: 'Nước mắm Nam Ô truyền thống đậm đà vị biển mẹ'
     },
     {
       image: '/images/banners/banner-spices-bowls.jpg',
-      eyebrow: 'TINH HOA GIA VỊ ẨM THỰC VIỆT',
-      title: 'Bộ sưu tập gia vị thượng hạng cho gian bếp',
-      subtitle: 'Nghệ vàng, ớt khô, tiêu sọ xay nguyên chất, đảm bảo an toàn tuyệt đối không phụ gia.',
+      eyebrow: 'BỘ SƯU TẬP GIA VỊ THƯỢNG HẠNG',
+      title: 'Gia vị thuần khiết cho bếp Việt an tâm',
+      subtitle: 'Nghệ vàng, ớt khô, tiêu sọ xay nguyên chất, bảo đảm an toàn tuyệt đối không phụ gia bảo quản.',
       cta: 'Khám phá ngay',
       link: '/cook-with-what-you-have',
-      alt: 'Gia vị nấu nướng thượng hạng cho gia đình'
+      alt: 'Bộ sưu tập gia vị thuần khiết cho bếp Việt'
     }
   ];
 
@@ -247,7 +247,16 @@ export class HomeComponent implements OnInit, OnDestroy {
     color: (['green', 'amber', 'red'] as const)[index % 3],
   })));
   readonly voucherToast = signal('');
+  private voucherToastTimer: ReturnType<typeof setTimeout> | null = null;
   private pendingVoucherId = signal<string | null>(null);
+
+  showVoucherToast(msg: string): void {
+    this.voucherToast.set(msg);
+    if (this.voucherToastTimer) clearTimeout(this.voucherToastTimer);
+    if (msg) {
+      this.voucherToastTimer = setTimeout(() => this.voucherToast.set(''), 4500);
+    }
+  }
 
   flashSales: FlashSaleItem[] = [];
   loadingFlashSales = true;
@@ -421,6 +430,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.heroTimer) clearInterval(this.heroTimer);
     if (this.countdownTimer) clearInterval(this.countdownTimer);
+    if (this.voucherToastTimer) clearTimeout(this.voucherToastTimer);
   }
   nextHero(): void { this.activeHero = (this.activeHero + 1) % this.heroSlides.length; }
   prevHero(): void { this.activeHero = (this.activeHero - 1 + this.heroSlides.length) % this.heroSlides.length; }
@@ -434,7 +444,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
   copyVoucher(code: string): void {
     this.voucherService.copyCode(code);
-    this.voucherToast.set(`Đã sao chép mã ${code}. Mã vẫn được giữ hiển thị khi bạn chuyển trang.`);
+    this.showVoucherToast(`Đã sao chép mã ${code}. Mã vẫn được giữ hiển thị khi bạn chuyển trang.`);
   }
   saveVoucher(id: string): void {
     if (this.isVoucherSaved(id)) return;
@@ -447,7 +457,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
   private persistVoucher(id: string): void {
     this.voucherService.collectVoucher(id).subscribe((result) => {
-      this.voucherToast.set(result.success
+      this.showVoucherToast(result.success
         ? 'Đã lưu voucher vào Ví Voucher. Bạn có thể chọn mã tại trang thanh toán.'
         : result.message || 'Không thể lưu voucher lúc này.');
     });

@@ -82,9 +82,10 @@
 .xanhla-brand-word {
   color: #1e3d24;
   font-family: var(--xanh-font-display);
-  font-size: 21px;
-  font-weight: 700;
-  letter-spacing: -.04em;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  white-space: nowrap;
 }
 
 /* ── Nav ── */
@@ -1319,12 +1320,53 @@
 }
 
 .xl-notif-title {
-  padding: 12px 16px;
+  padding: 10px 16px;
   font-size: 13px;
   font-weight: 800;
   border-bottom: 1px solid #eef2e8;
   background: #fafcf8;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.xl-notif-title-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.xl-notif-badge {
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid #bbf7d0;
+}
+
+.xl-notif-mark-read-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #86efac;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.xl-notif-mark-read-btn:hover {
+  background: #15803d;
+  color: #ffffff;
+  border-color: #15803d;
+  box-shadow: 0 2px 6px rgba(21, 128, 61, 0.2);
 }
 
 .xl-notif-item {
@@ -1873,7 +1915,7 @@
   border: 1.5px solid #164219;
 }
 
-/* Cart Button: High-visibility Lime Pill */
+/* Cart Button: High-visibility Brand Emerald Pill */
 .xl-cart-pill-btn {
   display: inline-flex;
   align-items: center;
@@ -1881,20 +1923,22 @@
   height: 42px;
   padding: 0 16px;
   border-radius: 999px;
-  background: #d5ed57;
-  border: 1.8px solid #164219;
-  color: #164219;
+  background: #144e28 !important;
+  border: 1.5px solid #144e28 !important;
+  color: #ffffff !important;
   cursor: pointer;
   font-family: inherit;
   font-size: 13.5px;
-  font-weight: 850;
+  font-weight: 750;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 2px 8px rgba(22, 66, 25, 0.12);
+  box-shadow: 0 2px 8px rgba(20, 78, 40, 0.2);
 }
 .xl-cart-pill-btn:hover {
-  background: #c8ee4f;
+  background: #0d381c !important;
+  border-color: #0d381c !important;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(22, 66, 25, 0.2);
+  box-shadow: 0 4px 12px rgba(20, 78, 40, 0.3);
+  color: #ffffff !important;
 }
 .xl-cart-icon-wrap {
   position: relative;
@@ -1906,7 +1950,7 @@
   position: absolute;
   top: -8px;
   right: -9px;
-  background: #dc2626;
+  background: #c53826;
   color: #ffffff;
   font-size: 10.5px;
   font-weight: 800;
@@ -1937,9 +1981,9 @@
   justify-content: space-between;
   gap: 12px;
   width: 100%;
-  max-width: 1360px;
+  max-width: 1280px !important;
   margin: 0 auto;
-  padding: 0 clamp(14px, 2.2vw, 28px);
+  padding: 0 clamp(16px, 3vw, 36px) !important;
   box-sizing: border-box;
 }
 
@@ -2033,7 +2077,7 @@
   font-size: 13.5px;
 }
 .xl-flash-tag {
-  background: linear-gradient(135deg, #ef4444, #f97316);
+  background: #c53826;
   color: #ffffff;
   font-size: 9px;
   font-weight: 800;

@@ -178,11 +178,23 @@
         </button>
         @if (notifMenuOpen()) {
           <div class="xl-notif-dropdown">
-            <div class="xl-notif-title" style="display:flex;justify-content:space-between;align-items:center">
-              <span>Thông báo</span>
-              @if (unreadCount() > 0) {
-                <button type="button" (click)="markAllAsRead()"
-                  style="background:none;border:none;font-size:12px;color:var(--xanh-moss);cursor:pointer;font-weight:600">Đã đọc</button>
+            <div class="xl-notif-title">
+              <div class="xl-notif-title-left">
+                <span>Thông báo</span>
+                @if (unreadCount() > 0) {
+                  <span class="xl-notif-badge">{{ unreadCount() }} mới</span>
+                }
+              </div>
+              @if (notifications().length > 0) {
+                <button
+                  type="button"
+                  class="xl-notif-mark-read-btn"
+                  (click)="markAllAsRead()"
+                  title="Đánh dấu tất cả thông báo là đã đọc"
+                >
+                  <i class="bi bi-check2-all" style="font-size:14px" aria-hidden="true"></i>
+                  <span>Đã đọc</span>
+                </button>
               }
             </div>
             @if (notifications().length === 0) {
@@ -190,7 +202,7 @@
             } @else {
               <div class="xl-notif-list">
                 @for (n of notifications(); track n.id) {
-                  <a class="xl-notif-item" [class.is-unread]="n.unread" [routerLink]="n.path" (click)="closeNotifMenu()">
+                  <a class="xl-notif-item" [class.is-unread]="n.unread" [routerLink]="n.path" (click)="onNotifClick(n)">
                     <span>
                       <strong>{{ n.title }}</strong>
                       <small>{{ n.body }}</small>

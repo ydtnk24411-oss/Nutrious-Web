@@ -296,7 +296,7 @@
                               {{ item.name }}
                               <span class="xl-missing-scale">
                                 @if (item.product && getCartQty(item.product) > 0) {
-                                  (Thiếu {{ getDisplayBuyPacks(item, detail) }} {{ getProductUnit(item) }} — cần {{ item.amount }} {{ item.unit }})
+                                  (Thiếu {{ getDisplayBuyPacks(item, detail) }} {{ getProductUnit(item) }} - cần {{ item.amount }} {{ item.unit }})
                                 } @else {
                                   (Cần {{ item.amount }} {{ item.unit }})
                                 }
@@ -1025,9 +1025,6 @@
                 <button type="button" class="xl-hero-btn-primary" (click)="startOnboarding(1)">
                   {{ (nutritionView() === 'result' && onboardingCompleted()) ? 'Thiết Lập Lại Thực Đơn' : 'Bắt Đầu Lên Thực Đơn Ngay' }}
                 </button>
-                <a routerLink="/cook-with-what-you-have" class="xl-hero-btn-vision" style="display:inline-flex;align-items:center;gap:7px;padding:12px 20px;border-radius:10px;background:#15803d;color:#fff;text-decoration:none;font-weight:700;font-size:14px;box-shadow:0 2px 8px rgba(21,128,61,0.25);transition:all 0.2s ease;">
-                  <i class="bi bi-camera-fill"></i> Gợi ý từ gian bếp (AI tủ lạnh)
-                </a>
                 <button type="button" class="xl-hero-btn-secondary" (click)="scrollToElement('nutrition-results-section')">
                   Khám Phá {{ results().length }} Món Ăn
                 </button>

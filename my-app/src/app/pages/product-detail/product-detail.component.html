@@ -154,19 +154,6 @@
             }
           }
 
-          <!-- ACFC / Cotton On Style Shopping Perks Card -->
-          <div class="pd-acfc-promo-card">
-            <div class="pd-acfc-promo-header">
-              <i class="bi bi-shield-check"></i>
-              <span>ƯU ĐÃI &amp; CHÍNH SÁCH EVERGREEN MART</span>
-            </div>
-            <ul class="pd-acfc-promo-list">
-              <li><i class="bi bi-truck"></i> Giao xe lạnh 0°C – 4°C, giao hỏa tốc 2 giờ nội thành.</li>
-              <li><i class="bi bi-arrow-repeat"></i> Đổi trả 100% miễn phí hoặc hoàn tiền trong 24 giờ.</li>
-              <li><i class="bi bi-ticket-perforated"></i> Miễn phí vận chuyển cho đơn hàng từ 200.000đ.</li>
-            </ul>
-          </div>
-
           <div style="margin-bottom:20px">
             <span class="xanhla-option-label">
               {{ p.isCombo ? 'Số lượng gói Combo' : 'Số lượng' }}
@@ -186,13 +173,13 @@
               (click)="addToCart()"
             >
               @if (p.isCombo && p.comboStatus === 'paused') {
-                TẠM NGỪNG KINH DOAN
+                Tạm ngừng kinh doanh
               } @else if (p.isCombo && comboStock(p) <= 0) {
-                TẠM HẾT COMBO
+                Tạm hết combo
               } @else if (isProductUnavailable(p)) {
-                TẠM HẾT HÀNG
+                Tạm hết hàng
               } @else {
-                <i class="bi bi-cart-plus"></i> THÊM VÀO GIỎ
+                Thêm vào giỏ hàng
               }
             </button>
             @if (!isProductUnavailable(p)) {
@@ -202,7 +189,7 @@
                 type="button"
                 (click)="buyNow()"
               >
-                <i class="bi bi-lightning-charge-fill"></i> MUA NGAY
+                Mua ngay
               </button>
             }
             <button

@@ -39,9 +39,16 @@ export class ChatbotComponent implements AfterViewChecked {
 
   constructor() {
     effect(() => {
+      const isOpen = this.chat.isOpen();
       this.chat.messages();
       this.chat.loading();
-      this.shouldScroll = true;
+      if (isOpen) {
+        this.shouldScroll = true;
+        // Tự động cuộn xuống tin nhắn mới nhất ngay khi mở và sau khi các phần tử render xong
+        setTimeout(() => this.scrollToBottom(), 20);
+        setTimeout(() => this.scrollToBottom(), 100);
+        setTimeout(() => this.scrollToBottom(), 250);
+      }
     });
   }
 
@@ -54,9 +61,9 @@ export class ChatbotComponent implements AfterViewChecked {
 
   scrollToBottom(): void {
     try {
-      if (this.messagesScrollContainer) {
-        this.messagesScrollContainer.nativeElement.scrollTop =
-          this.messagesScrollContainer.nativeElement.scrollHeight;
+      if (this.messagesScrollContainer?.nativeElement) {
+        const el = this.messagesScrollContainer.nativeElement;
+        el.scrollTop = el.scrollHeight;
       }
     } catch {}
   }

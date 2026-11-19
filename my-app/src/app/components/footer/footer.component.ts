@@ -59,15 +59,15 @@ const DEFAULT_NEWSLETTER_DESC =
   'Đăng ký email để nhận ngay voucher giảm 20%, gợi ý thực đơn dinh dưỡng mỗi tuần và ưu đãi Flash Sale nông sản thu hoạch trong ngày.';
 const DEFAULT_CONTACT_INFO = {
   hotline: '1800 6999 (07:00 – 21:00)',
-  email: 'chamsoc@evergreenmart.vn',
+  email: 'chamsoc@xanhla.vn',
   address: 'Khu phố 6, Phường Linh Trung, TP. Thủ Đức, TP. Hồ Chí Minh',
 };
 
 const DEFAULT_TRUST_ITEMS: FooterTrustItem[] = [
   { iconKey: 'leaf', title: '100% Hữu Cơ & VietGAP', subtitle: 'Nguồn gốc rõ ràng từ nông trại' },
-  { iconKey: 'truck', title: 'Giao Nhanh 30 – 45 Phút', subtitle: '18 chi nhánh tại 10 tỉnh thành' },
+  { iconKey: 'truck', title: 'Giao Nhanh Trong 2 Giờ', subtitle: '18 chi nhánh tại 10 tỉnh thành' },
   { iconKey: 'shield', title: 'Đồng Kiểm Khi Nhận Hàng', subtitle: 'Kiểm tra hàng tươi sống tại chỗ' },
-  { iconKey: 'headset', title: 'Tổng Đài 07:00 – 21:00', subtitle: 'Hotline miễn cước: 1800 6999' },
+  { iconKey: 'headset', title: 'Hỗ Trợ Tận Tâm 24/7', subtitle: 'Hotline miễn cước: 1800 6999' },
 ];
 
 const DEFAULT_ABOUT_LINKS: FooterNavLink[] = [
@@ -121,9 +121,9 @@ const DEFAULT_POLICIES_MAP: Record<string, PolicyContent> = {
       {
         heading: '2. Cam kết chất lượng 3 Không',
         content: [
-          'Không hóa chất bảo quản độc hại — kiểm định VietGAP / GlobalGAP định kỳ.',
-          'Không thực phẩm tồn kho qua ngày — thu hoạch sáng sớm, giao nhanh trong 2 giờ.',
-          'Không rủi ro mua sắm — đồng kiểm khi nhận hàng và hoàn tiền 100% nếu không hài lòng.',
+          'Không hóa chất bảo quản độc hại - kiểm định VietGAP / GlobalGAP định kỳ.',
+          'Không thực phẩm tồn kho qua ngày - thu hoạch sáng sớm, giao nhanh trong 2 giờ.',
+          'Không rủi ro mua sắm - đồng kiểm khi nhận hàng và hoàn tiền 100% nếu không hài lòng.',
         ],
       },
     ],
@@ -286,7 +286,7 @@ export class FooterComponent implements OnInit {
   protected newsletterTitle = signal(DEFAULT_NEWSLETTER_TITLE);
   protected newsletterDesc = signal(DEFAULT_NEWSLETTER_DESC);
   protected copyrightText = signal(
-    `© 2026 ${DEFAULT_BRAND_NAME} — Nông Nghiệp Hữu Cơ & Dinh Dưỡng Thông Minh. Bảo lưu mọi quyền.`
+    `© 2026 ${DEFAULT_BRAND_NAME} - Nông Nghiệp Hữu Cơ & Dinh Dưỡng Thông Minh. Bảo lưu mọi quyền.`
   );
   protected contactInfo = signal(DEFAULT_CONTACT_INFO);
   protected trustItems = signal<FooterTrustItem[]>(DEFAULT_TRUST_ITEMS);
@@ -311,7 +311,7 @@ export class FooterComponent implements OnInit {
 
         if (cfg.brandName) {
           const b = this.sanitizeBrand(cfg.brandName);
-          this.brandName.set(b === 'Xanh Lá' ? DEFAULT_BRAND_NAME : b);
+          this.brandName.set((b === 'Xanh Lá' || !b) ? DEFAULT_BRAND_NAME : b);
         }
         if (cfg.brandDesc && cfg.brandDesc.trim()) {
           this.brandDesc.set(this.sanitizeBrand(cfg.brandDesc));

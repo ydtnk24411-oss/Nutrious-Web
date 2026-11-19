@@ -402,7 +402,7 @@
         } @else if (results().length === 0) {
         <div class="xanhla-upcoming-card" role="status">
           <div class="upcoming-icon"><i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i></div>
-          <h3 class="upcoming-title">Chưa có công thức phù hợp — Đầu bếp đang triển khai thêm</h3>
+          <h3 class="upcoming-title">Chưa có công thức phù hợp - Đầu bếp đang triển khai thêm</h3>
           @if (unmatchedIngredients().length > 0 && unmatchedIngredients().length === myIngredients().length) {
           <p class="upcoming-desc">
             Hiện thư viện món ăn chưa có công thức chế biến sử dụng
@@ -425,7 +425,7 @@
         <div class="xanhla-partial-upcoming-note" role="status">
           <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
           <span>
-            Nguyên liệu chưa có công thức: <strong>{{ unmatchedIngredientNames() }}</strong> — Đầu bếp Evergreen Mart đang
+            Nguyên liệu chưa có công thức: <strong>{{ unmatchedIngredientNames() }}</strong> - Đầu bếp Evergreen Mart đang
             triển khai thêm công thức mới!
           </span>
         </div>
@@ -620,7 +620,7 @@
                               {{ ing.name }}
                               <span class="xanhla-missing-scale">
                                 @if (ing.hasPartial) {
-                                (Thiếu {{ ing.missingAmount }} {{ ing.unit }} — đã có {{ ing.availableAmount }}/{{
+                                (Thiếu {{ ing.missingAmount }} {{ ing.unit }} - đã có {{ ing.availableAmount }}/{{
                                 ing.requiredAmount }} {{ ing.unit }})
                                 } @else {
                                 (Thiếu {{ ing.missingAmount }} {{ ing.unit }})

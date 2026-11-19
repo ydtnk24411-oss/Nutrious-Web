@@ -45,7 +45,7 @@ function mapCookRecipe(doc) {
   };
 }
 
-// GET /api/recipes — Public list of recipes and cook assistant configuration from MongoDB
+// GET /api/recipes - Public list of recipes and cook assistant configuration from MongoDB
 router.get('/', cacheMiddleware(60), async (req, res, next) => {
   try {
     const filter = { isActive: true };
@@ -86,7 +86,7 @@ router.get('/', cacheMiddleware(60), async (req, res, next) => {
   }
 });
 
-// GET /api/recipes/:id — Public detail for a single recipe by recipeId
+// GET /api/recipes/:id - Public detail for a single recipe by recipeId
 router.get('/:id', async (req, res, next) => {
   try {
     const doc = await Recipe.findOne({ recipeId: req.params.id, isActive: true }).lean();
@@ -99,7 +99,7 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-// POST /api/recipes — Admin create recipe
+// POST /api/recipes - Admin create recipe
 router.post('/', protect, adminOnly, async (req, res, next) => {
   try {
     const recipe = await Recipe.create(req.body);
@@ -110,7 +110,7 @@ router.post('/', protect, adminOnly, async (req, res, next) => {
   }
 });
 
-// PUT /api/recipes/:id — Admin update recipe by recipeId or _id
+// PUT /api/recipes/:id - Admin update recipe by recipeId or _id
 router.put('/:id', protect, adminOnly, async (req, res, next) => {
   try {
     const query = req.params.id.match(/^[0-9a-fA-F]{24}$/)

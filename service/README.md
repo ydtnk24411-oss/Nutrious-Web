@@ -55,7 +55,7 @@ Dữ liệu bao gồm:
 
 ## Chạy server
 
-Development mode với **`nodemon`** (khuyến nghị — tự động restart khi code thay đổi):
+Development mode với **`nodemon`** (khuyến nghị - tự động restart khi code thay đổi):
 
 ```bash
 npm run dev

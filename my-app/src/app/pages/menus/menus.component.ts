@@ -41,7 +41,7 @@ export class MenusComponent implements OnInit {
   protected loading     = signal(true);
   protected error       = signal('');
 
-  // Group by categoryVi — same logic as ordering page
+  // Group by categoryVi - same logic as ordering page
   protected sections = computed(() => {
     const all = this.allProducts();
     const groups: Record<string, ApiProduct[]> = {};

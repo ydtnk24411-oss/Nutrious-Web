@@ -1,43 +1,38 @@
 <!-- ── Floating Chatbot Widget (Luxury Minimalist Design) ────────── -->
 <div class="xanh-chatbot-container">
 
-  <!-- ── Floating Launcher Button ──────────────────────────────────── -->
-  <div class="xanh-chat-launcher-wrap">
-    @if (!chat.isOpen() && chat.hasUnread()) {
-      <div class="xanh-chat-tooltip" (click)="chat.open()">
-        <div class="tooltip-sparkle-dot"></div>
-        <div class="tooltip-text-content">
-          <span class="tooltip-badge">NutriBot AI</span>
-          <span class="tooltip-message">Chào bạn, cần tư vấn nông sản sạch hoặc phân tích món ăn hôm nay?</span>
+  <!-- ── Floating Launcher Button (chỉ hiển thị khi đóng hội thoại) ──── -->
+  @if (!chat.isOpen()) {
+    <div class="xanh-chat-launcher-wrap">
+      @if (chat.hasUnread()) {
+        <div class="xanh-chat-tooltip" (click)="chat.open()">
+          <div class="tooltip-sparkle-dot"></div>
+          <div class="tooltip-text-content">
+            <span class="tooltip-badge">NutriBot AI</span>
+            <span class="tooltip-message">Chào bạn, cần tư vấn nông sản sạch hoặc phân tích món ăn hôm nay?</span>
+          </div>
+          <button class="xanh-tooltip-close" (click)="$event.stopPropagation(); chat.hasUnread.set(false)" aria-label="Đóng gợi ý">
+            <i class="bi bi-dash-lg" style="font-size:14px" aria-hidden="true"></i>
+          </button>
         </div>
-        <button class="xanh-tooltip-close" (click)="$event.stopPropagation(); chat.hasUnread.set(false)" aria-label="Đóng gợi ý">
-          <i class="bi bi-dash-lg" style="font-size:14px" aria-hidden="true"></i>
-        </button>
-      </div>
-    }
+      }
 
-    <button
-      class="xanh-chat-launcher"
-      [class.is-open]="chat.isOpen()"
-      (click)="chat.toggle()"
-      title="Trợ lý AI Nông sản Evergreen Mart - Kết nối Google Gemini"
-      aria-label="Mở cửa sổ chat với AI Evergreen Mart"
-    >
-      <div class="launcher-glow-ring"></div>
-      @if (!chat.isOpen()) {
+      <button
+        class="xanh-chat-launcher"
+        (click)="chat.open()"
+        title="Trợ lý AI Nông sản Evergreen Mart - Kết nối Google Gemini"
+        aria-label="Mở cửa sổ chat với AI Evergreen Mart"
+      >
+        <div class="launcher-glow-ring"></div>
         <div class="launcher-icon-wrap">
           <img src="/avatars/nutribot.png" alt="AI Evergreen Mart" class="launcher-nutribot-avatar" />
           @if (chat.hasUnread()) {
             <span class="launcher-unread-dot"></span>
           }
         </div>
-      } @else {
-        <div class="launcher-close-icon">
-          <i class="bi bi-dash-lg" style="font-size:20px" aria-hidden="true"></i>
-        </div>
-      }
-    </button>
-  </div>
+      </button>
+    </div>
+  }
 
   <!-- ── Chat Window (Ultra-Premium Frosted Glass) ──────────────────── -->
   @if (chat.isOpen()) {
@@ -279,26 +274,6 @@
           accept="image/*"
           style="display: none"
         />
-
-        <!-- Luxury Quick Image Upload Strip (Always Visible) -->
-        <div class="xanh-quick-upload-strip">
-          <button
-            type="button"
-            class="xanh-upload-strip-btn"
-            (click)="triggerImagePicker()"
-            title="Bấm để chọn ảnh món ăn từ máy hoặc điện thoại"
-          >
-            <div class="strip-left">
-              <span class="strip-icon-circle">
-                <i class="bi bi-camera" style="font-size:14px" aria-hidden="true"></i>
-              </span>
-              <span class="xanh-strip-text">Tải ảnh nhận diện nguyên liệu & món ăn</span>
-            </div>
-            <span class="xanh-strip-badge">
-              <span>Gemini Vision</span>
-            </span>
-          </button>
-        </div>
 
         <!-- Image Preview Bar (if user selected photo) -->
         @if (selectedImageBase64()) {

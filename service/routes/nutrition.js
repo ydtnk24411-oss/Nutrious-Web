@@ -78,7 +78,7 @@ function mapRecipeDoc(r, products = [], config = null) {
   };
 }
 
-// GET /api/nutrition — Lấy toàn bộ cấu hình hero, gói thực đơn mẫu, mục tiêu dinh dưỡng và danh sách công thức từ MongoDB (cache 60s)
+// GET /api/nutrition - Lấy toàn bộ cấu hình hero, gói thực đơn mẫu, mục tiêu dinh dưỡng và danh sách công thức từ MongoDB (cache 60s)
 router.get('/', cacheMiddleware(60), async (req, res, next) => {
   try {
     const [config, recipes, products, recentOrders] = await Promise.all([
@@ -122,7 +122,7 @@ router.get('/', cacheMiddleware(60), async (req, res, next) => {
   }
 });
 
-// GET /api/nutrition/:id — Lấy chi tiết 1 món ăn từ MongoDB
+// GET /api/nutrition/:id - Lấy chi tiết 1 món ăn từ MongoDB
 router.get('/:id', async (req, res, next) => {
   try {
     const [config, recipe, products] = await Promise.all([

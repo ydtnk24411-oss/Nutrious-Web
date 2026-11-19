@@ -414,7 +414,7 @@ Return ONLY a valid JSON array without markdown code fence or extra explanation,
       `- Đậu phụ luộc chấm sốt tương mè đen.\n` +
       `- 1 ly nước ép cần tây táo xanh thanh lọc cơ thể.\n\n` +
       `*Bạn có thể bấm vào thẻ bên dưới để xem hoặc thêm nguyên liệu vào giỏ hàng ngay:*`,
-    defaultWelcome: `Xin chào bạn! Tôi là **NutriBot — Chuyên gia Dinh dưỡng & Trợ lý Nông sản Evergreen Mart** 🩺🌿\n\n` +
+    defaultWelcome: `Xin chào bạn! Tôi là **NutriBot - Chuyên gia Dinh dưỡng & Trợ lý Nông sản Evergreen Mart** 🩺🌿\n\n` +
       `Tôi có thể hỗ trợ bạn:\n` +
       `- 📷 **Nhận diện món ăn qua ảnh:** Tải ảnh đĩa ăn hoặc đồ uống lên, tôi sẽ phân tích nguyên liệu, tính lượng Calo và đưa ra lời khuyên dinh dưỡng tức thì!\n` +
       `- 🩺 **Cá nhân hóa thực đơn:** Tính toán chỉ số BMI, TDEE, thiết kế thực đơn Eat-Clean, giảm mỡ, tăng cơ hoặc ăn kiêng theo bệnh lý.\n` +
@@ -423,9 +423,9 @@ Return ONLY a valid JSON array without markdown code fence or extra explanation,
       `*Hôm nay bạn cần NutriBot phân tích món ăn hay tư vấn dinh dưỡng gì nào?*`,
     macroAdvice: `📊 **Hướng dẫn chia tỷ lệ Macro (Dinh dưỡng đa lượng) chuẩn NutriBot:**\n\n` +
       `Macro bao gồm 3 nhóm chất sinh năng lượng chính:\n` +
-      `1. **Protein (Chất đạm):** 1g = 4 kcal — Xây dựng cơ bắp, hỗ trợ trao đổi chất (Ức gà, cá hồi, thịt bò nạc, đậu phụ).\n` +
-      `2. **Carbohydrate (Tinh bột):** 1g = 4 kcal — Cung cấp năng lượng chính (Gạo lứt Ba Vì, khoai lang, yến mạch, hoa quả).\n` +
-      `3. **Fat (Chất béo tốt):** 1g = 9 kcal — Cân bằng hormone, hòa tan vitamin A, D, E, K (Bơ, dầu ô-liu, các loại hạt).\n\n` +
+      `1. **Protein (Chất đạm):** 1g = 4 kcal - Xây dựng cơ bắp, hỗ trợ trao đổi chất (Ức gà, cá hồi, thịt bò nạc, đậu phụ).\n` +
+      `2. **Carbohydrate (Tinh bột):** 1g = 4 kcal - Cung cấp năng lượng chính (Gạo lứt Ba Vì, khoai lang, yến mạch, hoa quả).\n` +
+      `3. **Fat (Chất béo tốt):** 1g = 9 kcal - Cân bằng hormone, hòa tan vitamin A, D, E, K (Bơ, dầu ô-liu, các loại hạt).\n\n` +
       `🎯 **Tỷ lệ phân chia khuyến nghị theo mục tiêu:**\n` +
       `- **Giảm mỡ & Cắt nét:** 40% Carb – 40% Protein – 20% Fat (Thâm hụt 300-500 kcal)\n` +
       `- **Duy trì & Eat-Clean:** 50% Carb – 25% Protein – 25% Fat\n` +

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Trang Mã Giảm Giá (/vouchers) — Ticket Layout & Logo Contrast
+   Trang Mã Giảm Giá (/vouchers) - Ticket Layout & Logo Contrast
    ═══════════════════════════════════════════════════════════════ */
 
 .vouchers-page-wrap {
@@ -199,7 +199,7 @@
   align-items: stretch;
 }
 
-/* Default theme variables — đồng bộ bảng màu voucher trang chủ (#6f9f18, #e4a827, #e94d3b, #203d0b, #d8f56a) */
+/* Default theme variables - đồng bộ bảng màu voucher trang chủ (#6f9f18, #e4a827, #e94d3b, #203d0b, #d8f56a) */
 .voucher-ticket {
   --stub-bg: #6f9f18;
   --stub-ink: #ffffff;
@@ -237,7 +237,7 @@
   filter: grayscale(0.25);
 }
 
-/* Theme 1: Leaf Green (#6f9f18 — đồng bộ coupon xanh trang chủ) */
+/* Theme 1: Leaf Green (#6f9f18 - đồng bộ coupon xanh trang chủ) */
 .voucher-theme--forest-emerald {
   --stub-bg: #6f9f18;
   --stub-ink: #ffffff;
@@ -249,7 +249,7 @@
   --logo-ring: rgba(255, 255, 255, 0.32);
 }
 
-/* Theme 2: Golden Honey (#e4a827 — đồng bộ coupon vàng trang chủ, chữ xanh đậm #203d0b tương phản cao) */
+/* Theme 2: Golden Honey (#e4a827 - đồng bộ coupon vàng trang chủ, chữ xanh đậm #203d0b tương phản cao) */
 .voucher-theme--harvest-gold {
   --stub-bg: #e4a827;
   --stub-ink: #203d0b;
@@ -273,7 +273,7 @@
   --logo-ring: rgba(255, 255, 255, 0.3);
 }
 
-/* Theme 4: Coral Red (#e94d3b — đồng bộ coupon đỏ san hô trang chủ) */
+/* Theme 4: Coral Red (#e94d3b - đồng bộ coupon đỏ san hô trang chủ) */
 .voucher-theme--warm-terracotta {
   --stub-bg: #e94d3b;
   --stub-ink: #ffffff;
@@ -297,7 +297,7 @@
   --logo-ring: rgba(255, 255, 255, 0.3);
 }
 
-/* Theme 6: Deep Forest (#203d0b — đồng bộ màu chữ & nút chính Evergreen) */
+/* Theme 6: Deep Forest (#203d0b - đồng bộ màu chữ & nút chính Evergreen) */
 .voucher-theme--deep-pine {
   --stub-bg: #203d0b;
   --stub-ink: #ffffff;
@@ -349,7 +349,7 @@
   box-shadow: inset 0 1px 0 #cbdba6;
 }
 
-/* Evergreen Mart Logo Medallion — nền trắng sáng + viền sáng chống chìm logo */
+/* Evergreen Mart Logo Medallion - nền trắng sáng + viền sáng chống chìm logo */
 .voucher-logo-halo {
   width: 52px;
   height: 52px;

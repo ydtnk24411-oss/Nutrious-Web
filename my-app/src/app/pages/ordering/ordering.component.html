@@ -51,15 +51,15 @@
         <div class="ord-sidebar-fixed-top">
           <!-- Search -->
           <div class="ord-filter-search">
-            <i class="bi bi-search" style="font-size:14px;color:var(--xl-forest)"></i>
-            <input type="text" placeholder="Tìm sản phẩm theo tên, SKU..."
+            <i class="bi bi-search"></i>
+            <input type="text" placeholder="Tìm sản phẩm theo tên, SKU."
                    [value]="search()" (input)="onSearchInput($event)"
                    (keydown.enter)="onSearchEnter()" (blur)="onSearchBlur()" />
           </div>
 
           <!-- Header sidebar -->
           <div class="ord-filter-header">
-            <span class="ord-filter-title">Lọc theo</span>
+            <span class="ord-filter-title">LỌC THEO</span>
             @if (hasActiveFilters()) {
               <button class="ord-filter-clear" type="button" (click)="clearAllFilters()">Xóa tất cả</button>
             }
@@ -117,12 +117,11 @@
             @if (openAccordions()['price']) {
             <div class="ord-filter-body">
               <div class="ord-price-range">
-                <span>0 ₫</span>
-                <span style="font-weight:600;color:var(--xanh-moss)">{{ maxPrice() }} ₫</span>
+                <span>0 đ</span>
+                <span class="ord-price-max-val">{{ maxPrice() }} đ</span>
               </div>
-              <input type="range" [min]="0" [max]="maxPriceInDB()" [value]="maxPrice()"
-                (input)="onMaxPriceChange(+$any($event.target).value)"
-                style="width:100%;accent-color:var(--xanh-moss);cursor:pointer" />
+              <input type="range" class="ord-price-slider" [min]="0" [max]="maxPriceInDB()" [value]="maxPrice()"
+                (input)="onMaxPriceChange(+$any($event.target).value)" />
             </div>
             }
           </div>
@@ -422,10 +421,6 @@
                   <a class="xanhla-prod-card-name" [routerLink]="'/product-page/' + prod.slug">
                     {{ prod.name }}
                   </a>
-
-                  @if (prod.description) {
-                  <div class="xanhla-prod-card-desc">{{ prod.description }}</div>
-                  }
 
                   <div class="xanhla-prod-card-price-row">
                     <span class="xanhla-prod-card-price">{{ formatPrice(prod.priceNumber || prod.price) }}</span>

@@ -2419,27 +2419,26 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #ffffff;
-  border: 1.5px solid #16a34a;
-  color: #16a34a;
-  font-size: 14px;
+  background: #236336;
+  border: 1.5px solid #236336;
+  color: #ffffff;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.02em;
-  border-radius: 6px;
+  letter-spacing: 0.01em;
+  border-radius: 9999px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .acfc-btn-add-cart i {
   font-size: 16px;
-  color: #16a34a;
+  color: #ffffff;
 }
 
 .acfc-btn-add-cart:hover:not(:disabled) {
-  background: #f0fdf4;
-  border-color: #15803d;
-  color: #15803d;
-  box-shadow: 0 3px 10px rgba(22, 163, 74, 0.15);
+  background: #1a4c28;
+  border-color: #1a4c28;
+  box-shadow: 0 4px 12px rgba(35, 99, 54, 0.25);
   transform: translateY(-1px);
 }
 
@@ -2447,7 +2446,8 @@
   opacity: 0.5;
   cursor: not-allowed;
   border-color: #cbd5e1;
-  color: #94a3b8;
+  background: #cbd5e1;
+  color: #64748b;
 }
 
 .acfc-btn-buy-now {
@@ -2458,26 +2458,27 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: #16a34a;
-  border: 1.5px solid #16a34a;
-  color: #ffffff;
-  font-size: 14px;
+  background: #ffffff;
+  border: 1.5px solid #236336;
+  color: #236336;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.02em;
-  border-radius: 6px;
+  letter-spacing: 0.01em;
+  border-radius: 9999px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .acfc-btn-buy-now i {
   font-size: 15px;
-  color: #fde047;
+  color: #236336;
 }
 
 .acfc-btn-buy-now:hover {
-  background: #15803d;
-  border-color: #15803d;
-  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3);
+  background: #f0fdf4;
+  border-color: #1a4c28;
+  color: #1a4c28;
+  box-shadow: 0 4px 12px rgba(35, 99, 54, 0.15);
   transform: translateY(-1px);
 }
 

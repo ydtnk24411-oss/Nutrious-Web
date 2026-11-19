@@ -270,7 +270,7 @@
             <div class="checkout-guest-auth-copy">
               <div class="checkout-guest-auth-title">
                 <i class="bi bi-person-badge" aria-hidden="true"></i>
-                <span>Mua nhanh không cần tài khoản — hoặc đăng ký để tích điểm</span>
+                <span>Mua nhanh không cần tài khoản - hoặc đăng ký để tích điểm</span>
               </div>
               <p class="checkout-guest-auth-desc">
                 Đăng nhập hoặc tạo tài khoản miễn phí để lưu địa chỉ, dùng Voucher giảm giá và theo dõi đơn hàng dễ dàng hơn.
@@ -856,6 +856,11 @@
                         style="width:28px;height:26px;border:none;background:transparent;font-size:15px;font-weight:700;color:#1e293b;display:flex;align-items:center;justify-content:center;padding:0"
                       >+</button>
                     </div>
+                    @if (maxStock > 0 && maxStock <= 30) {
+                      <span style="font-size:11.5px;color:#d97706;font-weight:600">
+                        (Kho còn: {{ maxStock }})
+                      </span>
+                    }
                   </div>
                 </div>
               </div>
@@ -931,7 +936,7 @@
           </div>
 
           <!-- 1. VOUCHER ĐƠN HÀNG / SẢN PHẨM -->
-          <div style="margin-bottom:12px">
+          <div style="margin-bottom:12px" class="checkout-order-voucher-box">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
               <span style="font-size:12.5px;font-weight:600;color:#475569">Voucher giảm giá đơn hàng</span>
             </div>
@@ -1033,7 +1038,7 @@
           </div>
 
           <!-- 2. VOUCHER FREESHIP / VẬN CHUYỂN -->
-          <div style="margin-bottom:12px">
+          <div style="margin-bottom:12px" class="checkout-shipping-voucher-box">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
               <span style="font-size:12.5px;font-weight:600;color:#475569">Voucher vận chuyển</span>
             </div>

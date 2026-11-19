@@ -1,5 +1,5 @@
 /* ==========================================================================
-   XANH LÁ — Minimalist Luxury Chatbot Widget
+   XANH LÁ - Minimalist Luxury Chatbot Widget
    High-End Aesthetics - Smooth Spring Physics - Frosted Acrylic Surfaces
    ========================================================================== */
 
@@ -230,15 +230,15 @@
 /* ── Chat Window (Luxury Glassmorphic Panel) ────────────────────────── */
 .xanh-chat-window {
   position: absolute;
-  bottom: 76px;
+  bottom: 0;
   right: 0;
-  width: 410px;
-  max-width: calc(100vw - 36px);
-  height: 610px;
-  max-height: calc(100vh - 100px);
+  width: 350px;
+  max-width: calc(100vw - 32px);
+  height: 510px;
+  max-height: calc(100vh - 40px);
   background: #ffffff;
-  border-radius: 22px;
-  box-shadow: 0 24px 60px -10px rgba(10, 35, 20, 0.32), 0 0 0 1px rgba(13, 46, 26, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 20px 50px -10px rgba(10, 35, 20, 0.28), 0 0 0 1px rgba(13, 46, 26, 0.08);
   border: 1px solid rgba(220, 235, 218, 0.85);
   display: flex;
   flex-direction: column;
@@ -266,7 +266,7 @@
 .xanh-chat-header {
   background: linear-gradient(135deg, #0b2916 0%, #113c21 60%, #154c2a 100%);
   color: #ffffff;
-  padding: 12px 14px;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -290,16 +290,16 @@
 
 .xanh-chat-avatar-wrapper {
   position: relative;
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   flex-shrink: 0;
 }
 
 .header-bot-circle,
 .header-staff-circle {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.12);
   border: 1.5px solid rgba(134, 239, 172, 0.35);
   display: flex;
@@ -324,8 +324,8 @@
   position: absolute;
   bottom: -2px;
   right: -2px;
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: #22c55e;
   border: 1.5px solid #0b2916;
@@ -335,7 +335,7 @@
 .header-titles {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
   flex: 1;
 }
@@ -348,7 +348,7 @@
 }
 
 .xanh-chat-title {
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 700;
   margin: 0;
   color: #ffffff;
@@ -361,9 +361,9 @@
 }
 
 .header-status-pill {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
-  padding: 2px 7px;
+  padding: 2px 6px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.14);
   color: #86efac;
@@ -394,7 +394,7 @@
 }
 
 .xanh-chat-status {
-  font-size: 11px;
+  font-size: 10.5px;
   color: rgba(240, 253, 244, 0.72);
   white-space: nowrap;
   overflow: hidden;
@@ -438,9 +438,9 @@
   background: rgba(255, 255, 255, 0.1);
   border: none;
   color: #f0fdf4;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -462,11 +462,11 @@
 .xanh-chat-body {
   flex: 1;
   background: #f7faf6;
-  padding: 16px;
+  padding: 12px 13px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 13px;
+  gap: 11px;
   scroll-behavior: smooth;
 }
 
@@ -678,10 +678,10 @@
 }
 
 .xanh-msg-bubble {
-  padding: 11px 15px;
-  border-radius: 4px 18px 18px 18px;
-  font-size: 13.5px;
-  line-height: 1.55;
+  padding: 9px 13px;
+  border-radius: 4px 16px 16px 16px;
+  font-size: 13px;
+  line-height: 1.5;
   color: #1e293b;
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -694,7 +694,7 @@
   background: linear-gradient(135deg, #15502c 0%, #0d341c 100%);
   color: #ffffff;
   border: none;
-  border-radius: 18px 4px 18px 18px;
+  border-radius: 16px 4px 16px 16px;
   box-shadow: 0 4px 14px rgba(13, 52, 28, 0.22);
 }
 
@@ -703,7 +703,7 @@
   background: #f0fdf4 !important;
   color: #0f172a !important;
   border: 1px solid #bbf7d0 !important;
-  border-radius: 4px 18px 18px 18px !important;
+  border-radius: 4px 16px 16px 16px !important;
   box-shadow: 0 2px 8px rgba(22, 101, 52, 0.05);
 }
 
@@ -985,12 +985,12 @@
 /* ── Footer ────────────────────────────────────────────────────────── */
 .xanh-chat-footer {
   background: #ffffff;
-  padding: 12px 16px 10px;
+  padding: 9px 12px 8px;
   border-top: 1px solid #e2e8f0;
 }
 
 .xanh-quick-upload-strip {
-  margin-bottom: 9px;
+  margin-bottom: 7px;
 }
 
 .xanh-upload-strip-btn {
@@ -1001,8 +1001,8 @@
   gap: 8px;
   background: #f8fafc;
   border: 1.5px dashed #cbd5e1;
-  border-radius: 10px;
-  padding: 7px 11px;
+  border-radius: 9px;
+  padding: 6px 10px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -1026,7 +1026,7 @@
 }
 
 .xanh-strip-text {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: #334155;
 }
@@ -1034,9 +1034,9 @@
 .xanh-strip-badge {
   background: #144626;
   color: #ffffff;
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
-  padding: 2px 7px;
+  padding: 2px 6px;
   border-radius: 999px;
 }
 
@@ -1046,8 +1046,8 @@
   gap: 8px;
   background: #f8fafc;
   border: 1.5px solid #e2e8f0;
-  border-radius: 24px;
-  padding: 4px 6px 4px 14px;
+  border-radius: 22px;
+  padding: 3px 5px 3px 12px;
   transition: all 0.2s ease;
 }
 
@@ -1062,8 +1062,8 @@
   border: none;
   color: #64748b;
   cursor: pointer;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1083,12 +1083,12 @@
   border: none;
   background: transparent;
   outline: none;
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 12.5px;
+  line-height: 1.4;
   color: #0f172a;
   resize: none;
-  max-height: 80px;
-  padding: 5px 0;
+  max-height: 70px;
+  padding: 4px 0;
   font-family: inherit;
 }
 
@@ -1097,8 +1097,8 @@
 }
 
 .xanh-chat-send-btn {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: #144626;
   color: #ffffff;
@@ -1228,8 +1228,8 @@
   }
   .xanh-chat-window {
     width: calc(100vw - 32px);
-    height: calc(100vh - 90px);
-    bottom: 70px;
+    height: calc(100vh - 40px);
+    bottom: 0;
     right: 0;
   }
 }
