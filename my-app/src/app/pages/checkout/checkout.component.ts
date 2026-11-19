@@ -1,4 +1,4 @@
-import { Component, signal, inject, computed, effect, untracked, OnInit, OnDestroy } from '@angular/core';
+import { Component, signal, inject, computed, effect, untracked, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
@@ -8,6 +8,7 @@ import { API_BASE } from '../../shared/services/api.service';
 import { OrderApiService } from '../../shared/services/order-api.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { VoucherService } from '../../shared/services/voucher.service';
+import { LoyaltyService } from '../../shared/services/loyalty.service';
 import { Voucher, XanhLaCartItem, EvaluatedCartItemPricing, XanhLaAddress } from '../../shared/models/xanh-la.models';
 import {
   ShippingApiService,
@@ -130,10 +131,13 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   private router     = inject(Router);
   private route      = inject(ActivatedRoute);
   protected voucher  = inject(VoucherService);
+  protected loyalty  = inject(LoyaltyService);
   private shippingApi = inject(ShippingApiService);
   protected formatPrice = formatPrice;
 
   private liveProductsByKey = signal<Map<string, ApiProduct>>(new Map());
+  protected branchStockMap = signal<Map<string, number>>(new Map());
+  protected branchShortageMap = signal<Map<string, { availableStock: number; message: string }>>(new Map());
 
   protected completed      = signal(false);
   protected guestOrderSubmitted = signal(false);
@@ -314,9 +318,23 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       let maxQty: number | null = null;
       let reason = '';
 
+      // 1. Kiểm tra tồn kho khả dụng thời gian thực tại chi nhánh kho đang chọn (Store-specific inventory)
+      const pid = String((item.product as any)?._id || (item.product as any)?.id || p?._id || p?.id || '');
+      const rawSlug = String(item.product?.slug || p?.slug || '');
+      const cleanSlug = rawSlug.replace(/^\/product-page\//, '').replace(/^\//, '');
+      const bMap = this.branchStockMap();
+      const bStock = bMap.size > 0 ? (bMap.get(pid) ?? bMap.get(rawSlug) ?? bMap.get(cleanSlug)) : undefined;
+
       if (p?.isActive === false) {
         maxQty = 0;
         reason = `"${item.product.name}" hiện đã ngừng kinh doanh.`;
+      } else if (typeof bStock === 'number') {
+        maxQty = bStock;
+        if (bStock <= 0) {
+          reason = `Chi nhánh [${this.activeStoreName()}] hiện đã hết hàng "${item.product.name}". Vui lòng chọn chi nhánh khác hoặc bỏ sản phẩm.`;
+        } else if (item.quantity > bStock) {
+          reason = `Chi nhánh [${this.activeStoreName()}] hiện chỉ còn ${bStock} "${item.product.name}" khả dụng cho kênh Online (yêu cầu ${item.quantity}). Vui lòng giảm số lượng.`;
+        }
       } else if (isCombo) {
         if (p?.comboStatus === 'paused' || p?.comboStatus === 'hidden') {
           maxQty = 0;
@@ -430,6 +448,21 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   }
 
   getCheckoutItemMaxStock(item: XanhLaCartItem): number {
+    const p: any = item.product;
+    const pid = String(p?._id || p?.id || '');
+    const rawSlug = String(p?.slug || '');
+    const cleanSlug = rawSlug.replace(/^\/product-page\//, '').replace(/^\//, '');
+
+    // 1. Kiểm tra tồn kho khả dụng thời gian thực tại chi nhánh kho đang chọn trước tiên!
+    const branchStock = this.branchStockMap();
+    if (branchStock.size > 0) {
+      const bStock = branchStock.get(pid) ?? branchStock.get(rawSlug) ?? branchStock.get(cleanSlug);
+      if (typeof bStock === 'number') {
+        return Math.max(0, Math.floor(bStock));
+      }
+    }
+
+    // 2. Fallback sang liveProductsByKey
     const live = this.findLiveProduct(item);
     if (live) {
       if (live.isActive === false || live.comboStatus === 'paused' || live.comboStatus === 'hidden') return 0;
@@ -456,7 +489,11 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
   adjustCheckoutItemQty(item: XanhLaCartItem, delta: number): void {
     const maxStock = this.getCheckoutItemMaxStock(item);
-    if (delta > 0 && item.quantity >= maxStock) return;
+    if (delta > 0 && item.quantity >= maxStock) {
+      const storeName = this.activeStoreName();
+      this.errorMsg.set(`Chi nhánh [${storeName}] hiện chỉ còn tối đa ${maxStock} "${item.product.name}" khả dụng cho kênh Online.`);
+      return;
+    }
     const upperBound = maxStock > 0 ? Math.min(99, maxStock) : item.quantity;
     const nextQty = Math.max(1, Math.min(upperBound, item.quantity + delta));
     if (nextQty === item.quantity) return;
@@ -772,6 +809,21 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     return `${wh.name} (${wh.address})`;
   });
 
+  // Chi nhánh kho đang trực tiếp xuất hàng / nhận hàng
+  readonly activeStoreId = computed<string>(() => {
+    if (this.shippingMethod() === 'pickup') {
+      return this.selectedPickupStoreId() || 'store-thuduc';
+    }
+    const wh = this.shippingCalculation()?.warehouse || this.nearestWarehouse();
+    return wh?.id || 'store-thuduc';
+  });
+
+  readonly activeStoreName = computed<string>(() => {
+    const storeId = this.activeStoreId();
+    const branch = this.storeBranches.find(s => s.id === storeId);
+    return branch?.name || storeId;
+  });
+
   // Chọn thời gian giao hàng (Giao tận nơi)
   readonly baseTimeSlots = BASE_TIME_SLOTS;
   readonly deliveryTimeSlots = BASE_TIME_SLOTS;
@@ -939,10 +991,54 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     return this.comboDiscount() + this.addonDiscount();
   });
 
-  // Tổng thanh toán: (Tiền hàng - Voucher đơn hàng) + Phí ship thực trả
-  readonly finalTotal = computed(() => {
+  // Quy đổi Điểm Thưởng Tích Lũy (100 điểm = 1 VNĐ)
+  readonly POINTS_PER_VND = 100;
+  protected usePoints = signal<boolean>(false);
+
+  readonly userPoints = computed<number>(() => {
+    const u = this.cart.currentUser();
+    if (!u) return 0;
+    return this.loyalty.balance() || (u as any).points || 0;
+  });
+
+  readonly maxPointsDiscountVnd = computed<number>(() => {
+    const pts = this.userPoints();
+    return Math.floor(pts / this.POINTS_PER_VND);
+  });
+
+  readonly basePayableBeforePoints = computed<number>(() => {
     const goodsAfterVoucher = Math.max(0, this.checkoutSubtotal() - this.orderVoucherDiscount());
     return goodsAfterVoucher + this.shippingFee();
+  });
+
+  readonly pointDiscount = computed<number>(() => {
+    if (!this.usePoints() || !this.cart.currentUser()) return 0;
+    const maxVnd = this.maxPointsDiscountVnd();
+    const payable = this.basePayableBeforePoints();
+    return Math.min(maxVnd, payable);
+  });
+
+  readonly actualPointsToRedeem = computed<number>(() => {
+    return this.pointDiscount() * this.POINTS_PER_VND;
+  });
+
+  readonly potentialPointsDiscountVnd = computed<number>(() => {
+    return Math.min(this.maxPointsDiscountVnd(), this.basePayableBeforePoints());
+  });
+
+  readonly potentialPointsToRedeem = computed<number>(() => {
+    return this.potentialPointsDiscountVnd() * this.POINTS_PER_VND;
+  });
+
+  toggleUsePoints(): void {
+    if (this.userPoints() < this.POINTS_PER_VND) return;
+    this.usePoints.update(v => !v);
+  }
+
+  // Tổng thanh toán: (Tiền hàng - Voucher đơn hàng) + Phí ship thực trả - Giảm giá điểm thưởng
+  readonly finalTotal = computed(() => {
+    const totalBeforePoints = this.basePayableBeforePoints();
+    return Math.max(0, totalBeforePoints - this.pointDiscount());
   });
 
   // Thời gian chuẩn bị hàng + vận chuyển dự kiến (phút)
@@ -1207,6 +1303,74 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         this.voucherMessage.set(`Mã ${curShip.code} đã được gỡ vì đơn hàng chưa đạt giá trị tối thiểu.`);
       }
     });
+
+    // Tự động kiểm tra tồn kho khả dụng thời gian thực tại chi nhánh kho đang chọn (O2O Store Check)
+    effect(() => {
+      const storeId = this.activeStoreId();
+      const items = this.checkoutItems();
+      if (!storeId || items.length === 0) {
+        this.branchStockMap.set(new Map());
+        this.branchShortageMap.set(new Map());
+        return;
+      }
+
+      const payload = items.map(it => ({
+        productId: String((it.product as any)?._id || (it.product as any)?.id || ''),
+        slug: it.product?.slug,
+        quantity: it.quantity,
+      }));
+
+      untracked(() => {
+        this.productApi.checkStoreStock(storeId, payload).subscribe({
+          next: (res) => {
+            if (!res?.success) return;
+            const stockMap = new Map<string, number>();
+            const shortageMap = new Map<string, { availableStock: number; message: string }>();
+
+            for (const item of res.items || []) {
+              if (item.productId) stockMap.set(item.productId, item.availableStock);
+              if (item.slug) {
+                stockMap.set(item.slug, item.availableStock);
+                const cleanSlug = item.slug.replace(/^\/product-page\//, '').replace(/^\//, '');
+                if (cleanSlug) stockMap.set(cleanSlug, item.availableStock);
+              }
+            }
+
+            for (const s of res.shortages || []) {
+              const info = { availableStock: s.availableStock, message: s.message };
+              if (s.productId) shortageMap.set(s.productId, info);
+              if (s.slug) {
+                shortageMap.set(s.slug, info);
+                const cleanSlug = s.slug.replace(/^\/product-page\//, '').replace(/^\//, '');
+                if (cleanSlug) shortageMap.set(cleanSlug, info);
+              }
+            }
+
+            this.branchStockMap.set(stockMap);
+            this.branchShortageMap.set(shortageMap);
+
+            // Nếu phát hiện món vượt quá tồn kho chi nhánh, tự động giới hạn và báo cho khách
+            for (const it of this.checkoutItems()) {
+              const p: any = it.product;
+              const pid = String(p?._id || p?.id || '');
+              const rawSlug = String(p?.slug || '');
+              const cleanSlug = rawSlug.replace(/^\/product-page\//, '').replace(/^\//, '');
+              const bStock = stockMap.get(pid) ?? stockMap.get(rawSlug) ?? stockMap.get(cleanSlug);
+
+              if (typeof bStock === 'number' && it.quantity > bStock && bStock > 0) {
+                if (this.isBuyNowMode()) {
+                  this.cart.updateBuyNowItemQuantity(it, bStock);
+                } else {
+                  this.cart.updateItemQuantity(it, bStock);
+                }
+                this.errorMsg.set(`Chi nhánh [${res.storeName}] hiện chỉ còn ${bStock} "${it.product.name}" khả dụng. Số lượng đã được tự động điều chỉnh về ${bStock}.`);
+              }
+            }
+          },
+          error: () => {},
+        });
+      });
+    });
   }
 
   ngOnInit(): void {
@@ -1331,6 +1495,20 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   /** Chuỗi địa chỉ mặc định của tài khoản đang đăng nhập */
   private _defaultAddress(): string {
     return this._formatAddress(this._defaultAddressObj());
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target) return;
+
+    if (this.showOrderVoucherPicker() && !target.closest('.checkout-order-voucher-box')) {
+      this.showOrderVoucherPicker.set(false);
+    }
+
+    if (this.showShippingVoucherPicker() && !target.closest('.checkout-shipping-voucher-box')) {
+      this.showShippingVoucherPicker.set(false);
+    }
   }
 
   // ── Khuyến mãi kép: Xử lý chọn / hủy Voucher Đơn Hàng & Voucher Freeship ──
@@ -1746,7 +1924,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     this.submitting.set(true);
     this.errorMsg.set('');
 
-    // Build order payload — product field là MongoDB _id nếu có (từ API),
+    // Build order payload - product field là MongoDB _id nếu có (từ API),
     // hoặc bỏ qua nếu là static data (slug string)
     const items = currentItems.map(i => {
       const prod = i.product as any;
@@ -1798,11 +1976,15 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         ? `${this.selectedPickupStore().name} - ${this.selectedPickupStore().address}`
         : this.shippingAddr(),
       pickupStore:         this.shippingMethod() === 'pickup' ? this.selectedPickupStore() : null,
+      warehouseId:         this.activeStoreId(),
+      pickupStoreId:       this.shippingMethod() === 'pickup' ? this.selectedPickupStoreId() : null,
       deliveryTimeSlot:    this.selectedDeliveryTimeString(),
       deliveryType:        this.shippingMethod() === 'delivery' ? this.selectedDeliveryType() : 'pickup',
       estimatedDeliveryTime: this.selectedDeliveryTimeString(),
       paymentMethod:       this.paymentMethod(),
       estimatedPoints:     this.estimatedPoints(),
+      pointsToRedeem:      this.usePoints() ? this.actualPointsToRedeem() : 0,
+      pointDiscount:       this.pointDiscount(),
       hasNonRefundableItems: this.nonRefundablePolicy().hasNonRefundableItems,
       nonRefundableAccepted: this.nonRefundableConfirmed(),
       nonRefundableItems:    this.nonRefundablePolicy().items,
@@ -1839,6 +2021,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
           this.scrollToTop(0);
 
           this.cart.loadUserData();
+          this.loyalty.refresh();
           this.voucher.refreshMine();
           this.voucher.loadPublic();
           if (pStatus === 'paid') {
@@ -1853,6 +2036,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         this.completed.set(true);
         this.scrollToTop(0);
         this.cart.loadUserData();
+        this.loyalty.refresh();
         this.voucher.refreshMine();
         this.voucher.loadPublic();
         if (this.isBuyNowMode()) {

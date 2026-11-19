@@ -167,8 +167,18 @@ function parseMetric(val: unknown, unitRegex: RegExp): number {
   return m ? parseFloat(m[1]) : 0;
 }
 
+const dietCache = new Map<string, string[]>();
+
 export function getProductDiets(p: ApiProduct): string[] {
-  if (p.isCombo) return [];
+  if (!p) return [];
+  const key = p._id || p.slug || p.name;
+  if (key && dietCache.has(key)) {
+    return dietCache.get(key)!;
+  }
+  if (p.isCombo) {
+    if (key) dietCache.set(key, []);
+    return [];
+  }
   const specs = p.specifications || {};
 
   // 1. Tự động đọc thông số dinh dưỡng từ specifications
@@ -195,7 +205,10 @@ export function getProductDiets(p: ApiProduct): string[] {
     specs['Chất béo (Lipid)'] ||
     specs['Carbohydrate']
   );
-  if (!hasNutrition) return [];
+  if (!hasNutrition) {
+    if (key) dietCache.set(key, []);
+    return [];
+  }
 
   // 2. Tự động đọc tên, đặc điểm, mô tả, hướng dẫn sử dụng, thành phần và danh mục
   const nameNorm = removeVietnameseTones(p.name || '');
@@ -407,6 +420,7 @@ export function getProductDiets(p: ApiProduct): string[] {
     diets.push('hypertension');
   }
 
+  if (key) dietCache.set(key, diets);
   return diets;
 }
 
@@ -709,11 +723,18 @@ export class OrderingComponent implements OnInit, OnDestroy {
       }
     }
 
+    const catCounts = new Map<string, number>();
+    for (const p of this.allProducts()) {
+      if (p.categoryId) {
+        catCounts.set(p.categoryId, (catCounts.get(p.categoryId) || 0) + 1);
+      }
+    }
+
     return {
       category: this.allCategories().map(c => ({
         value: c._id,
         label: c.name,
-        count: this.allProducts().filter(p => p.categoryId === c._id).length,
+        count: catCounts.get(c._id) || 0,
       })),
       diet: DIET_FACET_OPTIONS.map(opt => ({
         value: opt.value,

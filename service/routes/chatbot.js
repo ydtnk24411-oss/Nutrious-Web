@@ -441,7 +441,7 @@ router.post('/message', optionalAuth, async (req, res, next) => {
         const voucherList = activeVouchers.map(v => {
           const val = v.discountType === 'percentage' ? `${v.discountValue}%` : `${v.discountValue.toLocaleString('vi-VN')}₫`;
           const minVal = v.minOrderValue ? `(Đơn từ ${v.minOrderValue.toLocaleString('vi-VN')}₫)` : '';
-          return `🎟️ Mã: **${v.code}** — Giảm **${val}** ${minVal} - *${v.name}*`;
+          return `🎟️ Mã: **${v.code}** - Giảm **${val}** ${minVal} - *${v.name}*`;
         }).join('\n');
 
         const replyText = `🎉 **Evergreen Mart hiện đang có các ưu đãi hấp dẫn dành riêng cho bạn:**\n\n${voucherList}\n\n` +
@@ -894,7 +894,7 @@ function handleBmiCalculation(knowledge, trimmed, cleanLower, profile) {
 
   const reply = `🩺 **Kết quả phân tích thể trạng từ Chuyên gia NutriBot:**\n\n` +
     `- **Chiều cao:** ${height} cm | **Cân nặng:** ${weight} kg\n` +
-    `- **Chỉ số BMI:** **${bmi}** — Đánh giá: **${status}**\n` +
+    `- **Chỉ số BMI:** **${bmi}** - Đánh giá: **${status}**\n` +
     `- **Cân nặng lý tưởng khuyến nghị:** **${minIdealWeight} kg – ${maxIdealWeight} kg**\n\n` +
     `💡 **Lời khuyên dinh dưỡng từ NutriBot:**\n${advice}\n\n` +
     `*Bạn có muốn NutriBot lên thực đơn 7 ngày phù hợp với chỉ số này không?*`;
@@ -1121,7 +1121,7 @@ router.post('/detect-ingredients', async (req, res, next) => {
   }
 });
 
-// GET /api/chatbot/session/:sessionId — đồng bộ tin nhắn 2 chiều giữa khách hàng và admin
+// GET /api/chatbot/session/:sessionId - đồng bộ tin nhắn 2 chiều giữa khách hàng và admin
 router.get('/session/:sessionId', optionalAuth, async (req, res, next) => {
   try {
     const { sessionId } = req.params;
@@ -1171,7 +1171,7 @@ router.get('/session/:sessionId', optionalAuth, async (req, res, next) => {
   }
 });
 
-// POST /api/chatbot/switch-to-ai — khách bấm nút "Trở về hỏi Trợ lý AI"
+// POST /api/chatbot/switch-to-ai - khách bấm nút "Trở về hỏi Trợ lý AI"
 router.post('/switch-to-ai', optionalAuth, async (req, res, next) => {
   try {
     const { sessionId } = req.body;

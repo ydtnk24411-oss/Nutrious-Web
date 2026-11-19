@@ -12,6 +12,10 @@ const FlashSale = require('../models/FlashSale');
 const InventoryLog = require('../models/InventoryLog');
 const StoreInventory = require('../models/StoreInventory');
 const AuditLog = require('../models/AuditLog');
+const Payment = require('../models/Payment');
+const Shipment = require('../models/Shipment');
+const OrderItem = require('../models/OrderItem');
+const PointTransaction = require('../models/PointTransaction');
 const { protect, optionalAuth, adminOnly, staffOnly, hasRole, verifyStoreAccess, getScopedStoreId } = require('../middleware/auth');
 const { validate }           = require('../middleware/validate');
 const { evaluateVoucher, consumeVoucher, restoreOrderVoucherOnce } = require('../utils/voucher');
@@ -23,6 +27,7 @@ const { clearDashboardCache } = require('./dashboard');
 const { cacheMiddleware, clearCache } = require('../utils/cache');
 const ExcelJS = require('exceljs');
 
+const POINTS_PER_VND = 100; // Tỷ lệ quy đổi điểm thưởng: 100 điểm = 1 VNĐ
 const QR_PAYMENT_TTL_MS = 15 * 60 * 1000; // 15 phút giữ đơn chờ chuyển khoản VietQR
 
 function buildVietQrPayload(order) {
@@ -81,6 +86,14 @@ async function expireUnpaidQrOrderIfNeeded(order) {
   ).lean();
 
   if (updated) {
+    Payment.updateMany(
+      { orderId: order._id, status: { $ne: 'success' } },
+      { $set: { status: 'expired' } }
+    ).catch(() => {});
+    Shipment.updateOne(
+      { orderId: order._id },
+      { $set: { status: 'cancelled' } }
+    ).catch(() => {});
     await restoreOrderInventoryOnce(order._id, null);
     await restoreOrderVoucherOnce(order);
     await handleFlashSaleOrderCancelled(order);
@@ -137,6 +150,16 @@ async function markQrOrderAsPaid(order, { reference = '', autoConfirm = true } =
   }
   // Khi đơn VietQR đã xác nhận thanh toán thành công, lập tức cộng điểm và cập nhật chi tiêu cho khách hàng
   if (updated.paymentStatus === 'paid') {
+    Payment.findOneAndUpdate(
+      { orderId: updated._id, paymentMethod: 'bank_transfer' },
+      { $set: { status: 'success', paidAt: updated.paidAt || new Date(), transactionReference: String(reference || '') } }
+    ).catch(() => {});
+    if (updated.status === 'confirmed') {
+      Shipment.updateOne(
+        { orderId: updated._id },
+        { $set: { status: 'assigned' } }
+      ).catch(() => {});
+    }
     await creditOrderPoints(updated._id);
   }
   if (typeof clearDashboardCache === 'function') {
@@ -895,7 +918,24 @@ router.post(
       }
 
       // 5. Server tự tính lại total: total = subtotal - discount + finalShippingFee
-      orderData.total = Math.max(0, payableGoods - orderData.discount + (isBopis ? 0 : finalShippingFee));
+      const basePayable = Math.max(0, payableGoods - orderData.discount + (isBopis ? 0 : finalShippingFee));
+
+      // Quy đổi điểm thưởng tích lũy (100 điểm = 1 VNĐ theo đúng quy tắc chuỗi siêu thị)
+      let pointDiscount = 0;
+      let actualPointsUsed = 0;
+      const requestedPoints = Math.max(0, Math.floor(Number(req.body.pointsToRedeem) || 0));
+      if (req.user && requestedPoints > 0) {
+        const currentUser = await User.findById(req.user._id).select('points').lean();
+        const availablePoints = currentUser?.points || 0;
+        const validPoints = Math.min(requestedPoints, availablePoints);
+        const maxVndFromPoints = Math.floor(validPoints / POINTS_PER_VND);
+        pointDiscount = Math.min(maxVndFromPoints, basePayable);
+        actualPointsUsed = pointDiscount * POINTS_PER_VND;
+      }
+
+      orderData.pointDiscount = pointDiscount;
+      orderData.pointsRedeemed = actualPointsUsed;
+      orderData.total = Math.max(0, basePayable - pointDiscount);
       orderData.paymentStatus = 'unpaid';
       orderData.paymentExpiresAt = orderData.paymentMethod === 'bank_transfer'
         ? new Date(Date.now() + QR_PAYMENT_TTL_MS)
@@ -1163,6 +1203,104 @@ router.post(
         ).catch(() => {});
         if (appliedOrderVoucher) await consumeVoucher(appliedOrderVoucher, req.user?._id, order._id);
         if (appliedShipVoucher) await consumeVoucher(appliedShipVoucher, req.user?._id, order._id);
+
+        // Trừ điểm thưởng của khách hàng nếu có sử dụng điểm quy đổi tiền
+        if (actualPointsUsed > 0 && order.user) {
+          const updatedUser = await User.findByIdAndUpdate(
+            order.user,
+            { $inc: { points: -actualPointsUsed } },
+            { new: true }
+          );
+          PointTransaction.create({
+            user: order.user,
+            type: 'redeemed',
+            amount: actualPointsUsed,
+            description: `Dùng ${actualPointsUsed.toLocaleString('vi-VN')} điểm giảm ${pointDiscount.toLocaleString('vi-VN')}đ cho đơn #${order.orderCode}`,
+            order: order.orderCode,
+            balanceAfter: updatedUser?.points || 0,
+          }).catch(() => {});
+        }
+
+        // Tự động sinh bản ghi thanh toán song song (Dual-Write sang Payment)
+        try {
+          const basePCode = `PAY-${order.orderCode.replace('XL-', '')}`;
+          if (pointDiscount > 0) {
+            await Payment.create({
+              paymentCode: `${basePCode}-PTS`,
+              orderId: order._id,
+              orderCode: order.orderCode,
+              user: order.user || null,
+              paymentMethod: 'loyalty_points',
+              amount: pointDiscount,
+              pointsUsed: actualPointsUsed,
+              status: 'success',
+              paidAt: new Date(),
+              note: `Thanh toán bằng ${actualPointsUsed.toLocaleString('vi-VN')} điểm thưởng tích lũy (100 điểm = 1đ)`,
+            });
+          }
+          if (order.total > 0 || pointDiscount === 0) {
+            await Payment.create({
+              paymentCode: pointDiscount > 0 ? `${basePCode}-MAIN` : basePCode,
+              orderId: order._id,
+              orderCode: order.orderCode,
+              user: order.user || null,
+              paymentMethod: order.paymentMethod || 'cod',
+              amount: order.total,
+              pointsUsed: 0,
+              status: order.paymentStatus === 'paid' ? 'success' : 'pending',
+              paidAt: order.paidAt || null,
+              note: `Thanh toán đơn hàng qua ${order.paymentMethod.toUpperCase()}`,
+            });
+          }
+        } catch (payErr) {
+          console.error('Lỗi tự động sinh bản ghi Payment:', payErr);
+        }
+
+        // Tự động sinh bản ghi Vận đơn song song (Dual-Write sang Shipment)
+        try {
+          const sCode = `SHIP-${order.orderCode.replace('XL-', '')}`;
+          await Shipment.create({
+            shipmentCode: sCode,
+            orderId: order._id,
+            orderCode: order.orderCode,
+            warehouseId: order.warehouseId || 'store-thuduc',
+            shippingMethod: order.shippingMethod || 'delivery',
+            shippingAddress: order.shippingAddress || '',
+            shippingFee: order.shippingFee || 0,
+            codAmount: order.paymentMethod === 'cod' ? order.total : 0,
+            shipperName: order.shipperName || '',
+            shipperPhone: order.shipperPhone || '',
+            status: 'pending',
+            estimatedDeliveryTime: order.estimatedDeliveryTime || '',
+          });
+        } catch (shipErr) {
+          console.error('Lỗi tự động sinh bản ghi Shipment:', shipErr);
+        }
+
+        // Tự động sinh bản ghi OrderItem chuẩn hóa song song
+        try {
+          if (Array.isArray(order.items)) {
+            for (const it of order.items) {
+              await OrderItem.create({
+                orderId: order._id,
+                orderCode: order.orderCode,
+                product: String(it.product || ''),
+                productName: it.productName || 'Sản phẩm',
+                categoryName: it.categoryName || '',
+                productImage: it.productImage || '',
+                priceNumber: it.priceNumber || 0,
+                quantity: it.quantity || 1,
+                selectedOption: it.selectedOption || '',
+                isCombo: Boolean(it.isCombo),
+                itemType: it.itemType || 'regular',
+                discount: it.addonSaving || 0,
+                subtotal: (it.priceNumber || 0) * (it.quantity || 1) - (it.addonSaving || 0),
+              });
+            }
+          }
+        } catch (itemErr) {
+          console.error('Lỗi tự động sinh bản ghi OrderItem:', itemErr);
+        }
       } catch (createErr) {
         for (const r of deductedReservations) {
           await Product.findByIdAndUpdate(r.pid, { $inc: { stock: r.qty } });
@@ -2298,9 +2436,41 @@ router.put('/:id/status', protect, staffOnly, async (req, res, next) => {
       if (currentOrder.pointsAwarded) {
         await rollbackOrderPoints(currentOrder._id, 'hủy đơn hàng');
       }
+      // Hoàn lại điểm thưởng tích lũy nếu đơn hàng đã từng đổi điểm thanh toán
+      if (currentOrder.pointsRedeemed > 0 && currentOrder.user) {
+        const rolledBackUser = await User.findByIdAndUpdate(
+          currentOrder.user,
+          { $inc: { points: currentOrder.pointsRedeemed } },
+          { new: true }
+        );
+        PointTransaction.create({
+          user: currentOrder.user,
+          type: 'earned',
+          amount: currentOrder.pointsRedeemed,
+          description: `Hoàn ${currentOrder.pointsRedeemed.toLocaleString('vi-VN')} điểm do hủy đơn #${currentOrder.orderCode}`,
+          order: currentOrder.orderCode,
+          balanceAfter: rolledBackUser?.points || 0,
+        }).catch(() => {});
+      }
+      Payment.updateMany(
+        { orderId: currentOrder._id, status: { $ne: 'success' } },
+        { $set: { status: 'cancelled' } }
+      ).catch(() => {});
+      Shipment.updateOne(
+        { orderId: currentOrder._id },
+        { $set: { status: 'cancelled' } }
+      ).catch(() => {});
     }
 
     if (status === 'delivered') {
+      Payment.updateMany(
+        { orderId: currentOrder._id, status: { $ne: 'cancelled' } },
+        { $set: { status: 'success', paidAt: new Date() } }
+      ).catch(() => {});
+      Shipment.updateOne(
+        { orderId: currentOrder._id },
+        { $set: { status: 'delivered', deliveredAt: new Date() } }
+      ).catch(() => {});
       await creditOrderPoints(currentOrder._id);
       await releaseAndDeductStoreInventory(currentOrder);
     }
@@ -2536,6 +2706,11 @@ router.post('/cod-settle', protect, staffOnly, async (req, res, next) => {
         },
       }
     );
+
+    Payment.updateMany(
+      { orderId: { $in: orderIds }, paymentMethod: 'cod' },
+      { $set: { settled: true, settledAt: now, settledBy: updater, status: 'success', paidAt: now } }
+    ).catch(() => {});
 
     AuditLog.create({
       actor: req.user._id,

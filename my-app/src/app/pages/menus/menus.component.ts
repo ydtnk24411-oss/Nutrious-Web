@@ -2,13 +2,13 @@ import { Component, signal, inject, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
-import { CartService } from '../../shared/services/cart.service';
+import { CartService, formatPrice } from '../../shared/services/cart.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { XanhLaProduct } from '../../shared/models/xanh-la.models';
 
 function toCartProduct(p: ApiProduct): XanhLaProduct {
   return {
-    id: p._id, name: p.name, slug: p.slug, price: p.price,
+    id: p._id, name: p.name, slug: p.slug, price: formatPrice(p.priceNumber || p.price),
     priceNumber: p.priceNumber, image: p.image,
     category: p.category as 'Vegetables' | 'Fruits' | 'Meat',
     categoryVi: p.categoryVi ?? p.category ?? '', description: p.description,
@@ -35,12 +35,13 @@ function toCartProduct(p: ApiProduct): XanhLaProduct {
 export class MenusComponent implements OnInit {
   protected cart       = inject(CartService);
   private productApi   = inject(ProductApiService);
+  protected formatPrice = formatPrice;
 
   protected allProducts = signal<ApiProduct[]>([]);
   protected loading     = signal(true);
   protected error       = signal('');
 
-  // Group by categoryVi — same logic as ordering page
+  // Group by categoryVi - same logic as ordering page
   protected sections = computed(() => {
     const all = this.allProducts();
     const groups: Record<string, ApiProduct[]> = {};
@@ -69,5 +70,10 @@ export class MenusComponent implements OnInit {
   addToCart(prod: ApiProduct): void {
     if (this.isOutOfStock(prod)) return;
     this.cart.addItem(toCartProduct(prod), 1);
+  }
+
+  openBuyNow(prod: ApiProduct): void {
+    if (this.isOutOfStock(prod)) return;
+    this.cart.openBuyNowModal(toCartProduct(prod));
   }
 }

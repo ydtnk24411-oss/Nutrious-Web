@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
-import { CartService } from '../../shared/services/cart.service';
+import { CartService, formatPrice } from '../../shared/services/cart.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { ApiService } from '../../shared/services/api.service';
 import { XanhLaProduct } from '../../shared/models/xanh-la.models';
@@ -248,6 +248,7 @@ export class CookComponent implements OnInit {
   protected cart = inject(CartService);
   private productApi = inject(ProductApiService);
   private api = inject(ApiService);
+  protected formatPrice = formatPrice;
   unitOptions = signal<CookUnitOption[]>([
     { value: 'g', label: 'g' },
     { value: 'kg', label: 'kg' },
@@ -674,7 +675,7 @@ export class CookComponent implements OnInit {
           }
 
           this.detectedFromImage.set(newDetected);
-          this.visionMessage.set(`Gemini Vision đã nhận diện thành công ${newDetected.length} nguyên liệu trong ảnh!`);
+          this.visionMessage.set(`Gemini Vision đã nhận diện được ${newDetected.length} nguyên liệu từ ảnh!`);
           if (this.hasSearched()) {
             this.results.set(this.computeRecipeResults());
           }
@@ -704,7 +705,6 @@ export class CookComponent implements OnInit {
       }
     });
   }
-
   // ── Method 3: Search & Recipe Priority Calculation ──────
   findRecipes(): void {
     this.loading.set(true);

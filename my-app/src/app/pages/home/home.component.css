@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
 
-#home-view.coop-home{--green:#176b3a;--green-dark:#104c2c;--green-soft:#eaf4e8;--red:#d92332;--ink:#202b24;--muted:#778078;--line:#e8ece6;--cream:#fffdf7;--yellow:#ffd64d;font-family:'Be Vietnam Pro',Arial,sans-serif;color:var(--ink);background:#fff;overflow:hidden}
+#home-view.coop-home{--green:#008848;--green-dark:#004D25;--green-soft:#F1F8F4;--red:#E53935;--ink:#1E293B;--muted:#64748B;--line:#EAEAEA;--cream:#FFFFFF;--yellow:#FF6B00;font-family:'Be Vietnam Pro',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--ink);background:#F4F6F8;overflow:hidden}
 .coop-home *{box-sizing:border-box}.coop-container{width:min(1240px,calc(100% - 40px));margin-inline:auto}
 .coop-service-strip{background:#f4f8f1;border-bottom:1px solid #e8eee4;color:#526b54;font-size:11px;font-weight:600}.service-inner{display:flex;gap:18px;align-items:center;justify-content:center;min-height:34px}
 .coop-hero{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(250px,.8fr);gap:16px;padding-top:22px}
@@ -31,14 +31,14 @@
    stronger contrast and a typography-only interface (no icons).
    ------------------------------------------------------------- */
 #home-view.coop-home {
-  --green: #176b3a;
-  --green-dark: #104c2c;
-  --green-soft: #eaf4e8;
-  --red: #d92332;
-  --ink: #1c2920;
-  --muted: #626e64;
-  --line: #d9e1d7;
-  background: #fff;
+  --green: #008848;
+  --green-dark: #004D25;
+  --green-soft: #F1F8F4;
+  --red: #E53935;
+  --ink: #1E293B;
+  --muted: #64748B;
+  --line: #EAEAEA;
+  background: #F4F6F8;
   color: var(--ink);
 }
 .coop-home .coop-container { width: min(1280px, calc(100% - 48px)); }
@@ -46,21 +46,22 @@
 .coop-home .service-inner { min-height: 38px; gap: 20px; }
 .coop-home .service-divider { width: 1px; height: 13px; background: #8cb39a; display: inline-block; }
 .coop-home .coop-hero { padding-top: 24px; gap: 18px; }
-.coop-home .coop-hero-main { min-height: 430px; border-radius: 5px; box-shadow: 0 8px 22px #153d2514; }
-.coop-home .coop-hero-shade { background: linear-gradient(90deg,rgba(7,36,18,.91),rgba(11,44,22,.60) 53%,rgba(11,44,22,.06)),linear-gradient(0deg,rgba(0,0,0,.25),transparent 50%); }
+.coop-home .coop-hero-main { min-height: 430px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+.coop-home .coop-hero-shade { display: none; }
 .coop-home .coop-kicker,
 .coop-home .coop-eyebrow { font-size: 10px; letter-spacing: .14em; font-weight: 800; text-transform: uppercase; }
 .coop-home .coop-kicker { padding: 8px 11px; background: #f7d96b; color: #233a25; margin-bottom: 16px; }
 .coop-home .coop-hero-copy h1 { font-size: clamp(34px, 4vw, 58px); max-width: 610px; }
 .coop-home .coop-hero-copy p { font-size: 14px; max-width: 460px; }
-.coop-home .coop-btn { min-height: 46px; border-radius: 3px; padding: 14px 21px; font-size: 12px; letter-spacing: .01em; }
+.coop-home .coop-btn { min-height: 46px; border-radius: 6px; padding: 14px 21px; font-size: 12px; letter-spacing: .01em; }
 .coop-home .coop-btn-yellow { background: #ffdc55; color: #1d3322; box-shadow: 0 3px 0 #d5b744; }
 .coop-home .coop-btn-white { color: #154b2b; }
 .coop-home .coop-btn-green { background: #176b3a; }
-.coop-home .coop-hero-controls { right: 20px; bottom: 18px; gap: 9px; }
-.coop-home .coop-hero-controls button { width: auto; min-width: 62px; height: 32px; padding: 0 10px; border-radius: 3px; border: 1px solid #ffffffb8; background: #123b25a8; color: #fff; font-size: 10px; font-weight: 700; }
+.coop-home .coop-hero-controls { right: 20px; bottom: 18px; gap: 9px; z-index: 5; }
+.coop-home .coop-hero-controls button { width: auto; min-width: 62px; height: 32px; padding: 0 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.7); background: rgba(0, 0, 0, 0.45); color: #fff; font-size: 11px; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+.coop-home .coop-hero-controls button:hover { background: rgba(0, 0, 0, 0.7); }
 .coop-home .coop-hero-side { gap: 18px; min-height: 430px; }
-.coop-home .coop-side-promo { border-radius: 5px; border: 1px solid #dfe6dc; }
+.coop-home .coop-side-promo { border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; }
 .coop-home .coop-side-promo>div { padding: 23px; }
 .coop-home .coop-side-promo span { display: inline-block; padding: 6px 8px; border: 1px solid #f4dc87; background: #173e2bbd; color: #ffdf78; font-size: 9px; }
 .coop-home .coop-side-promo h2 { font-size: clamp(18px, 1.8vw, 24px); margin: 10px 0 7px; }
@@ -130,11 +131,25 @@
 .coop-home .coop-price-row strong { font-size: 17px; }
 .coop-home .coop-add-btn { border-radius: 3px; border-width: 1px; padding: 11px; font-size: 11px; }
 .coop-home .coop-add-btn:hover { background: #176b3a; }
-.coop-home .coop-arrow-btn { width: auto; min-width: 62px; height: 34px; border-radius: 3px; font-size: 10px; font-weight: 700; }
-.coop-home .coop-arrow-btn:first-of-type::after { content: 'Trước'; }
-.coop-home .coop-arrow-btn:last-of-type::after { content: 'Sau'; }
-.coop-home .coop-arrow-btn { font-size: 0; }
-.coop-home .coop-arrow-btn::after { font-size: 10px; }
+.coop-home .coop-arrow-btn {
+  width: auto;
+  min-width: 90px;
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1.5px solid #165b32;
+  background: #ffffff;
+  color: #165b32;
+  font-size: 13.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.coop-home .coop-arrow-btn:first-of-type::after { content: 'Trước'; font-size: 13.5px; font-weight: 700; margin-left: 2px; }
+.coop-home .coop-arrow-btn:last-of-type::after { content: 'Sau'; font-size: 13.5px; font-weight: 700; margin-left: 2px; }
+.coop-home .coop-arrow-btn i.bi { font-size: 14px; }
 .coop-home .coop-loading, .coop-home .coop-empty { border: 1px solid #dce5d8; border-radius: 4px; background: #f5f8f2; }
 
 /* Editorial, origin, news and benefits */
@@ -650,112 +665,561 @@
 .coop-home .service-inner { min-height: 38px; display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap; font-size: 11px; font-weight: 700; }
 .coop-home .service-divider { width: 5px; height: 5px; border-radius: 50%; background: var(--xl-lime); flex: 0 0 5px; }
 
-/* Hero: large editorial type and a gently irregular frame */
-.coop-home .coop-hero { display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(260px, .85fr); gap: 18px; padding-top: 26px; align-items: stretch; }
-.coop-home .coop-hero-main { min-height: 440px; overflow: hidden; border: 2px solid var(--xl-forest); border-radius: 30px 8px 30px 8px !important; box-shadow: 9px 9px 0 var(--xl-lime) !important; isolation: isolate; }
-.coop-home .coop-hero-main img { width: 100%; height: 100%; min-height: 440px; object-fit: cover; }
-.coop-home .coop-hero-shade { background: linear-gradient(90deg, rgba(21,48,7,.88) 0%, rgba(28,57,9,.68) 44%, rgba(28,57,9,.05) 100%) !important; }
-.coop-home .coop-hero-copy { max-width: 640px; padding: clamp(24px, 4vw, 54px) !important; }
-.coop-home .coop-kicker, .coop-home .coop-eyebrow {
-  display: inline-flex; align-items: center; width: fit-content; padding: 7px 12px;
-  border: 1px solid #b9d957; border-radius: 3px 12px 3px 12px;
-  background: var(--xl-lime) !important; color: var(--xl-forest) !important;
-  font-size: 10px; line-height: 1.25; font-weight: 900; letter-spacing: .1em;
-  text-transform: uppercase; box-shadow: 3px 3px 0 rgba(15,45,0,.12);
+/* Hero: Bố cục banner nông sản thực phẩm tươi sạch chuẩn siêu thị (Tự nhiên, Không dùng gradient) */
+.coop-home .coop-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.85fr) minmax(260px, .85fr);
+  gap: 18px;
+  padding-top: 24px;
+  align-items: stretch;
 }
-.coop-home .coop-hero-copy h1 {
-  max-width: 620px; margin: 20px 0 14px; color: #fff !important;
-  font-size: clamp(38px, 5.2vw, 66px) !important; font-weight: 950 !important;
-  line-height: .99 !important; letter-spacing: -.055em !important;
-  text-shadow: 2px 3px 0 rgba(11,38,0,.5), 0 8px 24px rgba(0,0,0,.22);
-  -webkit-text-stroke: .45px rgba(255,255,255,.38);
-}
-.coop-home .coop-hero-copy p { max-width: 460px; font-size: 15px; line-height: 1.75; color: #f5ffe7 !important; text-shadow: 0 2px 8px #183500; }
-.coop-home .coop-btn { min-height: 46px; display: inline-flex; justify-content: center; align-items: center; padding: 12px 22px; border: 2px solid var(--xl-forest); border-radius: 4px 18px 4px 18px !important; font-weight: 900; letter-spacing: -.01em; box-shadow: 4px 4px 0 var(--xl-forest); transition: transform .18s ease, box-shadow .18s ease; }
-.coop-home .coop-btn:hover { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--xl-forest); }
-.coop-home .coop-btn-yellow { background: var(--xl-lime) !important; color: var(--xl-forest) !important; }
-.coop-home .coop-btn-white { background: #fff !important; color: var(--xl-forest) !important; }
-.coop-home .coop-btn-green { background: var(--xl-forest) !important; color: #fff !important; border-color: var(--xl-forest); }
-.coop-home .coop-hero-controls { display: flex; align-items: center; gap: 10px; }
-.coop-home .coop-hero-controls button { border: 1px solid rgba(255,255,255,.7); background: rgba(20,47,5,.65); color: #fff; padding: 8px 13px; font-weight: 800; border-radius: 3px 10px 3px 10px; }
-.coop-home .coop-hero-controls span { color: #fff; font-size: 12px; font-weight: 800; }
-.coop-home .coop-hero-slide-link { display: block; width: 100%; height: 100%; position: absolute; inset: 0; text-decoration: none; }
-.coop-home .coop-hero-slide-img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
-.coop-home .coop-hero-side { gap: 16px; }
-.coop-home .coop-side-promo { min-height: 0; border: 2px solid var(--xl-forest); border-radius: 8px 24px 8px 24px !important; box-shadow: 5px 5px 0 #c4df64 !important; overflow: hidden; position: relative; }
-.coop-home .coop-side-promo:after { display: none !important; }
-.coop-home .coop-side-promo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .35s ease; }
-.coop-home .coop-side-promo:hover img { transform: scale(1.04); }
-.coop-home .coop-side-promo > div { padding: 17px 18px !important; background: #f6fbdf; }
-.coop-home .coop-side-promo > div > span { display: inline-block; color: var(--xl-green); font-size: 9px; letter-spacing: .12em; font-weight: 900; }
-.coop-home .coop-side-promo h2 { color: var(--xl-forest) !important; font-weight: 900; letter-spacing: -.04em; }
-.coop-home .coop-side-promo p { color: var(--xl-muted) !important; }
-.coop-home .coop-side-promo-warm > div { background: #fce9d9; }
 
-/* Category navigation under Hero banner - Chỉ hiển thị hình và tên danh mục trên nền trắng */
+.coop-home .coop-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(260px, 0.8fr);
+  gap: 18px;
+  padding-top: 22px;
+  align-items: stretch;
+}
+
+.coop-home .coop-hero-main {
+  position: relative;
+  min-height: 440px;
+  border-radius: 16px !important;
+  overflow: hidden;
+  border: 1px solid rgba(220, 195, 150, 0.35) !important;
+  background: #0a1f16;
+  box-shadow: 0 10px 32px -4px rgba(10, 36, 20, 0.16), 0 3px 10px rgba(0, 0, 0, 0.06) !important;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+}
+
+.coop-home .coop-hero-slide-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 440px;
+  object-fit: cover;
+  object-position: center right;
+  display: block;
+  z-index: 0;
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.coop-home .coop-hero-main:hover .coop-hero-slide-img {
+  transform: scale(1.02);
+}
+
+.coop-home .coop-hero-shade {
+  display: none !important;
+}
+
+/* Phủ lớp chuyển sắc khí quyển tự nhiên (Seamless Studio Vignette):
+   Phía bên trái chuyển êm từ tông ngọc bích hữu cơ sâu thẳm sang trong suốt ở bên phải,
+   kết hợp cùng vầng hào quang ánh nắng ấm áp (Warm Sun Halo) mô phỏng ánh sáng nghệ thuật chiếu vào món ăn.
+   Mọi chủ thể bên phải đều hiển thị 100% trong trẻo, sắc nét và hấp dẫn. */
+.coop-home .coop-hero-ambient-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 24% 45%, rgba(235, 205, 135, 0.20) 0%, rgba(235, 205, 135, 0.05) 42%, transparent 68%),
+    linear-gradient(90deg,
+      rgba(6, 20, 13, 0.94) 0%,
+      rgba(7, 24, 16, 0.86) 32%,
+      rgba(9, 28, 19, 0.55) 54%,
+      rgba(9, 28, 19, 0.15) 75%,
+      transparent 95%),
+    linear-gradient(0deg, rgba(5, 16, 10, 0.55) 0%, transparent 28%);
+}
+
+/* Khối Chữ Thông Tin Trình Bày Tinh Tế, Thoáng Đãng */
+.coop-home .coop-hero-editorial {
+  position: relative;
+  z-index: 2;
+  padding: 42px 46px 68px 46px;
+  max-width: 580px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* Huy hiệu kính mờ sâm-panh thanh nhã viền vàng cát, dãn chữ rộng (letter-spacing: 0.16em) */
+.coop-home .coop-hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 18px;
+  border-radius: 999px;
+  background: rgba(18, 36, 22, 0.65);
+  border: 1px solid rgba(220, 190, 130, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.coop-home .coop-kicker-sparkle {
+  display: none !important;
+}
+
+.coop-home .coop-kicker-text {
+  color: #f7e7c4;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+/* Tiêu đề chính */
+.coop-home .coop-hero-title {
+  font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  color: #ffffff !important;
+  font-size: clamp(30px, 3.4vw, 46px) !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.03em !important;
+  margin: 0 0 14px 0;
+  max-width: 580px;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.65), 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Lời tựa mô tả: Thanh thoát, êm ái */
+.coop-home .coop-hero-subtitle {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  color: rgba(240, 246, 240, 0.92);
+  font-size: 13.5px;
+  line-height: 1.68;
+  font-weight: 400;
+  margin: 0 0 24px 0;
+  max-width: 470px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* Nút dạng viên ngọc hoàng gia ánh kim (Royal Sunlit Pill) màu vàng đồng sâm-panh sang trọng (KHÔNG GRADIENT) */
+.coop-home .coop-hero-action {
+  display: flex;
+  align-items: center;
+}
+
+.coop-home .coop-hero-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #dfbc45;
+  color: #0b2417 !important;
+  border: 1px solid rgba(255, 240, 190, 0.8);
+  padding: 12px 28px;
+  border-radius: 999px !important;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  transition: all 0.25s ease;
+}
+
+.coop-home .coop-hero-btn:hover {
+  background: #ecd066;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  color: #0b2417 !important;
+}
+
+.coop-home .coop-hero-btn i {
+  font-size: 13px;
+  transition: transform 0.25s ease;
+}
+
+.coop-home .coop-hero-btn:hover i {
+  transform: translateX(4px);
+}
+
+/* Dải điều hướng phía dưới: Chấm hình thoi bên trái & Viên nhộng capsule < > bên phải */
+.coop-home .coop-hero-bottom-bar {
+  position: absolute;
+  bottom: 22px;
+  left: 36px;
+  right: 36px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.coop-home .coop-hero-nav-capsule {
+  display: none !important;
+}
+
+.coop-home .coop-hero-nav-arrow {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #f7e7c4;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.coop-home .coop-hero-nav-arrow:hover {
+  background: rgba(223, 188, 69, 0.25);
+  color: #ffffff;
+}
+
+/* Hàng chấm hình thoi xoay 45° thanh mảnh, chấm active màu vàng nhẹ ấm áp */
+.coop-home .coop-hero-diamonds {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+.coop-home .coop-hero-diamond {
+  width: 9px;
+  height: 9px;
+  transform: rotate(45deg);
+  border: 1.5px solid rgba(225, 195, 135, 0.55);
+  background: transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.coop-home .coop-hero-diamond:hover {
+  border-color: #f4e4b5;
+  background: rgba(244, 228, 181, 0.22);
+  transform: rotate(45deg) scale(1.2);
+}
+
+.coop-home .coop-hero-diamond.active {
+  background: #f4e4b5 !important; /* Vàng tơ tằm nhạt thanh nhã, dịu mắt */
+  border-color: #ffffff !important;
+  transform: rotate(45deg) scale(1.35);
+  box-shadow: 0 0 10px rgba(244, 228, 181, 0.7) !important; /* Hào quang dịu êm, không chói gắt */
+}
+
+/* 2 Banner phụ bên phải: Giữ nguyên hình ảnh gốc sắc nét, đổ bóng khuếch tán êm ái tránh dính bệt */
+.coop-home .coop-hero-side {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 16px;
+  min-height: 440px;
+}
+
+.coop-home .coop-side-promo {
+  position: relative;
+  min-height: 0;
+  border-radius: 16px !important;
+  overflow: hidden;
+  background: #ffffff;
+  display: block;
+  box-shadow: 0 8px 24px -4px rgba(10, 36, 20, 0.08), 0 2px 6px rgba(0, 0, 0, 0.03) !important;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.coop-home .coop-side-promo::after {
+  display: none !important;
+}
+
+.coop-home .coop-side-promo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.coop-home .coop-side-promo:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -4px rgba(10, 36, 20, 0.12), 0 3px 8px rgba(0, 0, 0, 0.05) !important;
+}
+
+.coop-home .coop-side-promo:hover img {
+  transform: scale(1.03);
+}
+
+/* Responsive Cho Giao Diện Hero Mới */
+@media (max-width: 900px) {
+  .coop-home .coop-hero {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding-top: 16px;
+  }
+  .coop-home .coop-hero-main {
+    min-height: 400px;
+  }
+  .coop-home .coop-hero-editorial {
+    padding: 32px 28px 60px 28px;
+    max-width: 500px;
+  }
+  .coop-home .coop-hero-title {
+    font-size: 24px;
+  }
+  .coop-home .coop-hero-bottom-bar {
+    left: 0;
+    right: 0;
+    bottom: 16px;
+  }
+  .coop-home .coop-hero-side {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 170px;
+    min-height: 0;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .coop-home .coop-hero-main {
+    min-height: 420px;
+  }
+  .coop-home .coop-hero-editorial {
+    padding: 24px 20px 64px 20px;
+    max-width: 100%;
+  }
+  .coop-home .coop-hero-title {
+    font-size: 21px;
+    line-height: 1.25;
+    margin-bottom: 8px;
+  }
+  .coop-home .coop-hero-subtitle {
+    font-size: 12px;
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+  .coop-home .coop-hero-btn {
+    padding: 10px 20px;
+    font-size: 11px;
+  }
+  .coop-home .coop-hero-bottom-bar {
+    left: 0;
+    right: 0;
+    bottom: 14px;
+  }
+  .coop-home .coop-hero-diamonds {
+    gap: 7px;
+  }
+  .coop-home .coop-hero-diamond {
+    width: 7.5px;
+    height: 7.5px;
+  }
+  .coop-home .coop-hero-side {
+    grid-template-columns: 1fr;
+    grid-template-rows: 150px 150px;
+    gap: 10px;
+  }
+}
+
+/* Khối Danh mục nhóm hàng: Khung Gian Hàng Nông Sản Việt Liền Khối Tinh Tế (Unified Heritage Pavilion) */
+.coop-home .coop-section-department {
+  padding-top: 36px !important;
+  padding-bottom: 46px !important;
+}
+
+.coop-home .coop-section-heading {
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  gap: 20px !important;
+  margin-bottom: 22px !important;
+  padding-left: 0 !important;
+  border-left: none !important;
+}
+
+.coop-home .coop-heading-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.coop-home .coop-eyebrow {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 5px 14px !important;
+  border-radius: 999px !important;
+  background: #edf5ee !important;
+  border: 1px solid #c2decb !important;
+  border-left: 1px solid #c2decb !important;
+  color: #165b32 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  margin-bottom: 10px !important;
+  line-height: 1.2 !important;
+}
+
+.coop-home .coop-section-heading h2 {
+  font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  color: #0d2e18 !important;
+  font-size: clamp(24px, 2.5vw, 32px) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.025em !important;
+  line-height: 1.2 !important;
+  margin: 0 0 6px 0 !important;
+  text-shadow: none !important;
+}
+
+.coop-home .coop-section-heading p {
+  font-family: 'Be Vietnam Pro', sans-serif !important;
+  color: #556b5b !important;
+  font-size: 13.5px !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+}
+
+.coop-home .coop-text-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: #165b32 !important;
+  text-decoration: none !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 1px 0 !important;
+  border-bottom: 1px solid rgba(22, 91, 50, 0.5) !important;
+  letter-spacing: 0.02em !important;
+  text-transform: none !important;
+  box-shadow: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.coop-home .coop-text-link:hover {
+  color: #0c381c !important;
+  border-bottom-color: #0c381c !important;
+  background: transparent !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Khung Gian Hàng Lớn Liền Khối: Nghệ thuật ẩm thực Việt Nam tinh tế, ấm áp, đồng điệu tuyệt đối */
+.coop-home .coop-department-wrapper {
+  background: #fdfbf7 !important;
+  border: 1px solid #e8e1d5 !important;
+  border-radius: 22px !important;
+  box-shadow: 0 10px 32px -4px rgba(12, 38, 22, 0.07), 0 2px 8px rgba(0, 0, 0, 0.02) !important;
+  padding: 26px 22px !important;
+  position: relative !important;
+}
+
+/* Lưới 8 Danh mục bên trong: Bố cục 4x2 cân đối, đĩnh đạc, thoáng đãng */
 .coop-home .coop-category-nav {
   display: grid !important;
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 28px 20px !important;
-  padding-top: 32px !important;
-  padding-bottom: 32px !important;
-  background: #ffffff !important;
+  gap: 16px 14px !important;
+  padding: 0 !important;
+  background: transparent !important;
   border: none !important;
-  border-bottom: 1px solid #eef2ea !important;
+  width: 100% !important;
 }
 
 .coop-home .coop-category-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  text-decoration: none;
-  cursor: pointer;
-  padding: 4px;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  transition: transform 0.25s ease;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  padding: 20px 12px 16px 12px !important;
+  background: #ffffff !important;
+  border: 1px solid #eee8dc !important;
+  border-radius: 16px !important;
+  box-shadow: 0 3px 10px rgba(16, 42, 24, 0.04) !important;
+  transition: all 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
 }
 
 .coop-home .coop-category-item:hover {
-  transform: translateY(-4px);
+  transform: translateY(-4px) !important;
+  background: #ffffff !important;
+  border-color: #c59b27 !important;
+  box-shadow: 0 12px 24px rgba(16, 42, 24, 0.10) !important;
 }
 
+.coop-home .coop-category-thumb {
+  width: 100% !important;
+  height: 104px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-bottom: 10px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Ảnh thực phẩm lớn, tươi ngon, sắc nét 100% trong suốt, bóng đổ tự nhiên */
 .coop-home .coop-category-img {
-  width: 144px;
-  height: 104px;
-  object-fit: contain;
-  mix-blend-mode: multiply;
-  transition: transform 0.25s ease;
+  max-width: 95% !important;
+  max-height: 100px !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
+  filter: drop-shadow(0 6px 12px rgba(16, 42, 24, 0.12));
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.35s ease !important;
 }
 
 .coop-home .coop-category-item:hover .coop-category-img {
-  transform: scale(1.06);
+  transform: scale(1.07) translateY(-2px) !important;
+  filter: drop-shadow(0 10px 16px rgba(16, 42, 24, 0.18));
 }
 
 .coop-home .coop-category-name {
-  display: block;
-  font-size: 15px;
-  font-weight: 600;
-  color: #2b3b2c;
-  text-align: center;
-  margin-top: 10px;
-  line-height: 1.35;
-  letter-spacing: -0.01em;
-  transition: color 0.2s ease;
+  display: block !important;
+  font-family: 'Be Vietnam Pro', sans-serif !important;
+  font-size: 14.5px !important;
+  font-weight: 700 !important;
+  color: #143d22 !important;
+  text-align: center !important;
+  line-height: 1.35 !important;
+  letter-spacing: -0.01em !important;
+  transition: color 0.2s ease !important;
 }
 
 .coop-home .coop-category-item:hover .coop-category-name {
-  color: var(--xl-forest, #15803d);
+  color: #165b32 !important;
 }
 
-/* Sections and wavy separators */
+/* Sections and headings */
 .coop-home .coop-section { position: relative; padding-top: 48px; padding-bottom: 48px; }
-.coop-home .coop-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
-.coop-home .coop-section-heading h2 { margin: 12px 0 8px; color: var(--xl-forest) !important; font-size: clamp(28px, 3vw, 42px) !important; line-height: 1.04; letter-spacing: -.055em !important; font-weight: 950 !important; text-shadow: 1px 2px 0 #e3edc8; }
-.coop-home .coop-section-heading p { margin: 0; color: var(--xl-muted) !important; font-size: 14px; line-height: 1.65; }
-.coop-home .coop-text-link { color: var(--xl-forest) !important; border-bottom: 2px solid var(--xl-green) !important; font-weight: 850; padding-bottom: 5px; white-space: nowrap; }
+.coop-home .coop-section-heading {
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  gap: 24px !important;
+  margin-bottom: 24px !important;
+  border-left: none !important;
+  padding-left: 0 !important;
+}
+.coop-home .coop-section-heading h2 { margin: 0 0 6px 0; color: #0c2b18 !important; font-size: clamp(26px, 2.8vw, 34px) !important; line-height: 1.2; letter-spacing: -0.025em !important; font-weight: 800 !important; text-shadow: none !important; }
+.coop-home .coop-section-heading p { margin: 0; color: #556b5b !important; font-size: 14px; line-height: 1.5; }
+.coop-home .coop-section-department .coop-text-link {
+  color: #165b32 !important;
+  border-bottom: 1px solid rgba(22, 91, 50, 0.5) !important;
+  font-weight: 700 !important;
+  font-size: 10px !important;
+  letter-spacing: 0.02em !important;
+  padding-bottom: 1px !important;
+  white-space: nowrap;
+  text-decoration: none !important;
+  transition: all 0.2s ease !important;
+}
+.coop-home .coop-section-department .coop-text-link:hover {
+  color: #0c381c !important;
+  border-bottom-color: #0c381c !important;
+}
 .coop-home .coop-tinted { position: relative; isolation: isolate; overflow: hidden; background: #eff7d9 !important; border-top: 1px solid #dbe9b8; border-bottom: 1px solid #dbe9b8; }
 .coop-home .coop-tinted::before { content: ""; position: absolute; z-index: -1; width: 420px; height: 140px; top: -85px; right: 4%; border-radius: 50%; background: #d8f56a; opacity: .62; transform: rotate(-9deg); }
 .coop-home .coop-tinted::after { content: ""; position: absolute; z-index: -1; width: 300px; height: 95px; bottom: -60px; left: -60px; border-radius: 50%; background: #d8f56a; opacity: .45; transform: rotate(12deg); }
@@ -765,118 +1229,1027 @@
 .coop-home .coop-section-popular { padding-top: 48px; }
 .coop-home .coop-section-origin { padding-top: 52px; padding-bottom: 58px; }
 
-/* Badges are rectangular, legible and consistent */
-.coop-home .coop-voucher-ticket { border-radius: 5px 22px 5px 22px !important; background: var(--xl-green) !important; border-right: 2px dashed rgba(255,255,255,.7); }
-.coop-home .coop-voucher-ticket strong { font-size: 36px !important; letter-spacing: -.06em; text-shadow: 1px 2px 0 rgba(25,55,0,.15); }
-.coop-home .coop-voucher-card { background: #fff !important; border: 1px solid #cbdba6 !important; border-radius: 7px 24px 7px 24px !important; box-shadow: 5px 5px 0 #e2edc6 !important; overflow: hidden; }
-.coop-home .coop-voucher-info h3 { color: var(--xl-forest) !important; font-size: 17px; font-weight: 900; letter-spacing: -.025em; }
-.coop-home .coop-voucher-info p { color: #4f5d43 !important; line-height: 1.55; }
-.coop-home .coop-voucher-info small { color: #77816c !important; }
-.coop-home .coop-voucher-actions { gap: 8px; flex-wrap: wrap; }
-.coop-home .coop-copy-btn { border: 1px solid var(--xl-forest) !important; background: var(--xl-lime) !important; color: var(--xl-forest) !important; border-radius: 3px 12px 3px 12px !important; font-weight: 900; }
-.coop-home .coop-voucher-actions b { padding: 7px 10px; border: 1px dashed #93b747; border-radius: 4px; color: var(--xl-forest) !important; background: #f7fbe9; letter-spacing: .04em; }
-.coop-home .voucher-orange .coop-voucher-ticket { background: #e4a827 !important; color: #203d0b !important; }
-.coop-home .voucher-red .coop-voucher-ticket { background: #e94d3b !important; color: #fff !important; }
+/* ── E-VOUCHER KHUYẾN MÃI: Thẻ lộc tri ân, màu sắc tự nhiên thanh nhã, bố cục cân xứng ── */
+.coop-home .coop-voucher-heading-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex-wrap: wrap !important;
+}
+
+.coop-home .coop-voucher-btn-primary {
+  background: #144e28 !important;
+  color: #ffffff !important;
+  border: 1.5px solid #144e28 !important;
+  height: 36px !important;
+  padding: 0 18px !important;
+  border-radius: 999px !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 6px rgba(20, 78, 40, 0.16) !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+}
+
+.coop-home .coop-voucher-btn-primary:hover {
+  background: #0b351a !important;
+  border-color: #0b351a !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(20, 78, 40, 0.26) !important;
+}
+
+.coop-home .coop-voucher-btn-secondary {
+  background: #ffffff !important;
+  color: #926010 !important;
+  border: 1.5px solid #dfbc45 !important;
+  height: 36px !important;
+  padding: 0 18px !important;
+  border-radius: 999px !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+}
+
+.coop-home .coop-voucher-btn-secondary:hover {
+  background: #fdfcf7 !important;
+  border-color: #c79e27 !important;
+  color: #724907 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 3px 8px rgba(181, 140, 34, 0.15) !important;
+}
+
+.coop-home .coop-voucher-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+}
+
+/* Thẻ Voucher cân bằng, thẳng hàng từng chi tiết */
+.coop-home .coop-voucher-card {
+  background: #ffffff !important;
+  border: 1px solid #e7ede2 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 14px rgba(12, 38, 22, 0.05) !important;
+  overflow: hidden !important;
+  display: flex !important;
+  min-height: 195px !important;
+  height: 100% !important;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease !important;
+}
+
+.coop-home .coop-voucher-card:hover {
+  transform: translateY(-3px) !important;
+  border-color: #c9dec6 !important;
+  box-shadow: 0 10px 24px rgba(12, 38, 22, 0.10) !important;
+}
+
+/* Cuống vé trái: Màu sắc mộc mạc, nhã nhặn như Ảnh 1 (Lá non, Lúa vàng, Đất nung Bát Tràng) */
+.coop-home .coop-voucher-ticket {
+  width: 110px !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 14px 0 0 14px !important;
+  background: #73a431 !important; /* Xanh lá dong / cốm non dịu mắt như Ảnh 1 */
+  color: #ffffff !important;
+  position: relative !important;
+  border-right: 2px dashed rgba(255, 255, 255, 0.7) !important;
+}
+
+.coop-home .coop-voucher-ticket strong {
+  font-size: 30px !important;
+  letter-spacing: -0.03em !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+  color: #ffffff !important;
+}
+
+.coop-home .coop-voucher-ticket small,
+.coop-home .coop-voucher-ticket span {
+  font-size: 8.5px !important;
+  letter-spacing: 0.12em !important;
+  font-weight: 700 !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.coop-home .voucher-orange .coop-voucher-ticket {
+  background: #df9f24 !important; /* Vàng mật ong / lúa chín như Ảnh 1 */
+  color: #ffffff !important;
+}
+
+.coop-home .voucher-red .coop-voucher-ticket {
+  background: #e0533c !important; /* Đất nung / gốm Bát Tràng mộc mạc như Ảnh 1 */
+  color: #ffffff !important;
+}
+
+/* Thân vé phải: Cấu trúc flex column chuẩn chỉ, thẳng hàng ngang */
+.coop-home .coop-voucher-info {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  padding: 16px 18px !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+
+.coop-home .coop-voucher-info h3 {
+  font-family: 'Be Vietnam Pro', sans-serif !important;
+  color: #0c2b18 !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  line-height: 1.35 !important;
+  margin: 0 0 6px 0 !important;
+  height: 42px !important;
+  max-height: 42px !important;
+  overflow: hidden !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+}
+
+.coop-home .coop-voucher-info p {
+  font-size: 12.5px !important;
+  color: #556b5b !important;
+  line-height: 1.45 !important;
+  margin: 0 0 8px 0 !important;
+  height: 38px !important;
+  max-height: 38px !important;
+  overflow: hidden !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+}
+
+.coop-home .coop-voucher-expiry {
+  font-size: 11px !important;
+  color: #718475 !important;
+  font-weight: 600 !important;
+  margin: 0 0 10px 0 !important;
+  display: block !important;
+}
+
+.coop-home .coop-voucher-actions {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  width: 100% !important;
+  margin-top: auto !important;
+}
+
+.coop-home .coop-voucher-btn-row {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+.coop-home .coop-copy-btn {
+  height: 34px !important;
+  width: 100% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #f4f8f3 !important;
+  border: 1px solid #bddabf !important;
+  color: #195c2e !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+}
+
+.coop-home .coop-copy-btn:hover {
+  background: #e6f2e5 !important;
+  border-color: #195c2e !important;
+}
+
+.coop-home .coop-voucher-save-btn {
+  height: 34px !important;
+  width: 100% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #fdfaf3 !important;
+  border: 1px solid #dfcf9f !important;
+  color: #8d6211 !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+}
+
+.coop-home .coop-voucher-save-btn:hover {
+  background: #fbf2dc !important;
+  border-color: #b58c22 !important;
+  color: #724e0b !important;
+}
+
+.coop-home .coop-voucher-saved {
+  height: 34px !important;
+  width: 100% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  background: #fcf8ee !important;
+  border: 1px dashed #cbb17b !important;
+  color: #8e6211 !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+}
+
+.coop-home .coop-voucher-apply-btn {
+  height: 36px !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #144e28 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.coop-home .coop-voucher-apply-btn:hover {
+  background: #0d381c !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(20, 78, 40, 0.22) !important;
+}
 
 /* Department cards */
 .coop-home .coop-department-grid { gap: 16px !important; }
-.coop-home .coop-department-card { border: 1px solid #d1dfb3 !important; border-radius: 7px 25px 7px 25px !important; background: #fff !important; overflow: hidden; box-shadow: 4px 5px 0 #e0ebc7 !important; transition: transform .22s ease, box-shadow .22s ease; }
-.coop-home .coop-department-card:hover { transform: translateY(-4px) rotate(-.3deg); border-color: var(--xl-green) !important; box-shadow: 7px 8px 0 var(--xl-lime) !important; }
+.coop-home .coop-department-card { border: 1px solid #e2e8f0 !important; border-radius: 12px !important; background: #fff !important; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important; transition: transform .22s ease, box-shadow .22s ease; }
+.coop-home .coop-department-card:hover { transform: translateY(-3px); border-color: #cbd5e1 !important; box-shadow: 0 6px 16px rgba(0,0,0,0.08) !important; }
 .coop-home .coop-department-image { background: #ffffff !important; padding: 14px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .coop-home .coop-department-image img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; transition: transform .35s ease; }
-.coop-home .coop-department-card:hover img { transform: scale(1.06); }
-.coop-home .coop-department-name { padding: 15px !important; }
-.coop-home .coop-department-name strong { color: var(--xl-forest) !important; font-size: 15px; font-weight: 900; }
-.coop-home .coop-department-name > span { display: inline-flex; width: fit-content; margin-top: 9px; padding: 6px 9px; background: #eff7d8 !important; border-left: 3px solid var(--xl-green) !important; color: #4b6b1b !important; font-size: 10px; font-weight: 800; }
+.coop-home .coop-department-card:hover img { transform: scale(1.05); }
+.coop-home .coop-department-name { padding: 14px !important; }
+.coop-home .coop-department-name strong { color: #1e293b !important; font-size: 14.5px; font-weight: 700; }
+.coop-home .coop-department-name > span { display: inline-flex; width: fit-content; margin-top: 8px; padding: 4px 8px; background: #f0fdf4 !important; border-left: 3px solid #16a34a !important; color: #15803d !important; font-size: 11px; font-weight: 700; border-radius: 4px; }
 
-/* Flash sale: high contrast anchor section */
-.coop-home .coop-flash-panel { padding: clamp(18px, 3vw, 34px) !important; background: var(--xl-forest) !important; border: 2px solid var(--xl-forest) !important; border-top: 7px solid var(--xl-lime) !important; border-radius: 10px 34px 10px 34px !important; box-shadow: 9px 10px 0 #d9ed9e !important; }
-.coop-home .coop-flash-heading { padding-bottom: 24px !important; margin-bottom: 24px !important; border-bottom: 1px solid rgba(255,255,255,.23) !important; }
-.coop-home .coop-flash-heading h2 { color: #fff !important; font-size: clamp(30px, 4vw, 48px) !important; font-weight: 950 !important; letter-spacing: -.06em; text-shadow: 1px 3px 0 rgba(0,0,0,.2); }
-.coop-home .coop-flash-heading h2 em { color: var(--xl-lime) !important; font-style: normal; text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px; }
-.coop-home .coop-flash-heading p { color: #e6f1d2 !important; }
-.coop-home .coop-eyebrow-light { background: var(--xl-lime) !important; color: var(--xl-forest) !important; }
-.coop-home .coop-countdown { padding: 13px 17px; border: 1px solid #d9ed9e !important; border-radius: 5px 17px 5px 17px !important; background: #f7fbe9 !important; }
-.coop-home .coop-countdown small { color: #5c6d42 !important; font-weight: 750; }
-.coop-home .coop-countdown strong { color: var(--xl-forest) !important; font-size: 29px !important; font-weight: 950; letter-spacing: .04em; }
-.coop-home .coop-product-grid { gap: 16px !important; }
-.coop-home .coop-product-card { min-width: 0; overflow: hidden; border: 1px solid #d3dfb9 !important; border-radius: 7px 23px 7px 23px !important; background: #fff !important; box-shadow: 4px 5px 0 #e5edcf !important; transition: transform .2s ease, box-shadow .2s ease; }
-.coop-home .coop-product-card:hover { transform: translateY(-4px); border-color: #a8c65a !important; box-shadow: 6px 7px 0 #d8f56a !important; }
-.coop-home .coop-product-photo { position: relative; overflow: hidden; background: #f1f6e4 !important; }
-.coop-home .coop-product-photo img { transition: transform .35s ease; }
-.coop-home .coop-product-card:hover .coop-product-photo img { transform: scale(1.045); }
-.coop-home .coop-discount { top: 12px !important; left: 12px !important; padding: 7px 10px !important; border: 1px solid #fff; border-radius: 3px 12px 3px 12px !important; background: var(--xl-coral) !important; color: #fff !important; font-weight: 950 !important; box-shadow: 2px 3px 0 rgba(0,0,0,.12); }
-.coop-home .coop-save-label { background: var(--xl-lime) !important; color: var(--xl-forest) !important; font-size: 9px !important; font-weight: 950 !important; letter-spacing: .08em; }
-.coop-home .coop-product-tag { max-width: calc(100% - 20px); padding: 6px 9px !important; background: var(--xl-forest) !important; color: #fff !important; border-radius: 3px 10px 3px 10px !important; font-size: 9px !important; font-weight: 850; }
-.coop-home .coop-product-info { padding: 15px !important; }
-.coop-home .coop-product-info > small { display: inline-block; margin-bottom: 8px; padding: 5px 8px; border-left: 3px solid var(--xl-green); background: #eff7d8 !important; color: #4c6b20 !important; font-size: 10px !important; font-weight: 850; }
-.coop-home .coop-product-info h3 { color: var(--xl-forest) !important; font-size: 15px !important; line-height: 1.4; font-weight: 900 !important; letter-spacing: -.025em; }
-.coop-home .coop-product-info h3 a { color: inherit !important; }
-.coop-home .coop-product-info p { min-height: 42px; color: #68735c !important; font-size: 12px !important; line-height: 1.6; }
-.coop-home .coop-price-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin: 13px 0; }
-.coop-home .coop-price-row strong { color: #d94431 !important; font-size: 21px !important; font-weight: 950 !important; letter-spacing: -.04em; text-shadow: 0 1px 0 #ffe7d9; }
-.coop-home .coop-price-row del { color: #87907c !important; font-size: 12px; }
-.coop-home .coop-add-btn { width: 100%; min-height: 42px; border: 2px solid var(--xl-forest) !important; border-radius: 4px 14px 4px 14px !important; background: var(--xl-lime) !important; color: var(--xl-forest) !important; font-weight: 900 !important; transition: background .2s, color .2s, transform .2s; }
-.coop-home .coop-add-btn:hover { background: var(--xl-forest) !important; color: #fff !important; transform: translateY(-1px); }
-.coop-home .coop-add-btn:disabled { opacity: .65; cursor: not-allowed; background: #e5e7eb !important; color: #6b7280 !important; border-color: #d1d5db !important; transform: none !important; }
+/* ── FLASH SALE: Sắc ngọc bích sơn mài cao cấp, bừng sáng & rực rỡ khí thế chợ phiên ── */
+.coop-home .coop-flash-panel {
+  padding: clamp(24px, 3.2vw, 36px) !important;
+  background: #0d3922 !important;
+  border: 1px solid rgba(223, 188, 69, 0.35) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 16px 40px -8px rgba(13, 57, 34, 0.25) !important;
+}
+
+.coop-home .coop-flash-heading {
+  padding-bottom: 22px !important;
+  margin-bottom: 24px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16) !important;
+}
+
+.coop-home .coop-flash-heading h2 {
+  color: #ffffff !important;
+  font-size: clamp(26px, 3.2vw, 38px) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.025em !important;
+  margin: 8px 0 6px !important;
+}
+
+.coop-home .coop-flash-heading h2 em {
+  color: #f3d068 !important;
+  font-style: normal !important;
+}
+
+.coop-home .coop-flash-heading p {
+  color: #d1e5d8 !important;
+  font-size: 13.5px !important;
+  margin: 0 !important;
+}
+
+/* Huy hiệu son đỏ Bát Tràng may mắn & lộc tài */
+.coop-home .coop-flash-heading .coop-eyebrow-light {
+  background: #fdf2f0 !important;
+  color: #b93826 !important;
+  border: 1px solid #f2bdb5 !important;
+  border-radius: 999px !important;
+  padding: 4px 14px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  display: inline-block !important;
+}
+
+/* Tráp đồng/gỗ đếm ngược */
+.coop-home .coop-countdown {
+  padding: 10px 20px !important;
+  border: 1px solid rgba(243, 208, 104, 0.45) !important;
+  border-radius: 14px !important;
+  background: rgba(0, 0, 0, 0.25) !important;
+}
+
+.coop-home .coop-countdown small {
+  color: #d6e8dd !important;
+  font-weight: 600 !important;
+  font-size: 11px !important;
+  letter-spacing: 0.05em !important;
+}
+
+.coop-home .coop-countdown strong {
+  color: #fbe488 !important;
+  font-size: 26px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.02em !important;
+}
+
+.coop-home .coop-countdown strong i {
+  color: rgba(251, 228, 136, 0.6) !important;
+}
+
+/* Thẻ sản phẩm Flash Sale */
+.coop-home .coop-flash-panel .coop-product-card {
+  background: #ffffff !important;
+  border: 1px solid #e4eae2 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06) !important;
+  overflow: visible !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: auto !important;
+  min-height: 440px !important;
+  justify-content: space-between !important;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease !important;
+}
+
+.coop-home .coop-flash-panel .coop-product-card:hover {
+  border-color: #dfbc45 !important;
+  transform: translateY(-4px) !important;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14) !important;
+}
+
+.coop-home .coop-flash-panel .coop-product-photo {
+  height: 175px !important;
+  background: #ffffff !important;
+  display: block !important;
+  padding: 0 !important;
+  border-radius: 14px 14px 0 0 !important;
+  overflow: hidden !important;
+  position: relative !important;
+  width: 100% !important;
+}
+
+.coop-home .coop-flash-panel .coop-product-photo img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  display: block !important;
+  transition: transform .35s ease !important;
+}
+
+.coop-home .coop-flash-panel .coop-product-card:hover .coop-product-photo img {
+  transform: scale(1.06) !important;
+}
+
+.coop-home .coop-flash-panel .coop-product-info {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  padding: 10px 10px 12px !important;
+}
+
+.coop-home .coop-flash-panel .coop-product-info h3 {
+  height: 38px !important;
+  max-height: 38px !important;
+  margin: 4px 0 6px !important;
+  font-size: 13.5px !important;
+  line-height: 19px !important;
+  font-weight: 700 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+.coop-home .coop-flash-panel .coop-product-info p {
+  height: 32px !important;
+  max-height: 32px !important;
+  margin: 0 0 6px !important;
+  font-size: 11px !important;
+  line-height: 16px !important;
+  color: #64748b !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+.coop-home .coop-flash-panel .coop-price-row {
+  margin-top: 4px !important;
+  margin-bottom: 6px !important;
+  min-height: 24px !important;
+}
+
+.coop-home .coop-flash-panel .coop-flash-progress-wrapper {
+  margin: 6px 0 10px !important;
+}
+
+.coop-home .coop-flash-panel .coop-card-btn-row {
+  margin-top: auto !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 8px !important;
+  width: 100% !important;
+  padding-top: 6px !important;
+  box-sizing: border-box !important;
+}
+
+/* Nút To rõ, chuẩn thiết kế bản gốc (Ảnh 3: THÊM GIỎ nền chanh #d8f56a, Mua ngay nền xanh #165b32) */
+.coop-home .coop-flash-panel .coop-add-btn {
+  background: #d8f56a !important;
+  border: 1.5px solid #165b32 !important;
+  color: #165b32 !important;
+  border-radius: 8px !important;
+  font-weight: 800 !important;
+  font-size: 11.5px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  transition: all 0.18s ease !important;
+}
+
+.coop-home .coop-flash-panel .coop-add-btn:hover:not(:disabled) {
+  background: #c8ee44 !important;
+  border-color: #144e28 !important;
+  color: #144e28 !important;
+  transform: translateY(-1px) !important;
+}
+
+.coop-home .coop-flash-panel .coop-card-btn-row .coop-buynow-btn {
+  background: #165b32 !important;
+  border: 1.5px solid #165b32 !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+  font-weight: 800 !important;
+  font-size: 11.5px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  transition: all 0.18s ease !important;
+}
+
+.coop-home .coop-flash-panel .coop-card-btn-row .coop-buynow-btn:hover:not(:disabled) {
+  background: #0d3922 !important;
+  border-color: #0d3922 !important;
+  transform: translateY(-1px) !important;
+}
+
+.coop-home .coop-flash-panel .coop-add-btn span {
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+  text-transform: uppercase !important;
+  line-height: 1 !important;
+}
+
+.coop-home .coop-flash-panel .coop-buynow-btn span {
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+  line-height: 1 !important;
+}
+
+.coop-home .coop-flash-panel .coop-add-btn i {
+  font-size: 13px !important;
+  color: #165b32 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+  flex-shrink: 0 !important;
+}
+
+.coop-home .coop-flash-panel .coop-buynow-btn i {
+  font-size: 13px !important;
+  color: #ffffff !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+  flex-shrink: 0 !important;
+}
+
+.coop-home .coop-product-grid { gap: 16px !important; align-items: stretch !important; }
+.coop-home .coop-product-card {
+  min-width: 0;
+  display: flex !important;
+  flex-direction: column !important;
+  height: auto !important;
+  min-height: 390px !important;
+  overflow: hidden;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease !important;
+}
+.coop-home .coop-product-card:hover { transform: translateY(-3px); border-color: #16a34a !important; box-shadow: 0 6px 16px rgba(0,0,0,0.08) !important; }
+.coop-home .coop-product-photo {
+  height: 200px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  background: #f8faf5 !important;
+  flex-shrink: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  padding: 0 !important;
+  border-radius: 14px 14px 0 0 !important;
+}
+
+.coop-home .coop-product-photo img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  display: block !important;
+  transition: transform .35s ease !important;
+}
+
+.coop-home .coop-product-card:hover .coop-product-photo img {
+  transform: scale(1.06) !important;
+}
+.coop-home .coop-discount { top: 10px !important; left: 10px !important; padding: 4px 8px !important; border: 1px solid #fff; border-radius: 6px !important; background: #dc2626 !important; color: #fff !important; font-weight: 800 !important; font-size: 11px; }
+.coop-home .coop-save-label { background: #fef08a !important; color: #854d0e !important; font-size: 9.5px !important; font-weight: 800 !important; padding: 2px 6px; border-radius: 4px; }
+.coop-home .coop-product-tag { display: none !important; }
+.coop-home .coop-product-info {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  padding: 14px !important;
+}
+.coop-home .coop-product-info > small { display: inline-block; margin-bottom: 6px; padding: 3px 8px; border-left: 3px solid #16a34a; background: #f0fdf4 !important; color: #15803d !important; font-size: 10.5px !important; font-weight: 700; border-radius: 4px; width: fit-content; }
+.coop-home .coop-product-info h3 {
+  color: #1e293b !important;
+  font-size: 14px !important;
+  line-height: 20px !important;
+  font-weight: 700 !important;
+  height: 40px !important;
+  max-height: 40px !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  margin: 4px 0 6px !important;
+}
+.coop-home .coop-product-info h3 a { color: inherit !important; text-decoration: none !important; }
+.coop-home .coop-product-info p {
+  height: 32px !important;
+  max-height: 32px !important;
+  color: #64748b !important;
+  font-size: 11.5px !important;
+  line-height: 16px !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  margin: 0 0 8px !important;
+}
+.coop-home .coop-price-row {
+  display: flex !important;
+  align-items: baseline !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  margin-top: auto !important;
+  margin-bottom: 8px !important;
+  min-height: 26px !important;
+}
+.coop-home .coop-price-row strong { color: #dc2626 !important; font-size: 18px !important; font-weight: 800 !important; letter-spacing: -.02em; }
+.coop-home .coop-price-row del { color: #94a3b8 !important; font-size: 12px; }
+.coop-home .coop-card-btn-row {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 8px !important;
+  width: 100% !important;
+  margin-top: auto !important;
+  padding-top: 8px !important;
+  box-sizing: border-box !important;
+}
+.coop-home .coop-card-btn-row .coop-add-btn {
+  background: #d8f56a !important;
+  border: 1.5px solid #165b32 !important;
+  color: #165b32 !important;
+  border-radius: 8px !important;
+  font-weight: 800 !important;
+  font-size: 11.5px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  transition: all 0.18s ease !important;
+}
+.coop-home .coop-card-btn-row .coop-add-btn:hover:not(:disabled) {
+  background: #c8ee44 !important;
+  color: #144e28 !important;
+  border-color: #144e28 !important;
+  transform: translateY(-1px) !important;
+}
+.coop-home .coop-card-btn-row .coop-buynow-btn {
+  background: #165b32 !important;
+  border: 1.5px solid #165b32 !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+  font-weight: 800 !important;
+  font-size: 11.5px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  transition: all 0.18s ease !important;
+}
+.coop-home .coop-card-btn-row .coop-buynow-btn:hover:not(:disabled) {
+  background: #0d3922 !important;
+  border-color: #0d3922 !important;
+  transform: translateY(-1px) !important;
+}
+.coop-home .coop-card-btn-row .coop-add-btn span {
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+  text-transform: uppercase !important;
+  letter-spacing: normal !important;
+  line-height: 1 !important;
+}
+.coop-home .coop-card-btn-row .coop-buynow-btn span {
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+  letter-spacing: normal !important;
+  line-height: 1 !important;
+}
+.coop-home .coop-card-btn-row .coop-add-btn i {
+  font-size: 13px !important;
+  color: #165b32 !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+  flex-shrink: 0 !important;
+}
+.coop-home .coop-card-btn-row .coop-buynow-btn i {
+  font-size: 13px !important;
+  color: #ffffff !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+  flex-shrink: 0 !important;
+}
+.coop-home .coop-card-btn-row .coop-add-btn:disabled,
+.coop-home .coop-card-btn-row button:only-child {
+  grid-column: 1 / -1 !important;
+  width: 100% !important;
+  height: 38px !important;
+}
 
 /* ── Flash Sale Progress Bar & Quota Status ── */
 .coop-home .coop-flash-progress-wrapper { margin: 10px 0 14px; display: flex; flex-direction: column; gap: 7px; }
 .coop-home .coop-flash-progress-bar { width: 100%; height: 9px; background-color: #e5e7eb; border-radius: 999px; overflow: hidden; position: relative; box-shadow: inset 0 1px 2px rgba(0,0,0,.08); }
 .coop-home .coop-flash-progress-fill { height: 100%; border-radius: 999px; transition: width .4s ease; }
-.coop-home .coop-flash-progress-fill.fill-green { background: linear-gradient(90deg, #22c55e, #16a34a); }
-.coop-home .coop-flash-progress-fill.fill-orange { background: linear-gradient(90deg, #f59e0b, #ea580c); }
-.coop-home .coop-flash-progress-fill.fill-red { background: linear-gradient(90deg, #f87171, #dc2626); }
+.coop-home .coop-flash-progress-fill.fill-green { background: #16a34a; }
+.coop-home .coop-flash-progress-fill.fill-orange { background: #ea580c; }
+.coop-home .coop-flash-progress-fill.fill-red { background: #dc2626; }
 .coop-home .coop-flash-quota-text { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; font-weight: 700; color: #4b5563; line-height: 1.25; }
 .coop-home .coop-flash-quota-text.is-soldout { color: #dc2626; }
 .coop-home .coop-flash-sold-count { font-weight: 750; color: #374151; }
 .coop-home .coop-flash-sold-percent { font-size: 11px; font-weight: 700; color: #6b7280; }
 .coop-home .coop-flash-soldout-label { display: inline-flex; align-items: center; background: #fee2e2; color: #b91c1c; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 850; text-transform: uppercase; letter-spacing: .03em; }
 
-.coop-home .coop-arrow-btn { border: 1px solid var(--xl-green) !important; border-radius: 4px 12px 4px 12px !important; color: var(--xl-forest) !important; background: #fff !important; font-weight: 850; }
-.coop-home .coop-arrow-btn:disabled { opacity: .35; }
+.coop-home .coop-arrow-btn {
+  width: auto !important;
+  min-width: 90px !important;
+  height: 42px !important;
+  border-radius: 999px !important;
+  border: 1.5px solid #165b32 !important;
+  background: #ffffff !important;
+  color: #165b32 !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  padding: 0 16px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+}
+.coop-home .coop-arrow-btn:hover:not(:disabled) {
+  background: #165b32 !important;
+  color: #ffffff !important;
+  border-color: #165b32 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(22, 91, 50, 0.2) !important;
+}
+.coop-home .coop-arrow-btn:disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+  border-color: #e5e7eb !important;
+  color: #9ca3af !important;
+  background: #f9fafb !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
 
-/* Wide editorial band with a curved, organic edge */
-.coop-home .coop-editorial-banner { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(260px,.9fr) minmax(0,1.1fr); gap: 28px; align-items: center; padding: clamp(24px, 4vw, 50px) !important; border: 2px solid var(--xl-forest); border-left: 10px solid var(--xl-lime) !important; border-radius: 12px 48px 12px 48px !important; background: linear-gradient(125deg, #203d0b 0%, #426d12 58%, #6e941f 100%) !important; box-shadow: 9px 10px 0 #e2edc6 !important; }
-.coop-home .coop-editorial-banner::after { content: ""; position: absolute; width: 270px; height: 270px; right: -70px; top: -120px; border: 30px solid rgba(216,245,106,.18); border-radius: 44% 56% 64% 36% / 39% 37% 63% 61%; transform: rotate(24deg); pointer-events: none; }
+/* Wide editorial banner: Màu xanh nông sản thực tế, viền mảnh tự nhiên, không gradient */
+.coop-home .coop-editorial-banner {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(260px, .9fr) minmax(0, 1.1fr);
+  gap: 28px;
+  align-items: center;
+  padding: clamp(24px, 4vw, 44px) !important;
+  border: 1px solid rgba(223, 188, 69, 0.3) !important;
+  border-radius: 18px !important;
+  background: #0d3922 !important;
+  box-shadow: 0 10px 30px rgba(13, 57, 34, 0.18) !important;
+}
+.coop-home .coop-editorial-banner::after { content: ""; position: absolute; width: 270px; height: 270px; right: -70px; top: -120px; border: 30px solid rgba(255,255,255,.05); border-radius: 50%; pointer-events: none; }
 .coop-home .coop-editorial-copy { position: relative; z-index: 1; }
-.coop-home .coop-editorial-copy h2 { color: #fff !important; font-size: clamp(31px, 4vw, 49px) !important; font-weight: 950 !important; line-height: 1.03; letter-spacing: -.06em; text-shadow: 2px 3px 0 rgba(0,0,0,.22); }
-.coop-home .coop-editorial-copy h2 em { color: var(--xl-lime) !important; font-style: normal; -webkit-text-stroke: .3px #efffbf; }
-.coop-home .coop-editorial-copy p { max-width: 460px; color: #eff7e3 !important; line-height: 1.75; }
+.coop-home .coop-editorial-copy h2 { color: #fff !important; font-size: clamp(28px, 3.5vw, 44px) !important; font-weight: 800 !important; line-height: 1.15; letter-spacing: -.03em; }
+.coop-home .coop-editorial-copy h2 em { color: #fde047 !important; font-style: normal; }
+.coop-home .coop-editorial-copy p { max-width: 460px; color: #f1f5f9 !important; line-height: 1.7; }
+.coop-home .coop-editorial-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #dfbc45 !important;
+  color: #0b2417 !important;
+  border: 1px solid rgba(255, 240, 190, 0.7);
+  padding: 12px 28px;
+  border-radius: 999px !important;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  margin-top: 8px;
+}
+.coop-home .coop-editorial-btn:hover {
+  background: #ebd066 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  color: #0b2417 !important;
+}
+.coop-home .coop-editorial-btn i {
+  font-size: 13px;
+  transition: transform 0.2s ease;
+}
+.coop-home .coop-editorial-btn:hover i {
+  transform: translateX(3px);
+}
 .coop-home .coop-editorial-images { position: relative; z-index: 1; display: grid; grid-template-columns: 1.15fr .85fr; grid-template-rows: repeat(2, 125px); gap: 10px; }
-.coop-home .coop-editorial-images img { width: 100%; height: 100%; object-fit: cover; border: 2px solid rgba(255,255,255,.8); border-radius: 5px 20px 5px 20px !important; box-shadow: 4px 5px 0 rgba(10,36,0,.24); }
+.coop-home .coop-editorial-images img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px !important; }
 .coop-home .coop-editorial-images img:first-child { grid-row: 1 / span 2; }
 
 /* Brand story and news */
-.coop-home .coop-origin-layout { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: clamp(24px, 4vw, 54px); align-items: center; padding: clamp(20px, 3vw, 38px) !important; border: 1px solid var(--xl-line) !important; border-radius: 9px 36px 9px 36px !important; background: #f6fae9 !important; }
-.coop-home .coop-origin-photo { border: 2px solid var(--xl-forest); border-radius: 7px 32px 7px 32px !important; box-shadow: 8px 8px 0 var(--xl-lime) !important; overflow: hidden; }
-.coop-home .coop-origin-photo > span { padding: 10px 14px !important; border-radius: 3px 14px 3px 14px !important; background: var(--xl-forest) !important; color: #fff !important; font-size: 10px; font-weight: 850; letter-spacing: .1em; }
-.coop-home .coop-origin-copy h2 { color: var(--xl-forest) !important; font-size: clamp(28px,3vw,40px) !important; line-height: 1.08; font-weight: 950 !important; letter-spacing: -.05em; text-shadow: 1px 2px 0 #e1edc4; }
-.coop-home .coop-origin-copy p { color: #59664d !important; line-height: 1.8; }
-.coop-home .coop-origin-copy ul { list-style: none; padding: 0; margin: 20px 0; display: grid; gap: 8px; }
-.coop-home .coop-origin-copy li { padding: 11px 14px !important; border: 1px solid #dbe7c1 !important; border-left: 4px solid var(--xl-green) !important; border-radius: 3px 12px 3px 12px !important; background: #fff !important; color: #35472a !important; font-weight: 700; }
-.coop-home .coop-news-section { position: relative; overflow: hidden; padding: 50px 0 56px !important; background: var(--xl-forest) !important; border-top: 7px solid var(--xl-lime) !important; }
-.coop-home .coop-news-section::before { content: ""; position: absolute; width: 430px; height: 120px; right: -100px; bottom: -60px; border-radius: 50%; background: rgba(216,245,106,.13); transform: rotate(-14deg); }
+.coop-home .coop-origin-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 48px);
+  align-items: center !important;
+  padding: clamp(24px, 3.5vw, 40px) !important;
+  border: 1px solid #e5ebe0 !important;
+  border-radius: 18px !important;
+  background: #f7f9f3 !important;
+}
+.coop-home .coop-origin-photo {
+  position: relative;
+  border-radius: 14px !important;
+  overflow: hidden;
+  height: 350px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+}
+.coop-home .coop-origin-photo img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+.coop-home .coop-origin-badge {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  padding: 6px 12px !important;
+  border-radius: 6px !important;
+  background: #143e22 !important;
+  color: #ffffff !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+}
+.coop-home .coop-origin-copy h2 {
+  color: #0c2b18 !important;
+  font-size: clamp(24px, 2.6vw, 32px) !important;
+  line-height: 1.25;
+  font-weight: 800 !important;
+  letter-spacing: -0.025em;
+  margin: 8px 0 10px 0;
+}
+.coop-home .coop-origin-copy p {
+  color: #4b6354 !important;
+  line-height: 1.65;
+  font-size: 13.5px;
+  margin-bottom: 16px;
+}
+.coop-home .coop-origin-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.coop-home .coop-origin-features li {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px !important;
+  border: 1px solid #e5ece0 !important;
+  border-left: 4px solid #165b32 !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+.coop-home .coop-origin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #143e22 !important;
+  color: #ffffff !important;
+  padding: 11px 26px !important;
+  border-radius: 999px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  text-decoration: none !important;
+  transition: all 0.2s ease;
+}
+.coop-home .coop-origin-btn:hover {
+  background: #0b2f18 !important;
+  transform: translateY(-1px);
+}
+.coop-home .coop-news-section { position: relative; overflow: hidden; padding: 48px 0 52px !important; background: #1b3810 !important; border-top: 1px solid #2d5a1b !important; }
+.coop-home .coop-news-section::before { content: ""; position: absolute; width: 430px; height: 120px; right: -100px; bottom: -60px; border-radius: 50%; background: rgba(255,255,255,.05); transform: rotate(-14deg); }
 .coop-home .coop-news-section .coop-section-heading { position: relative; z-index: 1; }
-.coop-home .coop-news-section .coop-section-heading h2 { color: #fff !important; text-shadow: 1px 2px 0 rgba(0,0,0,.2); }
-.coop-home .coop-news-section .coop-section-heading p { color: #dce9c8 !important; }
-.coop-home .coop-news-section .coop-eyebrow { background: var(--xl-lime) !important; color: var(--xl-forest) !important; }
-.coop-home .coop-news-card { position: relative; z-index: 1; overflow: hidden; border: 1px solid #d7e6ba !important; border-radius: 7px 24px 7px 24px !important; background: #fff !important; box-shadow: 5px 6px 0 #9cbd45 !important; transition: transform .2s ease; }
-.coop-home .coop-news-card:hover { transform: translateY(-4px); }
-.coop-home .coop-news-image { overflow: hidden; }
-.coop-home .coop-news-image img { transition: transform .35s ease; }
+.coop-home .coop-news-section .coop-section-heading h2 { color: #fff !important; }
+.coop-home .coop-news-section .coop-section-heading p { color: #cbd5e1 !important; }
+.coop-home .coop-news-section .coop-eyebrow { background: #fde047 !important; color: #1e293b !important; border-radius: 6px; padding: 4px 10px; }
+.coop-home .coop-news-section .coop-text-link {
+  color: #fbe488 !important;
+  border-bottom: 1.5px solid #fbe488 !important;
+  padding-bottom: 2px !important;
+  font-size: 11.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  text-decoration: none !important;
+  transition: color 0.2s ease, border-color 0.2s ease !important;
+}
+.coop-home .coop-news-section .coop-text-link:hover {
+  color: #ffffff !important;
+  border-bottom-color: #ffffff !important;
+}
+.coop-home .coop-news-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+  align-items: stretch !important;
+}
+.coop-home .coop-news-card {
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+  transition: transform .2s ease;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+}
+.coop-home .coop-news-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.08) !important; }
+.coop-home .coop-news-image { height: 180px !important; overflow: hidden; flex-shrink: 0 !important; }
+.coop-home .coop-news-image img { width: 100% !important; height: 100% !important; object-fit: cover !important; transition: transform .35s ease; }
 .coop-home .coop-news-card:hover .coop-news-image img { transform: scale(1.05); }
-.coop-home .coop-news-image > span { padding: 6px 9px !important; border-radius: 3px 10px 3px 10px !important; background: var(--xl-lime) !important; color: var(--xl-forest) !important; font-size: 9px; font-weight: 900; }
-.coop-home .coop-news-copy { padding: 17px !important; }
-.coop-home .coop-news-copy small { color: var(--xl-green) !important; font-weight: 900; letter-spacing: .07em; }
-.coop-home .coop-news-copy h3 { color: var(--xl-forest) !important; font-size: 17px; line-height: 1.35; font-weight: 900; }
-.coop-home .coop-read-more { display: inline-block; margin-top: 5px; padding-bottom: 3px; color: var(--xl-forest) !important; border-bottom: 2px solid var(--xl-green) !important; font-weight: 850; }
-.coop-home .coop-benefits { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 0; padding-top: 22px; padding-bottom: 22px; border-top: 4px solid var(--xl-lime) !important; background: #f7fbe9 !important; }
-.coop-home .coop-benefits > div { padding: 12px 20px; border-right: 1px solid #d5e3b7 !important; }
+.coop-home .coop-news-image > span { padding: 4px 8px !important; border-radius: 4px !important; background: #16a34a !important; color: #fff !important; font-size: 9.5px; font-weight: 700; }
+.coop-home .coop-news-copy {
+  padding: 18px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+}
+.coop-home .coop-news-copy small {
+  color: #16a34a !important;
+  font-weight: 700;
+  letter-spacing: .05em;
+  font-size: 11px;
+  margin-bottom: 6px !important;
+}
+.coop-home .coop-news-copy h3 {
+  color: #1e293b !important;
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: 700;
+  min-height: 44px !important;
+  margin: 0 0 14px 0 !important;
+}
+.coop-home .coop-read-more {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin-top: auto !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  color: #165b32 !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  border-bottom: 1.5px solid transparent !important;
+  width: fit-content !important;
+  transition: all 0.2s ease !important;
+}
+.coop-home .coop-news-card:hover .coop-read-more {
+  color: #0d3922 !important;
+  border-bottom-color: #0d3922 !important;
+}
+.coop-home .coop-benefits { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 0; padding-top: 22px; padding-bottom: 22px; border-top: 1px solid #e2e8f0 !important; background: #f8fafc !important; }
+.coop-home .coop-benefits > div { padding: 12px 20px; border-right: 1px solid #e2e8f0 !important; }
 .coop-home .coop-benefits > div:last-child { border-right: 0 !important; }
-.coop-home .coop-benefits strong { display: block; margin-bottom: 5px; color: var(--xl-forest) !important; font-size: 13px; font-weight: 900; }
-.coop-home .coop-benefits small { color: #68755a !important; font-size: 11px; }
-.coop-home .coop-loading, .coop-home .coop-empty { padding: 28px; border: 1px dashed #b7ce7c; border-radius: 5px 18px 5px 18px; background: #f6fae8; color: var(--xl-forest); font-weight: 700; }
+.coop-home .coop-benefits strong { display: block; margin-bottom: 4px; color: #1e293b !important; font-size: 13px; font-weight: 700; }
+.coop-home .coop-benefits small { color: #64748b !important; font-size: 11.5px; }
+.coop-home .coop-loading, .coop-home .coop-empty { padding: 28px; border: 1px dashed #cbd5e1; border-radius: 12px; background: #f8fafc; color: #475569; font-weight: 600; }
 
 @media (max-width: 1000px) {
   .coop-home .coop-hero { grid-template-columns: minmax(0,1fr); }
@@ -890,44 +2263,44 @@
   .coop-home .coop-container { width: min(100% - 28px, 1240px); }
   .coop-home .service-inner { gap: 8px; padding: 9px 0; font-size: 10px; }
   .coop-home .coop-hero { padding-top: 18px; }
-  .coop-home .coop-hero-main, .coop-home .coop-hero-main img { min-height: 400px; }
-  .coop-home .coop-hero-main { border-radius: 20px 5px 20px 5px !important; box-shadow: 5px 5px 0 var(--xl-lime) !important; }
-  .coop-home .coop-hero-copy { padding: 24px !important; }
-  .coop-home .coop-hero-copy h1 { font-size: clamp(35px, 10vw, 50px) !important; }
+  .coop-home .coop-hero-main, .coop-home .coop-hero-main img { min-height: 380px; }
+  .coop-home .coop-hero-main { border-radius: 14px !important; box-shadow: 0 2px 10px rgba(0,0,0,0.06) !important; }
+  .coop-home .coop-hero-copy { padding: 20px !important; }
+  .coop-home .coop-hero-copy h1 { font-size: clamp(28px, 8vw, 40px) !important; }
   .coop-home .coop-hero-copy p { font-size: 13px; }
   .coop-home .coop-hero-side { gap: 10px; }
   .coop-home .coop-side-promo > div { padding: 12px !important; }
-  .coop-home .coop-side-promo h2 { font-size: 17px; }
+  .coop-home .coop-side-promo h2 { font-size: 16px; }
   .coop-home .coop-side-promo p { font-size: 11px; }
   .coop-home .coop-category-nav { grid-template-columns: repeat(2, minmax(0,1fr)) !important; gap: 16px 12px !important; padding-top: 24px !important; }
   .coop-home .coop-category-img { width: 116px; height: 84px; }
   .coop-home .coop-category-name { font-size: 13px; margin-top: 6px; }
-  .coop-home .coop-section { padding-top: 34px; padding-bottom: 38px; }
-  .coop-home .coop-section-heading { align-items: start; flex-direction: column; gap: 12px; }
-  .coop-home .coop-section-heading h2 { font-size: 30px !important; }
+  .coop-home .coop-section { padding-top: 30px; padding-bottom: 34px; }
+  .coop-home .coop-section-heading { align-items: start; flex-direction: column; gap: 10px; }
+  .coop-home .coop-section-heading h2 { font-size: 26px !important; }
   .coop-home .coop-voucher-grid { grid-template-columns: minmax(0,1fr) !important; }
-  .coop-home .coop-department-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 11px !important; }
-  .coop-home .coop-department-name { padding: 11px !important; }
+  .coop-home .coop-department-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px !important; }
+  .coop-home .coop-department-name { padding: 10px !important; }
   .coop-home .coop-department-name strong { font-size: 13px; }
-  .coop-home .coop-flash-panel { padding: 16px !important; border-radius: 7px 24px 7px 24px !important; box-shadow: 5px 6px 0 #d9ed9e !important; }
-  .coop-home .coop-flash-heading { display: flex; flex-direction: column; gap: 18px; }
-  .coop-home .coop-flash-heading h2 { font-size: 32px !important; }
+  .coop-home .coop-flash-panel { padding: 16px !important; border-radius: 14px !important; box-shadow: 0 2px 10px rgba(0,0,0,0.06) !important; }
+  .coop-home .coop-flash-heading { display: flex; flex-direction: column; gap: 14px; }
+  .coop-home .coop-flash-heading h2 { font-size: 28px !important; }
   .coop-home .coop-countdown { width: fit-content; }
   .coop-home .coop-product-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap: 10px !important; }
-  .coop-home .coop-product-info { padding: 11px !important; }
+  .coop-home .coop-product-info { padding: 10px !important; }
   .coop-home .coop-product-info h3 { font-size: 13px !important; }
   .coop-home .coop-product-info p { font-size: 11px !important; }
-  .coop-home .coop-price-row strong { font-size: 17px !important; }
-  .coop-home .coop-add-btn { min-height: 39px; font-size: 12px; }
-  .coop-home .coop-editorial-banner { padding: 23px !important; border-radius: 8px 28px 8px 28px !important; box-shadow: 5px 6px 0 #e2edc6 !important; }
-  .coop-home .coop-editorial-copy h2 { font-size: 34px !important; }
-  .coop-home .coop-editorial-images { grid-template-rows: repeat(2, 100px); gap: 7px; }
-  .coop-home .coop-origin-layout { grid-template-columns: minmax(0,1fr); gap: 26px; padding: 17px !important; }
-  .coop-home .coop-origin-copy h2 { font-size: 30px !important; }
-  .coop-home .coop-news-section { padding: 36px 0 42px !important; }
-  .coop-home .coop-news-grid { grid-template-columns: minmax(0,1fr) !important; gap: 14px; }
+  .coop-home .coop-price-row strong { font-size: 16px !important; }
+  .coop-home .coop-add-btn { min-height: 36px; font-size: 12px; }
+  .coop-home .coop-editorial-banner { padding: 20px !important; border-radius: 14px !important; box-shadow: 0 2px 10px rgba(0,0,0,0.06) !important; }
+  .coop-home .coop-editorial-copy h2 { font-size: 28px !important; }
+  .coop-home .coop-editorial-images { grid-template-rows: repeat(2, 90px); gap: 6px; }
+  .coop-home .coop-origin-layout { grid-template-columns: minmax(0,1fr); gap: 20px; padding: 16px !important; }
+  .coop-home .coop-origin-copy h2 { font-size: 26px !important; }
+  .coop-home .coop-news-section { padding: 32px 0 36px !important; }
+  .coop-home .coop-news-grid { grid-template-columns: minmax(0,1fr) !important; gap: 12px; }
   .coop-home .coop-benefits { grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .coop-home .coop-benefits > div { padding: 12px; border-bottom: 1px solid #d5e3b7; }
+  .coop-home .coop-benefits > div { padding: 10px; border-bottom: 1px solid #e2e8f0; }
   .coop-home .coop-benefits > div:nth-child(2) { border-right: 0 !important; }
   .coop-home .coop-benefits > div:nth-child(3), .coop-home .coop-benefits > div:nth-child(4) { border-bottom: 0; }
 }
@@ -1062,4 +2435,102 @@
 @keyframes popIn {
   from { transform: scale(0.9) translateY(12px); opacity: 0; }
   to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* ── Floating Voucher Toast Popup (Fixed Bottom-Right) ── */
+.coop-voucher-toast-popup {
+  position: fixed !important;
+  bottom: 28px !important;
+  right: 28px !important;
+  z-index: 999999 !important;
+  background: #ffffff !important;
+  border: 1.5px solid #165b32 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 32px rgba(10, 36, 20, 0.22) !important;
+  padding: 14px 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  max-width: 440px !important;
+  animation: slideInToast 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes slideInToast {
+  from {
+    transform: translateY(24px) scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.coop-toast-icon {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  background: #f0fdf4 !important;
+  color: #165b32 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 20px !important;
+  flex-shrink: 0 !important;
+}
+
+.coop-toast-body {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  font-size: 13px !important;
+  color: #1f2937 !important;
+  line-height: 1.4 !important;
+}
+
+.coop-toast-msg {
+  font-weight: 600 !important;
+  color: #111827 !important;
+}
+
+.coop-toast-link {
+  color: #165b32 !important;
+  font-weight: 700 !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+  font-size: 12px !important;
+  transition: color 0.2s ease !important;
+}
+
+.coop-toast-link:hover {
+  color: #0c331c !important;
+}
+
+.coop-toast-close {
+  background: transparent !important;
+  border: none !important;
+  color: #9ca3af !important;
+  cursor: pointer !important;
+  padding: 6px !important;
+  border-radius: 6px !important;
+  margin-left: auto !important;
+  font-size: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: color 0.2s, background 0.2s !important;
+}
+
+.coop-toast-close:hover {
+  color: #374151 !important;
+  background: #f3f4f6 !important;
+}
+
+@media (max-width: 640px) {
+  .coop-voucher-toast-popup {
+    left: 16px !important;
+    right: 16px !important;
+    bottom: 20px !important;
+    max-width: none !important;
+  }
 }

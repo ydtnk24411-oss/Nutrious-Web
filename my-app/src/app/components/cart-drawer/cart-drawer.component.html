@@ -137,7 +137,7 @@
           <div class="xanhla-drawer-total">
             <span>Tổng cộng</span>
             <span [style.color]="selectedCount > 0 ? 'var(--xanh-moss)' : 'var(--xanh-muted)'">
-              {{ selectedCount > 0 ? formatPrice(selectedSubtotal) : '—' }}
+              {{ selectedCount > 0 ? formatPrice(selectedSubtotal) : '-' }}
             </span>
           </div>
           @if (selectedCount === 0) {

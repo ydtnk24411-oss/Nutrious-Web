@@ -70,7 +70,7 @@
         <div>
           <span class="section-pill">FLASH SALE TRONG NGÀY</span>
           <h2 class="promo-section-title">Deal Nông Sản Tươi Sạch Giá Cực Tốt</h2>
-          <p class="promo-section-sub">Dữ liệu Flash Sale đồng bộ trực tiếp với Trang chủ — Thêm vào giỏ hoặc Mua ngay với giá ưu đãi</p>
+          <p class="promo-section-sub">Dữ liệu Flash Sale đồng bộ trực tiếp với Trang chủ - Thêm vào giỏ hoặc Mua ngay với giá ưu đãi</p>
         </div>
         <div class="promo-flash-timer-box">
           <span class="pft-icon"><i class="bi bi-clock-history"></i></span>
@@ -151,11 +151,11 @@
                       <span>Tạm hết hàng</span>
                     </button>
                   } @else {
-                    <button type="button" class="fs-add-btn" (click)="addDealToCart(deal, $event)">
+                    <button type="button" class="fs-add-btn" (click)="addDealToCart(deal, $event)" [attr.aria-label]="'Thêm ' + deal.name + ' vào giỏ'">
                       <i class="bi bi-cart-plus"></i>
                       <span>THÊM GIỎ</span>
                     </button>
-                    <button type="button" class="fs-buynow-btn" (click)="openBuyNowDeal(deal)">
+                    <button type="button" class="fs-buynow-btn" (click)="openBuyNowDeal(deal)" [attr.aria-label]="'Mua ngay ' + deal.name">
                       <i class="bi bi-lightning-charge-fill"></i>
                       <span>Mua ngay</span>
                     </button>
@@ -180,7 +180,7 @@
           <div>
             <span class="section-pill section-pill--amber">COMBO ĐI CHỢ THÔNG MINH</span>
             <h2 class="promo-section-title">Combo Nguyên Liệu Theo Bữa Ăn Tiết Kiệm</h2>
-            <p class="promo-section-sub">Trọn bộ nguyên liệu tươi sạch từ thực đơn dinh dưỡng — Giảm ngay 22% kèm mã ưu đãi</p>
+            <p class="promo-section-sub">Trọn bộ nguyên liệu tươi sạch từ thực đơn dinh dưỡng - Giảm ngay 22% kèm mã ưu đãi</p>
           </div>
           <a routerLink="/nutrition" class="promo-section-link">Thiết kế thực đơn riêng →</a>
         </div>
