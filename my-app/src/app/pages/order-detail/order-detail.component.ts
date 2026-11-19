@@ -1,3 +1,4 @@
+// Updated order cancellation rules
 import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -264,6 +265,10 @@ export class OrderDetailComponent implements OnInit {
   }
 
   cancelOrder(): void {
+    if (!this.canCancelOrder()) {
+      alert('Đơn hàng đã bước sang khâu chuẩn bị hàng hoặc đang giao, không thể hủy lúc này.');
+      return;
+    }
     this.openCancelModal();
   }
 
@@ -290,6 +295,11 @@ export class OrderDetailComponent implements OnInit {
   confirmCancelOrder(): void {
     const currentOrder = this.order();
     if (!currentOrder || this.cancelling()) return;
+
+    if (!this.canCancelOrder()) {
+      alert('Đơn hàng đã bước sang khâu chuẩn bị hàng hoặc đang giao, không thể hủy lúc này.');
+      return;
+    }
 
     const mainReason = this.selectedCancelReason().trim();
     if (!mainReason) {
