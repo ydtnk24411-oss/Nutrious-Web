@@ -21,6 +21,7 @@ const orderItemSchema = new mongoose.Schema(
     addonDiscountValue:    { type: Number, default: 0 },
     addonSaving:           { type: Number, default: 0 },
     discountedByAddon:     { type: Boolean, default: false },
+    isFlashSale:           { type: Boolean, default: false },
     promoNote:             { type: String, default: '' },
   },
   { _id: false }

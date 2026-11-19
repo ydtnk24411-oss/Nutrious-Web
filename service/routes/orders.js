@@ -220,6 +220,16 @@ function isFreshPerishableProduct(prod) {
   return { isFresh: false, categoryName: '' };
 }
 
+function resolveActiveFlashSale(prod, flashSaleByKey) {
+  if (!prod || !flashSaleByKey || flashSaleByKey.size === 0) return null;
+  return (
+    flashSaleByKey.get(String(prod._id)) ||
+    (prod.slug ? flashSaleByKey.get(String(prod.slug).trim().toLowerCase()) : null) ||
+    (prod.name ? flashSaleByKey.get(String(prod.name).trim().toLowerCase()) : null) ||
+    null
+  );
+}
+
 async function handleFlashSaleOrderConfirmed(order) {
   if (!order || !Array.isArray(order.items)) return;
   for (const item of order.items) {
@@ -310,6 +320,24 @@ router.post(
       const regularEntries = [];
       const addonEntries = [];
       const detectedNonRefundableItems = [];
+
+      // Nạp các Flash Sale đang diễn ra và còn suất ưu đãi để đồng bộ giá từ DB
+      const nowFs = new Date();
+      const activeFlashSales = await FlashSale.find({
+        isActive: true,
+        startDate: { $lte: nowFs },
+        endDate: { $gte: nowFs },
+      }).lean();
+      const flashSaleByKey = new Map();
+      const flashRemainingById = new Map();
+      for (const fsDoc of activeFlashSales) {
+        const rem = Math.max(0, Number(fsDoc.totalQuantity || 0) - Number(fsDoc.soldQuantity || 0));
+        if (rem <= 0) continue;
+        flashRemainingById.set(String(fsDoc._id), rem);
+        if (fsDoc.product) flashSaleByKey.set(String(fsDoc.product), fsDoc);
+        if (fsDoc.slug) flashSaleByKey.set(String(fsDoc.slug).trim().toLowerCase(), fsDoc);
+        if (fsDoc.name) flashSaleByKey.set(String(fsDoc.name).trim().toLowerCase(), fsDoc);
+      }
 
       for (const item of orderData.items) {
         const qty = Number(item.quantity);
@@ -469,12 +497,16 @@ router.post(
             linkedMainKey: String(item.linkedMainProduct).trim(),
           });
         } else {
+          const matchedFs = resolveActiveFlashSale(prod, flashSaleByKey);
+          const fsPrice = matchedFs ? Number(matchedFs.flashSalePrice || 0) : 0;
           regularEntries.push({
             inputItem: item,
             prod,
             prodId: prod._id.toString(),
             priceNum,
             qty,
+            flashSale: matchedFs && fsPrice > 0 && fsPrice < priceNum ? matchedFs : null,
+            flashSalePrice: matchedFs && fsPrice > 0 && fsPrice < priceNum ? fsPrice : 0,
           });
         }
       }
@@ -691,6 +723,31 @@ router.post(
           });
           serverSubtotal += finalUnitPrice * take;
           totalAddonSaving += saving;
+        }
+        if (remQty > 0 && reg.flashSale && reg.flashSalePrice > 0) {
+          const fsId = String(reg.flashSale._id);
+          const availFs = flashRemainingById.get(fsId) || 0;
+          const flashQty = Math.min(remQty, availFs);
+          if (flashQty > 0) {
+            flashRemainingById.set(fsId, availFs - flashQty);
+            finalItems.push({
+              product: reg.prodId,
+              productName: reg.prod.name,
+              productImage: reg.prod.image || reg.inputItem.productImage || '',
+              productPrice: `${reg.flashSalePrice.toLocaleString('vi-VN')}đ`,
+              priceNumber: reg.flashSalePrice,
+              originalPriceNumber: reg.priceNum,
+              quantity: flashQty,
+              selectedOption: reg.inputItem.selectedOption || '',
+              itemType: 'regular',
+              addonSaving: 0,
+              discountedByAddon: false,
+              isFlashSale: true,
+              promoNote: 'Ưu đãi Flash Sale',
+            });
+            serverSubtotal += reg.flashSalePrice * flashQty;
+            remQty -= flashQty;
+          }
         }
         if (remQty > 0) {
           finalItems.push({
@@ -1129,179 +1186,18 @@ router.post(
         order = await Order.create(orderData);
         // O2O: Tự động tăng reservedStock (tồn kho tạm giữ) tại cửa hàng được giao đơn
         assignedStoreId = order.warehouseId || order.pickupStore?.id || order.pickupStoreId || order.storeId || req.body.warehouseId || req.body.pickupStore?.id || req.body.pickupStoreId || req.body.storeId || assignedStoreId;
-        for (const r of deductedReservations) {
-          await StoreInventory.findOneAndUpdate(
-            { storeId: assignedStoreId, productId: r.pid },
-            { $inc: { physicalStock: -r.qty, reservedStock: r.qty } },
-            { upsert: false }
-          );
-          await Product.findByIdAndUpdate(r.pid, { $inc: { reservedStock: r.qty } });
 
-          // Kế toán: Ghi nhận nhật ký giữ hàng cho đơn đặt online
-          InventoryLog.create({
-            product: r.pid,
-            productName: r.productName,
-            type: 'order_confirmed',
-            storeId: assignedStoreId,
-            referenceId: order.orderCode || String(order._id),
-            delta: -r.qty,
-            oldStock: r.oldStock,
-            newStock: r.newStock,
-            reason: `Đơn hàng [${order.orderCode || order._id}]: Tạm giữ ${r.qty} sản phẩm tại kho để đóng gói giao hàng`,
-            note: r.reasons ? r.reasons.join(', ') : '',
-          }).catch(() => {});
-        }
-
-        // Tự động đồng bộ địa chỉ giao hàng vào Sổ địa chỉ (User.addresses) của khách hàng
-        if (order.user) {
-          try {
-            const customer = await User.findById(order.user);
-            if (customer) {
-              const addrText = String(order.shippingAddress || '').trim();
-              if (addrText && order.shippingMethod !== 'pickup') {
-                if (!Array.isArray(customer.addresses)) customer.addresses = [];
-                const coords = order.shippingCoordinates || {};
-                const exists = customer.addresses.some(
-                  (a) => a.address && (a.address === addrText || addrText.includes(a.address))
-                );
-                if (!exists) {
-                  // Đặt địa chỉ vừa mua hàng làm mặc định trong Sổ địa chỉ
-                  customer.addresses = customer.addresses.map((a) => ({
-                    ...a.toObject(),
-                    isDefault: false,
-                  }));
-                  customer.addresses.push({
-                    label: 'Địa chỉ nhận hàng',
-                    fullName: order.guestName || customer.name || 'Khách hàng',
-                    phone: order.guestPhone || customer.phone || '',
-                    address: addrText,
-                    city: 'TP. Hồ Chí Minh',
-                    province: '',
-                    ward: '',
-                    lat: typeof coords.lat === 'number' ? coords.lat : null,
-                    lng: typeof coords.lng === 'number' ? coords.lng : null,
-                    isDefault: true,
-                  });
-                  await customer.save();
-                }
-              }
-            }
-          } catch (addrErr) {
-            console.error('Lỗi tự động lưu sổ địa chỉ từ đơn hàng:', addrErr);
-          }
-        }
-        // Đánh dấu giỏ hàng đã chuyển đổi thành công (Converted)
-        const sessId = req.sessionID || req.headers['x-session-id'];
-        Cart.updateMany(
-          {
-            $or: [
-              ...(req.user?._id ? [{ customerId: req.user._id }] : []),
-              ...(sessId ? [{ sessionId: sessId }] : []),
-            ],
-            status: 'Active',
-          },
-          { $set: { status: 'Converted', convertedOrderId: order._id, lastUpdatedAt: new Date() } }
-        ).catch(() => {});
-        if (appliedOrderVoucher) await consumeVoucher(appliedOrderVoucher, req.user?._id, order._id);
-        if (appliedShipVoucher) await consumeVoucher(appliedShipVoucher, req.user?._id, order._id);
-
-        // Trừ điểm thưởng của khách hàng nếu có sử dụng điểm quy đổi tiền
-        if (actualPointsUsed > 0 && order.user) {
-          const updatedUser = await User.findByIdAndUpdate(
-            order.user,
-            { $inc: { points: -actualPointsUsed } },
-            { new: true }
-          );
-          PointTransaction.create({
-            user: order.user,
-            type: 'redeemed',
-            amount: actualPointsUsed,
-            description: `Dùng ${actualPointsUsed.toLocaleString('vi-VN')} điểm giảm ${pointDiscount.toLocaleString('vi-VN')}đ cho đơn #${order.orderCode}`,
-            order: order.orderCode,
-            balanceAfter: updatedUser?.points || 0,
-          }).catch(() => {});
-        }
-
-        // Tự động sinh bản ghi thanh toán song song (Dual-Write sang Payment)
-        try {
-          const basePCode = `PAY-${order.orderCode.replace('XL-', '')}`;
-          if (pointDiscount > 0) {
-            await Payment.create({
-              paymentCode: `${basePCode}-PTS`,
-              orderId: order._id,
-              orderCode: order.orderCode,
-              user: order.user || null,
-              paymentMethod: 'loyalty_points',
-              amount: pointDiscount,
-              pointsUsed: actualPointsUsed,
-              status: 'success',
-              paidAt: new Date(),
-              note: `Thanh toán bằng ${actualPointsUsed.toLocaleString('vi-VN')} điểm thưởng tích lũy (100 điểm = 1đ)`,
-            });
-          }
-          if (order.total > 0 || pointDiscount === 0) {
-            await Payment.create({
-              paymentCode: pointDiscount > 0 ? `${basePCode}-MAIN` : basePCode,
-              orderId: order._id,
-              orderCode: order.orderCode,
-              user: order.user || null,
-              paymentMethod: order.paymentMethod || 'cod',
-              amount: order.total,
-              pointsUsed: 0,
-              status: order.paymentStatus === 'paid' ? 'success' : 'pending',
-              paidAt: order.paidAt || null,
-              note: `Thanh toán đơn hàng qua ${order.paymentMethod.toUpperCase()}`,
-            });
-          }
-        } catch (payErr) {
-          console.error('Lỗi tự động sinh bản ghi Payment:', payErr);
-        }
-
-        // Tự động sinh bản ghi Vận đơn song song (Dual-Write sang Shipment)
-        try {
-          const sCode = `SHIP-${order.orderCode.replace('XL-', '')}`;
-          await Shipment.create({
-            shipmentCode: sCode,
-            orderId: order._id,
-            orderCode: order.orderCode,
-            warehouseId: order.warehouseId || 'store-thuduc',
-            shippingMethod: order.shippingMethod || 'delivery',
-            shippingAddress: order.shippingAddress || '',
-            shippingFee: order.shippingFee || 0,
-            codAmount: order.paymentMethod === 'cod' ? order.total : 0,
-            shipperName: order.shipperName || '',
-            shipperPhone: order.shipperPhone || '',
-            status: 'pending',
-            estimatedDeliveryTime: order.estimatedDeliveryTime || '',
-          });
-        } catch (shipErr) {
-          console.error('Lỗi tự động sinh bản ghi Shipment:', shipErr);
-        }
-
-        // Tự động sinh bản ghi OrderItem chuẩn hóa song song
-        try {
-          if (Array.isArray(order.items)) {
-            for (const it of order.items) {
-              await OrderItem.create({
-                orderId: order._id,
-                orderCode: order.orderCode,
-                product: String(it.product || ''),
-                productName: it.productName || 'Sản phẩm',
-                categoryName: it.categoryName || '',
-                productImage: it.productImage || '',
-                priceNumber: it.priceNumber || 0,
-                quantity: it.quantity || 1,
-                selectedOption: it.selectedOption || '',
-                isCombo: Boolean(it.isCombo),
-                itemType: it.itemType || 'regular',
-                discount: it.addonSaving || 0,
-                subtotal: (it.priceNumber || 0) * (it.quantity || 1) - (it.addonSaving || 0),
-              });
-            }
-          }
-        } catch (itemErr) {
-          console.error('Lỗi tự động sinh bản ghi OrderItem:', itemErr);
-        }
+        // Cập nhật tồn kho song song để tăng tốc tối đa
+        await Promise.all(
+          deductedReservations.map(async (r) => {
+            await StoreInventory.findOneAndUpdate(
+              { storeId: assignedStoreId, productId: r.pid },
+              { $inc: { physicalStock: -r.qty, reservedStock: r.qty } },
+              { upsert: false }
+            );
+            await Product.findByIdAndUpdate(r.pid, { $inc: { reservedStock: r.qty } });
+          })
+        );
       } catch (createErr) {
         for (const r of deductedReservations) {
           await Product.findByIdAndUpdate(r.pid, { $inc: { stock: r.qty } });
@@ -1309,60 +1205,12 @@ router.post(
         throw createErr;
       }
 
-      // Ghi nhận lịch sử trừ kho cho từng sản phẩm vật lý đã xuất
-      for (const r of deductedReservations) {
-        const viaCombo = r.reasons.some((rs) => rs.startsWith('Combo '));
-        await InventoryLog.create({
-          product: new mongoose.Types.ObjectId(r.pid),
-          productName: r.productName,
-          type: 'order_confirmed',
-          storeId: assignedStoreId,
-          referenceId: order.orderCode || String(order._id),
-          delta: -r.qty,
-          oldStock: r.oldStock,
-          newStock: r.newStock,
-          reason: viaCombo
-            ? `Đơn hàng ${order.orderCode} (${r.reasons.join('; ')})`
-            : `Đơn hàng ${order.orderCode}`,
-          note: viaCombo ? 'Trừ kho thành phần Combo khi đặt hàng' : 'Trừ kho khi tạo đơn hàng',
-          updatedBy: req.user?._id || null,
-        });
-      }
-
-      // Thông báo thời gian thực cho nhân viên Sales / Admin khi có đơn hàng mới
-      sendRealtimeNotification({
-        recipientRole: 'sales',
-        title: `Đơn hàng mới #${order.orderCode}`,
-        body: `Khách hàng ${order.guestName || order.customerName || (req.user ? req.user.name : 'Khách hàng')} vừa đặt đơn hàng trị giá ${order.total.toLocaleString('vi-VN')}đ.`,
-        type: 'order',
-        path: '/admin/orders',
-        orderId: order._id,
-      });
-
-      // Cảnh báo tồn kho thời gian thực cho Thủ kho / Admin nếu chạm ngưỡng cảnh báo
-      for (const r of deductedReservations) {
-        if (r.newStock <= 5) {
-          sendRealtimeNotification({
-            recipientRole: 'warehouse',
-            title: `Cảnh báo tồn kho thấp: ${r.productName}`,
-            body: `Sản phẩm "${r.productName}" vừa chạm ngưỡng cảnh báo, chỉ còn ${r.newStock} sản phẩm trong kho!`,
-            type: 'inventory',
-            path: '/admin/inventory',
-          });
-        }
-      }
-
-      // Gửi email xác nhận đặt hàng thành công tự động bất đồng bộ
-      sendOrderConfirmationEmail(order);
-
       // 5. Tạo link VietQR nếu phương thức là bank_transfer
       const vietQr = order.paymentMethod === 'bank_transfer'
         ? buildVietQrPayload(order)
         : { qrUrl: null, bankInfo: null };
 
-      if (typeof clearDashboardCache === 'function') clearDashboardCache();
-      if (typeof clearCache === 'function') clearCache();
-
+      // Phản hồi ngay lập tức cho khách hàng để màn hình thành công hiển thị siêu tốc (<300ms)
       res.status(201).json({
         success: true,
         orderCode: order.orderCode,
@@ -1384,6 +1232,217 @@ router.post(
           qrUrl: vietQr.qrUrl,
           bankInfo: vietQr.bankInfo,
         },
+      });
+
+      // Các nghiệp vụ phụ trợ (ghi log kế toán, vận đơn, payment, voucher, email, thông báo) thực thi bất đồng bộ
+      setImmediate(async () => {
+        try {
+          // Ghi nhận nhật ký giữ hàng & trừ kho cho từng sản phẩm vật lý (dùng insertMany hàng loạt)
+          const invLogs = [];
+          for (const r of deductedReservations) {
+            const viaCombo = r.reasons && r.reasons.some((rs) => rs.startsWith('Combo '));
+            invLogs.push({
+              product: new mongoose.Types.ObjectId(r.pid),
+              productName: r.productName,
+              type: 'order_confirmed',
+              storeId: assignedStoreId,
+              referenceId: order.orderCode || String(order._id),
+              delta: -r.qty,
+              oldStock: r.oldStock,
+              newStock: r.newStock,
+              reason: viaCombo
+                ? `Đơn hàng [${order.orderCode}]: ${r.reasons.join('; ')}`
+                : `Đơn hàng [${order.orderCode}]: Tạm giữ ${r.qty} sản phẩm tại kho để đóng gói giao hàng`,
+              note: viaCombo ? 'Trừ kho thành phần Combo khi đặt hàng' : 'Trừ kho khi tạo đơn hàng',
+              updatedBy: req.user?._id || null,
+            });
+          }
+          if (invLogs.length > 0) {
+            InventoryLog.insertMany(invLogs, { ordered: false }).catch(() => {});
+          }
+
+          // Tự động đồng bộ địa chỉ giao hàng vào Sổ địa chỉ (User.addresses) của khách hàng
+          if (order.user) {
+            try {
+              const customer = await User.findById(order.user);
+              if (customer) {
+                const addrText = String(order.shippingAddress || '').trim();
+                if (addrText && order.shippingMethod !== 'pickup') {
+                  if (!Array.isArray(customer.addresses)) customer.addresses = [];
+                  const coords = order.shippingCoordinates || {};
+                  const exists = customer.addresses.some(
+                    (a) => a.address && (a.address === addrText || addrText.includes(a.address))
+                  );
+                  if (!exists) {
+                    customer.addresses = customer.addresses.map((a) => ({
+                      ...a.toObject(),
+                      isDefault: false,
+                    }));
+                    customer.addresses.push({
+                      label: 'Địa chỉ nhận hàng',
+                      fullName: order.guestName || customer.name || 'Khách hàng',
+                      phone: order.guestPhone || customer.phone || '',
+                      address: addrText,
+                      city: 'TP. Hồ Chí Minh',
+                      province: '',
+                      ward: '',
+                      lat: typeof coords.lat === 'number' ? coords.lat : null,
+                      lng: typeof coords.lng === 'number' ? coords.lng : null,
+                      isDefault: true,
+                    });
+                    await customer.save();
+                  }
+                }
+              }
+            } catch (addrErr) {
+              console.error('Lỗi tự động lưu sổ địa chỉ từ đơn hàng:', addrErr);
+            }
+          }
+
+          // Đánh dấu giỏ hàng đã chuyển đổi thành công (Converted)
+          const sessId = req.sessionID || req.headers['x-session-id'];
+          Cart.updateMany(
+            {
+              $or: [
+                ...(req.user?._id ? [{ customerId: req.user._id }] : []),
+                ...(sessId ? [{ sessionId: sessId }] : []),
+              ],
+              status: 'Active',
+            },
+            { $set: { status: 'Converted', convertedOrderId: order._id, lastUpdatedAt: new Date() } }
+          ).catch(() => {});
+
+          if (appliedOrderVoucher) await consumeVoucher(appliedOrderVoucher, req.user?._id, order._id);
+          if (appliedShipVoucher) await consumeVoucher(appliedShipVoucher, req.user?._id, order._id);
+
+          // Trừ điểm thưởng của khách hàng nếu có sử dụng điểm quy đổi tiền
+          if (actualPointsUsed > 0 && order.user) {
+            const updatedUser = await User.findByIdAndUpdate(
+              order.user,
+              { $inc: { points: -actualPointsUsed } },
+              { new: true }
+            );
+            PointTransaction.create({
+              user: order.user,
+              type: 'redeemed',
+              amount: actualPointsUsed,
+              description: `Dùng ${actualPointsUsed.toLocaleString('vi-VN')} điểm giảm ${pointDiscount.toLocaleString('vi-VN')}đ cho đơn #${order.orderCode}`,
+              order: order.orderCode,
+              balanceAfter: updatedUser?.points || 0,
+            }).catch(() => {});
+          }
+
+          // Tự động sinh bản ghi thanh toán song song (Dual-Write sang Payment)
+          try {
+            const basePCode = `PAY-${order.orderCode.replace('XL-', '')}`;
+            if (pointDiscount > 0) {
+              await Payment.create({
+                paymentCode: `${basePCode}-PTS`,
+                orderId: order._id,
+                orderCode: order.orderCode,
+                user: order.user || null,
+                paymentMethod: 'loyalty_points',
+                amount: pointDiscount,
+                pointsUsed: actualPointsUsed,
+                status: 'success',
+                paidAt: new Date(),
+                note: `Thanh toán bằng ${actualPointsUsed.toLocaleString('vi-VN')} điểm thưởng tích lũy (100 điểm = 1đ)`,
+              });
+            }
+            if (order.total > 0 || pointDiscount === 0) {
+              await Payment.create({
+                paymentCode: pointDiscount > 0 ? `${basePCode}-MAIN` : basePCode,
+                orderId: order._id,
+                orderCode: order.orderCode,
+                user: order.user || null,
+                paymentMethod: order.paymentMethod || 'cod',
+                amount: order.total,
+                pointsUsed: 0,
+                status: order.paymentStatus === 'paid' ? 'success' : 'pending',
+                paidAt: order.paidAt || null,
+                note: `Thanh toán đơn hàng qua ${order.paymentMethod.toUpperCase()}`,
+              });
+            }
+          } catch (payErr) {
+            console.error('Lỗi tự động sinh bản ghi Payment:', payErr);
+          }
+
+          // Tự động sinh bản ghi Vận đơn song song (Dual-Write sang Shipment)
+          try {
+            const sCode = `SHIP-${order.orderCode.replace('XL-', '')}`;
+            await Shipment.create({
+              shipmentCode: sCode,
+              orderId: order._id,
+              orderCode: order.orderCode,
+              warehouseId: order.warehouseId || 'store-thuduc',
+              shippingMethod: order.shippingMethod || 'delivery',
+              shippingAddress: order.shippingAddress || '',
+              shippingFee: order.shippingFee || 0,
+              codAmount: order.paymentMethod === 'cod' ? order.total : 0,
+              shipperName: order.shipperName || '',
+              shipperPhone: order.shipperPhone || '',
+              status: 'pending',
+              estimatedDeliveryTime: order.estimatedDeliveryTime || '',
+            });
+          } catch (shipErr) {
+            console.error('Lỗi tự động sinh bản ghi Shipment:', shipErr);
+          }
+
+          // Tự động sinh bản ghi OrderItem chuẩn hóa song song (dùng insertMany hàng loạt)
+          try {
+            if (Array.isArray(order.items) && order.items.length > 0) {
+              const orderItemsDocs = order.items.map((it) => ({
+                orderId: order._id,
+                orderCode: order.orderCode,
+                product: String(it.product || ''),
+                productName: it.productName || 'Sản phẩm',
+                categoryName: it.categoryName || '',
+                productImage: it.productImage || '',
+                priceNumber: it.priceNumber || 0,
+                quantity: it.quantity || 1,
+                selectedOption: it.selectedOption || '',
+                isCombo: Boolean(it.isCombo),
+                itemType: it.itemType || 'regular',
+                discount: it.addonSaving || 0,
+                subtotal: (it.priceNumber || 0) * (it.quantity || 1) - (it.addonSaving || 0),
+              }));
+              await OrderItem.insertMany(orderItemsDocs, { ordered: false });
+            }
+          } catch (itemErr) {
+            console.error('Lỗi tự động sinh bản ghi OrderItem:', itemErr);
+          }
+
+          // Thông báo thời gian thực cho nhân viên Sales / Admin khi có đơn hàng mới
+          sendRealtimeNotification({
+            recipientRole: 'sales',
+            title: `Đơn hàng mới #${order.orderCode}`,
+            body: `Khách hàng ${order.guestName || order.customerName || (req.user ? req.user.name : 'Khách hàng')} vừa đặt đơn hàng trị giá ${order.total.toLocaleString('vi-VN')}đ.`,
+            type: 'order',
+            path: '/admin/orders',
+            orderId: order._id,
+          });
+
+          // Cảnh báo tồn kho thời gian thực cho Thủ kho / Admin nếu chạm ngưỡng cảnh báo
+          for (const r of deductedReservations) {
+            if (r.newStock <= 5) {
+              sendRealtimeNotification({
+                recipientRole: 'warehouse',
+                title: `Cảnh báo tồn kho thấp: ${r.productName}`,
+                body: `Sản phẩm "${r.productName}" vừa chạm ngưỡng cảnh báo, chỉ còn ${r.newStock} sản phẩm trong kho!`,
+                type: 'inventory',
+                path: '/admin/inventory',
+              });
+            }
+          }
+
+          // Gửi email xác nhận đặt hàng thành công tự động
+          sendOrderConfirmationEmail(order);
+
+          if (typeof clearDashboardCache === 'function') clearDashboardCache();
+          if (typeof clearCache === 'function') clearCache();
+        } catch (bgErr) {
+          console.error('Lỗi tiến trình nền sau đặt hàng:', bgErr);
+        }
       });
     } catch (err) { next(err); }
   }
