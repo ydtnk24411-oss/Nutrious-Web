@@ -50,10 +50,61 @@ const nutritionConfigSchema = new mongoose.Schema(
       title: { type: String, default: '' },
       subtitle: { type: String, default: '' },
       bannerImage: { type: String, default: '' },
+      fallbackFoodImage: { type: String, default: '' },
     },
     goals: [nutritionGoalSchema],
     mealPlans: [nutritionMealPlanSchema],
     ingredientAliases: [ingredientAliasSchema],
+    quickSearchTags: [
+      {
+        label: { type: String, required: true },
+        query: { type: String, required: true },
+      },
+    ],
+    plannerConfig: {
+      weekDays: [
+        {
+          key: { type: String, required: true },
+          label: { type: String, required: true },
+          short: { type: String, required: true },
+        },
+      ],
+      mealSlots: [
+        {
+          key: { type: String, required: true },
+          label: { type: String, required: true },
+          time: { type: String, required: true },
+          icon: { type: String, default: '' },
+        },
+      ],
+      lightRecipeIds: [{ type: String }],
+      nutrientBoostOptions: [
+        {
+          id: { type: String, required: true },
+          label: { type: String, required: true },
+          desc: { type: String, default: '' },
+        },
+      ],
+      healthGoals: [
+        {
+          id: { type: String, required: true },
+          title: { type: String, required: true },
+          subtitle: { type: String, default: '' },
+          badge: { type: String, default: '' },
+          metrics: { type: String, default: '' },
+          mealsPerDay: { type: Number, default: 3 },
+          targetDailyKcal: { type: Number, default: 1650 },
+          targetProtein: { type: Number, default: 125 },
+          targetFiber: { type: Number, default: 28 },
+          targetCarbs: { type: Number, default: 130 },
+          priorityNutrients: [{ type: String }],
+          dayTheme: { type: String, default: '' },
+          weekDayThemes: { type: mongoose.Schema.Types.Mixed, default: {} },
+          defaultSingleDaySchedule: { type: mongoose.Schema.Types.Mixed, default: {} },
+          weeklySchedule: { type: mongoose.Schema.Types.Mixed, default: {} },
+        },
+      ],
+    },
     recipeDefaults: {
       cookTime: { type: String, default: '15 phút' },
       difficulty: { type: String, default: 'Dễ chế biến' },

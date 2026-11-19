@@ -1101,9 +1101,11 @@
                   />
                 }
               </div>
-              <div class="otp-demo-badge">
-                <span><i class="bi bi-lightning-charge-fill" style="color:#eab308"></i> Môi trường thử nghiệm: Mã OTP là <strong>{{ changePhoneDemoOtp() }}</strong></span>
-              </div>
+              @if (changePhoneDemoOtp()) {
+                <div class="otp-demo-badge">
+                  <span><i class="bi bi-lightning-charge-fill" style="color:#eab308"></i> Môi trường thử nghiệm: Mã OTP là <strong>{{ changePhoneDemoOtp() }}</strong></span>
+                </div>
+              }
               <div class="acc-dialog-actions" style="margin-top:16px">
                 <button type="button" class="acc-btn-outline" (click)="changePhoneStep.set('input')">Quay lại</button>
                 <button type="button" class="acc-btn-primary" [disabled]="changePhoneLoading()" (click)="submitChangePhoneVerify()">

@@ -399,6 +399,212 @@ function matchCatalogueProduct(
   return byNorm || null;
 }
 
+const DEFAULT_HERO_CONFIG: NutritionHeroConfig = {
+  kicker: '🥗 Trợ Lý Thực Đơn Khoa Học - Dữ Liệu Trực Tuyến',
+  title: 'Dinh dưỡng thông minh & Thực đơn chuẩn vị',
+  subtitle:
+    'Khám phá các gói thực đơn dinh dưỡng tiết kiệm, xem chi tiết công thức chế biến từng bước, bảng thành phần vi chất và thêm trọn bộ nguyên liệu tươi sạch vào giỏ hàng chỉ với một chạm.',
+  bannerImage: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&h=520&fit=crop',
+  fallbackFoodImage: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=700&q=80',
+};
+
+const DEFAULT_QUICK_SEARCH_TAGS: QuickSearchTag[] = [
+  { label: 'Sữa chua', query: 'sữa chua' },
+  { label: 'Cá hồi', query: 'cá hồi' },
+  { label: 'Quả bơ', query: 'bơ' },
+  { label: 'Thịt gà', query: 'gà' },
+  { label: 'Dâu tây', query: 'dâu tây' },
+  { label: 'Thịt bò', query: 'thịt bò' },
+  { label: 'Nấm đông cô', query: 'nấm' },
+];
+
+const DEFAULT_PLANNER_CONFIG: NutritionPlannerConfig = {
+  weekDays: [
+    { key: 'mon', label: 'Thứ 2', short: 'T2' },
+    { key: 'tue', label: 'Thứ 3', short: 'T3' },
+    { key: 'wed', label: 'Thứ 4', short: 'T4' },
+    { key: 'thu', label: 'Thứ 5', short: 'T5' },
+    { key: 'fri', label: 'Thứ 6', short: 'T6' },
+    { key: 'sat', label: 'Thứ 7', short: 'T7' },
+    { key: 'sun', label: 'Chủ Nhật', short: 'CN' },
+  ],
+  mealSlots: [
+    { key: 'breakfast', label: 'Bữa Sáng Năng Lượng', time: '07:00 – 08:30', icon: 'bi-brightness-high' },
+    { key: 'lunch', label: 'Bữa Trưa Đủ Chất', time: '11:30 – 13:00', icon: 'bi-sun' },
+    { key: 'snack', label: 'Bữa Phụ & Sữa Chua', time: '15:30 – 16:30', icon: 'bi-cup-straw' },
+    { key: 'dinner', label: 'Bữa Tối Thanh Đạm', time: '18:30 – 20:00', icon: 'bi-moon-stars' },
+  ],
+  lightRecipeIds: [
+    'sua-chua-hy-lap-trai-cay',
+    'sinh-to-dau-xoai',
+    'detox-cam-tao-ca-rot',
+    'sup-bi-do-hat-sen',
+    'salad-uc-ga-sot-sua-chua',
+  ],
+  nutrientBoostOptions: [
+    { id: 'protein', label: 'Tăng Đạm (Protein Xây Cơ)', desc: 'Thịt bò, ức gà, cá hồi, tôm sú' },
+    { id: 'fiber', label: 'Giàu Chất Xơ (No Lâu)', desc: 'Bông cải xanh, cải ngọt, bí đỏ' },
+    { id: 'probiotic', label: 'Lợi Khuẩn Sữa Chua', desc: 'Sữa chua Hy Lạp, men sống tiêu hóa' },
+    { id: 'omega3', label: 'Omega-3 & Tim Mạch', desc: 'Cá hồi Na Uy, quả bơ sáp' },
+    { id: 'vitamin', label: 'Vitamin Đẹp Da & Đề Kháng', desc: 'Dâu tây, cam sành, ớt chuông' },
+    { id: 'lowcarb', label: 'Low-Carb (Giảm Tinh Bột)', desc: 'Ưu tiên rau xanh & đạm nạc' },
+  ],
+  healthGoals: [
+    {
+      id: 'protein',
+      title: 'Tập Gym & Tăng Cơ',
+      subtitle: 'Tối ưu phục hồi & xây dựng cơ bắp với ức gà, thăn bò, cá hồi Na Uy, trứng gà ta.',
+      badge: '35% Đạm',
+      metrics: '~2.000 kcal - 145g Protein',
+      mealsPerDay: 4,
+      targetDailyKcal: 2000,
+      targetProtein: 145,
+      targetFiber: 30,
+      targetCarbs: 160,
+      priorityNutrients: ['protein', 'omega3', 'probiotic'],
+      dayTheme: 'Thực đơn Tập Gym Tăng Cơ: Giàu Đạm Tinh Khiết, Phục Hồi Năng Lượng & Săn Chắc Cơ Bắp',
+      weekDayThemes: {
+        mon: 'Thứ 2: Nạp Đạm Tinh Khiết & Khởi Động Cơ Bắp',
+        tue: 'Thứ 3: Tăng Sức Bền Với Bò Mỹ & Bông Cải Xanh',
+        wed: 'Thứ 4: Phục Hồi Cơ Chuyên Sâu Cùng Omega-3 Cá Hồi',
+        thu: 'Thứ 5: Siết Cơ Nạc Với Ức Gà & Sữa Chua Hy Lạp',
+        fri: 'Thứ 6: Bổ Sung Kẽm & Đạm Hải Sản Tôm Sú Cà Mau',
+        sat: 'Thứ 7: Năng Lượng Đỉnh Cao Cho Buổi Tập Cuối Tuần',
+        sun: 'Chủ Nhật: Giãn Cơ, Bù Khoáng & Tiêu Hóa Nhẹ Nhàng',
+      },
+      defaultSingleDaySchedule: {
+        breakfast: 'sua-chua-hy-lap-trai-cay',
+        lunch: 'bo-ap-chao-bong-cai',
+        snack: 'sinh-to-dau-xoai',
+        dinner: 'ca-hoi-ap-chao',
+      },
+      weeklySchedule: {
+        mon: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'bo-ap-chao-bong-cai', snack: 'sinh-to-dau-xoai', dinner: 'ca-hoi-ap-chao' },
+        tue: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'ca-rot-xao-thit-ga', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'tom-su-hap-cai-ngot' },
+        wed: { breakfast: 'sinh-to-dau-xoai', lunch: 'ca-hoi-ap-chao', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'salad-uc-ga-sot-sua-chua' },
+        thu: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'bo-ap-chao-bong-cai', snack: 'sinh-to-dau-xoai', dinner: 'heo-thao-moc-cuon-rau' },
+        fri: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'tom-su-hap-cai-ngot', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'salad-bo-ca-hoi' },
+        sat: { breakfast: 'sinh-to-dau-xoai', lunch: 'bo-ap-chao-bong-cai', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'ca-hoi-ap-chao' },
+        sun: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-ga-nuong', snack: 'sinh-to-dau-xoai', dinner: 'tom-su-hap-cai-ngot' },
+      },
+    },
+    {
+      id: 'eatclean',
+      title: 'Giảm Cân & Siết Mỡ (Eat Clean)',
+      subtitle: 'Thâm hụt calo lành mạnh, dồi dào chất xơ tự nhiên, loại bỏ đường tinh luyện.',
+      badge: 'Thâm hụt nhẹ',
+      metrics: '~1.350 kcal - 95g Protein',
+      mealsPerDay: 3,
+      targetDailyKcal: 1350,
+      targetProtein: 95,
+      targetFiber: 35,
+      targetCarbs: 90,
+      priorityNutrients: ['fiber', 'lowcarb', 'vitamin'],
+      dayTheme: 'Thực đơn Eat Clean Giảm Mỡ: Thâm Hụt Calo Thông Minh, Giàu Chất Xơ Tự Nhiên & Ít Tinh Bột',
+      weekDayThemes: {
+        mon: 'Thứ 2: Thanh Lọc Đầu Tuần & Thâm Hụt Calo Tự Nhiên',
+        tue: 'Thứ 3: Đốt Mỡ Thừa Với Chất Béo Tốt (Bơ Sáp & Cá Hồi)',
+        wed: 'Thứ 4: Nhẹ Bụng Đẹp Da Cùng Salad Ức Gà Sốt Sữa Chua',
+        thu: 'Thứ 5: Cân Bằng Đường Huyết & Giàu Chất Xơ Hoà Tan',
+        fri: 'Thứ 6: Detox Vitamin C & Chống Oxy Hóa Tươi Mát',
+        sat: 'Thứ 7: Eat Clean Cuối Tuần Ngon Miệng Không Lo Tăng Cân',
+        sun: 'Chủ Nhật: Nghỉ Ngơi, Bổ Sung Lợi Khuẩn & Làm Sạch Ruột',
+      },
+      defaultSingleDaySchedule: {
+        breakfast: 'sua-chua-hy-lap-trai-cay',
+        lunch: 'ca-hoi-ap-chao',
+        snack: 'sinh-to-dau-xoai',
+        dinner: 'salad-ga-nuong',
+      },
+      weeklySchedule: {
+        mon: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'ca-hoi-ap-chao', snack: 'sinh-to-dau-xoai', dinner: 'salad-ga-nuong' },
+        tue: { breakfast: 'sinh-to-dau-xoai', lunch: 'salad-bo-ca-hoi', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'tom-su-hap-cai-ngot' },
+        wed: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-uc-ga-sot-sua-chua', snack: 'detox-cam-tao-ca-rot', dinner: 'dau-hu-sot-nam-chay' },
+        thu: { breakfast: 'detox-cam-tao-ca-rot', lunch: 'ca-hoi-ap-chao', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'sup-bi-do-hat-sen' },
+        fri: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-ga-nuong', snack: 'sinh-to-dau-xoai', dinner: 'tom-su-hap-cai-ngot' },
+        sat: { breakfast: 'sinh-to-dau-xoai', lunch: 'salad-bo-ca-hoi', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'salad-uc-ga-sot-sua-chua' },
+        sun: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'ca-hoi-ap-chao', snack: 'detox-cam-tao-ca-rot', dinner: 'sup-bi-do-hat-sen' },
+      },
+    },
+    {
+      id: 'family',
+      title: 'Giữ Dáng & Cơm Nhà Cân Bằng',
+      subtitle: 'Cân đối vi chất chuẩn tháp dinh dưỡng, thanh mát, thơm ngon, dễ chuẩn bị cho cả nhà.',
+      badge: '4 nhóm chất',
+      metrics: '~1.750 kcal - Đủ 4 nhóm chất',
+      mealsPerDay: 3,
+      targetDailyKcal: 1750,
+      targetProtein: 110,
+      targetFiber: 28,
+      targetCarbs: 150,
+      priorityNutrients: ['protein', 'fiber', 'vitamin'],
+      dayTheme: 'Thực đơn Cơm Nhà Đủ Chất: Cân Bằng 4 Nhóm Dinh Dưỡng, Thơm Ngon Hợp Khẩu Vị Cả Nhà',
+      weekDayThemes: {
+        mon: 'Thứ 2: Cơm Nhà Đủ Chất Khởi Đầu Tuần Mới',
+        tue: 'Thứ 3: Đổi Vị Cuốn Rau Thảo Mộc & Canh Ngọt Thanh',
+        wed: 'Thứ 4: Bổ Sung Canxi & Sắt Cho Cả Gia Đình',
+        thu: 'Thứ 5: Bữa Cơm Ấm Cúng Giàu Omega-3 & Vitamin A',
+        fri: 'Thứ 6: Thực Đơn Thanh Mát, Dễ Tiêu Hóa Cho Người Lớn & Trẻ Nhỏ',
+        sat: 'Thứ 7: Tiệc Cuối Tuần Tươi Ngon Với Hải Sản & Rau Hữu Cơ',
+        sun: 'Chủ Nhật: Cân Bằng Dinh Dưỡng & Bữa Phụ Sữa Chua Trái Cây',
+      },
+      defaultSingleDaySchedule: {
+        breakfast: 'sua-chua-hy-lap-trai-cay',
+        lunch: 'canh-cai-xanh-thit-bo',
+        snack: 'sinh-to-dau-xoai',
+        dinner: 'ca-rot-xao-thit-ga',
+      },
+      weeklySchedule: {
+        mon: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'canh-cai-xanh-thit-bo', snack: 'sinh-to-dau-xoai', dinner: 'ca-rot-xao-thit-ga' },
+        tue: { breakfast: 'sinh-to-dau-xoai', lunch: 'heo-thao-moc-cuon-rau', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'tom-su-hap-cai-ngot' },
+        wed: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'bo-ap-chao-bong-cai', snack: 'detox-cam-tao-ca-rot', dinner: 'sup-bi-do-hat-sen' },
+        thu: { breakfast: 'sup-bi-do-hat-sen', lunch: 'ca-hoi-ap-chao', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'canh-cai-xanh-thit-bo' },
+        fri: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'ca-rot-xao-thit-ga', snack: 'sinh-to-dau-xoai', dinner: 'heo-thao-moc-cuon-rau' },
+        sat: { breakfast: 'sinh-to-dau-xoai', lunch: 'tom-su-hap-cai-ngot', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'bo-ap-chao-bong-cai' },
+        sun: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'ca-hoi-ap-chao', snack: 'sinh-to-dau-xoai', dinner: 'dau-hu-sot-nam-chay' },
+      },
+    },
+    {
+      id: 'yogurt_detox',
+      title: 'Thanh Lọc & Tiêu Hóa Khỏe',
+      subtitle: 'Bổ sung sữa chua men sống, sinh tố hạt chia thanh mát, nhẹ bụng sáng da.',
+      badge: '10 Tỷ Probiotics',
+      metrics: '~1.400 kcal - Lợi khuẩn đường ruột',
+      mealsPerDay: 4,
+      targetDailyKcal: 1400,
+      targetProtein: 85,
+      targetFiber: 36,
+      targetCarbs: 105,
+      priorityNutrients: ['probiotic', 'fiber', 'vitamin'],
+      dayTheme: 'Thực đơn Thanh Lọc & Tiêu Hóa Khỏe: Bổ Sung Probiotics Từ Sữa Chua Hy Lạp & Trái Cây Tươi',
+      weekDayThemes: {
+        mon: 'Thứ 2: Đánh Thức Hệ Vi Sinh Đường Ruột Với Sữa Chua Hy Lạp',
+        tue: 'Thứ 3: Thanh Lọc Cơ Thể & Bổ Sung Enzyme Tự Nhiên',
+        wed: 'Thứ 4: Tăng Cường Miễn Dịch Với Probiotics & Vitamin C',
+        thu: 'Thứ 5: Thực Đơn Nhẹ Bụng, Giảm Đầy Hơi & Tốt Cho Dạ Dày',
+        fri: 'Thứ 6: Trẻ Hóa Làn Da Với Dâu Tây, Xoài Cát & Sữa Chua Men Sống',
+        sat: 'Thứ 7: Phục Hồi Năng Lượng Xanh Từ Đạm Thực Vật & Nấm',
+        sun: 'Chủ Nhật: Thư Giãn Toàn Diện & Cân Bằng Hệ Tiêu Hóa',
+      },
+      defaultSingleDaySchedule: {
+        breakfast: 'sua-chua-hy-lap-trai-cay',
+        lunch: 'salad-uc-ga-sot-sua-chua',
+        snack: 'sinh-to-dau-xoai',
+        dinner: 'dau-hu-sot-nam-chay',
+      },
+      weeklySchedule: {
+        mon: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-uc-ga-sot-sua-chua', snack: 'sinh-to-dau-xoai', dinner: 'dau-hu-sot-nam-chay' },
+        tue: { breakfast: 'sinh-to-dau-xoai', lunch: 'salad-bo-ca-hoi', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'sup-bi-do-hat-sen' },
+        wed: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-ga-nuong', snack: 'detox-cam-tao-ca-rot', dinner: 'salad-uc-ga-sot-sua-chua' },
+        thu: { breakfast: 'detox-cam-tao-ca-rot', lunch: 'dau-hu-sot-nam-chay', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'tom-su-hap-cai-ngot' },
+        fri: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-uc-ga-sot-sua-chua', snack: 'sinh-to-dau-xoai', dinner: 'sup-bi-do-hat-sen' },
+        sat: { breakfast: 'sinh-to-dau-xoai', lunch: 'salad-bo-ca-hoi', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'dau-hu-sot-nam-chay' },
+        sun: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-uc-ga-sot-sua-chua', snack: 'detox-cam-tao-ca-rot', dinner: 'salad-ga-nuong' },
+      },
+    },
+  ],
+};
+
 @Component({
   selector: 'app-nutrition',
   standalone: true,
@@ -416,27 +622,15 @@ export class NutritionComponent implements OnInit {
 
   protected formatPrice = formatPrice;
 
-  // Dynamic data loaded from MongoDB via /api/nutrition and /api/products
-  heroConfig = signal<NutritionHeroConfig>({
-    kicker: '',
-    title: '',
-    subtitle: '',
-    bannerImage: '',
-    fallbackFoodImage: '',
-  });
+  // Dynamic data loaded from MongoDB via /api/nutrition and /api/products (with admin-branch defaults so onboarding & planner always initialize synchronously)
+  heroConfig = signal<NutritionHeroConfig>({ ...DEFAULT_HERO_CONFIG });
   private goalsSignal = signal<GoalItem[]>([]);
   private recipesDbSignal = signal<RecipeDbItem[]>([]);
   private mealPlansSignal = signal<MealPlanDeal[]>([]);
   private ingredientAliasesSignal = signal<IngredientAliasItem[]>([]);
   private recipeDefaultsSignal = signal<RecipeDefaultsConfig | null>(null);
-  private quickSearchTagsSignal = signal<QuickSearchTag[]>([]);
-  private plannerConfigSignal = signal<NutritionPlannerConfig>({
-    weekDays: [],
-    mealSlots: [],
-    lightRecipeIds: [],
-    nutrientBoostOptions: [],
-    healthGoals: [],
-  });
+  private quickSearchTagsSignal = signal<QuickSearchTag[]>([...DEFAULT_QUICK_SEARCH_TAGS]);
+  private plannerConfigSignal = signal<NutritionPlannerConfig>({ ...DEFAULT_PLANNER_CONFIG });
   catalogue = signal<ApiProduct[]>([]);
 
   get GOALS(): GoalItem[] {
@@ -504,8 +698,21 @@ export class NutritionComponent implements OnInit {
   private planRefreshTimer: ReturnType<typeof setTimeout> | undefined;
   private macroInputTimer: ReturnType<typeof setTimeout> | undefined;
 
-  singleDaySchedule = signal<DayMealPlanMap>({ breakfast: '', lunch: '', snack: '', dinner: '' });
-  weeklySchedule = signal<Record<string, DayMealPlanMap>>({});
+  singleDaySchedule = signal<DayMealPlanMap>({
+    breakfast: 'sua-chua-hy-lap-trai-cay',
+    lunch: 'bo-ap-chao-bong-cai',
+    snack: 'sinh-to-dau-xoai',
+    dinner: 'ca-hoi-ap-chao',
+  });
+  weeklySchedule = signal<Record<string, DayMealPlanMap>>({
+    mon: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'bo-ap-chao-bong-cai', snack: 'sinh-to-dau-xoai', dinner: 'ca-hoi-ap-chao' },
+    tue: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'ca-rot-xao-thit-ga', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'tom-su-hap-cai-ngot' },
+    wed: { breakfast: 'sinh-to-dau-xoai', lunch: 'ca-hoi-ap-chao', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'salad-uc-ga-sot-sua-chua' },
+    thu: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'bo-ap-chao-bong-cai', snack: 'sinh-to-dau-xoai', dinner: 'heo-thao-moc-cuon-rau' },
+    fri: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'tom-su-hap-cai-ngot', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'salad-bo-ca-hoi' },
+    sat: { breakfast: 'sinh-to-dau-xoai', lunch: 'bo-ap-chao-bong-cai', snack: 'sua-chua-hy-lap-trai-cay', dinner: 'ca-hoi-ap-chao' },
+    sun: { breakfast: 'sua-chua-hy-lap-trai-cay', lunch: 'salad-ga-nuong', snack: 'sinh-to-dau-xoai', dinner: 'tom-su-hap-cai-ngot' },
+  });
 
   // Dedicated detail view state (for viewing a dish or a meal plan on its own detail screen)
   selectedRecipeId = signal<string | null>(null);
@@ -1646,7 +1853,7 @@ export class NutritionComponent implements OnInit {
       this.weeklySchedule.update((prev) => ({
         ...prev,
         [targetDay]: {
-          ...prev[targetDay],
+          ...(prev[targetDay] || currentSched),
           [slotKey]: nextRecipe.id,
         },
       }));
@@ -1976,9 +2183,10 @@ export class NutritionComponent implements OnInit {
       this.onboardingCompleted.set(true);
       this.nutritionView.set('result');
     } else {
-      // A saved plan keeps its settings, but must not open the results view by itself.
-      // Show personalized results only after the user completes setup or explicitly requests view=result.
-      this.nutritionView.set('landing');
+      // Khi vào trang /nutrition không kèm param view:
+      // - Chưa thiết lập onboarding: hiện Hero Banner & danh sách món (landing)
+      // - Đã thiết lập trước đó: phục hồi Thực đơn tối ưu đã lưu
+      this.nutritionView.set(this.onboardingCompleted() ? 'result' : 'landing');
     }
 
     this.loading.set(true);
@@ -2034,8 +2242,18 @@ export class NutritionComponent implements OnInit {
           this.quickSearchTagsSignal.set(nutrition.data.quickSearchTags);
         }
         if (nutrition.data.plannerConfig) {
-          this.plannerConfigSignal.set(nutrition.data.plannerConfig);
-          const dbGoals = nutrition.data.plannerConfig.healthGoals || [];
+          const incoming = nutrition.data.plannerConfig;
+          const mergedPlanner: NutritionPlannerConfig = {
+            weekDays: incoming.weekDays?.length ? incoming.weekDays : DEFAULT_PLANNER_CONFIG.weekDays,
+            mealSlots: incoming.mealSlots?.length ? incoming.mealSlots : DEFAULT_PLANNER_CONFIG.mealSlots,
+            lightRecipeIds: incoming.lightRecipeIds?.length ? incoming.lightRecipeIds : DEFAULT_PLANNER_CONFIG.lightRecipeIds,
+            nutrientBoostOptions: incoming.nutrientBoostOptions?.length
+              ? incoming.nutrientBoostOptions
+              : DEFAULT_PLANNER_CONFIG.nutrientBoostOptions,
+            healthGoals: incoming.healthGoals?.length ? incoming.healthGoals : DEFAULT_PLANNER_CONFIG.healthGoals,
+          };
+          this.plannerConfigSignal.set(mergedPlanner);
+          const dbGoals = mergedPlanner.healthGoals || [];
           const matchedPreset = dbGoals.find((g) => g.id === this.plannerPreset()) || dbGoals[0];
           const hasStoredOnboarding =
             typeof window !== 'undefined' &&
@@ -2063,8 +2281,15 @@ export class NutritionComponent implements OnInit {
       }
       this.computeRecipes();
       if (this.onboardingCompleted() && this.nutritionView() === 'result') {
+        const curSingle = this.singleDaySchedule();
         const monPlan = this.weeklySchedule()?.['mon'];
-        const hasPlan = monPlan && monPlan.breakfast && monPlan.lunch;
+        const weekKeysCount = Object.keys(this.weeklySchedule() || {}).length;
+        const allSameDay =
+          !!curSingle?.breakfast &&
+          curSingle.breakfast === curSingle.lunch &&
+          curSingle.lunch === curSingle.dinner &&
+          this.allComputedRecipes().length > 1;
+        const hasPlan = !!monPlan?.breakfast && !!monPlan?.lunch && weekKeysCount >= 7 && !allSameDay;
         if (!hasPlan) {
           this.generateSmartPlan(false, false);
         }
@@ -2096,8 +2321,9 @@ export class NutritionComponent implements OnInit {
             this.generateSmartPlan(false, false);
           } else if (viewParam === 'landing') {
             this.nutritionView.set('landing');
+          } else if (this.onboardingCompleted()) {
+            this.nutritionView.set('result');
           } else {
-            // Returning to the plain /nutrition route always returns to the landing view.
             this.nutritionView.set('landing');
           }
         }

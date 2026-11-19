@@ -537,7 +537,7 @@ export class AccountComponent implements OnInit, OnDestroy {
   changePhoneSuccess = signal('');
   changePhoneCountdown = signal(60);
   changePhoneCanResend = signal(false);
-  changePhoneDemoOtp = signal('123456');
+  changePhoneDemoOtp = signal('');
   private phoneCountdownInterval: any = null;
 
   // ── Liên kết tài khoản Google ────────────────
@@ -596,9 +596,7 @@ export class AccountComponent implements OnInit, OnDestroy {
       password,
       (res) => {
         this.changePhoneLoading.set(false);
-        if (res.demoOtp) {
-          this.changePhoneDemoOtp.set(res.demoOtp);
-        }
+        this.changePhoneDemoOtp.set(res.demoOtp || '');
         this.changePhoneStep.set('otp');
         this.changePhoneOtpDigits.set(['', '', '', '', '', '']);
         this.startPhoneCountdown();
@@ -651,7 +649,7 @@ export class AccountComponent implements OnInit, OnDestroy {
       newPhone,
       password,
       (res) => {
-        if (res.demoOtp) this.changePhoneDemoOtp.set(res.demoOtp);
+        this.changePhoneDemoOtp.set(res.demoOtp || '');
         this.startPhoneCountdown();
         this.changePhoneOtpDigits.set(['', '', '', '', '', '']);
         setTimeout(() => this.focusPhoneOtp(0), 100);

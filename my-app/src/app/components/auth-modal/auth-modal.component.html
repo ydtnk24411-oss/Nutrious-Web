@@ -223,10 +223,12 @@
         </div>
 
         <!-- Demo mode badge -->
-        <div class="otp-demo-badge">
-          <i class="bi bi-lightning-charge-fill badge-icon" style="color:#eab308" aria-hidden="true"></i>
-          <span>Môi trường thử nghiệm: Mã OTP là <strong>{{ demoOtp() }}</strong></span>
-        </div>
+        @if (demoOtp()) {
+          <div class="otp-demo-badge">
+            <i class="bi bi-lightning-charge-fill badge-icon" style="color:#eab308" aria-hidden="true"></i>
+            <span>Môi trường thử nghiệm: Mã OTP là <strong>{{ demoOtp() }}</strong></span>
+          </div>
+        }
 
         <!-- Nút xác nhận OTP -->
         <button class="xanhla-btn-primary auth-submit-btn" type="button" [disabled]="otpLoading()"
@@ -315,10 +317,12 @@
         </div>
 
         <!-- Demo mode badge -->
-        <div class="otp-demo-badge">
-          <i class="bi bi-lightning-charge-fill badge-icon" style="color:#eab308" aria-hidden="true"></i>
-          <span>Môi trường thử nghiệm: Mã OTP là <strong>{{ demoOtp() }}</strong></span>
-        </div>
+        @if (demoOtp()) {
+          <div class="otp-demo-badge">
+            <i class="bi bi-lightning-charge-fill badge-icon" style="color:#eab308" aria-hidden="true"></i>
+            <span>Môi trường thử nghiệm: Mã OTP là <strong>{{ demoOtp() }}</strong></span>
+          </div>
+        }
 
         <!-- Nút xác nhận OTP -->
         <button class="xanhla-btn-primary auth-submit-btn" type="button" [disabled]="otpLoading()"
@@ -404,6 +408,60 @@
       }
 
       }
+    </div>
+  </div>
+</div>
+}
+
+<!-- POPUP ĐĂNG KÝ THÀNH CÔNG -->
+@if (registerSuccessName() !== null) {
+<div class="xanhla-modal-backdrop" (click)="closeRegisterSuccess()">
+  <div class="register-success-modal" role="dialog" aria-modal="true" aria-labelledby="register-success-title"
+    (click)="$event.stopPropagation()">
+    <button class="register-success-close" type="button" aria-label="Đóng"
+      (click)="closeRegisterSuccess()">
+      <i class="bi bi-x-lg" aria-hidden="true"></i>
+    </button>
+
+    <!-- Hero: nền xanh + logo -->
+    <div class="register-success-hero">
+      <span class="rs-confetti rs-c1"></span>
+      <span class="rs-confetti rs-c2"></span>
+      <span class="rs-confetti rs-c3"></span>
+      <span class="rs-confetti rs-c4"></span>
+      <span class="rs-confetti rs-c5"></span>
+      <span class="rs-confetti rs-c6"></span>
+      <span class="rs-leaf rs-leaf-left" aria-hidden="true"></span>
+      <span class="rs-leaf rs-leaf-right" aria-hidden="true"></span>
+
+      <div class="register-success-logo">
+        <img src="/logo.png" alt="Evergreen Mart" />
+        <span class="register-success-check" aria-hidden="true">
+          <i class="bi bi-check-lg"></i>
+        </span>
+      </div>
+    </div>
+
+    <div class="register-success-body">
+      <span class="register-success-eyebrow">Evergreen Mart</span>
+      <h3 id="register-success-title" class="register-success-title">Đăng ký thành công!</h3>
+      <p class="register-success-text">
+        Chào mừng
+        @if (registerSuccessName()) {
+        <strong>{{ registerSuccessName() }}</strong>
+        }
+        đã trở thành thành viên của <strong>Evergreen Mart</strong>.
+        Tài khoản của bạn đã được tạo và đăng nhập tự động.
+      </p>
+
+      <div class="register-success-actions">
+        <button type="button" class="register-success-btn" (click)="closeRegisterSuccess('shop')">
+          <i class="bi bi-basket2-fill" aria-hidden="true"></i> Bắt đầu mua sắm
+        </button>
+        <button type="button" class="register-success-btn-outline" (click)="closeRegisterSuccess('account')">
+          <i class="bi bi-person-circle" aria-hidden="true"></i> Xem tài khoản
+        </button>
+      </div>
     </div>
   </div>
 </div>

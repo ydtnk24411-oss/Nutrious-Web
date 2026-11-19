@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ShellComponent } from '../../components/shell/shell.component';
 import { CartService, formatPrice, calcAddOnUnitDiscount, resolveProductOption } from '../../shared/services/cart.service';
+import { API_BASE } from '../../shared/services/api.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { ReviewService, ReviewEligibility } from '../../shared/services/review.service';
 import { WishlistService } from '../../shared/services/wishlist.service';
@@ -965,7 +966,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
         sessionId: sessionStorage.getItem('xanhla_session_id') || 'guest_detail',
       });
       if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
-        navigator.sendBeacon('http://localhost:3000/api/analytics/telemetry', payload);
+        navigator.sendBeacon(`${API_BASE}/analytics/telemetry`, payload);
       }
     }
   }
