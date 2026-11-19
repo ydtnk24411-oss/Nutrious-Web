@@ -1,5 +1,5 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
-import { inject } from '@angular/core';
+import { inject, Injector } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, retry, throwError } from 'rxjs';
 import { API_BASE } from '../services/api.service';
@@ -7,7 +7,7 @@ import { CartService } from '../services/cart.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
-  const cartService = inject(CartService);
+  const injector = inject(Injector);
 
   const isInternalApi = req.url.startsWith(API_BASE) || req.url.startsWith('/');
   if (!isInternalApi) {
@@ -34,7 +34,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           router.navigate(['/admin/login'], { queryParams: { expired: '1' } });
         } else {
           // Storefront (localhost:4200): xóa phiên, yêu cầu đăng nhập lại
-          cartService.expireSession();
+          // Dùng injector.get để lazy-load CartService tránh Circular Dependency (NG0200)
+          try {
+            const cartService = injector.get(CartService);
+            cartService.expireSession();
+          } catch {
+            localStorage.removeItem('xanhla_auth_token');
+            localStorage.removeItem('xanhla_user_session');
+          }
         }
       }
       return throwError(() => err);
