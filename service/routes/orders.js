@@ -363,6 +363,41 @@ router.post(
         // Lấy giá chuẩn từ database (trường số priceNumber, KHÔNG parse chuỗi)
         const priceNum = typeof prod.priceNumber === 'number' ? prod.priceNumber : Number(prod.priceNumber || 0);
 
+        // Kiểm tra xem sản phẩm có đang trong chương trình Flash Sale hợp lệ còn số lượng hay không
+        let effectivePriceNum = priceNum;
+        let isFlashSaleItem = false;
+        if (!isComboEntity) {
+          const now = new Date();
+          const orFs = [];
+          if (mongoose.Types.ObjectId.isValid(prod._id)) {
+            orFs.push({ product: prod._id });
+          }
+          if (prod.slug) orFs.push({ slug: prod.slug });
+          if (prod.name) orFs.push({ name: prod.name });
+
+          const activeFlashSaleDoc = await FlashSale.findOne({
+            isActive: true,
+            $or: orFs,
+            $and: [
+              { $or: [{ startDate: { $exists: false } }, { startDate: null }, { startDate: { $lte: now } }] },
+              { $or: [{ endDate: { $exists: false } }, { endDate: null }, { endDate: { $gte: now } }] }
+            ]
+          });
+
+          if (
+            activeFlashSaleDoc &&
+            typeof activeFlashSaleDoc.flashSalePrice === 'number' &&
+            activeFlashSaleDoc.flashSalePrice > 0 &&
+            activeFlashSaleDoc.flashSalePrice < priceNum
+          ) {
+            const fsRemaining = Math.max(0, (activeFlashSaleDoc.totalQuantity || 0) - (activeFlashSaleDoc.soldQuantity || 0));
+            if (fsRemaining > 0) {
+              effectivePriceNum = activeFlashSaleDoc.flashSalePrice;
+              isFlashSaleItem = true;
+            }
+          }
+        }
+
         if (isComboEntity) {
           const comboPopFields = 'name price priceNumber image weight unit slug stock isActive';
           const popProd =
@@ -464,17 +499,21 @@ router.post(
             inputItem: item,
             prod,
             prodId: prod._id.toString(),
-            priceNum,
+            priceNum: effectivePriceNum,
+            originalPriceNum: priceNum,
             qty,
             linkedMainKey: String(item.linkedMainProduct).trim(),
+            isFlashSale: isFlashSaleItem,
           });
         } else {
           regularEntries.push({
             inputItem: item,
             prod,
             prodId: prod._id.toString(),
-            priceNum,
+            priceNum: effectivePriceNum,
+            originalPriceNum: priceNum,
             qty,
+            isFlashSale: isFlashSaleItem,
           });
         }
       }
@@ -544,9 +583,9 @@ router.post(
             product: ae.prodId,
             productName: ae.prod.name,
             productImage: ae.prod.image || ae.inputItem.productImage || '',
-            productPrice: ae.prod.price,
+            productPrice: `${ae.priceNum.toLocaleString('vi-VN')}đ`,
             priceNumber: ae.priceNum,
-            originalPriceNumber: ae.priceNum,
+            originalPriceNumber: ae.originalPriceNum || ae.priceNum,
             quantity: ae.qty,
             selectedOption: ae.inputItem.selectedOption || '',
             itemType: 'regular',
@@ -627,9 +666,9 @@ router.post(
               product: ae.prodId,
               productName: ae.prod.name,
               productImage: ae.prod.image || ae.inputItem.productImage || '',
-              productPrice: ae.prod.price,
+              productPrice: `${ae.priceNum.toLocaleString('vi-VN')}đ`,
               priceNumber: ae.priceNum,
-              originalPriceNumber: ae.priceNum,
+              originalPriceNumber: ae.originalPriceNum || ae.priceNum,
               quantity: pairedQty,
               selectedOption: ae.inputItem.selectedOption || '',
               itemType: 'addon',
@@ -648,9 +687,9 @@ router.post(
               product: ae.prodId,
               productName: ae.prod.name,
               productImage: ae.prod.image || ae.inputItem.productImage || '',
-              productPrice: ae.prod.price,
+              productPrice: `${ae.priceNum.toLocaleString('vi-VN')}đ`,
               priceNumber: ae.priceNum,
-              originalPriceNumber: ae.priceNum,
+              originalPriceNumber: ae.originalPriceNum || ae.priceNum,
               quantity: excessQty,
               selectedOption: ae.inputItem.selectedOption || '',
               itemType: 'regular',
@@ -677,9 +716,9 @@ router.post(
             product: reg.prodId,
             productName: reg.prod.name,
             productImage: reg.prod.image || reg.inputItem.productImage || '',
-            productPrice: reg.prod.price,
+            productPrice: `${finalUnitPrice.toLocaleString('vi-VN')}đ`,
             priceNumber: finalUnitPrice,
-            originalPriceNumber: reg.priceNum,
+            originalPriceNumber: reg.originalPriceNum || reg.priceNum,
             quantity: take,
             selectedOption: reg.inputItem.selectedOption || '',
             itemType: 'regular',
@@ -688,6 +727,7 @@ router.post(
             addonSaving: saving,
             discountedByAddon: true,
             promoNote: `Ưu đãi mua kèm cùng "${alloc.addonProdName}"`,
+            isFlashSale: Boolean(reg.isFlashSale),
           });
           serverSubtotal += finalUnitPrice * take;
           totalAddonSaving += saving;
@@ -697,14 +737,16 @@ router.post(
             product: reg.prodId,
             productName: reg.prod.name,
             productImage: reg.prod.image || reg.inputItem.productImage || '',
-            productPrice: reg.prod.price,
+            productPrice: `${reg.priceNum.toLocaleString('vi-VN')}đ`,
             priceNumber: reg.priceNum,
-            originalPriceNumber: reg.priceNum,
+            originalPriceNumber: reg.originalPriceNum || reg.priceNum,
             quantity: remQty,
             selectedOption: reg.inputItem.selectedOption || '',
             itemType: 'regular',
             addonSaving: 0,
             discountedByAddon: false,
+            isFlashSale: Boolean(reg.isFlashSale),
+            promoNote: reg.isFlashSale ? 'Ưu đãi Flash Sale' : '',
           });
           serverSubtotal += reg.priceNum * remQty;
         }
