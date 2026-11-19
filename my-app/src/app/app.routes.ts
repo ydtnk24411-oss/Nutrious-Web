@@ -145,7 +145,11 @@ export const routes: Routes = [
   { path: 'menus',                  redirectTo: 'online-ordering', pathMatch: 'full' },
   { path: 'menus-1',                redirectTo: 'online-ordering', pathMatch: 'full' },
   { path: 'category/all-products',  redirectTo: 'online-ordering', pathMatch: 'full' },
-  { path: 'category/:slug',         redirectTo: 'online-ordering', pathMatch: 'full' },
+  {
+    path: 'category/:slug',
+    redirectTo: (route) => `/online-ordering?category=${route.params['slug']}`,
+    pathMatch: 'full',
+  },
 
   // ── 404 Not Found Page ───────────────────────────────────────
   {
