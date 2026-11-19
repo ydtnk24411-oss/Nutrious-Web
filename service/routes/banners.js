@@ -111,6 +111,12 @@ const DEFAULT_POPUP = {
   endDate: null,
 };
 
+const LEGACY_MEDIA_IDS = new Set([
+  '6afe009e20f0b5e73e86e586',
+  '6afe00b520f0b5e73e86e5fe',
+  '6afe111137cea1a386b98ff0',
+]);
+
 async function getOrCreateConfig() {
   let cfg = await BannerConfig.findOne();
   if (!cfg) {
@@ -119,6 +125,16 @@ async function getOrCreateConfig() {
       promoPopup: DEFAULT_POPUP,
       updatedBy: 'system',
     });
+  } else {
+    const hasLegacy = (cfg.heroSlides || []).some(s =>
+      Array.from(LEGACY_MEDIA_IDS).some(id => String(s?.image || '').includes(id)) ||
+      ['9-9', 'hoi-vien', 'thuc-pham-sach'].some(k => String(s?.image || '').toLowerCase().includes(k))
+    );
+    if (hasLegacy || !cfg.heroSlides || cfg.heroSlides.length < 4) {
+      cfg.heroSlides = DEFAULT_SLIDES;
+      cfg.updatedBy = 'Auto-Sanitized Fresh Produce';
+      await cfg.save();
+    }
   }
   return cfg;
 }

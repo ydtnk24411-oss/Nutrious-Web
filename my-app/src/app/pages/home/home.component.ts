@@ -257,7 +257,16 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.http.get<any>(`${API_BASE}/banners`, { params: { _t: String(now) } }).subscribe({
       next: (res) => {
         if (res && res.success && res.data) {
-          const legacyBlacklist = ['9-9', 'hoi-vien', 'thuc-pham-sach'];
+          const legacyBlacklist = [
+            '9-9',
+            'hoi-vien',
+            'thuc-pham-sach',
+            'banner-9-9',
+            'banner-uu-dai-hoi-vien',
+            '6afe009e20f0b5e73e86e586',
+            '6afe00b520f0b5e73e86e5fe',
+            '6afe111137cea1a386b98ff0',
+          ];
           const activeSlides = (res.data.heroSlides || [])
             .map((s: any, idx: number) => ({ s, idx }))
             .filter(({ s }: { s: any }) => s && s.active !== false && String(s.image || '').trim().length > 0)
@@ -268,11 +277,7 @@ export class HomeComponent implements OnInit, OnDestroy {
             })
             .map(({ s }: { s: any }) => s);
 
-          const isCustomized = Boolean(
-            activeSlides.some((s: any) => String(s.image || '').includes('/api/banners/media/'))
-          );
-
-          if (activeSlides.length > 0 && isCustomized) {
+          if (activeSlides.length > 0) {
             const mapped = activeSlides.map((s: any, idx: number) => ({
               image: this.resolveMediaUrl(s.image),
               link: s.link || '/online-ordering',
@@ -284,6 +289,8 @@ export class HomeComponent implements OnInit, OnDestroy {
               this.heroBanners = mapped;
               this.activeHero = 0;
             }
+          } else {
+            this.heroBanners = [...this.defaultHeroBanners];
           }
 
           if (res.data.promoPopup) {
