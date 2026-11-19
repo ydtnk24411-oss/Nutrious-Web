@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const User = require('../models/User');
+const Employee = require('../models/Employee');
 const Order = require('../models/Order');
 const bcrypt = require('bcryptjs');
 const { protect, adminOnly, staffOnly } = require('../middleware/auth');
@@ -111,9 +112,12 @@ router.get('/purchase-stats', protect, staffOnly, async (req, res, next) => {
 // POST /api/users/staff - create new staff account
 router.post('/staff', protect, adminOnly, async (req, res, next) => {
   try {
-    const { name, email, password, role = 'support', phone, assignedStore, storeName } = req.body;
+    const { name, email, password, role = 'support', phone, assignedStore, storeName, department } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: 'Vui lòng nhập tên, email và mật khẩu' });
+    }
+    if (password.trim().length < 6) {
+      return res.status(400).json({ success: false, message: 'Mật khẩu phải từ 6 ký tự trở lên' });
     }
 
     const existing = await User.findOne({ email: email.toLowerCase().trim() });
@@ -121,17 +125,50 @@ router.post('/staff', protect, adminOnly, async (req, res, next) => {
       return res.status(409).json({ success: false, message: 'Email này đã được sử dụng' });
     }
 
+    const empCode = req.body.employeeCode || `NV-${Math.floor(1000 + Math.random() * 9000)}`;
+
     const user = await User.create({
       name: name.trim(),
       email: email.toLowerCase().trim(),
       password,
       role,
       phone: phone || '',
+      employeeCode: empCode,
       assignedStore: assignedStore || 'store-thuduc',
       storeName: storeName || '',
       assignedStoreIds: assignedStore ? [assignedStore] : ['store-thuduc'],
       isActive: true,
     });
+
+    // Đồng bộ sang bảng Employee
+    let dept = department || 'Vận hành siêu thị';
+    const r = (role || '').toLowerCase();
+    if (r === 'admin') dept = 'Ban Giám Đốc';
+    else if (r === 'manager') dept = 'Quản lý chi nhánh';
+    else if (r === 'warehouse') dept = 'Kho vận & Tiếp nhận';
+    else if (r === 'sales') dept = 'Kinh doanh & Bán hàng';
+    else if (r === 'support') dept = 'Chăm sóc khách hàng';
+    else if (r === 'marketing') dept = 'Marketing & Khuyến mại';
+
+    await Employee.findOneAndUpdate(
+      { userId: user._id },
+      {
+        $set: {
+          employeeCode: empCode,
+          userId: user._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone || '',
+          role: user.role,
+          department: dept,
+          assignedStore: user.assignedStore || 'all',
+          assignedStoreIds: user.assignedStoreIds || ['all'],
+          storeName: user.storeName || '',
+          isActive: true,
+        },
+      },
+      { upsert: true }
+    );
 
     const userObj = user.toObject();
     delete userObj.password;
@@ -141,7 +178,7 @@ router.post('/staff', protect, adminOnly, async (req, res, next) => {
       category: 'STAFF',
       targetType: 'User',
       targetId: user._id,
-      details: `Tạo tài khoản nhân viên mới: ${user.name} (${user.email}) với vai trò [${user.role}], Chi nhánh [${user.assignedStore}]`,
+      details: `Tạo tài khoản nhân viên mới: ${user.name} (${user.email}), Mã [${empCode}], vai trò [${user.role}], Chi nhánh [${user.assignedStore}]`,
     });
 
     res.status(201).json({ success: true, data: userObj });
@@ -160,9 +197,19 @@ router.get('/:id', protect, staffOnly, async (req, res, next) => {
 // PUT /api/users/:id - admin (update role / isActive / profile)
 router.put('/:id', protect, adminOnly, async (req, res, next) => {
   try {
-    const { role, isActive, name, phone, password, assignedStore, storeName } = req.body;
+    const { role, isActive, name, phone, password, assignedStore, storeName, department } = req.body;
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng.' });
+
+    // Bảo vệ an toàn: Quản trị viên không thể tự khóa tài khoản hoặc tự hạ quyền của chính mình
+    if (String(user._id) === String(req.user?._id)) {
+      if (isActive === false) {
+        return res.status(400).json({ success: false, message: 'Bạn không thể tự khóa tài khoản của chính mình!' });
+      }
+      if (role && String(role).toLowerCase() !== 'admin') {
+        return res.status(400).json({ success: false, message: 'Bạn không thể tự hạ quyền Quản trị viên của chính mình!' });
+      }
+    }
 
     if (role !== undefined) user.role = role;
     if (isActive !== undefined) user.isActive = isActive;
@@ -178,6 +225,38 @@ router.put('/:id', protect, adminOnly, async (req, res, next) => {
     }
 
     await user.save();
+
+    // Đồng bộ sang bảng Employee
+    let dept = department;
+    if (!dept) {
+      const r = (user.role || '').toLowerCase();
+      if (r === 'admin') dept = 'Ban Giám Đốc';
+      else if (r === 'manager') dept = 'Quản lý chi nhánh';
+      else if (r === 'warehouse') dept = 'Kho vận & Tiếp nhận';
+      else if (r === 'sales') dept = 'Kinh doanh & Bán hàng';
+      else if (r === 'support') dept = 'Chăm sóc khách hàng';
+      else if (r === 'marketing') dept = 'Marketing & Khuyến mại';
+      else dept = 'Vận hành siêu thị';
+    }
+
+    await Employee.findOneAndUpdate(
+      { userId: user._id },
+      {
+        $set: {
+          name: user.name,
+          email: user.email,
+          phone: user.phone || '',
+          role: user.role,
+          department: dept,
+          assignedStore: user.assignedStore || 'all',
+          assignedStoreIds: user.assignedStoreIds || ['all'],
+          storeName: user.storeName || '',
+          isActive: user.isActive,
+        },
+      },
+      { upsert: true }
+    );
+
     const userObj = user.toObject();
     delete userObj.password;
 
@@ -196,7 +275,23 @@ router.put('/:id', protect, adminOnly, async (req, res, next) => {
 // DELETE /api/users/:id - admin (soft delete)
 router.delete('/:id', protect, adminOnly, async (req, res, next) => {
   try {
-    await User.findByIdAndUpdate(req.params.id, { isActive: false });
+    if (String(req.params.id) === String(req.user?._id)) {
+      return res.status(400).json({ success: false, message: 'Bạn không thể tự xóa tài khoản của chính mình!' });
+    }
+
+    const [user] = await Promise.all([
+      User.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true }),
+      Employee.findOneAndUpdate({ userId: req.params.id }, { isActive: false }),
+    ]);
+
+    logAction(req, {
+      action: 'STAFF_DEACTIVATE',
+      category: 'STAFF',
+      targetType: 'User',
+      targetId: req.params.id,
+      details: `Vô hiệu hóa tài khoản nhân sự: ${user?.name || req.params.id}`,
+    });
+
     res.json({ success: true, message: 'Đã vô hiệu hoá tài khoản.' });
   } catch (err) { next(err); }
 });

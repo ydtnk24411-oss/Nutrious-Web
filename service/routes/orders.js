@@ -1117,6 +1117,7 @@ router.post(
       }
 
       let order = null;
+      let assignedStoreId = orderData.warehouseId || orderData.pickupStoreId || orderData.storeId || req.body.warehouseId || req.body.pickupStoreId || 'store-thuduc';
       try {
         orderData.statusHistory = [{
           status: orderData.status || 'pending',
@@ -1127,7 +1128,7 @@ router.post(
         }];
         order = await Order.create(orderData);
         // O2O: Tự động tăng reservedStock (tồn kho tạm giữ) tại cửa hàng được giao đơn
-        const assignedStoreId = order.warehouseId || order.pickupStore?.id || order.pickupStoreId || order.storeId || req.body.warehouseId || req.body.pickupStore?.id || req.body.pickupStoreId || req.body.storeId || 'store-thuduc';
+        assignedStoreId = order.warehouseId || order.pickupStore?.id || order.pickupStoreId || order.storeId || req.body.warehouseId || req.body.pickupStore?.id || req.body.pickupStoreId || req.body.storeId || assignedStoreId;
         for (const r of deductedReservations) {
           await StoreInventory.findOneAndUpdate(
             { storeId: assignedStoreId, productId: r.pid },
@@ -1332,7 +1333,7 @@ router.post(
       sendRealtimeNotification({
         recipientRole: 'sales',
         title: `Đơn hàng mới #${order.orderCode}`,
-        body: `Khách hàng ${order.customerName} vừa đặt đơn hàng trị giá ${order.total.toLocaleString('vi-VN')}đ.`,
+        body: `Khách hàng ${order.guestName || order.customerName || (req.user ? req.user.name : 'Khách hàng')} vừa đặt đơn hàng trị giá ${order.total.toLocaleString('vi-VN')}đ.`,
         type: 'order',
         path: '/admin/orders',
         orderId: order._id,
