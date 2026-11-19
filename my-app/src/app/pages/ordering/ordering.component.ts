@@ -1099,14 +1099,22 @@ export class OrderingComponent implements OnInit, OnDestroy {
 
   // Tìm Category bằng ID, slug hoặc name
   private navigateToCategory(value: string): void {
-    const target = normalizeCategoryTarget(value).toLowerCase();
+    const rawTarget = normalizeCategoryTarget(value).toLowerCase();
+    const cleanTarget = removeVietnameseTones(rawTarget).replace(/[^a-z0-9]/g, '');
 
-    const category = this.allCategories().find(c =>
-      c._id === value ||
-      c.slug.toLowerCase() === target ||
-      c.slug.toLowerCase() === '/category/' + target ||
-      c.name.toLowerCase() === target
-    );
+    const category = this.allCategories().find(c => {
+      if (c._id === value) return true;
+      if (c.slug.toLowerCase() === rawTarget || c.slug.toLowerCase() === '/category/' + rawTarget) return true;
+      if (c.name.toLowerCase() === rawTarget) return true;
+
+      const slugNorm = removeVietnameseTones(c.slug.toLowerCase()).replace(/[^a-z0-9]/g, '');
+      if (slugNorm === cleanTarget || slugNorm.replace('category', '') === cleanTarget) return true;
+
+      const nameNorm = removeVietnameseTones(c.name.toLowerCase()).replace(/[^a-z0-9]/g, '');
+      if (nameNorm === cleanTarget) return true;
+
+      return false;
+    });
 
     if (category) {
       this.selectCategory(category._id);

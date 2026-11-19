@@ -29,7 +29,9 @@
           }
 
           <div class="coop-hero-action">
-            <a [routerLink]="heroBanners[activeHero].link || '/online-ordering'" class="coop-hero-btn">
+            <a [routerLink]="getBannerPath(heroBanners[activeHero].link)"
+               [queryParams]="getBannerQueryParams(heroBanners[activeHero].link)"
+               class="coop-hero-btn">
               <span>{{ heroBanners[activeHero].cta || 'Khám phá ngay' }}</span>
               <i class="bi bi-arrow-right" aria-hidden="true"></i>
             </a>
@@ -54,10 +56,16 @@
 
       <!-- 2 Banner Phụ Bên Phải (Ảnh Thương Hiệu Sắc Nét Thuần Túy, Không Che Nút Đè Lên Chữ) -->
       <div class="coop-hero-side">
-        <a class="coop-side-promo" [routerLink]="sideBanners.top.link" [title]="sideBanners.top.alt">
+        <a class="coop-side-promo"
+           [routerLink]="getBannerPath(sideBanners.top.link)"
+           [queryParams]="getBannerQueryParams(sideBanners.top.link)"
+           [title]="sideBanners.top.alt">
           <img [src]="sideBanners.top.image" [alt]="sideBanners.top.alt || 'Banner phụ Maggi'">
         </a>
-        <a class="coop-side-promo coop-side-promo-warm" [routerLink]="sideBanners.bottom.link" [title]="sideBanners.bottom.alt">
+        <a class="coop-side-promo coop-side-promo-warm"
+           [routerLink]="getBannerPath(sideBanners.bottom.link)"
+           [queryParams]="getBannerQueryParams(sideBanners.bottom.link)"
+           [title]="sideBanners.bottom.alt">
           <img [src]="sideBanners.bottom.image" [alt]="sideBanners.bottom.alt || 'Banner phụ Chin-Su'">
         </a>
       </div>
