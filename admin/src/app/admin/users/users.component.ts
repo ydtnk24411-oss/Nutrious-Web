@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, computed } from '@angular/core';
+import { Component, signal, inject, OnInit, OnDestroy, HostListener, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserApiService, ApiUser, ApiUserWithStats, UserRole } from '../../shared/services/user-api.service';
@@ -12,7 +12,7 @@ import { AdminAuthService } from '../../shared/services/admin-auth.service';
   templateUrl: './users.component.html',
   styleUrl: './users.component.css',
 })
-export class AdminUsersComponent implements OnInit {
+export class AdminUsersComponent implements OnInit, OnDestroy {
   protected auth = inject(AdminAuthService);
   private userApi = inject(UserApiService);
   private orderApi = inject(OrderApiService);
@@ -75,16 +75,60 @@ export class AdminUsersComponent implements OnInit {
 
   totalPages = computed(() => Math.ceil(this.total() / this.limit));
 
-  ngOnInit(): void { this.load(); }
+  private pollTimer: ReturnType<typeof setInterval> | null = null;
+  private isFetching = false;
+  private loadSeq = 0;
 
-  load(): void {
-    this.loading.set(true);
+  ngOnInit(): void {
+    this.load();
+    // Tự động đồng bộ danh sách khách hàng mới mỗi 5 giây mà không cần F5
+    this.pollTimer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      this.load(true);
+    }, 5000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
+    }
+  }
+
+  @HostListener('window:focus')
+  onWindowFocus(): void {
+    // Cập nhật ngay khi chuyển lại tab Admin
+    this.load(true);
+  }
+
+  load(silent = false): void {
+    if (silent && (this.isFetching || this.saving() || this.modalOpen())) return;
+    const seq = ++this.loadSeq;
+    this.isFetching = true;
+    if (!silent) {
+      this.loading.set(true);
+      this.error.set('');
+    }
     const p: Record<string, string | number> = { page: this.page(), limit: this.limit };
     if (this.search()) p['search'] = this.search();
     if (this.role())   p['role']   = this.role();
     this.userApi.getWithStats(p).subscribe({
-      next:  (r) => { this.users.set(r.data); this.total.set(r.total); this.loading.set(false); },
-      error: ()  => { this.error.set('Không thể tải người dùng.'); this.loading.set(false); },
+      next: (r) => {
+        if (seq !== this.loadSeq) return;
+        this.isFetching = false;
+        this.users.set(r.data);
+        this.total.set(r.total);
+        this.error.set('');
+        this.loading.set(false);
+      },
+      error: () => {
+        if (seq !== this.loadSeq) return;
+        this.isFetching = false;
+        if (!silent) {
+          this.error.set('Không thể tải người dùng.');
+        }
+        this.loading.set(false);
+      },
     });
   }
 
