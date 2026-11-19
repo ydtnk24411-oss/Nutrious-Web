@@ -6,7 +6,7 @@ const Voucher = require('../models/Voucher');
 const UserVoucher = require('../models/UserVoucher');
 const FlashSale = require('../models/FlashSale');
 const mongoose = require('mongoose');
-const { sendRealtimeNotification } = require('../routes/notifications');
+const { sendRealtimeNotification } = require('./sse');
 
 /**
  * Tự động hủy đơn hàng VietQR đã quá hạn thanh toán 15 phút và hoàn trả tồn kho ngay lập tức

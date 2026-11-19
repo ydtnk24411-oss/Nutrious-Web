@@ -1697,6 +1697,9 @@
   border-bottom: 1px solid #eef2e8;
   padding: 0 !important;
   box-shadow: 0 2px 12px rgba(22, 66, 25, 0.05);
+  /* Đặt header chính nằm trên subnav để dropdown Thông báo/Tài khoản không bị chip chi nhánh che */
+  position: relative;
+  z-index: 20;
 }
 .xl-header-container {
   display: flex;

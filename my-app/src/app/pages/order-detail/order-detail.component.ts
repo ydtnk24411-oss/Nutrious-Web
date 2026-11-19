@@ -18,6 +18,7 @@ interface OrderItem {
   linkedMainProductName?: string;
   addonSaving?: number;
   discountedByAddon?: boolean;
+  isFlashSale?: boolean;
   promoNote?: string;
   quantity: number;
   selectedOption?: string;

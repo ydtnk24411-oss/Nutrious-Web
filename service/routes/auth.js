@@ -5,6 +5,8 @@ const { body } = require('express-validator');
 const User = require('../models/User');
 const Order = require('../models/Order');
 const OtpVerification = require('../models/OtpVerification');
+const Voucher = require('../models/Voucher');
+const { sendRealtimeNotification } = require('../utils/sse');
 const { validate } = require('../middleware/validate');
 const { protect, signToken } = require('../middleware/auth');
 
@@ -188,6 +190,55 @@ router.post(
 
 // POST /api/auth/register/verify-otp
 // Bước 2 & 3: Xác minh OTP -> Tạo tài khoản người dùng -> Tự động đăng nhập
+
+// Mô tả ngắn mức giảm của voucher (vd: "Giảm 20% (tối đa 50.000đ)")
+function describeVoucherDiscount(v) {
+  const fmt = (n) => `${Number(n || 0).toLocaleString('vi-VN')}đ`;
+  let text = v.discountType === 'percentage'
+    ? `Giảm ${v.discountValue}%${v.maxDiscountValue ? ` (tối đa ${fmt(v.maxDiscountValue)})` : ''}`
+    : `Giảm ${fmt(v.discountValue)}`;
+  text += v.minOrderValue > 0 ? ` cho đơn từ ${fmt(v.minOrderValue)}` : ' cho đơn đầu tiên';
+  return text;
+}
+
+// Lấy voucher bạn mới (isFirstOrderOnly) đang hiệu lực và tạo thông báo cho tài khoản vừa đăng ký.
+// Không làm hỏng luồng đăng ký nếu có lỗi.
+async function notifyWelcomeVouchers(user) {
+  try {
+    const now = new Date();
+    const vouchers = await Voucher.find({
+      isFirstOrderOnly: true,
+      isActive: true,
+      isPublic: true,
+      startDate: { $lte: now },
+      endDate: { $gte: now },
+    })
+      .sort({ discountValue: -1 })
+      .limit(5)
+      .lean();
+
+    if (!vouchers.length) return [];
+
+    const summary = vouchers.map((v) => `${v.code}: ${describeVoucherDiscount(v)}`).join(' • ');
+    await sendRealtimeNotification({
+      recipient: user._id,
+      title: '🎁 Quà tặng bạn mới từ Evergreen Mart',
+      body: `Chào mừng ${user.name || 'bạn'}! Bạn có ${vouchers.length} voucher bạn mới: ${summary}. Áp dụng ngay cho đơn hàng đầu tiên.`,
+      type: 'voucher',
+      path: '/vouchers',
+    });
+
+    return vouchers.map((v) => ({
+      code: v.code,
+      name: v.name,
+      description: describeVoucherDiscount(v),
+      endDate: v.endDate,
+    }));
+  } catch (err) {
+    console.error('notifyWelcomeVouchers error:', err);
+    return [];
+  }
+}
 router.post(
   '/register/verify-otp',
   [
@@ -269,12 +320,16 @@ router.post(
       // Tự động cấp token phiên đăng nhập
       const token = signToken(newUser);
 
+      // Ưu đãi bạn mới: lấy các voucher đơn đầu tiên đang hiệu lực & gửi thông báo chào mừng
+      const welcomeVouchers = await notifyWelcomeVouchers(newUser);
+
       return res.status(201).json({
         success: true,
         message: 'Đăng ký tài khoản thành công! Chào mừng bạn đến với EvergreenMart.',
         token,
         user: publicUser(newUser),
         linkedOrdersCount,
+        welcomeVouchers,
       });
     } catch (err) {
       next(err);

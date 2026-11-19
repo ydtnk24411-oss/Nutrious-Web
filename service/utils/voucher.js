@@ -99,9 +99,9 @@ function calculateEligibleItemsAndSubtotal(voucher, items, fallbackSubtotal) {
 
   for (const it of items) {
     // 1. Kiểm tra excludeSaleItems
+    const orig = Number(it.originalPrice ?? it.originalPriceNumber) || 0;
+    const curr = Number(it.price ?? it.priceNumber) || 0;
     if (excludeSale) {
-      const orig = Number(it.originalPrice) || 0;
-      const curr = Number(it.price) || 0;
       if (it.isFlashSale || (orig > curr && orig > 0)) {
         continue;
       }
@@ -115,14 +115,14 @@ function calculateEligibleItemsAndSubtotal(voucher, items, fallbackSubtotal) {
 
     // 3. Kiểm tra targetCats
     if (hasCatFilter) {
-      const cat = String(it.category || it.categoryVi || it.categorySlug || '').toLowerCase();
+      const cat = String(it.category || it.categoryVi || it.categorySlug || it.categoryName || '').toLowerCase();
       const matchCat = targetCats.some(tc => cat.includes(tc) || tc.includes(cat));
       if (!matchCat) {
         continue;
       }
     }
 
-    const itemTotal = (Number(it.price) || 0) * (Number(it.quantity) || 1);
+    const itemTotal = curr * (Number(it.quantity) || 1);
     eligibleSubtotal += itemTotal;
     eligibleCount++;
   }

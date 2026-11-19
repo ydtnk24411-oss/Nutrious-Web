@@ -33,6 +33,7 @@ export interface ApiOrder {
     addonDiscountValue?: number;
     addonSaving?: number;
     discountedByAddon?: boolean;
+    isFlashSale?: boolean;
     promoNote?: string;
   }[];
   subtotal: number;

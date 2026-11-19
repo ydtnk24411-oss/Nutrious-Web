@@ -454,6 +454,33 @@
         Tài khoản của bạn đã được tạo và đăng nhập tự động.
       </p>
 
+      @if (welcomeVouchers().length > 0) {
+      <div class="rs-gift">
+        <div class="rs-gift-head">
+          <i class="bi bi-gift-fill" aria-hidden="true"></i>
+          <span>Quà tặng bạn mới dành riêng cho bạn</span>
+        </div>
+        @for (v of welcomeVouchers(); track v.code) {
+        <div class="rs-voucher">
+          <div class="rs-voucher-left">
+            <i class="bi bi-ticket-perforated-fill" aria-hidden="true"></i>
+          </div>
+          <div class="rs-voucher-info">
+            <div class="rs-voucher-code">{{ v.code }}</div>
+            <div class="rs-voucher-desc">{{ v.description }}</div>
+          </div>
+          <button type="button" class="rs-voucher-copy" (click)="copyVoucherCode(v.code)"
+            [class.is-copied]="copiedVoucherCode() === v.code">
+            {{ copiedVoucherCode() === v.code ? 'Đã chép' : 'Sao chép' }}
+          </button>
+        </div>
+        }
+        <a class="rs-gift-link" href="javascript:void(0)" (click)="closeRegisterSuccess('vouchers')">
+          Xem ví voucher <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </a>
+      </div>
+      }
+
       <div class="register-success-actions">
         <button type="button" class="register-success-btn" (click)="closeRegisterSuccess('shop')">
           <i class="bi bi-basket2-fill" aria-hidden="true"></i> Bắt đầu mua sắm
