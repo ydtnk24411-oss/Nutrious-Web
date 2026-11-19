@@ -165,15 +165,16 @@ export class HeaderComponent implements OnDestroy {
 
   toggleMobileMenu(): void { this.mobileMenuOpen.update(v => !v); }
   closeMobileMenu(): void  { this.mobileMenuOpen.set(false); }
-  toggleUserMenu(): void   { this.userMenuOpen.update(v => !v); this.areaMenuOpen.set(false); this.notifMenuOpen.set(false); }
+  toggleUserMenu(): void   { this.userMenuOpen.update(v => !v); this.areaMenuOpen.set(false); this.notifMenuOpen.set(false); this.catMenuOpen.set(false); }
   closeUserMenu(): void    { this.userMenuOpen.set(false); }
-  toggleCatMenu(): void    { this.catMenuOpen.update(v => !v); }
+  toggleCatMenu(): void    { this.catMenuOpen.update(v => !v); this.userMenuOpen.set(false); this.notifMenuOpen.set(false); this.areaMenuOpen.set(false); }
   closeCatMenu(): void     { this.catMenuOpen.set(false); }
-  toggleAreaMenu(): void   { this.areaMenuOpen.update(v => !v); this.userMenuOpen.set(false); this.notifMenuOpen.set(false); }
+  toggleAreaMenu(): void   { this.areaMenuOpen.update(v => !v); this.userMenuOpen.set(false); this.notifMenuOpen.set(false); this.catMenuOpen.set(false); }
   toggleNotifMenu(): void  {
     const next = !this.notifMenuOpen();
     this.notifMenuOpen.set(next);
     this.userMenuOpen.set(false);
+    this.catMenuOpen.set(false);
     this.areaMenuOpen.set(false);
     if (next) {
       this.notifService.loadHistory();
