@@ -62,7 +62,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       title: 'Rau củ thuần khiết thu hoạch sớm mai',
       subtitle: 'Nguồn nông sản hữu cơ VietGAP tươi mới mỗi ngày, trọn vẹn vị lành nguyên bản cho bữa cơm gia đình.',
       cta: 'Khám phá ngay',
-      link: '/online-ordering',
+      link: '/online-ordering?category=vegetables',
       alt: 'Rau củ hữu cơ thuần khiết thu hoạch sớm mai'
     },
     {
@@ -71,7 +71,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       title: 'Cá hồi Na Uy tươi rói chuẩn vị biển',
       subtitle: 'Phi lê cá hồi thượng hạng giữ lạnh 0-2°C, ngọt mềm từng thớ thịt béo ngậy giàu dưỡng chất.',
       cta: 'Xem hải sản',
-      link: '/online-ordering',
+      link: '/online-ordering?category=seafood',
       alt: 'Cá hồi Na Uy tươi rói chuẩn vị biển tự nhiên'
     },
     {
@@ -80,7 +80,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       title: 'Tôm sú & cá biển tươi sống ướp đá',
       subtitle: 'Hải sản tươi sống ướp đá tự nhiên cập bến sớm, giữ trọn độ giòn ngọt thanh lành từ biển mẹ.',
       cta: 'Đặt hàng ngay',
-      link: '/online-ordering',
+      link: '/online-ordering?category=seafood',
       alt: 'Tôm sú và cá biển tươi sống ướp đá tự nhiên'
     },
     {
@@ -98,7 +98,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       title: 'Hương sắc thiên nhiên ngọt lành mỗi ngày',
       subtitle: 'Dâu tây Đà Lạt, kiwi, chuối, nho mọng nước chín cây, thanh mát bổ sung vitamin tự nhiên.',
       cta: 'Chọn trái cây',
-      link: '/promotions',
+      link: '/online-ordering?category=fruits',
       alt: 'Trái cây nhiệt đới ngọt lành tươi mọng'
     },
     {
@@ -107,7 +107,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       title: 'Tinh hoa thảo mộc đượm vị cơm nhà',
       subtitle: 'Tiêu rừng, quế chi, hoa hồi 100% tự nhiên đánh thức hương vị cơm mẹ nấu ấm áp đậm đà.',
       cta: 'Xem gia vị',
-      link: '/cook-with-what-you-have',
+      link: '/online-ordering?category=pantry',
       alt: 'Gia vị thảo mộc thiên nhiên đượm vị cơm nhà'
     },
     {
@@ -116,7 +116,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       title: 'Nước mắm Nam Ô truyền thống đượm tình',
       subtitle: 'Ủ chượp thủ công từ cá cơm than vịnh Đà Nẵng và muối hạt tinh khiết, lắng đọng từng giọt ngọc biển.',
       cta: 'Mua đặc sản',
-      link: '/category/all-products',
+      link: '/online-ordering?category=pantry',
       alt: 'Nước mắm Nam Ô truyền thống đậm đà vị biển mẹ'
     },
     {
@@ -125,7 +125,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       title: 'Gia vị thuần khiết cho bếp Việt an tâm',
       subtitle: 'Nghệ vàng, ớt khô, tiêu sọ xay nguyên chất, bảo đảm an toàn tuyệt đối không phụ gia bảo quản.',
       cta: 'Khám phá ngay',
-      link: '/cook-with-what-you-have',
+      link: '/online-ordering?category=pantry',
       alt: 'Bộ sưu tập gia vị thuần khiết cho bếp Việt'
     }
   ];
@@ -154,7 +154,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     },
     bottom: {
       image: '/images/banners/banner-chinsu-pepper.jpg',
-      link: '/online-ordering',
+      link: '/online-ordering?category=pantry',
       alt: 'Tiêu đen Chin-Su rắc tiêu thơm cơm đậm tình'
     }
   };
@@ -232,6 +232,24 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (!imgEl.src.includes(this.fallbackCategoryImage)) {
       imgEl.src = this.fallbackCategoryImage;
     }
+  }
+
+  getBannerPath(link?: string): string {
+    if (!link) return '/online-ordering';
+    return link.split('?')[0] || '/online-ordering';
+  }
+
+  getBannerQueryParams(link?: string): Record<string, string> {
+    if (!link || !link.includes('?')) return {};
+    const queryPart = link.split('?')[1];
+    const queryParams: Record<string, string> = {};
+    if (queryPart) {
+      const searchParams = new URLSearchParams(queryPart);
+      searchParams.forEach((val, key) => {
+        queryParams[key] = val;
+      });
+    }
+    return queryParams;
   }
 
   trackByCatId(_index: number, cat: ApiCategory): string {
@@ -342,8 +360,8 @@ export class HomeComponent implements OnInit, OnDestroy {
                 cta: s.cta || fallback.cta || 'Mua sắm ngay',
               };
             });
-            const nextSig = mapped.map((b) => `${b.image}|${b.title}|${b.eyebrow}`).join(';;');
-            const curSig = this.heroBanners.map((b) => `${b.image}|${b.title}|${b.eyebrow}`).join(';;');
+            const nextSig = mapped.map((b) => `${b.image}|${b.title}|${b.eyebrow}|${b.link}`).join(';;');
+            const curSig = this.heroBanners.map((b) => `${b.image}|${b.title}|${b.eyebrow}|${b.link}`).join(';;');
             if (nextSig !== curSig) {
               this.heroBanners = mapped;
               this.activeHero = 0;
