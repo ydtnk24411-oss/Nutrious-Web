@@ -651,46 +651,234 @@
 .coop-home .service-inner { min-height: 38px; display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: wrap; font-size: 11px; font-weight: 700; }
 .coop-home .service-divider { width: 5px; height: 5px; border-radius: 50%; background: var(--xl-lime); flex: 0 0 5px; }
 
-/* Hero: modern, clean layout */
-.coop-home .coop-hero { display: grid; grid-template-columns: minmax(0, 1.85fr) minmax(260px, .85fr); gap: 18px; padding-top: 26px; align-items: stretch; }
-.coop-home .coop-hero-main { min-height: 440px; overflow: hidden; border: 1px solid #2d5a1b; border-radius: 16px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important; isolation: isolate; }
-.coop-home .coop-hero-main img { width: 100%; height: 100%; min-height: 440px; object-fit: cover; }
-.coop-home .coop-hero-shade { background: linear-gradient(90deg, rgba(21,48,7,.88) 0%, rgba(28,57,9,.68) 44%, rgba(28,57,9,.05) 100%) !important; }
-.coop-home .coop-hero-copy { max-width: 640px; padding: clamp(24px, 4vw, 54px) !important; }
-.coop-home .coop-kicker, .coop-home .coop-eyebrow {
-  display: inline-flex; align-items: center; width: fit-content; padding: 6px 12px;
-  border: 1px solid #b9d957; border-radius: 6px;
-  background: var(--xl-lime) !important; color: var(--xl-forest) !important;
-  font-size: 10.5px; line-height: 1.25; font-weight: 800; letter-spacing: .08em;
+/* Hero: Bố cục banner nông sản thực phẩm tươi sạch chuẩn siêu thị (Tự nhiên, Không dùng gradient) */
+.coop-home .coop-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.85fr) minmax(260px, .85fr);
+  gap: 18px;
+  padding-top: 24px;
+  align-items: stretch;
+}
+
+.coop-home .coop-hero-main {
+  position: relative;
+  min-height: 440px;
+  border-radius: 12px !important;
+  overflow: hidden;
+  border: 1px solid #1e5e31 !important;
+  background: #0e2e17;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08) !important;
+  isolation: isolate;
+}
+
+.coop-home .coop-hero-slide-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 440px;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.coop-home .coop-hero-shade {
+  display: none !important;
+}
+
+/* Khối chữ thông tin sản phẩm đè lên banner (Solid dark green, viền mảnh tự nhiên, tuyệt đối không dùng gradient) */
+.coop-home .coop-hero-content-card {
+  position: absolute;
+  top: 36px;
+  left: 36px;
+  bottom: 36px;
+  max-width: 480px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  background: rgba(14, 46, 23, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  padding: 28px 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.16);
+}
+
+.coop-home .coop-hero-badge {
+  display: inline-block;
+  padding: 5px 11px;
+  border-radius: 4px;
+  background: #ffd23f;
+  color: #12381b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  margin-bottom: 12px;
+  border: 1px solid #e6bd32;
 }
-.coop-home .coop-hero-copy h1 {
-  max-width: 620px; margin: 18px 0 14px; color: #fff !important;
-  font-size: clamp(34px, 4.5vw, 54px) !important; font-weight: 800 !important;
-  line-height: 1.15 !important; letter-spacing: -.03em !important;
-  text-shadow: 0 2px 10px rgba(0,0,0,.3);
-  -webkit-text-stroke: 0;
+
+.coop-home .coop-hero-title {
+  color: #ffffff;
+  font-size: clamp(22px, 2.3vw, 30px);
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+  margin: 0 0 10px 0;
 }
-.coop-home .coop-hero-copy p { max-width: 460px; font-size: 14.5px; line-height: 1.7; color: #f5ffe7 !important; text-shadow: 0 1px 4px rgba(0,0,0,0.3); }
-.coop-home .coop-btn { min-height: 44px; display: inline-flex; justify-content: center; align-items: center; padding: 10px 20px; border: 1px solid transparent; border-radius: 8px !important; font-weight: 700; letter-spacing: -.01em; box-shadow: 0 2px 6px rgba(0,0,0,0.12); transition: transform .18s ease, box-shadow .18s ease; }
-.coop-home .coop-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.18); }
-.coop-home .coop-btn-yellow { background: #eab308 !important; color: #1e293b !important; }
-.coop-home .coop-btn-white { background: #fff !important; color: var(--xl-forest) !important; }
-.coop-home .coop-btn-green { background: var(--xl-forest) !important; color: #fff !important; border-color: var(--xl-forest); }
-.coop-home .coop-hero-controls { display: flex; align-items: center; gap: 10px; }
-.coop-home .coop-hero-controls button { border: 1px solid rgba(255,255,255,.7); background: rgba(20,47,5,.65); color: #fff; padding: 8px 13px; font-weight: 800; border-radius: 6px; }
-.coop-home .coop-hero-controls span { color: #fff; font-size: 12px; font-weight: 800; }
-.coop-home .coop-hero-slide-link { display: block; width: 100%; height: 100%; position: absolute; inset: 0; text-decoration: none; }
-.coop-home .coop-hero-slide-img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
-.coop-home .coop-hero-side { gap: 16px; }
-.coop-home .coop-side-promo { min-height: 0; border: 1px solid #e2e8f0; border-radius: 14px !important; box-shadow: 0 3px 12px rgba(0,0,0,0.05) !important; overflow: hidden; position: relative; }
-.coop-home .coop-side-promo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .35s ease; }
-.coop-home .coop-side-promo:hover img { transform: scale(1.04); }
-.coop-home .coop-side-promo > div { padding: 17px 18px !important; background: #f6fbdf; }
-.coop-home .coop-side-promo > div > span { display: inline-block; color: var(--xl-green); font-size: 9px; letter-spacing: .12em; font-weight: 900; }
-.coop-home .coop-side-promo h2 { color: var(--xl-forest) !important; font-weight: 800; letter-spacing: -.02em; }
-.coop-home .coop-side-promo p { color: var(--xl-muted) !important; }
-.coop-home .coop-side-promo-warm > div { background: #fce9d9; }
+
+.coop-home .coop-hero-subtitle {
+  color: #e2eedf;
+  font-size: 13.5px;
+  line-height: 1.55;
+  margin: 0 0 20px 0;
+}
+
+.coop-home .coop-hero-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.coop-home .coop-hero-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #008848;
+  color: #ffffff !important;
+  border: 1px solid #005f32;
+  padding: 11px 22px;
+  border-radius: 6px !important;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+  transition: background 0.2s, transform 0.15s;
+}
+
+.coop-home .coop-hero-btn:hover {
+  background: #00703b;
+  transform: translateY(-1px);
+  color: #ffffff !important;
+}
+
+.coop-home .coop-hero-controls {
+  position: absolute;
+  bottom: 22px;
+  right: 24px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(14, 46, 23, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  padding: 5px 10px;
+}
+
+.coop-home .coop-hero-controls button {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.coop-home .coop-hero-controls button:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.coop-home .coop-hero-counter {
+  color: #ffd23f;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 0 4px;
+}
+
+/* 2 Banner phụ bên phải: Hiển thị hình ảnh chân thực, viền mảnh tự nhiên, không che gradient */
+.coop-home .coop-hero-side {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 16px;
+  min-height: 440px;
+}
+
+.coop-home .coop-side-promo {
+  position: relative;
+  min-height: 0;
+  border: 1px solid #d5e2d1 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04) !important;
+  overflow: hidden;
+  background: #ffffff;
+  display: block;
+}
+
+.coop-home .coop-side-promo:after {
+  display: none !important;
+}
+
+.coop-home .coop-side-promo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.coop-home .coop-side-promo:hover img {
+  transform: scale(1.025);
+}
+
+@media (max-width: 768px) {
+  .coop-home .coop-hero {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding-top: 14px;
+  }
+  .coop-home .coop-hero-main {
+    min-height: 380px;
+  }
+  .coop-home .coop-hero-content-card {
+    left: 14px;
+    right: 14px;
+    top: auto;
+    bottom: 56px;
+    max-width: none;
+    padding: 16px 18px;
+    border-radius: 8px;
+  }
+  .coop-home .coop-hero-title {
+    font-size: 18px;
+    line-height: 1.25;
+    margin-bottom: 6px;
+  }
+  .coop-home .coop-hero-subtitle {
+    font-size: 12px;
+    line-height: 1.45;
+    margin-bottom: 12px;
+  }
+  .coop-home .coop-hero-btn {
+    padding: 8px 16px;
+    font-size: 11.5px;
+  }
+  .coop-home .coop-hero-controls {
+    right: 14px;
+    bottom: 12px;
+  }
+  .coop-home .coop-hero-side {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 160px;
+    min-height: 0;
+    gap: 10px;
+  }
+}
 
 /* Category navigation under Hero banner - Chỉ hiển thị hình và tên danh mục trên nền trắng */
 .coop-home .coop-category-nav {
@@ -875,9 +1063,9 @@
 .coop-home .coop-flash-progress-wrapper { margin: 10px 0 14px; display: flex; flex-direction: column; gap: 7px; }
 .coop-home .coop-flash-progress-bar { width: 100%; height: 9px; background-color: #e5e7eb; border-radius: 999px; overflow: hidden; position: relative; box-shadow: inset 0 1px 2px rgba(0,0,0,.08); }
 .coop-home .coop-flash-progress-fill { height: 100%; border-radius: 999px; transition: width .4s ease; }
-.coop-home .coop-flash-progress-fill.fill-green { background: linear-gradient(90deg, #22c55e, #16a34a); }
-.coop-home .coop-flash-progress-fill.fill-orange { background: linear-gradient(90deg, #f59e0b, #ea580c); }
-.coop-home .coop-flash-progress-fill.fill-red { background: linear-gradient(90deg, #f87171, #dc2626); }
+.coop-home .coop-flash-progress-fill.fill-green { background: #16a34a; }
+.coop-home .coop-flash-progress-fill.fill-orange { background: #ea580c; }
+.coop-home .coop-flash-progress-fill.fill-red { background: #dc2626; }
 .coop-home .coop-flash-quota-text { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; font-weight: 700; color: #4b5563; line-height: 1.25; }
 .coop-home .coop-flash-quota-text.is-soldout { color: #dc2626; }
 .coop-home .coop-flash-sold-count { font-weight: 750; color: #374151; }
@@ -887,8 +1075,8 @@
 .coop-home .coop-arrow-btn { border: 1px solid #cbd5e1 !important; border-radius: 8px !important; color: #1e293b !important; background: #fff !important; font-weight: 700; cursor: pointer; }
 .coop-home .coop-arrow-btn:disabled { opacity: .35; cursor: not-allowed; }
 
-/* Wide editorial banner */
-.coop-home .coop-editorial-banner { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(260px,.9fr) minmax(0,1.1fr); gap: 28px; align-items: center; padding: clamp(24px, 4vw, 44px) !important; border: 1px solid #2d5a1b; border-radius: 16px !important; background: linear-gradient(125deg, #1e3a10 0%, #2f5c15 58%, #41751c 100%) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important; }
+/* Wide editorial banner: Màu xanh nông sản thực tế, viền mảnh tự nhiên, không gradient */
+.coop-home .coop-editorial-banner { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(260px,.9fr) minmax(0,1.1fr); gap: 28px; align-items: center; padding: clamp(24px, 4vw, 44px) !important; border: 1px solid #133d1e !important; border-radius: 14px !important; background: #1b4d27 !important; box-shadow: 0 4px 18px rgba(0,0,0,0.06) !important; }
 .coop-home .coop-editorial-banner::after { content: ""; position: absolute; width: 270px; height: 270px; right: -70px; top: -120px; border: 30px solid rgba(255,255,255,.05); border-radius: 50%; pointer-events: none; }
 .coop-home .coop-editorial-copy { position: relative; z-index: 1; }
 .coop-home .coop-editorial-copy h2 { color: #fff !important; font-size: clamp(28px, 3.5vw, 44px) !important; font-weight: 800 !important; line-height: 1.15; letter-spacing: -.03em; }

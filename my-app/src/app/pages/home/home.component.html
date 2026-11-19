@@ -3,31 +3,47 @@
 
 
     <section class="coop-hero coop-container" aria-label="Ưu đãi nổi bật">
-      <!-- Banner Chính: Slider Chạy Ảnh Thuần (Đã Xóa Toàn Bộ Chữ Text) -->
+      <!-- Banner Chính: Slider Nông Sản & Thực Phẩm Tươi Sạch + Khối Chữ Rõ Ràng (Tự Nhiên, Không Gradient) -->
       <div class="coop-hero-main">
-        <a [routerLink]="heroBanners[activeHero].link || '/online-ordering'" class="coop-hero-slide-link">
-          <img [src]="heroBanners[activeHero].image"
-            [alt]="heroBanners[activeHero].alt || ('Banner ' + (activeHero + 1))" class="coop-hero-slide-img"
-            (error)="onHeroImageError($event)" />
-        </a>
+        <img [src]="heroBanners[activeHero].image"
+          [alt]="heroBanners[activeHero].alt || heroBanners[activeHero].title || ('Banner ' + (activeHero + 1))"
+          class="coop-hero-slide-img"
+          (error)="onHeroImageError($event)" />
+
+        <!-- Khối Chữ Thông Tin (Text Overlay - Nền Xanh Tự Nhiên Rõ Nét, Viền Mảnh Sạch Sẽ, Không Dùng Gradient) -->
+        <div class="coop-hero-content-card">
+          @if (heroBanners[activeHero].eyebrow) {
+            <span class="coop-hero-badge">{{ heroBanners[activeHero].eyebrow }}</span>
+          }
+          <h1 class="coop-hero-title">{{ heroBanners[activeHero].title || heroBanners[activeHero].alt }}</h1>
+          @if (heroBanners[activeHero].subtitle) {
+            <p class="coop-hero-subtitle">{{ heroBanners[activeHero].subtitle }}</p>
+          }
+          <div class="coop-hero-action">
+            <a [routerLink]="heroBanners[activeHero].link || '/online-ordering'" class="coop-hero-btn">
+              <span>{{ heroBanners[activeHero].cta || 'Đi chợ ngay' }}</span>
+              <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
 
         <!-- Nút Điều Hướng Slider (Trước / Sau & Số Thứ Tự) -->
         @if (heroBanners.length > 1) {
         <div class="coop-hero-controls">
           <button type="button" aria-label="Banner trước" (click)="prevHero()">Trước</button>
-          <span>{{ activeHero + 1 | number:'2.0' }} / {{ heroBanners.length | number:'2.0' }}</span>
+          <span class="coop-hero-counter">{{ activeHero + 1 | number:'2.0' }} / {{ heroBanners.length | number:'2.0' }}</span>
           <button type="button" aria-label="Banner tiếp theo" (click)="nextHero()">Sau</button>
         </div>
         }
       </div>
 
-      <!-- 2 Banner Phụ Bên Phải (Ảnh Thuần) -->
+      <!-- 2 Banner Phụ Bên Phải (Ảnh Thương Hiệu Sắc Nét, Viền Mảnh Sạch Sẽ, Không Dùng Gradient) -->
       <div class="coop-hero-side">
-        <a class="coop-side-promo" [routerLink]="sideBanners.top.link">
-          <img [src]="sideBanners.top.image" [alt]="sideBanners.top.alt || 'Banner phụ trên'">
+        <a class="coop-side-promo" [routerLink]="sideBanners.top.link" [title]="sideBanners.top.alt">
+          <img [src]="sideBanners.top.image" [alt]="sideBanners.top.alt || 'Banner phụ Maggi'">
         </a>
-        <a class="coop-side-promo coop-side-promo-warm" [routerLink]="sideBanners.bottom.link">
-          <img [src]="sideBanners.bottom.image" [alt]="sideBanners.bottom.alt || 'Banner phụ dưới'">
+        <a class="coop-side-promo coop-side-promo-warm" [routerLink]="sideBanners.bottom.link" [title]="sideBanners.bottom.alt">
+          <img [src]="sideBanners.bottom.image" [alt]="sideBanners.bottom.alt || 'Banner phụ Chin-Su'">
         </a>
       </div>
     </section>

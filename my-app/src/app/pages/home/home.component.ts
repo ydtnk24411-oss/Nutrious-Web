@@ -22,6 +22,16 @@ interface Voucher {
 }
 interface NewsItem { title: string; image: string; path: string; date: string; }
 
+export interface HeroBannerSlide {
+  image: string;
+  link?: string;
+  alt?: string;
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+  cta?: string;
+}
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -43,60 +53,93 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   // =========================================================================
   // 1. DANH SÁCH BANNER CHÍNH (SLIDER) - 100% ẢNH NÔNG SẢN & THỰC PHẨM SẮC NÉT
+  // Tích hợp đầy đủ thông tin: nhãn chứng nhận, tiêu đề, mô tả và nút bấm
   // =========================================================================
-  private readonly defaultHeroBanners: Array<{ image: string; link?: string; alt?: string }> = [
+  private readonly defaultHeroBanners: HeroBannerSlide[] = [
     {
       image: '/images/banners/banner-fresh-vegetables.jpg',
+      eyebrow: 'NÔNG SẢN SẠCH VIETGAP - GIAO NHANH 2H',
+      title: 'Rau củ quả tươi sạch thu hoạch trong ngày',
+      subtitle: 'Nguồn nông sản hữu cơ Đà Lạt an toàn, bảo đảm tươi ngon trọn vẹn từng bữa ăn gia đình.',
+      cta: 'Đi chợ ngay',
       link: '/online-ordering',
       alt: 'Rau củ quả tươi sạch hữu cơ giao nhanh 2h'
     },
     {
       image: '/images/banners/banner-seafood-salmon.jpg',
+      eyebrow: 'HẢI SẢN TƯƠI SỐNG - GIAO CHUẨN LẠNH',
+      title: 'Cá hồi Na Uy phi lê & hải sản cao cấp',
+      subtitle: 'Cá hồi nhập khẩu trực tiếp tươi rói mỗi ngày, bảo quản thùng xốp giữ trọn vị ngọt biển.',
+      cta: 'Xem hải sản',
       link: '/online-ordering',
       alt: 'Hải sản cá hồi tươi sống cao cấp chuẩn tươi sạch'
     },
     {
-      image: '/images/banners/banner-fresh-fruits.jpg',
-      link: '/promotions',
-      alt: 'Trái cây nhiệt đới ngọt lành mỗi ngày'
-    },
-    {
-      image: '/images/banners/banner-spices-spoons.jpg',
-      link: '/cook-with-what-you-have',
-      alt: 'Gia vị thảo mộc thiên nhiên cho bữa cơm trọn vị'
-    },
-    {
-      image: '/images/banners/banner-nam-o-sauce.jpg',
-      link: '/category/all-products',
-      alt: 'Nước mắm Nam Ô truyền thống nồng đượm vị biển mẹ'
-    },
-    {
       image: '/images/banners/banner-seafood-ice.jpg',
+      eyebrow: 'ƯỚP ĐÁ TỰ NHIÊN - ĐÁNH BẮT TRONG NGÀY',
+      title: 'Tôm sú & cá biển tươi sống ướp đá sạch',
+      subtitle: 'Tuyển chọn tôm sú, cá thu, cá bớp biển nguyên con tươi ngon, sơ chế sạch theo yêu cầu.',
+      cta: 'Đặt hàng ngay',
       link: '/online-ordering',
       alt: 'Tôm cá tươi ngon ướp đá giao hàng lạnh nội thành'
     },
     {
       image: '/images/banners/banner-salmon-dish.jpg',
+      eyebrow: 'BỮA ĂN DINH DƯỠNG LÀNH MẠNH',
+      title: 'Thực đơn cân bằng dinh dưỡng thông minh',
+      subtitle: 'Cá hồi áp chảo thanh vị cùng rau củ hữu cơ, tính toán calorie và vi chất chuẩn khoa học.',
+      cta: 'Lên thực đơn',
       link: '/nutrition',
       alt: 'Cá hồi áp chảo cùng rau củ thanh mát đủ chất'
     },
     {
+      image: '/images/banners/banner-fresh-fruits.jpg',
+      eyebrow: 'TRÁI CÂY TƯƠI MỌNG NƯỚC',
+      title: 'Trái cây nhiệt đới ngọt lành mỗi ngày',
+      subtitle: 'Đặc sản dâu tây, kiwi, nho, chuối chín cây ngọt dịu tự nhiên, bổ sung vitamin cho cả nhà.',
+      cta: 'Xem ưu đãi',
+      link: '/promotions',
+      alt: 'Trái cây nhiệt đới ngọt lành mỗi ngày'
+    },
+    {
+      image: '/images/banners/banner-spices-spoons.jpg',
+      eyebrow: 'GIA VỊ THẢO MỘC NGUYÊN CHẤT',
+      title: 'Gia vị thảo mộc thiên nhiên thơm lành',
+      subtitle: 'Tiêu rừng, quế chi, hoa hồi, hạt ngò tự nhiên đánh thức hương vị cơm mẹ nấu đậm đà.',
+      cta: 'Xem gian bếp',
+      link: '/cook-with-what-you-have',
+      alt: 'Gia vị thảo mộc thiên nhiên cho bữa cơm trọn vị'
+    },
+    {
+      image: '/images/banners/banner-nam-o-sauce.jpg',
+      eyebrow: 'ĐẶC SẢN LÀNG NGHỀ TRĂM NĂM',
+      title: 'Nước mắm Nam Ô truyền thống đượm vị',
+      subtitle: 'Ủ chượp thủ công từ cá cơm than vịnh Đà Nẵng và muối hạt tinh khiết, đậm đà vị biển mẹ.',
+      cta: 'Mua đặc sản',
+      link: '/category/all-products',
+      alt: 'Nước mắm Nam Ô truyền thống nồng đượm vị biển mẹ'
+    },
+    {
       image: '/images/banners/banner-spices-bowls.jpg',
+      eyebrow: 'TINH HOA GIA VỊ ẨM THỰC VIỆT',
+      title: 'Bộ sưu tập gia vị thượng hạng cho gian bếp',
+      subtitle: 'Nghệ vàng, ớt khô, tiêu sọ xay nguyên chất, đảm bảo an toàn tuyệt đối không phụ gia.',
+      cta: 'Khám phá ngay',
       link: '/cook-with-what-you-have',
       alt: 'Gia vị nấu nướng thượng hạng cho gia đình'
     }
   ];
 
-  private readonly heroBannersSignal = signal<Array<{ image: string; link?: string; alt?: string }>>(
+  private readonly heroBannersSignal = signal<HeroBannerSlide[]>(
     [...this.defaultHeroBanners]
   );
   private readonly activeHeroSignal = signal(0);
 
-  get heroBanners(): Array<{ image: string; link?: string; alt?: string }> {
+  get heroBanners(): HeroBannerSlide[] {
     return this.heroBannersSignal();
   }
 
-  set heroBanners(slides: Array<{ image: string; link?: string; alt?: string }>) {
+  set heroBanners(slides: HeroBannerSlide[]) {
     this.heroBannersSignal.set(slides);
   }
 
@@ -278,13 +321,20 @@ export class HomeComponent implements OnInit, OnDestroy {
             .map(({ s }: { s: any }) => s);
 
           if (activeSlides.length > 0) {
-            const mapped = activeSlides.map((s: any, idx: number) => ({
-              image: this.resolveMediaUrl(s.image),
-              link: s.link || '/online-ordering',
-              alt: s.title || s.eyebrow || `Banner ${idx + 1}`,
-            }));
-            const nextSig = mapped.map((b: any) => `${b.image}|${b.link}|${b.alt}`).join(';;');
-            const curSig = this.heroBanners.map((b) => `${b.image}|${b.link}|${b.alt}`).join(';;');
+            const mapped: HeroBannerSlide[] = activeSlides.map((s: any, idx: number) => {
+              const fallback = this.defaultHeroBanners[idx % this.defaultHeroBanners.length];
+              return {
+                image: this.resolveMediaUrl(s.image),
+                link: s.link || fallback.link || '/online-ordering',
+                alt: s.title || s.eyebrow || fallback.alt || `Banner ${idx + 1}`,
+                eyebrow: s.eyebrow || fallback.eyebrow || '',
+                title: s.title || fallback.title || '',
+                subtitle: s.subtitle || fallback.subtitle || '',
+                cta: s.cta || fallback.cta || 'Mua sắm ngay',
+              };
+            });
+            const nextSig = mapped.map((b) => `${b.image}|${b.title}|${b.eyebrow}`).join(';;');
+            const curSig = this.heroBanners.map((b) => `${b.image}|${b.title}|${b.eyebrow}`).join(';;');
             if (nextSig !== curSig) {
               this.heroBanners = mapped;
               this.activeHero = 0;
