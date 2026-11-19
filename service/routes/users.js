@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Employee = require('../models/Employee');
 const Order = require('../models/Order');
@@ -6,7 +7,9 @@ const bcrypt = require('bcryptjs');
 const { protect, adminOnly, staffOnly } = require('../middleware/auth');
 const { logAction } = require('../utils/auditLogger');
 
-// Exclude oversized inline base64 avatar blobs from list responses while preserving lightweight URLs
+const INLINE_AVATAR_MARKER = '__INLINE_AVATAR__';
+
+// Return a marker for oversized inline base64 avatars so list queries stay small and fast
 const USER_LIST_SELECT = {
   _id: 1,
   name: 1,
@@ -18,6 +21,7 @@ const USER_LIST_SELECT = {
   assignedStore: 1,
   storeName: 1,
   createdAt: 1,
+  updatedAt: 1,
   points: 1,
   tier: 1,
   totalSpent: 1,
@@ -26,14 +30,50 @@ const USER_LIST_SELECT = {
       {
         $and: [
           { $eq: [{ $type: '$avatar' }, 'string'] },
-          { $lte: [{ $strLenCP: '$avatar' }, 1000] },
+          { $gt: [{ $strLenCP: '$avatar' }, 0] },
         ],
       },
-      '$avatar',
-      '',
+      {
+        $cond: [
+          { $lte: [{ $strLenCP: '$avatar' }, 1000] },
+          '$avatar',
+          INLINE_AVATAR_MARKER,
+        ],
+      },
+      {
+        $cond: [
+          {
+            $and: [
+              { $eq: [{ $type: '$googleAvatar' }, 'string'] },
+              { $lte: [{ $strLenCP: '$googleAvatar' }, 1000] },
+            ],
+          },
+          '$googleAvatar',
+          '',
+        ],
+      },
     ],
   },
 };
+
+function getPublicBaseUrl(req) {
+  const forwardedProto = String(req.get('x-forwarded-proto') || '').split(',')[0].trim();
+  const protocol = forwardedProto || req.protocol || 'http';
+  const host = req.get('x-forwarded-host') || req.get('host');
+  return host ? `${protocol}://${host}` : '';
+}
+
+function attachAvatarUrls(req, users) {
+  const baseUrl = getPublicBaseUrl(req);
+  return users.map((user) => {
+    if (user.avatar !== INLINE_AVATAR_MARKER) return user;
+    const version = new Date(user.updatedAt || user.createdAt || 0).getTime();
+    return {
+      ...user,
+      avatar: `${baseUrl}/api/users/${user._id}/avatar?v=${version}`,
+    };
+  });
+}
 
 // GET /api/users - admin/staff list
 router.get('/', protect, staffOnly, async (req, res, next) => {
@@ -70,7 +110,7 @@ router.get('/', protect, staffOnly, async (req, res, next) => {
         .lean(),
       User.countDocuments(filter),
     ]);
-    res.json({ success: true, total, page: Number(page), data: users });
+    res.json({ success: true, total, page: Number(page), data: attachAvatarUrls(req, users) });
   } catch (err) { next(err); }
 });
 
@@ -134,7 +174,7 @@ router.get('/purchase-stats', protect, staffOnly, async (req, res, next) => {
       };
     });
 
-    res.json({ success: true, total, page: Number(page), data: usersWithStats });
+    res.json({ success: true, total, page: Number(page), data: attachAvatarUrls(req, usersWithStats) });
   } catch (err) { next(err); }
 });
 
@@ -211,6 +251,37 @@ router.post('/staff', protect, adminOnly, async (req, res, next) => {
     });
 
     res.status(201).json({ success: true, data: userObj });
+  } catch (err) { next(err); }
+});
+
+// GET /api/users/:id/avatar - serve decoded avatar image without bloating list responses
+router.get('/:id/avatar', async (req, res, next) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).end();
+    }
+    const user = await User.findById(req.params.id).select('avatar googleAvatar').lean();
+    const raw = (typeof user?.avatar === 'string' && user.avatar) || user?.googleAvatar || '';
+    if (!raw) {
+      return res.status(404).end();
+    }
+    if (/^(https?:\/\/|\/)/i.test(raw)) {
+      return res.redirect(raw);
+    }
+    const match = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/s.exec(raw);
+    if (!match) {
+      return res.status(404).end();
+    }
+    const mimeType = match[1].toLowerCase();
+    const buffer = Buffer.from(match[2].replace(/\s+/g, ''), 'base64');
+    res.set({
+      'Content-Type': mimeType,
+      'Cache-Control': 'public, max-age=86400',
+      'Cross-Origin-Resource-Policy': 'cross-origin',
+      'X-Content-Type-Options': 'nosniff',
+      ...(mimeType === 'image/svg+xml' ? { 'Content-Security-Policy': "default-src 'none'; sandbox" } : {}),
+    });
+    return res.send(buffer);
   } catch (err) { next(err); }
 });
 
