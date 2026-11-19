@@ -1,4 +1,6 @@
 import { Injectable, inject } from '@angular/core';
+import { of } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { ApiService } from './api.service';
 
 export interface ApiCategory {
@@ -14,9 +16,26 @@ export interface ApiCategory {
 @Injectable({ providedIn: 'root' })
 export class CategoryApiService {
   private api = inject(ApiService);
+  private categoriesCache: { success: boolean; data: ApiCategory[] } | null = null;
+  private cacheTime = 0;
 
   getAll() {
-    return this.api.get<{ success: boolean; data: ApiCategory[] }>('/categories');
+    if (this.categoriesCache && (Date.now() - this.cacheTime < 300000)) {
+      return of(this.categoriesCache);
+    }
+    return this.api.get<{ success: boolean; data: ApiCategory[] }>('/categories').pipe(
+      tap(res => {
+        if (res && res.success) {
+          this.categoriesCache = res;
+          this.cacheTime = Date.now();
+        }
+      })
+    );
+  }
+
+  clearCache() {
+    this.categoriesCache = null;
+    this.cacheTime = 0;
   }
 
   getWithCounts() {
@@ -24,14 +43,17 @@ export class CategoryApiService {
   }
 
   create(body: Partial<ApiCategory>) {
+    this.clearCache();
     return this.api.post<{ success: boolean; data: ApiCategory }>('/categories', body);
   }
 
   update(id: string, body: Partial<ApiCategory>) {
+    this.clearCache();
     return this.api.put<{ success: boolean; data: ApiCategory }>(`/categories/${id}`, body);
   }
 
   remove(id: string) {
+    this.clearCache();
     return this.api.delete<{ success: boolean }>(`/categories/${id}`);
   }
 }

@@ -38,6 +38,8 @@ const orderSchema = new mongoose.Schema(
     discount:    { type: Number, default: 0 },
     comboDiscount: { type: Number, default: 0 },
     addonDiscount: { type: Number, default: 0 },
+    pointDiscount: { type: Number, default: 0 },
+    pointsRedeemed: { type: Number, default: 0 },
     voucherCode: { type: String, default: '' },
     shippingVoucherCode: { type: String, default: '' },
     shippingVoucherDiscount: { type: Number, default: 0 },

@@ -4,6 +4,7 @@ const { body } = require('express-validator');
 const Product  = require('../models/Product');
 const Combo    = require('../models/Combo');
 const Category = require('../models/Category');
+const ProductImage = require('../models/ProductImage');
 const StoreInventory = require('../models/StoreInventory');
 const ShippingConfig = require('../models/ShippingConfig');
 const SearchLog = require('../models/SearchLog');
@@ -100,8 +101,8 @@ async function sanitizeAddOnDeals(rawDeals, selfId, mainDoc) {
 }
 
 // GET /api/products  - public, supports ?categoryId=&category=&search=&sort=&page=&limit=
-// Cache 30 giây đối với các lượt duyệt catalog chung (dùng public scope chung cho mọi user để tăng hit rate 99%)
-router.get('/', optionalAuth, cacheMiddleware(30, (req) => !req.query.search && !req.query.keyword, true), async (req, res, next) => {
+// Cache 10 phút (600s) đối với các lượt duyệt catalog chung, tự động xóa cache khi admin thêm/sửa/xóa sản phẩm
+router.get('/', optionalAuth, cacheMiddleware(600, (req) => !req.query.search && !req.query.keyword, true), async (req, res, next) => {
   try {
     const {
       categoryId,
@@ -229,10 +230,11 @@ router.get('/', optionalAuth, cacheMiddleware(30, (req) => !req.query.search && 
     } else if (isCombo === 'false') {
       let prodQuery = Product.find(filter)
         .sort(sortObj)
-        .populate('addOnDeals.product', ADDON_POPULATE_FIELDS)
         .lean();
-      if (useBrief) {
-        prodQuery = prodQuery.select('name slug price priceNumber image images category categoryVi categoryId stock reservedStock safetyBuffer isActive isCombo addOnDeals weight unit soldCount averageRating createdAt');
+      if (!useBrief) {
+        prodQuery = prodQuery.populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
+      } else {
+        prodQuery = prodQuery.select('name slug price priceNumber image images category categoryVi categoryId stock reservedStock safetyBuffer isActive isCombo addOnDeals weight unit soldCount averageRating container cutType cutting packSize packaging preparation quantity ripeness sizeGroup thickness type specifications description createdAt');
       }
       if (limitNum > 0) prodQuery = prodQuery.skip(skipNum).limit(limitNum);
       [resultDocs, total] = await Promise.all([prodQuery, Product.countDocuments(filter)]);
@@ -242,9 +244,11 @@ router.get('/', optionalAuth, cacheMiddleware(30, (req) => !req.query.search && 
       const comboColFilter = { ...filter };
       delete comboColFilter.isCombo;
       const prodComboFilter = { ...filter, isCombo: true };
-      let prodQuery = Product.find(prodFilter).sort(sortObj).populate('addOnDeals.product', ADDON_POPULATE_FIELDS).lean();
-      if (useBrief) {
-        prodQuery = prodQuery.select('name slug price priceNumber image images category categoryVi categoryId stock reservedStock safetyBuffer isActive isCombo addOnDeals weight unit soldCount averageRating createdAt');
+      let prodQuery = Product.find(prodFilter).sort(sortObj).lean();
+      if (!useBrief) {
+        prodQuery = prodQuery.populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
+      } else {
+        prodQuery = prodQuery.select('name slug price priceNumber image images category categoryVi categoryId stock reservedStock safetyBuffer isActive isCombo addOnDeals weight unit soldCount averageRating container cutType cutting packSize packaging preparation quantity ripeness sizeGroup thickness type specifications description createdAt');
       }
       const [prods, colCombos, prodCombos] = await Promise.all([
         prodQuery,
@@ -418,7 +422,7 @@ router.get('/:slug/related', async (req, res, next) => {
       related = [...related, ...fallbackProducts];
     }
 
-    res.json({ success: true, data: related });
+    res.json({ success: true, data: enrichProductOrComboList(related) });
   } catch (err) { next(err); }
 });
 
@@ -441,7 +445,7 @@ router.get('/:slug/frequently-bought', async (req, res, next) => {
       .limit(2)
       .lean();
 
-    res.json({ success: true, data: companionProducts });
+    res.json({ success: true, data: enrichProductOrComboList(companionProducts) });
   } catch (err) { next(err); }
 });
 
@@ -572,6 +576,109 @@ router.post('/compare-store-prices', async (req, res, next) => {
       toStore: toStoreInfo,
       hasDiscrepancy: discrepancies.length > 0,
       discrepancies,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/products/check-store-stock - kiểm tra số lượng tồn kho khả dụng của danh sách món tại chi nhánh chỉ định
+router.post('/check-store-stock', async (req, res, next) => {
+  try {
+    const { storeId, items } = req.body;
+    if (!storeId || !Array.isArray(items) || items.length === 0) {
+      return res.json({ success: true, hasShortage: false, items: [], shortages: [] });
+    }
+
+    const targetStoreId = String(storeId).trim();
+    const resultItems = [];
+    const shortages = [];
+
+    // Lấy thông tin kho
+    const shippingConfig = await ShippingConfig.findOne({ key: 'default' }).lean();
+    let warehouses = shippingConfig?.warehouses || [];
+    const storeInfo = warehouses.find((w) => w.id === targetStoreId) || { id: targetStoreId, name: targetStoreId };
+    const storeName = storeInfo.name || targetStoreId;
+
+    for (const it of items) {
+      const prodIdentifier = it.productId || it.product || it.slug;
+      if (!prodIdentifier) continue;
+
+      let p = null;
+      if (mongoose.Types.ObjectId.isValid(prodIdentifier)) {
+        p = await Product.findById(prodIdentifier).lean();
+      }
+      if (!p && typeof prodIdentifier === 'string') {
+        p = await Product.findOne({ slug: prodIdentifier }).lean();
+      }
+      if (!p) continue;
+
+      const requestedQty = Math.max(1, Number(it.quantity) || 1);
+      let availableStock = 0;
+      let buffer = 0;
+
+      if (p.isCombo && Array.isArray(p.comboItems) && p.comboItems.length > 0) {
+        let minComboAvail = 999999;
+        for (const ci of p.comboItems) {
+          const compId = ci.product?._id || ci.product;
+          if (!compId) continue;
+          const compInv = await StoreInventory.findOne({ storeId: targetStoreId, productId: compId }).lean();
+          let compAvail = 0;
+          if (compInv) {
+            compAvail = Math.max(0, (compInv.physicalStock ?? 0) - (compInv.reservedStock ?? 0) - (compInv.safetyBuffer ?? 0));
+          } else {
+            const compDoc = await Product.findById(compId).lean();
+            compAvail = Math.max(0, (compDoc?.stock || 0) - (compDoc?.safetyBuffer || 0));
+          }
+          const perCombo = Math.max(1, Number(ci.quantity) || 1);
+          const possible = Math.floor(compAvail / perCombo);
+          if (possible < minComboAvail) {
+            minComboAvail = possible;
+          }
+        }
+        availableStock = minComboAvail === 999999 ? 0 : minComboAvail;
+      } else {
+        const storeInv = await StoreInventory.findOne({ storeId: targetStoreId, productId: p._id }).lean();
+        if (storeInv) {
+          const phys = storeInv.physicalStock ?? 0;
+          const resv = storeInv.reservedStock ?? 0;
+          buffer = storeInv.safetyBuffer ?? 0;
+          availableStock = Math.max(0, phys - resv - buffer);
+        } else if (targetStoreId === 'store-thuduc' || targetStoreId === 'default') {
+          availableStock = Math.max(0, (p.stock || 0) - (p.safetyBuffer || 0));
+        } else {
+          availableStock = 0;
+        }
+      }
+
+      const isShortage = availableStock < requestedQty;
+      const itemRes = {
+        productId: String(p._id),
+        slug: p.slug,
+        name: p.name,
+        requestedQty,
+        availableStock,
+        maxQty: availableStock,
+        isShortage,
+      };
+      resultItems.push(itemRes);
+
+      if (isShortage) {
+        shortages.push({
+          ...itemRes,
+          storeName,
+          message: `Chi nhánh [${storeName}] hiện chỉ còn ${availableStock} "${p.name}" khả dụng cho kênh Online (bạn đang chọn ${requestedQty}).`,
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      storeId: targetStoreId,
+      storeName,
+      hasShortage: shortages.length > 0,
+      items: resultItems,
+      shortages,
     });
   } catch (err) {
     next(err);
@@ -753,6 +860,20 @@ router.post('/', protect, adminOnly, productValidation, validate, async (req, re
         req.body.category = (cat.slug || '').replace(/^\/category\//, '');
         req.body.categoryVi = cat.name;
       }
+    } else if (req.body.category) {
+      const cleanSlug = String(req.body.category).replace(/^\/category\//, '');
+      const cat = await Category.findOne({
+        $or: [
+          { slug: cleanSlug },
+          { slug: `/category/${cleanSlug}` },
+          { name: req.body.category },
+        ],
+      });
+      if (cat) {
+        req.body.categoryId = cat._id;
+        req.body.categoryVi = cat.name;
+        req.body.category = cleanSlug;
+      }
     }
     if (req.body.image || Array.isArray(req.body.images)) {
       req.body.images = normalizeProductImages({ image: req.body.image, images: req.body.images });
@@ -762,6 +883,47 @@ router.post('/', protect, adminOnly, productValidation, validate, async (req, re
       req.body.addOnDeals = await sanitizeAddOnDeals(req.body.addOnDeals, null, req.body);
     }
     const created = await Product.create(req.body);
+
+    // Đồng bộ sang bảng chuẩn hóa ProductImage
+    if (created.image) {
+      try {
+        await ProductImage.findOneAndUpdate(
+          { productId: created._id, isPrimary: true },
+          {
+            $set: {
+              productId: created._id,
+              imageUrl: created.image,
+              imageType: 'thumbnail',
+              caption: created.name,
+              sortOrder: 1,
+              isPrimary: true,
+            },
+          },
+          { upsert: true }
+        );
+      } catch (_) {}
+    }
+
+    // Khởi tạo bản ghi tồn kho cấp chi nhánh StoreInventory cho kho trung tâm
+    try {
+      await StoreInventory.findOneAndUpdate(
+        { storeId: 'store-thuduc', productId: created._id },
+        {
+          $setOnInsert: {
+            storeId: 'store-thuduc',
+            storeName: 'Evergreen Mart Thủ Đức',
+            productId: created._id,
+            sku: created.slug || '',
+            productName: created.name,
+            physicalStock: Math.max(0, Number(created.stock) || 0),
+            reservedStock: 0,
+            safetyBuffer: 2,
+          },
+        },
+        { upsert: true }
+      );
+    } catch (_) {}
+
     clearCache();
     const product = await Product.findById(created._id)
       .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
@@ -789,6 +951,20 @@ router.put('/:id', protect, authorizeRoles('Manager', 'Admin', 'Marketing'), asy
         req.body.category = (cat.slug || '').replace(/^\/category\//, '');
         req.body.categoryVi = cat.name;
       }
+    } else if (req.body.category) {
+      const cleanSlug = String(req.body.category).replace(/^\/category\//, '');
+      const cat = await Category.findOne({
+        $or: [
+          { slug: cleanSlug },
+          { slug: `/category/${cleanSlug}` },
+          { name: req.body.category },
+        ],
+      });
+      if (cat) {
+        req.body.categoryId = cat._id;
+        req.body.categoryVi = cat.name;
+        req.body.category = cleanSlug;
+      }
     }
     if (Array.isArray(req.body.images)) {
       const targetImage = req.body.image ?? (await Product.findById(req.params.id).select('image').lean())?.image;
@@ -804,6 +980,33 @@ router.put('/:id', protect, authorizeRoles('Manager', 'Admin', 'Marketing'), asy
     const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
       .populate('addOnDeals.product', ADDON_POPULATE_FIELDS);
     if (!product) return res.status(404).json({ success: false, message: 'Không tìm thấy sản phẩm.' });
+
+    // Đồng bộ cập nhật bảng ProductImage
+    if (product.image) {
+      try {
+        await ProductImage.findOneAndUpdate(
+          { productId: product._id, isPrimary: true },
+          {
+            $set: {
+              productId: product._id,
+              imageUrl: product.image,
+              caption: product.name,
+              isPrimary: true,
+            },
+          },
+          { upsert: true }
+        );
+      } catch (_) {}
+    }
+
+    // Đồng bộ thông tin tên sản phẩm & sku sang StoreInventory
+    try {
+      await StoreInventory.updateMany(
+        { productId: product._id },
+        { $set: { productName: product.name, sku: product.slug } }
+      );
+    } catch (_) {}
+
     clearCache();
     res.json({ success: true, data: enrichProductOrComboList([product])[0] });
   } catch (err) { next(err); }

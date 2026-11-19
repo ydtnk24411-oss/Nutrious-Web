@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { ChatbotService, ChatProduct, ChatMessage } from '../../shared/services/chatbot.service';
-import { CartService } from '../../shared/services/cart.service';
+import { CartService, formatPrice } from '../../shared/services/cart.service';
 import { XanhLaProduct } from '../../shared/models/xanh-la.models';
 
 @Component({
@@ -25,6 +25,7 @@ export class ChatbotComponent implements AfterViewChecked {
   protected chat = inject(ChatbotService);
   private cart = inject(CartService);
   private router = inject(Router);
+  protected formatPrice = formatPrice;
 
   @ViewChild('messagesScroll') private messagesScrollContainer?: ElementRef<HTMLDivElement>;
   @ViewChild('fileInput') private fileInputRef?: ElementRef<HTMLInputElement>;
@@ -38,9 +39,16 @@ export class ChatbotComponent implements AfterViewChecked {
 
   constructor() {
     effect(() => {
+      const isOpen = this.chat.isOpen();
       this.chat.messages();
       this.chat.loading();
-      this.shouldScroll = true;
+      if (isOpen) {
+        this.shouldScroll = true;
+        // Tự động cuộn xuống tin nhắn mới nhất ngay khi mở và sau khi các phần tử render xong
+        setTimeout(() => this.scrollToBottom(), 20);
+        setTimeout(() => this.scrollToBottom(), 100);
+        setTimeout(() => this.scrollToBottom(), 250);
+      }
     });
   }
 
@@ -53,9 +61,9 @@ export class ChatbotComponent implements AfterViewChecked {
 
   scrollToBottom(): void {
     try {
-      if (this.messagesScrollContainer) {
-        this.messagesScrollContainer.nativeElement.scrollTop =
-          this.messagesScrollContainer.nativeElement.scrollHeight;
+      if (this.messagesScrollContainer?.nativeElement) {
+        const el = this.messagesScrollContainer.nativeElement;
+        el.scrollTop = el.scrollHeight;
       }
     } catch {}
   }

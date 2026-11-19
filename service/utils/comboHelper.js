@@ -34,6 +34,17 @@ function slugifyVietnamese(raw) {
   return base || `combo-${Date.now()}`;
 }
 
+function formatPriceString(priceNumber, rawPrice) {
+  const str = String(rawPrice || '').trim();
+  if (str.includes('.') && (str.endsWith('đ') || str.endsWith('₫'))) {
+    return str;
+  }
+  const num = typeof priceNumber === 'number' && !isNaN(priceNumber)
+    ? priceNumber
+    : (Number(str.replace(/[^\d]/g, '')) || 0);
+  return `${num.toLocaleString('vi-VN')}đ`;
+}
+
 function resolveComboStatus(doc) {
   if (!doc) return 'hidden';
   if (doc.comboStatus === 'paused') return 'paused';
@@ -130,6 +141,7 @@ function enrichComboDocument(doc, options = {}) {
   return {
     ...obj,
     isCombo: true,
+    price: formatPriceString(obj.priceNumber, obj.price),
     image: normalizedImages[0] || obj.image || '',
     images: normalizedImages,
     comboStatus: status,
@@ -152,6 +164,7 @@ function enrichProductOrComboList(docs) {
     if (isCombo) return enrichComboDocument(d, { assumeCombo: true });
     const obj = typeof d?.toObject === 'function' ? d.toObject({ virtuals: true }) : { ...d };
     if (obj) {
+      obj.price = formatPriceString(obj.priceNumber, obj.price);
       if (obj.availableOnlineStock === undefined) {
         const stock = obj.stock ?? 0;
         const reserved = obj.reservedStock ?? 0;

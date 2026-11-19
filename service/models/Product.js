@@ -82,6 +82,16 @@ const productSchema = new mongoose.Schema(
   }
 );
 
+productSchema.pre('save', function (next) {
+  if (typeof this.priceNumber === 'number' && !isNaN(this.priceNumber)) {
+    const str = String(this.price || '');
+    if (!str.includes('.') || (!str.includes('đ') && !str.includes('₫'))) {
+      this.price = `${this.priceNumber.toLocaleString('vi-VN')}đ`;
+    }
+  }
+  next();
+});
+
 productSchema.virtual('availableOnlineStock').get(function () {
   const physical = this.stock ?? 0;
   const reserved = this.reservedStock ?? 0;

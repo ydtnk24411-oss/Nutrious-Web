@@ -136,8 +136,23 @@ export function calcAddOnUnitDiscount(
   return Math.max(0, Math.min(targetUnitPrice, rawDisc));
 }
 
-export function formatPrice(value: number): string {
-  return value.toLocaleString('vi-VN') + 'đ';
+export function formatPrice(value: number | string | any): string {
+  if (value === null || value === undefined || value === '') return '0đ';
+  if (typeof value === 'number') {
+    return value.toLocaleString('vi-VN') + 'đ';
+  }
+  const str = String(value).trim();
+  if (str.includes('.') && (str.endsWith('đ') || str.endsWith('₫'))) {
+    return str;
+  }
+  const cleanDigits = str.replace(/[^\d]/g, '');
+  if (cleanDigits) {
+    const num = Number(cleanDigits);
+    if (!isNaN(num) && num >= 0) {
+      return num.toLocaleString('vi-VN') + 'đ';
+    }
+  }
+  return str;
 }
 
 export function resolveProductMaxStock(

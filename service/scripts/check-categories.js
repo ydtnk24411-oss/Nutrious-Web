@@ -8,14 +8,8 @@ async function check() {
   const cats = await Category.find({ isActive: { $ne: false } }).sort({ order: 1, createdAt: 1 });
   console.log('Categories count:', cats.length);
   cats.forEach(c => {
-    console.log({
-      _id: c._id.toString(),
-      name: c.name,
-      slug: c.slug,
-      image: c.image,
-      order: c.order,
-      isActive: c.isActive
-    });
+    const imgPreview = c.image ? (c.image.startsWith('data:') ? 'BASE64 (' + c.image.length + ')' : c.image) : 'NONE';
+    console.log(c.name, '=>', imgPreview);
   });
   await mongoose.disconnect();
 }

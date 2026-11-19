@@ -1,4 +1,6 @@
 import { Injectable, inject } from '@angular/core';
+import { of } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { ApiService } from './api.service';
 
 export interface ApiComboLimitingItem {
@@ -79,8 +81,25 @@ export class ProductApiService {
     return this.api.get<{ success: boolean; data: ApiCategory[] }>('/categories');
   }
 
+  private catalogCache = new Map<string, { data: { success: boolean; total: number; data: ApiProduct[] }; time: number }>();
+
   getAll(params?: Record<string, string | number>) {
-    return this.api.get<{ success: boolean; total: number; data: ApiProduct[] }>('/products', params);
+    const key = JSON.stringify(params || {});
+    const cached = this.catalogCache.get(key);
+    if (cached && (Date.now() - cached.time < 300000)) {
+      return of(cached.data);
+    }
+    return this.api.get<{ success: boolean; total: number; data: ApiProduct[] }>('/products', params).pipe(
+      tap(res => {
+        if (res && res.success) {
+          this.catalogCache.set(key, { data: res, time: Date.now() });
+        }
+      })
+    );
+  }
+
+  clearCatalogCache() {
+    this.catalogCache.clear();
   }
 
   getBySlug(slug: string) {
@@ -100,14 +119,43 @@ export class ProductApiService {
   }
 
   create(body: Partial<ApiProduct>) {
+    this.clearCatalogCache();
     return this.api.post<{ success: boolean; data: ApiProduct }>('/products', body);
   }
 
   update(id: string, body: Partial<ApiProduct>) {
+    this.clearCatalogCache();
     return this.api.put<{ success: boolean; data: ApiProduct }>(`/products/${id}`, body);
   }
 
   remove(id: string) {
+    this.clearCatalogCache();
     return this.api.delete<{ success: boolean }>(`/products/${id}`);
+  }
+
+  checkStoreStock(storeId: string, items: { productId?: string; slug?: string; quantity: number }[]) {
+    return this.api.post<{
+      success: boolean;
+      storeId: string;
+      storeName: string;
+      hasShortage: boolean;
+      items: {
+        productId: string;
+        slug: string;
+        name: string;
+        requestedQty: number;
+        availableStock: number;
+        maxQty: number;
+        isShortage: boolean;
+      }[];
+      shortages: {
+        productId: string;
+        slug: string;
+        name: string;
+        requestedQty: number;
+        availableStock: number;
+        message: string;
+      }[];
+    }>('/products/check-store-stock', { storeId, items });
   }
 }

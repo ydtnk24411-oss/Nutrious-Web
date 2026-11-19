@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, HostListener, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ShellComponent } from '../../components/shell/shell.component';
-import { CartService } from '../../shared/services/cart.service';
+import { CartService, formatPrice } from '../../shared/services/cart.service';
 import { ProductApiService, ApiProduct } from '../../shared/services/product-api.service';
 import { heroImage, originImage } from '../../shared/data/xanh-la.data';
 import { Voucher as ApiVoucher, XanhLaProduct } from '../../shared/models/xanh-la.models';
@@ -21,6 +21,16 @@ interface Voucher {
   color: 'green' | 'amber' | 'red';
 }
 interface NewsItem { title: string; image: string; path: string; date: string; }
+
+export interface HeroBannerSlide {
+  image: string;
+  link?: string;
+  alt?: string;
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+  cta?: string;
+}
 
 @Component({
   selector: 'app-home',
@@ -42,62 +52,110 @@ export class HomeComponent implements OnInit, OnDestroy {
   readonly fallbackProductImage = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=700&q=80';
 
   // =========================================================================
-  // 1. DANH SÁCH BANNER CHÍNH (SLIDER) - MẶC ĐỊNH TRƯỚC KHI LOAD TỪ MONGODB
+  // 1. DANH SÁCH BANNER CHÍNH (SLIDER) - 100% ẢNH NÔNG SẢN & THỰC PHẨM SẮC NÉT
+  // Tích hợp đầy đủ thông tin: nhãn chứng nhận, tiêu đề, mô tả và nút bấm
   // =========================================================================
-  private readonly defaultHeroBanners: Array<{ image: string; link?: string; alt?: string }> = [
+  private readonly defaultHeroBanners: HeroBannerSlide[] = [
     {
-      image: '/images/banners/banner1.jpg',
+      image: '/images/banners/banner-fresh-vegetables.jpg',
+      eyebrow: 'NÔNG SẢN HỮU CƠ ĐÀ LẠT',
+      title: 'Rau củ thuần khiết thu hoạch sớm mai',
+      subtitle: 'Nguồn nông sản hữu cơ VietGAP tươi mới mỗi ngày, trọn vẹn vị lành nguyên bản cho bữa cơm gia đình.',
+      cta: 'Khám phá ngay',
       link: '/online-ordering',
-      alt: 'Banner 1'
+      alt: 'Rau củ hữu cơ thuần khiết thu hoạch sớm mai'
     },
     {
-      image: '/images/banners/banner6.png',
+      image: '/images/banners/banner-seafood-salmon.jpg',
+      eyebrow: 'HẢI SẢN CAO CẤP NHẬP KHẨU',
+      title: 'Cá hồi Na Uy tươi rói chuẩn vị biển',
+      subtitle: 'Phi lê cá hồi thượng hạng giữ lạnh 0-2°C, ngọt mềm từng thớ thịt béo ngậy giàu dưỡng chất.',
+      cta: 'Xem hải sản',
+      link: '/online-ordering',
+      alt: 'Cá hồi Na Uy tươi rói chuẩn vị biển tự nhiên'
+    },
+    {
+      image: '/images/banners/banner-seafood-ice.jpg',
+      eyebrow: 'ĐÁNH BẮT TRONG NGÀY - ƯỚP ĐÁ LẠNH',
+      title: 'Tôm sú & cá biển tươi sống ướp đá',
+      subtitle: 'Hải sản tươi sống ướp đá tự nhiên cập bến sớm, giữ trọn độ giòn ngọt thanh lành từ biển mẹ.',
+      cta: 'Đặt hàng ngay',
+      link: '/online-ordering',
+      alt: 'Tôm sú và cá biển tươi sống ướp đá tự nhiên'
+    },
+    {
+      image: '/images/banners/banner-salmon-dish.jpg',
+      eyebrow: 'ẨM THỰC DINH DƯỠNG LÀNH MẠNH',
+      title: 'Bữa ăn cân bằng nâng niu sức khỏe',
+      subtitle: 'Cá hồi áp chảo thanh vị cùng rau củ hữu cơ, tính toán calorie và vi chất thanh sạch chuẩn khoa học.',
+      cta: 'Xem thực đơn',
+      link: '/nutrition',
+      alt: 'Bữa ăn cân bằng dinh dưỡng nâng niu sức khỏe'
+    },
+    {
+      image: '/images/banners/banner-fresh-fruits.jpg',
+      eyebrow: 'VƯỜN TRÁI CÂY NHIỆT ĐỚI TƯƠI MỌNG',
+      title: 'Hương sắc thiên nhiên ngọt lành mỗi ngày',
+      subtitle: 'Dâu tây Đà Lạt, kiwi, chuối, nho mọng nước chín cây, thanh mát bổ sung vitamin tự nhiên.',
+      cta: 'Chọn trái cây',
       link: '/promotions',
-      alt: 'Banner 2'
+      alt: 'Trái cây nhiệt đới ngọt lành tươi mọng'
     },
     {
-      image: '/images/banners/banner8.png',
+      image: '/images/banners/banner-spices-spoons.jpg',
+      eyebrow: 'GIA VỊ THẢO MỘC THIÊN NHIÊN',
+      title: 'Tinh hoa thảo mộc đượm vị cơm nhà',
+      subtitle: 'Tiêu rừng, quế chi, hoa hồi 100% tự nhiên đánh thức hương vị cơm mẹ nấu ấm áp đậm đà.',
+      cta: 'Xem gia vị',
       link: '/cook-with-what-you-have',
-      alt: 'Banner 3'
+      alt: 'Gia vị thảo mộc thiên nhiên đượm vị cơm nhà'
     },
     {
-      image: '/images/banners/banner9.png',
-      link: '/cook-with-what-you-have',
-      alt: 'Banner 9'
+      image: '/images/banners/banner-nam-o-sauce.jpg',
+      eyebrow: 'ĐẶC SẢN LÀNG NGHỀ TRĂM NĂM',
+      title: 'Nước mắm Nam Ô truyền thống đượm tình',
+      subtitle: 'Ủ chượp thủ công từ cá cơm than vịnh Đà Nẵng và muối hạt tinh khiết, lắng đọng từng giọt ngọc biển.',
+      cta: 'Mua đặc sản',
+      link: '/category/all-products',
+      alt: 'Nước mắm Nam Ô truyền thống đậm đà vị biển mẹ'
     },
     {
-      image: '/images/banners/banner4.png',
+      image: '/images/banners/banner-spices-bowls.jpg',
+      eyebrow: 'BỘ SƯU TẬP GIA VỊ THƯỢNG HẠNG',
+      title: 'Gia vị thuần khiết cho bếp Việt an tâm',
+      subtitle: 'Nghệ vàng, ớt khô, tiêu sọ xay nguyên chất, bảo đảm an toàn tuyệt đối không phụ gia bảo quản.',
+      cta: 'Khám phá ngay',
       link: '/cook-with-what-you-have',
-      alt: 'Banner 4'
+      alt: 'Bộ sưu tập gia vị thuần khiết cho bếp Việt'
     }
   ];
 
-  private readonly heroBannersSignal = signal<Array<{ image: string; link?: string; alt?: string }>>(
+  private readonly heroBannersSignal = signal<HeroBannerSlide[]>(
     [...this.defaultHeroBanners]
   );
   private readonly activeHeroSignal = signal(0);
 
-  get heroBanners(): Array<{ image: string; link?: string; alt?: string }> {
+  get heroBanners(): HeroBannerSlide[] {
     return this.heroBannersSignal();
   }
 
-  set heroBanners(slides: Array<{ image: string; link?: string; alt?: string }>) {
+  set heroBanners(slides: HeroBannerSlide[]) {
     this.heroBannersSignal.set(slides);
   }
 
   // =========================================================================
-  // 2. HAI BANNER PHỤ BÊN PHẢI (ẢNH THUẦN)
+  // 2. HAI BANNER PHỤ BÊN PHẢI (ẢNH THƯƠNG HIỆU SẮC NÉT CHUẨN THỰC PHẨM)
   // =========================================================================
   sideBanners = {
     top: {
-      image: '/images/banners/banner9.png',
-      link: '/online-ordering',
-      alt: 'Banner phụ trên'
+      image: '/images/banners/banner-maggi.jpg',
+      link: '/promotions',
+      alt: 'Chốt quà Maggi thăng vị hè tươi mát'
     },
     bottom: {
-      image: '/images/banners/banner4.png',
-      link: '/nutrition',
-      alt: 'Banner phụ dưới'
+      image: '/images/banners/banner-chinsu-pepper.jpg',
+      link: '/online-ordering',
+      alt: 'Tiêu đen Chin-Su rắc tiêu thơm cơm đậm tình'
     }
   };
 
@@ -189,7 +247,16 @@ export class HomeComponent implements OnInit, OnDestroy {
     color: (['green', 'amber', 'red'] as const)[index % 3],
   })));
   readonly voucherToast = signal('');
+  private voucherToastTimer: ReturnType<typeof setTimeout> | null = null;
   private pendingVoucherId = signal<string | null>(null);
+
+  showVoucherToast(msg: string): void {
+    this.voucherToast.set(msg);
+    if (this.voucherToastTimer) clearTimeout(this.voucherToastTimer);
+    if (msg) {
+      this.voucherToastTimer = setTimeout(() => this.voucherToast.set(''), 4500);
+    }
+  }
 
   flashSales: FlashSaleItem[] = [];
   loadingFlashSales = true;
@@ -242,32 +309,47 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.http.get<any>(`${API_BASE}/banners`, { params: { _t: String(now) } }).subscribe({
       next: (res) => {
         if (res && res.success && res.data) {
+          const legacyBlacklist = [
+            '9-9',
+            'hoi-vien',
+            'thuc-pham-sach',
+            'banner-9-9',
+            'banner-uu-dai-hoi-vien',
+            '6afe009e20f0b5e73e86e586',
+            '6afe00b520f0b5e73e86e5fe',
+            '6afe111137cea1a386b98ff0',
+          ];
           const activeSlides = (res.data.heroSlides || [])
             .map((s: any, idx: number) => ({ s, idx }))
             .filter(({ s }: { s: any }) => s && s.active !== false && String(s.image || '').trim().length > 0)
+            .filter(({ s }: { s: any }) => !legacyBlacklist.some(k => String(s.image || '').toLowerCase().includes(k)))
             .sort((a: { s: any; idx: number }, b: { s: any; idx: number }) => {
               const orderDiff = (Number(a.s?.sortOrder) || 999) - (Number(b.s?.sortOrder) || 999);
               return orderDiff !== 0 ? orderDiff : a.idx - b.idx;
             })
             .map(({ s }: { s: any }) => s);
 
-          const isCustomized = Boolean(
-            (res.data.updatedBy && res.data.updatedBy !== 'system')
-            || activeSlides.some((s: any) => String(s.image || '').includes('/api/banners/media/'))
-          );
-
-          if (activeSlides.length > 0 && isCustomized) {
-            const mapped = activeSlides.map((s: any, idx: number) => ({
-              image: this.resolveMediaUrl(s.image),
-              link: s.link || '/online-ordering',
-              alt: s.title || s.eyebrow || `Banner ${idx + 1}`,
-            }));
-            const nextSig = mapped.map((b: any) => `${b.image}|${b.link}|${b.alt}`).join(';;');
-            const curSig = this.heroBanners.map((b) => `${b.image}|${b.link}|${b.alt}`).join(';;');
+          if (activeSlides.length > 0) {
+            const mapped: HeroBannerSlide[] = activeSlides.map((s: any, idx: number) => {
+              const fallback = this.defaultHeroBanners[idx % this.defaultHeroBanners.length];
+              return {
+                image: this.resolveMediaUrl(s.image),
+                link: s.link || fallback.link || '/online-ordering',
+                alt: s.title || s.eyebrow || fallback.alt || `Banner ${idx + 1}`,
+                eyebrow: s.eyebrow || fallback.eyebrow || '',
+                title: s.title || fallback.title || '',
+                subtitle: s.subtitle || fallback.subtitle || '',
+                cta: s.cta || fallback.cta || 'Mua sắm ngay',
+              };
+            });
+            const nextSig = mapped.map((b) => `${b.image}|${b.title}|${b.eyebrow}`).join(';;');
+            const curSig = this.heroBanners.map((b) => `${b.image}|${b.title}|${b.eyebrow}`).join(';;');
             if (nextSig !== curSig) {
               this.heroBanners = mapped;
               this.activeHero = 0;
             }
+          } else {
+            this.heroBanners = [...this.defaultHeroBanners];
           }
 
           if (res.data.promoPopup) {
@@ -348,6 +430,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.heroTimer) clearInterval(this.heroTimer);
     if (this.countdownTimer) clearInterval(this.countdownTimer);
+    if (this.voucherToastTimer) clearTimeout(this.voucherToastTimer);
   }
   nextHero(): void { this.activeHero = (this.activeHero + 1) % this.heroSlides.length; }
   prevHero(): void { this.activeHero = (this.activeHero - 1 + this.heroSlides.length) % this.heroSlides.length; }
@@ -361,7 +444,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
   copyVoucher(code: string): void {
     this.voucherService.copyCode(code);
-    this.voucherToast.set(`Đã sao chép mã ${code}. Mã vẫn được giữ hiển thị khi bạn chuyển trang.`);
+    this.showVoucherToast(`Đã sao chép mã ${code}. Mã vẫn được giữ hiển thị khi bạn chuyển trang.`);
   }
   saveVoucher(id: string): void {
     if (this.isVoucherSaved(id)) return;
@@ -374,7 +457,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
   private persistVoucher(id: string): void {
     this.voucherService.collectVoucher(id).subscribe((result) => {
-      this.voucherToast.set(result.success
+      this.showVoucherToast(result.success
         ? 'Đã lưu voucher vào Ví Voucher. Bạn có thể chọn mã tại trang thanh toán.'
         : result.message || 'Không thể lưu voucher lúc này.');
     });
@@ -464,15 +547,21 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.cart.openBuyNowModal(this.buildDealCartProduct(deal));
   }
 
-  formatPrice(val: number): string {
-    return (val || 0).toLocaleString('vi-VN') + 'đ';
+  formatPrice(val: any): string {
+    return formatPrice(val);
+  }
+
+  onHeroImgError(index: number): void {
+    if (this.heroSlides[index]) {
+      this.heroSlides[index].image = this.fallbackProductImage;
+    }
   }
   private toCartProduct(p: ApiProduct): XanhLaProduct {
     return {
       id: p._id,
       name: p.name,
       slug: p.slug,
-      price: p.price,
+      price: formatPrice(p.priceNumber || p.price),
       priceNumber: p.priceNumber,
       image: p.image,
       category: p.categoryId,

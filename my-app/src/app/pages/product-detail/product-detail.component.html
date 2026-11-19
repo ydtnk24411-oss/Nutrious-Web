@@ -120,7 +120,26 @@
               </div>
             }
           } @else {
-            <div class="xanhla-product-info-price">Giá {{ money(resolveUnitPrice(p)) }}</div>
+            @if (activeFlashSale(); as deal) {
+              <div class="pd-flash-price-block">
+                <div class="pd-flash-deal-pill">
+                  <i class="bi bi-lightning-charge-fill"></i> FLASH SALE TIẾT KIỆM
+                </div>
+                <div class="pd-flash-main-row">
+                  <span class="pd-flash-current-price">{{ formatPrice(deal.flashSalePrice) }}</span>
+                  <span class="pd-flash-original-price">{{ money(resolveUnitPrice(p)) }}</span>
+                  <span class="pd-flash-discount-badge">-{{ deal.discountPercent }}%</span>
+                </div>
+                <div class="pd-flash-quota-wrap">
+                  <div class="pd-flash-quota-bar">
+                    <div class="pd-flash-quota-fill" [style.width.%]="deal.soldPercent || 75"></div>
+                  </div>
+                  <span class="pd-flash-quota-text">Đã bán {{ deal.soldQuantity || 0 }}/{{ deal.totalQuantity || deal.stock || 40 }} suất</span>
+                </div>
+              </div>
+            } @else {
+              <div class="xanhla-product-info-price">Giá {{ money(resolveUnitPrice(p)) }}</div>
+            }
 
             @if (p.options && p.options.length > 0) {
               <div class="xanhla-option-group">
@@ -135,7 +154,7 @@
             }
           }
 
-          <div style="margin-bottom:24px">
+          <div style="margin-bottom:20px">
             <span class="xanhla-option-label">
               {{ p.isCombo ? 'Số lượng gói Combo' : 'Số lượng' }}
             </span>
@@ -146,18 +165,17 @@
             </div>
           </div>
 
-          <div class="xanhla-product-cta-row">
+          <div class="xanhla-product-cta-row acfc-cta-layout">
             <button
-              class="xanhla-btn-primary"
+              class="acfc-btn-add-cart"
               type="button"
-              style="flex:1"
               [disabled]="isProductUnavailable(p)"
               (click)="addToCart()"
             >
               @if (p.isCombo && p.comboStatus === 'paused') {
                 Tạm ngừng kinh doanh
               } @else if (p.isCombo && comboStock(p) <= 0) {
-                Tạm hết Combo
+                Tạm hết combo
               } @else if (isProductUnavailable(p)) {
                 Tạm hết hàng
               } @else {
@@ -166,9 +184,9 @@
             </button>
             @if (!isProductUnavailable(p)) {
               <button
-                class="xanhla-btn-secondary"
+                class="acfc-btn-buy-now"
+                [class.is-flash-sale]="activeFlashSale() !== null"
                 type="button"
-                style="flex:1"
                 (click)="buyNow()"
               >
                 Mua ngay
@@ -176,9 +194,9 @@
             }
             <button
               type="button"
+              class="acfc-btn-wishlist"
               (click)="wishlist.toggleWishlist(p)"
               [title]="wishlist.isWishlisted(p._id) ? 'Bỏ khỏi yêu thích' : 'Thêm vào yêu thích'"
-              style="width:48px;height:48px;border-radius:var(--xanh-radius-sm);border:1px solid #fecdd3;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;flex-shrink:0"
               [style.color]="wishlist.isWishlisted(p._id) ? '#e11d48' : '#64748b'"
               [style.background]="wishlist.isWishlisted(p._id) ? '#fff1f2' : '#ffffff'"
             >
@@ -447,9 +465,9 @@
                   @if (isProductUnavailable(p)) {
                     Tạm hết hàng
                   } @else if (addedBundleNotice()) {
-                    Đã thêm vào giỏ hàng!
+                    Đã thêm vào giỏ!
                   } @else {
-                    Thêm vào giỏ hàng
+                    Thêm vào giỏ
                   }
                 </button>
                 @if (liveAddOnSummary().selectedCount > 0 && !isProductUnavailable(p)) {
@@ -529,17 +547,22 @@
                       Tạm hết hàng thành phần
                     }
                   </div>
-                  <button type="button" class="pd-combo-btn"
-                          [disabled]="isComboUnavailable(combo)"
-                          (click)="addCombo(combo)">
+                  <div class="ord-card-btn-row">
                     @if (isComboUnavailable(combo)) {
-                      Tạm hết combo
-                    } @else if (addedComboId() === combo._id) {
-                      Đã thêm vào giỏ
+                      <button type="button" class="xanhla-prod-card-add" disabled>
+                        <span>Tạm hết combo</span>
+                      </button>
                     } @else {
-                      Thêm combo vào giỏ
+                      <button type="button" class="xanhla-prod-card-add" (click)="addCombo(combo)" [attr.aria-label]="'Thêm ' + combo.name + ' vào giỏ'">
+                        <i class="bi bi-cart-plus"></i>
+                        <span>{{ addedComboId() === combo._id ? 'Đã thêm giỏ' : 'THÊM GIỎ' }}</span>
+                      </button>
+                      <button type="button" class="xanhla-prod-card-buynow" (click)="openBuyNowFromRelated(combo, $event)" [attr.aria-label]="'Mua ngay ' + combo.name">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                        <span>Mua ngay</span>
+                      </button>
                     }
-                  </button>
+                  </div>
                 </div>
               </article>
             }
@@ -652,37 +675,36 @@
                     @if (prod.weight || prod.packSize) {
                       <span class="xanhla-prod-card-unit">/ {{ prod.weight || prod.packSize }}</span>
                     }
-
-                    @if (itemQty(prod.slug) > 0) {
-                      <span class="ord-item-qty-badge ord-qty-inline">
-                        {{ itemQty(prod.slug) }}
-                      </span>
-                    }
                   </div>
 
-                  @if (itemQty(prod.slug) > 0) {
-                    <div class="ord-qty-picker ord-qty-picker--full">
-                      <button type="button" class="ord-qty-btn" (click)="removeOne(prod, $event)">−</button>
-                      <span class="ord-qty-num">{{ itemQty(prod.slug) }}</span>
+                  <div class="ord-card-btn-row">
+                    @if (isProductUnavailable(prod)) {
                       <button
                         type="button"
-                        class="ord-qty-btn"
-                        [disabled]="isProductUnavailable(prod) || itemQty(prod.slug) >= productMaxStock(prod)"
-                        (click)="addOne(prod, $event)">+</button>
-                    </div>
-                  } @else {
-                    <button
-                      type="button"
-                      class="xanhla-prod-card-add"
-                      [disabled]="isProductUnavailable(prod)"
-                      (click)="addOne(prod, $event)"
-                      [attr.aria-label]="isProductUnavailable(prod) ? (prod.name + ' tạm hết hàng') : ('Thêm ' + prod.name)">
-                      @if (!isProductUnavailable(prod)) {
-                        <i class="bi bi-bag" style="font-size:15px"></i>
-                      }
-                      {{ isProductUnavailable(prod) ? 'Tạm hết hàng' : 'Thêm vào giỏ' }}
-                    </button>
-                  }
+                        class="xanhla-prod-card-add"
+                        disabled>
+                        <span>Tạm hết hàng</span>
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        class="xanhla-prod-card-add"
+                        (click)="addOne(prod, $event)"
+                        [attr.aria-label]="'Thêm ' + prod.name + ' vào giỏ'">
+                        <i class="bi bi-cart-plus"></i>
+                        <span>THÊM GIỎ</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        class="xanhla-prod-card-buynow"
+                        (click)="openBuyNowFromRelated(prod, $event)"
+                        [attr.aria-label]="'Mua ngay ' + prod.name">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                        <span>Mua ngay</span>
+                      </button>
+                    }
+                  </div>
                 </div>
               </div>
             }

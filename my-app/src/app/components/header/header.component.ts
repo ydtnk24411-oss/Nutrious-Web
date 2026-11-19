@@ -156,6 +156,13 @@ export class HeaderComponent implements OnDestroy {
     this.notifService.markAllAsRead();
   }
 
+  onNotifClick(n: InAppNotification): void {
+    if (n.unread) {
+      this.notifService.markAsRead(n.id);
+    }
+    this.closeNotifMenu();
+  }
+
   toggleMobileMenu(): void { this.mobileMenuOpen.update(v => !v); }
   closeMobileMenu(): void  { this.mobileMenuOpen.set(false); }
   toggleUserMenu(): void   { this.userMenuOpen.update(v => !v); this.areaMenuOpen.set(false); this.notifMenuOpen.set(false); }

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   XANH LÁ — Global Design System
+   XANH LÁ - Global Design System
    ========================================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
 @import 'leaflet/dist/leaflet.css';
@@ -15,11 +15,11 @@ html, body {
 }
 
 body {
-  background: #f7fdf5;
-  color: #1c3a1c;
-  font-family: 'Be Vietnam Pro', 'Segoe UI', sans-serif;
+  background: #F4F6F8;
+  color: #1E293B;
+  font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 15px;
-  line-height: 1.65;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overflow-x: clip;
 }
@@ -32,33 +32,35 @@ img { display: block; max-width: 100%; }
    DESIGN TOKENS
    ========================================================================== */
 :root {
-  --font-display: 'Playfair Display', Georgia, serif;
-  --font-text:    'Be Vietnam Pro', 'Segoe UI', sans-serif;
+  --font-display: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-text:    'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-  /* Green scale */
-  --green-900:  #1b3d1b;
-  --green-700:  #2d6a2d;
-  --green-500:  #4a8f4a;
-  --green-300:  #8ab88a;
-  --green-100:  #e8f5e8;
-  --green-50:   #f2faf2;
+  /* Fresh Food Supermarket Green Scale (Bách Hóa Xanh / WinMart authentic) */
+  --green-900:  #004D25;
+  --green-700:  #008848;
+  --green-500:  #1B8A3D;
+  --green-300:  #86EFAC;
+  --green-100:  #E8F5E9;
+  --green-50:   #F1F8F4;
 
-  /* Amber scale */
-  --amber-700:  #c77f00;
-  --amber-500:  #e8a020;
-  --amber-300:  #ffc947;
-  --amber-100:  #fff8e6;
+  /* Retail Conversion Accent (Warm Orange / Sale Red) */
+  --amber-700:  #C2410C;
+  --amber-500:  #FF6B00;
+  --amber-300:  #FDBA74;
+  --amber-100:  #FFEDD5;
+  --red-600:    #E53935;
+  --red-700:    #D32F2F;
 
   /* Neutrals */
-  --paper:      #f7fdf5;
-  --cream:      #fdfaf2;
-  --white:      #ffffff;
-  --ink:        #1c3a1c;
-  --muted:      #5a7a5a;
-  --border:     #d4e8d4;
-  --border-2:   #e8f0e8;
+  --paper:      #F4F6F8;
+  --cream:      #FAFAFA;
+  --white:      #FFFFFF;
+  --ink:        #1E293B;
+  --muted:      #64748B;
+  --border:     #EAEAEA;
+  --border-2:   #F0F0F0;
 
-  /* Semantic aliases — giữ để không break code cũ */
+  /* Semantic aliases - giữ để không break code cũ */
   --xanh-primary:       var(--green-700);
   --xanh-primary-light: var(--green-500);
   --xanh-primary-bg:    var(--green-100);
@@ -81,14 +83,14 @@ img { display: block; max-width: 100%; }
   --xanh-paper-deep:    var(--green-100);
   --xanh-sage:          var(--green-300);
   --xanh-warm:          var(--amber-500);
-  --xanh-light-green:   #d4f0d4;
+  --xanh-light-green:   #E8F5E9;
 
-  /* Radius */
+  /* Radius (gọn gàng, thực tế, không bo tròn đồ chơi) */
   --r-xs:   4px;
-  --r-sm:   8px;
-  --r-md:   14px;
-  --r-lg:   20px;
-  --r-xl:   28px;
+  --r-sm:   6px;
+  --r-md:   8px;
+  --r-lg:   12px;
+  --r-xl:   16px;
   --r-full: 9999px;
   --xanh-radius-xs:   var(--r-xs);
   --xanh-radius-sm:   var(--r-sm);
@@ -97,14 +99,14 @@ img { display: block; max-width: 100%; }
   --xanh-radius-xl:   var(--r-xl);
   --xanh-radius-full: var(--r-full);
 
-  /* Shadows */
-  --shadow-sm: 0 1px 4px rgba(30,60,30,.06), 0 2px 10px rgba(30,60,30,.07);
-  --shadow-md: 0 4px 16px rgba(30,60,30,.10), 0 1px 4px rgba(30,60,30,.05);
-  --shadow-lg: 0 10px 36px rgba(30,60,30,.14);
+  /* Shadows (mảnh nhẹ, sạch sẽ, không đổ bóng mờ ảo AI) */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.10);
   --xanh-shadow-sm: var(--shadow-sm);
   --xanh-shadow-md: var(--shadow-md);
   --xanh-shadow-lg: var(--shadow-lg);
-  --vang-shadow: 0 4px 16px rgba(232,160,32,.22);
+  --vang-shadow: 0 2px 8px rgba(255, 107, 0, 0.20);
 }
 
 /* ==========================================================================
@@ -283,7 +285,6 @@ app-header {
 .xanhla-user-menu a:hover, .xanhla-user-menu button:hover {
   background: var(--green-100); color: var(--green-700);
 }
-
 /* ==========================================================================
    BUTTONS
    ========================================================================== */
@@ -407,144 +408,378 @@ app-header {
 
 .xanhla-prod-card {
   flex: 0 0 calc((100% - 54px) / 4);
-  background: var(--white);
-  border: 1px solid var(--border-2);
-  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #EAEAEA;
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(30,55,30,.08);
-  transition: transform .25s, box-shadow .28s, border-color .2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
   display: flex; flex-direction: column;
   position: relative;
 }
 .xanhla-prod-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 14px 36px rgba(30,55,30,.15);
-  border-color: var(--border);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  border-color: #008848;
 }
 
-/* ── Ảnh: 4/3, nền sáng như sản phẩm trên nền trắng ── */
+/* ── Ảnh: Tỷ lệ 1/1 vuông vắn, nền trắng tinh, tôn sản phẩm đồ ăn ── */
 .xanhla-prod-card-img {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1 / 1;
   width: 100%; overflow: hidden;
   display: block; position: relative;
-  background: #f8f8f4;
+  background: #ffffff;
+  padding: 10px;
   text-decoration: none;
 }
 .xanhla-prod-card-img img {
-  width: 100%; height: 100%; object-fit: cover;
-  transition: transform .45s cubic-bezier(.22,.72,.22,1);
+  width: 100%; height: 100%; object-fit: contain;
+  transition: transform 0.3s ease;
 }
-.xanhla-prod-card:hover .xanhla-prod-card-img img { transform: scale(1.06); }
+.xanhla-prod-card:hover .xanhla-prod-card-img img { transform: scale(1.04); }
 
-/* Không có gradient tối — ảnh sáng như mẫu */
+/* Không có gradient tối - ảnh sáng như mẫu */
 .xanhla-prod-card-img::before { display: none; }
 
-/* ── Badge danh mục trên ảnh — amber/vàng pill ── */
+/* ── Badge giảm giá góc ảnh - đỏ tươi thực phẩm gọn gàng ── */
 .xanhla-prod-badge-sale {
-  position: absolute; top: 12px; left: 12px; z-index: 2;
-  background: #d63f3f; color: #fff;
-  font-size: 12px; font-weight: 800; letter-spacing: .02em;
-  padding: 4px 12px; border-radius: var(--r-full);
+  position: absolute; top: 8px; left: 8px; z-index: 2;
+  background: #E53935; color: #fff;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.02em;
+  padding: 3px 8px; border-radius: 4px;
 }
 
-/* Badge danh mục amber (dùng trên ảnh) */
-.xanhla-prod-badge {
-  position: absolute; top: 12px; left: 12px; z-index: 2;
-  background: var(--amber-500); color: #fff;
-  font-size: 11px; font-weight: 700; letter-spacing: .02em;
-  padding: 5px 13px; border-radius: var(--r-full);
-}
+/* Badge danh mục */
+.xanhla-prod-badge,
 .xanhla-prod-badge-yellow {
-  position: absolute; top: 12px; left: 12px; z-index: 2;
-  background: var(--amber-500); color: #fff;
+  position: absolute; top: 8px; left: 8px; z-index: 2;
+  background: #FF6B00; color: #fff;
   font-size: 11px; font-weight: 700;
-  padding: 5px 13px; border-radius: var(--r-full);
+  padding: 3px 8px; border-radius: 4px;
 }
 
-/* Countdown timer — chỉ ở card khuyến mãi */
+/* Countdown timer - chỉ ở card khuyến mãi */
 .xanhla-prod-card-timer {
-  position: absolute; bottom: 10px; left: 10px; z-index: 2;
-  background: rgba(10,28,10,.72);
-  backdrop-filter: blur(6px);
+  position: absolute; bottom: 8px; left: 8px; z-index: 2;
+  background: rgba(15, 23, 42, 0.82);
   color: #fff;
-  font-size: 12px; font-weight: 700;
-  padding: 5px 12px; border-radius: var(--r-full);
-  border: 1px solid rgba(255,255,255,.18);
-  letter-spacing: .04em;
+  font-size: 11px; font-weight: 700;
+  padding: 3px 8px; border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
-.xanhla-prod-card-timer span { color: var(--amber-300); }
+.xanhla-prod-card-timer span { color: #FDBA74; }
 
 /* ── Body ── */
 .xanhla-prod-card-body {
-  padding: 16px 16px 18px;
-  display: flex; flex-direction: column; flex: 1; gap: 3px;
+  padding: 12px 14px 14px;
+  display: flex; flex-direction: column; flex: 1; gap: 4px;
+  background: #ffffff;
 }
 
-/* Tag danh mục — amber đậm, uppercase nhỏ */
+/* Tag danh mục */
 .xanhla-prod-card-cat {
   display: inline-flex;
   align-items: center;
-  background: #eff6eb;
-  color: #1e532b;
-  border-left: 3.5px solid #5ca32a;
+  background: #F1F8F4;
+  color: #008848;
+  border-left: 3px solid #008848;
   border-radius: 0 4px 4px 0;
-  padding: 2.5px 8px 2.5px 7px;
+  padding: 2px 7px;
   font-size: 11px;
   font-weight: 700;
-  text-transform: none;
-  letter-spacing: 0.01em;
   width: fit-content;
-  line-height: 1.35;
+  line-height: 1.3;
   margin-bottom: 2px;
 }
 
-/* Tên — Playfair, đậm */
+/* Tên sản phẩm - 2 dòng gọn gàng */
 .xanhla-prod-card-name {
-  font-family: var(--font-display);
-  font-size: 17px; font-weight: 700;
-  color: var(--ink); line-height: 1.28;
+  font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1E293B;
+  line-height: 1.35;
   text-decoration: none;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 36px;
 }
-.xanhla-prod-card-name:hover { color: var(--green-700); }
+.xanhla-prod-card-name:hover { color: #008848; }
 
 /* Mô tả 2 dòng */
 .xanhla-prod-card-desc {
-  font-size: 12.5px; color: var(--muted); line-height: 1.6;
-  flex: 1; margin: 4px 0 2px;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  font-size: 12px; color: #64748B; line-height: 1.5;
+  margin: 2px 0;
+  display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 
-/* Hàng giá */
+/* Hàng giá bán nổi bật */
 .xanhla-prod-card-price-row {
-  display: flex; align-items: baseline; gap: 8px;
-  flex-wrap: wrap; margin: 8px 0 14px;
+  display: flex; align-items: baseline; gap: 6px;
+  flex-wrap: wrap; margin: 6px 0 10px;
 }
 .xanhla-prod-card-price {
-  font-size: 20px; font-weight: 800; color: #d63f3f;
+  font-size: 17px; font-weight: 800; color: #E53935;
 }
 .xanhla-prod-card-price-old {
-  font-size: 13px; color: #bbb; text-decoration: line-through; font-weight: 400;
+  font-size: 12px; color: #94A3B8; text-decoration: line-through; font-weight: 400;
 }
 .xanhla-prod-card-unit {
-  font-size: 12px; color: var(--muted); font-weight: 500;
+  font-size: 12px; color: #64748B; font-weight: 500;
 }
 .xanhla-prod-card-save {
-  font-size: 11.5px; font-weight: 700;
-  color: var(--amber-700);
+  font-size: 11px; font-weight: 700;
+  color: #C2410C;
   margin-left: auto;
 }
 
-/* Nút — pill full-width, xanh đậm */
-.xanhla-prod-card-add {
-  width: 100%; padding: 11px;
-  background: var(--green-700); color: #fff;
-  border: none; border-radius: var(--r-full);
-  font-size: 14px; font-weight: 700; cursor: pointer;
-  transition: background .15s;
-  display: flex; align-items: center; justify-content: center;
-  letter-spacing: .01em;
+/* ==========================================================================
+   ENTERPRISE PRODUCT CARD & ACTION BUTTON SYSTEM
+   - Tông màu chủ đạo: Xanh lá cây (#16a34a) - Vàng (#fde047 / #f59e0b)
+   - Sắc đỏ/cam (#FF6600 / #dc2626) DÀNH RIÊNG cho khối Flash Sale và nhãn giá
+   - Độ rộng 2 nút bằng nhau 50% - 50%, thẳng hàng tăm tắp trên cùng một hàng
+   - Căn chỉnh tự động đẩy nút xuống đáy thẻ (margin-top: auto)
+   - 100% Bootstrap Icons (bi bi-cart-plus, bi bi-lightning-charge-fill)
+   ========================================================================== */
+
+/* 1. Chuẩn hóa Grid & Cột thẻ sản phẩm để thẳng hàng 100% */
+.coop-product-card,
+.xanhla-prod-card {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  background: #ffffff !important;
+  border: 1px solid #EAEAEA !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
 }
-.xanhla-prod-card-add:hover { background: var(--green-900); }
+
+.coop-product-card:hover,
+.xanhla-prod-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08) !important;
+  border-color: #16a34a !important;
+}
+
+.coop-product-info,
+.xanhla-prod-card-body {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  padding: 12px 14px !important;
+}
+
+.coop-product-info h3,
+.xanhla-prod-card-name,
+.xanhla-prod-card-title {
+  height: 38px !important;
+  max-height: 38px !important;
+  line-height: 19px !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  margin: 4px 0 6px !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: #1E293B !important;
+}
+
+.coop-product-info p,
+.xanhla-prod-card-desc {
+  height: 32px !important;
+  max-height: 32px !important;
+  line-height: 16px !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  margin: 0 0 6px !important;
+  font-size: 11.5px !important;
+  color: #64748B !important;
+}
+
+.coop-price-row,
+.xanhla-prod-card-price-row {
+  margin-top: auto !important;
+  margin-bottom: 8px !important;
+  min-height: 26px !important;
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 6px !important;
+}
+
+/* 2. Khung hàng chứa 2 nút (Row container) */
+.eg-card-btn-row,
+.ord-card-btn-row,
+.coop-card-btn-row,
+.fs-card-actions {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  margin-top: 0 !important;
+  padding-top: 4px !important;
+  box-sizing: border-box !important;
+}
+
+/* 3. Nút 1: THÊM GIỎ (To rõ, thoáng đãng, chuẩn thương hiệu) */
+.eg-card-btn-add,
+.xanhla-prod-card-add,
+.coop-add-btn,
+.fs-add-btn {
+  flex: 1 1 0% !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  padding: 0 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  background: #d8f56a !important;
+  border: 1.5px solid #165b32 !important;
+  border-radius: 8px !important;
+  color: #165b32 !important;
+  font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+  white-space: nowrap !important;
+  text-decoration: none !important;
+  box-sizing: border-box !important;
+  line-height: 1 !important;
+  overflow: hidden !important;
+}
+
+.eg-card-btn-add i,
+.xanhla-prod-card-add i,
+.coop-add-btn i,
+.fs-add-btn i {
+  font-size: 13px !important;
+  color: #165b32 !important;
+  display: inline-block !important;
+  line-height: 1 !important;
+  flex-shrink: 0 !important;
+}
+
+.eg-card-btn-add:hover:not(:disabled),
+.xanhla-prod-card-add:hover:not(:disabled),
+.coop-add-btn:hover:not(:disabled) {
+  background: #c8ee44 !important;
+  border-color: #144e28 !important;
+  color: #144e28 !important;
+  box-shadow: 0 2px 6px rgba(22, 91, 50, 0.15) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 4. Nút 2: Mua ngay (To rõ, nền xanh lá đậm thương hiệu #165b32, chữ trắng) */
+.eg-card-btn-buynow,
+.xanhla-prod-card-buynow,
+.coop-buynow-btn {
+  flex: 1 1 0% !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  padding: 0 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  background: #165b32 !important;
+  border: 1.5px solid #165b32 !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 11.5px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  transition: all 0.18s ease !important;
+  white-space: nowrap !important;
+  text-decoration: none !important;
+  box-sizing: border-box !important;
+  line-height: 1 !important;
+  overflow: hidden !important;
+}
+
+.eg-card-btn-buynow i,
+.xanhla-prod-card-buynow i,
+.coop-buynow-btn i {
+  font-size: 13px !important;
+  color: #ffffff !important;
+  display: inline-block !important;
+  line-height: 1 !important;
+  flex-shrink: 0 !important;
+}
+
+.eg-card-btn-buynow:hover:not(:disabled),
+.xanhla-prod-card-buynow:hover:not(:disabled),
+.coop-buynow-btn:hover:not(:disabled) {
+  background: #0d3922 !important;
+  border-color: #0d3922 !important;
+  box-shadow: 0 2px 8px rgba(22, 91, 50, 0.3) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 5. Nút 2: Mua ngay - KHỐI FLASH SALE (Đỏ gốm son Bát Tràng #c53826, văn hóa may mắn & cấp bách tinh tế) */
+.fs-buynow-btn,
+.coop-flash-panel .coop-buynow-btn,
+.promo-flash-deal .coop-buynow-btn {
+  background: #c53826 !important;
+  border: 1.5px solid #c53826 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(197, 56, 38, 0.22) !important;
+}
+
+.fs-buynow-btn i,
+.coop-flash-panel .coop-buynow-btn i,
+.promo-flash-deal .coop-buynow-btn i {
+  color: #ffffff !important;
+}
+
+.fs-buynow-btn:hover:not(:disabled),
+.coop-flash-panel .coop-buynow-btn:hover:not(:disabled),
+.promo-flash-deal .coop-buynow-btn:hover:not(:disabled) {
+  background: #ae2e1e !important;
+  border-color: #ae2e1e !important;
+  box-shadow: 0 4px 12px rgba(197, 56, 38, 0.35) !important;
+}
+
+/* 6. Trạng thái hết hàng (Disabled State) */
+.eg-card-btn-disabled,
+.xanhla-prod-card-add:disabled,
+.coop-add-btn:disabled,
+.fs-add-btn:disabled,
+.xanhla-prod-card-buynow:disabled,
+.coop-buynow-btn:disabled,
+.fs-buynow-btn:disabled {
+  width: 100% !important;
+  max-width: 100% !important;
+  flex: 1 1 100% !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  border-radius: 6px !important;
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #94a3b8 !important;
+  cursor: not-allowed !important;
+  opacity: 0.75 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
 
 /* Carousel nav */
 .xanhla-carousel-nav { display: flex; gap: 8px; }
@@ -801,7 +1036,7 @@ app-header {
 }
 .xanhla-deal-card-cta:hover { background: var(--green-900); }
 
-/* Hero deal — full-width banner khuyến mãi đặc biệt */
+/* Hero deal - full-width banner khuyến mãi đặc biệt */
 .xanhla-hero-deal {
   background: linear-gradient(110deg, #1e4a22 0%, #2d6a2d 50%, #1e4a22 100%);
   border-radius: var(--r-xl);
@@ -1275,7 +1510,7 @@ app-header {
    ========================================================================== */
 
 /* ==========================================================================
-   XANH LÁ — Premium Admin Design System
+   XANH LÁ - Premium Admin Design System
    Modern Organic Farm Dashboard - Deep Forest & Vibrant Lime
    ========================================================================== */
 
@@ -2039,7 +2274,7 @@ th.text-right, td.text-right,
   font-variant-numeric: tabular-nums !important;
 }
 
-/* 3. Ô nhập liệu & Nút bấm trong Biểu mẫu (Forms — Đăng nhập, Thanh toán) */
+/* 3. Ô nhập liệu & Nút bấm trong Biểu mẫu (Forms - Đăng nhập, Thanh toán) */
 .xanhla-auth-field input,
 .xanhla-auth-field select,
 #section-contact-info input,

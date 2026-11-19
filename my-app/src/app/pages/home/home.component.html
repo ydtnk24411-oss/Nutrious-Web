@@ -3,31 +3,62 @@
 
 
     <section class="coop-hero coop-container" aria-label="Ưu đãi nổi bật">
-      <!-- Banner Chính: Slider Chạy Ảnh Thuần (Đã Xóa Toàn Bộ Chữ Text) -->
+      <!-- Banner Chính: Slider Nông Sản & Ẩm Thực Tươi Sạch Tinh Tế Chuẩn Luxury Organic -->
       <div class="coop-hero-main">
-        <a [routerLink]="heroBanners[activeHero].link || '/online-ordering'" class="coop-hero-slide-link">
-          <img [src]="heroBanners[activeHero].image"
-            [alt]="heroBanners[activeHero].alt || ('Banner ' + (activeHero + 1))" class="coop-hero-slide-img"
-            (error)="onHeroImageError($event)" />
-        </a>
+        <!-- Ảnh Nền Sắc Nét Toàn Cảnh (Crisp High-Res Hero Image) -->
+        <img [src]="heroBanners[activeHero].image"
+          [alt]="heroBanners[activeHero].alt || heroBanners[activeHero].title || ('Banner ' + (activeHero + 1))"
+          class="coop-hero-slide-img"
+          (error)="onHeroImageError($event)" />
 
-        <!-- Nút Điều Hướng Slider (Trước / Sau & Số Thứ Tự) -->
-        @if (heroBanners.length > 1) {
-        <div class="coop-hero-controls">
-          <button type="button" aria-label="Banner trước" (click)="prevHero()">Trước</button>
-          <span>{{ activeHero + 1 | number:'2.0' }} / {{ heroBanners.length | number:'2.0' }}</span>
-          <button type="button" aria-label="Banner tiếp theo" (click)="nextHero()">Sau</button>
+        <!-- Lớp Mặt Nạ Khí Quyển Tự Nhiên (Seamless Studio Vignette & Warm Sun Halo) -->
+        <div class="coop-hero-ambient-scrim" aria-hidden="true"></div>
+
+        <!-- Khối Chữ Thông Tin Trình Bày Tinh Tế, Thoáng Đãng (Floating Editorial Typography) -->
+        <div class="coop-hero-editorial">
+          @if (heroBanners[activeHero].eyebrow) {
+            <div class="coop-hero-kicker">
+              <span class="coop-kicker-text">{{ heroBanners[activeHero].eyebrow }}</span>
+            </div>
+          }
+
+          <h1 class="coop-hero-title">{{ heroBanners[activeHero].title || heroBanners[activeHero].alt }}</h1>
+
+          @if (heroBanners[activeHero].subtitle) {
+            <p class="coop-hero-subtitle">{{ heroBanners[activeHero].subtitle }}</p>
+          }
+
+          <div class="coop-hero-action">
+            <a [routerLink]="heroBanners[activeHero].link || '/online-ordering'" class="coop-hero-btn">
+              <span>{{ heroBanners[activeHero].cta || 'Khám phá ngay' }}</span>
+              <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </a>
+          </div>
         </div>
-        }
+
+        <!-- Dải Điều Hướng Phía Dưới (Diamond Seed Dots & Capsule Navigation) -->
+        <div class="coop-hero-bottom-bar">
+          <div class="coop-hero-diamonds" role="tablist" aria-label="Danh sách slide">
+            @for (slide of heroBanners; track $index) {
+              <button type="button"
+                class="coop-hero-diamond"
+                [class.active]="activeHero === $index"
+                (click)="activeHero = $index"
+                [attr.aria-label]="'Chuyển đến slide ' + ($index + 1)">
+              </button>
+            }
+          </div>
+
+        </div>
       </div>
 
-      <!-- 2 Banner Phụ Bên Phải (Ảnh Thuần) -->
+      <!-- 2 Banner Phụ Bên Phải (Ảnh Thương Hiệu Sắc Nét Thuần Túy, Không Che Nút Đè Lên Chữ) -->
       <div class="coop-hero-side">
-        <a class="coop-side-promo" [routerLink]="sideBanners.top.link">
-          <img [src]="sideBanners.top.image" [alt]="sideBanners.top.alt || 'Banner phụ trên'">
+        <a class="coop-side-promo" [routerLink]="sideBanners.top.link" [title]="sideBanners.top.alt">
+          <img [src]="sideBanners.top.image" [alt]="sideBanners.top.alt || 'Banner phụ Maggi'">
         </a>
-        <a class="coop-side-promo coop-side-promo-warm" [routerLink]="sideBanners.bottom.link">
-          <img [src]="sideBanners.bottom.image" [alt]="sideBanners.bottom.alt || 'Banner phụ dưới'">
+        <a class="coop-side-promo coop-side-promo-warm" [routerLink]="sideBanners.bottom.link" [title]="sideBanners.bottom.alt">
+          <img [src]="sideBanners.bottom.image" [alt]="sideBanners.bottom.alt || 'Banner phụ Chin-Su'">
         </a>
       </div>
     </section>
@@ -39,17 +70,23 @@
 
     <section class="coop-section coop-container coop-section-department" aria-labelledby="dept-title">
       <div class="coop-section-heading">
-        <div><span class="coop-eyebrow">ĐI CHỢ DỄ DÀNG</span>
+        <div class="coop-heading-left">
+          <span class="coop-eyebrow">ĐI CHỢ DỄ DÀNG</span>
           <h2 id="dept-title">Chọn theo nhóm hàng</h2>
           <p>Tất cả những gì bạn cần cho bữa ăn gia đình.</p>
-        </div><a routerLink="/online-ordering" class="coop-text-link">Tất cả sản phẩm</a>
+        </div>
+        <a routerLink="/online-ordering" class="coop-text-link">
+          <span>Xem tất cả</span>
+        </a>
       </div>
       <div class="coop-department-wrapper">
-        <nav class="coop-category-nav coop-container" aria-label="Danh mục sản phẩm" *ngIf="categories.length > 0">
+        <nav class="coop-category-nav" aria-label="Danh mục sản phẩm" *ngIf="categories.length > 0">
           <a *ngFor="let cat of categories; trackBy: trackByCatId" routerLink="/online-ordering"
             [queryParams]="{ category: cat.name }" class="coop-category-item" [title]="cat.name">
-            <img [src]="cat.image || fallbackCategoryImage" [alt]="cat.name" class="coop-category-img" loading="lazy"
-              (error)="onCatImageError($event, cat.image)" />
+            <div class="coop-category-thumb">
+              <img [src]="cat.image || fallbackCategoryImage" [alt]="cat.name" class="coop-category-img" loading="lazy"
+                (error)="onCatImageError($event, cat.image)" />
+            </div>
             <span class="coop-category-name">{{ cat.name }}</span>
           </a>
         </nav>
@@ -59,19 +96,16 @@
 
     <section class="coop-section coop-container coop-section-vouchers" aria-labelledby="voucher-title">
       <div class="coop-section-heading">
-        <div><span class="coop-eyebrow">MUA SẮM TIẾT KIỆM</span>
+        <div class="coop-heading-left">
+          <span class="coop-eyebrow">MUA SẮM TIẾT KIỆM</span>
           <h2 id="voucher-title">E-voucher khuyến mãi</h2>
           <p>Thêm mã ưu đãi, nhẹ ví hơn khi đi chợ online.</p>
         </div>
         <div class="coop-voucher-heading-actions">
-          <a routerLink="/vouchers" class="coop-text-link">Khám phá ưu đãi →</a>
-          <a routerLink="/vouchers" class="coop-text-link">Ví Voucher →</a>
+          <a routerLink="/vouchers" class="coop-voucher-btn-primary">Khám phá ưu đãi</a>
+          <a routerLink="/vouchers" class="coop-voucher-btn-secondary">Ví Voucher</a>
         </div>
       </div>
-      @if (voucherToast()) {
-      <div class="coop-voucher-toast" role="status">{{ voucherToast() }} <a routerLink="/vouchers">Mở Ví Voucher</a>
-      </div>
-      }
       <div class="coop-voucher-grid">
         <article *ngFor="let voucher of vouchers()" class="coop-voucher-card"
           [class.voucher-green]="voucher.color === 'green'" [class.voucher-orange]="voucher.color === 'amber'"
@@ -81,23 +115,23 @@
           <div class="coop-voucher-info">
             <h3>{{ voucher.title }}</h3>
             <p>{{ voucher.value }}</p>
-            <small>{{ voucher.expiry }}</small>
+            <small class="coop-voucher-expiry">{{ voucher.expiry }}</small>
             <div class="coop-voucher-actions">
-              <button type="button" class="coop-copy-btn" (click)="copyVoucher(voucher.code)">
-                @if (isVoucherCopied(voucher.code)) {
-                <i class="bi bi-check-lg"></i> Mã: {{ voucher.code }}
+              <div class="coop-voucher-btn-row">
+                <button type="button" class="coop-copy-btn" (click)="copyVoucher(voucher.code)" [title]="'Sao chép mã ' + voucher.code">
+                  @if (isVoucherCopied(voucher.code)) {
+                  <i class="bi bi-check-lg"></i> {{ voucher.code }}
+                  } @else {
+                  Sao chép mã
+                  }
+                </button>
+                @if (isVoucherSaved(voucher.id)) {
+                <b class="coop-voucher-saved"><i class="bi bi-check-lg"></i> Đã lưu</b>
                 } @else {
-                Sao chép mã
+                <button type="button" class="coop-voucher-save-btn" (click)="saveVoucher(voucher.id)">+ Lưu vào ví</button>
                 }
-              </button>
-              @if (isVoucherSaved(voucher.id)) {
-              <b><i class="bi bi-check-lg"></i> Đã lưu ví</b>
-              } @else {
-              <button type="button" class="coop-voucher-save-btn" (click)="saveVoucher(voucher.id)">+ Lưu vào
-                ví</button>
-              }
-              <a class="coop-voucher-apply-btn" routerLink="/checkout" [queryParams]="{ voucher: voucher.code }">Áp dụng
-                ngay</a>
+              </div>
+              <a class="coop-voucher-apply-btn" routerLink="/checkout" [queryParams]="{ voucher: voucher.code }">Áp dụng ngay</a>
             </div>
           </div>
         </article>
@@ -110,7 +144,7 @@
           <div>
             <span class="coop-eyebrow coop-eyebrow-light">SĂN DEAL MỖI NGÀY</span>
             <h2 id="sale-title">Flash sale <em>giá cực tốt</em></h2>
-            <p>Deal ngon trong ngày — nhanh tay chọn món yêu thích.</p>
+            <p>Deal ngon trong ngày - nhanh tay chọn món yêu thích.</p>
           </div>
           <div class="coop-countdown">
             <small>Ưu đãi kết thúc sau</small>
@@ -162,20 +196,20 @@
                 </div>
               </div>
 
-              <div style="display:flex;gap:6px;margin-top:8px">
+              <div class="coop-card-btn-row">
                 <ng-container *ngIf="deal.isSoldOut; else activeDealBtns">
-                  <button type="button" class="coop-add-btn" style="flex:1" disabled>
+                  <button type="button" class="coop-add-btn" disabled>
                     <span>Tạm hết hàng</span>
                   </button>
                 </ng-container>
                 <ng-template #activeDealBtns>
-                  <button type="button" class="coop-add-btn" style="flex:1" (click)="addDealToCart(deal, $event)">
-                    <i class="bi bi-cart-plus" style="margin-right:4px"></i><span>Thêm giỏ</span>
+                  <button type="button" class="coop-add-btn" (click)="addDealToCart(deal, $event)" [attr.aria-label]="'Thêm ' + deal.name + ' vào giỏ'">
+                    <i class="bi bi-cart-plus"></i>
+                    <span>Thêm giỏ</span>
                   </button>
-                  <button type="button" class="coop-buynow-btn"
-                    style="flex:1;background:#15803d;color:#fff;border:none;border-radius:6px;font-weight:700;font-size:12px;padding:8px;cursor:pointer"
-                    (click)="openBuyNowDeal(deal)">
-                    <i class="bi bi-lightning-charge-fill" style="margin-right:4px"></i><span>Mua ngay</span>
+                  <button type="button" class="coop-buynow-btn" (click)="openBuyNowDeal(deal)" [attr.aria-label]="'Mua ngay ' + deal.name">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                    <span>Mua ngay</span>
                   </button>
                 </ng-template>
               </div>
@@ -187,72 +221,91 @@
 
     <section class="coop-section coop-container coop-section-popular" aria-labelledby="popular-title">
       <div class="coop-section-heading">
-        <div><span class="coop-eyebrow">ĐƯỢC NHIỀU NHÀ TIN CHỌN</span>
+        <div class="coop-heading-left">
+          <span class="coop-eyebrow">ĐƯỢC NHIỀU NHÀ TIN CHỌN</span>
           <h2 id="popular-title">Sản phẩm nổi bật</h2>
           <p>Những lựa chọn quen thuộc cho căn bếp đủ đầy.</p>
         </div>
-        <div class="coop-heading-actions"><a routerLink="/online-ordering" class="coop-text-link">Xem tất cả</a><button
-            class="coop-arrow-btn" type="button" aria-label="Sản phẩm trước" (click)="prevProducts()"
-            [disabled]="productOffset === 0">Trước</button><button class="coop-arrow-btn" type="button"
-            aria-label="Sản phẩm tiếp theo" (click)="nextProducts()"
-            [disabled]="productOffset + 4 >= apiProducts.length">Sau</button></div>
+        <div class="coop-heading-actions">
+          <a routerLink="/online-ordering" class="coop-text-link">Xem tất cả</a>
+          <button class="coop-arrow-btn" type="button" aria-label="Sản phẩm trước" (click)="prevProducts()" [disabled]="productOffset === 0">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <button class="coop-arrow-btn" type="button" aria-label="Sản phẩm tiếp theo" (click)="nextProducts()" [disabled]="productOffset + 4 >= apiProducts.length">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
       </div>
       <div *ngIf="loadingProducts" class="coop-loading">Đang tải sản phẩm...</div>
-      <div *ngIf="!loadingProducts && apiProducts.length === 0" class="coop-empty">Sản phẩm đang được cập nhật. Bạn có
-        thể khám phá gian hàng online.</div>
+      <div *ngIf="!loadingProducts && apiProducts.length === 0" class="coop-empty">Sản phẩm đang được cập nhật. Bạn có thể khám phá gian hàng online.</div>
       <div class="coop-product-grid coop-api-grid" *ngIf="!loadingProducts && apiProducts.length">
         <article *ngFor="let product of visibleProducts" class="coop-product-card">
-          <a class="coop-product-photo" [routerLink]="productSlug(product)"><img
-              [src]="product.image || fallbackProductImage" [alt]="product.name" loading="lazy"><span
-              class="coop-product-tag">{{ getCategoryName(product.categoryId) }}</span></a>
-          <div class="coop-product-info"><small>{{ getCategoryName(product.categoryId) }}</small>
+          <a class="coop-product-photo" [routerLink]="productSlug(product)">
+            <img [src]="product.image || fallbackProductImage" [alt]="product.name" loading="lazy">
+          </a>
+          <div class="coop-product-info">
+            <small>{{ getCategoryName(product.categoryId) }}</small>
             <h3><a [routerLink]="productSlug(product)">{{ product.name }}</a></h3>
             <p>{{ product.description || 'Lựa chọn tiện lợi cho gia đình bạn.' }}</p>
-            <div class="coop-price-row"><strong>{{ product.price }}</strong></div>
-            <div style="display:flex;gap:6px;margin-top:8px"><ng-container
-                *ngIf="isProductUnavailable(product); else availableProductBtns"><button type="button"
-                  class="coop-add-btn" style="flex:1" disabled><span>{{ product.isCombo && product.comboStatus ===
-                    'paused' ? 'Tạm ngừng kinh doanh' : 'Tạm hết hàng' }}</span></button></ng-container><ng-template
-                #availableProductBtns><button type="button" class="coop-add-btn" style="flex:1"
-                  (click)="addToCart(product, $event)"><i class="bi bi-cart-plus"
-                    style="margin-right:4px"></i><span>Thêm giỏ</span></button><button type="button"
-                  class="coop-buynow-btn"
-                  style="flex:1;background:#15803d;color:#fff;border:none;border-radius:6px;font-weight:700;font-size:12px;padding:8px;cursor:pointer"
-                  (click)="openBuyNow(product)"><i class="bi bi-lightning-charge-fill"
-                    style="margin-right:4px"></i><span>Mua ngay</span></button></ng-template></div>
+            <div class="coop-price-row">
+              <strong>{{ formatPrice(product.priceNumber || product.price) }}</strong>
+            </div>
+            <div class="coop-card-btn-row">
+              <ng-container *ngIf="isProductUnavailable(product); else availableProductBtns">
+                <button type="button" class="coop-add-btn" disabled>
+                  <span>{{ product.isCombo && product.comboStatus === 'paused' ? 'Tạm ngừng kinh doanh' : 'Tạm hết hàng' }}</span>
+                </button>
+              </ng-container>
+              <ng-template #availableProductBtns>
+                <button type="button" class="coop-add-btn" (click)="addToCart(product, $event)" [attr.aria-label]="'Thêm ' + product.name + ' vào giỏ'">
+                  <i class="bi bi-cart-plus"></i>
+                  <span>Thêm giỏ</span>
+                </button>
+                <button type="button" class="coop-buynow-btn" (click)="openBuyNow(product)" [attr.aria-label]="'Mua ngay ' + product.name">
+                  <i class="bi bi-lightning-charge-fill"></i>
+                  <span>Mua ngay</span>
+                </button>
+              </ng-template>
+            </div>
           </div>
         </article>
       </div>
     </section>
 
     <section class="coop-editorial-banner coop-container">
-      <div class="coop-editorial-copy"><span class="coop-eyebrow coop-eyebrow-light">CẢM HỨNG BỮA CƠM NHÀ</span>
-        <h2>Chọn nguyên liệu tươi.<br><em>Nấu điều thương.</em></h2>
-        <p>Từ bữa sáng nhanh gọn đến bữa tối quây quần, để Evergreen Mart cùng bạn chăm chút từng bữa ăn.</p><a
-          routerLink="/online-ordering" class="coop-btn coop-btn-white">Tìm nguyên liệu</a>
+      <div class="coop-editorial-copy">
+        <span class="coop-eyebrow coop-eyebrow-light">CẢM HỨNG BỮA CƠM NHÀ</span>
+        <h2>Chọn nguyên liệu lành.<br><em>Nấu trọn yêu thương.</em></h2>
+        <p>Từ bữa sáng nhanh gọn đến bữa tối quây quần, để Evergreen Mart cùng bạn chăm chút từng bữa cơm gia đình thuần khiết.</p>
+        <a routerLink="/online-ordering" class="coop-editorial-btn">
+          <span>Tìm nguyên liệu</span>
+        </a>
       </div>
-      <div class="coop-editorial-images"><img
-          src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=800&q=85"
-          alt="Salad rau củ tươi" loading="lazy"><img
-          src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=800&q=85"
-          alt="Món ăn lành mạnh" loading="lazy"><img
-          src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=800&q=85"
-          alt="Bữa ăn đầy màu sắc" loading="lazy"></div>
+      <div class="coop-editorial-images">
+        <img src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=800&q=85" alt="Salad rau củ tươi" loading="lazy">
+        <img src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=800&q=85" alt="Món ăn lành mạnh" loading="lazy">
+        <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=800&q=85" alt="Bữa ăn đầy màu sắc" loading="lazy">
+      </div>
     </section>
 
     <section class="coop-section coop-container coop-section-origin" aria-labelledby="origin-title">
       <div class="coop-origin-layout">
-        <div class="coop-origin-photo"><img [src]="originImage" alt="Nông sản tươi được tuyển chọn"
-            loading="lazy"><span>FRESH PICKS<br><b>EVERY DAY</b></span></div>
-        <div class="coop-origin-copy"><span class="coop-eyebrow">TƯƠI NGON TỪ LỰA CHỌN ĐẦU TIÊN</span>
+        <div class="coop-origin-photo">
+          <img [src]="originImage" alt="Nông sản tươi tuyển chọn tại vườn" loading="lazy">
+          <span class="coop-origin-badge">FRESH PICKS EVERY DAY</span>
+        </div>
+        <div class="coop-origin-copy">
+          <span class="coop-eyebrow">TƯƠI NGON TỪ LỰA CHỌN ĐẦU TIÊN</span>
           <h2 id="origin-title">Chăm chút bữa ăn, bắt đầu từ điều giản dị.</h2>
-          <p>Evergreen Mart mang đến trải nghiệm mua sắm thực phẩm gần gũi, dễ chọn và thuận tiện — để bạn dành thêm
-            thời gian cho những điều quan trọng ở nhà.</p>
-          <ul>
-            <li>Danh mục đa dạng, dễ tìm kiếm</li>
-            <li>Gợi ý nguyên liệu theo nhu cầu</li>
-            <li>Mua sắm trực tuyến thuận tiện</li>
-          </ul><a routerLink="/online-ordering" class="coop-btn coop-btn-green">Khám phá gian hàng</a>
+          <p>Evergreen Mart mang đến trải nghiệm mua sắm thực phẩm gần gũi, dễ chọn và thuận tiện – để bạn dành thêm thời gian cho những điều quan trọng ở nhà.</p>
+          <ul class="coop-origin-features">
+            <li><span>Danh mục đa dạng, dễ tìm kiếm</span></li>
+            <li><span>Gợi ý nguyên liệu theo nhu cầu</span></li>
+            <li><span>Mua sắm trực tuyến thuận tiện</span></li>
+          </ul>
+          <a routerLink="/online-ordering" class="coop-origin-btn">
+            <span>Khám phá gian hàng</span>
+          </a>
         </div>
       </div>
     </section>
@@ -260,10 +313,12 @@
     <section class="coop-section coop-news-section coop-section-news">
       <div class="coop-container">
         <div class="coop-section-heading">
-          <div><span class="coop-eyebrow">GÓC NHÀ XANH</span>
+          <div class="coop-heading-left">
+            <span class="coop-eyebrow">GÓC NHÀ XANH</span>
             <h2>Cẩm nang</h2>
             <p>Mẹo nhỏ và ý tưởng hay cho nhịp sống mỗi ngày.</p>
-          </div><a routerLink="/cam-nang" class="coop-text-link">Xem tất cả</a>
+          </div>
+          <a routerLink="/cam-nang" class="coop-text-link">Xem tất cả</a>
         </div>
         <div class="coop-news-grid"><a *ngFor="let item of newsItems" [routerLink]="item.path" class="coop-news-card">
             <div class="coop-news-image"><img [src]="item.image" [alt]="item.title" loading="lazy"><span>GÓC SỐNG
@@ -299,6 +354,22 @@
           </div>
         </div>
       </div>
+    }
+
+    <!-- Popup Thông Báo Toast (Nổi góc phải, không phá vỡ bố cục) -->
+    @if (voucherToast()) {
+      <aside class="coop-voucher-toast-popup" role="status" aria-live="polite">
+        <div class="coop-toast-icon">
+          <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <div class="coop-toast-body">
+          <span class="coop-toast-msg">{{ voucherToast() }}</span>
+          <a routerLink="/vouchers" class="coop-toast-link">Mở Ví Voucher</a>
+        </div>
+        <button type="button" class="coop-toast-close" (click)="voucherToast.set('')" aria-label="Đóng thông báo">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </aside>
     }
   </main>
 </app-shell>

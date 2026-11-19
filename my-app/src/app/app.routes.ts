@@ -89,6 +89,16 @@ export const routes: Routes = [
       import('./pages/cook/cook.component').then((m) => m.CookComponent),
   },
   {
+    path: 'cook',
+    redirectTo: 'cook-with-what-you-have',
+    pathMatch: 'full',
+  },
+  {
+    path: 'hom-nay-an-gi',
+    redirectTo: 'cook-with-what-you-have',
+    pathMatch: 'full',
+  },
+  {
     path: 'cam-nang/:slug',
     loadComponent: () =>
       import('./pages/handbook/handbook-detail.component').then((m) => m.HandbookDetailComponent),
