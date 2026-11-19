@@ -40,7 +40,7 @@ Dự án đã đóng gói sẵn toàn bộ snapshot dữ liệu mẫu trong [`se
    cd service
    npm install
    ```
-2. Tạo file `service/.env` và dán nguyên bộ biến môi trường (`MONGODB_URI`, `JWT_SECRET`, `GEMINI_API_KEY`...) do nhóm đính kèm khi nộp đồ án (hoặc copy từ file `.env` nhóm gửi kèm).
+2. Tạo file `service/.env` và dán nguyên bộ biến môi trường (`MONGODB_URI`, `JWT_SECRET`, `GEMINI_API_KEY`...) do nhóm đính kèm khi nộp đồ án (trong link drive full project).
 3. Lưu ý: Nếu mạng trường/Wi-Fi nội bộ chặn cổng `27017` của MongoDB Atlas hoặc IP chưa được cấp phép trên Atlas, vui lòng chuyển sang **Cách 1 (Chạy Offline)**.
 
 ---
