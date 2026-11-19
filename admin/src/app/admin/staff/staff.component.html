@@ -27,18 +27,31 @@
   }
 
   <!-- Filter Toolbar -->
-  <div class="filter-card">
-    <div class="search-input-wrapper">
+  <div class="filter-card" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <div class="search-input-wrapper" style="flex:1;min-width:260px">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="11" cy="11" r="8"/>
         <line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
       <input
         type="text"
-        placeholder="Tìm nhân viên theo tên hoặc email..."
+        placeholder="Tìm nhân viên theo tên, email, mã NV, chi nhánh..."
         [ngModel]="searchQuery()"
         (ngModelChange)="searchQuery.set($event)"
       />
+    </div>
+    <div class="role-filter-wrapper">
+      <select
+        class="form-control"
+        style="height:42px;border-radius:8px;padding:0 12px;font-size:13.5px;border:1px solid #cbd5e1;background:#fff;cursor:pointer"
+        [ngModel]="selectedRole()"
+        (ngModelChange)="selectedRole.set($event)"
+      >
+        <option value="all">Tất cả vai trò</option>
+        @for (r of roleDefs; track r.key) {
+          <option [value]="r.key">{{ r.label }}</option>
+        }
+      </select>
     </div>
   </div>
 
@@ -60,6 +73,7 @@
             <tr>
               <th style="width: 110px;">Mã NV</th>
               <th>Nhân viên</th>
+              <th>Vai trò</th>
               <th>Chi nhánh / Bộ phận</th>
               <th>Email</th>
               <th>Số điện thoại</th>
@@ -80,6 +94,16 @@
                     </div>
                     <span class="staff-name">{{ user.name }}</span>
                   </div>
+                </td>
+                <td>
+                  <span
+                    class="role-badge"
+                    [style.color]="getRoleDef(user.role).color"
+                    [style.background]="getRoleDef(user.role).bg"
+                    style="display:inline-block;padding:3px 8px;border-radius:6px;font-size:12px;font-weight:600"
+                  >
+                    {{ getRoleDef(user.role).label }}
+                  </span>
                 </td>
                 <td>
                   <span class="store-badge">{{ user.storeName || user.assignedStore || '-' }}</span>
