@@ -1188,7 +1188,7 @@
                               <strong (click)="openRecipeDetail(r.id)">{{ r.name }}</strong>
                               <span>{{ slot.scaledCalories || r.calories }} kcal - Đạm {{ slot.scaledProtein || r.macros.protein }}g</span>
                             </div>
-                            <button type="button" class="xl-mini-swap-btn" (click)="swapMealInSlot(slot.slotKey, dayPlan.dayKey)" title="Đổi món khác"></button>
+                            <button type="button" class="xl-mini-swap-btn" (click)="swapMealInSlot(slot.slotKey, dayPlan.dayKey)" title="Đổi món khác" aria-label="Đổi món khác"><i class="bi bi-arrow-repeat"></i></button>
                           </div>
                         }
                       }
