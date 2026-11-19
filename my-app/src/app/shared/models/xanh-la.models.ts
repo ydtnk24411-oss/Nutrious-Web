@@ -307,6 +307,7 @@ export interface OrderItem {
   addonDiscountValue?: number;
   addonSaving?: number;
   discountedByAddon?: boolean;
+  isFlashSale?: boolean;
   promoNote?: string;
 }
 

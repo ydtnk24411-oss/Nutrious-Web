@@ -1059,8 +1059,12 @@
                     <span style="font-size:13px;font-weight:700;color:#15803d;white-space:nowrap">
                       @if (shippingMethod() === 'delivery' && !hasDeliveryLocation()) {
                         Tối đa -{{ formatPrice(selShip.discount || 30000) }}
-                      } @else {
+                      } @else if (shippingVoucherDiscount() > 0) {
                         -{{ formatPrice(shippingVoucherDiscount()) }}
+                      } @else if (shippingMethod() === 'pickup') {
+                        Nhận tại quầy (0đ ship)
+                      } @else {
+                        Đã Freeship sẵn
                       }
                     </span>
                   </div>
@@ -1120,6 +1124,9 @@
                           <span style="color:#b91c1c;font-weight:600">{{ opt.timeWindowLabel }}</span>
                         } @else if (opt.isEligible) {
                           Hỗ trợ tối đa {{ formatPrice(opt.estimatedDiscount) }}
+                          @if (shippingMethod() === 'delivery' && hasDeliveryLocation() && remainingShippingBeforeVoucher() === 0) {
+                            <span style="color:#15803d;font-weight:600"> · Đã Freeship theo đơn</span>
+                          }
                         } @else {
                           Cần đơn tối thiểu {{ formatPrice(opt.voucher.minValue || 0) }}
                         }

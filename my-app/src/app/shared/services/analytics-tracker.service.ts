@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs';
-import { ApiService } from './api.service';
+import { ApiService, API_BASE } from './api.service';
 
 function getSessionId(): string {
   try {
@@ -125,7 +125,7 @@ export class AnalyticsTrackerService {
         timestamp: new Date().toISOString(),
         ...data,
       });
-      navigator.sendBeacon('/api/analytics/track', new Blob([payload], { type: 'application/json' }));
+      navigator.sendBeacon(`${API_BASE}/analytics/track`, new Blob([payload], { type: 'application/json' }));
     } else {
       this.track(eventType, data);
     }

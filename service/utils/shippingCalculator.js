@@ -166,13 +166,21 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
   return Number((R * c).toFixed(2));
 }
 
+const osrmRouteCache = new Map();
+
 /**
  * Gọi OSRM public API để lấy khoảng cách đường bộ thực tế (km) và GeoJSON route
  */
 async function getOSRMRoute(lat1, lon1, lat2, lon2) {
+  const cacheKey = `${lat1.toFixed(4)},${lon1.toFixed(4)}->${lat2.toFixed(4)},${lon2.toFixed(4)}`;
+  const cached = osrmRouteCache.get(cacheKey);
+  if (cached && (Date.now() - cached.timestamp < 3600000)) {
+    return cached.data;
+  }
+
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4500);
+    const timeout = setTimeout(() => controller.abort(), 1500);
 
     const url = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson`;
     const res = await fetch(url, {
@@ -189,28 +197,33 @@ async function getOSRMRoute(lat1, lon1, lat2, lon2) {
         const route = data.routes[0];
         const distanceKm = Number((route.distance / 1000).toFixed(2));
         const durationMin = Math.round(route.duration / 60);
-        return {
+        const result = {
           success: true,
           distanceKm,
           durationMin,
           geometry: route.geometry,
           source: 'osrm',
         };
+        if (osrmRouteCache.size > 500) osrmRouteCache.clear();
+        osrmRouteCache.set(cacheKey, { timestamp: Date.now(), data: result });
+        return result;
       }
     }
   } catch (_) {
-    // Fallback nếu OSRM public API bận
+    // Fallback nếu OSRM public API bận hoặc quá 1.5s
   }
 
   const haversine = calculateHaversineDistance(lat1, lon1, lat2, lon2);
   const estRoadKm = Number((haversine * 1.32).toFixed(2));
-  return {
+  const fallbackResult = {
     success: true,
     distanceKm: estRoadKm,
     durationMin: Math.round(estRoadKm * 3.5) + 15,
     geometry: null,
     source: 'haversine_estimate',
   };
+  osrmRouteCache.set(cacheKey, { timestamp: Date.now(), data: fallbackResult });
+  return fallbackResult;
 }
 
 /**

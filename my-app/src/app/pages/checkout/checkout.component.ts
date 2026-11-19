@@ -924,17 +924,29 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     return distBase; // Khung giờ nhận hàng
   });
 
+  // Tính hỗ trợ ship tự động và phí thực trả độc lập theo từng mức cước gốc (tránh nhảy giá khi chuyển gói)
+  private computeAutoShippingDiscountForFee(baseFee: number): number {
+    if (baseFee <= 0 || this.shippingMethod() === 'pickup' || !this.hasDeliveryLocation()) return 0;
+    const sub = this.checkoutSubtotal();
+    if (sub >= 300000) return Math.min(25000, baseFee);
+    if (sub >= 150000) return Math.min(10000, baseFee);
+    return 0;
+  }
+
+  private computeNetShippingForBaseFee(baseFee: number): number {
+    const autoDisc = this.computeAutoShippingDiscountForFee(baseFee);
+    const sv = this.selectedShippingVoucher();
+    const remAfterAuto = Math.max(0, baseFee - autoDisc);
+    const voucherDisc = sv && remAfterAuto > 0 ? Math.min(remAfterAuto, sv.discount) : 0;
+    return Math.max(0, baseFee - autoDisc - voucherDisc);
+  }
+
   // Bậc thang hỗ trợ phí ship tự động theo giá trị đơn hàng (Subtotal):
   // Subtotal < 150.000đ: 0đ hỗ trợ (khách trả đủ phí)
   // Subtotal 150.000đ - 299.000đ: Hỗ trợ 10.000đ
   // Subtotal >= 300.000đ: Hỗ trợ tối đa 25.000đ (Freeship)
   readonly autoShippingDiscount = computed<number>(() => {
-    if (this.shippingMethod() === 'pickup' || !this.hasDeliveryLocation()) return 0;
-    const sub = this.checkoutSubtotal();
-    const base = this.baseShippingFee();
-    if (sub >= 300000) return Math.min(25000, base);
-    if (sub >= 150000) return Math.min(10000, base);
-    return 0;
+    return this.computeAutoShippingDiscountForFee(this.baseShippingFee());
   });
 
   // Gợi ý tiến trình nhận Freeship
@@ -952,12 +964,17 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     return { qualifiedMax: false, nextGap: gap1, text: `Mua thêm ${formatPrice(gap1)} để giảm 10.000đ ship, hoặc thêm ${formatPrice(gap2)} để Freeship!` };
   });
 
+  // Phí ship còn lại sau hỗ trợ tự động (trước khi áp dụng Voucher Freeship)
+  readonly remainingShippingBeforeVoucher = computed<number>(() => {
+    if (this.shippingMethod() === 'pickup' || !this.hasDeliveryLocation()) return 0;
+    return Math.max(0, this.baseShippingFee() - this.autoShippingDiscount());
+  });
+
   // Giảm giá từ Voucher Freeship (giảm trên số phí ship còn lại sau auto discount)
   readonly shippingVoucherDiscount = computed<number>(() => {
     const sv = this.selectedShippingVoucher();
-    if (!sv || this.shippingMethod() === 'pickup' || !this.hasDeliveryLocation()) return 0;
-    const remainingFee = Math.max(0, this.baseShippingFee() - this.autoShippingDiscount());
-    if (remainingFee <= 0) return 0;
+    const remainingFee = this.remainingShippingBeforeVoucher();
+    if (!sv || remainingFee <= 0) return 0;
     return Math.min(remainingFee, sv.discount);
   });
 
@@ -1063,7 +1080,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     const mm = String(arrival.getMinutes()).padStart(2, '0');
 
     const origPrice = this.resolvedDistanceBaseFee() + 10000;
-    const netPrice = Math.max(0, origPrice - this.autoShippingDiscount() - this.shippingVoucherDiscount());
+    const netPrice = this.computeNetShippingForBaseFee(origPrice);
 
     return {
       isAvailable: isOpen,
@@ -1078,7 +1095,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   // Thông tin Giao tiết kiệm (trong 24h)
   readonly standardDeliveryInfo = computed(() => {
     const orig = 15000 + this.farDeliverySurcharge();
-    const net = Math.max(0, orig - this.autoShippingDiscount() - this.shippingVoucherDiscount());
+    const net = this.computeNetShippingForBaseFee(orig);
     return {
       originalPrice: orig,
       finalPrice: net,
@@ -1095,7 +1112,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     const earliestArrivalHour = currentHour + leadHours;
 
     const distBase = this.resolvedDistanceBaseFee();
-    const netPrice = Math.max(0, distBase - this.autoShippingDiscount() - this.shippingVoucherDiscount());
+    const netPrice = this.computeNetShippingForBaseFee(distBase);
     const isFreeship = netPrice === 0;
 
     return BASE_TIME_SLOTS.map(slot => {
@@ -1573,16 +1590,28 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       expectedVoucherType: 'SHIPPING_DISCOUNT',
     }).subscribe((res) => {
       if (res.valid) {
-        this.selectedShippingVoucher.set({
-          code,
-          discount: res.discount || opt.voucher.value || 30000,
-          voucher: opt.voucher,
-        });
-        this.voucherMessage.set(`Đã áp dụng mã Freeship ${code}`);
+        this.applySelectedShippingVoucher(code, res.discount || opt.voucher.value || 30000, opt.voucher);
       } else {
         this.voucherMessage.set(res.message || 'Mã không hợp lệ');
       }
     });
+  }
+
+  private applySelectedShippingVoucher(code: string, discountVal: number, voucher: Voucher): void {
+    this.selectedShippingVoucher.set({ code, discount: discountVal, voucher });
+    this.showShippingVoucherPicker.set(false);
+    if (this.shippingMethod() === 'delivery' && !this.hasDeliveryLocation()) {
+      this.voucherMessage.set(`Đã áp dụng mã Freeship ${code} (tối đa -${formatPrice(discountVal)})`);
+      return;
+    }
+    const applied = this.shippingVoucherDiscount();
+    if (applied > 0) {
+      this.voucherMessage.set(`Đã áp dụng mã Freeship ${code}: -${formatPrice(applied)}`);
+    } else if (this.shippingMethod() === 'pickup') {
+      this.voucherMessage.set(`Đơn nhận tại cửa hàng miễn phí ship, mã ${code} không cần trừ thêm.`);
+    } else {
+      this.voucherMessage.set(`Đơn đã được hỗ trợ miễn phí 100% ship theo giá trị đơn, mã ${code} không cần trừ thêm.`);
+    }
   }
 
   removeShippingVoucher(): void {
@@ -1625,13 +1654,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
         if (isShip) {
           const discountVal = result.discount || matched?.value || 30000;
-          this.selectedShippingVoucher.set({
-            code,
-            discount: discountVal,
-            voucher: matched || ({ code, name: 'Voucher Miễn Phí Vận Chuyển', type: 'fixed', value: discountVal } as any)
-          });
-          this.voucherMessage.set(`Đã áp dụng mã Freeship ${code}`);
-          this.showShippingVoucherPicker.set(false);
+          const voucherObj = matched || ({ code, name: 'Voucher Miễn Phí Vận Chuyển', type: 'fixed', value: discountVal } as any);
+          this.applySelectedShippingVoucher(code, discountVal, voucherObj);
         } else {
           this.selectedOrderVoucher.set({
             code,
