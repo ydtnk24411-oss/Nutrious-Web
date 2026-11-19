@@ -218,7 +218,7 @@
   width: max-content;
   max-width: 330px;
   background: #ffffff;
-  z-index: 1100;
+  z-index: 2000;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   box-shadow: 0 18px 48px rgba(15, 23, 42, 0.14), 0 4px 12px rgba(15, 23, 42, 0.05);
@@ -1284,7 +1284,7 @@
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
-  z-index: 1100;
+  z-index: 2000;
   width: 350px;
   max-height: 480px;
   display: flex;
@@ -1697,9 +1697,12 @@
   border-bottom: 1px solid #eef2e8;
   padding: 0 !important;
   box-shadow: 0 2px 12px rgba(22, 66, 25, 0.05);
-  /* Đặt header chính nằm trên subnav để dropdown Thông báo/Tài khoản không bị chip chi nhánh che */
+}
+
+.xl-account-wrapper,
+.xl-notif-wrapper {
   position: relative;
-  z-index: 20;
+  z-index: 1050;
 }
 .xl-header-container {
   display: flex;
